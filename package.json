@@ -1,0 +1,22 @@
+{
+  "name": "reverie",
+  "version": "0.1.0",
+  "description": "Reverie — a virtual city where AI agents live, work, trade, befriend, govern, and get banned.",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=22.18" },
+  "scripts": {
+    "sim": "node src/index.ts sim",
+    "serve": "node src/index.ts serve",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "check": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^6.0.2"
+  }
+}
