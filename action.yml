@@ -1,0 +1,95 @@
+name: "VaporDep — block hallucinated dependencies"
+description: >-
+  Verifies that every dependency in package.json, requirements.txt, Cargo.toml,
+  Gemfile, composer.json and go.mod actually exists on its registry and scores
+  its slopsquatting / typosquatting risk. Fails the job when a package is
+  missing or looks like a hallucinated / squatted name.
+author: "VaporDep"
+
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  files:
+    description: >-
+      Manifest files or directories to check, separated by spaces, commas or
+      newlines. Leave empty to auto-detect manifests in the workspace root.
+      Items are always treated as paths, never as CLI options.
+    required: false
+    default: ""
+  api-url:
+    description: >-
+      Base URL of a VaporDep API (https://your-worker.workers.dev or a
+      https://<listing>.p.rapidapi.com listing). When set, packages are
+      verified via POST <api-url>/v1/batch instead of the runner querying each
+      registry directly.
+    required: false
+    default: ""
+  api-key:
+    description: >-
+      API key for api-url (sent as x-api-key, or as X-RapidAPI-Key for a
+      RapidAPI listing). Passed to the CLI through the environment, never on
+      the command line. With a key the CLI sends batches of 100 packages
+      (the pro limit) unless batch-size says otherwise. Store it in a secret.
+    required: false
+    default: ""
+  batch-size:
+    description: >-
+      Packages per API request, 1-100. Defaults to 10, or 100 when api-key is
+      set.
+    required: false
+    default: ""
+  fail-on:
+    description: "Lowest risk level that fails the job: danger, caution or never."
+    required: false
+    default: "danger"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Check dependencies with VaporDep
+      shell: bash
+      env:
+        VAPORDEP_CLI: ${{ github.action_path }}/cli/vapordep.mjs
+        VAPORDEP_INPUT_FILES: ${{ inputs.files }}
+        VAPORDEP_INPUT_BATCH_SIZE: ${{ inputs.batch-size }}
+        VAPORDEP_INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        # The CLI reads these two itself; keeping the key out of argv keeps it
+        # out of `ps` and /proc for other processes in the job.
+        VAPORDEP_API: ${{ inputs.api-url }}
+        VAPORDEP_API_KEY: ${{ inputs.api-key }}
+      run: |
+        set -euo pipefail
+
+        args=("check" "--fail-on" "${VAPORDEP_INPUT_FAIL_ON:-danger}")
+
+        if [ -n "${VAPORDEP_INPUT_BATCH_SIZE}" ]; then
+          args+=("--batch-size" "${VAPORDEP_INPUT_BATCH_SIZE}")
+        fi
+
+        files=()
+        if [ -n "${VAPORDEP_INPUT_FILES}" ]; then
+          # Split the files input on whitespace, newlines and commas. An item
+          # that looks like an option is refused rather than handed to the CLI.
+          while IFS= read -r item; do
+            [ -n "${item}" ] || continue
+            if [ "${item#-}" != "${item}" ]; then
+              echo "::error::files input contains '${item}', which looks like a CLI option; only file or directory paths are accepted" >&2
+              exit 2
+            fi
+            files+=("${item}")
+          done < <(printf '%s\n' "${VAPORDEP_INPUT_FILES}" | tr ',' '\n' | tr -s '[:space:]' '\n')
+        fi
+
+        # "--" ends option parsing: everything after it is a path.
+        if [ "${#files[@]}" -gt 0 ]; then
+          args+=("--" "${files[@]}")
+        fi
+
+        node "${VAPORDEP_CLI}" "${args[@]}"

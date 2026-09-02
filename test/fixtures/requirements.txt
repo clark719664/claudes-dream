@@ -1,0 +1,12 @@
+# Fixture requirements file for the VaporDep CLI tests.
+--index-url https://pypi.org/simple
+-r base-requirements.txt
+
+requests==2.32.3
+numpy>=1.26,<2
+Flask[async]~=3.0   # capitalised name with an extra
+django ; python_version >= "3.9"
+pyyaml @ https://example.invalid/pyyaml.tar.gz
+-e ./editable-local-package
+https://example.invalid/some-wheel-1.0-py3-none-any.whl
+reqeusts

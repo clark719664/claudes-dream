@@ -1,0 +1,63 @@
+name: Refresh top-package data
+
+on:
+  schedule:
+    # 06:17 UTC on the 1st of every month (off the :00 rush).
+    - cron: "17 6 1 * *"
+  workflow_dispatch: {}
+
+# No workflow-wide permissions: only the refresh job below gets a write token.
+permissions: {}
+
+concurrency:
+  group: refresh-top-packages
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Refresh data/top-*.json and data/top-lists.mjs
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # `contents: write` is needed for the commit step only. Because consumers
+    # run cli/vapordep.mjs from this repository's default branch (via
+    # `uses: <owner>/<repo>@v1`), anything that can push here can run code in
+    # their CI: protect the default branch with required reviews, and pin the
+    # third-party action below to a full commit SHA before enabling the
+    # schedule (`uses: stefanzweifel/git-auto-commit-action@<40-char sha>`).
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Refresh top-package lists from live sources
+        id: refresh
+        # A source that fails keeps its existing file (per-source fallback inside
+        # the script) and the script exits non-zero. Keep going so the sources
+        # that did refresh are still validated and committed; the run is flagged
+        # as failed at the end.
+        continue-on-error: true
+        run: node scripts/refresh-top-packages.mjs
+
+      - name: Validate refreshed data (offline test suite)
+        run: node --test test/
+
+      - name: Commit and push changes (if any)
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "data: refresh top-package lists"
+          file_pattern: "data/top-*.json data/top-lists.mjs"
+          commit_user_name: github-actions[bot]
+          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit_author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+
+      - name: Flag partial refresh
+        if: steps.refresh.outcome == 'failure'
+        run: |
+          echo "::error::At least one data source failed to refresh and its existing list was kept. See the refresh step log."
+          exit 1

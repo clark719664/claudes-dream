@@ -1,0 +1,4 @@
+# Plain list of package names; read with --ecosystem npm.
+express
+React
+lodahs

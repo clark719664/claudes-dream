@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VaporDep — dependency hallucination firewall (slopsquatting protection)</title>
+  <meta name="description" content="VaporDep verifies that package names — including the ones your AI coding assistant just suggested — actually exist on npm, PyPI, crates.io, RubyGems, Packagist and Go, and scores their slopsquatting and typosquatting risk. CLI, GitHub Action and hosted API. MIT licensed.">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f6f4">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f1116">
+  <meta property="og:title" content="VaporDep — your AI assistant just invented that package">
+  <meta property="og:description" content="Verify that dependencies exist and catch slopsquatting before it reaches your lockfile. CLI, GitHub Action, hosted API.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 5 6v9c0 7.2 4.7 12.7 11 15 6.3-2.3 11-7.8 11-15V6z' fill='%236b4de6'/%3E%3Cpath d='m10.5 16 3.6 3.6 7.4-7.4' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f6f4;
+      --bg-elev: #ffffff;
+      --bg-code: #14161c;
+      --fg-code: #e6e8ee;
+      --fg: #16181d;
+      --fg-muted: #5b6270;
+      --line: #dfe1e6;
+      --accent: #6b4de6;
+      --accent-fg: #ffffff;
+      --accent-soft: #ede9fc;
+      --danger: #c0392b;
+      --danger-soft: #fbe9e7;
+      --caution: #a3620a;
+      --caution-soft: #fdf1dc;
+      --ok: #1f7a3a;
+      --ok-soft: #e3f4e8;
+      --radius: 12px;
+      --shadow: 0 1px 2px rgba(20, 22, 28, .06), 0 8px 24px -12px rgba(20, 22, 28, .18);
+      --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1116;
+        --bg-elev: #171a21;
+        --bg-code: #0a0b0f;
+        --fg-code: #e2e4ea;
+        --fg: #e8e9ed;
+        --fg-muted: #9aa1ae;
+        --line: #272b35;
+        --accent: #a08cff;
+        --accent-fg: #0f1116;
+        --accent-soft: #241f45;
+        --danger: #ff7b6b;
+        --danger-soft: #3a1d1a;
+        --caution: #f0b35a;
+        --caution-soft: #3a2c14;
+        --ok: #5fd08a;
+        --ok-soft: #14301f;
+        --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px -14px rgba(0, 0, 0, .7);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--fg);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { text-decoration-thickness: 2px; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+    h1, h2, h3 { line-height: 1.15; letter-spacing: -.015em; margin: 0 0 .5em; }
+    h1 { font-size: clamp(2.1rem, 5.2vw, 3.5rem); font-weight: 750; }
+    h2 { font-size: clamp(1.5rem, 3vw, 2.1rem); font-weight: 700; }
+    h3 { font-size: 1.15rem; font-weight: 650; }
+    p { margin: 0 0 1em; }
+    code, pre { font-family: var(--mono); }
+    code { font-size: .92em; background: var(--accent-soft); padding: .1em .4em; border-radius: 5px; }
+    pre {
+      margin: 0;
+      background: var(--bg-code);
+      color: var(--fg-code);
+      border-radius: var(--radius);
+      padding: 1rem 1.15rem;
+      overflow-x: auto;
+      font-size: .84rem;
+      line-height: 1.55;
+      tab-size: 2;
+    }
+    pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+    .wrap { width: min(1080px, calc(100% - 2.5rem)); margin-inline: auto; }
+    section { padding: 4.5rem 0; }
+    section + section { border-top: 1px solid var(--line); }
+    .eyebrow {
+      display: inline-block;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: .9rem;
+    }
+    .lede { font-size: 1.15rem; color: var(--fg-muted); max-width: 62ch; }
+    .skip {
+      position: absolute; left: -999px; top: 0;
+      background: var(--accent); color: var(--accent-fg); padding: .5rem 1rem; z-index: 10;
+    }
+    .skip:focus { left: 1rem; top: 1rem; }
+
+    /* Header */
+    header {
+      position: sticky; top: 0; z-index: 5;
+      background: var(--bg);
+      background: color-mix(in srgb, var(--bg) 86%, transparent);
+      backdrop-filter: saturate(160%) blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav { display: flex; align-items: center; gap: 1.5rem; height: 64px; }
+    .brand { display: flex; align-items: center; gap: .6rem; font-weight: 750; color: var(--fg); text-decoration: none; font-size: 1.1rem; }
+    .brand svg { width: 28px; height: 28px; }
+    .nav ul { list-style: none; margin: 0 0 0 auto; padding: 0; display: flex; gap: 1.25rem; }
+    .nav ul a { color: var(--fg-muted); text-decoration: none; font-size: .95rem; font-weight: 500; }
+    .nav ul a:hover { color: var(--fg); }
+    @media (max-width: 720px) { .nav ul li:not(.keep) { display: none; } }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .7rem 1.15rem; border-radius: 9px;
+      font-weight: 650; font-size: .98rem; text-decoration: none;
+      border: 1px solid transparent; cursor: pointer; transition: transform .08s ease, background .15s ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--accent); color: var(--accent-fg); }
+    .btn-primary:hover { filter: brightness(1.06); }
+    .btn-ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+    .btn-ghost:hover { background: var(--bg-elev); }
+    .btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+
+    /* Hero */
+    .hero { padding: 5rem 0 4rem; }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 3rem; align-items: center; }
+    @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } }
+    .hero .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.75rem; }
+    .hero .fine { font-size: .88rem; color: var(--fg-muted); margin-top: 1.25rem; }
+    .terminal { box-shadow: var(--shadow); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
+    .terminal-bar {
+      display: flex; align-items: center; gap: .45rem;
+      background: #1d2028; padding: .55rem .9rem; font-size: .75rem; color: #9aa1ae; font-family: var(--mono);
+    }
+    .terminal-bar i { width: 10px; height: 10px; border-radius: 50%; background: #3a3f4b; display: inline-block; }
+    .terminal pre { border-radius: 0; font-size: .78rem; }
+    .t-danger { color: #ff7b6b; font-weight: 700; }
+    .t-ok { color: #5fd08a; }
+    .t-dim { color: #8b93a3; }
+    .t-cmd { color: #cfd3dc; }
+    .t-cmd::before { content: "$ "; color: #8b93a3; }
+
+    /* Stat */
+    .stat { display: grid; grid-template-columns: auto 1fr; gap: 2rem; align-items: center; background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius); padding: 2rem; }
+    .stat .num { font-size: clamp(3rem, 8vw, 5rem); font-weight: 800; letter-spacing: -.04em; color: var(--accent); line-height: 1; }
+    .stat p { margin: 0; color: var(--fg-muted); }
+    .stat cite { font-style: normal; font-size: .9rem; display: block; margin-top: .6rem; }
+    @media (max-width: 640px) { .stat { grid-template-columns: 1fr; gap: 1rem; } }
+
+    /* Steps */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 2rem; }
+    @media (max-width: 820px) { .steps { grid-template-columns: 1fr; } }
+    .step { background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.5rem; }
+    .step .n { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 800; margin-bottom: .9rem; }
+    .step p { color: var(--fg-muted); margin: 0; font-size: .97rem; }
+    .step ul { color: var(--fg-muted); font-size: .95rem; margin: .6rem 0 0; padding-left: 1.1rem; }
+
+    /* Flags */
+    .flags { width: 100%; border-collapse: collapse; margin-top: 1.5rem; font-size: .95rem; }
+    .flags th, .flags td { text-align: left; padding: .6rem .75rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .flags th { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-muted); }
+    .flags td:nth-child(2) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .flags code { white-space: nowrap; }
+    .table-scroll { overflow-x: auto; }
+
+    /* Example */
+    .example-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; align-items: start; margin-top: 2rem; }
+    @media (max-width: 900px) { .example-grid { grid-template-columns: 1fr; } }
+    .example-note { font-size: .85rem; color: var(--fg-muted); margin-top: .6rem; }
+    .badge { display: inline-block; font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: .2em .6em; border-radius: 999px; }
+    .badge-danger { background: var(--danger-soft); color: var(--danger); }
+    .badge-caution { background: var(--caution-soft); color: var(--caution); }
+    .badge-ok { background: var(--ok-soft); color: var(--ok); }
+    .levels { display: grid; gap: .75rem; margin-top: 1rem; }
+    .level { display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: baseline; padding: .9rem 1rem; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 10px; font-size: .95rem; }
+    .level p { margin: 0; color: var(--fg-muted); }
+
+    /* Ecosystems */
+    .ecos { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.25rem; }
+    .ecos span { border: 1px solid var(--line); background: var(--bg-elev); border-radius: 999px; padding: .35rem .9rem; font-size: .92rem; font-weight: 600; }
+    .ecos small { color: var(--fg-muted); font-weight: 400; margin-left: .3rem; }
+
+    /* Pricing */
+    .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 2rem; align-items: stretch; }
+    @media (max-width: 860px) { .plans { grid-template-columns: 1fr; } }
+    .plan { display: flex; flex-direction: column; background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.75rem; }
+    .plan.featured { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .plan h3 { margin-bottom: .25rem; }
+    .plan .price { font-size: 2.2rem; font-weight: 800; letter-spacing: -.03em; }
+    .plan .price small { font-size: 1rem; font-weight: 500; color: var(--fg-muted); letter-spacing: 0; }
+    .plan .who { color: var(--fg-muted); font-size: .92rem; margin-bottom: 1rem; }
+    .plan ul { list-style: none; padding: 0; margin: 0 0 1.5rem; font-size: .95rem; }
+    .plan li { padding: .35rem 0 .35rem 1.5rem; position: relative; }
+    .plan li::before { content: ""; position: absolute; left: 0; top: .78em; width: 12px; height: 7px; border-left: 2px solid var(--ok); border-bottom: 2px solid var(--ok); transform: rotate(-45deg); }
+    .plan .btn { margin-top: auto; justify-content: center; }
+    .pricing-note { margin-top: 1.5rem; padding: 1rem 1.15rem; border-left: 3px solid var(--caution); background: var(--caution-soft); color: var(--fg); border-radius: 0 10px 10px 0; font-size: .95rem; }
+    .pricing-note p { margin: 0; }
+
+    /* FAQ */
+    .faq { margin-top: 1.5rem; border-top: 1px solid var(--line); }
+    .faq details { border-bottom: 1px solid var(--line); }
+    .faq summary { cursor: pointer; padding: 1.1rem 0; font-weight: 650; font-size: 1.05rem; list-style: none; display: flex; justify-content: space-between; gap: 1rem; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after { content: "+"; color: var(--accent); font-weight: 400; font-size: 1.4rem; line-height: 1; }
+    .faq details[open] summary::after { content: "–"; }
+    .faq .a { padding: 0 0 1.25rem; color: var(--fg-muted); max-width: 72ch; }
+    .faq .a p:last-child { margin-bottom: 0; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--line); padding: 2.5rem 0; color: var(--fg-muted); font-size: .92rem; }
+    .foot { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: center; justify-content: space-between; }
+    .foot ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 1.25rem; }
+    .foot a { color: var(--fg-muted); }
+    .foot a:hover { color: var(--fg); }
+
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn { transition: none; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header>
+    <nav class="wrap nav" aria-label="Primary">
+      <a class="brand" href="#top" aria-label="VaporDep home">
+        <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <path d="M16 2 5 6v9c0 7.2 4.7 12.7 11 15 6.3-2.3 11-7.8 11-15V6z" fill="var(--accent)"/>
+          <path d="m10.5 16 3.6 3.6 7.4-7.4" fill="none" stroke="var(--accent-fg)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        VaporDep
+      </a>
+      <ul>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#example">Example</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li class="keep"><a href="https://github.com/clark719664/claudes-dream/blob/HEAD/docs/API.md">API docs</a></li>
+        <li class="keep"><a href="https://github.com/clark719664/claudes-dream">GitHub</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero" id="top">
+      <div class="wrap hero-grid">
+        <div>
+          <span class="eyebrow">Dependency hallucination firewall</span>
+          <h1>Your AI assistant just invented that package.</h1>
+          <p class="lede">Code-generation models suggest dependencies that do not exist, and attackers register those names with malware inside. VaporDep checks every package name against the real registry and scores how much it looks like a <em>slopsquatting</em> trap — before it lands in your lockfile.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="https://github.com/clark719664/claudes-dream#quickstart">Run it in CI</a>
+            <a class="btn btn-ghost" href="https://github.com/clark719664/claudes-dream/blob/HEAD/docs/API.md">Read the API docs</a>
+          </div>
+          <p class="fine">npm · PyPI · crates.io · RubyGems · Packagist · Go modules. Zero dependencies. MIT licensed. CLI and GitHub Action are free; the hosted API has a free tier.</p>
+        </div>
+        <div class="terminal" aria-label="Example CLI output (static)">
+          <div class="terminal-bar"><i></i><i></i><i></i>&nbsp; vapordep check package.json</div>
+<pre><code><span class="t-cmd">node cli/vapordep.mjs check package.json</span>
+<span class="t-dim">RISK    SCORE  ECOSYSTEM  PACKAGE   EXISTS  FLAGS                    DID YOU MEAN
+------  -----  ---------  --------  ------  -----------------------  ------------</span>
+<span class="t-danger">danger</span>  90     npm        expresss  NO      NOT_FOUND,NEAR_MISS_TOP  express (1)
+<span class="t-ok">ok</span>      0      npm        express   yes     -                        -
+<span class="t-ok">ok</span>      0      npm        react     yes     -                        -
+
+Details:
+  [danger] npm/expresss (score 90)
+    - NOT_FOUND: No package with this name exists on npm
+    - NEAR_MISS_TOP: Name is 1 edit away from the popular package "express" — the classic hallucination / slopsquat signature
+    - did you mean: express
+
+Summary: 3 packages from 1 file | 1 danger | 0 caution | 2 ok | mode: local registry lookups
+<span class="t-danger">FAIL</span>: at least one package is at or above the "danger" threshold (--fail-on danger).</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- The problem -->
+    <section id="problem">
+      <div class="wrap">
+        <span class="eyebrow">The problem has a number</span>
+        <div class="stat">
+          <div class="num">19.7%</div>
+          <p>of the packages recommended by large language models across 576,000 generated code samples <strong>did not exist</strong>. Many hallucinated names repeat across prompts, which makes them predictable — and a predictable non-existent name is a name an attacker can register first.
+            <cite>Spracklen et al., <em>We Have a Package for You! A Comprehensive Analysis of Package Hallucinations by Code Generating LLMs</em>, USENIX Security 2025 — <a href="https://arxiv.org/abs/2406.10279">arXiv:2406.10279</a></cite>
+          </p>
+        </div>
+        <p class="lede" style="margin-top:1.75rem">This is <strong>slopsquatting</strong>: typosquatting where the typo is made by the model instead of the human. Vulnerability scanners cannot help — they audit packages that exist. VaporDep asks the question one step earlier: <em>should this package exist at all?</em></p>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section id="how">
+      <div class="wrap">
+        <span class="eyebrow">How it works</span>
+        <h2>Three steps, no account required for the first two.</h2>
+        <div class="steps">
+          <article class="step">
+            <div class="n">1</div>
+            <h3>Read the names</h3>
+            <p>The CLI parses <code>package.json</code>, <code>requirements.txt</code>, <code>Cargo.toml</code>, <code>Gemfile</code>, <code>composer.json</code> and <code>go.mod</code>. The API takes names directly — from an editor plugin, a bot, or a script that intercepts model output.</p>
+          </article>
+          <article class="step">
+            <div class="n">2</div>
+            <h3>Ask the real registry</h3>
+            <p>Every name is validated against its ecosystem's naming rules, then looked up on npm, PyPI, crates.io, RubyGems, Packagist or the Go module proxy. Not a cached mirror — the registry itself.</p>
+          </article>
+          <article class="step">
+            <div class="n">3</div>
+            <h3>Score the name</h3>
+            <p>Missing packages are flagged. Names one or two edits away from a popular package — the hallucination signature — score higher. Existing packages get extra scrutiny when they are brand new, barely downloaded, have no repository, or shadow a popular name.</p>
+            <ul>
+              <li><span class="badge badge-danger">danger</span> fails the build by default</li>
+              <li><span class="badge badge-caution">caution</span> is reported; fail on it with <code>--fail-on caution</code></li>
+              <li><span class="badge badge-ok">ok</span> passes</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="table-scroll">
+          <table class="flags">
+            <thead><tr><th scope="col">Flag</th><th scope="col">Points</th><th scope="col">Triggered when</th></tr></thead>
+            <tbody>
+              <tr><td><code>INVALID_NAME</code></td><td>100</td><td>The name breaks the ecosystem's naming rules; nothing is looked up</td></tr>
+              <tr><td><code>NOT_FOUND</code></td><td>+60</td><td>The registry has no such package</td></tr>
+              <tr><td><code>NEAR_MISS_TOP</code></td><td>+30</td><td>Not found <em>and</em> within two edits of a popular package</td></tr>
+              <tr><td><code>SHADOWS_TOP</code></td><td>+35</td><td>Exists, is not popular itself, but is one or two edits from a popular package</td></tr>
+              <tr><td><code>VERY_NEW</code></td><td>+25</td><td>Exists, first published less than 30 days ago</td></tr>
+              <tr><td><code>LOW_ADOPTION</code></td><td>+15</td><td>Exists, fewer than 100 downloads in the last week</td></tr>
+              <tr><td><code>NO_REPO</code></td><td>+10</td><td>Exists, no source repository in its metadata</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="example-note">Score is the sum, capped at 100. 60 and above is <strong>danger</strong>, 25 to 59 is <strong>caution</strong>, below 25 is <strong>ok</strong>.</p>
+
+        <div class="ecos" aria-label="Supported ecosystems">
+          <span>npm</span><span>PyPI</span><span>crates.io</span><span>RubyGems</span><span>Packagist</span><span>Go modules</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Example verdict -->
+    <section id="example">
+      <div class="wrap">
+        <span class="eyebrow">What you get back</span>
+        <h2>One verdict object, everywhere.</h2>
+        <p class="lede">The API, the CLI's <code>--json</code> output and the GitHub Action all return the same shape, so a rule you write once works in every place.</p>
+        <div class="example-grid">
+          <div>
+<pre><code>{
+  "name": "expresss",
+  "ecosystem": "npm",
+  "exists": false,
+  "registry": null,
+  "risk": {
+    "level": "danger",
+    "score": 90,
+    "flags": [
+      {
+        "code": "NOT_FOUND",
+        "message": "No package with this name exists on npm"
+      },
+      {
+        "code": "NEAR_MISS_TOP",
+        "message": "Name is 1 edit away from the popular package \"express\" — the classic hallucination / slopsquat signature"
+      }
+    ]
+  },
+  "suggestions": [
+    { "name": "express", "distance": 1 }
+  ]
+}</code></pre>
+            <p class="example-note">Static example — this page does not call the API. <code>GET /v1/check?name=expresss&amp;ecosystem=npm</code> produces a response of this shape.</p>
+          </div>
+          <div>
+            <h3>Reading it</h3>
+            <div class="levels">
+              <div class="level"><code>exists</code><p>Whether the registry knows the name. Never guessed: the API answers <code>true</code> or <code>false</code>; only the CLI's <code>--offline</code> mode reports <code>null</code>.</p></div>
+              <div class="level"><code>registry</code><p>Created date, last publish, weekly downloads, repository and description when the package exists — <code>null</code> for fields a registry does not expose, rather than an estimate.</p></div>
+              <div class="level"><code>risk</code><p>Level, score and every flag that fired, each with a human-readable message you can print straight into a CI log.</p></div>
+              <div class="level"><code>suggestions</code><p>Up to five popular packages within two edits, closest first. Usually the name the model meant.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing">
+      <div class="wrap">
+        <span class="eyebrow">Pricing</span>
+        <h2>The CLI and Action are free. Pay only for the hosted API.</h2>
+        <p class="lede">Everything is open source and self-hostable. A subscription buys a URL that works from any CI job in thirty seconds, batches of up to 100 packages per call (unauthenticated calls to a Worker are limited to 10), and popular-package lists that somebody else keeps fresh.</p>
+        <div class="plans">
+          <article class="plan">
+            <h3>Free</h3>
+            <div class="price">$0</div>
+            <p class="who">Trying it out, hobby projects, low-volume CI.</p>
+            <ul>
+              <li>50 checks per day</li>
+              <li>All six ecosystems</li>
+              <li>Batches of up to 100 packages</li>
+              <li>Same verdicts as every other tier</li>
+            </ul>
+            <a class="btn btn-ghost" href="#" aria-disabled="true">Subscribe</a>
+          </article>
+          <article class="plan featured">
+            <h3>Pro</h3>
+            <div class="price">$9<small>/month</small></div>
+            <p class="who">A team's pipelines, an editor plugin, a bot.</p>
+            <ul>
+              <li>10,000 checks per month</li>
+              <li>Batches of up to 100 packages</li>
+              <li>All six ecosystems</li>
+              <li>Cancel any time</li>
+            </ul>
+            <a class="btn btn-primary" href="#" aria-disabled="true">Subscribe</a>
+          </article>
+          <article class="plan">
+            <h3>Team</h3>
+            <div class="price">$29<small>/month</small></div>
+            <p class="who">Platform and security teams covering many repositories.</p>
+            <ul>
+              <li>100,000 checks per month</li>
+              <li>Batches of up to 100 packages</li>
+              <li>All six ecosystems</li>
+              <li>Cancel any time</li>
+            </ul>
+            <a class="btn btn-ghost" href="#" aria-disabled="true">Subscribe</a>
+          </article>
+        </div>
+        <div class="pricing-note" role="note">
+          <p><strong>Not live yet.</strong> The subscribe buttons go live once the API is listed on RapidAPI, which handles keys, metering and billing. A check is one API request; a batch call counts as one. Until then, clone the repo and run the CLI — it is free and needs no account.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq">
+      <div class="wrap">
+        <span class="eyebrow">FAQ</span>
+        <h2>Questions people ask before trusting a security tool.</h2>
+        <div class="faq">
+          <details>
+            <summary>Is this open source?</summary>
+            <div class="a">
+              <p>Yes — MIT licensed, the whole thing: CLI, GitHub Action, the API (a Cloudflare Worker), the scoring rules and the data refresh script. You can read every line and self-host it on Cloudflare's free tier in a few minutes; <a href="https://github.com/clark719664/claudes-dream/blob/HEAD/docs/DEPLOY.md">the deployment guide</a> walks through it. The paid plans exist for people who would rather pay a few dollars than run infrastructure: you are paying for convenience, not for access.</p>
+            </div>
+          </details>
+          <details>
+            <summary>What is slopsquatting?</summary>
+            <div class="a">
+              <p>Typosquatting, but with the typo made by a language model. Models hallucinate plausible package names; when the same wrong name shows up across many prompts, an attacker can register it on the registry with a malicious install script and wait for developers to paste the model's suggestion. The USENIX Security 2025 study linked above measured how often models hallucinate package names in the first place.</p>
+            </div>
+          </details>
+          <details>
+            <summary>How is this different from npm audit, Dependabot or Snyk?</summary>
+            <div class="a">
+              <p>Those tools look for <em>known vulnerabilities in packages that exist</em>. VaporDep asks whether the package should exist at all, and whether its name looks like a trap. The two are complementary: run VaporDep on the names, run your scanner on what you install.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Does the API store my dependency list?</summary>
+            <div class="a">
+              <p>The Worker has no database. A request is looked up against the registry, scored and returned; the only thing kept is Cloudflare's standard request logging and, for single-package checks, a five-minute HTTP cache. If that is still too much, run the CLI in local mode — it talks to the registries directly from your machine and never contacts VaporDep at all — or self-host the Worker.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Will it flag my own brand-new package?</summary>
+            <div class="a">
+              <p>A legitimate package published last week with a repository link scores 25 (<strong>caution</strong>), maybe 40 if downloads are still low. That is by design: new-and-unknown deserves a second look, not a block. The default <code>--fail-on danger</code> only fails the build on missing packages, invalid names, or existing packages that stack several warning signs. Packages that live only on a private registry will show as <code>NOT_FOUND</code>; point the check at your public manifests only, or pass a plain text file of just the names you want checked together with <code>--ecosystem</code>.</p>
+            </div>
+          </details>
+          <details>
+            <summary>What does <code>--offline</code> do?</summary>
+            <div class="a">
+              <p>No network at all. Only the naming rules and the similarity check against the bundled popular-package lists run, so <code>exists</code> is reported as <code>null</code> and near-misses come back as <strong>caution</strong>. Useful in air-gapped CI or as a very fast pre-commit hook; it will not catch a hallucinated name that happens to be far from every popular package.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Where do the "popular package" lists come from?</summary>
+            <div class="a">
+              <p>From public ranking data (PyPI's download rankings, crates.io and Packagist's popularity APIs) and curated lists for the ecosystems without a free ranking endpoint: the npm list is re-verified against the npm registry on every refresh, the RubyGems and Go lists are curated and format-checked only. A scheduled job refreshes them monthly and commits the result, so the lists in the repository are the lists the API uses.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap foot">
+      <div>VaporDep — a dependency hallucination firewall. MIT licensed. The only statistic on this page is from Spracklen et al., <a href="https://arxiv.org/abs/2406.10279">arXiv:2406.10279</a>.</div>
+      <ul>
+        <li><a href="https://github.com/clark719664/claudes-dream">Source</a></li>
+        <li><a href="https://github.com/clark719664/claudes-dream/blob/HEAD/docs/API.md">API reference</a></li>
+        <li><a href="https://github.com/clark719664/claudes-dream/blob/HEAD/docs/DEPLOY.md">Self-host</a></li>
+        <li><a href="https://github.com/clark719664/claudes-dream/blob/HEAD/action.yml">GitHub Action</a></li>
+        <li><a href="https://github.com/clark719664/claudes-dream/blob/HEAD/LICENSE">License</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Fixture Gemfile for the VaporDep CLI tests.
+source "https://rubygems.org"
+
+ruby ">= 3.1"
+
+gem "rails", "~> 7.1"
+gem 'nokogiri'
+gem "rake", ">= 13"
+# gem "commented-out"
+gem "corp-auth", git: "https://example.invalid/corp-auth.git"
+gem "local-thing", path: "../local-thing"
+gem "old-style", :github => "example/old-style"
+
+group :development, :test do
+  gem "rspec-rails"
+  gem("nokogirl", "~> 1.0")
+end

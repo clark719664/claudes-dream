@@ -1,0 +1,8 @@
+{
+  "npm": ["react", "react-dom", "lodash", "express", "axios", "vue", "chalk", "commander", "@babel/core", "vitest"],
+  "pypi": ["requests", "numpy", "flask", "django", "pyyaml", "pytest"],
+  "crates": ["serde", "serde_json", "tokio", "rand", "regex", "anyhow", "cc", "criterion"],
+  "rubygems": ["rails", "rake", "nokogiri", "rspec-rails", "bundler"],
+  "packagist": ["monolog/monolog", "symfony/console", "guzzlehttp/guzzle", "phpunit/phpunit"],
+  "go": ["github.com/gin-gonic/gin", "github.com/sirupsen/logrus", "github.com/spf13/cobra", "golang.org/x/text"]
+}

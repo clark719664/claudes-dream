@@ -1,0 +1,34 @@
+# Cloudflare Worker configuration for the VaporDep API.
+#
+#   npx wrangler dev      # run locally (http://localhost:8787)
+#   npx wrangler deploy   # publish to Cloudflare
+#
+name = "vapordep-api"
+main = "src/worker.js"
+compatibility_date = "2026-07-01"
+workers_dev = true
+
+[vars]
+# Public, non-secret configuration.
+DOCS_URL = "https://github.com/clark719664/claudes-dream#readme"
+
+# ---------------------------------------------------------------------------
+# Secrets — NEVER put these in this file. Store them in Cloudflare instead:
+#
+#   # Comma-separated list of "pro" API keys accepted in the `x-api-key` header
+#   # (paste e.g.  key_live_abc123,key_live_def456  at the prompt):
+#   npx wrangler secret put API_KEYS
+#
+#   # Shared secret that RapidAPI sends in the `x-rapidapi-proxy-secret`
+#   # header (copy it from the RapidAPI provider dashboard). While this is
+#   # unset/empty the header is ignored entirely:
+#   npx wrangler secret put RAPIDAPI_PROXY_SECRET
+#
+# For local development put the same names in a git-ignored `.dev.vars` file:
+#
+#   API_KEYS=dev-key
+#   RAPIDAPI_PROXY_SECRET=
+# ---------------------------------------------------------------------------
+
+[observability]
+enabled = true

@@ -1,0 +1,10 @@
+# Local Worker secrets (API_KEYS, RAPIDAPI_PROXY_SECRET) for `wrangler dev`.
+.dev.vars
+.dev.vars.*
+
+# wrangler's local state and cache.
+.wrangler/
+
+# The project has no dependencies; nothing under node_modules belongs here.
+node_modules/
+package-lock.json

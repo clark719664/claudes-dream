@@ -1,0 +1,34 @@
+[package]
+name = "fixture-crate"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }   # inline table with a comment
+serde_json = "1"
+tokio = "1"
+rand = "0.8"
+serde_jsn = "1.0"
+fancy = { package = "anyhow", version = "1" }
+my-local = { path = "../my-local" }
+my-fork = { git = "https://example.invalid/my-fork.git", branch = "main" }
+
+[dependencies.regex]
+version = "1"
+features = [
+  "unicode",
+]
+
+[dependencies.other-local]
+path = "../other-local"
+version = "0.1"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[build-dependencies]
+cc = "1"
+
+[features]
+default = ["std"]
+std = []

@@ -1,0 +1,50 @@
+{
+  "name": "vapordep",
+  "version": "0.1.0",
+  "description": "Dependency hallucination firewall: verifies that (AI-suggested) package names actually exist on npm, PyPI, crates.io, RubyGems, Packagist and the Go module proxy, and scores their slopsquatting/typosquatting risk.",
+  "type": "module",
+  "license": "MIT",
+  "main": "./src/check.js",
+  "bin": {
+    "vapordep": "./cli/vapordep.mjs"
+  },
+  "files": [
+    "src/",
+    "cli/",
+    "data/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "slopsquatting",
+    "typosquatting",
+    "supply-chain-security",
+    "dependency",
+    "hallucination",
+    "llm",
+    "ai-coding",
+    "npm",
+    "pypi",
+    "crates",
+    "rubygems",
+    "packagist",
+    "go-modules",
+    "cloudflare-workers",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clark719664/claudes-dream.git"
+  },
+  "homepage": "https://github.com/clark719664/claudes-dream#readme",
+  "bugs": {
+    "url": "https://github.com/clark719664/claudes-dream/issues"
+  }
+}
