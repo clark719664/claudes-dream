@@ -1,0 +1,278 @@
+/**
+ * The Treasury and every movement of lumens in Reverie.
+ *
+ * All money changes hands through transfer(); nothing else in src/ may assign
+ * a wallet, a business treasury or the Treasury balance. That single funnel is
+ * what makes the money supply auditable (auditMoneySupply) and the ledger
+ * complete. Business profit/loss is tracked here too, because every lumen a
+ * business earns or spends passes through this file.
+ */
+import { clamp, isBusinessId } from '../types.ts';
+import type { Business, CitizenId, LedgerEntry, LedgerKind, MoneyParty, World } from '../types.ts';
+import { emit, remember } from '../sim/events.ts';
+
+/** Daily stipends for public office, paid from the Treasury via withholdingPay. */
+export const OFFICE_SALARIES = { mayor: 30, councillor: 20, judge: 25 } as const;
+
+/** Money flowing into a business that is not revenue. */
+const NOT_REVENUE: readonly LedgerKind[] = ['capital', 'loan'];
+/** Money flowing out of a business that is not an operating cost. */
+const NOT_COST: readonly LedgerKind[] = ['payout', 'profit_tax', 'capital', 'seizure'];
+
+/** "12,345" — thousands separators without locale dependence. */
+export function formatNumber(n: number): string {
+  const sign = n < 0 ? '−' : '';
+  const digits = String(Math.abs(Math.round(n)));
+  return sign + digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/** "12,345 ℓ" */
+export function formatLumens(n: number): string {
+  return `${formatNumber(n)} ℓ`;
+}
+
+function businessOf(world: World, party: MoneyParty): Business | null {
+  if (!isBusinessId(party)) return null;
+  return world.businesses[party] ?? null;
+}
+
+/** Current balance of a party. 'mint' is infinite; 'burn' and unknown parties hold nothing. */
+export function balanceOf(world: World, party: MoneyParty): number {
+  if (party === 'treasury') return world.treasury.balance;
+  if (party === 'mint') return Number.POSITIVE_INFINITY;
+  if (party === 'burn') return 0;
+  const c = world.citizens[party];
+  if (c) return c.wallet;
+  const b = world.businesses[party];
+  if (b) return b.treasury;
+  return 0;
+}
+
+/** Can this party be credited? Dissolved businesses and the mint cannot receive. */
+function canReceive(world: World, party: MoneyParty): boolean {
+  if (party === 'treasury' || party === 'burn') return true;
+  if (party === 'mint') return false;
+  if (world.citizens[party]) return true;
+  const b = world.businesses[party];
+  return !!b && b.dissolvedDay === null;
+}
+
+function isKnownPayer(world: World, party: MoneyParty): boolean {
+  if (party === 'treasury' || party === 'mint') return true;
+  if (party === 'burn') return false;
+  return !!world.citizens[party] || !!world.businesses[party];
+}
+
+function debit(world: World, party: MoneyParty, amount: number): void {
+  if (party === 'treasury') { world.treasury.balance -= amount; return; }
+  if (party === 'mint') { world.treasury.minted += amount; return; }
+  const c = world.citizens[party];
+  if (c) { c.wallet -= amount; return; }
+  const b = world.businesses[party];
+  if (b) b.treasury -= amount;
+}
+
+function credit(world: World, party: MoneyParty, amount: number): void {
+  if (party === 'treasury') { world.treasury.balance += amount; return; }
+  if (party === 'burn') { world.treasury.burned += amount; return; }
+  const c = world.citizens[party];
+  if (c) { c.wallet += amount; return; }
+  const b = world.businesses[party];
+  if (b) b.treasury += amount;
+}
+
+/** Keep each business's daily revenue/cost counters in step with its cash flows. */
+function trackBusinessFlows(world: World, from: MoneyParty, to: MoneyParty, amount: number, kind: LedgerKind): void {
+  const dest = businessOf(world, to);
+  if (dest && !NOT_REVENUE.includes(kind)) dest.revenueToday += amount;
+  const src = businessOf(world, from);
+  if (src && !NOT_COST.includes(kind)) src.costsToday += amount;
+}
+
+/**
+ * Move an integer amount of lumens. Returns false (and changes nothing) when
+ * the payer cannot cover it, when either party is unknown, or on a self-transfer.
+ * 'mint' has infinite funds and 'burn' absorbs; both are recorded on the Treasury.
+ */
+export function transfer(
+  world: World, from: MoneyParty, to: MoneyParty, amount: number, kind: LedgerKind, memo: string,
+): boolean {
+  if (!Number.isFinite(amount)) return false;
+  const amt = Math.round(amount);
+  if (amt <= 0) return false;
+  if (from === to) return false;
+  if (!isKnownPayer(world, from) || !canReceive(world, to)) return false;
+  if (balanceOf(world, from) < amt) return false;
+
+  debit(world, from, amt);
+  credit(world, to, amt);
+
+  const t = world.treasury;
+  const entry: LedgerEntry = { tick: world.tick, kind, amount: amt, from, to, memo };
+  t.ledger.push(entry);
+  const max = Math.max(1, world.config.ledgerLength);
+  if (t.ledger.length > max) t.ledger.splice(0, t.ledger.length - max);
+  t.totals[kind] = (t.totals[kind] ?? 0) + amt;
+  if (to === 'treasury') t.revenueToday += amt;
+  if (from === 'treasury') t.spendToday += amt;
+  trackBusinessFlows(world, from, to, amt, kind);
+  return true;
+}
+
+/**
+ * Pay a citizen a gross amount with income tax withheld. The tax leg goes to
+ * the Treasury as 'income_tax'; when the Treasury itself is the payer only the
+ * net amount leaves it (the tax is recorded, not round-tripped). A payer short
+ * of funds pays pro rata. `opts.taxRate` overrides the government rate (tax
+ * evasion passes 0). Returns what was actually paid.
+ */
+export function withholdingPay(
+  world: World, payer: MoneyParty, payee: CitizenId, gross: number,
+  kind: 'wage' | 'salary' | 'payout', memo: string, opts?: { taxRate?: number },
+): { net: number; tax: number } {
+  const none = { net: 0, tax: 0 };
+  const c = world.citizens[payee];
+  if (!c || payer === payee || !Number.isFinite(gross)) return none;
+  const wanted = Math.round(gross);
+  if (wanted <= 0 || !isKnownPayer(world, payer)) return none;
+
+  const available = balanceOf(world, payer);
+  const actual = Math.min(wanted, Math.max(0, Math.floor(available)));
+  if (actual <= 0) return none;
+
+  const rate = clamp(opts?.taxRate ?? world.government.incomeTax, 0, 1);
+  const tax = Math.round(actual * rate);
+  const net = actual - tax;
+
+  if (payer === 'treasury') {
+    if (net > 0 && !transfer(world, 'treasury', payee, net, kind, memo)) return none;
+    if (tax > 0) world.treasury.totals.income_tax = (world.treasury.totals.income_tax ?? 0) + tax;
+  } else {
+    if (tax > 0 && !transfer(world, payer, 'treasury', tax, 'income_tax', memo)) return none;
+    if (net > 0 && !transfer(world, payer, payee, net, kind, memo)) {
+      c.stats.totalTaxPaid += tax;
+      return { net: 0, tax };
+    }
+  }
+  c.stats.totalEarned += net;
+  c.stats.totalTaxPaid += tax;
+  return { net, tax };
+}
+
+/**
+ * Ids of citizens actually living in the city: in the turn order and not
+ * exiled. Emigrants keep their standing but leave the order, so this is the
+ * test the daily money flows (dividend, rent, loans) use.
+ */
+export function residentIds(world: World): Set<CitizenId> {
+  const out = new Set<CitizenId>();
+  for (const id of world.order) {
+    const c = world.citizens[id];
+    if (c && c.standing !== 'exiled') out.add(id);
+  }
+  return out;
+}
+
+function receivesPublicMoney(world: World, id: CitizenId, residents: Set<CitizenId>): boolean {
+  const c = world.citizens[id];
+  return !!c && residents.has(id) && (c.standing === 'good' || c.standing === 'probation');
+}
+
+/**
+ * Daily citizen's dividend to everyone in good standing or on probation. When
+ * the Treasury cannot cover the full bill the dividend is paid pro rata; when
+ * it is empty the dividend is suspended and the Chronicle hears about it.
+ */
+export function payDividend(world: World): void {
+  const dividend = Math.round(world.government.dividend);
+  if (dividend <= 0) return;
+  const residents = residentIds(world);
+  const eligible = Object.values(world.citizens).filter((c) => receivesPublicMoney(world, c.id, residents));
+  if (eligible.length === 0) return;
+
+  const total = dividend * eligible.length;
+  const balance = world.treasury.balance;
+  const share = balance >= total ? dividend : Math.floor(balance / eligible.length);
+  if (share <= 0) {
+    emit(world, 'treasury', "The Treasury is empty: the citizen's dividend is suspended today.", [], 0.7);
+    return;
+  }
+  let count = 0;
+  for (const c of eligible) {
+    if (!transfer(world, 'treasury', c.id, share, 'dividend', "citizen's dividend")) continue;
+    count++;
+    remember(world, c.id, 'money', `You received the citizen's dividend of ${share} ℓ.`);
+  }
+  if (share < dividend) {
+    emit(world, 'treasury', `Treasury shortfall: the dividend was paid pro rata at ${share} ℓ instead of ${dividend} ℓ.`, [], 0.6);
+  } else {
+    emit(world, 'paid', `Dividend of ${dividend} ℓ paid to ${count} citizens (${formatLumens(share * count)}).`, [], 0.1);
+  }
+}
+
+/** Daily stipends for the mayor, councillors and judges (mayor's stipend supersedes a council seat). */
+export function paySalaries(world: World): void {
+  const g = world.government;
+  const stipends = new Map<CitizenId, { office: string; amount: number }>();
+  for (const id of g.judges) stipends.set(id, { office: 'judge', amount: OFFICE_SALARIES.judge });
+  for (const id of g.council) stipends.set(id, { office: 'councillor', amount: OFFICE_SALARIES.councillor });
+  if (g.mayorId) stipends.set(g.mayorId, { office: 'mayor', amount: OFFICE_SALARIES.mayor });
+
+  const residents = residentIds(world);
+  let paid = 0;
+  let count = 0;
+  for (const [id, s] of stipends) {
+    if (!receivesPublicMoney(world, id, residents)) continue;
+    const { net, tax } = withholdingPay(world, 'treasury', id, s.amount, 'salary', `${s.office}'s stipend`);
+    if (net <= 0) continue;
+    paid += net;
+    count++;
+    const c = world.citizens[id];
+    c.needs.purpose = clamp(c.needs.purpose + 3, 0, 100);
+    remember(world, id, 'money', `You received your ${s.office}'s stipend: ${net} ℓ (${tax} ℓ withheld in tax).`);
+  }
+  if (count > 0) emit(world, 'paid', `Public stipends paid to ${count} office holders (${formatLumens(paid)} net).`, [], 0.1);
+}
+
+/** Treasury + every wallet + every business treasury. */
+export function moneySupply(world: World): number {
+  let sum = world.treasury.balance;
+  for (const c of Object.values(world.citizens)) sum += c.wallet;
+  for (const b of Object.values(world.businesses)) sum += b.treasury;
+  return sum;
+}
+
+/** Lumens are conserved: supply must equal founding + minted − burned. */
+export function auditMoneySupply(world: World): { supply: number; expected: number; ok: boolean } {
+  const supply = moneySupply(world);
+  const t = world.treasury;
+  const expected = t.foundingSupply + t.minted - t.burned;
+  const ok = supply === expected;
+  if (!ok) {
+    emit(world, 'system', `Money supply audit failed: ${formatLumens(supply)} in circulation but ${formatLumens(expected)} expected.`,
+      [], 0.9, { supply, expected });
+  }
+  return { supply, expected, ok };
+}
+
+/**
+ * End-of-day balance sheet. Returns the one-line report for the Chronicle,
+ * resets the daily counters, and raises the alarm when the balance could not
+ * cover another day like today.
+ */
+export function dailyTreasuryRollover(world: World): string {
+  const t = world.treasury;
+  const revenue = t.revenueToday;
+  const spend = t.spendToday;
+  const report = `Treasury: ${formatLumens(t.balance)} (+${formatNumber(revenue)} revenue, −${formatNumber(spend)} spend)`;
+  const crisis = t.balance < spend;
+  if (crisis) {
+    emit(world, 'treasury', `Treasury crisis: only ${formatLumens(t.balance)} left after spending ${formatLumens(spend)} in a day.`,
+      [], 0.9, { balance: t.balance, revenue, spend });
+  } else {
+    emit(world, 'treasury', report, [], 0.2, { balance: t.balance, revenue, spend });
+  }
+  t.revenueToday = 0;
+  t.spendToday = 0;
+  return report;
+}

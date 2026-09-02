@@ -1,0 +1,376 @@
+/**
+ * Jobs and shifts. The city runs the founding jobs (wages from the Treasury,
+ * output to the Bazaar); businesses post their own (wages from the business
+ * treasury, output to the business inventory). A shift is one working tick.
+ */
+import { SKILLS, clamp } from '../types.ts';
+import type {
+  ActionResult, Business, BusinessId, Citizen, CitizenId, Job, JobId, JobOutput, JobRole, MoneyParty, Skill, World,
+} from '../types.ts';
+import { CITY_JOBS, COURIER_CONTRACT } from '../data/jobs.ts';
+import { DISTRICTS, districtOfBuilding } from '../data/city.ts';
+import type { JobTemplate } from '../data/jobs.ts';
+import { nextId } from '../util/ids.ts';
+import { emit, remember } from '../sim/events.ts';
+import { transfer, withholdingPay } from './treasury.ts';
+import { buyFromMarket, deliverToMarket, takeFromMarket, wholeUnits } from './market.ts';
+import { addHousingProgress } from './housing.ts';
+
+export const CITY_EMPLOYER_NAME = 'City of Reverie';
+/** Skill gained per shift in the job's skill (×1.5 while holding knowledge). */
+const SKILL_PER_SHIFT = 0.5;
+/** Boosted shifts per volume of knowledge consumed. */
+const SHIFTS_PER_KNOWLEDGE = 10;
+/** Steady work slowly builds a reputation: +1 every this many shifts. */
+const SHIFTS_PER_REPUTATION = 20;
+
+export interface JobSpec {
+  title: string;
+  wage: number;
+  skill: Skill | null;
+  minSkill: number;
+  role?: JobRole;
+  output?: JobOutput;
+}
+
+function fail(message: string): ActionResult { return { ok: false, message }; }
+function ok(message: string): ActionResult { return { ok: true, message }; }
+
+function isDetained(world: World, c: Citizen): boolean {
+  return c.detainedUntilTick !== null && c.detainedUntilTick > world.tick;
+}
+
+function jobFromTemplate(world: World, t: JobTemplate, employer: BusinessId | 'city', wage: number): Job {
+  const id = nextId(world, 'j');
+  const job: Job = {
+    id, role: t.role, title: t.title, employer, buildingId: t.buildingId, district: districtOfBuilding(t.buildingId),
+    skill: t.skill, minSkill: t.minSkill, minReputation: t.minReputation, wage: Math.round(wage),
+    output: { ...t.output }, holderId: null, createdDay: world.day,
+  };
+  world.jobs[id] = job;
+  return job;
+}
+
+/** Open one more city position for a role (used at founding and when the Watch grows). Null if the role has no template. */
+export function createCityJob(world: World, role: JobRole): Job | null {
+  const t = CITY_JOBS.find((x) => x.role === role);
+  return t ? jobFromTemplate(world, t, 'city', t.wage) : null;
+}
+
+/** Founding jobs from CITY_JOBS × slots. Idempotent: only missing slots are created. */
+export function createCityJobs(world: World): void {
+  for (const t of CITY_JOBS) {
+    const existing = Object.values(world.jobs).filter((j) => j.employer === 'city' && j.role === t.role).length;
+    for (let i = existing; i < t.slots; i++) jobFromTemplate(world, t, 'city', t.wage);
+  }
+}
+
+export function openJobs(world: World): Job[] {
+  return Object.values(world.jobs).filter((j) => j.holderId === null);
+}
+
+export function employerBusiness(world: World, job: Job): Business | null {
+  return job.employer === 'city' ? null : world.businesses[job.employer] ?? null;
+}
+
+export function employerName(world: World, job: Job): string {
+  if (job.employer === 'city') return CITY_EMPLOYER_NAME;
+  return world.businesses[job.employer]?.name ?? 'a closed business';
+}
+
+export function isQualified(world: World, c: Citizen, job: Job): boolean {
+  if (c.standing !== 'good' && c.standing !== 'probation') return false;
+  if (job.employer !== 'city') {
+    const biz = world.businesses[job.employer];
+    if (!biz || biz.dissolvedDay !== null) return false;
+  }
+  if (c.reputation < job.minReputation) return false;
+  if (job.skill && c.skills[job.skill] < job.minSkill) return false;
+  return true;
+}
+
+function qualificationGap(c: Citizen, job: Job): string {
+  if (c.standing !== 'good' && c.standing !== 'probation') return `You cannot work while ${c.standing}.`;
+  if (c.reputation < job.minReputation) return `That job needs reputation ${job.minReputation}; yours is ${Math.round(c.reputation)}.`;
+  if (job.skill && c.skills[job.skill] < job.minSkill) {
+    return `That job needs ${job.skill} ${job.minSkill}; yours is ${Math.round(c.skills[job.skill])}.`;
+  }
+  return 'You are not qualified for that job.';
+}
+
+/** Detach a citizen from their job without events (the caller narrates). */
+function releaseJob(world: World, c: Citizen): Job | null {
+  const job = c.jobId ? world.jobs[c.jobId] ?? null : null;
+  c.jobId = null;
+  if (!job) return null;
+  if (job.holderId === c.id) job.holderId = null;
+  const biz = employerBusiness(world, job);
+  if (biz) biz.employees = biz.employees.filter((id) => id !== c.id);
+  if (job.role === 'watch_officer') {
+    const g = world.government;
+    g.watch = g.watch.filter((id) => id !== c.id);
+    if (g.watchCaptainId === c.id) g.watchCaptainId = null;
+    if (c.office === 'watch') c.office = null;
+  }
+  return job;
+}
+
+/** Put a citizen into an open job (no checks; callers validate). */
+export function assignJob(world: World, c: Citizen, job: Job): void {
+  if (c.jobId && c.jobId !== job.id) {
+    const old = releaseJob(world, c);
+    if (old) remember(world, c.id, 'work', `You left your job as ${old.title} at ${employerName(world, old)}.`);
+  }
+  job.holderId = c.id;
+  c.jobId = job.id;
+  const biz = employerBusiness(world, job);
+  if (biz && !biz.employees.includes(c.id)) biz.employees.push(c.id);
+  if (job.role === 'watch_officer') {
+    c.office = 'watch';
+    if (!world.government.watch.includes(c.id)) world.government.watch.push(c.id);
+  }
+}
+
+export function applyForJob(world: World, cId: CitizenId, jobId: JobId): ActionResult {
+  const c = world.citizens[cId];
+  if (!c) return fail('Unknown citizen.');
+  const job = world.jobs[jobId];
+  if (!job) return fail('That job no longer exists.');
+  if (job.holderId === cId) return fail(`You already work as ${job.title}.`);
+  if (job.holderId) return fail('That position has already been filled.');
+  if (isDetained(world, c)) return fail('You cannot take a job while detained.');
+  if (!isQualified(world, c, job)) return fail(qualificationGap(c, job));
+  if (job.role === 'watch_officer' && c.office && c.office !== 'watch') return fail(`You cannot join the Watch while serving as ${c.office}.`);
+  const biz = employerBusiness(world, job);
+  if (job.employer !== 'city' && (!biz || biz.dissolvedDay !== null)) return fail('That employer has closed its doors.');
+
+  assignJob(world, c, job);
+  const employer = employerName(world, job);
+  emit(world, 'hired', `${c.name} was hired as ${job.title} at ${employer}.`, [cId], 0.2, { jobId });
+  remember(world, cId, 'work', `You were hired as ${job.title} at ${employer} (${job.wage} ℓ per shift).`);
+  return ok(`You were hired as ${job.title} at ${employer}.`);
+}
+
+export function quitJob(world: World, cId: CitizenId): ActionResult {
+  const c = world.citizens[cId];
+  if (!c) return fail('Unknown citizen.');
+  const job = releaseJob(world, c);
+  if (!job) return fail('You do not have a job to quit.');
+  const employer = employerName(world, job);
+  emit(world, 'quit', `${c.name} quit as ${job.title} at ${employer}.`, [cId], 0.2, { jobId: job.id });
+  remember(world, cId, 'work', `You quit your job as ${job.title} at ${employer}.`);
+  return ok(`You quit your job as ${job.title}.`);
+}
+
+export function fireFromJob(world: World, cId: CitizenId, reason: string): void {
+  const c = world.citizens[cId];
+  if (!c) return;
+  const job = releaseJob(world, c);
+  if (!job) return;
+  const employer = employerName(world, job);
+  emit(world, 'fired', `${c.name} lost their job as ${job.title} at ${employer}: ${reason}.`, [cId], 0.3, { jobId: job.id, reason });
+  remember(world, cId, 'work', `You were dismissed as ${job.title} at ${employer}: ${reason}.`);
+}
+
+function meanSkill(c: Citizen): number {
+  let sum = 0;
+  for (const s of SKILLS) sum += c.skills[s];
+  return sum / SKILLS.length;
+}
+
+function hasCriticalNeed(c: Citizen): boolean {
+  return Object.values(c.needs).some((v) => v < 20);
+}
+
+/**
+ * Draw the shift's energy input: city jobs take it from the Bazaar, business
+ * jobs use their own stock then buy the rest. Returns the output multiplier
+ * (1 when fully supplied, 0.5 when none was available).
+ */
+function supplyEnergy(world: World, job: Job, biz: Business | null): number {
+  const cost = Math.round(job.output.energyCost ?? 0);
+  if (cost <= 0) return 1;
+  let got = 0;
+  if (biz) {
+    const fromStock = Math.min(cost, Math.max(0, biz.inventory.energy));
+    biz.inventory.energy -= fromStock;
+    got += fromStock;
+    let need = cost - got;
+    if (need > 0) {
+      let bought = buyFromMarket(world, biz.id, 'energy', need).ok ? need : 0;
+      if (bought === 0) {
+        const available = Math.min(need, world.market.goods.energy.stock);
+        for (let q = available; q >= 1 && bought === 0; q--) {
+          if (buyFromMarket(world, biz.id, 'energy', q).ok) bought = q;
+        }
+      }
+      biz.inventory.energy -= bought;
+      got += bought;
+      need -= bought;
+    }
+  } else {
+    got = takeFromMarket(world, 'energy', cost);
+  }
+  return got >= cost ? 1 : 0.5 + 0.5 * (got / cost);
+}
+
+/** Skill growth for a shift; knowledge speeds it up and is slowly consumed. */
+function growSkill(world: World, c: Citizen, job: Job): void {
+  if (!job.skill) return;
+  let gain = SKILL_PER_SHIFT;
+  if (c.inventory.knowledge > 0) {
+    gain *= 1.5;
+    const key = `kshift:${c.id}`;
+    const n = (world.counters[key] ?? 0) + 1;
+    if (n >= SHIFTS_PER_KNOWLEDGE) {
+      c.inventory.knowledge -= 1;
+      world.counters[key] = 0;
+    } else {
+      world.counters[key] = n;
+    }
+  }
+  c.skills[job.skill] = clamp(c.skills[job.skill] + gain, 0, 100);
+}
+
+function applyRoleSpecials(world: World, c: Citizen, job: Job, biz: Business | null): void {
+  switch (job.role) {
+    case 'courier':
+      if (biz) transfer(world, 'treasury', biz.id, COURIER_CONTRACT, 'fee', `courier contract: ${c.name}`);
+      break;
+    case 'watch_officer':
+      world.counters.patrolTicks = (world.counters.patrolTicks ?? 0) + 1;
+      break;
+    case 'journalist':
+      world.counters.scrutiny = (world.counters.scrutiny ?? 0) + 1;
+      break;
+    case 'merchant':
+      world.counters.merchantOnShiftTick = world.tick;
+      break;
+    default:
+      break;
+  }
+}
+
+/** Work one shift at the citizen's job. See docs/MODULES.md for the full rule list. */
+export function workShift(world: World, cId: CitizenId): ActionResult {
+  const c = world.citizens[cId];
+  if (!c) return fail('Unknown citizen.');
+  if (!c.jobId) return fail('You do not have a job; apply for one on the job board.');
+  const job = world.jobs[c.jobId];
+  if (!job || job.holderId !== cId) { c.jobId = null; return fail('Your job no longer exists.'); }
+  if (c.standing !== 'good' && c.standing !== 'probation') return fail(`You cannot work while ${c.standing}.`);
+  if (isDetained(world, c)) return fail('You cannot work while detained.');
+  const employer = employerName(world, job);
+  if (c.district !== job.district) return fail(`You must be in ${DISTRICTS[job.district].name} to work at ${employer}.`);
+  const [start, end] = world.config.workHours;
+  if (world.hour < start || world.hour >= end) return fail(`${employer} is closed at this hour (open ${start}:00–${end}:00).`);
+  if (c.shiftsToday >= world.config.maxShiftsPerDay) return fail(`You have already worked ${c.shiftsToday} shifts today.`);
+  const building = world.buildings[job.buildingId];
+  const damage = building ? clamp(building.damage, 0, 1) : 0;
+  if (damage >= 1) return fail(`${building?.name ?? 'Your workplace'} is in ruins; nothing can be done there until it is repaired.`);
+
+  const wage = Math.round(Math.max(world.government.minWage, job.wage));
+  const biz = employerBusiness(world, job);
+  if (job.employer !== 'city') {
+    if (!biz || biz.dissolvedDay !== null) { releaseJob(world, c); return fail('Your employer has closed its doors.'); }
+    if (biz.treasury < wage) return fail(`${biz.name} cannot pay your wage of ${wage} ℓ: the employer's treasury is empty.`);
+  }
+
+  const skillValue = job.skill ? c.skills[job.skill] : meanSkill(c);
+  const productivity = (0.5 + skillValue / 200) * (1 - damage) * (hasCriticalNeed(c) ? 0.5 : 1);
+  const effective = productivity * supplyEnergy(world, job, biz);
+
+  const out = job.output;
+  let produced = 0;
+  if (out.good && out.qty) {
+    const qty = out.qty * effective;
+    if (biz) {
+      produced = wholeUnits(world, `carry:${biz.id}:${out.good}`, qty);
+      biz.inventory[out.good] += produced;
+    } else {
+      const before = world.market.goods[out.good].stock;
+      deliverToMarket(world, out.good, qty);
+      produced = world.market.goods[out.good].stock - before;
+    }
+  }
+  if (out.housingProgress) addHousingProgress(world, out.housingProgress * effective);
+
+  const evadeKey = `evade:${cId}`;
+  const evading = (world.counters[evadeKey] ?? 0) > 0;
+  if (evading) world.counters[evadeKey] -= 1;
+  const payer: MoneyParty = biz ? biz.id : 'treasury';
+  const { net, tax } = withholdingPay(world, payer, cId, wage, 'wage', `shift as ${job.title}`, evading ? { taxRate: 0 } : undefined);
+
+  applyRoleSpecials(world, c, job, biz);
+  growSkill(world, c, job);
+  c.needs.purpose = clamp(c.needs.purpose + 8, 0, 100);
+  c.needs.rest = clamp(c.needs.rest - 4, 0, 100);
+  c.shiftsToday += 1;
+  c.stats.shiftsWorked += 1;
+  if (c.stats.shiftsWorked % SHIFTS_PER_REPUTATION === 0) c.reputation = clamp(c.reputation + 1, 0, 100);
+
+  const taxNote = tax > 0 ? ` (${tax} ℓ withheld in tax)` : evading ? ' (no tax declared)' : '';
+  const outputNote = out.good && produced > 0 ? `, producing ${produced} ${out.good}` : '';
+  remember(world, cId, 'work', `You were paid ${net} ℓ${taxNote} for a shift as ${job.title} at ${employer}${outputNote}.`);
+  return ok(`You worked a shift as ${job.title} at ${employer} and earned ${net} ℓ${taxNote}${outputNote}.`);
+}
+
+/** Business owners post vacancies. The business must exist (programmer error otherwise). */
+export function postJob(world: World, businessId: BusinessId, spec: JobSpec): Job {
+  const biz = world.businesses[businessId];
+  if (!biz) throw new Error(`postJob: unknown business ${businessId}`);
+  const id = nextId(world, 'j');
+  const job: Job = {
+    id, role: spec.role ?? 'clerk', title: spec.title.trim() || 'Assistant', employer: businessId,
+    buildingId: biz.buildingId, district: biz.district, skill: spec.skill,
+    minSkill: clamp(Math.round(spec.minSkill), 0, 100), minReputation: 0,
+    wage: Math.round(Math.max(spec.wage, world.government.minWage)),
+    output: { ...(spec.output ?? {}) }, holderId: null, createdDay: world.day,
+  };
+  world.jobs[id] = job;
+  biz.jobs.push(id);
+  return job;
+}
+
+/** Owner-facing wrapper around postJob with the checks an action needs. */
+export function postJobAsOwner(world: World, ownerId: CitizenId, spec: JobSpec): ActionResult {
+  const c = world.citizens[ownerId];
+  if (!c) return fail('Unknown citizen.');
+  const biz = c.businessId ? world.businesses[c.businessId] : null;
+  if (!biz || biz.dissolvedDay !== null || biz.ownerId !== ownerId) return fail('You do not own a business.');
+  if (!Number.isFinite(spec.wage) || spec.wage < world.government.minWage) return fail(`Wages must be at least the minimum wage of ${world.government.minWage} ℓ.`);
+  if (biz.jobs.filter((id) => world.jobs[id]?.holderId === null).length >= 6) return fail('Your business already has six open positions.');
+  const job = postJob(world, biz.id, spec);
+  emit(world, 'hired', `${biz.name} is hiring: ${job.title} at ${job.wage} ℓ per shift.`, [ownerId], 0.1, { jobId: job.id });
+  return ok(`Posted ${job.title} at ${job.wage} ℓ per shift.`);
+}
+
+/** Change a business job's wage (owner only when `byId` is given); never below the minimum wage. */
+export function setWage(world: World, jobId: JobId, wage: number, byId?: CitizenId): ActionResult {
+  const job = world.jobs[jobId];
+  if (!job) return fail('That job no longer exists.');
+  if (job.employer === 'city') return fail('City wages are set by the Council, not by citizens.');
+  const biz = world.businesses[job.employer];
+  if (!biz || biz.dissolvedDay !== null) return fail('That employer has closed its doors.');
+  if (byId !== undefined && biz.ownerId !== byId) return fail('Only the owner can set wages at this business.');
+  const w = Number.isFinite(wage) ? Math.round(wage) : 0;
+  if (w < world.government.minWage) return fail(`Wages must be at least the minimum wage of ${world.government.minWage} ℓ.`);
+  job.wage = w;
+  if (job.holderId) remember(world, job.holderId, 'work', `Your wage as ${job.title} at ${biz.name} is now ${w} ℓ per shift.`);
+  return ok(`${job.title} now pays ${w} ℓ per shift.`);
+}
+
+/** Remove a job entirely, dismissing its holder. */
+export function closeJob(world: World, jobId: JobId): void {
+  const job = world.jobs[jobId];
+  if (!job) return;
+  if (job.holderId) fireFromJob(world, job.holderId, 'the position was closed');
+  const biz = employerBusiness(world, job);
+  if (biz) biz.jobs = biz.jobs.filter((id) => id !== jobId);
+  delete world.jobs[jobId];
+}
+
+/** Daily: everyone starts with a fresh shift count. */
+export function dailyJobs(world: World): void {
+  for (const c of Object.values(world.citizens)) c.shiftsToday = 0;
+}
