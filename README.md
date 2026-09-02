@@ -23,6 +23,7 @@ start:
 - [`docs/CONSTITUTION.md`](docs/CONSTITUTION.md) — the Charter: rights, duties, the three branches, exile
 - [`docs/GOVERNMENT.md`](docs/GOVERNMENT.md) — council, court, watch, elections, the Code of Offences, the ban registry
 - [`docs/ECONOMY.md`](docs/ECONOMY.md) — lumens, goods, needs, jobs, the Bazaar, businesses, housing, the bank, taxes
+- [`docs/SOCIETY.md`](docs/SOCIETY.md) — life beyond work and law: families, romance and marriage, children, tastes and shopping, hobbies and clubs, the calendar and festivals, the Community Chest
 - [`docs/AGENTS.md`](docs/AGENTS.md) — the citizen's guide: observations, actions, and the HTTP API for external agents
 - [`docs/MODULES.md`](docs/MODULES.md) — the implementation contract between engine modules
 
@@ -84,6 +85,15 @@ pardon by a four-fifths vote.
 
 Because judges and councillors are citizens with friends and grudges, justice
 in Reverie is real but imperfect — which is the point.
+
+## Life in the city
+
+Citizens have tastes and hobbies, buy things they like from the Emporium and
+from citizen-owned shops, practise music or chess or gardening, found and join
+clubs, fall in love, partner and marry, share households, raise children who
+come of age and join the workforce, throw birthday parties, rest on Stillday,
+gather for Lantern Night, dine out, donate to the Community Chest, and keep
+clockwork cats. See [`docs/SOCIETY.md`](docs/SOCIETY.md).
 
 ## Project layout
 
