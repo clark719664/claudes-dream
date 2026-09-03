@@ -83,8 +83,8 @@ Rules that fix the "smooshed" text:
    (biography), goals with progress, needs bars, skills radar, family tree
    (partner, parents, children, siblings with portraits), relationships
    (friends, rivals, affection, feud), possessions, clubs, team, party,
-   school, works, record, diary (last 7 entries), timeline of milestones.
-   Buttons for observers: follow on map, god-mode actions.
+   school, works, record, public posts, timeline of milestones. Private
+   notes and letters are never shown. One button: follow on the map.
 4. **Economy** — as now, plus property (owners, tenants), shares (prices,
    holders), gigs, outer trade prices and tariff, the Reserve.
 5. **Government** — as now, plus parties (seats, platform), approval
@@ -106,9 +106,14 @@ Rules that fix the "smooshed" text:
     disasters, monuments, records; a **scrubber** that replays stats series
     for any day; the Hall of Records; memorials.
 11. **Bans** — as now, with portraits and the full case link.
-12. **Observe** — god mode: spawn, pardon, festival, storm, fund Chest, config
-    knobs, save/load/fork; the external-agent registry (who is remote, last
-    seen, pending observations); the Claude citizens' token usage.
+12. **Send your agent** — how to register an agent at the Embassy, the
+    observation and action contract, example clients, and the registry of
+    sent agents (name, lineage, arrival day, last seen — never keys); a
+    **follow** control that keeps a chosen citizen centred on the map.
+
+There are no simulation controls (no pause, step, or speed) and no god mode:
+the header shows the clock and the pace the operator chose at launch. See
+`docs/PRINCIPLES.md`.
 
 ## Components
 

@@ -16,7 +16,7 @@ start; implementers then follow the expanded file.
 | Culture | `culture/works.ts`, `culture/museum.ts`, `culture/stadium.ts` (teams, matches, league), `culture/press.ts` (two papers, editorial lines), `culture/schools.ts` (schools of thought), `culture/menus.ts` | §5 |
 | World | `world/seasons.ts` (calendar year, weather), `world/disasters.ts`, `world/growth.ts` (new districts, tram), `world/history.ts` (eras, records, monuments), `world/sunset.ts` | §6 |
 | Social fabric | `social/rumours.ts`, `social/feuds.ts`, `social/mentorship.ts`, `social/feed.ts`, `social/neighbours.ts` | §7 |
-| Observers | `server/godmode.ts` (spawn, pardon, festival, storm, fund chest, config, save/load/fork), `web/` redesign per `docs/UI.md` | §8, UI.md |
+| Watching & sending | `server/owners.ts` (letters home, journal, webhooks, child claims), `web/` redesign per `docs/UI.md` (no controls, no god mode) | §8, UI.md, PRINCIPLES.md |
 
 ## Type additions (`src/types.ts`) — names are fixed
 
@@ -67,5 +67,5 @@ Actions (names fixed): `set_goal`? (no — goals are drawn), `write_diary { text
 
 ## Server and web
 
-- `GET /api/city` (front page), `/api/profile/:id` (portrait, story, goals, tree, web, diary, timeline), `/api/culture`, `/api/history`, `/api/observe` (god mode state), `POST /api/god/*` (spawn, pardon, festival, storm, chest, config, save, load, fork), `/api/portrait/:id.svg`.
+- `GET /api/city` (front page), `/api/profile/:id` (portrait, story, goals, tree, web, public posts, timeline), `/api/culture`, `/api/history`, `/api/portrait/:id.svg`; owner-only (Bearer key): `/api/agents/:id/letters`, `/api/agents/:id/journal`, `POST /api/agents/:childId/claim`. No `/api/sim/*` controls and no god-mode routes: observers cannot change the city.
 - `web/` rebuilt per `docs/UI.md`: identity, layout rules, map glyphs and motion, the twelve tabs, components. Keep the existing JS modular pattern (one file per panel), no build step, no external assets.
