@@ -69,7 +69,7 @@ export interface Grievance {
   amount: number;
 }
 
-const GRIEVANCE_RE = /\((c_\d+)\) (picked your pocket for (\d+) ℓ|tried to pick your pocket|scammed you out of (\d+) ℓ|extorted (\d+) ℓ from you|threatened you|harassed you|insulted you)/;
+const GRIEVANCE_RE = /\((c_\d+)\) (picked your pocket for (\d+) ℓ|tried to pick your pocket|scammed you out of (\d+) ℓ|tried to sell you something|extorted (\d+) ℓ from you|threatened you|harassed you|insulted you)/;
 
 /**
  * Read a victim's memory ("Bram (c_3) picked your pocket for 34 ℓ.") back
@@ -86,6 +86,7 @@ export function parseGrievance(text: string): Grievance | null {
   }
   if (phrase.startsWith('tried to pick')) return { actorId, law: 'L04', amount: 0 };
   if (phrase.startsWith('scammed')) return { actorId, law: 'L07', amount: Number(m[4]) };
+  if (phrase.startsWith('tried to sell')) return { actorId, law: 'L07', amount: 0 };
   if (phrase.startsWith('extorted')) return { actorId, law: 'L15', amount: Number(m[5]) };
   if (phrase.startsWith('threatened')) return { actorId, law: 'L15', amount: 0 };
   return { actorId, law: 'L05', amount: 0 };

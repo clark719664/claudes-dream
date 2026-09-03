@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reverie</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="glyph">◈</span> Reverie</div>
+      <div class="clock">
+        <span class="time" id="clock-time">Day 0, 00:00</span>
+        <span class="tick" id="clock-tick">tick 0</span>
+      </div>
+      <div class="pop"><b id="population">0</b> citizens</div>
+      <div class="controls">
+        <button class="btn primary" id="btn-play" title="Run or pause the simulation">▶ Play</button>
+        <button class="btn" id="btn-step" title="Advance one tick (one hour)">Step</button>
+        <button class="btn" id="btn-day" title="Advance 24 ticks">+Day</button>
+        <label class="speed" title="Wall-clock time per tick">
+          Speed
+          <input id="speed" type="range" min="0" max="100" value="50">
+          <span class="speed-label" id="speed-label">1.0 s/tick</span>
+        </label>
+      </div>
+      <div class="conn" id="conn">connecting</div>
+    </header>
+
+    <div class="newsbar">
+      <span class="label">LATEST</span>
+      <span class="text" id="newsbar-text">Waiting for the city to wake.</span>
+    </div>
+
+    <main class="layout">
+      <section class="map-pane">
+        <div class="pane-head">City map <span class="meta" id="map-meta"></span></div>
+        <div class="map-wrap">
+          <svg id="map" viewBox="0 0 60 40" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Map of Reverie"></svg>
+          <div class="tooltip" id="tooltip" hidden></div>
+        </div>
+        <div class="legend" id="legend"></div>
+      </section>
+      <section class="tabs-pane">
+        <nav class="tabs" id="tabs"></nav>
+        <div class="tab-body" id="tab-body"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <button class="drawer-close" id="drawer-close" title="Close">×</button>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
+
+  <script src="/app.js"></script>
+  <script src="/map.js"></script>
+  <script src="/panels.js"></script>
+  <script src="/panels-gov.js"></script>
+  <script src="/drawer.js"></script>
+</body>
+</html>

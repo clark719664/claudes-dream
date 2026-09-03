@@ -14,10 +14,38 @@ import { balanceOf, transfer } from './treasury.ts';
 
 /** Proportional price step per tick when demand and supply diverge. */
 export const PRICE_STEP = 0.05;
-/** Fraction of the gap to the founding price closed per quiet tick. */
+/**
+ * Fraction of the gap to the founding price closed every tick. The founding
+ * price is the anchor; flows push a price away from it and this pulls it back,
+ * so a moderate imbalance settles in a band instead of walking to a bound.
+ */
 export const MEAN_REVERSION = 0.01;
 /** Prices never exceed this multiple of the founding price. */
 export const PRICE_CAP_MULTIPLIER = 20;
+/**
+ * Ticks over which the demand and supply rates that drive prices are
+ * averaged: one city day. Production happens only in working hours while
+ * consumption runs around the clock, so comparing a single tick's flows would
+ * read every night-time purchase as a shortage (demand 1, supply 0) and walk a
+ * perfectly balanced market up to the price cap within days.
+ */
+export const FLOW_WINDOW_TICKS = 24;
+/**
+ * Days of demand the Bazaar likes to hold. A shelf with this much cover feels
+ * no upward pressure however brisk the trade; an empty one feels no downward
+ * pressure. Without this the price would react to flows alone and walk to the
+ * cap while hundreds of units sat unsold.
+ */
+export const COMFORT_COVER_DAYS = 3;
+/**
+ * Least upward pressure (as a share of a full step) while the shelf is bare
+ * and buyers are going without. Against the 1% pull toward the founding price
+ * it settles a lasting famine at about twice that price: a real scarcity
+ * signal that can never walk to the cap on its own.
+ */
+export const SHORTAGE_PRESSURE = 0.1;
+/** Supply rate (units per tick) below which the ratio treats supply as "about one unit a day". */
+const MIN_SUPPLY_RATE = 1 / FLOW_WINDOW_TICKS;
 /** A single trade worth at least this much is newsworthy enough for the log. */
 const NOTABLE_TRADE = 100;
 
@@ -51,6 +79,59 @@ export function marketPrice(world: World, good: Good): number {
   return world.market.goods[good].price;
 }
 
+/** Units buyers asked for this tick that the shelf could not provide (cleared by tickMarket). */
+export function unmetDemand(world: World, good: Good): number {
+  return world.counters[`unmet:${good}`] ?? 0;
+}
+
+function noteUnmetDemand(world: World, good: Good, qty: number): void {
+  if (qty > 0) world.counters[`unmet:${good}`] = unmetDemand(world, good) + qty;
+}
+
+function rateKey(kind: 'demand' | 'supply', good: Good): string {
+  return `flow:${kind}:${good}`;
+}
+
+/** Smoothed demand and supply in units per tick (exponential average over FLOW_WINDOW_TICKS). */
+export function flowRates(world: World, good: Good): { demand: number; supply: number } {
+  return {
+    demand: world.counters[rateKey('demand', good)] ?? 0,
+    supply: world.counters[rateKey('supply', good)] ?? 0,
+  };
+}
+
+function round6(v: number): number {
+  return Math.round(v * 1e6) / 1e6;
+}
+
+/** Days the current stock would last at the smoothed demand rate (units when nobody is buying). */
+export function daysOfCover(world: World, good: Good): number {
+  const stock = Math.max(0, world.market.goods[good].stock);
+  return stock / Math.max(1, flowRates(world, good).demand * 24);
+}
+
+/**
+ * How much of a flow-driven step applies given the shelf: rises are damped by
+ * cover (none at COMFORT_COVER_DAYS or more), falls by scarcity (none when empty).
+ */
+function coverGate(cover: number, rising: boolean): number {
+  const share = clamp(cover / COMFORT_COVER_DAYS, 0, 1);
+  return rising ? 1 - share : share;
+}
+
+/** Fold this tick's flows into the smoothed rates and return them. */
+function updateFlowRates(world: World, good: Good, demandTick: number, supplyTick: number): { demand: number; supply: number } {
+  const alpha = 1 / FLOW_WINDOW_TICKS;
+  const prev = flowRates(world, good);
+  const next = {
+    demand: round6(prev.demand * (1 - alpha) + demandTick * alpha),
+    supply: round6(prev.supply * (1 - alpha) + supplyTick * alpha),
+  };
+  world.counters[rateKey('demand', good)] = next.demand;
+  world.counters[rateKey('supply', good)] = next.supply;
+  return next;
+}
+
 /**
  * Buy from the Bazaar: price + sales tax, both to the Treasury. Only completed
  * purchases count as demand: a failed attempt against an empty shelf must not
@@ -66,7 +147,7 @@ export function buyFromMarket(world: World, buyer: CitizenId | BusinessId, good:
   if (!holder) return fail('Unknown or inactive buyer.');
 
   if (mg.stock < q) {
-    world.counters[`unmet:${good}`] = (world.counters[`unmet:${good}`] ?? 0) + q;
+    noteUnmetDemand(world, good, q);
     return fail(mg.stock <= 0
       ? `The Bazaar has no ${good} in stock.`
       : `The Bazaar only has ${mg.stock} ${good} in stock.`);
@@ -137,7 +218,7 @@ export function takeFromMarket(world: World, good: Good, qty: number): number {
   const mg = world.market.goods[good];
   if (!mg || q === 0) return 0;
   const taken = Math.min(q, mg.stock);
-  if (taken < q) world.counters[`unmet:${good}`] = (world.counters[`unmet:${good}`] ?? 0) + (q - taken);
+  noteUnmetDemand(world, good, q - taken);
   mg.stock -= taken;
   mg.demandTick += taken;
   mg.demandDay += taken;
@@ -158,9 +239,18 @@ function setEffectivePrice(world: World, good: Good, value: number): void {
 }
 
 /**
- * Hourly price update. Demand above supply pushes a price up by up to 5%,
- * supply above demand pushes it down; a quiet tick drifts 1% back toward the
- * founding price. A merchant on shift smooths the market (half step).
+ * Hourly price update. On a tick with any trading, the price moves by up to
+ * 5% toward the ratio of demand to supply, both measured as rates smoothed
+ * over the last day (see FLOW_WINDOW_TICKS), and damped by the state of the
+ * shelf (see COMFORT_COVER_DAYS): a well-stocked good does not get dearer
+ * however brisk the trade, an empty one does not get cheaper. Only completed
+ * trades drive the ratio: buyers turned away by an empty shelf are reported
+ * as a shortage and add a small fixed pressure (SHORTAGE_PRESSURE), because
+ * in a city where the Bazaar pays fixed wages and keeps the takings a full
+ * rationing price would only starve the poor. Every tick the price also
+ * drifts 1% of the way back toward the founding price, so a glut settles at
+ * a discount and a squeeze at a premium rather than at the floor or the cap.
+ * A merchant on shift smooths the market (half step).
  */
 export function tickMarket(world: World): void {
   const m = world.market;
@@ -170,21 +260,25 @@ export function tickMarket(world: World): void {
 
   for (const good of GOODS) {
     const g = m.goods[good];
+    const rates = updateFlowRates(world, good, g.demandTick, g.supplyTick);
+    const unmet = unmetDemand(world, good);
+    const short = g.stock <= 0 && (g.demandTick > 0 || unmet > 0);
     const current = effectivePrice(world, good);
-    if (g.demandTick === 0 && g.supplyTick === 0) {
-      setEffectivePrice(world, good, current + (g.basePrice - current) * MEAN_REVERSION);
-    } else {
-      const ratio = clamp((g.demandTick - g.supplyTick) / Math.max(g.supplyTick, 1), -1, 1);
-      setEffectivePrice(world, good, current * (1 + step * ratio));
+    let next = current + (g.basePrice - current) * MEAN_REVERSION;
+    if (g.demandTick > 0 || g.supplyTick > 0 || unmet > 0) {
+      const flow = clamp((rates.demand - rates.supply) / Math.max(rates.supply, MIN_SUPPLY_RATE), -1, 1);
+      let ratio = flow * coverGate(daysOfCover(world, good), flow > 0);
+      if (short) ratio = Math.max(ratio, SHORTAGE_PRESSURE);
+      next += current * step * ratio;
     }
+    setEffectivePrice(world, good, next);
 
-    const unmet = world.counters[`unmet:${good}`] ?? 0;
-    if (g.stock <= 0 && (g.demandTick > 0 || unmet > 0)) {
+    if (short) {
       shortages.push(good);
       const key = `shortage:${good}`;
       if (world.counters[key] !== world.day) {
         world.counters[key] = world.day;
-        emit(world, 'shortage', `The Bazaar has run out of ${good}; buyers are going without.`, [], 0.6, { good, price: g.price });
+        emit(world, 'shortage', `The Bazaar has run out of ${good}; buyers are going without.`, [], 0.6, { good, price: g.price, unmet });
       }
     }
     g.demandTick = 0;

@@ -6,8 +6,8 @@ import type { Business, Job, World } from '../src/types.ts';
 import { nextId } from '../src/util/ids.ts';
 import {
   MAX_POPULATION, activeCitizens, adjustReputation, canAct, computeMood, createCitizen, currentCycleStartDay,
-  dailyCitizens, describeCitizen, emigrate, hasCriticalNeed, isEligibleCandidate, isEligibleVoter, isPresent,
-  talentOf, tickNeeds,
+  dailyCitizens, describeCitizen, emigrate, hasCandidacyResidency, hasCriticalNeed, isEligibleCandidate, isEligibleVoter,
+  isPresent, talentOf, tickNeeds,
 } from '../src/citizens/citizen.ts';
 
 function addJob(w: World, overrides: Partial<Job> = {}): Job {
@@ -208,14 +208,21 @@ test('voter eligibility: standing, detention and presence', () => {
   assert.equal(isPresent(w, good), true);
 });
 
-test('candidate eligibility: residency and convictions this cycle', () => {
+test('candidate eligibility: residency (founders exempt) and convictions this cycle', () => {
   const w = makeWorld();
-  const c = makeCitizen(w, { arrivedDay: 0 });
-  assert.equal(isEligibleCandidate(w, c), false, 'day 0: not resident long enough');
-  w.day = 6;
-  assert.equal(isEligibleCandidate(w, c), false);
-  w.day = 7;
-  assert.equal(isEligibleCandidate(w, c), true);
+  const founder = makeCitizen(w, { arrivedDay: 0 });
+  assert.equal(hasCandidacyResidency(w, founder), true, 'a founder counts as resident from day 0');
+  assert.equal(isEligibleCandidate(w, founder), true, 'founders may stand in the founding election');
+  w.day = 3;
+  const c = makeCitizen(w, { arrivedDay: 3 });
+  assert.equal(hasCandidacyResidency(w, c), false);
+  assert.equal(isEligibleCandidate(w, c), false, 'day of arrival: not resident long enough');
+  w.day = 9;
+  assert.equal(isEligibleCandidate(w, c), false, 'six days resident is one short');
+  w.day = 10;
+  assert.equal(hasCandidacyResidency(w, c), true);
+  assert.equal(isEligibleCandidate(w, c), true, 'seven days resident');
+  assert.equal(isEligibleCandidate(w, founder), true);
   w.day = 30;
   w.government.election.electionDay = 35;
   assert.equal(currentCycleStartDay(w), 7);
@@ -226,7 +233,9 @@ test('candidate eligibility: residency and convictions this cycle', () => {
   c.record.convictions.push({ caseId: 'k_3', law: 'L06', severity: 3, tier: 3, day: 20 });
   assert.equal(isEligibleCandidate(w, c), false, 'a severity-3 conviction this cycle bars candidacy');
   const detained = makeCitizen(w, { arrivedDay: 0, detainedUntilTick: w.tick + 5 });
-  assert.equal(isEligibleCandidate(w, detained), false);
+  assert.equal(isEligibleCandidate(w, detained), false, 'a detained founder cannot stand');
+  const suspended = makeCitizen(w, { arrivedDay: 0, standing: 'suspended' });
+  assert.equal(isEligibleCandidate(w, suspended), false, 'the founders\' exemption does not override standing');
 });
 
 test('activeCitizens excludes the exiled and the departed', () => {

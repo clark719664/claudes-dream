@@ -46,8 +46,23 @@ export function sentenceForTier(world: World, c: Case, tier: PenaltyTier, opts: 
 }
 
 /**
+ * The Charter exiles for an offence *committed* while suspended. A suspension
+ * begins with the conviction that imposed it (a tier-4 sentence), so an
+ * offence from before that day — typically a second charge tried in the same
+ * sitting as the one that suspended the defendant — does not count. With no
+ * such conviction on record, the standing alone decides.
+ */
+function committedWhileSuspended(d: Citizen, c: Case): boolean {
+  let since: number | null = null;
+  for (const k of d.record.convictions) {
+    if (k.caseId !== c.id && k.tier === 4 && (since === null || k.day > since)) since = k.day;
+  }
+  return since === null || Math.floor(c.filedTick / 24) > since;
+}
+
+/**
  * Tier = severity + up to two steps for prior convictions of severity ≥ 2;
- * exile for anyone convicted while suspended, and on a third strike
+ * exile for an offence committed while suspended, and on a third strike
  * (two prior convictions of severity ≥ 3 plus this one).
  */
 export function computeSentence(world: World, c: Case): Sentence {
@@ -55,7 +70,7 @@ export function computeSentence(world: World, c: Case): Sentence {
   const priors = d ? d.record.convictions.filter((k) => k.caseId !== c.id) : [];
   const escalation = Math.min(2, priors.filter((k) => k.severity >= 2).length);
   let tier = clamp(c.severity + escalation, 1, 5);
-  if (d && d.standing === 'suspended') tier = 5;
+  if (d && d.standing === 'suspended' && committedWhileSuspended(d, c)) tier = 5;
   const strikes = priors.filter((k) => k.severity >= 3).length;
   if (strikes >= 2 && c.severity >= 3) tier = 5;
   return sentenceForTier(world, c, tier as PenaltyTier);

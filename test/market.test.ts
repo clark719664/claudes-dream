@@ -2,8 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
 import type { Business, World } from '../src/types.ts';
+
 import {
-  buyFromMarket, dailyMarket, deliverToMarket, marketPrice, sellToMarket, takeFromMarket, tickMarket, wholeUnits,
+  buyFromMarket, dailyMarket, daysOfCover, deliverToMarket, marketPrice, sellToMarket, takeFromMarket, tickMarket, unmetDemand,
+  wholeUnits,
 } from '../src/economy/market.ts';
 
 function makeBusiness(world: World, ownerId: string, treasury = 100): Business {
@@ -43,7 +45,7 @@ test('buyFromMarket charges price plus sales tax to the treasury and conserves m
   assert.ok(c.memory.some((m) => m.kind === 'money'));
 });
 
-test('buyFromMarket refuses bad quantities, empty wallets, exiles and short stock (still counting demand)', () => {
+test('buyFromMarket refuses bad quantities, empty wallets, exiles and short stock (recording unmet demand)', () => {
   const w = makeWorld();
   const c = makeCitizen(w, { wallet: 5 });
   assert.equal(buyFromMarket(w, c.id, 'goods', 0).ok, false);
@@ -53,14 +55,23 @@ test('buyFromMarket refuses bad quantities, empty wallets, exiles and short stoc
   const ex = makeCitizen(w, { wallet: 500, standing: 'exiled' });
   assert.equal(buyFromMarket(w, ex.id, 'goods', 1).ok, false);
   assert.equal(w.market.goods.goods.demandTick, 0);
+  assert.equal(unmetDemand(w, 'goods'), 0, 'a refusal for money or standing is not unmet demand');
 
   const rich = makeCitizen(w, { wallet: 100000 });
   const res = buyFromMarket(w, rich.id, 'knowledge', 25); // stock is 20
   assert.equal(res.ok, false);
   assert.match(res.message, /only has 20/);
-  assert.equal(w.market.goods.knowledge.demandTick, 25);
+  // only completed purchases are demand that moves the price; the failed request is unmet demand
+  assert.equal(w.market.goods.knowledge.demandTick, 0);
+  assert.equal(w.market.goods.knowledge.demandDay, 0);
+  assert.equal(unmetDemand(w, 'knowledge'), 25);
   assert.equal(w.market.goods.knowledge.stock, 20);
   assert.equal(rich.wallet, 100000);
+  assert.equal(buyFromMarket(w, rich.id, 'knowledge', 21).ok, false);
+  assert.equal(unmetDemand(w, 'knowledge'), 46, 'unmet demand accumulates within the tick');
+  tickMarket(w);
+  assert.equal(unmetDemand(w, 'knowledge'), 0, 'tickMarket clears unmet demand');
+  assert.deepEqual(w.market.shortages, [], 'stock was short of the request but not empty: no shortage');
 });
 
 test('sellToMarket pays price minus sales tax from the treasury; the tax stays and is recorded', () => {
@@ -127,19 +138,114 @@ test('wholeUnits carries the remainder in world.counters', () => {
   assert.equal(wholeUnits(w, 'carry:test', Number.NaN), 0);
 });
 
-test('takeFromMarket removes up to the stock and counts the whole request as demand', () => {
+test('takeFromMarket removes up to the stock, counting what it took as demand and the shortfall as unmet', () => {
   const w = makeWorld();
   w.market.goods.energy.stock = 3;
   assert.equal(takeFromMarket(w, 'energy', 2), 2);
   assert.equal(w.market.goods.energy.stock, 1);
+  assert.equal(unmetDemand(w, 'energy'), 0);
   assert.equal(takeFromMarket(w, 'energy', 5), 1);
   assert.equal(w.market.goods.energy.stock, 0);
-  assert.equal(w.market.goods.energy.demandTick, 7);
+  assert.equal(w.market.goods.energy.demandTick, 3);
+  assert.equal(w.market.goods.energy.demandDay, 3);
+  assert.equal(unmetDemand(w, 'energy'), 4);
   assert.equal(takeFromMarket(w, 'energy', 0), 0);
+  assert.equal(takeFromMarket(w, 'energy', Number.NaN), 0);
+  assert.equal(unmetDemand(w, 'energy'), 4, 'nothing asked for is nothing unmet');
+  tickMarket(w);
+  assert.deepEqual(w.market.shortages, ['energy'], 'an empty shelf that a producer went without is a shortage');
 });
 
-test('tickMarket raises prices when demand exceeds supply and lowers them when supply exceeds demand', () => {
+/** Drive one good through `days` of a daily pattern: `supply` units per working tick, `demand` per tick on the given hours (unmet when the shelf is bare). */
+function runDays(w: World, good: 'compute', days: number, supplyPerWorkTick: number, demandAt: (hour: number) => number): void {
+  const buyer = makeCitizen(w, { wallet: 10_000_000 });
+  for (let day = 0; day < days; day++) {
+    for (let hour = 0; hour < 24; hour++) {
+      w.tick = day * 24 + hour;
+      w.day = day;
+      w.hour = hour;
+      if (hour >= 8 && hour < 18) deliverToMarket(w, good, supplyPerWorkTick);
+      const wanted = demandAt(hour);
+      if (wanted > 0) {
+        const got = Math.min(wanted, w.market.goods[good].stock);
+        if (got > 0) buyFromMarket(w, buyer.id, good, got);
+        if (got < wanted) buyFromMarket(w, buyer.id, good, wanted - got); // refused: unmet demand
+      }
+      tickMarket(w);
+    }
+  }
+}
+
+test('a balanced market with daytime-only production does not drift: night purchases are not shortages', () => {
   const w = makeWorld();
+  const start = w.market.goods.compute.price;
+  // 180 units made in 10 working ticks, 180 units eaten in 12 spread over the whole day: balanced over the day
+  runDays(w, 'compute', 30, 18, (hour) => (hour % 2 === 0 ? 15 : 0));
+  const p = w.market.goods.compute.price;
+  assert.ok(p >= start * 0.8 && p <= start * 1.25, `price drifted from ${start} to ${p}`);
+});
+
+test('a sustained imbalance moves the price steadily, both ways, without hitting the bounds in a week', () => {
+  const w = makeWorld();
+  w.market.goods.compute.stock = 60; // a thin shelf: about a quarter of a day's demand
+  // 15% more demand than supply, the shelf kept thin by the drawdown
+  runDays(w, 'compute', 7, 20, (hour) => (hour % 2 === 0 ? 19 : 0));
+  const up = w.market.goods.compute.price;
+  assert.ok(up > 6 && up < 6 * 20, `demand above supply on a thin shelf should lift the price gently (got ${up})`);
+  const w2 = makeWorld();
+  w2.market.goods.compute.stock = 100_000;
+  // 15% more supply than demand
+  runDays(w2, 'compute', 7, 20, (hour) => (hour % 2 === 0 ? 14 : 0));
+  const down = w2.market.goods.compute.price;
+  assert.ok(down < 6 && down > 1, `supply above demand should lower the price gently (got ${down})`);
+});
+
+test('a lasting famine settles the price near twice founding: a scarcity signal that cannot walk to the cap', () => {
+  const w = makeWorld();
+  w.market.goods.compute.stock = 0;
+  // supply 10 a working tick, all snapped up at once, and a queue at the empty shelf in between
+  runDays(w, 'compute', 14, 10, (hour) => (hour >= 8 && hour < 18 ? 10 : 30));
+  const p = w.market.goods.compute.price;
+  assert.ok(p > 6, `a persistent stock-out should carry a premium (got ${p})`);
+  assert.ok(p <= 6 * 2.1, `but a bounded one (got ${p})`);
+  assert.ok(w.events.filter((e) => e.kind === 'shortage').length >= 10, 'and it is reported as a shortage day after day');
+  // another month changes nothing: the premium and the pull toward founding have met
+  runDays(w, 'compute', 30, 10, (hour) => (hour >= 8 && hour < 18 ? 10 : 30));
+  assert.ok(w.market.goods.compute.price <= 6 * 2.1, `still bounded after six weeks (got ${w.market.goods.compute.price})`);
+});
+
+test('an empty shelf is reported as a shortage and carries a bounded premium; a glut lowers the price', () => {
+  const w = makeWorld();
+  const c = makeCitizen(w, { wallet: 100000 });
+  const g = w.market.goods.goods;
+  g.stock = 0;
+  // four days of stock-out (ticks 1..95, days 0..3): every tick someone leaves empty-handed
+  let previous = g.price;
+  for (let i = 0; i < 95; i++) {
+    w.tick++;
+    w.day = Math.floor(w.tick / 24);
+    assert.equal(buyFromMarket(w, c.id, 'goods', 1).ok, false);
+    tickMarket(w);
+    assert.deepEqual(w.market.shortages, ['goods']);
+    assert.ok(g.price >= previous, 'the premium never reverses while the shelf stays bare');
+    previous = g.price;
+  }
+  assert.ok(g.price > 12 && g.price <= 24, `nothing was traded, yet the queue lifted the price a little (got ${g.price})`);
+  assert.equal(w.events.filter((e) => e.kind === 'shortage').length, 4, 'one shortage story per day');
+  // then supply pours in with nobody buying: the price falls
+  for (let i = 0; i < 60; i++) {
+    w.tick++;
+    deliverToMarket(w, 'goods', 20);
+    tickMarket(w);
+  }
+  assert.deepEqual(w.market.shortages, []);
+  assert.ok(g.price < 12, `a glut should push the price below founding (got ${g.price})`);
+  assert.ok(g.price >= 1);
+});
+
+test('tickMarket raises prices when demand exceeds supply on a bare shelf and lowers them when supply exceeds demand', () => {
+  const w = makeWorld();
+  w.market.goods.goods.stock = 0;
   w.market.goods.goods.demandTick = 10;
   w.market.goods.goods.supplyTick = 0;
   w.market.goods.culture.demandTick = 0;
@@ -153,8 +259,32 @@ test('tickMarket raises prices when demand exceeds supply and lowers them when s
   assert.equal(w.market.goods.compute.price, 6); // untouched
 });
 
+test('a well-stocked good does not get dearer however brisk the trade; the damping fades as the shelf empties', () => {
+  const w = makeWorld();
+  // 120 goods in stock against 10 a tick of demand is twelve days of cover: no upward pressure at all
+  w.market.goods.goods.demandTick = 10;
+  tickMarket(w);
+  assert.equal(w.market.goods.goods.price, 12);
+  assert.ok(daysOfCover(w, 'goods') > 3, `cover ${daysOfCover(w, 'goods')}`);
+  // half the comfortable cover: half a step
+  const w2 = makeWorld();
+  w2.market.goods.goods.stock = 15; // 15 / (10/24 × 24) = 1.5 days
+  w2.market.goods.goods.demandTick = 10;
+  tickMarket(w2);
+  assert.ok(Math.abs(daysOfCover(w2, 'goods') - 1.5) < 1e-4, `cover ${daysOfCover(w2, 'goods')}`);
+  assert.ok(Math.abs((w2.market.goods.goods.price + (w2.counters['pricefrac:goods'] ?? 0)) - 12 * 1.025) < 1e-4);
+  // and an empty shelf feels no downward pressure however much is delivered and unsold this tick
+  const w3 = makeWorld();
+  w3.market.goods.culture.stock = 0;
+  w3.market.goods.culture.supplyTick = 10; // arrived and gone again within the tick
+  w3.market.goods.culture.price = 20;
+  tickMarket(w3);
+  assert.equal(w3.market.goods.culture.price, 20);
+});
+
 test('tickMarket lets cheap goods move too, thanks to the fractional residual', () => {
   const w = makeWorld();
+  w.market.goods.energy.stock = 0;
   for (let i = 0; i < 4; i++) {
     w.market.goods.energy.demandTick = 5;
     tickMarket(w);
@@ -162,6 +292,7 @@ test('tickMarket lets cheap goods move too, thanks to the fractional residual', 
   assert.equal(w.market.goods.energy.price, 4); // 3 × 1.05^4 = 3.65
   for (let i = 0; i < 40; i++) {
     w.market.goods.energy.supplyTick = 50;
+    w.market.goods.energy.stock += 50;
     tickMarket(w);
   }
   assert.equal(w.market.goods.energy.price, 1); // floored at 1
@@ -188,6 +319,7 @@ test('a merchant on shift halves the price step', () => {
   const w = makeWorld();
   w.tick = 9;
   w.counters.merchantOnShiftTick = 9;
+  w.market.goods.goods.stock = 0;
   w.market.goods.goods.demandTick = 10;
   tickMarket(w);
   assert.equal(w.market.goods.goods.price, 12); // 12 × 1.025 = 12.3

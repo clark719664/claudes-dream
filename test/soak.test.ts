@@ -46,9 +46,13 @@ function present(w: World, c: Citizen): Citizen[] {
   return activeCitizens(w).filter((o) => o.id !== c.id && o.district === c.district);
 }
 
-function eat(w: World, c: Citizen): void {
+/** Buy (if needed) and eat one compute. False when the Bazaar is empty or the wallet cannot cover it. */
+function eat(w: World, c: Citizen): boolean {
   if (c.inventory.compute <= 0) buyFromMarket(w, c.id, 'compute', 1);
-  if (c.inventory.compute > 0) { c.inventory.compute -= 1; c.needs.energy = clamp(c.needs.energy + 40, 0, 100); }
+  if (c.inventory.compute <= 0) return false;
+  c.inventory.compute -= 1;
+  c.needs.energy = clamp(c.needs.energy + 40, 0, 100);
+  return true;
 }
 
 function socialize(w: World, c: Citizen): void {
@@ -73,7 +77,8 @@ function crime(w: World, c: Citizen): void {
     const n = recordHostility(w, c.id, victim.id);
     adjustBond(w, c.id, victim.id, -20);
     if (n >= 2) commitOffence(w, c.id, 'L05', { victimId: victim.id });
-  } else if (roll === 8) {
+  } else if (roll === 8 && c.personality.honesty < 0.15) {
+    // as in the reflex brain, only the truly amoral wreck critical infrastructure
     const critical = Object.values(w.buildings).find((b) => b.district === c.district && b.critical);
     if (critical) { critical.damage = 1; commitOffence(w, c.id, 'L13', { buildingId: critical.id }); }
   } else {
@@ -86,21 +91,26 @@ function crime(w: World, c: Citizen): void {
 function act(w: World, c: Citizen): void {
   if (c.standing === 'suspended') {
     if (canAppeal(w, c.id) && chance(w, 0.5)) fileAppeal(w, c.id);
-    else if (c.needs.energy < 40 && standingAllows(c, 'eat')) eat(w, c);
+    else if (c.needs.energy < 40 && standingAllows(c, 'eat') && eat(w, c)) return;
     else socialize(w, c);
     return;
   }
   if (canAppeal(w, c.id) && chance(w, 0.4)) { fileAppeal(w, c.id); return; }
-  if (c.needs.energy < 35) { eat(w, c); return; }
-  if (c.needs.rest < 25) {
+  // a hungry citizen eats if they can; when the Bazaar is bare they get on with their day (and, if a
+  // forge operator, with making compute) instead of queuing at an empty shelf all day
+  if (c.needs.energy < 35 && eat(w, c)) return;
+  const [start, end] = w.config.workHours;
+  const working = w.hour >= start && w.hour < end;
+  const job = c.jobId ? w.jobs[c.jobId] : null;
+  // sleep outside working hours until properly rested (a shift costs 4 rest; below 20 a worker's output halves),
+  // and during the working day only when utterly spent
+  const sleepy = working && job ? c.needs.rest < 5 : c.needs.rest < (working ? 25 : 70);
+  if (sleepy) {
     if (c.district !== 'verdant_quarter') { c.district = 'verdant_quarter'; return; }
     c.needs.rest = clamp(c.needs.rest + (c.homeTier > 0 ? 15 : 8), 0, 100);
     return;
   }
   if (c.homeTier === 0 && c.wallet > 50 && vacancies(w)[1] > 0) { moveHome(w, c.id, 1); return; }
-  const [start, end] = w.config.workHours;
-  const working = w.hour >= start && w.hour < end;
-  const job = c.jobId ? w.jobs[c.jobId] : null;
   if (working && job) {
     if (c.district !== job.district) { c.district = job.district; return; }
     const r = workShift(w, c.id);

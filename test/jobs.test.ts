@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
 import type { Business, Citizen, Job, JobRole, World } from '../src/types.ts';
 import { CITY_JOBS, COURIER_CONTRACT } from '../src/data/jobs.ts';
+import { unmetDemand } from '../src/economy/market.ts';
 import {
   applyForJob, closeJob, createCityJob, createCityJobs, dailyJobs, employerName, fireFromJob, isQualified, openJobs,
   postJob, postJobAsOwner, quitJob, setWage, workShift,
@@ -214,7 +215,9 @@ test('output halves without energy, halves again with a critical need, and scale
   w.market.goods.energy.stock = 0;
   workShift(w, c.id);
   assert.ok(Math.abs((w.counters['carry:market:compute'] ?? 0) - 0.9) < 1e-6); // 1.8 × 0.5
-  assert.equal(w.market.goods.energy.demandTick, 1); // unmet demand still registers
+  // nothing was taken, so nothing counts as demand; the shortfall is unmet demand for the shortage report
+  assert.equal(w.market.goods.energy.demandTick, 0);
+  assert.equal(unmetDemand(w, 'energy'), 1);
   // each shift grows crafting by 0.5, so reset it to keep productivity at 0.6
   w.counters['carry:market:compute'] = 0;
   w.market.goods.energy.stock = 100;

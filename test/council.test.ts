@@ -145,14 +145,19 @@ test('an election seats a council and a mayor, unseats incumbents and schedules 
   const a = makeCitizen(w, { name: 'Ada', arrivedDay: -10, reputation: 70 });
   const b = makeCitizen(w, { name: 'Bram', arrivedDay: -10, reputation: 60 });
   const c = makeCitizen(w, { name: 'Cove', arrivedDay: -10, reputation: 50 });
-  const newcomer = makeCitizen(w, { arrivedDay: 0 });
+  const newcomer = makeCitizen(w, { arrivedDay: 1 });
+  const founder = makeCitizen(w, { name: 'Fen', arrivedDay: 0, reputation: 30 });
   const judge = makeCitizen(w, { name: 'Dune', arrivedDay: -10, office: 'judge', reputation: 80 });
   w.government.judges = [judge.id];
   const voters = Array.from({ length: 8 }, () => makeCitizen(w, { arrivedDay: -10 }));
   voters.forEach((v, i) => { v.bonds[i < 6 ? b.id : a.id] = 90; v.personality.sociability = 0.9; });
 
   assert.equal(daysToElection(w), 4);
-  assert.equal(nominate(w, newcomer.id, NEUTRAL).ok, false, 'seven days of residence needed');
+  founder.bonds[b.id] = 90;
+  const tooNew = nominate(w, newcomer.id, NEUTRAL);
+  assert.equal(tooNew.ok, false, 'seven days of residence needed');
+  assert.match(tooNew.message, /seven days/);
+  assert.equal(nominate(w, founder.id, NEUTRAL).ok, true, 'a founder may stand in the founding week');
   for (const cand of [a, b, c, judge]) assert.equal(nominate(w, cand.id, NEUTRAL).ok, true);
   assert.equal(nominate(w, a.id, NEUTRAL).ok, false, 'already a candidate');
   assert.equal(campaign(w, voters[0].id).ok, false, 'not a candidate');
@@ -173,12 +178,13 @@ test('an election seats a council and a mayor, unseats incumbents and schedules 
   holdElection(w);
   const g = w.government;
   assert.equal(g.mayorId, b.id, 'Bram has the most friends');
-  assert.equal(g.council.length, 4);
+  assert.equal(g.council.length, 5);
   assert.equal(g.council[0], b.id);
-  assert.ok(g.council.includes(a.id) && g.council.includes(c.id) && g.council.includes(judge.id));
+  assert.ok(g.council.includes(a.id) && g.council.includes(c.id) && g.council.includes(judge.id) && g.council.includes(founder.id));
   assert.equal(b.office, 'mayor');
   assert.equal(a.office, 'councillor');
   assert.equal(judge.office, 'councillor');
+  assert.equal(founder.office, 'councillor', 'five candidates, five seats: even the founder with no votes is seated');
   assert.deepEqual(g.judges, [], 'a judge elected to the Council leaves the bench');
   assert.equal(incumbent.office, null, 'not re-elected');
   assert.ok(!g.council.includes(incumbent.id));

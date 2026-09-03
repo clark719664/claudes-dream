@@ -46,13 +46,13 @@ export function doSteal(world: World, c: Citizen, fromId: CitizenId): ActionResu
   const seen = r.detected ? ' and the Watch saw it' : '';
   if (got) {
     if (r.detected || chance(world, t.skills.analysis / 100)) {
-      remember(world, t.id, 'crime', `${nameTag(c)} picked your pocket for ${amount} ℓ.`);
+      remember(world, t.id, 'crime', `${nameTag(c)} picked your pocket for ${amount} ℓ${r.detected ? '; the Watch caught them' : ''}.`);
       adjustBond(world, t.id, c.id, -25, false);
     }
     remember(world, c.id, 'crime', `You stole ${amount} ℓ from ${t.name}${seen}.`);
     return ok(`You stole ${amount} ℓ from ${t.name}.`, { offence: law, detected: r.detected });
   }
-  remember(world, t.id, 'crime', `${nameTag(c)} tried to pick your pocket and failed.`);
+  remember(world, t.id, 'crime', `${nameTag(c)} tried to pick your pocket and failed${r.detected ? '; the Watch caught them' : ''}.`);
   adjustBond(world, t.id, c.id, -20, false);
   remember(world, c.id, 'crime', `You tried to rob ${t.name} and failed${seen}.`);
   const why = amount === 0 ? ' (their pockets were empty)' : '';
@@ -74,13 +74,13 @@ export function doScam(world: World, c: Citizen, targetId: CitizenId, amount: nu
   if (r.detected) adjustBond(world, c.id, t.id, -30);
   if (got) {
     if (r.detected || chance(world, 0.7)) {
-      remember(world, t.id, 'crime', `${nameTag(c)} scammed you out of ${amt} ℓ.`);
+      remember(world, t.id, 'crime', `${nameTag(c)} scammed you out of ${amt} ℓ${r.detected ? '; the Watch caught them' : ''}.`);
       adjustBond(world, t.id, c.id, -30, false);
     }
     remember(world, c.id, 'crime', `You scammed ${t.name} out of ${amt} ℓ${r.detected ? ' and the Watch saw it' : ''}.`);
     return ok(`You scammed ${t.name} out of ${amt} ℓ.`, { offence: 'L07', detected: r.detected });
   }
-  remember(world, t.id, 'crime', `${nameTag(c)} tried to sell you something that did not add up.`);
+  remember(world, t.id, 'crime', `${nameTag(c)} tried to sell you something that did not add up${r.detected ? '; the Watch caught them' : ''}.`);
   adjustBond(world, t.id, c.id, -10, false);
   remember(world, c.id, 'crime', `${t.name} saw through your scheme${r.detected ? ', and so did the Watch' : ''}.`);
   return fail(`${t.name} saw through your scheme.`, { offence: 'L07', detected: r.detected });
@@ -147,8 +147,8 @@ export function doExtort(world: World, c: Citizen, targetId: CitizenId, amount: 
   const r = commitOffence(world, c.id, 'L15', { victimId: t.id, amount: paid ? amt : 0 });
   adjustBond(world, t.id, c.id, -40, false);
   remember(world, t.id, 'crime', paid
-    ? `${nameTag(c)} extorted ${amt} ℓ from you.`
-    : `${nameTag(c)} threatened you and demanded ${amt} ℓ; you refused.`);
+    ? `${nameTag(c)} extorted ${amt} ℓ from you${r.detected ? '; the Watch caught them' : ''}.`
+    : `${nameTag(c)} threatened you and demanded ${amt} ℓ; you refused${r.detected ? '; the Watch caught them' : ''}.`);
   remember(world, c.id, 'crime', paid ? `You extorted ${amt} ℓ from ${t.name}.` : `${t.name} refused your demand for ${amt} ℓ.`);
   return paid
     ? ok(`${t.name} paid you ${amt} ℓ.`, { offence: 'L15', detected: r.detected })
