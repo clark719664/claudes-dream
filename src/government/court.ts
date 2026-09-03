@@ -13,6 +13,7 @@ import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
 import { adjustReputation } from '../citizens/citizen.ts';
 import { areFriends, bondBetween } from '../citizens/relationships.ts';
+import { areFamily } from '../society/family.ts';
 import { detain } from './watch.ts';
 import { byFiling, canSit, caseNumber, isDetained, isPresent, latestConviction, nameOf } from './cases.ts';
 import { computeSentence, describeSentence, executeSentence, finePaidKey } from './sentencing.ts';
@@ -87,12 +88,14 @@ function employmentTie(world: World, judge: Citizen, defendant: Citizen): boolea
   return false;
 }
 
-/** Friend, employer, employee, accuser, victim or the defendant themself. */
+/** Family, friend, employer, employee, accuser, victim or the defendant themself. */
 export function mustRecuse(world: World, judgeId: CitizenId, c: Case): boolean {
   const judge = world.citizens[judgeId];
   const d = world.citizens[c.defendantId];
   if (!judge || !d) return true;
   if (judgeId === d.id || judgeId === c.filedBy || judgeId === c.victimId) return true;
+  if (areFamily(world, judgeId, d.id)) return true;
+  if (c.victimId && areFamily(world, judgeId, c.victimId)) return true;
   if (areFriends(world, judgeId, d.id)) return true;
   return employmentTie(world, judge, d);
 }

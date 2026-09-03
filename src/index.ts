@@ -161,7 +161,12 @@ function namesOf(world: World, ids: CitizenId[]): string {
   return ids.length ? ids.map((id) => nameOf(world, id)).join(', ') : 'none';
 }
 
-/** One line per day: the numbers that tell whether the city is alive, then the morning's headlines. */
+/** Households with more than one soul in them: the city's shared roofs. */
+function sharedHomes(world: World): number {
+  return Object.values(world.households ?? {}).filter((h) => h.members.length > 1).length;
+}
+
+/** Two lines per day: the numbers that tell whether the city is alive, then the morning's headlines. */
 function printDigest(world: World, quiet: boolean): void {
   const s = world.stats[world.stats.length - 1];
   if (!s) return;
@@ -170,6 +175,10 @@ function printDigest(world: World, quiet: boolean): void {
     `Day ${String(s.day).padStart(3)} │ pop ${s.population} │ employed ${s.employed} │ homeless ${s.homeless} │ `
     + `treasury ${formatLumens(s.treasury)} │ prices ${s.priceIndex.toFixed(2)} │ cases ${cases} (+${s.charges}, ${s.convictions} convicted) │ `
     + `exiles ${world.bans.length} │ mayor ${nameOf(world, world.government.mayorId)}`,
+  );
+  console.log(
+    `        │ friends ${s.friendships} │ couples ${s.partnerships} (${s.marriages} married) │ children ${s.children} │ `
+    + `homes ${sharedHomes(world)} │ clubs ${s.clubs} │ things ${s.possessions} │ chest ${formatLumens(s.chest)}`,
   );
   if (quiet) return;
   const edition = world.chronicle[world.chronicle.length - 1];
@@ -200,6 +209,13 @@ function printSummary(world: World, ticksRun: number, elapsedNs: bigint): void {
   console.log(`Treasury ${formatLumens(world.treasury.balance)} · money supply ${formatLumens(audit.supply)} (${audit.ok ? 'audit ok' : `AUDIT FAILED, expected ${formatLumens(audit.expected)}`}) · price index ${world.market.priceIndex.toFixed(2)} (${prices})`);
   console.log(`Government: Mayor ${nameOf(world, g.mayorId)} · Council ${namesOf(world, g.council)} · Judges ${namesOf(world, g.judges)} · Watch ${g.watch.length} officer${g.watch.length === 1 ? '' : 's'} · next election ${election}`);
   console.log(`Justice: ${cases.length} cases, ${convictions} convictions, ${appeals} appeals, ${pending} pending, ${world.bans.length} exile${world.bans.length === 1 ? '' : 's'} on the register`);
+  const clubs = Object.values(world.clubs ?? {}).filter((k) => k.members.length > 0);
+  const members = clubs.reduce((n, k) => n + k.members.length, 0);
+  const weddings = world.events.filter((e) => e.kind === 'wedding').length;
+  const births = world.events.filter((e) => e.kind === 'birth').length;
+  console.log(`Society: ${sharedHomes(world)} shared homes · ${s.partnerships} partnerships · ${s.marriages} marriages (${weddings} wedding${weddings === 1 ? '' : 's'} held) · `
+    + `${s.children} children (${births} born) · ${clubs.length} club${clubs.length === 1 ? '' : 's'} with ${members} members · `
+    + `${s.possessions} things owned · Community Chest ${formatLumens(s.chest)}`);
   const llmCalls = world.counters.llmCalls ?? 0;
   const llmNote = llmCalls > 0 ? ` · Claude calls ${llmCalls} (${world.counters.llmFallbacks ?? 0} fell back to instinct)` : '';
   console.log(`Engine errors ${world.counters.engineErrors ?? 0}${llmNote} · ${ticksRun} ticks in ${secs.toFixed(2)} s (${rate} ticks/s)`);

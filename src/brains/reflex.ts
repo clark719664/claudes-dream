@@ -22,6 +22,11 @@ import {
 import type { Ctx } from './reflex-util.ts';
 import { closestQualification, shiftsWanted, tryBusiness, tryHousing, tryJobSearch, tryLoan, tryStudy, tryWork } from './reflex-work.ts';
 import { tryAppeal, tryCivic, tryReport } from './reflex-civic.ts';
+import {
+  restDayOff, tryBirthdayGift, tryClubLife, tryClubMeeting, tryCraft, tryDine, tryDonate, tryHappening, tryPlay,
+  tryRomance, tryUseItem, tryWants,
+} from './reflex-society.ts';
+import { childDecide } from './child.ts';
 
 export const HUNGRY = 30;
 export const STARVING = 20;
@@ -259,10 +264,14 @@ function tryCrime(ctx: Ctx): Action | null {
 // The rest of the day
 // ---------------------------------------------------------------------------
 
-/** Free time: company, a show, a lesson, the larder, a letter to a friend, or a walk to where the evening is. */
+/** Free time: company, a game, a show, a lesson, the larder, a letter to a friend, or a walk to where the evening is. */
 function leisure(ctx: Ctx): Action {
   const { world, c, clock, here } = ctx;
   const p = c.personality;
+  const game = tryPlay(ctx);
+  if (game) return game;
+  const thing = tryUseItem(ctx);
+  if (thing) return thing;
   if (here.length > 0 && chance(world, 0.5)) {
     const companion = pickCompanion(ctx);
     if (companion) return { type: 'socialize', with: companion.id };
@@ -307,13 +316,28 @@ function fallback(ctx: Ctx): Action {
   return { type: 'idle' };
 }
 
+/** Nobody but the Watch, the Ward, the kitchens and the stage works on Stillday or Founders' Day. */
+function tryWorkday(ctx: Ctx): Action | null {
+  return restDayOff(ctx) ? null : tryWork(ctx);
+}
+
+/** No job hunting on a day off either; the Exchange is shut. */
+function tryJobHunt(ctx: Ctx): Action | null {
+  return restDayOff(ctx) ? null : tryJobSearch(ctx);
+}
+
 const LADDER: readonly Step[] = [
-  tryAppeal, tryEat, tryInbox, tryCharity, tryRest, tryHousing, tryJobSearch, tryWork, tryCivic, tryBusiness,
-  trySocial, tryComfort, tryPurpose, tryReport, tryCrime, tryPerform, tryGift,
+  tryAppeal, tryEat, tryDine, tryInbox, tryCharity, tryRest, tryHousing,
+  tryHappening, tryClubMeeting,
+  tryJobHunt, tryWorkday, tryCraft, tryCivic, tryBusiness,
+  tryRomance, trySocial, tryComfort, tryWants, tryPurpose,
+  tryReport, tryCrime, tryPerform, tryClubLife, tryBirthdayGift, tryDonate, tryUseItem, tryGift,
 ];
 
 /** Only what a suspended citizen may still do: appeal, eat, rest, keep company, write. */
-const RESTRICTED_LADDER: readonly Step[] = [tryAppeal, tryEat, tryInbox, tryRest, trySocial, tryComfort];
+const RESTRICTED_LADDER: readonly Step[] = [
+  tryAppeal, tryEat, tryDine, tryInbox, tryRest, tryHappening, trySocial, tryComfort, tryPlay, tryUseItem,
+];
 
 function decideSuspended(ctx: Ctx): Action {
   for (const step of RESTRICTED_LADDER) {
@@ -324,9 +348,10 @@ function decideSuspended(ctx: Ctx): Action {
   return stepTo(ctx, 'commons') ?? { type: 'idle' };
 }
 
-/** Decide one action for a reflex citizen. */
+/** Decide one action for a reflex citizen; children think with the child policy. */
 export function reflexDecide(world: World, c: Citizen, obs: Observation): Action {
   if (c.standing === 'exiled' || obs.self.detained) return { type: 'idle' };
+  if (c.lifeStage === 'child') return childDecide(world, c, obs);
   const ctx = makeCtx(world, c, obs);
   if (c.standing === 'suspended') return decideSuspended(ctx);
   for (const step of LADDER) {

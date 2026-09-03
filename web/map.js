@@ -4,7 +4,8 @@
  * Districts are labelled rounded rectangles on the 60 x 40 city grid,
  * buildings are small squares (gold-edged when critical, tinted red by
  * damage), citizens are dots jittered inside their district and coloured by
- * standing; office holders wear a gold ring, detained citizens a dashed one.
+ * standing; children are smaller, office holders wear a gold ring, detained
+ * citizens a dashed one.
  * Dots are keyed by citizen id and moved with a CSS transition so the city
  * looks alive between polls.
  */
@@ -113,9 +114,13 @@
   }
 
   function citizenTip(c) {
-    const lines = [c.name];
-    lines.push(`${c.job || 'Unemployed'} · ${R.districtName(c.district)}`);
+    const lines = [R.displayName(c)];
+    lines.push(c.lifeStage === 'child'
+      ? `A child of the ${c.familyName} family · ${R.districtName(c.district)}`
+      : `${c.job || 'Unemployed'} · ${R.districtName(c.district)}`);
     lines.push(`${R.titleCase(c.standing)}${c.office ? ` · ${R.titleCase(c.office)}` : ''}${c.detained ? ' · detained' : ''} · mood ${Math.round(c.mood)}`);
+    if (c.partnerId) lines.push(`${c.married ? 'Married to' : 'Partner:'} ${c.partnerName || c.partnerId}`);
+    if (c.lifeStage === 'elder') lines.push('An elder of Reverie');
     if (c.brain !== 'reflex') lines.push(c.brain === 'llm' ? 'A Claude citizen' : 'An external agent');
     return lines;
   }
@@ -139,7 +144,8 @@
       }
       el.__data = c;
       el.style.transform = `translate(${c.x.toFixed(2)}px, ${c.y.toFixed(2)}px)`;
-      el.setAttribute('class', ['citizen', c.office ? 'office' : '', c.detained ? 'detained' : '', c.id === selectedId ? 'selected' : ''].join(' ').trim());
+      el.setAttribute('class', ['citizen', c.lifeStage === 'child' ? 'child' : '', c.office ? 'office' : '',
+        c.detained ? 'detained' : '', c.id === selectedId ? 'selected' : ''].join(' ').replace(/\s+/g, ' ').trim());
       el.lastChild.setAttribute('fill', STANDING_FILL[c.standing] || '#8a94a8');
     }
     for (const [id, el] of dots) {
@@ -154,6 +160,7 @@
       item('probation', null, `background:${STANDING_FILL.probation}`),
       item('suspended', null, `background:${STANDING_FILL.suspended}`),
       item('exiled (at the Gate)', null, `background:${STANDING_FILL.exiled}`),
+      item('child', null, `background:${STANDING_FILL.good};width:6px;height:6px`),
       item('holds office', 'ring'),
       item('detained', 'dashed'),
       item('Claude', 'diamond', 'background:#b8c0d0'),

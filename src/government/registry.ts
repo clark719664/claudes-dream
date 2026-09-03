@@ -18,6 +18,7 @@ import { fireFromJob } from '../economy/jobs.ts';
 import { dissolveBusiness } from '../economy/business.ts';
 import { moveHome } from '../economy/housing.ts';
 import { friendsOf } from '../citizens/relationships.ts';
+import { severSocialTies, wardship } from '../society/family.ts';
 
 /** Days of probation that follow a suspension (or a pardon). */
 export const PROBATION_DAYS = 14;
@@ -166,9 +167,12 @@ function lawForBan(world: World, c: Citizen, caseId: CaseId): LawCode {
 
 /**
  * Exile a citizen through the Exile Gate. Assets are seized, the business
- * dissolved, the home vacated, every job and office cleared; the citizen
- * leaves the turn order and is recorded in the ban registry. Idempotent: an
- * already exiled citizen's existing record is returned.
+ * dissolved, the home and household given up, clubs left, every job and
+ * office cleared, and their partner is single again (the bond is kept, so a
+ * pardon can bring them home); the citizen leaves the turn order and is
+ * recorded in the ban registry. A child of theirs with no parent left in the
+ * city becomes a ward. Idempotent: an already exiled citizen's existing
+ * record is returned.
  */
 export function exileCitizen(world: World, cId: CitizenId, caseId: CaseId): BanRecord {
   const c = world.citizens[cId];
@@ -183,6 +187,7 @@ export function exileCitizen(world: World, cId: CitizenId, caseId: CaseId): BanR
   const { seized, restitution } = seizeAssets(world, c, caseId);
   if (c.businessId) dissolveBusiness(world, c.businessId, `its owner ${c.name} was exiled`, true);
   c.businessId = null;
+  severSocialTies(world, cId, 'was exiled');
   if (c.homeTier !== 0) moveHome(world, cId, 0);
   fireFromJob(world, cId, reason);
   stripOffice(world, cId, reason);
@@ -213,6 +218,8 @@ export function exileCitizen(world: World, cId: CitizenId, caseId: CaseId): BanR
     { caseId, law: record.law, seized, restitution });
   remember(world, cId, 'event', `You were exiled from Reverie (case ${caseId}). The gate closed behind you.`);
   for (const f of friends) remember(world, f, 'social', `${c.name} was exiled from the city.`);
+  // The gate has closed: any child of theirs with no parent left is now the city's.
+  for (const kid of [...c.family.children]) wardship(world, kid);
   return record;
 }
 

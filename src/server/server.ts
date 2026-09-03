@@ -19,6 +19,7 @@ import { HttpError, isRecord, readJson, sendError, sendFailure, sendJson, serveS
 import { citizenView, citizensView, mapView, stateView } from './views.ts';
 import type { SimStatus } from './views.ts';
 import { bansView, chronicleView, courtView, economyView, governmentView } from './views-city.ts';
+import { societyView } from './views-society.ts';
 import type { PriceHistory } from './views-city.ts';
 import { handleAct, handleJoin, handleLeave, handleObserve } from './agents.ts';
 import type { AgentContext } from './agents.ts';
@@ -262,6 +263,7 @@ export async function startServer(world: World, opts: ServerOptions): Promise<Ru
       case '/api/economy': only(get); sendJson(res, 200, economyView(world, sim.history)); return;
       case '/api/government': only(get); sendJson(res, 200, governmentView(world)); return;
       case '/api/court': only(get); sendJson(res, 200, courtView(world)); return;
+      case '/api/society': only(get); sendJson(res, 200, societyView(world)); return;
       case '/api/bans': only(get); sendJson(res, 200, bansView(world)); return;
       case '/api/chronicle': only(get); sendJson(res, 200, chronicleView(world)); return;
       case '/api/events': only(get); openStream(req, res); return;

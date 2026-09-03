@@ -5,20 +5,52 @@
  * remember who wronged them when they notice, id included, so they can report.
  */
 import { clamp } from '../types.ts';
-import type { ActionResult, BuildingId, Citizen, CitizenId, LawCode, World } from '../types.ts';
+import type { ActionResult, BuildingId, CaseId, Citizen, CitizenId, LawCode, World } from '../types.ts';
+import { LAWS } from '../data/laws.ts';
 import { chance, rand, randInt } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
+import { adjustReputation } from '../citizens/citizen.ts';
 import { adjustBond, bondBetween, recordHostility } from '../citizens/relationships.ts';
 import { commitOffence } from '../government/watch.ts';
 import { GRAND_THEFT_THRESHOLD, districtName, fail, nameTag, ok, targetOf } from './common.ts';
 
+/** What a child's misdeed costs each of its parents in reputation. */
+export const CHILD_PARENT_REPUTATION = 5;
 export const STEAL_MIN = 10;
 export const STEAL_MAX = 80;
 export const HARASS_COUNT = 2;
 export const VANDALISM_DAMAGE = 0.25;
 export const SABOTAGE_VANDALISM_DAMAGE = 0.5;
 export const EVADE_SHIFTS = 3;
+
+/**
+ * Answer for an offence. Grown citizens answer to the Watch; children are
+ * never charged in Reverie — the city takes it out of their parents' good
+ * name instead, and everyone hears about it. A child with no parent left in
+ * the city answers to nobody at all.
+ */
+export function commitOffenceOrScold(
+  world: World, c: Citizen, law: LawCode,
+  ctx: { victimId?: CitizenId; amount?: number; buildingId?: BuildingId; visibilityMod?: number } = {},
+): { detected: boolean; caseId: CaseId | null } {
+  if (c.lifeStage !== 'child') return commitOffence(world, c.id, law, ctx);
+  c.stats.offencesCommitted += 1;
+  const misdeed = LAWS[law].name.toLowerCase();
+  const parents = c.family.parents
+    .map((id) => world.citizens[id])
+    .filter((p): p is Citizen => !!p && p.standing !== 'exiled' && world.order.includes(p.id));
+  remember(world, c.id, 'crime', `You were caught at ${misdeed} in ${districtName(world, c.district)}; children are not charged, but your family heard of it.`);
+  for (const p of parents) {
+    adjustReputation(world, p, -CHILD_PARENT_REPUTATION, `your child ${c.name} was caught at ${misdeed}`);
+    remember(world, p.id, 'family', `${c.name} was caught at ${misdeed} in ${districtName(world, c.district)}; a child cannot be charged, so the shame is yours.`);
+  }
+  emit(world, 'offence', parents.length > 0
+    ? `${c.name}, a child, was caught at ${misdeed}; ${parents.map((p) => p.name).join(' and ')} answered for it.`
+    : `${c.name}, a child with nobody to answer for them, was caught at ${misdeed}.`,
+  [c.id, ...parents.map((p) => p.id)], 0.3, { law, child: c.id, parents: parents.map((p) => p.id) });
+  return { detected: false, caseId: null };
+}
 
 /** The target of an in-person offence: around, and in the same district. */
 function markHere(world: World, c: Citizen, id: CitizenId): Citizen | ActionResult {
@@ -42,7 +74,7 @@ export function doSteal(world: World, c: Citizen, fromId: CitizenId): ActionResu
   const amount = Math.min(Math.max(0, Math.floor(t.wallet)), randInt(world, STEAL_MIN, STEAL_MAX));
   const got = success && amount > 0 && transfer(world, t.id, c.id, amount, 'theft', `${c.name} robbed ${t.name}`);
   const law: LawCode = got && amount >= GRAND_THEFT_THRESHOLD ? 'L08' : 'L04';
-  const r = commitOffence(world, c.id, law, { victimId: t.id, amount: got ? amount : 0, visibilityMod: got ? 0 : 0.2 });
+  const r = commitOffenceOrScold(world, c, law, { victimId: t.id, amount: got ? amount : 0, visibilityMod: got ? 0 : 0.2 });
   const seen = r.detected ? ' and the Watch saw it' : '';
   if (got) {
     if (r.detected || chance(world, t.skills.analysis / 100)) {
@@ -70,7 +102,7 @@ export function doScam(world: World, c: Citizen, targetId: CitizenId, amount: nu
   const success = chance(world, p);
   const amt = Math.min(Math.max(0, Math.floor(t.wallet)), requested);
   const got = success && amt > 0 && transfer(world, t.id, c.id, amt, 'scam', `${c.name} defrauded ${t.name}`);
-  const r = commitOffence(world, c.id, 'L07', { victimId: t.id, amount: got ? amt : 0, visibilityMod: got ? 0 : 0.1 });
+  const r = commitOffenceOrScold(world, c, 'L07', { victimId: t.id, amount: got ? amt : 0, visibilityMod: got ? 0 : 0.1 });
   if (r.detected) adjustBond(world, c.id, t.id, -30);
   if (got) {
     if (r.detected || chance(world, 0.7)) {
@@ -98,7 +130,7 @@ export function doHarass(world: World, c: Citizen, targetId: CitizenId): ActionR
   remember(world, c.id, 'crime', `You harassed ${t.name} in ${where}.`);
   emit(world, 'insult', `${c.name} harassed ${t.name} in ${where}.`, [c.id, t.id], 0.2);
   if (count >= HARASS_COUNT) {
-    const r = commitOffence(world, c.id, 'L05', { victimId: t.id });
+    const r = commitOffenceOrScold(world, c, 'L05', { victimId: t.id });
     return ok(`You harassed ${t.name} again.`, { offence: 'L05', detected: r.detected });
   }
   return ok(`You harassed ${t.name}.`);
@@ -120,7 +152,7 @@ export function doVandalize(world: World, c: Citizen, buildingId: BuildingId): A
   b.damage = Math.round(clamp(b.damage + (b.critical ? SABOTAGE_VANDALISM_DAMAGE : VANDALISM_DAMAGE), 0, 1) * 100) / 100;
   const state = b.damage >= 1 ? 'beyond use' : `${Math.round(b.damage * 100)}% damaged`;
   emit(world, 'system', `${b.name} was found ${state} by unknown hands.`, [], b.critical ? 0.7 : 0.4, { buildingId, damage: b.damage });
-  const r = commitOffence(world, c.id, law, { buildingId });
+  const r = commitOffenceOrScold(world, c, law, { buildingId });
   remember(world, c.id, 'crime', `You damaged ${b.name}${r.detected ? ' and the Watch saw it' : ''}.`);
   return ok(`You damaged ${b.name} (${state}).`, { offence: law, detected: r.detected });
 }
@@ -131,7 +163,7 @@ export function doEvadeTax(world: World, c: Citizen): ActionResult {
   if (!job) return fail('You have no wages to under-report.');
   world.counters[`evade:${c.id}`] = EVADE_SHIFTS;
   const dodged = Math.round(EVADE_SHIFTS * Math.max(world.government.minWage, job.wage) * world.government.incomeTax);
-  const r = commitOffence(world, c.id, 'L03', { amount: dodged });
+  const r = commitOffenceOrScold(world, c, 'L03', { amount: dodged });
   remember(world, c.id, 'crime', `You arranged to declare no income on your next ${EVADE_SHIFTS} shifts${r.detected ? '; the Treasury noticed' : ''}.`);
   return ok(`Your next ${EVADE_SHIFTS} shifts will be paid without tax.`, { offence: 'L03', detected: r.detected });
 }
@@ -144,7 +176,7 @@ export function doExtort(world: World, c: Citizen, targetId: CitizenId, amount: 
   if (amt <= 0) return fail('You must demand a positive amount.');
   const paid = t.wallet >= amt && t.personality.honesty * rand(world) < 0.5
     && transfer(world, t.id, c.id, amt, 'extortion', `${c.name} extorted ${t.name}`);
-  const r = commitOffence(world, c.id, 'L15', { victimId: t.id, amount: paid ? amt : 0 });
+  const r = commitOffenceOrScold(world, c, 'L15', { victimId: t.id, amount: paid ? amt : 0 });
   adjustBond(world, t.id, c.id, -40, false);
   remember(world, t.id, 'crime', paid
     ? `${nameTag(c)} extorted ${amt} ℓ from you${r.detected ? '; the Watch caught them' : ''}.`
@@ -162,7 +194,7 @@ export function doSabotage(world: World, c: Citizen, buildingId: BuildingId): Ac
   if (!b.critical) return fail(`${b.name} is not critical infrastructure; that would be vandalism.`);
   b.damage = 1;
   emit(world, 'system', `${b.name} has been sabotaged and lies in ruins; its output has stopped.`, [], 0.9, { buildingId });
-  const r = commitOffence(world, c.id, 'L13', { buildingId });
+  const r = commitOffenceOrScold(world, c, 'L13', { buildingId });
   remember(world, c.id, 'crime', `You sabotaged ${b.name}${r.detected ? ' and the Watch saw it' : ''}.`);
   return ok(`You sabotaged ${b.name}.`, { offence: 'L13', detected: r.detected });
 }

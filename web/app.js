@@ -148,6 +148,19 @@
       keys.map((k) => R.h('i', { class: k, style: `height:${Math.max(2, Math.round((p[k] || 0) * 14))}px` })));
   };
 
+  /** "Ondine Ashgrove" for a married citizen, "Ondine" for everyone else. */
+  R.displayName = function displayName(c) {
+    if (!c) return '';
+    return c.married && c.familyName ? `${c.name} ${c.familyName}` : c.name;
+  };
+
+  /** A pill for the citizens who are not simply adults. */
+  R.stagePill = function stagePill(stage) {
+    if (stage === 'child') return R.pill('child', 'accent');
+    if (stage === 'elder') return R.pill('elder', 'gold');
+    return null;
+  };
+
   R.nameLink = function nameLink(id, name) {
     if (!id) return R.h('span', { class: 'dim' }, '—');
     return R.h('a', {
@@ -316,7 +329,7 @@
 
   // ----------------------------------------------------------------- tabs
 
-  const TAB_ORDER = ['citizens', 'economy', 'government', 'court', 'bans', 'chronicle'];
+  const TAB_ORDER = ['citizens', 'society', 'economy', 'government', 'court', 'bans', 'chronicle'];
   R.tabs = {};
 
   /** def: { label, load(): Promise<data>, mount(root) (once), update(data, root) } */

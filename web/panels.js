@@ -8,11 +8,14 @@
   // ------------------------------------------------------------- citizens
 
   const CITIZEN_COLUMNS = [
-    { key: 'name', label: 'Name', sortable: true, render: (c) => R.h('span', null, R.h('b', null, c.name), ' ', R.brainBadge(c.brain)) },
+    { key: 'name', label: 'Name', sortable: true, cls: 'nowrap', render: (c) => R.h('span', null,
+      R.h('b', null, c.name), c.familyName ? R.h('span', { class: 'muted' }, ` ${c.familyName}`) : null,
+      ' ', R.stagePill(c.lifeStage), ' ', R.brainBadge(c.brain)) },
     { key: 'lineage', label: 'Lineage', sortable: true, cls: 'small muted' },
     { key: 'brain', label: 'Mind', sortable: true, cls: 'small', render: (c) => (c.brain === 'llm' ? 'Claude' : c.brain) },
     { key: 'job', label: 'Job', sortable: true, render: (c) => (c.job ? R.h('span', null, c.job, c.employer ? R.h('span', { class: 'muted small' }, ` · ${c.employer}`) : null) : c.business ? R.h('span', null, 'Owner ', R.h('span', { class: 'muted small' }, `· ${c.business}`)) : R.h('span', { class: 'dim' }, 'unemployed')) },
     { key: 'district', label: 'District', sortable: true, render: (c) => R.districtName(c.district) },
+    { key: 'partner', label: 'Partner', sortable: true, cls: 'small nowrap', render: (c) => (c.partnerId ? R.h('span', null, R.nameLink(c.partnerId, c.partner), c.married ? R.h('span', null, ' ', R.pill('married', 'gold')) : null) : null) },
     { key: 'wallet', label: 'Wallet', sortable: true, cls: 'num', render: (c) => R.lumens(c.wallet) },
     { key: 'mood', label: 'Mood', sortable: true, render: (c) => R.miniBar(c.mood, 100, c.mood < 30 ? 'crit' : c.mood < 50 ? 'warn' : '') },
     { key: 'reputation', label: 'Reputation', sortable: true, render: (c) => R.miniBar(c.reputation, 100, 'gold') },
@@ -45,7 +48,7 @@
         if (f.standing !== 'all' && c.standing !== f.standing) return false;
         if (f.brain !== 'all' && c.brain !== f.brain) return false;
         if (f.q) {
-          const hay = `${c.name} ${c.job || ''} ${c.employer || ''} ${c.lineage} ${c.district} ${c.office || ''} ${c.id}`.toLowerCase();
+          const hay = `${c.name} ${c.familyName || ''} ${c.job || ''} ${c.employer || ''} ${c.lineage} ${c.district} ${c.office || ''} ${c.partner || ''} ${c.id}`.toLowerCase();
           if (!hay.includes(f.q)) return false;
         }
         return true;

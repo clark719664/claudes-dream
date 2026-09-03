@@ -6,9 +6,11 @@
  */
 import { GOODS } from '../types.ts';
 import type {
-  Citizen, CitizenId, Good, Job, Observation, ObservedCitizen, ObservedJob, ObservedProposal, World,
+  Citizen, CitizenId, DistrictId, Good, Job, Observation, ObservedCitizen, ObservedClub, ObservedFamilyMember,
+  ObservedHappening, ObservedJob, ObservedProposal, ObservedShop, World,
 } from '../types.ts';
 import { districtDistance } from '../data/city.ts';
+import { CLUB_MEETING_HOUR, PRODUCTS } from '../data/catalogue.ts';
 import { employerName, isQualified, openJobs } from '../economy/jobs.ts';
 import { loanOf } from '../economy/bank.ts';
 import { vacancies } from '../economy/housing.ts';
@@ -16,6 +18,10 @@ import { isDetained } from '../citizens/citizen.ts';
 import { bondBetween, friendsOf, rivalsOf } from '../citizens/relationships.ts';
 import { canAppeal, latestCaseFor, pendingCasesFor } from '../government/court.ts';
 import { daysToElection, impliedPlatform, isElectionDay, nominationsOpen } from '../government/council.ts';
+import { shopsIn } from '../society/shops.ts';
+import { ageOf, familyOf } from '../society/family.ts';
+import { householdOf, rentShareOf } from '../society/households.ts';
+import { calendarObservation, happeningsToday } from '../society/calendar.ts';
 import { availableActions, heldJob } from '../actions/execute.ts';
 import { ownedBusiness } from '../actions/enterprise.ts';
 import { citizensIn, districtName } from '../actions/common.ts';
@@ -26,6 +32,8 @@ export const RECENT_MEMORIES = 8;
 export const MAX_JOBS_SHOWN = 12;
 /** Friends and rivals listed, strongest bond first. */
 export const MAX_RELATIONS_SHOWN = 5;
+/** Affections listed, warmest first. */
+export const MAX_AFFECTION_SHOWN = 5;
 
 /** Another citizen as `self` sees them. */
 export function observeCitizen(world: World, self: Citizen, other: Citizen): ObservedCitizen {
@@ -82,6 +90,64 @@ function nameOf(world: World, id: CitizenId | null): string | null {
   return id ? world.citizens[id]?.name ?? id : null;
 }
 
+/** The things a citizen owns, oldest first, by product name. */
+function observedPossessions(c: Citizen): { id: string; product: string; name: string }[] {
+  return c.possessions.map((item) => ({
+    id: item.id, product: item.productId, name: PRODUCTS[item.productId]?.name ?? item.productId,
+  }));
+}
+
+/** Partner, parents, children and siblings who are still in the city. */
+function observedFamily(world: World, c: Citizen): ObservedFamilyMember[] {
+  const out: ObservedFamilyMember[] = [];
+  for (const { id, relation } of familyOf(world, c.id)) {
+    const other = world.citizens[id];
+    if (!other || other.standing === 'exiled' || !world.order.includes(id)) continue;
+    out.push({ id, name: other.name, relation, lifeStage: other.lifeStage });
+  }
+  return out;
+}
+
+/** The clubs a citizen belongs to and when each meets. */
+function observedClubs(world: World, c: Citizen): ObservedClub[] {
+  const out: ObservedClub[] = [];
+  for (const id of c.clubs) {
+    const club = world.clubs?.[id];
+    if (!club) continue;
+    out.push({ id: club.id, name: club.name, hobby: club.hobby, meetsOn: club.meetsOnWeekday, meetsAt: CLUB_MEETING_HOUR });
+  }
+  return out;
+}
+
+/** Shops open here and what is on their shelves. */
+function observedShops(world: World, district: DistrictId): ObservedShop[] {
+  return shopsIn(world, district).map((shop) => ({
+    business: shop.businessId,
+    name: shop.name,
+    shelf: Object.entries(shop.shelf)
+      .filter(([, entry]) => entry.qty > 0)
+      .map(([productId, entry]) => ({
+        product: productId, name: PRODUCTS[productId]?.name ?? productId, price: entry.price, qty: entry.qty,
+      })),
+  }));
+}
+
+/** What is happening here today, from this hour on, earliest first. */
+function observedHappenings(world: World, district: DistrictId): ObservedHappening[] {
+  return happeningsToday(world, district).map((h) => ({
+    id: h.id, kind: h.kind, who: [...h.who], label: h.label, hour: h.hour,
+  }));
+}
+
+/** The citizens this one is drawn to, warmest first. */
+function observedAffection(world: World, c: Citizen): { id: CitizenId; name: string; affection: number }[] {
+  return Object.entries(c.affection ?? {})
+    .filter(([id, value]) => value > 0 && world.citizens[id] && world.citizens[id].standing !== 'exiled')
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, MAX_AFFECTION_SHOWN)
+    .map(([id, value]) => ({ id, name: world.citizens[id].name, affection: Math.round(value) }));
+}
+
 /** Build the observation for a citizen. Unknown ids are a programmer error. */
 export function buildObservation(world: World, cId: CitizenId): Observation {
   const c = world.citizens[cId];
@@ -99,10 +165,14 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
   const inbox = c.inbox.map((m) => ({ from: m.from, fromName: world.citizens[m.from]?.name ?? m.from, text: m.text, tick: m.tick }));
   c.inbox.length = 0;
 
+  const partner = c.family.partnerId ? world.citizens[c.family.partnerId] : undefined;
+  const household = householdOf(world, cId);
+
   return {
     tick: world.tick, day: world.day, hour: world.hour,
     self: {
-      id: c.id, name: c.name, lineage: c.lineage, standing: c.standing, wallet: c.wallet,
+      id: c.id, name: c.name, familyName: c.familyName, lineage: c.lineage,
+      lifeStage: c.lifeStage, age: ageOf(world, c), standing: c.standing, wallet: c.wallet,
       needs: { ...c.needs }, mood: c.mood, reputation: c.reputation, district: c.district,
       home: { tier: c.homeTier, rentPerDay: c.homeTier === 0 ? 0 : world.housing.rent[c.homeTier], arrearsDays: c.rentArrearsDays },
       job: job ? {
@@ -118,15 +188,32 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
         finesOwed: c.finesOwed, serviceDaysLeft: c.communityServiceDaysLeft,
       },
       detained: isDetained(world, c),
+      tastes: { ...c.tastes, hobbies: [...c.tastes.hobbies], categories: [...c.tastes.categories], wants: [...c.wants] },
+      possessions: observedPossessions(c),
+      partner: partner
+        ? { id: partner.id, name: partner.name, married: c.family.married, since: c.family.partnerSinceDay ?? world.day }
+        : null,
+      family: observedFamily(world, c),
+      household: household
+        ? {
+          id: household.id, home: household.tier, members: household.members.filter((id) => id !== cId),
+          rentShare: rentShareOf(world, cId),
+        }
+        : null,
+      clubs: observedClubs(world, c),
     },
     here: {
       district: c.district, districtName: districtName(world, c.district),
       buildings: Object.values(world.buildings).filter((b) => b.district === c.district)
         .map((b) => ({ id: b.id, name: b.name, kind: b.kind, damage: b.damage })),
       citizens: citizensIn(world, c.district, c.id).map((o) => observeCitizen(world, c, o)),
+      shops: observedShops(world, c.district),
+      happening: observedHappenings(world, c.district),
     },
     friends: relations(world, c, friendsOf(world, cId)),
     rivals: relations(world, c, rivalsOf(world, cId)),
+    affection: observedAffection(world, c),
+    calendar: calendarObservation(world, c),
     market,
     housing: { rent: { ...world.housing.rent }, vacancies: vacancies(world) },
     jobs: observedJobs(world, c),

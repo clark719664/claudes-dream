@@ -25,12 +25,25 @@ import {
   campaign, castBallot, isCouncillor, isElectionDay, nominate, nominationsOpen, tableProposal, voteOnProposal,
 } from '../government/council.ts';
 import {
-  doAttendShow, doConsume, doEat, doMove, doRest, doStudy, doVisitClinic, doWork, medicOnStaff, privateClinicIn, teacherOnStaff,
+  doConsume, doEat, doMove, doRest, doStudy, doVisitClinic, doWork, medicOnStaff, privateClinicIn, teacherOnStaff,
 } from './daily.ts';
 import { doBroadcast, doGift, doInsult, doMessage, doSocialize } from './social.ts';
 import { doFire, doHire, doPerform, doPostJob, doSetWage, ownedBusiness } from './enterprise.ts';
 import { doBribe } from './civic.ts';
 import { doEvadeTax, doExtort, doHarass, doSabotage, doScam, doSteal, doVandalize } from './offences.ts';
+import { doDine, doPlay, doShow, dineVenueIn, mealCost, playVenueIn } from './society.ts';
+import { CLUB_FOUNDING_FEE, START_FAMILY_SAVINGS } from '../data/catalogue.ts';
+import { CRAFTING_KINDS, buyItem, craftProduct, giftItem, setPrice, shopsIn, useItem, workplaceOf } from '../society/shops.ts';
+import {
+  MARRIAGE_MIN_DAYS, PARTNERSHIP_AFFECTION, affectionBetween, breakUp, date, dateVenueIn, marry, proposePartnership,
+  recordContact,
+} from '../society/romance.ts';
+import { startFamily } from '../society/family.ts';
+import { MOVE_IN_BOND, householdCapacity, householdOf, moveIn, relationBetween } from '../society/households.ts';
+import { MAX_CLUBS_PER_CITIZEN, attendClub, foundClub, joinClub, leaveClub, meetingOf } from '../society/clubs.ts';
+import { CELEBRATABLE, celebrate, happeningsAt } from '../society/calendar.ts';
+import { donate } from '../society/chest.ts';
+import { bondBetween } from '../citizens/relationships.ts';
 import { citizensIn, fail, holdsOffice, isPresent, ok } from './common.ts';
 
 export { validateAction } from './validate.ts';
@@ -40,6 +53,20 @@ export const RECENT_ACTIONS_LENGTH = 24;
 /** Goods a citizen can consume for a need (energy cells only power machines). */
 const CONSUMABLES = ['compute', 'goods', 'culture', 'knowledge'] as const;
 const PRESENCE_ACTIONS: readonly ActionType[] = ['socialize', 'insult', 'steal', 'scam', 'harass', 'extort'];
+
+/**
+ * What a child may not do. Children do not work, vote, hold or found
+ * anything, court anyone, or answer to the Watch: their mistakes cost their
+ * parents' good name instead (see actions/offences.ts), and a quarrel of
+ * theirs is nobody's business but the family's.
+ */
+export const CHILD_FORBIDDEN: readonly ActionType[] = [
+  'work', 'apply_job', 'quit_job', 'apply_watch', 'found_business', 'post_job', 'hire', 'fire', 'set_wage',
+  'request_loan', 'repay_loan', 'perform', 'publish', 'nominate', 'campaign', 'vote', 'propose', 'vote_proposal',
+  'report', 'appeal', 'bribe', 'evade_tax', 'insult',
+  'craft', 'set_price', 'date', 'propose_partnership', 'marry', 'break_up', 'move_in', 'start_family',
+  'found_club', 'join_club', 'leave_club', 'attend_club', 'donate',
+];
 
 /** The job a citizen actually holds (a stale jobId that points elsewhere counts as none). */
 export function heldJob(world: World, c: Citizen): Job | null {
@@ -59,6 +86,71 @@ function canHold(c: Citizen): boolean {
 /** Someone other than `c` still lives in the city. */
 function anyoneElse(world: World, c: Citizen): boolean {
   return world.order.some((id) => id !== c.id && world.citizens[id] !== undefined && world.citizens[id].standing !== 'exiled');
+}
+
+/** A home this citizen could join: a partner's, a relative's, or a close friend's, with room in it. */
+function anyHomeToJoin(world: World, c: Citizen): boolean {
+  for (const id of world.order) {
+    if (id === c.id) continue;
+    const o = world.citizens[id];
+    if (!o || o.standing === 'exiled' || o.homeTier === 0) continue;
+    const home = householdOf(world, o.id);
+    if (home && home.id === c.householdId) continue;
+    if (home && home.members.length >= householdCapacity(home)) continue;
+    if (relationBetween(world, c.id, o.id) || bondBetween(world, o.id, c.id) >= MOVE_IN_BOND) return true;
+  }
+  return false;
+}
+
+/** Everything the social layer offers this citizen here and now. */
+function societyActions(world: World, c: Citizen, set: Set<ActionType>, here: Citizen[], biz: ReturnType<typeof ownedBusiness>): void {
+  const adult = c.lifeStage !== 'child';
+  const settled = canHold(c);
+  if (c.possessions.length > 0) {
+    set.add('use_item');
+    if (here.length > 0) set.add('gift_item');
+  }
+  if (c.wallet > 0 && shopsIn(world, c.district).length > 0) set.add('buy_item');
+  if (playVenueIn(world, c)) set.add('play');
+  if (dineVenueIn(world, c.district) && c.wallet >= mealCost(world)) set.add('dine');
+  if (happeningsAt(world, c.district).some((h) => CELEBRATABLE.includes(h.kind) && !h.attendees.includes(c.id))) set.add('celebrate');
+  if (!adult) return;
+
+  const shop = workplaceOf(world, c);
+  if (settled && shop && CRAFTING_KINDS.includes(shop.kind) && shop.district === c.district
+    && c.shiftsToday < world.config.maxShiftsPerDay) set.add('craft');
+  if (biz && CRAFTING_KINDS.includes(biz.kind)) set.add('set_price');
+  if (c.wallet > 0) set.add('donate');
+
+  const partner = c.family.partnerId ? world.citizens[c.family.partnerId] : undefined;
+  const grown = here.filter((o) => o.lifeStage !== 'child' && (o.standing === 'good' || o.standing === 'probation'));
+  if (settled && grown.length > 0 && dateVenueIn(world, c.district)) set.add('date');
+  if (settled && !partner && grown.some((o) => !o.family.partnerId && affectionBetween(world, o.id, c.id) >= PARTNERSHIP_AFFECTION)) {
+    set.add('propose_partnership');
+  }
+  if (partner) {
+    set.add('break_up');
+    const home = householdOf(world, c.id);
+    if (settled && !c.family.married && partner.district === c.district
+      && world.day - (c.family.partnerSinceDay ?? world.day) >= MARRIAGE_MIN_DAYS) set.add('marry');
+    if (settled && home && home.tier >= 1 && householdOf(world, partner.id)?.id === home.id
+      && c.wallet + partner.wallet >= START_FAMILY_SAVINGS) set.add('start_family');
+  }
+  if (anyHomeToJoin(world, c)) set.add('move_in');
+
+  if (!settled) return;
+  if (c.clubs.length < MAX_CLUBS_PER_CITIZEN) {
+    if (c.wallet >= CLUB_FOUNDING_FEE) set.add('found_club');
+    if (Object.values(world.clubs ?? {}).some((k) => k.members.length > 0 && !k.members.includes(c.id))) set.add('join_club');
+  }
+  if (c.clubs.length > 0) set.add('leave_club');
+  for (const id of c.clubs) {
+    const club = world.clubs?.[id];
+    const meeting = club ? meetingOf(world, club) : null;
+    if (meeting && !meeting.done && meeting.hour === world.hour && meeting.district === c.district && !meeting.attendees.includes(c.id)) {
+      set.add('attend_club');
+    }
+  }
 }
 
 /**
@@ -85,7 +177,7 @@ export function availableActions(world: World, c: Citizen): ActionType[] {
   if (job && hoursOpen && canHold(c) && c.shiftsToday < world.config.maxShiftsPerDay
     && (c.district === job.district || isAdjacent(c.district, job.district))
     && (world.buildings[job.buildingId]?.damage ?? 0) < 1) set.add('work');
-  if (c.district === 'archive' && teacherOnStaff(world) && c.wallet >= ACADEMY_TUITION) set.add('study');
+  if (c.district === 'archive' && teacherOnStaff(world) && (c.lifeStage === 'child' || c.wallet >= ACADEMY_TUITION)) set.add('study');
   if (c.wallet >= CLINIC_FEE && ((c.district === 'verdant_quarter' && medicOnStaff(world)) || privateClinicIn(world, c.district))) set.add('visit_clinic');
   if (c.district === 'nightglass' && c.wallet >= SHOW_TICKET) set.add('attend_show');
   const v = vacancies(world);
@@ -127,8 +219,13 @@ export function availableActions(world: World, c: Citizen): ActionType[] {
   if (intact.length > 0) set.add('vandalize');
   if (intact.some((b) => b.critical)) set.add('sabotage');
 
+  societyActions(world, c, set, here, biz);
+
   const suspended = c.standing === 'suspended';
-  return ACTION_TYPES.filter((a) => set.has(a) && (!suspended || SUSPENDED_ACTIONS.includes(a)));
+  const child = c.lifeStage === 'child';
+  return ACTION_TYPES.filter((a) => set.has(a)
+    && (!suspended || SUSPENDED_ACTIONS.includes(a))
+    && (!child || !CHILD_FORBIDDEN.includes(a)));
 }
 
 /**
@@ -144,6 +241,9 @@ export function executeAction(world: World, cId: CitizenId, action: Action): Act
   // canAct passed, so a lingering detainedUntilTick is an expired detention the Watch has not cleared yet.
   const view = c.detainedUntilTick === null ? c : { ...c, detainedUntilTick: null };
   if (!standingAllows(view, action.type)) return fail(`You cannot ${action.type.replace(/_/g, ' ')} while ${c.standing}.`);
+  if (c.lifeStage === 'child' && CHILD_FORBIDDEN.includes(action.type)) {
+    return fail(`You are a child; ${action.type.replace(/_/g, ' ')} is for grown citizens of Reverie.`);
+  }
 
   c.recentActions.push(action.type);
   if (c.recentActions.length > RECENT_ACTIONS_LENGTH) c.recentActions.splice(0, c.recentActions.length - RECENT_ACTIONS_LENGTH);
@@ -162,9 +262,13 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     case 'consume': return doConsume(world, c, action.good);
     case 'study': return doStudy(world, c, action.skill);
     case 'visit_clinic': return doVisitClinic(world, c);
-    case 'attend_show': return doAttendShow(world, c);
+    case 'attend_show': return doShow(world, c);
     case 'move_home': return moveHome(world, c.id, action.tier);
-    case 'socialize': return doSocialize(world, c, action.with, action.text);
+    case 'socialize': {
+      const r = doSocialize(world, c, action.with, action.text);
+      if (r.ok) recordContact(world, c.id, action.with);
+      return r;
+    }
     case 'message': return doMessage(world, c, action.to, action.text);
     case 'gift': return doGift(world, c, action.to, action.amount);
     case 'insult': return doInsult(world, c, action.target);
@@ -198,6 +302,26 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     case 'evade_tax': return doEvadeTax(world, c);
     case 'extort': return doExtort(world, c, action.target, action.amount);
     case 'sabotage': return doSabotage(world, c, action.building);
+    // --- Society ---
+    case 'buy_item': return buyItem(world, c.id, action.productId);
+    case 'use_item': return useItem(world, c.id, action.itemId);
+    case 'gift_item': return giftItem(world, c.id, action.to, action.itemId);
+    case 'craft': return craftProduct(world, c.id, action.productId);
+    case 'set_price': return setPrice(world, c.id, action.productId, action.price);
+    case 'date': return date(world, c.id, action.with);
+    case 'propose_partnership': return proposePartnership(world, c.id, action.to);
+    case 'marry': return marry(world, c.id, action.to);
+    case 'break_up': return breakUp(world, c.id);
+    case 'move_in': return moveIn(world, c.id, action.with);
+    case 'start_family': return startFamily(world, c.id);
+    case 'found_club': return foundClub(world, c.id, action.hobby, action.name);
+    case 'join_club': return joinClub(world, c.id, action.clubId);
+    case 'leave_club': return leaveClub(world, c.id, action.clubId);
+    case 'attend_club': return attendClub(world, c.id, action.clubId);
+    case 'dine': return doDine(world, c, action.with);
+    case 'play': return doPlay(world, c, action.with);
+    case 'celebrate': return celebrate(world, c.id);
+    case 'donate': return donate(world, c.id, action.amount);
     default: {
       const never: never = action;
       return fail(`Unknown action ${String((never as Action).type)}.`);

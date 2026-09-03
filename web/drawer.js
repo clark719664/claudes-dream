@@ -1,6 +1,7 @@
 /*
- * Reverie dashboard — the citizen drawer: needs, skills, personality, bonds,
- * record, cases, memory and lifetime statistics for one citizen.
+ * Reverie dashboard — the citizen drawer: family and home, needs, skills,
+ * personality, tastes and possessions, clubs, bonds, record, cases, memory
+ * and lifetime statistics for one citizen.
  */
 (function () {
   'use strict';
@@ -14,6 +15,68 @@
   let body = null;
   let backdrop = null;
   let currentId = null;
+
+  /** Citizens are known by their given name; the family name is always shown here. */
+  function fullName(p) {
+    return p && p.familyName ? `${p.name} ${p.familyName}` : (p ? p.name : '—');
+  }
+
+  function personLink(p) {
+    return R.nameLink(p.id, fullName(p));
+  }
+
+  /** Partner, relatives and the household they share. */
+  function familySection(c) {
+    const partner = c.partner;
+    const fam = c.family || [];
+    const home = c.household;
+    const kv = R.h('dl', { class: 'kv' },
+      R.h('dt', null, partner && partner.married ? 'Spouse' : 'Partner'),
+      R.h('dd', null, partner
+        ? R.h('span', null, personLink(partner),
+          R.h('span', { class: 'muted small' }, ` · ${partner.married ? 'married' : 'partners'} since day ${partner.since ?? 0} · affection ${partner.affection}`))
+        : R.h('span', { class: 'dim' }, 'unattached')),
+      R.h('dt', null, 'Household'),
+      R.h('dd', null, home
+        ? R.h('span', null, `${home.tierName} · ${(home.members || []).length} of ${home.capacity} at home`,
+          R.h('span', { class: 'muted small' }, ` · ${R.lumens(home.rentShare)}/day of the rent`))
+        : R.h('span', { class: 'dim' }, 'no household')),
+      c.guardian ? R.h('dt', null, 'Guardian') : null,
+      c.guardian ? R.h('dd', null, personLink(c.guardian)) : null);
+    const list = fam.length
+      ? R.h('ul', { class: 'list' }, fam.map((f) => R.h('li', { class: 'kin' },
+        R.h('span', null, personLink(f), ' ', R.stagePill(f.lifeStage)),
+        R.h('span', { class: 'spacer' }),
+        R.h('span', { class: 'muted small' }, f.relation),
+        f.standing === 'exiled' ? R.pill('exiled', 'exiled') : f.present === false ? R.pill('away', 'neutral') : null)))
+      : R.h('div', { class: 'dim small' }, 'No family on the record.');
+    return [kv, list];
+  }
+
+  /** Hobbies, what they own and what they would like to own. */
+  function tastesSection(c) {
+    const t = c.tastes || {};
+    const items = (c.possessions || []).map((p) => R.h('span', { class: 'chip', title: `${R.titleCase(p.category)}${p.hobby ? ` · ${R.titleCase(p.hobby)}` : ''} · bought day ${p.acquiredDay}` }, p.name));
+    const wants = (c.wants || []).map((w) => R.h('span', { class: 'chip want', title: `about ${R.lumens(w.basePrice)}` }, w.name));
+    return [
+      R.h('dl', { class: 'kv' },
+        R.h('dt', null, 'Hobbies'), R.h('dd', null, (t.hobbies || []).map(R.titleCase).join(', ') || '—'),
+        R.h('dt', null, 'Favourites'), R.h('dd', null, `${R.districtName(t.favouriteDistrict)} · ${R.titleCase(t.favouriteGood || '')}`)),
+      R.h('div', { class: 'sub-label muted small' }, `Possessions (${items.length})`),
+      items.length ? R.h('div', { class: 'chips' }, items) : R.h('div', { class: 'dim small' }, 'Owns nothing yet.'),
+      R.h('div', { class: 'sub-label muted small' }, 'Would like'),
+      wants.length ? R.h('div', { class: 'chips' }, wants) : R.h('div', { class: 'dim small' }, 'Wants for nothing.'),
+    ];
+  }
+
+  function clubsSection(c) {
+    const clubs = c.clubs || [];
+    if (!clubs.length) return R.h('div', { class: 'dim small' }, 'Belongs to no club.');
+    return R.h('ul', { class: 'list' }, clubs.map((k) => R.h('li', null,
+      R.h('span', null, R.h('b', null, k.name), ' ', R.pill(k.hobbyName, 'accent'), k.isConvenor ? R.pill('convenor', 'gold') : null),
+      R.h('span', { class: 'spacer' }),
+      R.h('span', { class: 'muted small' }, `${k.meetsOnName}s ${R.pad2(k.meetsAtHour)}:00 · ${k.venue ? k.venue.name : ''} · ${k.members} members`))));
+  }
 
   function stat(label, value) {
     return R.h('div', { class: 'stat' }, R.h('div', { class: 'label' }, label), R.h('div', { class: 'value' }, value));
@@ -53,15 +116,17 @@
     const job = c.job;
     const biz = c.business;
     const header = R.h('div', null,
-      R.h('h2', null, c.name, ' ', R.brainBadge(c.brain)),
+      R.h('h2', null, fullName(c), ' ', R.brainBadge(c.brain)),
       R.h('div', { class: 'subtitle' },
         R.standingPill(c.standing),
+        R.stagePill(c.lifeStage),
         c.office ? R.pill(R.titleCase(c.office), 'gold') : null,
         c.detained ? R.pill('detained', 'neutral') : null,
         !c.present && c.standing !== 'exiled' ? R.pill('left the city', 'neutral') : null,
         R.h('span', { class: 'mono' }, c.id),
         R.h('span', null, `· ${c.lineage}`),
         R.h('span', null, `· arrived day ${c.arrivedDay}`),
+        R.h('span', null, `· ${c.lifeStage === 'child' ? 'born' : 'here'} ${c.age} day${c.age === 1 ? '' : 's'}`),
         c.hasApiKey ? R.h('span', null, '· API-linked') : null));
 
     const stats = R.h('div', { class: 'stats' },
@@ -89,10 +154,13 @@
       header,
       stats,
       R.h('h3', null, 'Work and home'), work,
+      R.h('h3', null, 'Family'), familySection(c),
       R.h('h3', null, 'Needs'), NEEDS.map((n) => R.barRow(R.titleCase(n), c.needs[n], 100, c.needs[n] < 20 ? 'crit' : c.needs[n] < 40 ? 'warn' : '')),
       R.h('h3', null, 'Skills'), SKILLS.map((s) => R.barRow(R.titleCase(s), c.skills[s], 100, 'gold')),
       R.h('h3', null, 'Personality'), TRAITS.map((t) => R.barRow(R.titleCase(t), c.personality[t] * 100, 100, '')),
       R.h('h3', null, 'Inventory'), inventory,
+      R.h('h3', null, 'Tastes and possessions'), tastesSection(c),
+      R.h('h3', null, 'Clubs'), clubsSection(c),
       R.h('div', { class: 'grid-2', style: 'grid-template-columns:1fr 1fr' },
         R.h('div', null, R.h('h3', null, 'Friends'), bondList(c.friends, true)),
         R.h('div', null, R.h('h3', null, 'Rivals'), bondList(c.rivals, false))),

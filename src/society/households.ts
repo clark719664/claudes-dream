@@ -251,6 +251,28 @@ export function joinHousehold(world: World, cId: CitizenId, hostId: CitizenId): 
 }
 
 /**
+ * A newborn takes its place under its parents' roof. Capacity limits who may
+ * *move in*, not who is born: a cot fits where a lodger would not, so this is
+ * the one way a household may hold more than its tier allows (society/birth).
+ * Returns the household, or null when the parent has no home to offer.
+ */
+export function houseNewborn(world: World, childId: CitizenId, parentId: CitizenId): Household | null {
+  const child = world.citizens[childId];
+  if (!child || childId === parentId || !world.citizens[parentId]) return null;
+  const h = householdOf(world, parentId);
+  if (!h || !isPaidTier(h.tier)) return null;
+  if (h.members.includes(childId)) return h;
+  const arrears = householdArrears(world, h);
+  if (householdOf(world, childId)) leaveHousehold(world, childId);
+  else if (isPaidTier(child.homeTier)) releaseUnit(world, child.homeTier);
+  child.householdId = h.id;
+  h.members.push(childId);
+  child.homeTier = h.tier;
+  child.rentArrearsDays = arrears;
+  return h;
+}
+
+/**
  * The move_in action: join the household of a partner, relative or close
  * friend (their bond toward you at least MOVE_IN_BOND) if there is room.
  */

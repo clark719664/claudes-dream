@@ -23,6 +23,8 @@ export const CULTURE_SOCIAL = 25;
 export const KNOWLEDGE_SKILL = 2;
 export const STUDY_SKILL = 2;
 export const STUDY_PURPOSE = 5;
+/** Children learn faster than grown citizens; school is their whole day. */
+export const CHILD_STUDY_BONUS = 1;
 export const CLINIC_RESTORE = 30;
 export const SHOW_SOCIAL = 25;
 
@@ -137,20 +139,26 @@ export function doConsume(world: World, c: Citizen, good: Good): ActionResult {
   }
 }
 
-/** A lesson at the Academy: tuition to the Treasury, +2 skill (+1 more with a volume of knowledge), purpose. */
+/**
+ * A lesson at the Academy: tuition to the Treasury, +2 skill (+1 more with a
+ * volume of knowledge), purpose. The city teaches its children for nothing —
+ * school is a child's whole working day.
+ */
 export function doStudy(world: World, c: Citizen, skill: Skill): ActionResult {
   if (!SKILLS.includes(skill)) return fail('There is no such skill.');
   if (c.district !== 'archive') return fail('The Academy is in the Archive; go there to study.');
   if ((world.buildings.academy?.damage ?? 0) >= 1) return fail('The Academy is in ruins; no lessons until it is repaired.');
   if (!teacherOnStaff(world)) return fail('The Academy has no teacher at present; nobody can give lessons.');
-  if (c.wallet < ACADEMY_TUITION) return fail(`A lesson costs ${ACADEMY_TUITION} ℓ; you have ${c.wallet} ℓ.`);
-  if (!transfer(world, c.id, 'treasury', ACADEMY_TUITION, 'tuition', `lesson in ${skill}`)) return fail('The tuition could not be paid.');
+  const tuition = c.lifeStage === 'child' ? 0 : ACADEMY_TUITION;
+  if (c.wallet < tuition) return fail(`A lesson costs ${tuition} ℓ; you have ${c.wallet} ℓ.`);
+  if (tuition > 0 && !transfer(world, c.id, 'treasury', tuition, 'tuition', `lesson in ${skill}`)) return fail('The tuition could not be paid.');
   let gain = STUDY_SKILL;
   if (c.inventory.knowledge > 0) { c.inventory.knowledge -= 1; gain += 1; }
+  if (c.lifeStage === 'child') gain += CHILD_STUDY_BONUS;
   c.skills[skill] = clamp(c.skills[skill] + gain, 0, 100);
   c.needs.purpose = clamp(c.needs.purpose + STUDY_PURPOSE, 0, 100);
   remember(world, c.id, 'work', `You took a lesson in ${skill} at the Academy (${skill} is now ${Math.round(c.skills[skill])}).`);
-  return ok(`You studied ${skill} (+${gain}, now ${Math.round(c.skills[skill])}) for ${ACADEMY_TUITION} ℓ.`);
+  return ok(`You studied ${skill} (+${gain}, now ${Math.round(c.skills[skill])})${tuition > 0 ? ` for ${tuition} ℓ` : ', free as every child of the city'}.`);
 }
 
 /** Treatment at the Restoration Ward (fee to the Treasury) or a private clinic (fee to the business). */

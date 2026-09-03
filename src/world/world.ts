@@ -18,6 +18,8 @@ import type { Action, Brain, BrainKind, Citizen, CitizenId, DistrictId, Loan, Ob
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { emptyWorld } from './scaffold.ts';
+import { FAMILY_NAMES } from '../data/catalogue.ts';
+import { assignTastes } from '../society/tastes.ts';
 import { emit, remember } from '../sim/events.ts';
 import { auditMoneySupply, dailyTreasuryRollover, formatLumens, payDividend, paySalaries } from '../economy/treasury.ts';
 import { dailyMarket, tickMarket } from '../economy/market.ts';
@@ -32,6 +34,13 @@ import { dailyWatch, tickWatch } from '../government/watch.ts';
 import { dailyJustice, fileCharge, holdCourt } from '../government/court.ts';
 import { dailyStandings } from '../government/registry.ts';
 import { appointJudges, councilSession, dailyGovernment, holdElection, isElectionDay, openNominations } from '../government/council.ts';
+import { refreshWantsDaily } from '../society/tastes.ts';
+import { dailyPossessions, initEmporium, restockEmporium } from '../society/shops.ts';
+import { dailyAffection } from '../society/romance.ts';
+import { dailyBirthdays, dailyLifeStages, dailyUpkeep, familyBondFloor } from '../society/family.ts';
+import { dailyClubs, scheduleMeetings } from '../society/clubs.ts';
+import { scheduleFestivals, tickHappenings } from '../society/calendar.ts';
+import { dailyChest } from '../society/chest.ts';
 import { executeAction } from '../actions/execute.ts';
 import { buildObservation } from '../brains/observe.ts';
 import { reflexBrain } from '../brains/reflex.ts';
@@ -140,6 +149,27 @@ function repairBuildings(world: World): void {
   }
 }
 
+/**
+ * The social layer's morning: what people want and what the shops hold, the
+ * night's affections, growing up and growing old, the keep of children, the
+ * bonds of family, the clubs and their meetings, the festivals of the day,
+ * and the Community Chest's stipends.
+ */
+function dailySociety(world: World): void {
+  guard(world, 'refreshWantsDaily', () => refreshWantsDaily(world));
+  guard(world, 'restockEmporium', () => restockEmporium(world));
+  guard(world, 'dailyPossessions', () => dailyPossessions(world));
+  guard(world, 'dailyAffection', () => dailyAffection(world));
+  guard(world, 'dailyLifeStages', () => dailyLifeStages(world));
+  guard(world, 'dailyUpkeep', () => dailyUpkeep(world));
+  guard(world, 'dailyBirthdays', () => dailyBirthdays(world));
+  guard(world, 'familyBondFloor', () => familyBondFloor(world));
+  guard(world, 'dailyClubs', () => dailyClubs(world));
+  guard(world, 'scheduleMeetings', () => scheduleMeetings(world));
+  guard(world, 'scheduleFestivals', () => scheduleFestivals(world));
+  guard(world, 'dailyChest', () => dailyChest(world));
+}
+
 /** Hour 0: the daily passes in contract order, the Treasury's report, the morning edition, the audit and the statistics. */
 function dailyRollover(world: World): void {
   guard(world, 'dailyCitizens', () => dailyCitizens(world));
@@ -155,6 +185,7 @@ function dailyRollover(world: World): void {
   guard(world, 'dailyGovernment', () => dailyGovernment(world));
   guard(world, 'dailyWatch', () => dailyWatch(world));
   guard(world, 'dailyMarket', () => dailyMarket(world));
+  dailySociety(world);
   guard(world, 'repairBuildings', () => repairBuildings(world));
   const report = guard(world, 'dailyTreasuryRollover', () => dailyTreasuryRollover(world)) ?? 'Treasury: no report today.';
   guard(world, 'printMorningEdition', () => printMorningEdition(world, report));
@@ -224,6 +255,7 @@ export async function stepTick(world: World, brains: BrainRegistry): Promise<voi
   guard(world, 'tickMarket', () => tickMarket(world));
   guard(world, 'tickWatch', () => tickWatch(world));
   guard(world, 'hourlyBusinesses', () => hourlyBusinesses(world));
+  guard(world, 'tickHappenings', () => tickHappenings(world));
 }
 
 export async function runTicks(world: World, n: number, brains: BrainRegistry): Promise<void> {
@@ -246,6 +278,35 @@ export function saveWorld(world: World, path: string): void {
   renameSync(tmp, path);
 }
 
+/**
+ * A world saved before the social layer existed has no households, clubs,
+ * Emporium or Community Chest, and its citizens no family, tastes or things;
+ * give them all the empty defaults so an old save can carry on living.
+ */
+function fillSocietyDefaults(world: World): void {
+  world.households ??= {};
+  world.clubs ??= {};
+  world.happenings ??= [];
+  if (!world.emporium) initEmporium(world);
+  world.treasury.chest ??= 0;
+  world.treasury.totals ??= {};
+  for (const c of Object.values(world.citizens)) {
+    c.familyName ??= FAMILY_NAMES[(Number(c.id.slice(2)) || 0) % FAMILY_NAMES.length];
+    c.lifeStage ??= 'adult';
+    c.bornDay ??= c.arrivedDay ?? 0;
+    c.lastBirthdayDay ??= c.bornDay;
+    c.possessions ??= [];
+    c.clubs ??= [];
+    c.affection ??= {};
+    c.contactsToday ??= {};
+    c.wants ??= [];
+    c.householdId ??= null;
+    c.guardianId ??= null;
+    c.family ??= { familyName: c.familyName, partnerId: null, partnerSinceDay: null, married: false, parents: [], children: [] };
+    if (!c.tastes) assignTastes(world, c);
+  }
+}
+
 /** Read a world saved by saveWorld. Throws if the file is not a Reverie save. */
 export function loadWorld(path: string): World {
   const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
@@ -259,5 +320,6 @@ export function loadWorld(path: string): World {
   world.stats ??= [];
   world.chronicle ??= [];
   world.counters ??= {};
+  fillSocietyDefaults(world);
   return world;
 }

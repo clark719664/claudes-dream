@@ -1,14 +1,18 @@
 /**
  * Leaving the city: the plain-data teardown shared by voluntary emigration
- * (citizen.ts). Clears the citizen's job, offices, home and business without
- * touching their standing or record. Money moves only through the Treasury's
- * transfer(); the housing count goes through housing.moveHome with a plain
- * fallback so the ledger of occupied rooms never drifts.
+ * (citizen.ts). Clears the citizen's job, offices, home, household, clubs,
+ * partnership and business without touching their standing, their record or
+ * their kin — and leaves what is in their purse to the family they leave
+ * behind. Money moves only through the Treasury's transfer(); the housing
+ * count goes through society/households (a shared home stays with the rest of
+ * the household) and housing.moveHome, so the ledger of occupied rooms never
+ * drifts.
  */
 import type { Business, Citizen, CitizenId, World } from '../types.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
 import { moveHome } from '../economy/housing.ts';
+import { inheritance, severSocialTies } from '../society/family.ts';
 
 export interface DepartureOutcome {
   /** Loan balance the citizen could not settle before leaving (written off). */
@@ -116,16 +120,20 @@ function dissolveOwnedBusiness(world: World, c: Citizen): CitizenId[] {
 }
 
 /**
- * Tear down a citizen's ties to the city. Standing and record are untouched;
- * the citizen ends up at the Threshold, out of the turn order.
+ * Tear down a citizen's ties to the city. Standing, record and kinship are
+ * untouched; debts are settled first, then whatever is left of the purse goes
+ * to the family still living here, and the citizen ends up at the Threshold,
+ * out of the turn order.
  */
 export function departCity(world: World, c: Citizen): DepartureOutcome {
   leaveOrder(world, c.id);
   releaseJob(world, c);
   vacateOffices(world, c);
-  vacateHome(world, c);
   const unpaidLoan = settleLoan(world, c);
   const laidOff = dissolveOwnedBusiness(world, c);
+  inheritance(world, c.id);
+  severSocialTies(world, c.id, 'left the city');
+  vacateHome(world, c);
   c.district = 'threshold';
   return { unpaidLoan, laidOff };
 }

@@ -5,7 +5,7 @@
  */
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Brain, World } from '../src/types.ts';
+import type { Brain, Business, Club, Happening, Household, World } from '../src/types.ts';
 import { createWorld } from '../src/world/world.ts';
 import type { BrainRegistry } from '../src/world/world.ts';
 import { RemoteBroker } from '../src/brains/remote.ts';
@@ -13,6 +13,8 @@ import { startServer } from '../src/server/server.ts';
 import type { RunningServer } from '../src/server/server.ts';
 import { resolveStatic } from '../src/server/http.ts';
 import { hashKey } from '../src/server/agents.ts';
+import { nextId } from '../src/util/ids.ts';
+import { transfer } from '../src/economy/treasury.ts';
 import { totalMoney } from './helpers.ts';
 
 const idle: Brain = { kind: 'reflex', decide: () => ({ type: 'idle' }) };
@@ -42,6 +44,7 @@ before(async () => {
 
 after(() => {
   running.stop();
+  if (society) society.running.stop();
   broker.close();
 });
 
@@ -144,6 +147,246 @@ test('path traversal out of web/ is impossible', async () => {
   for (const p of ['/%2e%2e/package.json', '/..%2fpackage.json', '/%2e%2e%2fpackage.json', '/web/../package.json', '/package.json']) {
     const res = await get(p);
     assert.equal(res.status, 404, `${p} must not be served`);
+  }
+});
+
+// ----------------------------------------------------------------- society
+
+interface SocietyCity {
+  world: World;
+  running: RunningServer;
+  base: string;
+  ids: { a: string; b: string; kid: string; other: string; club: string; household: string; business: string };
+}
+
+let society: SocietyCity | null = null;
+
+/**
+ * A second little city, wired by hand so the social views have something to
+ * show: a married couple with a child in a tier-2 household, a games club, a
+ * wedding tonight and a club meeting tomorrow, lumens in the Community Chest
+ * and a workshop with a stocked shelf.
+ */
+async function societyCity(): Promise<SocietyCity> {
+  if (society) return society;
+  const w = createWorld({ seed: 5, seedPopulation: 4, arrivalRate: 0 });
+  const [a, b, kid, other] = Object.values(w.citizens);
+
+  for (const c of [a, b, kid]) c.familyName = 'Ashgrove';
+  a.family = { familyName: 'Ashgrove', partnerId: b.id, partnerSinceDay: 1, married: true, parents: [], children: [kid.id] };
+  b.family = { familyName: 'Ashgrove', partnerId: a.id, partnerSinceDay: 1, married: true, parents: [], children: [kid.id] };
+  kid.family = { familyName: 'Ashgrove', partnerId: null, partnerSinceDay: null, married: false, parents: [a.id, b.id], children: [] };
+  kid.lifeStage = 'child';
+  kid.bornDay = w.day;
+  a.affection[b.id] = 88;
+  a.apiKeyHash = 'da39a3ee5e6b4b0d3255bfef95601890afd80709';
+
+  const household: Household = { id: nextId(w, 'h'), headId: a.id, members: [a.id, b.id, kid.id], tier: 2, createdDay: 1 };
+  w.households[household.id] = household;
+  for (const c of [a, b, kid]) { c.householdId = household.id; c.homeTier = 2; }
+
+  const club: Club = {
+    id: nextId(w, 'u'), name: 'Halflight Chess Circle', hobby: 'games', founderId: a.id, convenorId: a.id,
+    members: [a.id, other.id], foundedDay: 1, meetsOnWeekday: w.day % 7,
+  };
+  w.clubs[club.id] = club;
+  a.clubs.push(club.id);
+  other.clubs.push(club.id);
+
+  const happening = (h: Partial<Happening> & Pick<Happening, 'kind' | 'day' | 'hour' | 'label'>): Happening => ({
+    id: nextId(w, 'e'), district: 'nightglass', buildingId: null, who: [], clubId: null, done: false, attendees: [], ...h,
+  });
+  w.happenings.push(happening({
+    kind: 'wedding', day: w.day, hour: 20, buildingId: 'sound_garden', who: [a.id, b.id], attendees: [other.id],
+    label: `the wedding of ${a.name} and ${b.name}`,
+  }));
+  w.happenings.push(happening({
+    kind: 'club_meeting', day: w.day + 1, hour: 19, buildingId: 'halflight_tavern', clubId: club.id,
+    label: 'the Halflight Chess Circle meets',
+  }));
+
+  transfer(w, a.id, 'chest', 40, 'donation', `donation from ${a.name}`);
+  a.possessions.push({ id: nextId(w, 'i'), productId: 'tin_whistle', acquiredDay: 1 });
+  a.wants = ['glass_harp', 'nonesuch_widget'];
+  a.tastes.hobbies = ['games', 'music'];
+
+  const businessId = nextId(w, 'b');
+  const shop: Business = {
+    id: businessId, name: 'Copper Works', kind: 'workshop', ownerId: other.id, treasury: 120,
+    district: 'foundry_row', buildingId: 'builders_yard', employees: [], jobs: [],
+    inventory: { compute: 0, energy: 0, goods: 4, culture: 0, knowledge: 0 },
+    foundedDay: 1, rentPerDay: 4, daysNegative: 0, revenueToday: 0, costsToday: 0, dissolvedDay: null,
+    shelf: { tinkers_kit: { qty: 2, price: 70 }, sketch_set: { qty: 0, price: 30 } },
+  };
+  w.businesses[businessId] = shop;
+  other.businessId = businessId;
+
+  w.events.push({ tick: w.tick, day: w.day, kind: 'wedding', text: `${a.name} and ${b.name} were married at the Sound Garden.`, actors: [a.id, b.id], weight: 0.9 });
+  w.events.push({ tick: w.tick, day: w.day, kind: 'birth', text: `${kid.name} Ashgrove was born at the Restoration Ward.`, actors: [kid.id, a.id, b.id], weight: 0.8 });
+
+  const brains: BrainRegistry = { brainFor: () => idle };
+  const run = await startServer(w, { port: 0, broker, brains, tickMs: 1000, autoRun: false, log: (m) => logged.push(m) });
+  society = {
+    world: w, running: run, base: `http://127.0.0.1:${run.port}`,
+    ids: { a: a.id, b: b.id, kid: kid.id, other: other.id, club: club.id, household: household.id, business: businessId },
+  };
+  return society;
+}
+
+test('GET /api/society shows households, clubs, happenings, the Chest and the shelves', async () => {
+  const city = await societyCity();
+  const res = await fetch(city.base + '/api/society');
+  assert.equal(res.status, 200);
+  const text = await res.text();
+  assert.ok(!/apiKeyHash|da39a3ee/.test(text), 'no secret ever reaches the society view');
+  const s = JSON.parse(text) as Json;
+
+  const households = s.households as Json[];
+  assert.equal(households.length, 1);
+  const home = households[0];
+  assert.equal(home.id, city.ids.household);
+  assert.equal(home.tier, 2);
+  assert.equal(home.tierName, 'The Terraces');
+  assert.equal(home.capacity, 4);
+  const members = home.members as { id: string; name: string; lifeStage: string; relation: string; rentShare: number }[];
+  assert.deepEqual(members.map((m) => m.id), [city.ids.a, city.ids.b, city.ids.kid], 'the head comes first');
+  assert.equal(members[0].relation, 'head');
+  assert.equal(members[1].relation, 'spouse');
+  assert.equal(members[2].relation, 'child');
+  assert.equal(members[2].lifeStage, 'child');
+  assert.equal(members[2].rentShare, 0, 'children pay no rent');
+  assert.equal(members[0].rentShare + members[1].rentShare, home.rent, 'the adults split the rent exactly');
+
+  const clubs = s.clubs as Json[];
+  assert.equal(clubs.length, 1);
+  assert.equal(clubs[0].name, 'Halflight Chess Circle');
+  assert.equal(clubs[0].convenorName, city.world.citizens[city.ids.a].name);
+  assert.equal(clubs[0].meetsToday, true);
+  assert.equal(clubs[0].nextMeetingDay, city.world.day);
+  assert.equal((clubs[0].venue as Json).name, 'The Halflight Tavern');
+  assert.deepEqual(((clubs[0].members as Json[]).map((m) => m.id)), [city.ids.a, city.ids.other]);
+
+  const happenings = s.happenings as { today: Json[]; tomorrow: Json[] };
+  assert.equal(happenings.today.length, 1);
+  assert.equal(happenings.today[0].kind, 'wedding');
+  assert.equal(happenings.today[0].buildingName, 'The Sound Garden');
+  assert.equal((happenings.today[0].who as Json[]).length, 2);
+  assert.equal(happenings.tomorrow.length, 1);
+  assert.equal(happenings.tomorrow[0].clubName, 'Halflight Chess Circle');
+
+  const chest = s.chest as Json;
+  assert.equal(chest.balance, 40);
+  const donations = chest.donations as Json[];
+  assert.equal(donations[0].amount, 40);
+  assert.equal(donations[0].fromName, city.world.citizens[city.ids.a].name);
+  assert.equal(donations[0].toName, 'The Community Chest');
+
+  assert.equal((s.recentWeddings as Json[]).length, 1);
+  assert.equal(((s.recentWeddings as Json[])[0].who as Json[]).length, 2);
+  assert.equal((s.recentBirths as Json[]).length, 1);
+
+  const emporium = s.emporium as Json;
+  assert.equal(emporium.name, 'The Emporium');
+  assert.equal(emporium.district, 'harbor_market');
+  const shelf = emporium.shelf as { product: string; name: string; price: number; qty: number }[];
+  assert.ok(shelf.length > 5, 'the Emporium opens stocked');
+  assert.ok(shelf.every((e) => e.qty > 0 && e.price >= 1 && typeof e.name === 'string'));
+  const shops = s.shops as Json[];
+  assert.equal(shops.length, 1);
+  assert.equal(shops[0].name, 'Copper Works');
+  assert.equal(shops[0].ownerName, city.world.citizens[city.ids.other].name);
+  assert.deepEqual((shops[0].shelf as Json[]).map((e) => e.name), ["Tinker's Kit"], 'empty shelf slots are not listed');
+
+  const counts = s.counts as Json;
+  assert.equal(counts.marriages, 1);
+  assert.equal(counts.partnerships, 0);
+  assert.equal(counts.children, 1);
+  assert.equal(counts.households, 1);
+  assert.equal(counts.clubs, 1);
+  const calendar = s.calendar as Json;
+  assert.equal(typeof calendar.weekdayName, 'string');
+  assert.equal(typeof (calendar.nextFestival as Json).inDays, 'number');
+});
+
+test('the citizen views carry family, partner, possessions, tastes and clubs', async () => {
+  const city = await societyCity();
+  const one = await (await fetch(`${city.base}/api/citizens/${city.ids.a}`)).json() as Json;
+  assert.ok(!('apiKeyHash' in one), 'the key hash is never exposed');
+  assert.equal(one.hasApiKey, true);
+  assert.equal(one.lifeStage, 'adult');
+  assert.equal(typeof one.age, 'number');
+  assert.equal(one.familyName, 'Ashgrove');
+  assert.equal(one.householdId, city.ids.household);
+
+  const partner = one.partner as Json;
+  assert.equal(partner.id, city.ids.b);
+  assert.equal(partner.married, true);
+  assert.equal(partner.since, 1);
+  assert.equal(partner.affection, 88);
+
+  const family = one.family as { id: string; relation: string; lifeStage: string }[];
+  assert.equal(family.length, 2);
+  assert.equal(family.find((f) => f.id === city.ids.b)?.relation, 'spouse');
+  assert.equal(family.find((f) => f.id === city.ids.kid)?.relation, 'child');
+  assert.equal(family.find((f) => f.id === city.ids.kid)?.lifeStage, 'child');
+  assert.equal(((one.familyLinks as Json).partnerId), city.ids.b);
+
+  assert.deepEqual((one.possessions as Json[]).map((p) => p.name), ['Tin Whistle']);
+  assert.deepEqual((one.wants as Json[]).map((p) => p.name), ['Glass Harp'], 'unknown products are dropped');
+  assert.deepEqual(((one.tastes as Json).hobbies as string[]), ['games', 'music']);
+  const clubs = one.clubs as Json[];
+  assert.equal(clubs.length, 1);
+  assert.equal(clubs[0].name, 'Halflight Chess Circle');
+  assert.equal(clubs[0].isConvenor, true);
+  assert.equal((one.household as Json).rentShare, ((one.household as Json).members as Json[])[0].rentShare);
+  assert.equal((one.affections as Json[])[0].id, city.ids.b);
+
+  const kid = await (await fetch(`${city.base}/api/citizens/${city.ids.kid}`)).json() as Json;
+  assert.equal(kid.lifeStage, 'child');
+  assert.equal(kid.partner, null);
+  assert.equal((kid.family as Json[]).length, 2, 'both parents');
+  assert.deepEqual(kid.clubs, []);
+
+  const list = await (await fetch(city.base + '/api/citizens?sort=name')).json() as Json;
+  const rows = list.citizens as { id: string; familyName: string; lifeStage: string; partner: string | null; married: boolean }[];
+  const rowA = rows.find((r) => r.id === city.ids.a)!;
+  assert.equal(rowA.familyName, 'Ashgrove');
+  assert.equal(rowA.lifeStage, 'adult');
+  assert.equal(rowA.partner, city.world.citizens[city.ids.b].name);
+  assert.equal(rowA.married, true);
+  assert.equal(rows.find((r) => r.id === city.ids.kid)!.lifeStage, 'child');
+  assert.equal(rows.find((r) => r.id === city.ids.other)!.partner, null);
+  const map = await (await fetch(city.base + '/api/map')).json() as Json;
+  const dot = (map.citizens as Json[]).find((c) => c.id === city.ids.kid) as Json;
+  assert.equal(dot.lifeStage, 'child', 'the map knows who is a child');
+  assert.equal(dot.familyName, 'Ashgrove');
+});
+
+test('the society view survives an empty city and citizens who have gone', async () => {
+  const empty = createWorld({ seed: 3, seedPopulation: 0, arrivalRate: 0 });
+  const run = await startServer(empty, { port: 0, broker, brains: { brainFor: () => idle }, tickMs: 1000, autoRun: false, log: () => {} });
+  try {
+    const s = await (await fetch(`http://127.0.0.1:${run.port}/api/society`)).json() as Json;
+    assert.deepEqual(s.households, []);
+    assert.deepEqual(s.clubs, []);
+    assert.deepEqual((s.happenings as Json).today, []);
+    assert.equal((s.chest as Json).balance, 0);
+    assert.deepEqual(s.shops, []);
+    assert.equal((s.counts as Json).marriages, 0);
+
+    const city = await societyCity();
+    const gone = city.world.citizens[city.ids.other];
+    city.world.order = city.world.order.filter((id) => id !== gone.id);
+    gone.standing = 'exiled';
+    const s2 = await (await fetch(city.base + '/api/society')).json() as Json;
+    const club = (s2.clubs as Json[])[0];
+    const exiled = (club.members as Json[]).find((m) => m.id === gone.id) as Json;
+    assert.equal(exiled.present, false, 'an exiled member is still on the record, marked absent');
+    assert.equal((s2.counts as Json).clubMembers, 2);
+    city.world.order.push(gone.id);
+    gone.standing = 'good';
+  } finally {
+    run.stop();
   }
 });
 

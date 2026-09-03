@@ -9,7 +9,11 @@ import { friendsOf, rivalsOf, bondBetween } from '../citizens/relationships.ts';
 import { employerName, openJobs } from '../economy/jobs.ts';
 import { daysToElection, isElectionDay, nominationsOpen } from '../government/council.ts';
 import { pendingCasesFor } from '../government/court.ts';
+import { ageOf } from '../society/family.ts';
 import { LAWS } from '../data/laws.ts';
+import {
+  affectionsView, citizenClubsView, citizenHouseholdView, familyView, partnerView, possessionsView, wantsView,
+} from './views-society.ts';
 
 export interface SimStatus {
   running: boolean;
@@ -34,6 +38,7 @@ export function partyName(world: World, party: MoneyParty | 'city'): string {
     case 'treasury': return 'The Treasury';
     case 'mint': return 'The Mint';
     case 'burn': return 'Burned';
+    case 'chest': return 'The Community Chest';
     case 'city': return 'City of Reverie';
     default:
       return world.citizens[party]?.name ?? world.businesses[party]?.name ?? party;
@@ -166,8 +171,11 @@ export function mapView(world: World): Record<string, unknown> {
       const pos = positionOf(world, c);
       const job = jobOf(world, c);
       return {
-        id: c.id, name: c.name, district: c.district, x: pos.x, y: pos.y, standing: c.standing, office: c.office,
-        brain: c.brain, mood: Math.round(c.mood), detained: isDetained(world, c), job: job ? job.title : null,
+        id: c.id, name: c.name, familyName: c.familyName, district: c.district, x: pos.x, y: pos.y,
+        standing: c.standing, office: c.office, brain: c.brain, mood: Math.round(c.mood),
+        detained: isDetained(world, c), job: job ? job.title : null,
+        lifeStage: c.lifeStage, married: c.family.married && c.family.partnerId !== null,
+        partnerId: c.family.partnerId, partnerName: nameOf(world, c.family.partnerId),
       };
     }),
   };
@@ -176,26 +184,34 @@ export function mapView(world: World): Record<string, unknown> {
 // --------------------------------------------------------------- citizens
 
 export interface CompactCitizen {
-  id: CitizenId; name: string; lineage: string; brain: string; job: string | null; employer: string | null;
+  id: CitizenId; name: string; familyName: string; lineage: string; brain: string; job: string | null; employer: string | null;
   district: string; wallet: number; mood: number; reputation: number; standing: string; office: string | null;
   homeTier: number; detained: boolean; present: boolean; business: string | null; convictions: number; arrivedDay: number;
+  lifeStage: string; age: number; partner: string | null; partnerId: CitizenId | null; married: boolean;
+  householdId: string | null; clubs: number; possessions: number;
 }
 
 export function compactCitizen(world: World, c: Citizen, present: Set<CitizenId>): CompactCitizen {
   const job = jobOf(world, c);
   const biz = businessOf(world, c);
+  const partnerId = c.family.partnerId;
+  const partner = partnerId ? world.citizens[partnerId] ?? null : null;
   return {
-    id: c.id, name: c.name, lineage: c.lineage, brain: c.brain,
+    id: c.id, name: c.name, familyName: c.familyName, lineage: c.lineage, brain: c.brain,
     job: job ? job.title : null, employer: job ? employerName(world, job) : null,
     district: c.district, wallet: c.wallet, mood: Math.round(c.mood), reputation: Math.round(c.reputation),
     standing: c.standing, office: c.office, homeTier: c.homeTier,
     detained: isDetained(world, c), present: isPresentIn(world, c, present),
     business: biz ? biz.name : null, convictions: c.record.convictions.length, arrivedDay: c.arrivedDay,
+    lifeStage: c.lifeStage, age: ageOf(world, c),
+    partner: partner ? partner.name : null, partnerId: partner ? partner.id : null, married: partner ? c.family.married : false,
+    householdId: c.householdId, clubs: c.clubs.length, possessions: c.possessions.length,
   };
 }
 
 const SORT_KEYS: readonly (keyof CompactCitizen)[] = [
-  'name', 'lineage', 'brain', 'job', 'district', 'wallet', 'mood', 'reputation', 'standing', 'office', 'arrivedDay', 'convictions',
+  'name', 'familyName', 'lineage', 'brain', 'job', 'district', 'wallet', 'mood', 'reputation', 'standing', 'office',
+  'arrivedDay', 'convictions', 'lifeStage', 'age', 'partner',
 ];
 
 function compareBy(key: keyof CompactCitizen, dir: 1 | -1) {
@@ -257,12 +273,25 @@ export function citizenView(world: World, id: CitizenId): Record<string, unknown
       appeal: k.appeal ? { filedDay: k.appeal.filedDay, result: k.appeal.result } : null,
     }));
   const ban = [...world.bans].reverse().find((b) => b.citizenId === id) ?? null;
+  const guardian = c.guardianId ? world.citizens[c.guardianId] ?? null : null;
   return {
     ...rest,
     hasApiKey: apiKeyHash !== null,
     detained: isDetained(world, c),
     present: isPresentIn(world, c, present),
     districtName: world.districts[c.district]?.name ?? c.district,
+    // Society: the raw links stay under familyLinks; family, possessions, clubs
+    // and wants are resolved to names here, as the observation resolves them.
+    age: ageOf(world, c),
+    familyLinks: c.family,
+    family: familyView(world, id, present),
+    partner: partnerView(world, c, present),
+    household: citizenHouseholdView(world, c, present),
+    possessions: possessionsView(c),
+    wants: wantsView(c),
+    clubs: citizenClubsView(world, c),
+    affections: affectionsView(world, c, 8),
+    guardian: guardian ? { id: guardian.id, name: guardian.name } : null,
     job: job ? {
       id: job.id, title: job.title, role: job.role, employer: employerName(world, job), employerId: job.employer,
       district: job.district, wage: Math.max(world.government.minWage, job.wage),
