@@ -287,3 +287,31 @@ test('formatLumens uses thousands separators', () => {
   assert.equal(formatLumens(0), '0 ℓ');
   assert.equal(formatLumens(-1500), '−1,500 ℓ');
 });
+
+test('the Community Chest holds money like any other party and counts toward the supply', () => {
+  const w = makeWorld();
+  const c = makeCitizen(w, { wallet: 0 });
+  transfer(w, 'treasury', c.id, 100, 'grant', 'seed money'); // audited money, not conjured by the helper
+  w.treasury.spendToday = 0;
+  const before = totalMoney(w);
+  assert.equal(balanceOf(w, 'chest'), 0);
+  assert.equal(transfer(w, c.id, 'chest', 40, 'donation', 'to the Chest'), true);
+  assert.equal(w.treasury.chest, 40);
+  assert.equal(balanceOf(w, 'chest'), 40);
+  assert.equal(c.wallet, 60);
+  assert.equal(w.treasury.totals.donation, 40);
+  assert.equal(w.treasury.revenueToday, 0, 'the Chest is not Treasury revenue');
+  assert.equal(totalMoney(w), before);
+  assert.equal(moneySupply(w), before);
+  assert.equal(auditMoneySupply(w).ok, true);
+  assert.equal(transfer(w, 'chest', c.id, 50, 'stipend', 'too much'), false, 'the Chest cannot overdraw');
+  assert.equal(transfer(w, 'chest', c.id, 15, 'stipend', 'hardship'), true);
+  assert.equal(w.treasury.chest, 25);
+  assert.equal(c.wallet, 75);
+  assert.equal(transfer(w, 'treasury', 'chest', 100, 'public_works', 'charity'), true);
+  assert.equal(w.treasury.chest, 125);
+  assert.equal(w.treasury.spendToday, 100, 'a council top-up is Treasury spend');
+  assert.equal(totalMoney(w), before);
+  assert.equal(auditMoneySupply(w).ok, true);
+  assert.equal(transfer(w, 'chest', 'chest', 5, 'stipend', 'self'), false);
+});

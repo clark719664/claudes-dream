@@ -44,6 +44,15 @@ export const COMFORT_COVER_DAYS = 3;
  * signal that can never walk to the cap on its own.
  */
 export const SHORTAGE_PRESSURE = 0.1;
+/**
+ * Days of demand the Bazaar will hold before it stops buying a good from
+ * citizens and businesses. Without this the Treasury would pay for every
+ * crate a private workshop turns out whether or not anyone wants it; with it
+ * a glut stops at the producer's door and the Treasury's exposure to private
+ * overproduction is bounded. City production is not bought and is managed
+ * by the labour plan instead (economy/planning.ts).
+ */
+export const BAZAAR_MAX_COVER_DAYS = 10;
 /** Supply rate (units per tick) below which the ratio treats supply as "about one unit a day". */
 const MIN_SUPPLY_RATE = 1 / FLOW_WINDOW_TICKS;
 /** A single trade worth at least this much is newsworthy enough for the log. */
@@ -110,6 +119,21 @@ export function daysOfCover(world: World, good: Good): number {
   return stock / Math.max(1, flowRates(world, good).demand * 24);
 }
 
+/** Smoothed demand in units per day. */
+export function demandPerDay(world: World, good: Good): number {
+  return flowRates(world, good).demand * 24;
+}
+
+/**
+ * Is the Bazaar taking this good from sellers today? Not while it holds
+ * BAZAAR_MAX_COVER_DAYS of demand for it. A good nobody has bought yet (no
+ * demand history, as at founding) is always taken.
+ */
+export function bazaarBuying(world: World, good: Good): boolean {
+  if (demandPerDay(world, good) < 1) return true;
+  return daysOfCover(world, good) < BAZAAR_MAX_COVER_DAYS;
+}
+
 /**
  * How much of a flow-driven step applies given the shelf: rises are damped by
  * cover (none at COMFORT_COVER_DAYS or more), falls by scarcity (none when empty).
@@ -171,7 +195,7 @@ export function buyFromMarket(world: World, buyer: CitizenId | BusinessId, good:
   return ok(`Bought ${q} ${good} for ${cost} ℓ (${tax} ℓ sales tax).`);
 }
 
-/** Sell to the Bazaar: the Treasury pays price minus sales tax; the tax stays in the Treasury. */
+/** Sell to the Bazaar: the Treasury pays price minus sales tax; the tax stays in the Treasury. Refused while the shelf is overstocked. */
 export function sellToMarket(world: World, seller: CitizenId | BusinessId, good: Good, qty: number): ActionResult {
   const q = Number.isFinite(qty) ? Math.round(qty) : 0;
   if (q <= 0) return fail('Quantity must be a positive whole number.');
@@ -180,6 +204,9 @@ export function sellToMarket(world: World, seller: CitizenId | BusinessId, good:
   const holder = resolveHolder(world, seller);
   if (!holder) return fail('Unknown or inactive seller.');
   if (holder.inv[good] < q) return fail(`You only have ${holder.inv[good]} ${good} to sell.`);
+  if (!bazaarBuying(world, good)) {
+    return fail(`The Bazaar is not buying ${good} today: its shelves already hold ${Math.round(daysOfCover(world, good))} days of it.`);
+  }
 
   const gross = Math.round(mg.price * q);
   const proceeds = Math.round(mg.price * q * (1 - clamp(world.government.salesTax, 0, 1)));

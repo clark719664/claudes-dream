@@ -103,18 +103,36 @@ interface Signal {
   reason: string;
 }
 
-function goodSignal(world: World, good: Good): Signal {
+/**
+ * A typical shift's share of output value falls short of the minimum wage the
+ * city must pay for it: the post runs at a loss until the price recovers.
+ */
+export function postRunsAtLoss(world: World, template: JobTemplate): boolean {
+  const good = template.output.good;
+  const qty = template.output.qty ?? 0;
+  if (!good || qty <= 0 || !PIECE_RATE_ROLES.includes(template.role)) return false;
+  const value = qty * POSTED_RATE_PRODUCTIVITY * world.market.goods[good].price * PIECE_RATE_SHARE;
+  return value < world.government.minWage;
+}
+
+function goodSignal(world: World, template: JobTemplate): Signal {
+  const good = template.output.good as Good;
   const cover = daysOfCover(world, good);
   const g = world.market.goods[good];
   const ratio = priceRatio(world, good);
   const shortage = world.market.shortages.includes(good) || (g.stock <= 0);
-  const short = shortage || cover < SHORTAGE_COVER_DAYS || ratio >= SHORTAGE_PRICE_RATIO;
-  const glut = cover > GLUT_COVER_DAYS && ratio < SHORTAGE_PRICE_RATIO;
-  const deep = cover > LAYOFF_COVER_DAYS && ratio < 1;
+  const atLoss = postRunsAtLoss(world, template);
+  const dear = ratio >= SHORTAGE_PRICE_RATIO && !atLoss;
+  const short = shortage || cover < SHORTAGE_COVER_DAYS || dear;
+  const glut = !short && (cover > GLUT_COVER_DAYS || atLoss);
+  const deep = glut && (cover > LAYOFF_COVER_DAYS || (atLoss && cover > SHORTAGE_COVER_DAYS * 2));
   const days = cover >= 100 ? 'months' : `${cover.toFixed(1)} days`;
-  const reason = short
-    ? (shortage ? `the Bazaar has run out of ${good}` : ratio >= SHORTAGE_PRICE_RATIO ? `${good} sells at ${g.price} ℓ, well above its founding price` : `the Bazaar holds only ${days} of ${good}`)
-    : `the Bazaar holds ${days} of ${good}`;
+  let reason: string;
+  if (shortage) reason = `the Bazaar has run out of ${good}`;
+  else if (short && !dear) reason = `the Bazaar holds only ${days} of ${good}`;
+  else if (dear) reason = `${good} sells at ${g.price} ℓ, well above its founding price`;
+  else if (atLoss && cover <= GLUT_COVER_DAYS) reason = `at ${g.price} ℓ a unit a shift's ${good} is worth less than the minimum wage`;
+  else reason = `the Bazaar holds ${days} of ${good}`;
   return { short, glut, deep, reason };
 }
 
@@ -130,7 +148,7 @@ function housingSignal(world: World): Signal {
 }
 
 function signalFor(world: World, template: JobTemplate): Signal | null {
-  if (template.output.good) return goodSignal(world, template.output.good);
+  if (template.output.good) return goodSignal(world, template);
   if (template.output.housingProgress) return housingSignal(world);
   return null;
 }

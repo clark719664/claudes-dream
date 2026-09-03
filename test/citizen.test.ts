@@ -4,6 +4,7 @@ import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
 import { NEEDS, SKILLS, TRAITS } from '../src/types.ts';
 import type { Business, Job, World } from '../src/types.ts';
 import { nextId } from '../src/util/ids.ts';
+import { FAMILY_NAMES, HOBBIES } from '../src/data/catalogue.ts';
 import {
   MAX_POPULATION, activeCitizens, adjustReputation, canAct, computeMood, createCitizen, currentCycleStartDay,
   dailyCitizens, describeCitizen, emigrate, hasCandidacyResidency, hasCriticalNeed, isEligibleCandidate, isEligibleVoter,
@@ -379,4 +380,72 @@ test('describeCitizen is a single informative line', () => {
   const job = addJob(w, { holderId: c.id });
   c.jobId = job.id;
   assert.ok(describeCitizen(w, c).includes('Fabricator at City of Reverie'));
+});
+
+// ---------------------------------------------------------------------------
+// Society: family names, tastes, life stages, children
+// ---------------------------------------------------------------------------
+
+test('createCitizen gives every arrival a family name, tastes, an adult life stage and empty family links', () => {
+  const w = makeWorld();
+  w.day = 4;
+  w.tick = 96;
+  const c = createCitizen(w);
+  assert.ok(FAMILY_NAMES.includes(c.familyName), `${c.familyName} comes from the family-name pool`);
+  assert.equal(c.family.familyName, c.familyName);
+  assert.equal(c.lifeStage, 'adult');
+  assert.equal(c.bornDay, 4);
+  assert.equal(c.lastBirthdayDay, 4);
+  assert.equal(c.tastes.hobbies.length, 2);
+  assert.ok(HOBBIES.includes(c.tastes.hobbies[0]) && HOBBIES.includes(c.tastes.hobbies[1]));
+  assert.ok(c.tastes.categories.length >= 2);
+  assert.deepEqual(c.family, { familyName: c.familyName, partnerId: null, partnerSinceDay: null, married: false, parents: [], children: [] });
+  assert.deepEqual([c.possessions, c.clubs, c.affection, c.contactsToday, c.wants, c.householdId, c.guardianId], [[], [], {}, {}, [], null, null]);
+  const named = createCitizen(w, { familyName: '  Ashgrove ' });
+  assert.equal(named.familyName, 'Ashgrove');
+  assert.equal(named.family.familyName, 'Ashgrove');
+  assert.ok(describeCitizen(w, named).includes('Ashgrove'));
+});
+
+test('founders draw distinct family names until the pool runs out', () => {
+  const w = makeWorld();
+  const names = Array.from({ length: FAMILY_NAMES.length }, () => createCitizen(w).familyName);
+  assert.equal(new Set(names).size, FAMILY_NAMES.length, 'no two unrelated founders share a name while names remain');
+  const extra = createCitizen(w);
+  assert.ok(FAMILY_NAMES.includes(extra.familyName), 'the pool exhausted: names are reused');
+});
+
+test('a child is born, not admitted: no grant, no room, no arrival notice, parents on record', () => {
+  const w = makeWorld();
+  const mother = createCitizen(w, { name: 'Ondine', familyName: 'Corvane' });
+  const father = createCitizen(w, { name: 'Bram', familyName: 'Corvane' });
+  w.day = 9;
+  w.tick = 9 * 24 + 7;
+  const before = totalMoney(w);
+  const treasury = w.treasury.balance;
+  const occupied = w.housing.occupied[1];
+  const events = w.events.length;
+  const child = createCitizen(w, {
+    name: 'Wren', lifeStage: 'child', parents: [mother.id, father.id, 'c_404', mother.id], familyName: 'Corvane',
+    district: 'verdant_quarter', brain: 'reflex',
+  });
+  assert.equal(child.lifeStage, 'child');
+  assert.equal(child.familyName, 'Corvane');
+  assert.deepEqual(child.family.parents, [mother.id, father.id], 'unknown and duplicate parents are dropped');
+  assert.equal(child.bornDay, 9);
+  assert.equal(child.arrivedDay, 9);
+  assert.equal(child.wallet, 0, 'no arrival grant');
+  assert.equal(w.treasury.balance, treasury);
+  assert.equal(totalMoney(w), before);
+  assert.equal(child.homeTier, 0, 'no room of their own');
+  assert.equal(w.housing.occupied[1], occupied);
+  assert.equal(child.district, 'verdant_quarter');
+  assert.equal(w.events.length, events, 'the birth is announced by the family module, not the Threshold');
+  assert.ok(w.order.includes(child.id));
+  assert.ok(child.memory.some((m) => m.kind === 'family' && m.text.includes('born') && m.text.includes('Ondine and Bram')));
+  assert.ok(child.tastes.hobbies.length === 2, 'children have tastes too');
+  assert.ok(describeCitizen(w, child).includes('child'));
+  const ward = createCitizen(w, { lifeStage: 'child', bornDay: 8.4 });
+  assert.equal(ward.bornDay, 8);
+  assert.ok(ward.memory.some((m) => m.text.includes('ward of the city')));
 });

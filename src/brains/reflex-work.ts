@@ -5,13 +5,16 @@
  */
 import { clamp } from '../types.ts';
 import type { Action, Citizen, HousingTier, Job, Skill, World } from '../types.ts';
-import { BUSINESS_JOBS } from '../data/jobs.ts';
+import type { BusinessKind } from '../types.ts';
+import { BUSINESS_JOBS, COURIER_CONTRACTS_PER_DAY } from '../data/jobs.ts';
 import { districtDistance } from '../data/city.ts';
 import { chance, rand } from '../util/rng.ts';
 import { bankOpen, creditLimit, avgDailyIncome } from '../economy/bank.ts';
 import { isQualified, openJobs } from '../economy/jobs.ts';
-import { daysOfCover } from '../economy/market.ts';
+import { activeBusinesses } from '../economy/business.ts';
+import { bazaarBuying, daysOfCover } from '../economy/market.ts';
 import { GLUT_COVER_DAYS } from '../economy/planning.ts';
+import { cityCanPay, isBudgetedJob } from '../economy/budget.ts';
 import { vacancies } from '../economy/housing.ts';
 import { talentOf } from '../citizens/citizen.ts';
 import { bondBetween } from '../citizens/relationships.ts';
@@ -38,6 +41,25 @@ export const GLUT_STOCK = 150;
 export const GLUT_SHIFTS = 4;
 /** An owner whose business has been in the red this many days trims staff. */
 export const TRIM_STAFF_AFTER_DAYS = 2;
+/** One business of a producing kind per this many citizens is as much as the Bazaar will absorb. */
+export const CITIZENS_PER_BUSINESS = 20;
+/** Shifts a day one courier can be expected to work, for sizing the contract pool. */
+const COURIER_SHIFTS_PER_DAY = 6;
+
+/**
+ * Is there room for one more business of this kind? Not when the Bazaar is
+ * already overstocked with what it would make, when the city has as many of
+ * the kind as its people can support, or (couriers) when the public contract
+ * pool is spoken for.
+ */
+export function roomForBusiness(world: World, kind: BusinessKind): boolean {
+  const existing = activeBusinesses(world).filter((b) => b.kind === kind).length;
+  if (kind === 'courier') return existing < Math.max(1, Math.round(COURIER_CONTRACTS_PER_DAY / COURIER_SHIFTS_PER_DAY));
+  if (kind === 'clinic') return existing < 1;
+  const good = BUSINESS_JOBS[kind][0]?.output.good;
+  if (good && (!bazaarBuying(world, good) || daysOfCover(world, good) > GLUT_COVER_DAYS / 2)) return false;
+  return existing < Math.max(1, Math.floor(world.order.length / CITIZENS_PER_BUSINESS));
+}
 
 function effectiveWage(world: World, job: Job): number {
   return Math.max(world.government.minWage, job.wage);
@@ -48,6 +70,14 @@ function employerSolvent(world: World, job: Job): boolean {
   if (job.employer === 'city') return true;
   const b = world.businesses[job.employer];
   return !!b && b.dissolvedDay === null && b.treasury >= effectiveWage(world, job);
+}
+
+/** Will the employer pay for a shift right now? The city's wage budget for salaried posts can run out before the day does. */
+function shiftPaid(world: World, job: Job): boolean {
+  if (job.employer !== 'city') return employerSolvent(world, job);
+  if (!isBudgetedJob(job)) return true;
+  const gross = effectiveWage(world, job);
+  return cityCanPay(world, gross - Math.round(gross * world.government.incomeTax));
 }
 
 function workplaceUsable(world: World, job: Job): boolean {
@@ -182,6 +212,7 @@ export function tryWork(ctx: Ctx): Action | null {
   if (clock.morning && distance > 0 && distance >= clock.workStart - clock.hour) return stepTo(ctx, job.district);
   if (!clock.working || c.shiftsToday >= shiftsWanted(world, c) || !workplaceUsable(world, job)) return null;
   if (!employerSolvent(world, job)) return tryJobSearch(ctx, job);
+  if (!shiftPaid(world, job)) return null;
   const story = tryPublish(ctx);
   if (story) return story;
   if (c.personality.diligence < 0.35 && c.mood < 40 && chance(world, 0.15)) return null;
@@ -198,7 +229,8 @@ export function tryBusiness(ctx: Ctx): Action | null {
     if (!ctx.can.has('found_business') || c.wallet <= FOUNDING_WALLET || c.personality.ambition <= FOUNDING_AMBITION) return null;
     if (ctx.clock.night || !chance(world, 0.25)) return null;
     const kind = kindForFounder(world, c);
-    return kind ? { type: 'found_business', name: businessName(world, kind), kind } : null;
+    if (!kind || !roomForBusiness(world, kind)) return null;
+    return { type: 'found_business', name: businessName(world, kind), kind };
   }
   const open = biz.jobs.map((id) => world.jobs[id]).filter((j): j is Job => !!j && j.holderId === null);
   // in the red for days with more than one on the payroll: let the least productive hand go before the bank does

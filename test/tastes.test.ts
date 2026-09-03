@@ -113,22 +113,24 @@ test('computeWants: fashion spreads from friends, and a broke citizen wants only
   const w = makeWorld();
   const c = makeCitizen(w, { wallet: 200 });
   c.tastes = { hobbies: ['music', 'astronomy'], favouriteDistrict: 'archive', favouriteGood: 'culture', categories: ['instrument'] };
+  c.possessions.push({ id: 'i_0', productId: 'clockwork_cat', acquiredDay: 0 }); // no further appeal in companions
   const friend = makeCitizen(w);
   const stranger = makeCitizen(w);
   c.bonds[friend.id] = 50;
   friend.possessions.push({ id: 'i_1', productId: 'running_shoes', acquiredDay: 0 });
   stranger.possessions.push({ id: 'i_2', productId: 'foundry_boots', acquiredDay: 0 });
   const wants = computeWants(w, c);
-  assert.deepEqual(wants, ['tin_whistle', 'glass_harp', 'running_shoes'], 'friends set fashions; strangers do not');
+  assert.deepEqual(wants, ['tin_whistle', 'glass_harp', 'star_almanac', 'star_lens', 'running_shoes'],
+    'hobby items by taste and price, then the fashion a friend set; strangers set none');
   c.wallet = 0;
   assert.deepEqual(computeWants(w, c), ['running_shoes'], `only the ${FASHION_BONUS} fashion term survives an empty wallet`);
   c.possessions.push({ id: 'i_3', productId: 'running_shoes', acquiredDay: 0 });
   assert.deepEqual(computeWants(w, c), [], 'no fashion pull for something you already own');
   // a friend who has left the city no longer sets fashions
   c.wallet = 200;
-  c.possessions = [];
+  c.possessions = c.possessions.filter((i) => i.productId !== 'running_shoes');
   w.order = w.order.filter((id) => id !== friend.id);
-  assert.deepEqual(computeWants(w, c), ['tin_whistle', 'glass_harp']);
+  assert.deepEqual(computeWants(w, c), ['tin_whistle', 'glass_harp', 'star_almanac', 'star_lens']);
 });
 
 test('refreshWantsDaily updates present adults and elders only', () => {

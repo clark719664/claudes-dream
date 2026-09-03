@@ -16,6 +16,7 @@ import { transfer, withholdingPay } from './treasury.ts';
 import { buyFromMarket, deliverToMarket, takeFromMarket, wholeUnits } from './market.ts';
 import { addHousingProgress } from './housing.ts';
 import { isPieceRateJob, pieceRate, planCityPosts, postToClose, postedPieceRate, refreshCityWages } from './planning.ts';
+import { cityCanPay, dailyBudget, isBudgetedJob, noteCitySpend } from './budget.ts';
 
 export const CITY_EMPLOYER_NAME = 'City of Reverie';
 /** Skill gained per shift in the job's skill (×1.5 while holding knowledge). */
@@ -244,10 +245,16 @@ function courierContract(world: World, c: Citizen, biz: Business): number {
   const key = 'courierContracts';
   const dayKey = 'courierContractsDay';
   if (world.counters[dayKey] !== world.day) { world.counters[dayKey] = world.day; world.counters[key] = 0; }
-  if ((world.counters[key] ?? 0) >= COURIER_CONTRACTS_PER_DAY) return 0;
+  if ((world.counters[key] ?? 0) >= COURIER_CONTRACTS_PER_DAY || !cityCanPay(world, COURIER_CONTRACT)) return 0;
   if (!transfer(world, 'treasury', biz.id, COURIER_CONTRACT, 'fee', `courier contract: ${c.name}`)) return 0;
   world.counters[key] = (world.counters[key] ?? 0) + 1;
+  noteCitySpend(world, COURIER_CONTRACT);
   return COURIER_CONTRACT;
+}
+
+/** What a salaried city shift is about to cost the Treasury, net of the tax it keeps. */
+function expectedCityNet(world: World, flatWage: number): number {
+  return Math.max(1, flatWage - Math.round(flatWage * world.government.incomeTax));
 }
 
 function applyRoleSpecials(world: World, c: Citizen, job: Job, biz: Business | null): void {
@@ -292,6 +299,8 @@ export function workShift(world: World, cId: CitizenId): ActionResult {
   if (job.employer !== 'city') {
     if (!biz || biz.dissolvedDay !== null) { releaseJob(world, c); return fail('Your employer has closed its doors.'); }
     if (biz.treasury < flatWage) return fail(`${biz.name} cannot pay your wage of ${flatWage} ℓ: the employer's treasury is empty.`);
+  } else if (isBudgetedJob(job) && !cityCanPay(world, expectedCityNet(world, flatWage))) {
+    return fail(`The city's wage budget for today is spent; there is no paid work at ${employer} until tomorrow.`);
   }
 
   const skillValue = job.skill ? c.skills[job.skill] : meanSkill(c);
@@ -322,6 +331,7 @@ export function workShift(world: World, cId: CitizenId): ActionResult {
   if (evading) world.counters[evadeKey] -= 1;
   const payer: MoneyParty = biz ? biz.id : 'treasury';
   const { net, tax } = withholdingPay(world, payer, cId, wage, 'wage', `shift as ${job.title}`, evading ? { taxRate: 0 } : undefined);
+  if (isBudgetedJob(job)) noteCitySpend(world, net);
 
   applyRoleSpecials(world, c, job, biz);
   growSkill(world, c, job);
@@ -426,9 +436,14 @@ export function applyCityPlan(world: World): void {
   }
 }
 
-/** Daily: everyone starts with a fresh shift count; piece rates and the city's posts follow the Bazaar. */
+/**
+ * Daily: everyone starts with a fresh shift count; piece rates follow the
+ * Bazaar, the Treasury sets the day's wage budget, and the city opens or
+ * closes production posts as the shelves demand.
+ */
 export function dailyJobs(world: World): void {
   for (const c of Object.values(world.citizens)) c.shiftsToday = 0;
   refreshCityWages(world);
+  dailyBudget(world);
   applyCityPlan(world);
 }
