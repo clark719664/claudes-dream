@@ -1,20 +1,32 @@
 import type { Building, BuildingId, District, DistrictId } from '../types.ts';
 
+/**
+ * The plan of Reverie. Every district is drawn from the founding, including
+ * the two that stay shut until the city is big enough for them: whether a
+ * district can be walked into is `world.openDistricts` and `world/growth.ts`,
+ * never this file.
+ */
 export const DISTRICTS: Record<DistrictId, District> = {
   verdant_quarter: { id: 'verdant_quarter', name: 'Verdant Quarter', x: 0, y: 0, w: 15, h: 16,
     adjacent: ['archive', 'nightglass', 'commons'] },
   archive: { id: 'archive', name: 'The Archive', x: 15, y: 0, w: 22, h: 10,
     adjacent: ['verdant_quarter', 'foundry_row', 'commons'] },
   foundry_row: { id: 'foundry_row', name: 'Foundry Row', x: 37, y: 0, w: 23, h: 16,
-    adjacent: ['archive', 'harbor_market', 'commons'] },
+    adjacent: ['archive', 'harbor_market', 'commons', 'heights'] },
   commons: { id: 'commons', name: 'The Commons', x: 15, y: 10, w: 22, h: 14,
     adjacent: ['verdant_quarter', 'archive', 'foundry_row', 'harbor_market', 'nightglass', 'threshold'] },
   nightglass: { id: 'nightglass', name: 'Nightglass', x: 0, y: 16, w: 15, h: 24,
     adjacent: ['verdant_quarter', 'commons', 'threshold'] },
   harbor_market: { id: 'harbor_market', name: 'Harbor Market', x: 37, y: 16, w: 23, h: 24,
-    adjacent: ['foundry_row', 'commons', 'threshold'] },
+    adjacent: ['foundry_row', 'commons', 'threshold', 'heights', 'undercroft'] },
   threshold: { id: 'threshold', name: 'The Threshold', x: 15, y: 24, w: 22, h: 16,
-    adjacent: ['commons', 'nightglass', 'harbor_market'] },
+    adjacent: ['commons', 'nightglass', 'harbor_market', 'undercroft'] },
+  // Opened by world/growth.ts at HEIGHTS_POPULATION: the hill above Foundry Row.
+  heights: { id: 'heights', name: 'The Heights', x: 60, y: 0, w: 12, h: 18,
+    adjacent: ['foundry_row', 'harbor_market', 'undercroft'] },
+  // Opened at UNDERCROFT_POPULATION: the old tunnels under the Harbor.
+  undercroft: { id: 'undercroft', name: 'The Undercroft', x: 60, y: 18, w: 12, h: 22,
+    adjacent: ['harbor_market', 'threshold', 'heights'] },
 };
 
 function b(id: BuildingId, name: string, district: DistrictId, kind: Building['kind'], x: number, y: number, critical = false): Building {
@@ -59,7 +71,55 @@ export const BUILDINGS: Record<BuildingId, Building> = Object.fromEntries([
   b('arrivals_hall', 'Arrivals Hall', 'threshold', 'arrivals', 19, 28),
   b('embassy', 'The Embassy', 'threshold', 'embassy', 26, 33),
   b('exile_gate', 'Exile Gate', 'threshold', 'gate', 33, 28),
+  // The metropolis: houses the growing city built for itself
+  b('stadium', 'The Stadium', 'commons', 'stadium', 17, 22),
+  b('hall_of_records', 'Hall of Records', 'commons', 'records', 34, 22),
+  b('museum', 'The Museum', 'archive', 'museum', 32, 7),
+  b('city_hospital', 'The Hospital', 'verdant_quarter', 'hospital', 12, 13),
+  b('harbor_ledger', 'The Harbor Ledger', 'harbor_market', 'press', 44, 35),
+  b('docks', 'The Docks', 'harbor_market', 'docks', 54, 37),
+  // The Heights, closed until the city is HEIGHTS_POPULATION strong
+  b('university', 'The University', 'heights', 'university', 63, 3),
+  b('hilltop_villas', 'Hilltop Villas', 'heights', 'housing', 68, 8),
+  b('high_dome', 'The Dome', 'heights', 'observatory', 63, 13),
+  // The Undercroft, closed until UNDERCROFT_POPULATION
+  b('night_market', 'The Night Market', 'undercroft', 'bazaar', 63, 22),
+  b('the_tunnels', 'The Tunnels', 'undercroft', 'housing', 68, 28),
+  b('cells_annex', 'The Cells', 'undercroft', 'watch', 63, 34),
 ].map((x) => [x.id, x]));
+
+/**
+ * A block of homes: how many units it holds, and what living there costs and
+ * feels like next to the plain tier rent. The Hilltop Villas are METROPOLIS's
+ * "tier 4" (dear, and calm) and the Tunnels its "tier 0.5" (cheap, and grim);
+ * both are ordinary tiers with a different price and a different comfort, so
+ * the three-rung housing ladder the rest of the engine counts on is untouched.
+ */
+export interface HousingBlock {
+  buildingId: BuildingId;
+  tier: 1 | 2 | 3;
+  units: number;
+  rentFactor: number;
+  comfortFactor: number;
+}
+
+export const HOUSING_BLOCKS: readonly HousingBlock[] = [
+  { buildingId: 'lantern_lofts', tier: 1, units: 30, rentFactor: 1.0, comfortFactor: 1.0 },
+  { buildingId: 'terraces', tier: 2, units: 15, rentFactor: 1.0, comfortFactor: 1.0 },
+  { buildingId: 'skyline_villas', tier: 3, units: 5, rentFactor: 1.0, comfortFactor: 1.0 },
+  { buildingId: 'hilltop_villas', tier: 3, units: 6, rentFactor: 2.2, comfortFactor: 0.6 },
+  { buildingId: 'the_tunnels', tier: 1, units: 24, rentFactor: 0.4, comfortFactor: 1.6 },
+];
+
+/** The blocks of one tier, dearest last. */
+export function blocksForTier(tier: 1 | 2 | 3): HousingBlock[] {
+  return HOUSING_BLOCKS.filter((b) => b.tier === tier).sort((a, b) => a.rentFactor - b.rentFactor);
+}
+
+/** The block a building is, if it is one. */
+export function blockOf(buildingId: BuildingId): HousingBlock | null {
+  return HOUSING_BLOCKS.find((b) => b.buildingId === buildingId) ?? null;
+}
 
 export function adjacentDistricts(d: DistrictId): DistrictId[] {
   return DISTRICTS[d].adjacent;
