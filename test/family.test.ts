@@ -182,7 +182,7 @@ test('a child is born with blended traits, an inherited talent and a place at ho
   assert.equal(kid.lifeStage, 'child');
   assert.equal(kid.bornDay, w.day);
   assert.equal(kid.familyName, 'Ashgrove');
-  assert.equal(kid.brain, 'reflex');
+  assert.equal(kid.brain, 'child', 'nobody sent this one: it lives on the child instinct until it is claimed');
   assert.deepEqual(kid.family.parents.sort(), [a.id, b.id].sort());
   assert.deepEqual(a.family.children, [kid.id]);
   assert.deepEqual(b.family.children, [kid.id]);

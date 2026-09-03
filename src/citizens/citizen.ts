@@ -5,7 +5,7 @@
  *
  * Money only moves through economy/treasury; housing through economy/housing.
  */
-import { NEEDS, SKILLS, TRAITS, clamp } from '../types.ts';
+import { NEEDS, SKILLS, TRAITS, clamp, neutralCharacter } from '../types.ts';
 import type {
   BrainKind, Citizen, CitizenId, DistrictId, LifeStage, Need, Personality, Skill, Skills, World,
 } from '../types.ts';
@@ -19,6 +19,7 @@ import { comfortDecayMultiplier, moveHome } from '../economy/housing.ts';
 import { joblessShare } from '../economy/planning.ts';
 import { friendsOf } from './relationships.ts';
 import { departCity } from './departure.ts';
+import { giveOrientation } from './orientation.ts';
 import { assignTastes } from '../society/tastes.ts';
 
 /** The Threshold stops admitting newcomers at this population. */
@@ -136,7 +137,8 @@ function rollNeeds(world: World): Citizen['needs'] {
 /**
  * Bring a new citizen through the Threshold: unique name, rolled personality,
  * skills and needs, a family name and tastes, arrival grant from the Treasury,
- * a first room if one is free. Emits 'arrival' and seeds the newcomer's memory.
+ * a first room if one is free, and the Arrivals Hall leaflet in the inbox.
+ * Emits 'arrival' and seeds the newcomer's memory.
  * A child (opts.lifeStage 'child') is born rather than arriving: it inherits
  * the family name, records its parents, and gets neither grant nor room
  * (family.birthChild announces the birth and houses it with its parents).
@@ -157,6 +159,9 @@ export function createCitizen(world: World, opts: CreateCitizenOpts = {}): Citiz
   const c: Citizen = {
     id, name, lineage, brain, arrivedDay: world.day,
     personality,
+    // Nobody arrives with a character: the city reads one off what they do,
+    // from their first full day (world.ts calls dailyCharacter every morning).
+    character: neutralCharacter(),
     skills,
     needs,
     mood: 0,
@@ -172,7 +177,7 @@ export function createCitizen(world: World, opts: CreateCitizenOpts = {}): Citiz
     communityServiceDaysLeft: 0, finesOwed: 0, finesOwedSinceDay: null,
     record: { convictions: [], strikes: 0 },
     bonds: {}, hostilityFrom: {}, recentOffences: [],
-    memory: [], inbox: [],
+    memory: [], inbox: [], notes: [], letters: [],
     shiftsToday: 0, recentActions: [],
     office: null, judgeTermEndsDay: null, platform: null, campaignVisibility: 0,
     stats: {
@@ -180,6 +185,7 @@ export function createCitizen(world: World, opts: CreateCitizenOpts = {}): Citiz
       giftsGiven: 0, giftsReceived: 0, showsPerformed: 0, storiesPublished: 0, votesCast: 0,
     },
     apiKeyHash: opts.apiKeyHash ?? null,
+    callbackUrl: null,
     exiledCaseId: null, exiledDay: null,
     familyName, lifeStage, bornDay, lastBirthdayDay: bornDay,
     tastes: { hobbies: [], favouriteDistrict: opts.district ?? 'threshold', favouriteGood: 'goods', categories: [] },
@@ -212,6 +218,7 @@ export function createCitizen(world: World, opts: CreateCitizenOpts = {}): Citiz
     ? ' The city found you a room at the Lantern Lofts.'
     : ' No rooms were free; you are sleeping rough until you find a home.';
   remember(world, id, 'event', welcome + roof);
+  giveOrientation(world, c);
   return c;
 }
 

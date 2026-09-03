@@ -1,35 +1,32 @@
 /**
- * The Court: charges, the bench (with recusal), judges' beliefs, verdicts and
- * the daily business of justice. Sentencing arithmetic lives in sentencing.ts,
- * appeals in appeals.ts, exile and suspension in registry.ts; the contract's
- * court.* names are all exported from here.
+ * The Court: charges and the daily business of justice. Who may sit and what a
+ * scripted judge believes live in bench.ts; the two-hour sitting in which the
+ * judges vote lives in court-session.ts; sentencing arithmetic in
+ * sentencing.ts; appeals in appeals.ts; exile and suspension in registry.ts.
+ * The contract's court.* names are all exported from here.
  */
 import { clamp } from '../types.ts';
-import type { Case, Citizen, CitizenId, LawCode, Verdict, World } from '../types.ts';
+import type { Case, CaseId, Citizen, CitizenId, LawCode, World } from '../types.ts';
 import { LAWS } from '../data/laws.ts';
 import { nextId } from '../util/ids.ts';
-import { normal, shuffle } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
-import { adjustReputation } from '../citizens/citizen.ts';
-import { areFriends, bondBetween } from '../citizens/relationships.ts';
-import { areFamily } from '../society/family.ts';
 import { detain } from './watch.ts';
-import { byFiling, canSit, caseNumber, isDetained, isPresent, latestConviction, nameOf } from './cases.ts';
-import { computeSentence, describeSentence, executeSentence, finePaidKey } from './sentencing.ts';
+import { byFiling, caseNumber, isDetained, latestConviction, nextCourtTick } from './cases.ts';
+import { executeSentence, finePaidKey } from './sentencing.ts';
 import { APPEAL_WINDOW_DAYS } from './appeals.ts';
 
 export { computeSentence, executeSentence } from './sentencing.ts';
-export { APPEAL_WINDOW_DAYS, appealVote, decideAppeals, fileAppeal } from './appeals.ts';
+export { APPEAL_WINDOW_DAYS, appealVote, appealsFor, castAppealVote, decideAppeals, fileAppeal } from './appeals.ts';
+export { GUILT_THRESHOLD, JUDGE_MIN_REPUTATION, judgeBelief, mustRecuse, selectBench } from './bench.ts';
+export {
+  MAX_CARRIED_SESSIONS, MIN_VOTES, benchFor, castVerdict, describeVotes, holdCourt, openCourtSession, sittingCases,
+  tallyVerdicts,
+} from './court-session.ts';
+export { courtTallyHour, nextCourtTick } from './cases.ts';
 
-/** A judge votes guilty when their belief in guilt exceeds this. */
-export const GUILT_THRESHOLD = 0.55;
 /** Days of unpaid fines before a Contempt charge. */
 export const CONTEMPT_AFTER_DAYS = 2;
-/** Judges (permanent or temporary) need at least this reputation. */
-export const JUDGE_MIN_REPUTATION = 60;
-const BENCH_SIZE = 3;
-const MIN_BENCH = 2;
 
 export interface ChargeSpec {
   defendantId: CitizenId;
@@ -39,12 +36,6 @@ export interface ChargeSpec {
   victimId?: CitizenId;
   amount?: number;
   description: string;
-}
-
-/** Tick of the next Court sitting (today's if it has not happened yet). */
-export function nextCourtTick(world: World): number {
-  const today = world.day * 24 + world.config.courtHour;
-  return world.hour <= world.config.courtHour ? today : today + 24;
 }
 
 // ---------------------------------------------------------------------------
@@ -62,7 +53,8 @@ export function fileCharge(world: World, spec: ChargeSpec): Case {
   const kase: Case = {
     id: nextId(world, 'k'), defendantId: d.id, law, severity, evidence, filedTick: world.tick, filedBy: spec.filedBy,
     victimId, amount: Math.max(0, Math.round(spec.amount ?? 0)), description: spec.description.slice(0, 280),
-    status: 'pending', triedDay: null, judges: [], votes: {}, verdict: null, sentence: null, appeal: null,
+    status: 'pending', triedDay: null, judges: [], votes: {}, reasons: {}, openedTick: null, carriedSessions: 0,
+    decidedByDefault: false, verdict: null, sentence: null, appeal: null,
   };
   world.cases[kase.id] = kase;
 
@@ -76,175 +68,6 @@ export function fileCharge(world: World, spec: ChargeSpec): Case {
 }
 
 // ---------------------------------------------------------------------------
-// The bench
-// ---------------------------------------------------------------------------
-
-/** Judge and defendant are employer and employee (either way round). */
-function employmentTie(world: World, judge: Citizen, defendant: Citizen): boolean {
-  const judgeJob = judge.jobId ? world.jobs[judge.jobId] : null;
-  const defendantJob = defendant.jobId ? world.jobs[defendant.jobId] : null;
-  if (judgeJob && defendant.businessId && judgeJob.employer === defendant.businessId) return true;
-  if (defendantJob && judge.businessId && defendantJob.employer === judge.businessId) return true;
-  return false;
-}
-
-/** Family, friend, employer, employee, accuser, victim or the defendant themself. */
-export function mustRecuse(world: World, judgeId: CitizenId, c: Case): boolean {
-  const judge = world.citizens[judgeId];
-  const d = world.citizens[c.defendantId];
-  if (!judge || !d) return true;
-  if (judgeId === d.id || judgeId === c.filedBy || judgeId === c.victimId) return true;
-  if (areFamily(world, judgeId, d.id)) return true;
-  if (c.victimId && areFamily(world, judgeId, c.victimId)) return true;
-  if (areFriends(world, judgeId, d.id)) return true;
-  return employmentTie(world, judge, d);
-}
-
-function holdsOffice(world: World, c: Citizen): boolean {
-  const g = world.government;
-  return c.office !== null || g.mayorId === c.id || g.council.includes(c.id) || g.judges.includes(c.id) || g.watch.includes(c.id);
-}
-
-/** Citizens fit to be drawn as temporary judges. `strict` demands reputation and a clean record. */
-function temporaryJudgePool(world: World, c: Case, bench: CitizenId[], strict: boolean): CitizenId[] {
-  const out: CitizenId[] = [];
-  for (const id of world.order) {
-    const cand = world.citizens[id];
-    if (!cand || bench.includes(id) || !canSit(world, cand) || mustRecuse(world, id, c)) continue;
-    if (strict) {
-      if (cand.reputation < JUDGE_MIN_REPUTATION || cand.record.convictions.length > 0 || holdsOffice(world, cand)) continue;
-    } else if (cand.reputation < 40 || world.government.judges.includes(id)) {
-      continue;
-    }
-    out.push(id);
-  }
-  return out;
-}
-
-/**
- * The judges who may hear a case: the appointed bench minus recusals. When
- * fewer than two remain, temporary judges are drawn by lot from eligible
- * citizens (then, failing that, from any upstanding citizen) to make three.
- */
-export function selectBench(world: World, c: Case): CitizenId[] {
-  const bench: CitizenId[] = [];
-  for (const id of world.government.judges) {
-    const judge = world.citizens[id];
-    if (!judge || bench.includes(id) || !canSit(world, judge) || mustRecuse(world, id, c)) continue;
-    bench.push(id);
-  }
-  if (bench.length >= MIN_BENCH) return bench;
-  for (const strict of [true, false]) {
-    const pool = shuffle(world, temporaryJudgePool(world, c, bench, strict));
-    for (const id of pool) {
-      if (bench.length >= BENCH_SIZE) break;
-      bench.push(id);
-    }
-    if (bench.length >= MIN_BENCH) break;
-  }
-  return bench;
-}
-
-/**
- * How strongly a judge believes the defendant guilty: the evidence, the
- * defendant's record and reputation, and — because judges are citizens —
- * friendship with the defendant or the victim, plus a dishonest judge's
- * thumb on the scale for friends and against rivals.
- */
-export function judgeBelief(world: World, judgeId: CitizenId, c: Case): number {
-  const judge = world.citizens[judgeId];
-  const d = world.citizens[c.defendantId];
-  if (!judge || !d) return 0;
-  const bondD = bondBetween(world, judgeId, d.id);
-  const bondV = c.victimId ? bondBetween(world, judgeId, c.victimId) : 0;
-  const priors = d.record.convictions.filter((k) => k.caseId !== c.id).length;
-  let belief = c.evidence;
-  belief += priors > 0 ? 0.15 : 0;
-  belief -= 0.20 * (bondD / 100);
-  belief += 0.10 * (1 - d.reputation / 100);
-  belief += 0.10 * (bondV / 100);
-  belief += normal(world) * 0.05;
-  belief -= (1 - judge.personality.honesty) * 0.1 * Math.sign(bondD);
-  return belief;
-}
-
-// ---------------------------------------------------------------------------
-// Trials
-// ---------------------------------------------------------------------------
-
-/** Try one pending case before its bench. */
-function tryCase(world: World, k: Case): void {
-  const d = world.citizens[k.defendantId];
-  const offence = LAWS[k.law].name.toLowerCase();
-  if (!d || !isPresent(world, d)) {
-    k.status = 'closed';
-    k.triedDay = world.day;
-    emit(world, 'verdict', `Case ${k.id} against ${nameOf(world, k.defendantId)} was closed: the defendant has left the city.`, [], 0.2, { caseId: k.id });
-    return;
-  }
-  const bench = selectBench(world, k);
-  if (bench.length === 0) {
-    if (world.counters.noBenchNoticeDay !== world.day) {
-      world.counters.noBenchNoticeDay = world.day;
-      emit(world, 'law', 'No judge could sit today; pending cases are held over.', [], 0.3);
-    }
-    return;
-  }
-
-  const votes: Record<CitizenId, Verdict> = {};
-  let guilty = 0;
-  for (const j of bench) {
-    const g = judgeBelief(world, j, k) > GUILT_THRESHOLD;
-    votes[j] = g ? 'guilty' : 'acquitted';
-    if (g) guilty++;
-  }
-  const verdict: Verdict = guilty * 2 > bench.length ? 'guilty' : 'acquitted';
-  k.judges = bench;
-  k.votes = votes;
-  k.verdict = verdict;
-  k.triedDay = world.day;
-  k.status = 'tried';
-  d.detainedUntilTick = null;
-  for (const j of bench) {
-    const judge = world.citizens[j];
-    if (judge) adjustReputation(world, judge, 1);
-  }
-
-  const tally = `${guilty}–${bench.length - guilty}`;
-  if (verdict === 'guilty') {
-    const s = computeSentence(world, k);
-    k.sentence = s;
-    if (s.exile) {
-      s.executeOnDay = world.day + APPEAL_WINDOW_DAYS;
-      emit(world, 'verdict', `The Court found ${d.name} guilty of ${offence} (${tally}) and sentenced them to exile, to be carried out on day ${s.executeOnDay} unless appealed.`,
-        [d.id, ...bench], 0.9, { caseId: k.id, verdict, tier: s.tier });
-      remember(world, d.id, 'verdict', `The Court found you guilty of ${offence} and sentenced you to EXILE on day ${s.executeOnDay}. You may appeal to the Council today.`);
-    } else {
-      executeSentence(world, k);
-      emit(world, 'verdict', `The Court found ${d.name} guilty of ${offence} (${tally}): ${describeSentence(s)}.`,
-        [d.id, ...bench], 0.5, { caseId: k.id, verdict, tier: s.tier });
-      remember(world, d.id, 'verdict', `The Court found you guilty of ${offence} (${tally}). You may appeal to the Council within a day.`);
-    }
-  } else {
-    k.status = 'closed';
-    emit(world, 'verdict', `The Court acquitted ${d.name} of ${offence} (${tally}).`, [d.id, ...bench], 0.5, { caseId: k.id, verdict });
-    remember(world, d.id, 'verdict', `The Court acquitted you of ${offence} (${tally}).`);
-  }
-  if (k.victimId && k.victimId !== d.id) {
-    remember(world, k.victimId, 'verdict', `The Court ${verdict === 'guilty' ? 'convicted' : 'acquitted'} ${d.name} of ${offence} against you (case ${k.id}).`);
-  }
-  for (const j of bench) {
-    remember(world, j, 'verdict', `You sat in judgement on ${d.name} (${offence}) and voted ${votes[j]}; the Court ${verdict === 'guilty' ? 'convicted' : 'acquitted'} them.`);
-  }
-}
-
-/** The daily sitting: every pending case, oldest first. */
-export function holdCourt(world: World): void {
-  const pending = Object.values(world.cases).filter((k) => k.status === 'pending').sort(byFiling);
-  for (const k of pending) tryCase(world, k);
-}
-
-// ---------------------------------------------------------------------------
 // Daily justice
 // ---------------------------------------------------------------------------
 
@@ -253,7 +76,7 @@ function executeDeferredExiles(world: World): void {
   for (const k of Object.values(world.cases)) {
     const s = k.sentence;
     if (!s || !s.exile || s.executed || k.verdict !== 'guilty') continue;
-    if (k.status === 'pending' || k.status === 'appealed') continue;
+    if (k.status === 'pending' || k.status === 'in_session' || k.status === 'appealed') continue;
     if (s.executeOnDay === null || s.executeOnDay > world.day) continue;
     executeSentence(world, k);
     k.status = 'closed';
@@ -343,9 +166,11 @@ export function dailyJustice(world: World): void {
 // Queries
 // ---------------------------------------------------------------------------
 
-/** Charges awaiting trial against a citizen, oldest first. */
+/** Charges still awaiting a verdict against a citizen — waiting or before a bench — oldest first. */
 export function pendingCasesFor(world: World, cId: CitizenId): Case[] {
-  return Object.values(world.cases).filter((k) => k.defendantId === cId && k.status === 'pending').sort(byFiling);
+  return Object.values(world.cases)
+    .filter((k) => k.defendantId === cId && (k.status === 'pending' || k.status === 'in_session'))
+    .sort(byFiling);
 }
 
 /** The most recently filed case against a citizen, whatever its status. */
@@ -366,3 +191,4 @@ export function canAppeal(world: World, cId: CitizenId): boolean {
 
 /** Re-exported so callers need only import court.ts. */
 export { latestConviction } from './cases.ts';
+export { describeSentence } from './sentencing.ts';

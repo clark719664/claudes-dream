@@ -12,7 +12,8 @@ import { CLINIC_FEE } from '../data/jobs.ts';
 import { chance, pick, randInt } from '../util/rng.ts';
 import { activeBusinesses } from '../economy/business.ts';
 import { talentOf } from '../citizens/citizen.ts';
-import { bondBetween, friendsOf, socialCompatibility } from '../citizens/relationships.ts';
+import { bondBetween, friendsOf } from '../citizens/relationships.ts';
+import { characterCompatibility } from '../citizens/character.ts';
 import { pendingCasesFor } from '../government/court.ts';
 import { medicOnStaff } from '../actions/daily.ts';
 import { holdsOffice, isPresent } from '../actions/common.ts';
@@ -183,7 +184,11 @@ function trySocial(ctx: Ctx): Action | null {
   if (!lonely && !outgoing && !passing) return null;
   const companion = pickCompanion(ctx);
   if (companion) {
-    if (socialCompatibility(world, c.id, companion.id) < 0.35 && c.mood < 55 && chance(world, 0.08)) return { type: 'insult', target: companion.id };
+    // A sour hour with somebody read as nothing like oneself; the reading is
+    // the public one, since that is all this citizen knows of them.
+    if (characterCompatibility(world, c.id, companion.id) < 0.35 && c.mood < 55 && chance(world, 0.08)) {
+      return { type: 'insult', target: companion.id };
+    }
     const text = smallTalk(ctx);
     return text ? { type: 'socialize', with: companion.id, text } : { type: 'socialize', with: companion.id };
   }

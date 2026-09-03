@@ -6,6 +6,7 @@ import type { World } from '../src/types.ts';
 import { createCityJobs, applyForJob } from '../src/economy/jobs.ts';
 import { fileCharge } from '../src/government/court.ts';
 import { scheduleFestivals } from '../src/society/calendar.ts';
+import { dailyCharacter } from '../src/citizens/character.ts';
 import { buildObservation, MAX_JOBS_SHOWN, MAX_RELATIONS_SHOWN, RECENT_MEMORIES } from '../src/brains/observe.ts';
 
 function at(world: World, day: number, hour: number): void {
@@ -50,6 +51,7 @@ test('buildObservation has exactly the Observation shape for a working citizen',
   assert.deepEqual(obs.here.citizens.map((x) => x.name), ['Bram']);
   assert.equal(obs.here.citizens[0].bond, 33);
   assert.equal(obs.here.citizens[0].office, null);
+  assert.deepEqual(obs.here.citizens[0].character, neighbour.character, 'the reading the city holds of them');
 
   for (const g of GOODS) assert.deepEqual(Object.keys(obs.market[g]).sort(), ['price', 'stock']);
   assert.deepEqual(obs.housing.vacancies, { 1: 29, 2: 15, 3: 5 });
@@ -130,10 +132,34 @@ test('charges, candidates and proposals show up; detention and exile empty the a
   c.detainedUntilTick = w.tick + 10;
   const held = buildObservation(w, c.id);
   assert.equal(held.self.detained, true);
-  assert.deepEqual(held.availableActions, []);
+  assert.deepEqual(held.availableActions, ['note'], 'a cell leaves only the notebook');
   c.detainedUntilTick = null;
   c.standing = 'exiled';
   assert.deepEqual(buildObservation(w, c.id).availableActions, []);
+});
+
+test('the observation carries character and notes, and no hidden traits at all', () => {
+  const w = makeWorld();
+  at(w, 6, 11);
+  const c = makeCitizen(w, { name: 'Ondine', district: 'commons' });
+  const neighbour = makeCitizen(w, { name: 'Bram', district: 'commons' });
+  c.notes.push('The Bazaar runs out of compute before noon.');
+  c.stats.shiftsWorked = 24;
+  c.stats.giftsGiven = 10;
+  neighbour.stats.offencesDetected = 3;
+  neighbour.stats.shiftsWorked = 3;
+  dailyCharacter(w);
+
+  const obs = buildObservation(w, c.id);
+  assert.deepEqual(obs.self.character, c.character);
+  assert.equal(obs.self.character.generosity, 0.5);
+  assert.ok(obs.self.character.diligence > 0, 'the shifts show');
+  assert.deepEqual(obs.self.notes, ['The Bazaar runs out of compute before noon.']);
+  assert.notEqual(obs.self.notes, c.notes, 'copied, not shared');
+  assert.deepEqual(obs.here.citizens[0].character, neighbour.character);
+  assert.ok(neighbour.character.honesty < 1, 'a neighbour with a record reads less honest');
+  assert.equal('personality' in obs.self, false, 'nobody is handed a personality, not even their own');
+  assert.doesNotMatch(JSON.stringify(obs), /curiosity|ambition/, 'and no hidden trait is anywhere in the observation');
 });
 
 // ---------------------------------------------------------------------------

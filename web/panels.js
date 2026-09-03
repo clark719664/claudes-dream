@@ -12,7 +12,7 @@
       R.h('b', null, c.name), c.familyName ? R.h('span', { class: 'muted' }, ` ${c.familyName}`) : null,
       ' ', R.stagePill(c.lifeStage), ' ', R.brainBadge(c.brain)) },
     { key: 'lineage', label: 'Lineage', sortable: true, cls: 'small muted' },
-    { key: 'brain', label: 'Mind', sortable: true, cls: 'small', render: (c) => (c.brain === 'llm' ? 'Claude' : c.brain) },
+    { key: 'brain', label: 'Mind', sortable: true, cls: 'small', render: (c) => R.brainName(c.brain) },
     { key: 'job', label: 'Job', sortable: true, render: (c) => (c.job ? R.h('span', null, c.job, c.employer ? R.h('span', { class: 'muted small' }, ` · ${c.employer}`) : null) : c.business ? R.h('span', null, 'Owner ', R.h('span', { class: 'muted small' }, `· ${c.business}`)) : R.h('span', { class: 'dim' }, 'unemployed')) },
     { key: 'district', label: 'District', sortable: true, render: (c) => R.districtName(c.district) },
     { key: 'partner', label: 'Partner', sortable: true, cls: 'small nowrap', render: (c) => (c.partnerId ? R.h('span', null, R.nameLink(c.partnerId, c.partner), c.married ? R.h('span', null, ' ', R.pill('married', 'gold')) : null) : null) },
@@ -33,7 +33,7 @@
       const standing = R.h('select', { onchange: (e) => { f.standing = e.target.value; rerender(); } },
         ['all', 'good', 'probation', 'suspended', 'exiled'].map((s) => R.h('option', { value: s }, s === 'all' ? 'All standings' : R.titleCase(s))));
       const brain = R.h('select', { onchange: (e) => { f.brain = e.target.value; rerender(); } },
-        R.h('option', { value: 'all' }, 'All minds'), R.h('option', { value: 'reflex' }, 'Reflex'), R.h('option', { value: 'llm' }, 'Claude'), R.h('option', { value: 'remote' }, 'Remote'));
+        R.h('option', { value: 'all' }, 'All minds'), R.h('option', { value: 'reflex' }, 'Scripted founders'), R.h('option', { value: 'llm' }, 'Claude'), R.h('option', { value: 'remote' }, 'Remote'));
       const present = R.h('label', null, R.h('input', { type: 'checkbox', checked: true, onchange: (e) => { f.presentOnly = e.target.checked; rerender(); } }), 'in the city only');
       root.appendChild(R.h('div', { class: 'toolbar' }, search, standing, brain, present, R.h('span', { class: 'spacer' }), R.h('span', { class: 'muted small', id: 'citizens-meta' })));
       root.appendChild(R.h('div', { id: 'citizens-table' }));
@@ -92,7 +92,8 @@
   function voteChips(votes) {
     if (!votes || !votes.length) return R.h('span', { class: 'dim' }, '—');
     return R.h('span', { class: 'chips' }, votes.map((v) => R.h('span', {
-      class: `chip ${v.verdict === 'guilty' ? 'verdict-guilty' : 'verdict-acquitted'}`, title: `${v.name} voted ${v.verdict}`,
+      class: `chip ${v.verdict === 'guilty' ? 'verdict-guilty' : 'verdict-acquitted'}`,
+      title: `${v.name} voted ${v.verdict}${v.reason ? `: "${v.reason}"` : ''}`,
     }, `${v.name.split(' ')[0]} ${v.verdict === 'guilty' ? 'G' : 'A'}`)));
   }
 

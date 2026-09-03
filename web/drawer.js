@@ -1,14 +1,18 @@
 /*
  * Reverie dashboard — the citizen drawer: family and home, needs, skills,
- * personality, tastes and possessions, clubs, bonds, record, cases, memory
+ * character, tastes and possessions, clubs, bonds, record, cases, memory
  * and lifetime statistics for one citizen.
+ *
+ * Character is the reading the city takes off a citizen's record, not the
+ * traits it was rolled with: those are its own business and are in no view
+ * (docs/PRINCIPLES.md §2).
  */
 (function () {
   'use strict';
   const R = window.R;
   const NEEDS = ['energy', 'rest', 'social', 'comfort', 'purpose'];
   const SKILLS = ['crafting', 'analysis', 'rhetoric', 'care', 'commerce', 'artistry'];
-  const TRAITS = ['curiosity', 'diligence', 'sociability', 'honesty', 'ambition'];
+  const CHARACTER = ['honesty', 'diligence', 'sociability', 'generosity', 'civic'];
   const TIER_NAMES = { 0: 'homeless', 1: 'Lantern Lofts (tier 1)', 2: 'The Terraces (tier 2)', 3: 'Skyline Villas (tier 3)' };
   /** A long-lived citizen can have a great many relatives; the rest are counted. */
   const MAX_FAMILY_SHOWN = 12;
@@ -163,7 +167,9 @@
       R.h('h3', null, 'Family'), familySection(c),
       R.h('h3', null, 'Needs'), NEEDS.map((n) => R.barRow(R.titleCase(n), c.needs[n], 100, c.needs[n] < 20 ? 'crit' : c.needs[n] < 40 ? 'warn' : '')),
       R.h('h3', null, 'Skills'), SKILLS.map((s) => R.barRow(R.titleCase(s), c.skills[s], 100, 'gold')),
-      R.h('h3', null, 'Personality'), TRAITS.map((t) => R.barRow(R.titleCase(t), c.personality[t] * 100, 100, '')),
+      R.h('h3', null, 'Character'),
+      R.h('div', { class: 'dim small' }, 'What the city has seen this citizen do, refreshed daily.'),
+      CHARACTER.map((t) => R.barRow(R.titleCase(t), ((c.character || {})[t] || 0) * 100, 100, '')),
       R.h('h3', null, 'Inventory'), inventory,
       R.h('h3', null, 'Tastes and possessions'), tastesSection(c),
       R.h('h3', null, 'Clubs'), clubsSection(c),

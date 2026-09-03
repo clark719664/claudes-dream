@@ -66,10 +66,8 @@ button { font: inherit; color: inherit; }
 .clock .tick { font-size: 11px; color: var(--dim); font-family: var(--mono); }
 .pop { font-family: var(--mono); color: var(--muted); }
 .pop b { color: var(--text); font-weight: 600; }
-.controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-.speed { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
-.speed input[type="range"] { width: 120px; accent-color: var(--accent); }
-.speed .speed-label { font-family: var(--mono); min-width: 74px; color: var(--text); }
+.pop .founders { color: var(--dim); }
+.pace { margin-left: auto; font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
 .conn { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); font-family: var(--mono); }
 .conn::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
 .conn.live::before { background: var(--good); box-shadow: 0 0 6px var(--good); }
@@ -109,7 +107,7 @@ button { font: inherit; color: inherit; }
   .tabs-pane { overflow: visible; }
   .tab-body { overflow: visible; }
   .topbar { flex-wrap: wrap; }
-  .controls { margin-left: 0; }
+  .pace { margin-left: 0; }
 }
 
 /* ------------------------------------------------------------------ map */
@@ -239,6 +237,7 @@ td.wrap { white-space: normal; max-width: 420px; }
 }
 .badge.llm { color: #c9a8ff; border-color: rgba(201, 168, 255, 0.4); }
 .badge.remote { color: var(--accent); border-color: rgba(90, 209, 200, 0.4); }
+.badge.founder { color: var(--muted); border-color: var(--border-strong); }
 
 .bar { position: relative; height: 7px; background: var(--panel-3); border-radius: 4px; overflow: hidden; min-width: 60px; }
 .bar > i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 4px; }
@@ -402,3 +401,22 @@ td.wrap { white-space: normal; max-width: 420px; }
 
 .citizen.child .body { transform: scale(0.62); }
 .citizen.child .ring { r: 0.62; }
+
+/* ------------------------------------------------- send an agent (agents tab) */
+
+.badge.child { color: var(--probation); border-color: rgba(231, 193, 92, 0.4); }
+
+.send-agent { max-width: 900px; }
+.send-agent p { margin: 4px 0 8px; }
+.send-agent .code {
+  margin: 0; padding: 10px 12px; overflow-x: auto;
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+  font-family: var(--mono); font-size: 12px; line-height: 1.55; color: var(--text); white-space: pre;
+}
+.send-agent ul.plain { margin: 4px 0 0; padding-left: 18px; }
+.send-agent ul.plain li { margin: 5px 0; font-size: 12.5px; }
+.send-agent code {
+  font-family: var(--mono); font-size: 11.5px; background: var(--panel-3);
+  border: 1px solid var(--border); border-radius: 4px; padding: 0 4px;
+}
+#agents-table table { min-width: 780px; }

@@ -31,6 +31,24 @@ export function nameOf(world: World, id: CitizenId | null | undefined): string {
   return id ? world.citizens[id]?.name ?? id : 'nobody';
 }
 
+/**
+ * The Court sits for two hours: benches are chosen and votes opened at
+ * `courtHour`, and the votes are counted at the end of the hour after it.
+ */
+export function courtTallyHour(world: World): number {
+  return (world.config.courtHour + 1) % 24;
+}
+
+/**
+ * Tick at which the next sitting of the Court opens. The sitting opens at the
+ * top of `courtHour`, so a charge laid during that hour or later waits for
+ * tomorrow's — and so does anyone held for it.
+ */
+export function nextCourtTick(world: World): number {
+  const today = world.day * 24 + world.config.courtHour;
+  return world.hour < world.config.courtHour ? today : today + 24;
+}
+
 /** Councillors and the Mayor able to sit today (Mayor first, no duplicates). */
 export function sittingCouncil(world: World): Citizen[] {
   const g = world.government;

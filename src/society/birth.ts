@@ -88,7 +88,9 @@ export function birthChild(world: World, h: Happening): Citizen {
     familyName: childFamilyName(parents),
     personality: blendPersonality(world, parents),
     skills: inheritTalent(world, parents),
-    brain: 'reflex',
+    // Nobody sent this one: until a parent claims it (POST /api/agents/:id/claim)
+    // it lives on the child instinct, not on a scripted adult mind.
+    brain: 'child',
     district: CHILD_DISTRICT,
     bornDay: world.day,
   });

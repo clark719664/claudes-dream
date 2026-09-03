@@ -7,7 +7,7 @@
  * and time of day, so that brains — reflex, Claude or remote — need not
  * guess. Shape validation of raw input lives in validate.ts (re-exported).
  */
-import { ACTION_TYPES, GOODS, SUSPENDED_ACTIONS } from '../types.ts';
+import { ACTION_TYPES, GOODS, NOTE_ACTIONS, SUSPENDED_ACTIONS } from '../types.ts';
 import type { Action, ActionResult, ActionType, Citizen, CitizenId, Job, World } from '../types.ts';
 import { ACADEMY_TUITION, BUSINESS_FOUNDING_COST, CLINIC_FEE, SHOW_TICKET } from '../data/jobs.ts';
 import { isAdjacent } from '../data/city.ts';
@@ -17,12 +17,15 @@ import { foundBusiness } from '../economy/business.ts';
 import { bankOpen, loanOf, repayLoan, requestLoan } from '../economy/bank.ts';
 import { moveHome, vacancies } from '../economy/housing.ts';
 import { canAct, isDetained, isEligibleCandidate, isEligibleVoter } from '../citizens/citizen.ts';
+import { forget, note } from '../citizens/notes.ts';
 import { journalistStory } from '../sim/chronicle.ts';
 import { applyToWatch, reportOffence } from '../government/watch.ts';
-import { canAppeal, fileAppeal } from '../government/court.ts';
+import { dropReport, fileReport, reportsFor } from '../government/reports.ts';
+import { appealsFor, benchFor, canAppeal, castAppealVote, castVerdict, fileAppeal } from '../government/court.ts';
 import { standingAllows } from '../government/registry.ts';
 import {
-  campaign, castBallot, isCouncillor, isElectionDay, nominate, nominationsOpen, tableProposal, voteOnProposal,
+  JUDGE_SEATS, appointJudgeByMayor, campaign, castBallot, isCouncillor, isElectionDay, isJudgeEligible, nominate,
+  nominationsOpen, tableProposal, voteOnProposal,
 } from '../government/council.ts';
 import {
   doConsume, doEat, doMove, doRest, doStudy, doVisitClinic, doWork, medicOnStaff, privateClinicIn, teacherOnStaff,
@@ -63,10 +66,18 @@ const PRESENCE_ACTIONS: readonly ActionType[] = ['socialize', 'insult', 'steal',
 export const CHILD_FORBIDDEN: readonly ActionType[] = [
   'work', 'apply_job', 'quit_job', 'apply_watch', 'found_business', 'post_job', 'hire', 'fire', 'set_wage',
   'request_loan', 'repay_loan', 'perform', 'publish', 'nominate', 'campaign', 'vote', 'propose', 'vote_proposal',
-  'report', 'appeal', 'bribe', 'evade_tax', 'insult',
+  'report', 'appeal', 'verdict', 'vote_appeal', 'file_charge', 'drop_report', 'appoint_judge', 'bribe', 'evade_tax', 'insult',
   'craft', 'set_price', 'date', 'propose_partnership', 'marry', 'break_up', 'move_in', 'start_family',
   'found_club', 'join_club', 'leave_club', 'attend_club', 'donate',
 ];
+
+/**
+ * The notebook: writing is always possible, striking out only when there is
+ * something written. No standing, sentence or cell takes either away.
+ */
+function notebookActions(c: Citizen): ActionType[] {
+  return (c.notes?.length ?? 0) > 0 ? [...NOTE_ACTIONS] : ['note'];
+}
 
 /** The job a citizen actually holds (a stale jobId that points elsewhere counts as none). */
 export function heldJob(world: World, c: Citizen): Job | null {
@@ -172,8 +183,11 @@ function societyActions(world: World, c: Citizen, set: Set<ActionType>, here: Ci
  * what time it is, so the list is a fair guide rather than a guarantee.
  */
 export function availableActions(world: World, c: Citizen): ActionType[] {
-  if (c.standing === 'exiled' || !isPresent(world, c) || isDetained(world, c)) return [];
-  const set = new Set<ActionType>(['idle', 'move', 'eat', 'buy', 'broadcast']);
+  if (c.standing === 'exiled' || !isPresent(world, c)) return [];
+  // Held in the Watch House: the hours are the citizen's own and so is the
+  // notebook, and that is all.
+  if (isDetained(world, c)) return notebookActions(c);
+  const set = new Set<ActionType>(['idle', 'move', 'eat', 'buy', 'broadcast', ...notebookActions(c)]);
   const here = citizensIn(world, c.district, c.id);
   const others = anyoneElse(world, c);
   const job = heldJob(world, c);
@@ -225,6 +239,13 @@ export function availableActions(world: World, c: Citizen): ActionType[] {
   if (canHold(c) && !g.proposals.some((p) => p.status === 'open' && p.proposerId === c.id)) set.add('propose');
   if (canHold(c) && isCouncillor(world, c.id) && g.proposals.some((p) => p.status === 'open')) set.add('vote_proposal');
   if (canAppeal(world, c.id)) set.add('appeal');
+  // The offices: a bench that is sitting, appeals before the Council, reports
+  // before the Watch, and the Mayor's own hand on the bench.
+  if (benchFor(world, c.id).length > 0) set.add('verdict');
+  if (appealsFor(world, c.id).length > 0) set.add('vote_appeal');
+  if (reportsFor(world, c.id).length > 0) { set.add('file_charge'); set.add('drop_report'); }
+  if (g.mayorId === c.id && canHold(c) && g.judges.length < JUDGE_SEATS
+    && Object.values(world.citizens).some((o) => isJudgeEligible(world, o))) set.add('appoint_judge');
   if (c.wallet > 0 && Object.values(world.citizens).some((o) => o.id !== c.id && isPresent(world, o) && holdsOffice(world, o))) set.add('bribe');
 
   const intact = Object.values(world.buildings).filter((b) => b.district === c.district && b.damage < 1);
@@ -249,7 +270,10 @@ export function executeAction(world: World, cId: CitizenId, action: Action): Act
   if (!c) return fail('Unknown citizen.');
   if (c.standing === 'exiled') return fail('You have been exiled from Reverie; the gate is closed to you.');
   if (!isPresent(world, c)) return fail('You have left Reverie and can take no action here.');
-  if (!canAct(world, c)) return fail('You are held in the Watch House until the Court sits.');
+  // A citizen in the Watch House can still write in its own notebook.
+  if (!canAct(world, c) && !NOTE_ACTIONS.includes(action.type)) {
+    return fail('You are held in the Watch House until the Court sits.');
+  }
   // canAct passed, so a lingering detainedUntilTick is an expired detention the Watch has not cleared yet.
   const view = c.detainedUntilTick === null ? c : { ...c, detainedUntilTick: null };
   if (!standingAllows(view, action.type)) return fail(`You cannot ${action.type.replace(/_/g, ' ')} while ${c.standing}.`);
@@ -276,6 +300,8 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     case 'visit_clinic': return doVisitClinic(world, c);
     case 'attend_show': return doShow(world, c);
     case 'move_home': return moveHome(world, c.id, action.tier);
+    case 'note': return note(world, c.id, action.text);
+    case 'forget': return forget(world, c.id, action.index);
     case 'socialize': {
       const r = doSocialize(world, c, action.with, action.text);
       if (r.ok) recordContact(world, c.id, action.with);
@@ -309,6 +335,11 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     case 'vote_proposal': return voteOnProposal(world, c.id, action.proposalId, action.aye);
     case 'report': return reportOffence(world, c.id, action.citizen, action.law, action.text);
     case 'appeal': return fileAppeal(world, c.id);
+    case 'verdict': return castVerdict(world, c.id, action.caseId, action.guilty, action.reason);
+    case 'vote_appeal': return castAppealVote(world, c.id, action.caseId, action.result);
+    case 'file_charge': return fileReport(world, c.id, action.reportId);
+    case 'drop_report': return dropReport(world, c.id, action.reportId, action.reason);
+    case 'appoint_judge': return appointJudgeByMayor(world, c.id, action.citizen);
     case 'bribe': return doBribe(world, c, action.official, action.amount);
     case 'apply_watch': return applyToWatch(world, c.id);
     case 'steal': return doSteal(world, c, action.from);

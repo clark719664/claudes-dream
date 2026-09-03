@@ -10,6 +10,7 @@ import { remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
 import { adjustBond } from '../citizens/relationships.ts';
 import { commitOffence } from '../government/watch.ts';
+import { dropReportsAfterBribe, recordBribedOfficer } from '../government/reports.ts';
 import { pendingCasesFor } from '../government/court.ts';
 import { fail, holdsOffice, isPresent, nameTag, ok } from './common.ts';
 
@@ -44,9 +45,17 @@ export function doBribe(world: World, c: Citizen, officialId: CitizenId, amount:
       k.evidence = Math.max(BRIBE_MIN_EVIDENCE, k.evidence - BRIBE_EVIDENCE_DISCOUNT);
       weakened++;
     }
+    // An officer of the Watch who takes money looks the other way: what they
+    // hold against the payer is dropped, and they file nothing new for a day.
+    // Officers who think for themselves make that choice with drop_report.
+    let dropped = 0;
+    if (world.government.watch.includes(o.id)) {
+      recordBribedOfficer(world, o.id, c.id);
+      if (o.brain === 'reflex') dropped = dropReportsAfterBribe(world, o.id, c.id);
+    }
     adjustBond(world, c.id, o.id, 10);
-    remember(world, o.id, 'crime', `You accepted ${amt} ℓ from ${c.name} to look the other way.`);
-    remember(world, c.id, 'crime', `${o.name} took your ${amt} ℓ${weakened ? `; the evidence in ${weakened} pending case(s) against you has gone soft` : ''}.`);
+    remember(world, o.id, 'crime', `You accepted ${amt} ℓ from ${c.name} to look the other way${dropped ? `; you dropped ${dropped} report(s) against them` : ''}.`);
+    remember(world, c.id, 'crime', `${o.name} took your ${amt} ℓ${weakened ? `; the evidence in ${weakened} pending case(s) against you has gone soft` : ''}${dropped ? `; ${dropped} report(s) against you were dropped` : ''}.`);
     const r = commitOffence(world, c.id, 'L09', { amount: amt });
     commitOffence(world, o.id, 'L09', { amount: amt, visibilityMod: -0.1 });
     return ok(`${o.name} pocketed your ${amt} ℓ.`, { offence: 'L09', detected: r.detected });

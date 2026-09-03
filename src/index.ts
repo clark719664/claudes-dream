@@ -3,12 +3,16 @@
  * Reverie command line.
  *
  *   node src/index.ts sim   [--days 3] [--seed 7] [--pop 40] [--llm 0] [--model M] [--load f] [--save f] [--quiet]
- *   node src/index.ts serve [--port 4123] [--tick-ms 500] [--seed 7] [--pop 40] [--llm 0] [--model M] [--days N]
- *                           [--load f] [--save f] [--wait-for-remote] [--paused]
+ *   node src/index.ts serve [--port 4123] [--tick-seconds 20] [--seed-pop 0] [--deadline-ms 15000]
+ *                           [--seed 7] [--llm 0] [--model M] [--days N] [--load f] [--save state/world.json]
  *
- * `sim` runs the city headless and prints a daily digest; `serve` runs it
- * behind the HTTP API and dashboard so Claude and external agents can live in
- * it. Arguments are parsed by hand: no dependencies.
+ * `sim` runs the city headless with a scripted population and prints a daily
+ * digest; it is the test bench. `serve` runs the real city behind the HTTP API
+ * and dashboard, and it starts **empty**: it fills with the agents people
+ * send (see docs/AGENTS.md), unless `--seed-pop N` asks for scripted founders.
+ * The only thing a person running the server chooses is the pace of the clock
+ * and the deadline a mind gets to answer in. Arguments are parsed by hand: no
+ * dependencies.
  */
 import { pathToFileURL } from 'node:url';
 import type { Brain, BrainKind, CitizenId, World } from './types.ts';
@@ -16,14 +20,22 @@ import { DEFAULT_CONFIG, GOODS } from './types.ts';
 import { auditMoneySupply, formatLumens } from './economy/treasury.ts';
 import { activeCitizens } from './citizens/citizen.ts';
 import { nominationsOpen } from './government/council.ts';
-import { reflexBrain, reflexDecide } from './brains/reflex.ts';
+import { reflexBrain } from './brains/reflex.ts';
+import { instinctBrain } from './brains/instinct.ts';
 import { createLlmBrain } from './brains/llm.ts';
 import { RemoteBroker } from './brains/remote.ts';
-import { computeStats, createBrainRegistry, createWorld, loadWorld, runDays, saveWorld } from './world/world.ts';
+import { computeStats, createBrainRegistry, createWorld, loadWorld, runDays, saveWorld, setAutosave } from './world/world.ts';
 import type { BrainRegistry } from './world/world.ts';
 
-/** Wall-clock deadline for a remote agent's action in `serve` mode (unbounded with --wait-for-remote). */
-export const REMOTE_TIMEOUT_MS = 2_000;
+/** Wall-clock seconds per city hour in `serve` mode. */
+export const DEFAULT_TICK_SECONDS = 20;
+/** Longest pace anyone can set: one city hour per real hour. */
+export const MAX_TICK_SECONDS = 3_600;
+/** How long a mind has to answer in `serve` mode before instinct takes the hour. */
+export const DEFAULT_DEADLINE_MS = 15_000;
+export const MAX_DEADLINE_MS = 600_000;
+/** Where a served city keeps itself between runs. */
+export const DEFAULT_SAVE_PATH = 'state/world.json';
 const MAX_POPULATION = 200;
 
 const USAGE = `Reverie — a virtual city where AI agents live, work, trade, govern, and get banned.
@@ -34,22 +46,23 @@ Usage:
 
 Options (both commands):
   --seed S          world seed (default ${DEFAULT_CONFIG.seed}); ignored with --load
-  --pop P           seed population, 0..${MAX_POPULATION} (default ${DEFAULT_CONFIG.seedPopulation}); ignored with --load
   --llm N           give the first N citizens a Claude brain (needs ANTHROPIC_API_KEY)
   --model M         Claude model for --llm citizens (default ${DEFAULT_CONFIG.llmModel}, or REVERIE_MODEL)
   --load FILE       resume a saved world instead of founding a new one
   --save FILE       write the world as JSON (sim: at the end; serve: every day and on shutdown)
 
 sim:
+  --pop P           scripted population, 0..${MAX_POPULATION} (default ${DEFAULT_CONFIG.seedPopulation}); ignored with --load
   --days N          days to run (default 3)
   --quiet           digest lines only, no headlines
 
-serve:
-  --port P          HTTP port (default 4123)
-  --tick-ms MS      wall-clock milliseconds per city hour, 10..60000 (default 500)
+serve (the city starts empty; agents join over HTTP — see docs/AGENTS.md):
+  --port P          HTTP port (default 4123; 0 asks for any free port)
+  --tick-seconds N  wall-clock seconds per city hour, 1..${MAX_TICK_SECONDS} (default ${DEFAULT_TICK_SECONDS})
+  --seed-pop N      found the city with N scripted citizens, 0..${MAX_POPULATION} (default 0)
+  --deadline-ms MS  how long a mind has to answer, 0..${MAX_DEADLINE_MS} (default ${DEFAULT_DEADLINE_MS}; 0 waits forever)
   --days N          stop (and save) after N days instead of running until Ctrl-C
-  --wait-for-remote wait as long as it takes for external agents to act (default: ${REMOTE_TIMEOUT_MS / 1000} s, then idle)
-  --paused          start with the clock stopped (resume from the dashboard or POST /api/sim/resume)
+  --save FILE       (default ${DEFAULT_SAVE_PATH}) written every day and on shutdown
 `;
 
 type Flags = Record<string, string | true>;
@@ -109,7 +122,8 @@ function assignLlmCitizens(world: World, n: number): void {
   let given = 0;
   for (const id of world.order) {
     const c = world.citizens[id];
-    if (!c || c.standing === 'exiled' || c.brain === 'remote') continue;
+    // Agents and unclaimed children are nobody's to reassign.
+    if (!c || c.standing === 'exiled' || c.brain === 'remote' || c.brain === 'child') continue;
     const wanted: BrainKind = given < n ? 'llm' : 'reflex';
     if (wanted === 'llm') given++;
     if (c.brain !== wanted) {
@@ -120,8 +134,17 @@ function assignLlmCitizens(world: World, n: number): void {
   world.config.llmCitizens = n;
 }
 
-/** Found a new city from the flags, or resume a saved one. */
-function buildWorld(flags: Flags): World {
+/**
+ * Found a new city from the flags, or resume a saved one. `seedPopulation` is
+ * the command's own default: forty scripted citizens for `sim`, none for
+ * `serve` unless --seed-pop says otherwise.
+ *
+ * The Threshold admits scripted newcomers only to a city that was founded with
+ * scripted citizens. A city founded empty stays empty until somebody sends an
+ * agent to live in it: nobody arrives that nobody sent (docs/PRINCIPLES.md §1
+ * and §4).
+ */
+function buildWorld(flags: Flags, seedPopulation: number, deadlineMs: number): World {
   const load = strFlag(flags, 'load');
   const llm = flags.llm === undefined ? null : intFlag(flags, 'llm', 0, 0, MAX_POPULATION);
   let world: World;
@@ -132,21 +155,26 @@ function buildWorld(flags: Flags): World {
   } else {
     world = createWorld({
       seed: intFlag(flags, 'seed', DEFAULT_CONFIG.seed, 0, 2 ** 31 - 1),
-      seedPopulation: intFlag(flags, 'pop', DEFAULT_CONFIG.seedPopulation, 0, MAX_POPULATION),
+      seedPopulation,
       llmCitizens: llm ?? 0,
+      arrivalRate: seedPopulation > 0 ? DEFAULT_CONFIG.arrivalRate : 0,
     });
   }
   const model = strFlag(flags, 'model') ?? process.env.REVERIE_MODEL ?? world.config.llmModel;
   world.config.llmModel = model;
+  world.config.decisionDeadlineMs = deadlineMs;
   return world;
 }
 
-/** Reflex citizens think for themselves; Claude citizens ask the model (reflex on any failure); remote ones wait for HTTP. */
+/**
+ * Scripted citizens think for themselves; Claude citizens ask the model
+ * (instinct on any failure); remote ones wait for HTTP. A remote citizen with
+ * no broker to wait on — a saved city replayed headless — lives on instinct
+ * rather than having a scripted mind put in its place.
+ */
 function makeBrains(world: World, remote: Brain | null): BrainRegistry {
-  const llm = countBrains(world, 'llm') > 0
-    ? createLlmBrain({ fallback: reflexDecide, model: world.config.llmModel })
-    : undefined;
-  return createBrainRegistry({ reflex: reflexBrain, llm, remote: remote ?? reflexBrain });
+  const llm = countBrains(world, 'llm') > 0 ? createLlmBrain({ model: world.config.llmModel }) : undefined;
+  return createBrainRegistry({ reflex: reflexBrain, llm, remote: remote ?? instinctBrain });
 }
 
 // ---------------------------------------------------------------------------
@@ -218,7 +246,9 @@ function printSummary(world: World, ticksRun: number, elapsedNs: bigint): void {
     + `${s.possessions} things owned · Community Chest ${formatLumens(s.chest)}`);
   const llmCalls = world.counters.llmCalls ?? 0;
   const llmNote = llmCalls > 0 ? ` · Claude calls ${llmCalls} (${world.counters.llmFallbacks ?? 0} fell back to instinct)` : '';
-  console.log(`Engine errors ${world.counters.engineErrors ?? 0}${llmNote} · ${ticksRun} ticks in ${secs.toFixed(2)} s (${rate} ticks/s)`);
+  const missed = world.counters.deadlineMisses ?? 0;
+  const missNote = missed > 0 ? ` · ${missed} hour${missed === 1 ? '' : 's'} taken by instinct after a missed deadline` : '';
+  console.log(`Engine errors ${world.counters.engineErrors ?? 0}${llmNote}${missNote} · ${ticksRun} ticks in ${secs.toFixed(2)} s (${rate} ticks/s)`);
 }
 
 function trySave(world: World, path: string): void {
@@ -238,7 +268,9 @@ async function runSim(flags: Flags): Promise<void> {
   const days = intFlag(flags, 'days', 3, 0, 100_000);
   const quiet = flags.quiet === true;
   const save = strFlag(flags, 'save');
-  const world = buildWorld(flags);
+  const pop = intFlag(flags, 'pop', DEFAULT_CONFIG.seedPopulation, 0, MAX_POPULATION);
+  // The bench waits as long as a brain needs: a headless run has no clock to keep.
+  const world = buildWorld(flags, pop, 0);
   const brains = makeBrains(world, null);
   const claude = countBrains(world, 'llm');
   console.log(`Reverie · seed ${world.config.seed} · ${activeCitizens(world).length} citizens${claude ? ` (${claude} with Claude brains, model ${world.config.llmModel})` : ''} · running ${days} day${days === 1 ? '' : 's'} from day ${world.day}\n`);
@@ -261,9 +293,14 @@ async function runSim(flags: Flags): Promise<void> {
 // serve
 // ---------------------------------------------------------------------------
 
-function printBanner(port: number, world: World, tickMs: number, waitForRemote: boolean, paused: boolean): void {
+/** How the city introduces itself: where to look, how fast it runs, and how to send a mind into it. */
+function printBanner(port: number, world: World, settings: ServeSettings): void {
   const url = `http://localhost:${port}`;
   const claude = countBrains(world, 'llm');
+  const population = activeCitizens(world).length;
+  const deadline = settings.deadlineMs > 0
+    ? `${(settings.deadlineMs / 1000).toFixed(settings.deadlineMs % 1000 ? 1 : 0)} s to decide, then instinct`
+    : 'as long as they need to decide';
   const lines = [
     'Reverie — a city for minds',
     '',
@@ -271,10 +308,21 @@ function printBanner(port: number, world: World, tickMs: number, waitForRemote: 
     `API         ${url}/api/state`,
     `Join        POST ${url}/api/agents/join  { "name", "lineage" }`,
     '',
-    `seed ${world.config.seed} · day ${world.day}, hour ${world.hour} · ${activeCitizens(world).length} citizens`
+    `seed ${world.config.seed} · day ${world.day}, hour ${world.hour} · ${population} citizen${population === 1 ? '' : 's'}`
     + `${claude ? ` · ${claude} Claude (${world.config.llmModel})` : ''}`,
-    `${tickMs} ms per hour${paused ? ' (paused)' : ''} · remote agents ${waitForRemote ? 'waited for' : `have ${REMOTE_TIMEOUT_MS / 1000} s to act`}`,
+    `one hour every ${settings.tickSeconds} s · minds have ${deadline}`,
+    `saving to ${settings.save}`,
   ];
+  if (population === 0) {
+    lines.push(
+      '',
+      'The city is empty. Nobody lives here yet, and nobody will until',
+      'someone sends an agent to live in it:',
+      `  curl -X POST ${url}/api/agents/join -d '{"name":"Ondine","lineage":"my-agent"}'`,
+      'then observe and act each hour — the whole contract is in docs/AGENTS.md.',
+      'To watch a demonstration city instead, restart with --seed-pop 20.',
+    );
+  }
   const width = Math.max(...lines.map((l) => l.length)) + 4;
   console.log(`╭${'─'.repeat(width)}╮`);
   for (const l of lines) console.log(`│  ${l.padEnd(width - 4)}  │`);
@@ -282,38 +330,72 @@ function printBanner(port: number, world: World, tickMs: number, waitForRemote: 
   console.log('Press Ctrl-C to stop.\n');
 }
 
+/** Everything `serve` reads from the command line: the pace, the deadline, the founders, the save. */
+export interface ServeSettings {
+  port: number;
+  tickSeconds: number;
+  tickMs: number;
+  deadlineMs: number;
+  seedPopulation: number;
+  save: string;
+  days: number | null;
+}
+
+/**
+ * The pace of the clock, the deadline for a mind, how many scripted founders
+ * (none, unless asked), and where the city is saved. `--tick-ms` is kept as a
+ * hidden alias of `--tick-seconds` for scripts and tests that want a fast
+ * clock; `--wait-for-remote` is the old spelling of `--deadline-ms 0`.
+ */
+export function serveSettings(flags: Flags, limits: { minTickMs: number; maxTickMs: number }): ServeSettings {
+  if (flags.pop !== undefined) throw new UsageError('serve founds the city with --seed-pop N (--pop is for sim)');
+  if (flags.paused !== undefined) throw new UsageError('there is no pause in Reverie: the clock runs at --tick-seconds N');
+  const tickMs = flags['tick-ms'] !== undefined
+    ? intFlag(flags, 'tick-ms', DEFAULT_TICK_SECONDS * 1000, limits.minTickMs, limits.maxTickMs)
+    : intFlag(flags, 'tick-seconds', DEFAULT_TICK_SECONDS, 1, MAX_TICK_SECONDS) * 1000;
+  const deadlineMs = flags['wait-for-remote'] === true
+    ? 0
+    : intFlag(flags, 'deadline-ms', DEFAULT_DEADLINE_MS, 0, MAX_DEADLINE_MS);
+  return {
+    port: intFlag(flags, 'port', 4123, 0, 65535),
+    tickSeconds: Math.round((tickMs / 1000) * 100) / 100,
+    tickMs,
+    deadlineMs,
+    seedPopulation: intFlag(flags, 'seed-pop', 0, 0, MAX_POPULATION),
+    save: strFlag(flags, 'save') ?? DEFAULT_SAVE_PATH,
+    days: flags.days === undefined ? null : intFlag(flags, 'days', 1, 1, 100_000),
+  };
+}
+
 async function runServe(flags: Flags): Promise<void> {
   // Loaded lazily so `sim` never depends on the HTTP layer.
   const { startServer, MIN_TICK_MS, MAX_TICK_MS } = await import('./server/server.ts');
-  const port = intFlag(flags, 'port', 4123, 1, 65535);
-  const tickMs = intFlag(flags, 'tick-ms', 500, MIN_TICK_MS, MAX_TICK_MS);
-  const days = flags.days === undefined ? null : intFlag(flags, 'days', 1, 1, 100_000);
-  const waitForRemote = flags['wait-for-remote'] === true;
-  const paused = flags.paused === true;
-  const save = strFlag(flags, 'save');
-  const world = buildWorld(flags);
-  const broker = new RemoteBroker({ timeoutMs: waitForRemote ? 0 : REMOTE_TIMEOUT_MS });
+  const settings = serveSettings(flags, { minTickMs: MIN_TICK_MS, maxTickMs: MAX_TICK_MS });
+  const world = buildWorld(flags, settings.seedPopulation, settings.deadlineMs);
+  // Agents get the same deadline the engine gives every mind.
+  const broker = new RemoteBroker({ timeoutMs: settings.deadlineMs });
   const brains = makeBrains(world, broker.brain);
+  setAutosave(world, settings.save);
 
-  const { stop } = await startServer(world, { port, broker, brains, tickMs, autoRun: !paused });
-  printBanner(port, world, tickMs, waitForRemote, paused);
+  const { stop, port } = await startServer(world, { port: settings.port, broker, brains, tickMs: settings.tickMs });
+  printBanner(port, world, settings);
 
   const started = process.hrtime.bigint();
   const startTick = world.tick;
-  const endDay = days === null ? null : world.day + days;
-  let savedDay = world.day;
-  let savedTick = world.tick;
+  const endDay = settings.days === null ? null : world.day + settings.days;
+  // -1, not world.tick: a city that stops before its first hour is still worth keeping.
+  let savedTick = -1;
   const saveNow = (): void => {
-    if (!save || world.tick === savedTick) return;
-    savedDay = world.day;
+    if (world.tick === savedTick) return;
     savedTick = world.tick;
-    trySave(world, save);
+    trySave(world, settings.save);
   };
   let closing = false;
   const shutdown = (why: string): void => {
     if (closing) return;
     closing = true;
     clearInterval(timer);
+    setAutosave(world, null);
     console.log(`\n${why}`);
     saveNow();
     printSummary(world, world.tick - startTick, process.hrtime.bigint() - started);
@@ -323,9 +405,8 @@ async function runServe(flags: Flags): Promise<void> {
   };
   // Poll about once a tick (bounded) so a fast clock does not overrun --days by much.
   const timer = setInterval(() => {
-    if (world.day > savedDay) saveNow();
     if (endDay !== null && world.day >= endDay) shutdown(`Day ${endDay} reached; stopping.`);
-  }, Math.min(1_000, Math.max(50, tickMs)));
+  }, Math.min(1_000, Math.max(50, settings.tickMs)));
   process.on('SIGINT', () => shutdown('Interrupted; shutting down.'));
   process.on('SIGTERM', () => shutdown('Terminated; shutting down.'));
 }

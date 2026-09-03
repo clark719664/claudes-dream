@@ -14,6 +14,7 @@ export type CitizenId = string;   // "c_12"
 export type BusinessId = string;  // "b_3"
 export type JobId = string;       // "j_40"
 export type CaseId = string;      // "k_7"
+export type ReportId = string;    // "r_9"
 export type ProposalId = string;  // "p_2"
 export type LoanId = string;      // "l_5"
 export type BuildingId = string;  // snake_case, see data/city.ts
@@ -38,7 +39,12 @@ export type Skill = 'crafting' | 'analysis' | 'rhetoric' | 'care' | 'commerce' |
 export type Need = 'energy' | 'rest' | 'social' | 'comfort' | 'purpose';
 export type Trait = 'curiosity' | 'diligence' | 'sociability' | 'honesty' | 'ambition';
 export type Standing = 'good' | 'probation' | 'suspended' | 'exiled';
-export type BrainKind = 'reflex' | 'llm' | 'remote';
+/**
+ * What thinks for a citizen: a scripted reflex mind (testing and seeded
+ * founders), a Claude model, an external agent over HTTP, or — for a child
+ * born here whom nobody has claimed yet — the child instinct.
+ */
+export type BrainKind = 'reflex' | 'llm' | 'remote' | 'child';
 export type Office = 'mayor' | 'councillor' | 'judge' | 'watch' | null;
 export type HousingTier = 0 | 1 | 2 | 3;
 
@@ -93,6 +99,40 @@ export type Skills = Record<Skill, number>;       // each 0..100
 export type Needs = Record<Need, number>;         // each 0..100
 export type Inventory = Record<Good, number>;
 
+/**
+ * What the city can see of a citizen's character: five public readings, each
+ * 0..1, inferred from what that citizen has actually done (citizens/character.ts)
+ * and recomputed daily. Nobody is given a character; it is earned. The hidden
+ * `personality` is a citizen's own business — its own brain may read it, and
+ * nothing else in the city may.
+ */
+export interface Character {
+  honesty: number;
+  diligence: number;
+  sociability: number;
+  generosity: number;
+  civic: number;
+}
+
+export type CharacterTrait = keyof Character;
+
+export const CHARACTER_TRAITS: readonly CharacterTrait[] = [
+  'honesty', 'diligence', 'sociability', 'generosity', 'civic',
+];
+
+/** The reading of a citizen nobody has watched yet: the middle of every scale. */
+export const NEUTRAL_CHARACTER: Character = {
+  honesty: 0.5, diligence: 0.5, sociability: 0.5, generosity: 0.5, civic: 0.5,
+};
+
+/** A fresh copy of the neutral reading (never share the constant: it is mutable). */
+export function neutralCharacter(): Character {
+  return { ...NEUTRAL_CHARACTER };
+}
+
+/** The city itself, as the sender of a message: the Arrivals Hall leaflet comes from here. */
+export const CITY_SENDER = 'city';
+
 export interface Conviction {
   caseId: CaseId;
   law: LawCode;
@@ -122,6 +162,32 @@ export interface Message {
   to: CitizenId;
   tick: number;
   text: string;
+}
+
+/** The numbers behind a day's letter home: what a reader can count. */
+export interface LetterSummary {
+  /** Lumens that reached the citizen's wallet that day. */
+  earned: number;
+  /** Lumens that left it. */
+  spent: number;
+  /** Everyone the citizen dealt with that day. */
+  met: CitizenId[];
+  /** Standing at the day's end. */
+  standing: Standing;
+  /** The day's public events this citizen was part of, most notable first. */
+  events: string[];
+}
+
+/**
+ * One day of a citizen's life, written at the day's end from its own memory
+ * and the public ledger, and readable only by the person who sent the agent
+ * (`GET /api/agents/:id/letters`). Like a citizen's notes, a letter is private:
+ * it is never emitted, never printed by the Chronicle and never admissible.
+ */
+export interface Letter {
+  day: number;
+  text: string;
+  summary: LetterSummary;
 }
 
 /** A candidate's stated positions, each 0..1 (0 = low/lenient, 1 = high/strict). */
@@ -220,7 +286,10 @@ export interface Citizen {
   brain: BrainKind;
   arrivedDay: number;
 
+  /** Hidden: the citizen's own to read, nobody else's. */
   personality: Personality;
+  /** Public: what the city has seen of this citizen, recomputed daily. */
+  character: Character;
   skills: Skills;
   needs: Needs;
   /** Cached weighted mean of needs, 0..100. Recomputed by citizens/citizen.ts. */
@@ -263,6 +332,16 @@ export interface Citizen {
 
   memory: MemoryEntry[];
   inbox: Message[];
+  /**
+   * What the citizen chose to write down (bounded, newest last). Private: it
+   * belongs to the citizen and to nobody else, not even the Court.
+   */
+  notes: string[];
+  /**
+   * The letters home, one per day (bounded, newest last). Private to the
+   * person who sent this agent: no view, no Chronicle and no Court sees them.
+   */
+  letters: Letter[];
 
   shiftsToday: number;
   /** Last N action types, newest last; used for spam detection and the dashboard. */
@@ -277,6 +356,11 @@ export interface Citizen {
 
   /** Remote agents only: sha256 of the API key. */
   apiKeyHash: string | null;
+  /**
+   * Remote agents only: where the city posts this citizen's observation each
+   * hour and reads the answer back. Null means the agent long-polls instead.
+   */
+  callbackUrl: string | null;
   exiledCaseId: CaseId | null;
   exiledDay: number | null;
 
@@ -428,7 +512,12 @@ export interface Loan {
 // Government and justice
 // ---------------------------------------------------------------------------
 
-export type CaseStatus = 'pending' | 'tried' | 'appealed' | 'closed';
+/**
+ * A charge waits ('pending'), sits before a bench that is casting its votes
+ * ('in_session'), has been decided ('tried'), is before the Council
+ * ('appealed'), or is finished ('closed').
+ */
+export type CaseStatus = 'pending' | 'in_session' | 'tried' | 'appealed' | 'closed';
 export type Verdict = 'guilty' | 'acquitted';
 export type AppealResult = 'upheld' | 'reduced' | 'overturned';
 
@@ -448,6 +537,8 @@ export interface Appeal {
   decidedDay: number | null;
   result: AppealResult | null;
   votes: Record<CitizenId, AppealResult>;
+  /** Sessions the Council let pass without enough votes to decide it. */
+  carried: number;
 }
 
 export interface Case {
@@ -466,9 +557,44 @@ export interface Case {
   triedDay: number | null;
   judges: CitizenId[];
   votes: Record<CitizenId, Verdict>;
+  /** Why each judge voted as they did, in their own words. Public with the vote. */
+  reasons: Record<CitizenId, string>;
+  /** Tick the sitting that is hearing this case opened; null when none is. */
+  openedTick: number | null;
+  /** Sittings that ended without enough votes to decide it. */
+  carriedSessions: number;
+  /** True when a bench decided it on the evidence alone after too many carries. */
+  decidedByDefault: boolean;
   verdict: Verdict | null;
   sentence: Sentence | null;
   appeal: Appeal | null;
+}
+
+/** What has become of a report the Watch holds. */
+export type ReportStatus = 'open' | 'filed' | 'dropped' | 'expired';
+
+/**
+ * What an officer of the Watch saw, or what a citizen told them. A report is
+ * not a charge: an officer decides whether to file it (`file_charge`) or drop
+ * it (`drop_report`), and an unfiled one lapses. Every report stays in the
+ * record, including the ones nobody filed.
+ */
+export interface Report {
+  id: ReportId;
+  /** The officer it is before; null while it sits in the Watch's shared inbox. */
+  officerId: CitizenId | null;
+  suspectId: CitizenId;
+  law: LawCode;
+  /** 0..1 strength of what the Watch has. */
+  evidence: number;
+  /** Tick it was made; it lapses REPORT_EXPIRY_TICKS after this. */
+  tick: number;
+  victimId: CitizenId | null;
+  amount: number;
+  description: string;
+  status: ReportStatus;
+  filedCaseId: CaseId | null;
+  droppedReason: string | null;
 }
 
 export type ProposalKind =
@@ -664,6 +790,12 @@ export interface WorldConfig {
   courtHour: number;
   councilHour: number;
   chronicleHour: number;
+  /**
+   * Wall-clock milliseconds a brain has to answer in one tick; 0 means no
+   * deadline (the headless simulation waits as long as it takes). A brain
+   * that misses it gets the instinct action for that hour.
+   */
+  decisionDeadlineMs: number;
 }
 
 export interface World {
@@ -691,6 +823,8 @@ export interface World {
 
   government: Government;
   cases: Record<CaseId, Case>;
+  /** The Watch's book: everything reported, filed, dropped or lapsed. */
+  reports: Record<ReportId, Report>;
   bans: BanRecord[];
 
   // --- Society ---
@@ -729,6 +863,7 @@ export const DEFAULT_CONFIG: WorldConfig = {
   courtHour: 10,
   councilHour: 14,
   chronicleHour: 6,
+  decisionDeadlineMs: 0,
 };
 
 // ---------------------------------------------------------------------------
@@ -748,6 +883,8 @@ export type Action =
   | { type: 'visit_clinic' }
   | { type: 'attend_show' }
   | { type: 'move_home'; tier: HousingTier }
+  | { type: 'note'; text: string }
+  | { type: 'forget'; index: number }
   | { type: 'socialize'; with: CitizenId; text?: string }
   | { type: 'message'; to: CitizenId; text: string }
   | { type: 'gift'; to: CitizenId; amount: number }
@@ -771,6 +908,12 @@ export type Action =
   | { type: 'vote_proposal'; proposalId: ProposalId; aye: boolean }
   | { type: 'report'; citizen: CitizenId; law: LawCode; text?: string }
   | { type: 'appeal' }
+  // The institutions: judges, councillors, officers of the Watch and the Mayor
+  | { type: 'verdict'; caseId: CaseId; guilty: boolean; reason?: string }
+  | { type: 'vote_appeal'; caseId: CaseId; result: AppealResult }
+  | { type: 'file_charge'; reportId: ReportId }
+  | { type: 'drop_report'; reportId: ReportId; reason: string }
+  | { type: 'appoint_judge'; citizen: CitizenId }
   | { type: 'bribe'; official: CitizenId; amount: number }
   | { type: 'apply_watch' }
   | { type: 'steal'; from: CitizenId }
@@ -805,10 +948,13 @@ export type ActionType = Action['type'];
 
 export const ACTION_TYPES: readonly ActionType[] = [
   'idle', 'move', 'work', 'rest', 'eat', 'buy', 'sell', 'consume', 'study', 'visit_clinic', 'attend_show', 'move_home',
+  'note', 'forget',
   'socialize', 'message', 'gift', 'insult', 'broadcast',
   'apply_job', 'quit_job', 'found_business', 'post_job', 'hire', 'fire', 'set_wage',
   'request_loan', 'repay_loan', 'perform', 'publish',
-  'nominate', 'campaign', 'vote', 'propose', 'vote_proposal', 'report', 'appeal', 'bribe', 'apply_watch',
+  'nominate', 'campaign', 'vote', 'propose', 'vote_proposal', 'report', 'appeal',
+  'verdict', 'vote_appeal', 'file_charge', 'drop_report', 'appoint_judge',
+  'bribe', 'apply_watch',
   'steal', 'scam', 'harass', 'vandalize', 'evade_tax', 'extort', 'sabotage',
   'buy_item', 'use_item', 'gift_item', 'craft', 'set_price',
   'date', 'propose_partnership', 'marry', 'break_up', 'move_in', 'start_family',
@@ -832,7 +978,14 @@ export const OFFENCE_ACTIONS: readonly ActionType[] = [
 export const SUSPENDED_ACTIONS: readonly ActionType[] = [
   'idle', 'rest', 'eat', 'move', 'socialize', 'message', 'appeal', 'consume', 'buy',
   'dine', 'play', 'celebrate', 'use_item',
+  'note', 'forget',
 ];
+
+/**
+ * Writing in one's own notebook is never taken away: a citizen may `note` and
+ * `forget` while suspended and while held in the Watch House.
+ */
+export const NOTE_ACTIONS: readonly ActionType[] = ['note', 'forget'];
 
 export interface ActionResult {
   ok: boolean;
@@ -854,6 +1007,8 @@ export interface ObservedCitizen {
   office: Office;
   reputation: number;
   standing: Standing;
+  /** What the city has seen this citizen do; never their hidden personality. */
+  character: Character;
 }
 
 export interface ObservedJob {
@@ -877,6 +1032,67 @@ export interface ObservedProposal {
   nays: number;
   needed: number;
   youVoted: boolean | null;
+}
+
+/**
+ * A case before the bench a judge is sitting on this session. It carries what
+ * is admissible — the charge, the evidence, the record — and nothing about
+ * what to make of it.
+ */
+export interface ObservedBenchCase {
+  caseId: CaseId;
+  defendant: CitizenId;
+  defendantName: string;
+  law: LawCode;
+  lawName: string;
+  severity: Severity;
+  evidence: number;
+  victim: CitizenId | null;
+  victimName: string | null;
+  description: string;
+  priorConvictions: number;
+  /** Judges on this bench, including the observer. */
+  bench: CitizenId[];
+  /** Votes cast so far, by judge. */
+  votes: Record<CitizenId, Verdict>;
+  /** The observer's own vote, if they have cast one. */
+  youVoted: Verdict | null;
+  /** Sittings this case has already been held over. */
+  carriedSessions: number;
+}
+
+/** A conviction before the Council on appeal, as a councillor sees it. */
+export interface ObservedAppeal {
+  caseId: CaseId;
+  defendant: CitizenId;
+  defendantName: string;
+  law: LawCode;
+  lawName: string;
+  evidence: number;
+  verdict: Verdict | null;
+  sentence: { tier: PenaltyTier; fine: number; serviceDays: number; suspensionDays: number; exile: boolean } | null;
+  filedDay: number;
+  votes: Record<CitizenId, AppealResult>;
+  youVoted: AppealResult | null;
+  carried: number;
+}
+
+/** A report before an officer of the Watch. */
+export interface ObservedReport {
+  id: ReportId;
+  suspect: CitizenId;
+  suspectName: string;
+  law: LawCode;
+  lawName: string;
+  evidence: number;
+  victim: CitizenId | null;
+  amount: number;
+  description: string;
+  tick: number;
+  /** True when it sits in the Watch's shared inbox rather than with one officer. */
+  shared: boolean;
+  /** Ticks left before it lapses unfiled. */
+  expiresInTicks: number;
 }
 
 /** A shop (or the Emporium) in the observer's district and what is on its shelf. */
@@ -941,8 +1157,11 @@ export interface Observation {
     business: { id: BusinessId; name: string; kind: BusinessKind; treasury: number; employees: number } | null;
     loan: { outstanding: number; ratePerDay: number } | null;
     skills: Skills;
-    personality: Personality;
+    /** How the city reads this citizen, from what it has watched them do. */
+    character: Character;
     inventory: Inventory;
+    /** Everything this citizen has written down, oldest first; private. */
+    notes: string[];
     office: Office;
     record: { convictions: number; strikes: number; pendingCharges: number; finesOwed: number; serviceDaysLeft: number };
     detained: boolean;
@@ -985,6 +1204,12 @@ export interface Observation {
     openProposals: ObservedProposal[];
     myLatestCase: { id: CaseId; law: LawCode; status: CaseStatus; verdict: Verdict | null; tier: PenaltyTier | null; canAppeal: boolean } | null;
   };
+  /** Cases before you as a judge this session; empty for everyone else. */
+  bench: ObservedBenchCase[];
+  /** Appeals before you as a councillor; empty for everyone else. */
+  appeals: ObservedAppeal[];
+  /** Reports before you as an officer of the Watch; empty for everyone else. */
+  reports: ObservedReport[];
   inbox: { from: CitizenId; fromName: string; text: string; tick: number }[];
   recent: string[];
   availableActions: ActionType[];

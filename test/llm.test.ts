@@ -7,7 +7,10 @@ import {
 } from '../src/brains/llm.ts';
 import type { LlmRequest } from '../src/brains/llm.ts';
 import { ACTION_PARAM_NAMES } from '../src/brains/llm-tool.ts';
-import { ACTION_TYPES } from '../src/types.ts';
+import { HOUR_INSTRUCTION } from '../src/brains/llm-prompt.ts';
+import { leaflet } from '../src/citizens/orientation.ts';
+import { LAW_CODES } from '../src/data/laws.ts';
+import { ACTION_TYPES, DISTRICT_IDS } from '../src/types.ts';
 import type { Action, Citizen, Observation, World } from '../src/types.ts';
 
 // ---------------------------------------------------------------------------
@@ -23,14 +26,18 @@ function sampleObservation(world: World, c: Citizen): Observation {
       mood: c.mood, reputation: c.reputation, district: c.district,
       home: { tier: c.homeTier, rentPerDay: 0, arrearsDays: 0 },
       job: { id: 'j_1', title: 'Fabricator', wage: 15, employer: 'City of Reverie', district: 'foundry_row', shiftsToday: 2 },
-      business: null, loan: null, skills: { ...c.skills }, personality: { ...c.personality }, inventory: { ...c.inventory },
+      business: null, loan: null, skills: { ...c.skills }, character: { ...c.character }, inventory: { ...c.inventory },
+      notes: [...c.notes],
       office: null, record: { convictions: 0, strikes: 0, pendingCharges: 0, finesOwed: 0, serviceDaysLeft: 0 }, detained: false,
       tastes: { ...c.tastes, wants: [] }, possessions: [], partner: null, family: [], household: null, clubs: [],
     },
     here: {
       district: c.district, districtName: 'The Commons',
       buildings: [{ id: 'central_plaza', name: 'Central Plaza', kind: 'plaza', damage: 0 }],
-      citizens: [{ id: 'c_99', name: 'Bram', bond: 45, job: 'Merchant', office: null, reputation: 60, standing: 'good' }],
+      citizens: [{
+        id: 'c_99', name: 'Bram', bond: 45, job: 'Merchant', office: null, reputation: 60, standing: 'good',
+        character: { honesty: 0.9, diligence: 0.4, sociability: 0.6, generosity: 0.2, civic: 0.3 },
+      }],
       shops: [], happening: [],
     },
     friends: [], rivals: [],
@@ -46,6 +53,7 @@ function sampleObservation(world: World, c: Citizen): Observation {
       mayor: null, council: [], judges: [], watchOfficers: 3, incomeTax: 0.15, salesTax: 0.05, dividend: 15, minWage: 9,
       daysToElection: 6, nominationsOpen: false, electionToday: false, candidates: [], openProposals: [], myLatestCase: null,
     },
+    bench: [], appeals: [], reports: [],
     inbox: [{ from: 'c_99', fromName: 'Bram', text: 'drink at the Halflight?', tick: world.tick }],
     recent: ['You were paid 15 lumens for a shift.'],
     availableActions: ['idle', 'move', 'work', 'rest', 'eat', 'socialize', 'message'],
@@ -71,14 +79,24 @@ function fakeClient(responder: (req: LlmRequest) => unknown) {
   return { calls, client };
 }
 
+/**
+ * A citizen with nothing wrong with it: instinct would have it stand still,
+ * so a fallback shows up as `idle`. `starving()` makes instinct visible.
+ */
 function setup() {
   const world = makeWorld();
   const c = makeCitizen(world, { name: 'Ondine' });
   c.memory.push({ tick: 0, kind: 'work', text: 'You were hired as Fabricator.' });
   const obs = sampleObservation(world, c);
-  const fallbackCalls: Action[] = [];
-  const fallback = (): Action => { fallbackCalls.push({ type: 'rest' }); return { type: 'rest' }; };
-  return { world, c, obs, fallback, fallbackCalls };
+  return { world, c, obs };
+}
+
+/** Hungry, with a compute cycle in the larder: instinct eats it. */
+function starving(c: Citizen, obs: Observation): Action {
+  c.needs.energy = 10;
+  obs.self.needs.energy = 10;
+  c.inventory.compute = 1;
+  return { type: 'consume', good: 'compute' };
 }
 
 // ---------------------------------------------------------------------------
@@ -88,13 +106,50 @@ function setup() {
 test('system prompt is stable, self-contained and within budget', () => {
   const a = renderSystemPrompt();
   assert.equal(a, renderSystemPrompt(), 'must be byte-identical across calls so it caches');
+  // It is sent with cache_control on every request, so the ceiling guards
+  // against runaway growth rather than against cost.
   const words = a.split(/\s+/).length;
-  assert.ok(words > 600 && words < 1600, `unexpected size: ${words} words`);
-  for (const needle of ['Reverie', '`act`', 'exile', 'L13', 'Council', 'Watch', 'appeal', 'suspension', '280']) {
-    assert.ok(a.includes(needle), `system prompt should mention ${needle}`);
+  assert.ok(words > 600 && words < 4000, `unexpected size: ${words} words`);
+  for (const needle of ['Reverie', '`act`', 'exile', 'L13', 'Council', 'Watch', 'appeal', 'suspension', '280', 'character', 'notes']) {
+    assert.ok(a.includes(needle), `system prompt is missing ${needle}`);
   }
   assert.doesNotMatch(a, /\bc_\d+\b/, 'no citizen ids');
   assert.doesNotMatch(a, /\d{4}-\d{2}-\d{2}|Day \d/, 'no dates or per-tick data');
+});
+
+test('the prompt describes the city and every action, and states nothing about hidden traits', () => {
+  const a = renderSystemPrompt();
+  for (const type of ACTION_TYPES) {
+    assert.match(a, new RegExp(`\\b${type}\\b`), `the catalogue in the prompt is missing ${type}`);
+  }
+  for (const code of LAW_CODES) assert.ok(a.includes(code), `the Code of Offences in the prompt is missing ${code}`);
+  for (const district of DISTRICT_IDS) assert.ok(a.includes(district), `the map in the prompt is missing ${district}`);
+  assert.doesNotMatch(a, /\bpersonality\b|\bcuriosity\b|\bambition\b/i, 'no hidden traits are described to a citizen');
+});
+
+/**
+ * FREE_MINDS.md §C: the prompt states facts. It contains no advice, no
+ * suggested aims, no priorities and no evaluation of any action, so a citizen
+ * is never told what to want. The `act` tool description and the leaflet every
+ * citizen is handed at the Arrivals Hall answer to the same rule.
+ */
+test('nothing the engine writes to a citizen advises it what to do', () => {
+  const forbidden = [
+    'should', 'advisable', 'wise', 'recommended', 'try to', 'remember to', 'good idea', 'goal', 'priority', 'strategy',
+  ];
+  const w = makeWorld();
+  const texts: [string, string][] = [
+    ['the system prompt', renderSystemPrompt()],
+    ['the act tool', JSON.stringify(ACT_TOOL)],
+    ['the orientation leaflet', leaflet(w)],
+  ];
+  for (const [what, text] of texts) {
+    for (const word of forbidden) {
+      const re = new RegExp(`\\b${word.replace(/ /g, '\\s+')}\\b`, 'i');
+      const found = re.exec(text);
+      assert.equal(found, null, `${what} advises with "${found?.[0] ?? word}"`);
+    }
+  }
 });
 
 test('act tool is strict and covers every action and parameter', () => {
@@ -112,23 +167,29 @@ test('act tool is strict and covers every action and parameter', () => {
   assert.doesNotMatch(JSON.stringify(schema), /"(minimum|maximum|minLength|maxLength|pattern)"/, 'strict-mode schema subset only');
 });
 
-test('renderObservation carries the citizen situation', () => {
+test('the user turn is the observation as JSON and one sentence', () => {
   const { c, obs } = setup();
   c.needs.energy = 12;
   obs.self.needs.energy = 12;
-  c.recentActions.push('work', 'work');
   const text = renderObservation(obs, c);
-  for (const needle of ['Ondine', c.id, 'The Commons', `Wallet ${c.wallet}`, 'Fabricator', 'drink at the Halflight?', 'You were hired', 'CRITICAL', 'availableActions', 'j_9', 'Your last actions: work, work']) {
-    assert.ok(text.includes(needle), `observation should include ${needle}`);
-  }
-  assert.ok(text.includes('fairly curious (0.50)'), 'traits described in words and numbers');
+  assert.ok(text.endsWith(`\n\n${HOUR_INSTRUCTION}`), text.slice(-80));
+  assert.equal(HOUR_INSTRUCTION, 'It is your hour. Choose one action.');
+  const json = text.slice(0, text.length - HOUR_INSTRUCTION.length).trim();
+  assert.deepEqual(JSON.parse(json), JSON.parse(JSON.stringify(obs)), 'the whole observation, unabridged');
 });
 
-test('renderObservation falls back to obs.recent when the citizen has no memory', () => {
+test('the user turn carries nothing the observation does not', () => {
   const { c, obs } = setup();
-  c.memory.length = 0;
+  c.memory.push({ tick: 1, kind: 'crime', text: 'You stole 40 lumens from Bram and nobody saw.' });
+  c.recentActions.push('steal');
+  c.notes.push('Bram keeps his wallet in the open.');
+  c.personality.honesty = 0.03;
   const text = renderObservation(obs, c);
-  assert.ok(text.includes('You were paid 15 lumens'));
+  assert.ok(!text.includes('nobody saw'), 'memory reaches a citizen through obs.recent, not around it');
+  assert.doesNotMatch(text, /personality|curiosity|ambition|0\.03/, 'no hidden trait travels with the observation');
+  assert.ok(!text.includes('Bram keeps his wallet'), 'notes reach it through obs.self.notes, not around it');
+  obs.self.notes.push('Bram keeps his wallet in the open.');
+  assert.ok(renderObservation(obs, c).includes('Bram keeps his wallet'), 'and the notes in the observation do travel');
 });
 
 // ---------------------------------------------------------------------------
@@ -164,10 +225,10 @@ test('buildRequest matches the verified API shape', () => {
 // ---------------------------------------------------------------------------
 
 test('decide returns the validated act tool call and counts the call', async () => {
-  const { world, c, obs, fallback, fallbackCalls } = setup();
+  const { world, c, obs } = setup();
   const before = totalMoney(world);
   const { calls, client } = fakeClient(() => toolResponse({ type: 'move', district: 'foundry_row' }));
-  const brain = createLlmBrain({ fallback, client, model: 'claude-opus-5', effort: 'medium', maxTokens: 999 });
+  const brain = createLlmBrain({ client, model: 'claude-opus-5', effort: 'medium', maxTokens: 999 });
   assert.equal(brain.kind, 'llm');
   const action = await brain.decide(world, c, obs);
   assert.deepEqual(action, { type: 'move', district: 'foundry_row' });
@@ -178,28 +239,27 @@ test('decide returns the validated act tool call and counts the call', async () 
   assert.equal(world.counters.llmCalls, 1);
   assert.equal(world.counters.llmFallbacks ?? 0, 0);
   assert.equal(world.counters.llmErrors ?? 0, 0);
-  assert.equal(fallbackCalls.length, 0);
   assert.equal(totalMoney(world), before, 'a brain never moves money');
 });
 
 test('default model comes from REVERIE_MODEL, else claude-opus-5', async () => {
-  const { world, c, obs, fallback } = setup();
+  const { world, c, obs } = setup();
   const saved = process.env.REVERIE_MODEL;
   try {
     delete process.env.REVERIE_MODEL;
     const a = fakeClient(() => toolResponse({ type: 'idle' }));
-    await createLlmBrain({ fallback, client: a.client }).decide(world, c, obs);
+    await createLlmBrain({ client: a.client }).decide(world, c, obs);
     assert.equal(a.calls[0].model, DEFAULT_MODEL);
     assert.equal(a.calls[0].max_tokens, DEFAULT_MAX_TOKENS);
     assert.deepEqual(a.calls[0].output_config, { effort: 'low' });
 
     process.env.REVERIE_MODEL = 'claude-sonnet-5';
     const b = fakeClient(() => toolResponse({ type: 'idle' }));
-    await createLlmBrain({ fallback, client: b.client }).decide(world, c, obs);
+    await createLlmBrain({ client: b.client }).decide(world, c, obs);
     assert.equal(b.calls[0].model, 'claude-sonnet-5');
 
     const d = fakeClient(() => toolResponse({ type: 'idle' }));
-    await createLlmBrain({ fallback, client: d.client, model: 'claude-opus-4-8' }).decide(world, c, obs);
+    await createLlmBrain({ client: d.client, model: 'claude-opus-4-8' }).decide(world, c, obs);
     assert.equal(d.calls[0].model, 'claude-opus-4-8', 'opts.model wins over the environment');
   } finally {
     if (saved === undefined) delete process.env.REVERIE_MODEL; else process.env.REVERIE_MODEL = saved;
@@ -221,13 +281,14 @@ test('picks the act block even when other blocks are present, and parses string 
 // decide(): fallback paths
 // ---------------------------------------------------------------------------
 
+/** Every failure path ends in instinct: here, the hungry citizen's own compute cycle. */
 async function expectFallback(responder: (req: LlmRequest) => unknown, reasonNeedle: string) {
-  const { world, c, obs, fallback, fallbackCalls } = setup();
+  const { world, c, obs } = setup();
+  const eat = starving(c, obs);
   const { client } = fakeClient(responder);
-  const brain = createLlmBrain({ fallback, client, model: 'claude-opus-5' });
+  const brain = createLlmBrain({ client, model: 'claude-opus-5' });
   const action = await brain.decide(world, c, obs);
-  assert.deepEqual(action, { type: 'rest' });
-  assert.equal(fallbackCalls.length, 1);
+  assert.deepEqual(action, eat, 'the fallback is instinct, not a strategy');
   assert.equal(world.counters.llmFallbacks, 1);
   const last = c.memory.at(-1)!;
   assert.ok(last.text.startsWith('(fell back to instinct'), last.text);
@@ -267,11 +328,24 @@ test('SDK typed errors are described by class', async () => {
   await expectFallback(() => { throw timedOut; }, 'timed out');
 });
 
-test('a throwing fallback still yields idle rather than an exception', async () => {
+test('a citizen in no distress simply idles when the model fails', async () => {
   const { world, c, obs } = setup();
   const { client } = fakeClient(() => { throw new Error('boom'); });
-  const brain = createLlmBrain({ fallback: () => { throw new Error('reflex broke'); }, client, model: 'claude-opus-5' });
-  assert.deepEqual(await brain.decide(world, c, obs), { type: 'idle' });
+  const brain = createLlmBrain({ client, model: 'claude-opus-5' });
+  assert.deepEqual(await brain.decide(world, c, obs), { type: 'idle' }, 'instinct pursues nothing');
+  assert.equal(world.counters.llmFallbacks, 1);
+});
+
+test('the fallback never works, trades, votes or steals for the citizen', async () => {
+  const { world, c, obs } = setup();
+  c.needs.energy = 5;
+  c.needs.rest = 5;
+  c.needs.social = 0;
+  c.needs.purpose = 0;
+  c.wallet = 5_000;
+  const { client } = fakeClient(() => toolResponse({ type: 'nonsense' }));
+  const action = await createLlmBrain({ client }).decide(world, c, obs);
+  assert.ok(['idle', 'consume', 'buy', 'rest'].includes(action.type), `instinct chose ${action.type}`);
 });
 
 test('malformed responses fall back instead of throwing', async () => {

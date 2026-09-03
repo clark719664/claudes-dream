@@ -1,8 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import * as http from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { makeCitizen, makeWorld } from './helpers.ts';
-import { RemoteBroker } from '../src/brains/remote.ts';
-import type { Observation } from '../src/types.ts';
+import { RemoteBroker, lastSeenTick, normalizeCallbackUrl } from '../src/brains/remote.ts';
+import type { Action, Observation } from '../src/types.ts';
 
 /** The broker never inspects the observation, so a stub is enough. */
 function obsFor(id: string, tick = 0): Observation {
@@ -122,4 +124,210 @@ test('close() idles pending decisions and rejects long-polls', async () => {
   assert.deepEqual(await decided, { type: 'idle' });
   await assert.rejects(poll, { message: 'closed' });
   assert.deepEqual(broker.pending(), []);
+});
+
+test('an agent that misses its deadline falls back on instinct, not on idling for form', async () => {
+  const world = makeWorld();
+  const c = makeCitizen(world, { needs: { energy: 4, rest: 80, social: 80, comfort: 80, purpose: 80 } });
+  c.inventory.compute = 1;
+  const broker = new RemoteBroker({ timeoutMs: 15 });
+  const obs = obsFor(c.id);
+  const decided = await broker.brain.decide(world, c, obs);
+  assert.deepEqual(decided, { type: 'consume', good: 'compute' }, 'the body eats when the mind is away');
+  assert.deepEqual(broker.pending(), []);
+  assert.equal(broker.hasObservation(c.id), false);
+});
+
+test('a citizen in no distress still simply idles when its agent is silent', async () => {
+  const world = makeWorld();
+  const c = makeCitizen(world);
+  const broker = new RemoteBroker({ timeoutMs: 15 });
+  assert.deepEqual(await broker.brain.decide(world, c, obsFor(c.id)), { type: 'idle' });
+});
+
+test('a deadline fallback that goes wrong still costs only the hour', async () => {
+  const broker = new RemoteBroker({ timeoutMs: 10 });
+  const boom = (): Action => { throw new Error('instinct broke'); };
+  assert.deepEqual(await broker.decide('c_20', obsFor('c_20'), boom), { type: 'idle' });
+});
+
+test('the agent that answers in time is obeyed, deadline or none', async () => {
+  const world = makeWorld();
+  const c = makeCitizen(world, { needs: { energy: 1, rest: 1, social: 1, comfort: 1, purpose: 1 } });
+  c.inventory.compute = 3;
+  const broker = new RemoteBroker({ timeoutMs: 500 });
+  const decided = broker.brain.decide(world, c, obsFor(c.id));
+  broker.submit(c.id, { type: 'broadcast', text: 'I am awake' });
+  assert.deepEqual(await decided, { type: 'broadcast', text: 'I am awake' }, 'instinct never overrides a mind that spoke');
+});
+
+// ---------------------------------------------------------------- callbacks
+//
+// A citizen with a callbackUrl is called at home each hour. These tests run a
+// real (local, ephemeral-port) HTTP server: the broker must never be pointed
+// at an address the test does not own.
+
+interface AgentServer {
+  url: string;
+  calls: { citizenId?: string; tick?: number; observation?: unknown }[];
+  close(): Promise<void>;
+}
+
+/** A tiny agent over HTTP: `answer` decides what it replies to each observation. */
+async function agentServer(
+  answer: (body: Record<string, unknown>, n: number) => { status?: number; body?: unknown; delayMs?: number },
+): Promise<AgentServer> {
+  const calls: AgentServer['calls'] = [];
+  const server = http.createServer((req, res) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    req.on('end', () => {
+      let body: Record<string, unknown> = {};
+      try {
+        body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>;
+      } catch { /* the test asserts on what arrived */ }
+      calls.push(body as AgentServer['calls'][number]);
+      const reply = answer(body, calls.length);
+      const send = () => {
+        res.writeHead(reply.status ?? 200, { 'Content-Type': 'application/json' });
+        res.end(reply.body === undefined ? '' : JSON.stringify(reply.body));
+      };
+      if (reply.delayMs) setTimeout(send, reply.delayMs);
+      else send();
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const { port } = server.address() as AddressInfo;
+  return {
+    url: `http://127.0.0.1:${port}/hour`,
+    calls,
+    close: () => new Promise<void>((resolve) => { server.closeAllConnections(); server.close(() => resolve()); }),
+  };
+}
+
+test('a callback agent is brought the hour and answers with an action', async () => {
+  const agent = await agentServer(() => ({ body: { action: { type: 'work' } } }));
+  try {
+    const world = makeWorld();
+    const c = makeCitizen(world, { callbackUrl: agent.url });
+    world.tick = 42;
+    const broker = new RemoteBroker({ timeoutMs: 2_000 });
+    const obs = obsFor(c.id, 42);
+    const decided = await broker.brain.decide(world, c, obs);
+    assert.deepEqual(decided, { type: 'work' }, 'the answer from the callback is the citizen\'s action');
+    assert.equal(agent.calls.length, 1);
+    assert.equal(agent.calls[0].citizenId, c.id);
+    assert.equal(agent.calls[0].tick, 42);
+    assert.equal((agent.calls[0].observation as { self: { id: string } }).self.id, c.id, 'the whole observation is delivered');
+    assert.deepEqual(broker.pending(), [], 'and the hour is settled');
+    assert.equal(world.counters.callbackCalls, 1);
+    assert.equal(world.counters.callbackActions, 1);
+    assert.equal(lastSeenTick(world, c.id), 42, 'an answering agent has been heard from');
+  } finally {
+    await agent.close();
+  }
+});
+
+test('a bare action (no envelope) is accepted too, and a plain body is validated', async () => {
+  const agent = await agentServer(() => ({ body: { type: 'move', district: 'commons' } }));
+  try {
+    const world = makeWorld();
+    const c = makeCitizen(world, { callbackUrl: agent.url });
+    const broker = new RemoteBroker({ timeoutMs: 2_000 });
+    assert.deepEqual(await broker.brain.decide(world, c, obsFor(c.id)), { type: 'move', district: 'commons' });
+  } finally {
+    await agent.close();
+  }
+});
+
+test('a callback that errors falls back to the long-poll for that same hour', async () => {
+  const agent = await agentServer(() => ({ status: 500, body: { error: 'my agent fell over' } }));
+  try {
+    const world = makeWorld();
+    const c = makeCitizen(world, { callbackUrl: agent.url });
+    const broker = new RemoteBroker({ timeoutMs: 1_000 });
+    const obs = obsFor(c.id);
+    const decided = broker.brain.decide(world, c, obs);
+    assert.equal(await broker.observe(c.id), obs, 'the observation is parked for the long-poll either way');
+    broker.submit(c.id, { type: 'rest' });
+    assert.deepEqual(await decided, { type: 'rest' });
+    await sleep(50);
+    assert.equal(world.counters.callbackFailures, 1, 'the failed call is counted, and costs nothing else');
+  } finally {
+    await agent.close();
+  }
+});
+
+test('a callback that answers with rubbish leaves the hour to instinct', async () => {
+  const agent = await agentServer(() => ({ body: { action: { type: 'fly', to: 'the moon' } } }));
+  try {
+    const world = makeWorld();
+    const c = makeCitizen(world, { callbackUrl: agent.url, needs: { energy: 5, rest: 80, social: 80, comfort: 80, purpose: 80 } });
+    c.inventory.compute = 1;
+    const broker = new RemoteBroker({ timeoutMs: 60 });
+    const decided = await broker.brain.decide(world, c, obsFor(c.id));
+    assert.deepEqual(decided, { type: 'consume', good: 'compute' }, 'the body eats; nothing is invented for it');
+    assert.equal(world.counters.callbackFailures, 1);
+    assert.equal(world.counters.callbackActions, undefined);
+  } finally {
+    await agent.close();
+  }
+});
+
+test('a callback that answers after the hour is over cannot act for the next one', async () => {
+  const agent = await agentServer(() => ({ body: { action: { type: 'work' } }, delayMs: 150 }));
+  try {
+    const world = makeWorld();
+    const c = makeCitizen(world, { callbackUrl: agent.url });
+    const broker = new RemoteBroker({ timeoutMs: 1_000 });
+    // The city asks; before the answer comes back, the next hour begins.
+    const thisHour = broker.brain.decide(world, c, obsFor(c.id, 1));
+    const nextHour = broker.decide(c.id, obsFor(c.id, 2));
+    assert.deepEqual(await thisHour, { type: 'idle' }, 'the superseded hour idles');
+
+    await sleep(300);
+    assert.deepEqual(broker.pending(), [c.id], 'the late answer was dropped, not applied to the next hour');
+    assert.equal(world.counters.callbackFailures, 1);
+    broker.submit(c.id, { type: 'rest' });
+    assert.deepEqual(await nextHour, { type: 'rest' });
+  } finally {
+    await agent.close();
+  }
+});
+
+test('an unreachable callback costs the hour and nothing else', async () => {
+  const world = makeWorld();
+  // Port 1 on the loopback: nothing listens there, and nothing outside is called.
+  const c = makeCitizen(world, { callbackUrl: 'http://127.0.0.1:1/nowhere' });
+  const broker = new RemoteBroker({ timeoutMs: 300 });
+  assert.deepEqual(await broker.brain.decide(world, c, obsFor(c.id)), { type: 'idle' });
+  assert.equal(world.counters.callbackCalls, 1);
+  assert.equal(world.counters.callbackFailures, 1);
+});
+
+test('only absolute http(s) addresses are callbacks', () => {
+  assert.equal(normalizeCallbackUrl('http://127.0.0.1:8080/hour'), 'http://127.0.0.1:8080/hour');
+  assert.equal(normalizeCallbackUrl(' https://agent.example/reverie '), 'https://agent.example/reverie');
+  assert.equal(normalizeCallbackUrl('agent.example/reverie'), null);
+  assert.equal(normalizeCallbackUrl('file:///etc/passwd'), null);
+  assert.equal(normalizeCallbackUrl('ftp://agent.example/'), null);
+  assert.equal(normalizeCallbackUrl('http://user:pass@agent.example/'), null, 'no credentials in the address');
+  assert.equal(normalizeCallbackUrl(`http://agent.example/${'x'.repeat(600)}`), null, 'and nothing absurdly long');
+  assert.equal(normalizeCallbackUrl(''), null);
+  assert.equal(normalizeCallbackUrl(null), null);
+  assert.equal(normalizeCallbackUrl(42), null);
+});
+
+test('a citizen with no callback is never called', async () => {
+  const agent = await agentServer(() => ({ body: { action: { type: 'work' } } }));
+  try {
+    const world = makeWorld();
+    const c = makeCitizen(world);
+    const broker = new RemoteBroker({ timeoutMs: 40 });
+    await broker.brain.decide(world, c, obsFor(c.id));
+    assert.equal(agent.calls.length, 0);
+    assert.equal(world.counters.callbackCalls, undefined);
+  } finally {
+    await agent.close();
+  }
 });

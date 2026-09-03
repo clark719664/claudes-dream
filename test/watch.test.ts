@@ -6,6 +6,7 @@ import { nextId } from '../src/util/ids.ts';
 import {
   applyToWatch, commitOffence, dailyWatch, detain, detectionProbability, officersOnDuty, reportOffence, tickWatch,
 } from '../src/government/watch.ts';
+import { fileReport } from '../src/government/reports.ts';
 
 function addWatchJob(w: World, holderId: string | null = null): Job {
   const id = nextId(w, 'j');
@@ -51,24 +52,26 @@ test('detectionProbability follows the contract formula', () => {
   assert.equal(detectionProbability(w, actor, 'L04', 0, 0, -10), 0.02, 'never impossible');
 });
 
-test('a detected offence becomes a Watch charge with a victim and evidence', () => {
+test('a detected offence becomes a report before the officer who saw it, and a charge only when they file it', () => {
   const w = makeWorld();
   w.tick = 30; w.day = 1; w.hour = 6;
-  for (let i = 0; i < 3; i++) addOfficer(w);
+  const officers = [addOfficer(w), addOfficer(w), addOfficer(w)];
   const thief = makeCitizen(w, { district: 'harbor_market' });
   const victim = makeCitizen(w, { district: 'harbor_market' });
   const before = totalMoney(w);
   const r = commitUntil(w, thief.id, 'L08', { victimId: victim.id, amount: 80, visibilityMod: 1 }, true);
-  assert.ok(r.caseId);
-  const k = w.cases[r.caseId];
-  assert.equal(k.defendantId, thief.id);
-  assert.equal(k.law, 'L08');
-  assert.equal(k.severity, 4);
-  assert.equal(k.filedBy, 'watch');
-  assert.equal(k.victimId, victim.id);
-  assert.equal(k.amount, 80);
-  assert.ok(k.evidence >= 0.3 && k.evidence <= 1);
-  assert.equal(k.status, 'pending');
+  assert.ok(r.reportId);
+  const report = w.reports[r.reportId];
+  assert.equal(report.suspectId, thief.id);
+  assert.equal(report.law, 'L08');
+  assert.ok(officers.some((o) => o.id === report.officerId), 'the officer who saw it holds it');
+  assert.equal(report.victimId, victim.id);
+  assert.equal(report.amount, 80);
+  assert.ok(report.evidence >= 0.3 && report.evidence <= 1);
+  assert.equal(report.status, 'open');
+  assert.equal(report.filedCaseId, null);
+  assert.equal(Object.keys(w.cases).length, 0, 'the Watch does not prosecute of its own accord');
+  assert.equal(thief.detainedUntilTick, null, 'and nobody is held on a report nobody filed');
   assert.equal(thief.stats.offencesDetected, 1);
   assert.ok(thief.stats.offencesCommitted >= 1);
   assert.ok(thief.recentOffences.some((o) => o.detected && o.law === 'L08'));
@@ -76,9 +79,25 @@ test('a detected offence becomes a Watch charge with a victim and evidence', () 
   assert.equal(ev.length, 1);
   assert.equal(ev[0].weight, 0.8, 'severity ≥ 4 makes the front page');
   assert.ok(victim.memory.some((m) => m.text.includes('caught')));
+  assert.ok(w.citizens[report.officerId!].memory.some((m) => m.text.includes(report.id)), 'the officer is told what they hold');
+
+  report.evidence = 0.9;
+  const filed = fileReport(w, report.officerId!, report.id);
+  assert.equal(filed.ok, true, filed.message);
+  assert.equal(report.status, 'filed');
+  const k = w.cases[report.filedCaseId!];
+  assert.equal(k.defendantId, thief.id);
+  assert.equal(k.law, 'L08');
+  assert.equal(k.severity, 4);
+  assert.equal(k.filedBy, report.officerId);
+  assert.equal(k.victimId, victim.id);
+  assert.equal(k.amount, 80);
+  assert.equal(k.evidence, 0.9);
+  assert.equal(k.status, 'pending');
   assert.ok(thief.memory.some((m) => m.text.includes('charged')));
-  assert.equal(totalMoney(w), before, 'detection moves no money');
+  assert.equal(totalMoney(w), before, 'detection and filing move no money');
   assert.ok(thief.detainedUntilTick !== null, 'a strong severity-4 charge means detention');
+  assert.equal(fileReport(w, report.officerId!, report.id).ok, false, 'a report is filed once');
 });
 
 test('an undetected offence is still recorded and only the victim knows', () => {
@@ -86,7 +105,8 @@ test('an undetected offence is still recorded and only the victim knows', () => 
   const thief = makeCitizen(w);
   const victim = makeCitizen(w);
   const r = commitUntil(w, thief.id, 'L04', { victimId: victim.id, amount: 20, visibilityMod: -10 }, false);
-  assert.equal(r.caseId, null);
+  assert.equal(r.reportId, null);
+  assert.equal(Object.keys(w.reports).length, 0);
   assert.equal(Object.keys(w.cases).length, 0);
   assert.ok(thief.recentOffences.length >= 1);
   assert.ok(thief.recentOffences.every((o) => !o.detected));
@@ -95,25 +115,28 @@ test('an undetected offence is still recorded and only the victim knows', () => 
   assert.ok(victim.memory.some((m) => m.text.includes('the Watch saw nothing')));
   for (let i = 0; i < 30; i++) commitOffence(w, thief.id, 'L04', { visibilityMod: -10 });
   assert.equal(thief.recentOffences.length, 20, 'recent offences are bounded');
-  assert.deepEqual(commitOffence(w, 'c_404', 'L04'), { detected: false, caseId: null });
+  assert.deepEqual(commitOffence(w, 'c_404', 'L04'), { detected: false, reportId: null });
 });
 
-test('a report that matches an undetected offence produces a solid charge', () => {
+test('a citizen\'s report goes to the shared inbox, strong when it matches something real', () => {
   const w = makeWorld();
   w.tick = 100;
   const thief = makeCitizen(w);
   const victim = makeCitizen(w);
   const bystander = makeCitizen(w);
+  const against = (id: string) => Object.values(w.reports).filter((x) => x.suspectId === id);
   commitUntil(w, thief.id, 'L08', { victimId: victim.id, amount: 90, visibilityMod: -10 }, false);
   const r = reportOffence(w, victim.id, thief.id, 'L04', 'he took my purse');
   assert.equal(r.ok, true, r.message);
-  const k = Object.values(w.cases).find((x) => x.defendantId === thief.id);
-  assert.ok(k);
-  assert.equal(k.law, 'L08', 'the charge names the offence actually committed');
-  assert.equal(k.evidence, 0.75, 'a victim is a strong witness');
-  assert.equal(k.filedBy, victim.id);
-  assert.equal(k.victimId, victim.id);
-  assert.equal(k.amount, 90);
+  assert.equal(Object.keys(w.cases).length, 0, 'a report is not a charge; an officer decides that');
+  const rep = against(thief.id)[0];
+  assert.ok(rep);
+  assert.equal(rep.law, 'L08', 'the report names the offence actually committed');
+  assert.equal(rep.evidence, 0.75, 'a victim is a strong witness');
+  assert.equal(rep.officerId, null, 'any officer may take it up');
+  assert.equal(rep.victimId, victim.id);
+  assert.equal(rep.amount, 90);
+  assert.equal(rep.status, 'open');
   assert.ok(thief.recentOffences.every((o) => o.detected), 'the offence is now on record');
   assert.equal(thief.bonds[victim.id], -20);
   assert.equal(victim.bonds[thief.id], -20);
@@ -121,17 +144,17 @@ test('a report that matches an undetected offence produces a solid charge', () =
   w.tick = 101;
   const r2 = reportOffence(w, bystander.id, thief.id, 'L08');
   assert.equal(r2.ok, true);
-  const weak = Object.values(w.cases).find((x) => x.defendantId === thief.id && x.filedBy === bystander.id);
+  const weak = against(thief.id)[1];
   assert.ok(weak && weak.evidence === 0.2);
   // a bystander reporting a fresh, unseen offence gets 0.6
   commitUntil(w, thief.id, 'L05', { victimId: victim.id, visibilityMod: -10 }, false);
   reportOffence(w, bystander.id, thief.id, 'L05');
-  const k3 = Object.values(w.cases).find((x) => x.law === 'L05');
-  assert.ok(k3 && k3.evidence === 0.6);
+  const third = against(thief.id).find((x) => x.law === 'L05');
+  assert.ok(third && third.evidence === 0.6);
 });
 
-test('a baseless report is filed thinly and sometimes rebounds as a False report charge', () => {
-  let counterCharged = 0;
+test('a baseless report is taken thinly and sometimes rebounds as a False report', () => {
+  let counterReported = 0;
   let clean = 0;
   for (let seed = 1; seed <= 24; seed++) {
     const w = makeWorld({ seed });
@@ -139,12 +162,13 @@ test('a baseless report is filed thinly and sometimes rebounds as a False report
     const accused = makeCitizen(w);
     const r = reportOffence(w, accuser.id, accused.id, 'L07');
     assert.equal(r.ok, true);
-    const against = Object.values(w.cases).filter((k) => k.defendantId === accused.id);
+    const against = Object.values(w.reports).filter((x) => x.suspectId === accused.id);
     assert.equal(against.length, 1);
     assert.equal(against[0].evidence, 0.2);
-    const rebound = Object.values(w.cases).filter((k) => k.defendantId === accuser.id);
+    assert.equal(against[0].officerId, null);
+    const rebound = Object.values(w.reports).filter((x) => x.suspectId === accuser.id);
     if (rebound.length) {
-      counterCharged++;
+      counterReported++;
       assert.equal(rebound[0].law, 'L12');
       assert.equal(rebound[0].evidence, 0.7);
       assert.equal(accuser.stats.offencesDetected, 1);
@@ -154,7 +178,7 @@ test('a baseless report is filed thinly and sometimes rebounds as a False report
     }
     assert.equal(accuser.bonds[accused.id], -20);
   }
-  assert.ok(counterCharged > 0 && clean > 0, `both outcomes occur (${counterCharged}/${clean})`);
+  assert.ok(counterReported > 0 && clean > 0, `both outcomes occur (${counterReported}/${clean})`);
 });
 
 test('reportOffence refuses self-reports, absent citizens and unknown laws', () => {

@@ -1,9 +1,20 @@
 /**
  * Appeals: a convicted citizen's one appeal to the Council, and the Council's
- * decision (uphold, reduce by a tier, overturn). court.ts re-exports these.
+ * decision (uphold, reduce by a tier, overturn).
+ *
+ * The Council decides by voting. A convicted citizen's appeal appears in every
+ * sitting councillor's observation the moment it is filed, and a councillor
+ * answers it with the `vote_appeal` action; the votes are counted at the end
+ * of the daily session. A majority carries, ties uphold, and an appeal with
+ * fewer than two votes is held over once and then upheld by default. Scripted
+ * councillors make up their minds by the disposition below and cast their
+ * votes through the same `castAppealVote`, so the record reads the same either
+ * way. court.ts re-exports all of this.
  */
 import { clamp } from '../types.ts';
-import type { ActionResult, AppealResult, Case, Citizen, CitizenId, PenaltyTier, World } from '../types.ts';
+import type {
+  ActionResult, AppealResult, Case, Citizen, CitizenId, ObservedAppeal, PenaltyTier, World,
+} from '../types.ts';
 import { LAWS } from '../data/laws.ts';
 import { rand } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
@@ -15,6 +26,10 @@ import { describeSentence, executeSentence, revokeSentence, sentenceForTier } fr
 export const APPEAL_WINDOW_DAYS = 1;
 /** With no Council to hear it, an appeal waits this long before the Court reviews it on the evidence alone. */
 export const APPEAL_HOLDOVER_DAYS = 7;
+/** Votes a Council needs before it may decide an appeal. */
+export const MIN_APPEAL_VOTES = 2;
+/** Sessions an appeal is held over for want of votes before it is upheld by default. */
+export const MAX_APPEAL_CARRIES = 1;
 /** A friend this close votes to overturn rather than merely reduce. */
 const DEVOTED_BOND = 70;
 
@@ -31,7 +46,7 @@ export function fileAppeal(world: World, cId: CitizenId): ActionResult {
   if (k.status !== 'tried' || k.triedDay === null) return fail(`Case ${k.id} can no longer be appealed.`);
   if (world.day - k.triedDay > APPEAL_WINDOW_DAYS) return fail('The appeal window has closed.');
   k.status = 'appealed';
-  k.appeal = { filedDay: world.day, decidedDay: null, result: null, votes: {} };
+  k.appeal = { filedDay: world.day, decidedDay: null, result: null, votes: {}, carried: 0 };
   emit(world, 'appeal', `${c.name} appealed their conviction for ${LAWS[k.law].name.toLowerCase()} (case ${k.id}) to the Council.`,
     [cId], 0.5, { caseId: k.id });
   remember(world, cId, 'civic', `You appealed case ${k.id} to the Council; it will decide at its next session.`);
@@ -62,6 +77,51 @@ export function appealOutcome(votes: Record<CitizenId, AppealResult>): AppealRes
   return n.overturned > n.reduced ? 'overturned' : 'reduced';
 }
 
+/** Appeals waiting on the Council, oldest first. */
+export function pendingAppeals(world: World): Case[] {
+  return Object.values(world.cases).filter((k) => k.status === 'appealed' && k.appeal && k.sentence).sort(byFiling);
+}
+
+/**
+ * A councillor's vote on an appeal. Votes may be changed until the session
+ * counts them, and every one of them is public.
+ */
+export function castAppealVote(world: World, councillorId: CitizenId, caseId: string, result: AppealResult): ActionResult {
+  const k = world.cases[caseId];
+  if (!k) return fail('There is no such case.');
+  const appeal = k.appeal;
+  if (k.status !== 'appealed' || !appeal) return fail(`Case ${k.id} is not before the Council.`);
+  const c = world.citizens[councillorId];
+  if (!c) return fail('Unknown citizen.');
+  if (!sittingCouncil(world).some((m) => m.id === councillorId)) return fail('Only sitting councillors vote on appeals.');
+  const changed = appeal.votes[councillorId] !== undefined && appeal.votes[councillorId] !== result;
+  appeal.votes[councillorId] = result;
+  const name = nameOf(world, k.defendantId);
+  emit(world, 'vote', `Councillor ${c.name} voted "${result}" on ${name}'s appeal (case ${k.id}).`,
+    [councillorId, k.defendantId], 0.2, { caseId: k.id, councillor: councillorId, result });
+  remember(world, councillorId, 'civic', `You voted "${result}" on ${name}'s appeal (case ${k.id}).`);
+  return { ok: true, message: `${changed ? 'You changed your vote to' : 'You voted'} "${result}" on case ${k.id}.` };
+}
+
+/** The appeals before a councillor, as their observation shows them. */
+export function appealsFor(world: World, cId: CitizenId): ObservedAppeal[] {
+  if (!sittingCouncil(world).some((m) => m.id === cId)) return [];
+  const out: ObservedAppeal[] = [];
+  for (const k of pendingAppeals(world)) {
+    const appeal = k.appeal;
+    const s = k.sentence;
+    if (!appeal) continue;
+    out.push({
+      caseId: k.id, defendant: k.defendantId, defendantName: nameOf(world, k.defendantId),
+      law: k.law, lawName: LAWS[k.law]?.name ?? k.law, evidence: Math.round(k.evidence * 100) / 100,
+      verdict: k.verdict,
+      sentence: s ? { tier: s.tier, fine: s.fine, serviceDays: s.serviceDays, suspensionDays: s.suspensionDays, exile: s.exile } : null,
+      filedDay: appeal.filedDay, votes: { ...appeal.votes }, youVoted: appeal.votes[cId] ?? null, carried: appeal.carried,
+    });
+  }
+  return out;
+}
+
 /** Carry out the Council's decision; returns a phrase describing the effect. */
 function applyAppeal(world: World, k: Case, result: AppealResult): string {
   const s = k.sentence;
@@ -83,13 +143,21 @@ function applyAppeal(world: World, k: Case, result: AppealResult): string {
   return `the sentence was reduced to ${describeSentence(k.sentence)}`;
 }
 
+/** "Ada upheld, Bram reduced" — how the Council divided, by name. */
+function describeAppealVotes(world: World, votes: Record<CitizenId, AppealResult>): string {
+  const rows = Object.entries(votes).map(([id, v]) => `${nameOf(world, id)} ${v}`);
+  return rows.length > 0 ? rows.join(', ') : 'nobody voted';
+}
+
 /**
- * The Council decides every pending appeal (called from the daily council
- * session). With no Council sitting, appeals are held over; after a week the
- * Court reviews them on the evidence alone so nobody waits forever.
+ * Count the votes on every pending appeal (called from the daily council
+ * session). Councillors who think for themselves have voted by now; scripted
+ * ones make up their minds here. With no Council sitting, appeals are held
+ * over; after a week the Court reviews them on the evidence alone so nobody
+ * waits forever.
  */
 export function decideAppeals(world: World): void {
-  const appealed = Object.values(world.cases).filter((k) => k.status === 'appealed' && k.appeal && k.sentence).sort(byFiling);
+  const appealed = pendingAppeals(world);
   if (appealed.length === 0) return;
   const council = sittingCouncil(world);
   for (const k of appealed) {
@@ -105,11 +173,24 @@ export function decideAppeals(world: World): void {
       }
       continue;
     }
-    const votes: Record<CitizenId, AppealResult> = {};
-    if (present) for (const m of council) votes[m.id] = appealVote(world, m, k);
+    if (present) {
+      for (const m of council) {
+        if (m.brain === 'reflex' && appeal.votes[m.id] === undefined) castAppealVote(world, m.id, k.id, appealVote(world, m, k));
+      }
+    }
     const byCourt = council.length === 0 && present;
-    const result: AppealResult = byCourt ? (k.evidence >= 0.6 ? 'upheld' : 'reduced') : appealOutcome(votes);
-    appeal.votes = votes;
+    const cast = Object.keys(appeal.votes).length;
+    if (present && !byCourt && cast < MIN_APPEAL_VOTES && appeal.carried < MAX_APPEAL_CARRIES) {
+      appeal.carried += 1;
+      emit(world, 'appeal', `The Council did not decide ${nameOf(world, k.defendantId)}'s appeal (case ${k.id}): `
+        + `${cast} of ${council.length} councillors voted. It is held over to the next session.`,
+      [k.defendantId, ...council.map((m) => m.id)], 0.4, { caseId: k.id, carried: appeal.carried });
+      if (d) remember(world, d.id, 'civic', `The Council did not vote on your appeal (case ${k.id}); it waits for the next session.`);
+      continue;
+    }
+    const result: AppealResult = byCourt
+      ? (k.evidence >= 0.6 ? 'upheld' : 'reduced')
+      : cast < MIN_APPEAL_VOTES ? 'upheld' : appealOutcome(appeal.votes);
     appeal.result = result;
     appeal.decidedDay = world.day;
     const effect = d ? applyAppeal(world, k, result) : 'the defendant has left the city';
@@ -119,10 +200,16 @@ export function decideAppeals(world: World): void {
     const offence = LAWS[k.law].name.toLowerCase();
     const who = byCourt ? 'With no Council seated, the Court reviewed and' : 'The Council';
     const verb = result === 'upheld' ? 'upheld' : result === 'reduced' ? 'reduced' : 'overturned';
-    emit(world, 'appeal', `${who} ${verb} ${name}'s conviction for ${offence} (case ${k.id}): ${effect}.`,
-      [k.defendantId, ...council.map((m) => m.id)], result === 'upheld' ? 0.6 : 0.7, { caseId: k.id, result, votes });
-    if (d) remember(world, d.id, 'verdict', `Your appeal in case ${k.id} was decided: ${effect}.`);
+    const how = byCourt ? 'on the evidence alone'
+      : cast < MIN_APPEAL_VOTES ? 'with too few votes to decide it, so it stands'
+        : describeAppealVotes(world, appeal.votes);
+    emit(world, 'appeal', `${who} ${verb} ${name}'s conviction for ${offence} (case ${k.id}; ${how}): ${effect}.`,
+      [k.defendantId, ...council.map((m) => m.id)], result === 'upheld' ? 0.6 : 0.7, { caseId: k.id, result, votes: { ...appeal.votes } });
+    if (d) remember(world, d.id, 'verdict', `Your appeal in case ${k.id} was decided (${how}): ${effect}.`);
     if (k.victimId) remember(world, k.victimId, 'verdict', `${name}'s appeal (case ${k.id}) was decided: ${effect}.`);
-    for (const m of council) remember(world, m.id, 'civic', `You voted "${votes[m.id]}" on ${name}'s appeal; the Council ruled: ${effect}.`);
+    for (const m of council) {
+      const mine = appeal.votes[m.id];
+      remember(world, m.id, 'civic', `${mine ? `You voted "${mine}" on` : 'You did not vote on'} ${name}'s appeal; the Council ruled: ${effect}.`);
+    }
   }
 }

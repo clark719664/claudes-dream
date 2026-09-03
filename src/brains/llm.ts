@@ -1,7 +1,10 @@
 /**
  * The Claude brain: renders the observation into a prompt, asks a Claude model
- * to call the `act` tool, validates the result, and falls back to the injected
- * reflex brain on refusal, error, missing tool call or invalid action.
+ * to call the `act` tool, validates the result, and falls back to **instinct**
+ * on refusal, error, timeout, missing tool call or invalid action. The
+ * fallback is never a strategy: a citizen whose mind is unreachable eats,
+ * sleeps or stands still (see brains/instinct.ts), it does not have its day
+ * played for it.
  *
  * `decide()` never throws. The SDK is loaded lazily (dynamic import, memoised)
  * and the client is shared by every LLM brain in the process; tests inject a
@@ -13,6 +16,7 @@ import { validateAction } from '../actions/validate.ts';
 import { emit, remember } from '../sim/events.ts';
 import { ACT_TOOL } from './llm-tool.ts';
 import { renderObservation, renderSystemPrompt } from './llm-prompt.ts';
+import { instinctOrIdle } from './instinct.ts';
 
 export { renderObservation, renderSystemPrompt } from './llm-prompt.ts';
 export { ACT_TOOL } from './llm-tool.ts';
@@ -39,8 +43,6 @@ export interface LlmClient {
 }
 
 export interface LlmBrainOptions {
-  /** The reflex brain, injected so this module never imports brains/reflex.ts. */
-  fallback: (world: World, c: Citizen, obs: Observation) => Action;
   /** Overrides REVERIE_MODEL and the default 'claude-opus-5'. */
   model?: string;
   effort?: 'low' | 'medium' | 'high';
@@ -123,8 +125,8 @@ function bump(world: World, key: string): void {
   world.counters[key] = (world.counters[key] ?? 0) + 1;
 }
 
-/** Brain that drives a citizen with a Claude model, falling back to `opts.fallback`. */
-export function createLlmBrain(opts: LlmBrainOptions): Brain {
+/** Brain that drives a citizen with a Claude model, falling back to instinct. */
+export function createLlmBrain(opts: LlmBrainOptions = {}): Brain {
   const cfg = {
     model: opts.model ?? process.env.REVERIE_MODEL ?? DEFAULT_MODEL,
     effort: opts.effort ?? 'low',
@@ -137,11 +139,7 @@ export function createLlmBrain(opts: LlmBrainOptions): Brain {
   function fallBack(world: World, c: Citizen, obs: Observation, reason: string): Action {
     bump(world, 'llmFallbacks');
     remember(world, c.id, 'event', `(fell back to instinct: ${reason})`);
-    try {
-      return opts.fallback(world, c, obs);
-    } catch {
-      return { type: 'idle' };
-    }
+    return instinctOrIdle(world, c, obs);
   }
 
   async function decide(world: World, c: Citizen, obs: Observation): Promise<Action> {

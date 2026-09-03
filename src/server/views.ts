@@ -4,6 +4,7 @@
  * events, drains inboxes or moves money.
  */
 import type { Building, Citizen, CitizenId, MoneyParty, World } from '../types.ts';
+import { characterOf } from '../citizens/character.ts';
 import { activeCitizens, isDetained } from '../citizens/citizen.ts';
 import { friendsOf, rivalsOf, bondBetween } from '../citizens/relationships.ts';
 import { employerName, openJobs } from '../economy/jobs.ts';
@@ -261,7 +262,13 @@ export function citizenView(world: World, id: CitizenId): Record<string, unknown
   const c = world.citizens[id];
   if (!c) return null;
   const present = presentSet(world);
-  const { apiKeyHash, ...rest } = c;
+  // Everything about a citizen is public except the four things that are not:
+  // its key, its notebook, its letters home and where its agent listens.
+  // Its rolled traits are not public either — nobody in Reverie is given a
+  // personality to live up to, and what the city can see of a citizen is the
+  // `character` read off its record (docs/PRINCIPLES.md §2).
+  const { apiKeyHash, callbackUrl, notes, letters, personality, ...rest } = c;
+  void personality;
   const job = jobOf(world, c);
   const biz = businessOf(world, c);
   const loan = c.loanId ? world.loans[c.loanId] ?? null : null;
@@ -277,7 +284,11 @@ export function citizenView(world: World, id: CitizenId): Record<string, unknown
   const guardian = c.guardianId ? world.citizens[c.guardianId] ?? null : null;
   return {
     ...rest,
+    character: characterOf(c),
     hasApiKey: apiKeyHash !== null,
+    hasCallback: !!callbackUrl,
+    notesCount: notes?.length ?? 0,
+    lettersCount: letters?.length ?? 0,
     detained: isDetained(world, c),
     present: isPresentIn(world, c, present),
     districtName: world.districts[c.district]?.name ?? c.district,

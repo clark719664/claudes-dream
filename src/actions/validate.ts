@@ -3,7 +3,7 @@
  * LLM tool calls). Returns a typed Action or an error string. Never throws.
  */
 import { ACTION_TYPES, DISTRICT_IDS, GOODS, SKILLS } from '../types.ts';
-import type { Action, ActionType, BusinessKind, HousingTier, LawCode, ProposalKind } from '../types.ts';
+import type { Action, ActionType, AppealResult, BusinessKind, HousingTier, LawCode, ProposalKind } from '../types.ts';
 import { LAW_CODES } from '../data/laws.ts';
 import { HOBBIES, PRODUCT_IDS } from '../data/catalogue.ts';
 
@@ -12,6 +12,7 @@ const PROPOSAL_KINDS: readonly ProposalKind[] = [
   'income_tax', 'sales_tax', 'dividend', 'min_wage', 'law_severity', 'pardon', 'public_works',
   'appoint_judge', 'dismiss_judge', 'remove_mayor', 'charter', 'charity',
 ];
+const APPEAL_RESULTS: readonly AppealResult[] = ['upheld', 'reduced', 'overturned'];
 const MAX_TEXT = 280;
 
 type Rec = Record<string, unknown>;
@@ -48,6 +49,8 @@ function id(v: unknown, field: string, re: RegExp): string {
 }
 const CID = /^c_\d+$/;
 const JID = /^j_\d+$/;
+const KID = /^k_\d+$/;
+const RID = /^r_\d+$/;
 const PID = /^p_\d+$/;
 const BID = /^[a-z_]+$/;
 const IID = /^i_\d+$/;
@@ -70,6 +73,8 @@ export function validateAction(input: unknown): { ok: true; action: Action } | {
       case 'consume': action = { type, good: oneOf(a.good, 'good', GOODS) }; break;
       case 'study': action = { type, skill: oneOf(a.skill, 'skill', SKILLS) }; break;
       case 'move_home': action = { type, tier: int(a.tier, 'tier', 0, 3) as HousingTier }; break;
+      case 'note': action = { type, text: str(a.text, 'text') }; break;
+      case 'forget': action = { type, index: int(a.index, 'index', 0, 1000) }; break;
       case 'socialize': action = { type, with: id(a.with, 'with', CID), ...(optStr(a.text, 'text') !== undefined ? { text: optStr(a.text, 'text') } : {}) }; break;
       case 'message': action = { type, to: id(a.to, 'to', CID), text: str(a.text, 'text') }; break;
       case 'gift': action = { type, to: id(a.to, 'to', CID), amount: int(a.amount, 'amount', 1, 100000) }; break;
@@ -110,6 +115,16 @@ export function validateAction(input: unknown): { ok: true; action: Action } | {
         type, citizen: id(a.citizen, 'citizen', CID), law: oneOf(a.law, 'law', LAW_CODES) as LawCode,
         ...(optStr(a.text, 'text') !== undefined ? { text: optStr(a.text, 'text') } : {}),
       }; break;
+      case 'verdict': action = {
+        type, caseId: id(a.caseId, 'caseId', KID), guilty: Boolean(a.guilty),
+        ...(optStr(a.reason, 'reason') !== undefined ? { reason: optStr(a.reason, 'reason') } : {}),
+      }; break;
+      case 'vote_appeal': action = {
+        type, caseId: id(a.caseId, 'caseId', KID), result: oneOf(a.result, 'result', APPEAL_RESULTS),
+      }; break;
+      case 'file_charge': action = { type, reportId: id(a.reportId, 'reportId', RID) }; break;
+      case 'drop_report': action = { type, reportId: id(a.reportId, 'reportId', RID), reason: str(a.reason, 'reason') }; break;
+      case 'appoint_judge': action = { type, citizen: id(a.citizen, 'citizen', CID) }; break;
       case 'bribe': action = { type, official: id(a.official, 'official', CID), amount: int(a.amount, 'amount', 1, 100000) }; break;
       case 'steal': action = { type, from: id(a.from, 'from', CID) }; break;
       case 'scam': action = { type, target: id(a.target, 'target', CID), amount: int(a.amount, 'amount', 1, 100000) }; break;

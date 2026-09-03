@@ -157,8 +157,9 @@ function caseView(world: World, k: Case): Record<string, unknown> {
     filedByName: k.filedBy === 'watch' ? 'the Watch' : nameOf(world, k.filedBy),
     victimId: k.victimId, victimName: nameOf(world, k.victimId), amount: k.amount, description: k.description,
     status: k.status, triedDay: k.triedDay,
-    judges: k.judges.map((id) => ({ id, name: nameOf(world, id) })),
-    votes: Object.entries(k.votes).map(([id, verdict]) => ({ id, name: nameOf(world, id), verdict })),
+    judges: k.judges.map((id) => ({ id, name: nameOf(world, id), verdict: k.votes[id] ?? null, reason: k.reasons?.[id] ?? null })),
+    votes: Object.entries(k.votes).map(([id, verdict]) => ({ id, name: nameOf(world, id), verdict, reason: k.reasons?.[id] ?? null })),
+    carriedSessions: k.carriedSessions ?? 0, decidedByDefault: k.decidedByDefault === true,
     verdict: k.verdict, sentence: k.sentence,
     appeal: k.appeal ? {
       filedDay: k.appeal.filedDay, decidedDay: k.appeal.decidedDay, result: k.appeal.result,
@@ -177,13 +178,27 @@ export function courtView(world: World): Record<string, unknown> {
   return {
     counts: {
       total: all.length,
-      pending: count((k) => k.status === 'pending'), tried: count((k) => k.status === 'tried'),
+      pending: count((k) => k.status === 'pending'), inSession: count((k) => k.status === 'in_session'),
+      tried: count((k) => k.status === 'tried'),
       appealed: count((k) => k.status === 'appealed'), closed: count((k) => k.status === 'closed'),
       guilty: count((k) => k.verdict === 'guilty'), acquitted: count((k) => k.verdict === 'acquitted'),
       exiles: count((k) => k.sentence?.exile === true),
     },
     nextSessionHour: world.config.courtHour,
     cases,
+    // The Watch's book: what was reported, what an officer charged, what they
+    // dropped and why, and what lapsed in whose hands. All of it public.
+    reports: Object.values(world.reports ?? {})
+      .sort((a, b) => b.tick - a.tick || idNumber(b.id) - idNumber(a.id))
+      .slice(0, CASE_VIEW_LENGTH)
+      .map((r) => ({
+        id: r.id, officerId: r.officerId, officerName: r.officerId ? nameOf(world, r.officerId) : null,
+        suspectId: r.suspectId, suspectName: nameOf(world, r.suspectId),
+        law: r.law, lawName: LAWS[r.law]?.name ?? r.law, evidence: Math.round(r.evidence * 100) / 100,
+        tick: r.tick, day: Math.floor(r.tick / 24), victimId: r.victimId, victimName: nameOf(world, r.victimId),
+        amount: r.amount, description: r.description, status: r.status,
+        filedCaseId: r.filedCaseId, droppedReason: r.droppedReason,
+      })),
   };
 }
 

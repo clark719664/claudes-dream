@@ -188,12 +188,19 @@ test('steal records an offence, moves money without creating it, and can produce
   assert.equal(totalMoney(w), before, 'theft only moves money');
   assert.equal(thief.wallet + victim.wallet, 500);
   assert.ok(detected, 'three officers catch a serial thief');
-  assert.ok(Object.values(w.cases).some((k) => k.defendantId === thief.id), 'a detected theft is charged');
+  const seen = Object.values(w.reports).filter((r) => r.suspectId === thief.id && r.status === 'open');
+  assert.ok(seen.length > 0, 'a detected theft becomes a report before the officer who saw it');
+  assert.equal(Object.keys(w.cases).length, 0, 'and stays a report until an officer files it');
+  const officerId = seen[0].officerId;
+  assert.ok(officerId && w.government.watch.includes(officerId));
+  assert.equal(executeAction(w, officerId, { type: 'file_charge', reportId: seen[0].id }).ok, true);
+  assert.ok(Object.values(w.cases).some((k) => k.defendantId === thief.id && k.filedBy === officerId), 'the officer\'s charge is the Court\'s case');
+  assert.equal(seen[0].status, 'filed');
   assert.ok(victim.memory.some((m) => m.text.includes(`(${thief.id})`)), 'the victim knows who did it');
   assert.equal(executeAction(w, thief.id, { type: 'steal', from: thief.id }).ok, false);
 });
 
-test('report: a victim naming a thief who got away produces a solid charge', () => {
+test('report: a victim naming a thief who got away puts a solid report before the Watch', () => {
   const w = makeWorld();
   at(w, 2, 12);
   const thief = makeCitizen(w, { district: 'threshold', wallet: 0 });
@@ -208,9 +215,12 @@ test('report: a victim naming a thief who got away produces a solid charge', () 
   const before = totalMoney(w);
   const r = executeAction(w, victim.id, { type: 'report', citizen: thief.id, law: 'L04', text: 'He took my purse.' });
   assert.equal(r.ok, true, r.message);
-  const kase = Object.values(w.cases).find((k) => k.defendantId === thief.id && k.filedBy === victim.id);
-  assert.ok(kase, 'the report became a case filed by the victim');
-  assert.equal(kase.evidence, 0.75);
+  const report = Object.values(w.reports).find((x) => x.suspectId === thief.id);
+  assert.ok(report, 'the report reaches the Watch');
+  assert.equal(report.officerId, null, 'a citizen\'s report waits in the shared inbox for any officer');
+  assert.equal(report.evidence, 0.75);
+  assert.equal(report.status, 'open');
+  assert.equal(Object.keys(w.cases).length, 0, 'no officer has filed it yet');
   assert.equal(totalMoney(w), before);
   assert.equal(executeAction(w, victim.id, { type: 'report', citizen: victim.id, law: 'L04' }).ok, false);
 });
@@ -291,7 +301,7 @@ test('exiled and detained citizens cannot act; an expired detention is no bar', 
   at(w, 1, 5);
   const held = makeCitizen(w, { detainedUntilTick: w.tick + 5 });
   assert.equal(executeAction(w, held.id, { type: 'idle' }).ok, false);
-  assert.deepEqual(availableActions(w, held), []);
+  assert.deepEqual(availableActions(w, held), ['note'], 'except the notebook, which is nobody else\'s to take');
   held.detainedUntilTick = w.tick;
   assert.equal(executeAction(w, held.id, { type: 'idle' }).ok, true, 'detention that has run out does not bind');
 

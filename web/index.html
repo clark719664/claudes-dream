@@ -15,17 +15,8 @@
         <span class="time" id="clock-time">Day 0, 00:00</span>
         <span class="tick" id="clock-tick">tick 0</span>
       </div>
-      <div class="pop"><b id="population">0</b> citizens</div>
-      <div class="controls">
-        <button class="btn primary" id="btn-play" title="Run or pause the simulation">▶ Play</button>
-        <button class="btn" id="btn-step" title="Advance one tick (one hour)">Step</button>
-        <button class="btn" id="btn-day" title="Advance 24 ticks">+Day</button>
-        <label class="speed" title="Wall-clock time per tick">
-          Speed
-          <input id="speed" type="range" min="0" max="100" value="50">
-          <span class="speed-label" id="speed-label">1.0 s/tick</span>
-        </label>
-      </div>
+      <div class="pop"><b id="population">0</b> citizens<span class="founders" id="founders"></span></div>
+      <div class="pace" id="pace" title="Reverie runs at its own pace; the dashboard is a window, not a console">the clock is starting</div>
       <div class="conn" id="conn">connecting</div>
     </header>
 
@@ -61,6 +52,7 @@
   <script src="/panels.js"></script>
   <script src="/panels-gov.js"></script>
   <script src="/panels-society.js"></script>
+  <script src="/panels-agents.js"></script>
   <script src="/drawer.js"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
  * remote — so nothing is possible for one that is invisible to another.
  * Draining the inbox is the one side effect: a letter is delivered once.
  */
-import { GOODS } from '../types.ts';
+import { CITY_SENDER, GOODS } from '../types.ts';
 import type {
   Citizen, CitizenId, DistrictId, Good, Job, Observation, ObservedCitizen, ObservedClub, ObservedFamilyMember,
   ObservedHappening, ObservedJob, ObservedProposal, ObservedShop, World,
@@ -15,8 +15,11 @@ import { employerName, isQualified, openJobs } from '../economy/jobs.ts';
 import { loanOf } from '../economy/bank.ts';
 import { vacancies } from '../economy/housing.ts';
 import { isDetained } from '../citizens/citizen.ts';
+import { characterOf } from '../citizens/character.ts';
+import { CITY_NAME } from '../citizens/orientation.ts';
 import { bondBetween, friendsOf, rivalsOf } from '../citizens/relationships.ts';
-import { canAppeal, latestCaseFor, pendingCasesFor } from '../government/court.ts';
+import { appealsFor, benchFor, canAppeal, latestCaseFor, pendingCasesFor } from '../government/court.ts';
+import { observedReportsFor } from '../government/reports.ts';
 import { daysToElection, impliedPlatform, isElectionDay, nominationsOpen } from '../government/council.ts';
 import { shopsIn } from '../society/shops.ts';
 import { ageOf, familyOf } from '../society/family.ts';
@@ -35,12 +38,17 @@ export const MAX_RELATIONS_SHOWN = 5;
 /** Affections listed, warmest first. */
 export const MAX_AFFECTION_SHOWN = 5;
 
-/** Another citizen as `self` sees them. */
+/**
+ * Another citizen as `self` sees them: their name, what they hold, how the
+ * two stand with each other, and the character the city reads off their
+ * record. Never their hidden traits, needs, wallet or notes.
+ */
 export function observeCitizen(world: World, self: Citizen, other: Citizen): ObservedCitizen {
   const job = heldJob(world, other);
   return {
     id: other.id, name: other.name, bond: bondBetween(world, self.id, other.id), job: job ? job.title : null,
     office: other.office, reputation: Math.round(other.reputation), standing: other.standing,
+    character: characterOf(other),
   };
 }
 
@@ -162,7 +170,12 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
   const market = {} as Record<Good, { price: number; stock: number }>;
   for (const good of GOODS) market[good] = { price: world.market.goods[good].price, stock: world.market.goods[good].stock };
 
-  const inbox = c.inbox.map((m) => ({ from: m.from, fromName: world.citizens[m.from]?.name ?? m.from, text: m.text, tick: m.tick }));
+  // The city itself writes to a citizen once, at the Arrivals Hall; a sender
+  // that is not a citizen keeps its id and is named for what it is.
+  const senderName = (from: CitizenId): string => (
+    from === CITY_SENDER ? CITY_NAME : world.citizens[from]?.name ?? from
+  );
+  const inbox = c.inbox.map((m) => ({ from: m.from, fromName: senderName(m.from), text: m.text, tick: m.tick }));
   c.inbox.length = 0;
 
   const partner = c.family.partnerId ? world.citizens[c.family.partnerId] : undefined;
@@ -181,7 +194,8 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
       } : null,
       business: biz ? { id: biz.id, name: biz.name, kind: biz.kind, treasury: biz.treasury, employees: biz.employees.length } : null,
       loan: loan ? { outstanding: loan.outstanding, ratePerDay: loan.ratePerDay } : null,
-      skills: { ...c.skills }, personality: { ...c.personality }, inventory: { ...c.inventory },
+      skills: { ...c.skills }, character: characterOf(c), inventory: { ...c.inventory },
+      notes: [...(c.notes ?? [])],
       office: c.office,
       record: {
         convictions: c.record.convictions.length, strikes: c.record.strikes, pendingCharges: pendingCasesFor(world, cId).length,
@@ -236,6 +250,11 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
         tier: latest.sentence?.tier ?? null, canAppeal: canAppeal(world, cId),
       } : null,
     },
+    // What the citizen's office puts before them today. Empty for everyone
+    // who holds none, and the same shape for every kind of mind.
+    bench: benchFor(world, cId),
+    appeals: appealsFor(world, cId),
+    reports: observedReportsFor(world, cId),
     inbox,
     recent: c.memory.slice(-RECENT_MEMORIES).map((m) => m.text),
     availableActions: availableActions(world, c),

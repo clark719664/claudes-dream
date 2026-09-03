@@ -13,7 +13,8 @@ import { BUSINESS_JOBS, BUSINESS_RENT, CLINIC_FEE, COURIER_CONTRACT } from '../d
 import { chance, pick, rand } from '../util/rng.ts';
 import { activeBusinesses } from '../economy/business.ts';
 import { talentOf } from '../citizens/citizen.ts';
-import { areRivals, bondBetween, socialCompatibility } from '../citizens/relationships.ts';
+import { areRivals, bondBetween } from '../citizens/relationships.ts';
+import { characterCompatibility } from '../citizens/character.ts';
 import { medicOnStaff, nextStepToward } from '../actions/daily.ts';
 import { citizensIn, districtName } from '../actions/common.ts';
 import { heldJob } from '../actions/execute.ts';
@@ -101,7 +102,11 @@ export function isOfficer(world: World, id: string): boolean {
   return world.government.watch.includes(id);
 }
 
-/** Whom to spend the hour with: friends first, compatible strangers next, never rivals. */
+/**
+ * Whom to spend the hour with: friends first, then whoever the citizen reads
+ * as being of their own sort — from the public character of the other, which
+ * is all anyone has to go on — and never a rival.
+ */
 export function pickCompanion(ctx: Ctx): Citizen | null {
   const { world, c, here } = ctx;
   let best: Citizen | null = null;
@@ -110,7 +115,7 @@ export function pickCompanion(ctx: Ctx): Citizen | null {
   for (const o of here) {
     if (areRivals(world, c.id, o.id)) continue;
     const bond = bondBetween(world, c.id, o.id);
-    let score = bond / 100 + socialCompatibility(world, c.id, o.id) * 0.6 + rand(world) * 0.3;
+    let score = bond / 100 + characterCompatibility(world, c.id, o.id) * 0.6 + rand(world) * 0.3;
     if (bond === 0) score += c.personality.curiosity * 0.2;
     if (bond >= 40) score += 0.2;
     for (const text of lately) if (text.includes(`with ${o.name} `)) score -= 0.25;

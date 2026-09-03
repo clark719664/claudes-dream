@@ -74,7 +74,7 @@ export function emptyWorld(overrides: Partial<WorldConfig> = {}): World {
     treasury: createTreasury(config.foundingSupply),
     loans: {},
     government: createGovernment(config),
-    cases: {}, bans: [],
+    cases: {}, reports: {}, bans: [],
     households: {}, clubs: {}, emporium: {}, happenings: [],
     events: [], tickEvents: [], chronicle: [], stats: [],
     counters: {},

@@ -9,6 +9,7 @@ import { chance } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
 import { hasCandidacyResidency, isEligibleCandidate, isEligibleVoter } from '../citizens/citizen.ts';
+import { characterOf } from '../citizens/character.ts';
 import { bondBetween } from '../citizens/relationships.ts';
 
 export const COUNCIL_SEATS = 5;
@@ -47,18 +48,21 @@ export function wasVictim(world: World, cId: CitizenId): boolean {
 }
 
 /**
- * The platform a citizen would stand on, read off their situation and
- * personality: the poor want dividend and wages, owners want low taxes, the
- * honest and the wronged want strict enforcement, the convicted do not.
+ * The platform a citizen would stand on if they have not declared one, read
+ * off their situation and their public character: the poor want dividend and
+ * wages, owners want low taxes, the wronged and those whose record is clean
+ * want strict enforcement, the convicted do not. Only public facts go in —
+ * voters weigh candidates by what the city has seen them do, never by traits
+ * nobody can see.
  */
 export function impliedPlatform(world: World, c: Citizen): Platform {
   const owner = c.businessId !== null;
   const employed = c.jobId !== null;
   const rich = c.wallet > RICH_WALLET;
   const poor = c.wallet < POOR_WALLET || (!employed && !owner);
-  const p = c.personality;
+  const p = characterOf(c);
   return {
-    tax: clamp(0.5 - (owner || rich ? 0.25 : 0) + (poor ? 0.15 : 0) + (0.5 - p.ambition) * 0.2, 0, 1),
+    tax: clamp(0.5 - (owner || rich ? 0.25 : 0) + (poor ? 0.15 : 0) + (0.5 - p.civic) * 0.2, 0, 1),
     dividend: clamp(0.5 + (poor ? 0.3 : 0) - (owner || rich ? 0.2 : 0) + (p.sociability - 0.5) * 0.2, 0, 1),
     minWage: clamp(0.5 + (employed && !owner ? 0.2 : 0) - (owner ? 0.3 : 0) + (poor ? 0.1 : 0), 0, 1),
     strictness: clamp(0.3 + p.honesty * 0.5 - (c.record.convictions.length > 0 ? 0.3 : 0) + (wasVictim(world, c.id) ? 0.2 : 0), 0, 1),

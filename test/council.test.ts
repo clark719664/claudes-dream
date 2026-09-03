@@ -4,10 +4,11 @@ import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
 import type { Citizen, Job, Platform, Proposal, World } from '../src/types.ts';
 import { nextId } from '../src/util/ids.ts';
 import {
-  JUDGE_FALLBACK_REPUTATION, appointJudges, campaign, castBallot, councilSession, councillorDisposition, dailyGovernment,
-  daysToElection, enactProposal, holdElection, nominate, openNominations, tableProposal, treasuryDeficitShare,
-  voteOnProposal, voterPreference,
+  JUDGE_FALLBACK_REPUTATION, JUDGE_VACANCY_GRACE_DAYS, appointJudges, campaign, castBallot, councilSession,
+  councillorDisposition, dailyGovernment, daysToElection, enactProposal, holdElection, nominate, openNominations,
+  tableProposal, treasuryDeficitShare, voteOnProposal, voterPreference,
 } from '../src/government/council.ts';
+import { availableActions, executeAction } from '../src/actions/execute.ts';
 
 const NEUTRAL: Platform = { tax: 0.5, dividend: 0.5, minWage: 0.5, strictness: 0.5 };
 
@@ -270,6 +271,55 @@ test('appointJudges fills the bench, the Mayor favouring friends; other office h
   makeCitizen(w, { reputation: 99 });
   appointJudges(w);
   assert.equal(w.government.judges.length, 3, 'the bench is full');
+});
+
+test('a Mayor with a mind of its own seats the bench by hand, and the city waits three days for it', () => {
+  const w = makeWorld();
+  w.day = 10;
+  const [mayor] = makeCouncil(w, 2);
+  mayor.brain = 'remote';
+  const fit = makeCitizen(w, { reputation: 80 });
+  const alsoFit = makeCitizen(w, { reputation: 75 });
+  const third = makeCitizen(w, { reputation: 70 });
+
+  const bench = (): string[] => [...w.government.judges];
+  appointJudges(w);
+  assert.deepEqual(bench(), [], 'the seats are held open for the Mayor to fill');
+  assert.equal(w.counters.judgeVacancySinceDay, 10);
+  assert.ok(availableActions(w, mayor).includes('appoint_judge'));
+  assert.ok(!availableActions(w, fit).includes('appoint_judge'), 'nobody else appoints judges');
+
+  assert.equal(executeAction(w, fit.id, { type: 'appoint_judge', citizen: alsoFit.id }).ok, false);
+  assert.equal(executeAction(w, mayor.id, { type: 'appoint_judge', citizen: mayor.id }).ok, false, 'the Mayor may not sit');
+  assert.equal(executeAction(w, mayor.id, { type: 'appoint_judge', citizen: 'c_404' }).ok, false);
+  const seated = executeAction(w, mayor.id, { type: 'appoint_judge', citizen: fit.id });
+  assert.equal(seated.ok, true, seated.message);
+  assert.deepEqual(bench(), [fit.id]);
+  assert.equal(fit.office, 'judge');
+  assert.equal(fit.judgeTermEndsDay, 10 + w.config.judgeTermDays);
+  assert.ok(w.events.some((e) => e.kind === 'law' && e.text.includes(mayor.name) && e.text.includes(fit.name)));
+
+  w.day = 10 + JUDGE_VACANCY_GRACE_DAYS - 1;
+  appointJudges(w);
+  assert.deepEqual(bench(), [fit.id], 'the rest of the bench is still the Mayor\'s to fill');
+  w.day = 10 + JUDGE_VACANCY_GRACE_DAYS;
+  appointJudges(w);
+  assert.ok(bench().includes(alsoFit.id) && bench().includes(third.id),
+    'after three days the city fills what is left');
+  assert.equal(w.counters.judgeVacancySinceDay, undefined, 'a full bench forgets the vacancy');
+});
+
+test('a scripted Mayor has no seats held for it: the procedure is already its choice', () => {
+  const w = makeWorld();
+  w.day = 10;
+  const [mayor] = makeCouncil(w, 2);
+  assert.equal(mayor.brain, 'reflex');
+  const crony = makeCitizen(w, { reputation: 65 });
+  mayor.bonds[crony.id] = 80;
+  makeCitizen(w, { reputation: 95 });
+  appointJudges(w);
+  assert.equal(w.government.judges[0], crony.id);
+  assert.equal(w.counters.judgeVacancySinceDay, undefined);
 });
 
 test('the bench never falls below the fallback standing: nobody tarnished, suspended or half-forgotten sits', () => {

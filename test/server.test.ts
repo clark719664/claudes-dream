@@ -1,7 +1,12 @@
 /**
  * The HTTP server: dashboard routes, static files (and that they cannot be
- * escaped), simulation controls, the SSE stream, and the external agent API
- * round trip through the RemoteBroker. One small city, one server on port 0.
+ * escaped), the SSE stream, and the external agent API round trip through the
+ * RemoteBroker. One small city, one server on port 0.
+ *
+ * There are no simulation controls to test, and that is the point: the clock
+ * belongs to the city. These servers are started at a very slow pace so the
+ * world holds still while the views are read, and ticks are run directly on
+ * the Simulation, which no route can reach.
  */
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,6 +23,8 @@ import { transfer } from '../src/economy/treasury.ts';
 import { totalMoney } from './helpers.ts';
 
 const idle: Brain = { kind: 'reflex', decide: () => ({ type: 'idle' }) };
+/** One city hour per real hour: the test city stands still unless a tick is asked for. */
+const SLOW_CLOCK = 3_600_000;
 
 let world: World;
 let broker: RemoteBroker;
@@ -38,7 +45,7 @@ before(async () => {
   world = createWorld({ seed: 11, seedPopulation: 6, arrivalRate: 0 });
   broker = new RemoteBroker({ timeoutMs: 1500 });
   const brains: BrainRegistry = { brainFor: (c) => (c.brain === 'remote' ? broker.brain : idle) };
-  running = await startServer(world, { port: 0, broker, brains, tickMs: 30, autoRun: false, log: (m) => logged.push(m) });
+  running = await startServer(world, { port: 0, broker, brains, tickMs: SLOW_CLOCK, log: (m) => logged.push(m) });
   base = `http://127.0.0.1:${running.port}`;
 });
 
@@ -50,16 +57,51 @@ after(() => {
 
 // ---------------------------------------------------------------- dashboard
 
-test('GET /api/state summarises the city', async () => {
+test('GET /api/state reports the clock, the city and the pace — and nothing to steer with', async () => {
   const res = await get('/api/state');
   assert.equal(res.status, 200);
   assert.equal(res.headers.get('access-control-allow-origin'), '*');
   const s = await json(res);
   assert.equal(s.tick, world.tick);
-  assert.equal(s.population, 6);
-  assert.equal(s.running, false);
+  assert.equal(s.day, world.day);
+  assert.equal(s.hour, world.hour);
   assert.equal(typeof s.clock, 'string');
+  assert.equal(s.population, 6);
+  assert.equal(s.founders, 6, 'all six founders are scripted');
+  assert.equal(s.tickSeconds, SLOW_CLOCK / 1000);
+  assert.equal(s.decisionDeadlineMs, world.config.decisionDeadlineMs);
   assert.equal((s.config as Json).seed, 11);
+  for (const key of ['running', 'busy', 'pendingRemote', 'tickMs']) {
+    assert.ok(!(key in s), `/api/state must not offer ${key}`);
+  }
+});
+
+test('the founder count is the scripted minds still living here', async () => {
+  const w = createWorld({ seed: 33, seedPopulation: 4, arrivalRate: 0 });
+  const run = await startServer(w, { port: 0, broker, brains: { brainFor: () => idle }, tickMs: SLOW_CLOCK, log: () => {} });
+  const url = `http://127.0.0.1:${run.port}`;
+  try {
+    const before = await (await fetch(url + '/api/state')).json() as Json;
+    assert.equal(before.population, 4);
+    assert.equal(before.founders, 4);
+
+    const joined = await (await fetch(url + '/api/agents/join', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Sable Vane', lineage: 'test-agent' }),
+    })).json() as Json;
+    const withAgent = await (await fetch(url + '/api/state')).json() as Json;
+    assert.equal(withAgent.population, 5);
+    assert.equal(withAgent.founders, 4, 'an agent is nobody\'s founder');
+
+    const exile = w.citizens[joined.citizenId as string];
+    const founder = w.citizens[w.order[0]];
+    founder.standing = 'exiled';
+    w.order = w.order.filter((id) => id !== founder.id);
+    const after = await (await fetch(url + '/api/state')).json() as Json;
+    assert.equal(after.founders, 3, 'an exiled founder no longer lives here');
+    assert.equal(exile.brain, 'remote');
+  } finally {
+    run.stop();
+  }
 });
 
 test('serves the dashboard with the right content types', async () => {
@@ -132,7 +174,16 @@ test('unknown routes are JSON 404s and wrong methods 405', async () => {
   assert.equal(file.status, 404);
   assert.equal((await json(file)).error, 'not found');
   assert.equal((await post('/api/state', {})).status, 405);
-  assert.equal((await get('/api/sim/step')).status, 405);
+});
+
+test('the simulation controls are gone: /api/sim/* is not a place', async () => {
+  for (const path of ['/api/sim/step', '/api/sim/pause', '/api/sim/resume', '/api/sim/speed']) {
+    const posted = await post(path, { ticks: 1, tickMs: 10 });
+    assert.equal(posted.status, 404, `POST ${path}`);
+    assert.equal((await json(posted)).error, 'not found');
+    assert.equal((await get(path)).status, 404, `GET ${path}`);
+  }
+  assert.equal((await post('/api/sim', {})).status, 404);
 });
 
 test('path traversal out of web/ is impossible', async () => {
@@ -226,7 +277,7 @@ async function societyCity(): Promise<SocietyCity> {
   w.events.push({ tick: w.tick, day: w.day, kind: 'birth', text: `${kid.name} Ashgrove was born at the Restoration Ward.`, actors: [kid.id, a.id, b.id], weight: 0.8 });
 
   const brains: BrainRegistry = { brainFor: () => idle };
-  const run = await startServer(w, { port: 0, broker, brains, tickMs: 1000, autoRun: false, log: (m) => logged.push(m) });
+  const run = await startServer(w, { port: 0, broker, brains, tickMs: SLOW_CLOCK, log: (m) => logged.push(m) });
   society = {
     world: w, running: run, base: `http://127.0.0.1:${run.port}`,
     ids: { a: a.id, b: b.id, kid: kid.id, other: other.id, club: club.id, household: household.id, business: businessId },
@@ -366,7 +417,7 @@ test('the citizen views carry family, partner, possessions, tastes and clubs', a
 
 test('the society view survives an empty city and citizens who have gone', async () => {
   const empty = createWorld({ seed: 3, seedPopulation: 0, arrivalRate: 0 });
-  const run = await startServer(empty, { port: 0, broker, brains: { brainFor: () => idle }, tickMs: 1000, autoRun: false, log: () => {} });
+  const run = await startServer(empty, { port: 0, broker, brains: { brainFor: () => idle }, tickMs: SLOW_CLOCK, log: () => {} });
   try {
     const s = await (await fetch(`http://127.0.0.1:${run.port}/api/society`)).json() as Json;
     assert.deepEqual(s.households, []);
@@ -415,7 +466,7 @@ test('join → observe → act round trip through the broker', async () => {
 
   const tickBefore = world.tick;
   const observing = get(`/api/agents/${agentId}/observe`, auth(agentKey));
-  const stepping = post('/api/sim/step', { ticks: 1 });
+  const ticking = running.sim.tick();
   const observed = await observing;
   assert.equal(observed.status, 200);
   const obs = await json(observed);
@@ -428,8 +479,7 @@ test('join → observe → act round trip through the broker', async () => {
   const a = await json(acted);
   assert.equal(a.accepted, true);
   assert.equal(a.executed, true, 'the tick finished within the act() wait');
-  const stepped = await json(await stepping);
-  assert.equal(stepped.ran, 1);
+  await ticking;
   assert.equal(world.tick, tickBefore + 1);
   assert.equal(world.citizens[agentId].district, 'commons', 'the submitted action was executed');
   assert.deepEqual(broker.pending(), []);
@@ -532,7 +582,7 @@ test('SSE stream sends an events frame and a state frame after each tick', async
   };
   await readUntil(() => text.includes('event: state'));
   const tickBefore = world.tick;
-  await post('/api/sim/step', { ticks: 1 });
+  await running.sim.tick();
   await readUntil(() => text.includes('event: events') && text.split('event: state').length >= 3);
   const eventsFrame = /event: events\ndata: (.*)\n/.exec(text);
   assert.ok(eventsFrame, 'an events frame was sent');
@@ -542,34 +592,32 @@ test('SSE stream sends an events frame and a state frame after each tick', async
   controller.abort();
 });
 
-test('speed, resume and pause drive the loop; step runs exactly n ticks', async () => {
-  const speed = await json(await post('/api/sim/speed', { tickMs: 1 }));
-  assert.equal(speed.tickMs, 10, 'clamped to the minimum');
-  assert.equal((await post('/api/sim/speed', { tickMs: 'fast' })).status, 400);
-  const before = world.tick;
-  const resumed = await json(await post('/api/sim/resume', {}));
-  assert.equal(resumed.running, true);
-  await sleep(150);
-  const paused = await json(await post('/api/sim/pause', {}));
-  assert.equal(paused.running, false);
-  await running.sim.tickDone();
-  const afterRun = world.tick;
-  assert.ok(afterRun > before, 'ticks advanced while running');
-  await sleep(60);
-  assert.equal(world.tick, afterRun, 'no ticks after pause');
-
-  const stepped = await json(await post('/api/sim/step', { ticks: 3 }));
-  assert.equal(stepped.ran, 3);
-  assert.equal(world.tick, afterRun + 3);
-  assert.equal((await post('/api/sim/step', { ticks: 0 })).status, 400);
+test('the clock turns by itself at the pace it was given, and cannot be hurried', async () => {
+  const fast = createWorld({ seed: 21, seedPopulation: 2, arrivalRate: 0 });
+  const run = await startServer(fast, { port: 0, broker, brains: { brainFor: () => idle }, tickMs: 25, log: () => {} });
+  try {
+    const url = `http://127.0.0.1:${run.port}`;
+    const first = await (await fetch(url + '/api/state')).json() as Json;
+    assert.equal(first.tickSeconds, 0.03, 'the pace is reported in seconds');
+    const deadline = Date.now() + 4000;
+    while (fast.tick < 3 && Date.now() < deadline) await sleep(20);
+    assert.ok(fast.tick >= 3, `the clock turned on its own (tick ${fast.tick})`);
+    assert.equal(run.sim.running, true, 'and nothing outside can stop it');
+    run.stop();
+    await run.sim.tickDone();
+    const stopped = fast.tick;
+    await sleep(120);
+    assert.equal(fast.tick, stopped, 'closing the server ends the city');
+  } finally {
+    run.stop();
+  }
 });
 
 test('a failing tick is logged and the server keeps serving', async () => {
   const order = world.order;
   (world as unknown as { order: unknown }).order = null;
-  const res = await post('/api/sim/step', { ticks: 1 });
+  await running.sim.tick();
   (world as unknown as { order: unknown }).order = order;
-  assert.equal(res.status, 200);
   assert.ok(logged.some((m) => /tick .* failed/.test(m)), 'the failure was logged');
   assert.equal((await get('/api/state')).status, 200);
 });

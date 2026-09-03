@@ -5,7 +5,7 @@
  * remember who wronged them when they notice, id included, so they can report.
  */
 import { clamp } from '../types.ts';
-import type { ActionResult, BuildingId, CaseId, Citizen, CitizenId, LawCode, World } from '../types.ts';
+import type { ActionResult, BuildingId, Citizen, CitizenId, LawCode, ReportId, World } from '../types.ts';
 import { LAWS } from '../data/laws.ts';
 import { chance, rand, randInt } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
@@ -33,7 +33,7 @@ export const EVADE_SHIFTS = 3;
 export function commitOffenceOrScold(
   world: World, c: Citizen, law: LawCode,
   ctx: { victimId?: CitizenId; amount?: number; buildingId?: BuildingId; visibilityMod?: number } = {},
-): { detected: boolean; caseId: CaseId | null } {
+): { detected: boolean; reportId: ReportId | null } {
   if (c.lifeStage !== 'child') return commitOffence(world, c.id, law, ctx);
   c.stats.offencesCommitted += 1;
   const misdeed = LAWS[law].name.toLowerCase();
@@ -49,7 +49,7 @@ export function commitOffenceOrScold(
     ? `${c.name}, a child, was caught at ${misdeed}; ${parents.map((p) => p.name).join(' and ')} answered for it.`
     : `${c.name}, a child with nobody to answer for them, was caught at ${misdeed}.`,
   [c.id, ...parents.map((p) => p.id)], 0.3, { law, child: c.id, parents: parents.map((p) => p.id) });
-  return { detected: false, caseId: null };
+  return { detected: false, reportId: null };
 }
 
 /** The target of an in-person offence: around, and in the same district. */

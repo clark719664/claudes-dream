@@ -1,7 +1,7 @@
 import type { World } from '../types.ts';
 
-/** Id prefixes: citizen, business, job, case, proposal, loan, club, household, item, happening. */
-export type IdPrefix = 'c' | 'b' | 'j' | 'k' | 'p' | 'l' | 'u' | 'h' | 'i' | 'e';
+/** Id prefixes: citizen, business, job, case, Watch report, proposal, loan, club, household, item, happening. */
+export type IdPrefix = 'c' | 'b' | 'j' | 'k' | 'r' | 'p' | 'l' | 'u' | 'h' | 'i' | 'e';
 
 /** Monotonic ids per prefix, stored in world.counters so they survive save/load. */
 export function nextId(world: World, prefix: IdPrefix): string {

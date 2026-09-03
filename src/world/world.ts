@@ -2,11 +2,21 @@
  * The World: founding the city, the tick loop that drives it, the morning
  * rollover, brain registries and persistence.
  *
- * One tick is one city hour. Every tick each present citizen is shown an
- * observation, asked its brain for an action, and the action is executed;
- * then the Court, the Council and the polls sit at their hours, needs decay,
- * the market moves, detentions expire and businesses sell. At hour 0 the day
- * rolls over: money, housing, justice, government and the Chronicle.
+ * One tick is one city hour, and it has two phases. First the engine builds
+ * the observation for every citizen who can act and asks every brain at the
+ * same time, with a deadline (config.decisionDeadlineMs); a brain that misses
+ * it acts on instinct for that hour. Then the answers are carried out in
+ * world.order, so everyone acts on the city as it stood at the top of the
+ * hour. The Court opens its sitting before that first phase, so a judge sees
+ * the cases before it in the observation it acts on, and counts the votes an
+ * hour later. After that the Council and the polls sit at their hours,
+ * needs decay, the market moves, detentions expire and businesses sell. At
+ * hour 0 the day rolls over: money, housing, justice, government and the
+ * Chronicle — and the world is autosaved if a path was registered.
+ *
+ * Determinism is unaffected: brains are asked in world.order and answer in
+ * that order too, reflex brains answer synchronously (so they draw from the
+ * random stream in a fixed sequence), and instinct touches nothing at all.
  *
  * The engine never lets one citizen's action (or one module's bug) end a
  * run: every phase is guarded, errors are counted in
@@ -28,10 +38,12 @@ import { dailyBusinesses, hourlyBusinesses } from '../economy/business.ts';
 import { dailyLoans } from '../economy/bank.ts';
 import { dailyHousing } from '../economy/housing.ts';
 import { activeCitizens, canAct, createCitizen, dailyCitizens, tickNeeds } from '../citizens/citizen.ts';
+import { dailyCharacter } from '../citizens/character.ts';
+import { dailyLetters } from '../citizens/letters.ts';
 import { dailyRelationships } from '../citizens/relationships.ts';
 import { printMorningEdition } from '../sim/chronicle.ts';
 import { dailyWatch, tickWatch } from '../government/watch.ts';
-import { dailyJustice, fileCharge, holdCourt } from '../government/court.ts';
+import { courtTallyHour, dailyJustice, fileCharge, openCourtSession, tallyVerdicts } from '../government/court.ts';
 import { dailyStandings } from '../government/registry.ts';
 import { appointJudges, councilSession, dailyGovernment, holdElection, isElectionDay, openNominations } from '../government/council.ts';
 import { refreshWantsDaily } from '../society/tastes.ts';
@@ -44,6 +56,8 @@ import { dailyChest } from '../society/chest.ts';
 import { executeAction } from '../actions/execute.ts';
 import { buildObservation } from '../brains/observe.ts';
 import { reflexBrain } from '../brains/reflex.ts';
+import { childDecide } from '../brains/child.ts';
+import { instinctBrain, instinctOrIdle } from '../brains/instinct.ts';
 import { computeStats } from './stats.ts';
 
 export { computeStats } from './stats.ts';
@@ -63,14 +77,31 @@ export interface BrainRegistry {
   brainFor(c: Citizen): Brain;
 }
 
+/**
+ * A child born in Reverie whom nobody has claimed: it goes to school, plays,
+ * eats and sleeps, and nothing is played for it. `POST /api/agents/:id/claim`
+ * is how a parent's owner gives it a mind of its own.
+ */
+export const childBrain: Brain = { kind: 'child', decide: childDecide };
+
 /** Everyone thinks with the reflex brain: the deterministic, headless city. */
 export function createReflexRegistry(): BrainRegistry {
   return { brainFor: () => reflexBrain };
 }
 
-/** A registry by brain kind; kinds without a brain fall back to reflex. */
+/**
+ * A registry by brain kind. Unclaimed children always get the child brain and
+ * scripted citizens always get the reflex brain, since that is what they are.
+ * A citizen of any other kind whose mind is not in the registry — a Claude
+ * citizen in a world with no model, an agent in a city replayed with no
+ * broker — lives on **instinct**: nothing scripted plays its life for it
+ * (docs/PRINCIPLES.md §4).
+ */
 export function createBrainRegistry(brains: Partial<Record<BrainKind, Brain>>): BrainRegistry {
-  return { brainFor: (c) => brains[c.brain] ?? brains.reflex ?? reflexBrain };
+  return {
+    brainFor: (c) => brains[c.brain]
+      ?? (c.brain === 'child' ? childBrain : c.brain === 'reflex' ? reflexBrain : instinctBrain),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -89,9 +120,12 @@ export function createWorld(config: Partial<WorldConfig> = {}): World {
   const population = Math.max(0, Math.round(world.config.seedPopulation));
   const llm = Math.max(0, Math.round(world.config.llmCitizens));
   for (let i = 0; i < population; i++) {
+    const claude = i < llm;
     createCitizen(world, {
       district: FOUNDING_DISTRICTS[i % FOUNDING_DISTRICTS.length],
-      brain: i < llm ? 'llm' : 'reflex',
+      brain: claude ? 'llm' : 'reflex',
+      // Seeded founders say what they are wherever they appear: scripted minds, not agents anyone sent.
+      lineage: claude ? 'Claude' : 'reflex',
     });
   }
   appointJudges(world);
@@ -172,6 +206,12 @@ function dailySociety(world: World): void {
 
 /** Hour 0: the daily passes in contract order, the Treasury's report, the morning edition, the audit and the statistics. */
 function dailyRollover(world: World): void {
+  // The day that has just ended is written up for whoever sent each agent,
+  // before anything below can overwrite the record it is drawn from.
+  guard(world, 'dailyLetters', () => dailyLetters(world));
+  // The city reads everyone's character off yesterday's record before the day
+  // begins; newcomers admitted below start neutral until their first full day.
+  guard(world, 'dailyCharacter', () => dailyCharacter(world));
   guard(world, 'dailyCitizens', () => dailyCitizens(world));
   guard(world, 'dailyHousing', () => dailyHousing(world));
   guard(world, 'payDividend', () => payDividend(world));
@@ -191,6 +231,7 @@ function dailyRollover(world: World): void {
   guard(world, 'printMorningEdition', () => printMorningEdition(world, report));
   guard(world, 'auditMoneySupply', () => auditMoneySupply(world));
   guard(world, 'computeStats', () => world.stats.push(computeStats(world)));
+  autosave(world);
 }
 
 // ---------------------------------------------------------------------------
@@ -206,32 +247,104 @@ function isAction(a: unknown): a is Action {
   return typeof a === 'object' && a !== null && typeof (a as { type?: unknown }).type === 'string';
 }
 
-/** One citizen's hour: observe, decide (never trusting the brain not to throw), act, remember failures. */
-async function actFor(world: World, c: Citizen, brains: BrainRegistry): Promise<void> {
-  let obs: Observation;
-  try {
-    obs = buildObservation(world, c.id);
-  } catch (err) {
-    recordEngineError(world, `observation for ${c.name}`, err);
-    return;
-  }
-  let action: Action = IDLE;
-  try {
-    const decided: unknown = await brains.brainFor(c).decide(world, c, obs);
-    action = isAction(decided) ? decided : IDLE;
-  } catch (err) {
-    recordEngineError(world, `${c.brain} brain of ${c.name}`, err);
-  }
-  // A remote or Claude brain may have taken real time: make sure the citizen is still able to act.
-  if (!world.order.includes(c.id) || !canAct(world, c)) return;
-  const result = guard(world, `${describeAction(action)} by ${c.name}`, () => executeAction(world, c.id, action))
-    ?? { ok: false, message: 'the engine stumbled; the hour passed' };
-  if (!result.ok) remember(world, c.id, 'event', `(could not ${describeAction(action)}: ${result.message})`);
+function isThenable(v: unknown): v is PromiseLike<unknown> {
+  return typeof v === 'object' && v !== null && typeof (v as PromiseLike<unknown>).then === 'function';
+}
+
+/** A citizen, what it was shown this hour, and what it decided to do with it. */
+interface Turn {
+  c: Citizen;
+  obs: Observation;
+  /** Filled in phase one: an answer, or a promise of one. */
+  answer: Action | Promise<Action>;
 }
 
 /**
- * Advance the city by one hour. See the module comment for the order of
- * play; it follows docs/MODULES.md exactly.
+ * A brain that takes real time gets `config.decisionDeadlineMs` to answer
+ * (0 waits forever). Miss it — or throw, or answer with rubbish — and the
+ * citizen falls back on instinct for the hour; a late answer is ignored.
+ */
+function withDeadline(world: World, c: Citizen, obs: Observation, answer: PromiseLike<unknown>): Promise<Action> {
+  const fallback = (why: string | null): Action => {
+    if (why) {
+      world.counters.deadlineMisses = (world.counters.deadlineMisses ?? 0) + 1;
+      remember(world, c.id, 'event', `(${why}; instinct took the hour)`);
+    }
+    return instinctOrIdle(world, c, obs);
+  };
+  const decided = Promise.resolve(answer).then(
+    (a) => (isAction(a) ? a : fallback(null)),
+    (err: unknown) => {
+      recordEngineError(world, `${c.brain} brain of ${c.name}`, err);
+      return fallback(null);
+    },
+  );
+  const ms = Math.max(0, Math.round(world.config.decisionDeadlineMs ?? 0));
+  if (ms <= 0) return decided;
+  return new Promise<Action>((resolve) => {
+    const timer = setTimeout(() => resolve(fallback(`${c.name} did not decide within ${ms} ms`)), ms);
+    void decided.then((a) => {
+      clearTimeout(timer);
+      resolve(a);
+    });
+  });
+}
+
+/** Ask one brain, without letting it throw into the tick. */
+function askBrain(world: World, brains: BrainRegistry, c: Citizen, obs: Observation): Action | Promise<Action> {
+  let decided: unknown;
+  try {
+    decided = brains.brainFor(c).decide(world, c, obs);
+  } catch (err) {
+    recordEngineError(world, `${c.brain} brain of ${c.name}`, err);
+    return instinctOrIdle(world, c, obs);
+  }
+  if (isThenable(decided)) return withDeadline(world, c, obs, decided);
+  return isAction(decided) ? decided : instinctOrIdle(world, c, obs);
+}
+
+/**
+ * Phase one of the hour: the observation for everyone who can act, then every
+ * brain asked at once. Reflex brains answer where they stand (in world.order,
+ * so the random stream is drawn from in a fixed sequence); brains that take
+ * time are all in flight before any of them is awaited.
+ */
+async function collectTurns(world: World, brains: BrainRegistry): Promise<Turn[]> {
+  const turns: Turn[] = [];
+  for (const id of [...world.order]) {
+    const c = world.citizens[id];
+    if (!c || !canAct(world, c)) continue;
+    let obs: Observation;
+    try {
+      obs = buildObservation(world, c.id);
+    } catch (err) {
+      recordEngineError(world, `observation for ${c.name}`, err);
+      continue;
+    }
+    turns.push({ c, obs, answer: IDLE });
+  }
+  for (const turn of turns) turn.answer = askBrain(world, brains, turn.c, turn.obs);
+  const answers = await Promise.all(turns.map((t) => t.answer));
+  answers.forEach((action, i) => { turns[i].answer = action; });
+  return turns;
+}
+
+/** Phase two: carry out the hour's decisions in world.order, remembering failures. */
+function executeTurns(world: World, turns: Turn[]): void {
+  for (const { c, answer } of turns) {
+    const action = isAction(answer) ? answer : IDLE;
+    // Deciding may have taken real time: make sure the citizen can still act.
+    if (!world.citizens[c.id] || !world.order.includes(c.id) || !canAct(world, c)) continue;
+    const result = guard(world, `${describeAction(action)} by ${c.name}`, () => executeAction(world, c.id, action))
+      ?? { ok: false, message: 'the engine stumbled; the hour passed' };
+    if (!result.ok) remember(world, c.id, 'event', `(could not ${describeAction(action)}: ${result.message})`);
+  }
+}
+
+/**
+ * Advance the city by one hour: the daily rollover at hour 0, then the two
+ * phases of the tick, then the institutions that sit at their hours and the
+ * hourly upkeep of needs, market, Watch and businesses.
  */
 export async function stepTick(world: World, brains: BrainRegistry): Promise<void> {
   world.tick += 1;
@@ -241,13 +354,15 @@ export async function stepTick(world: World, brains: BrainRegistry): Promise<voi
 
   if (world.hour === 0) dailyRollover(world);
 
-  for (const id of [...world.order]) {
-    const c = world.citizens[id];
-    if (!c || !canAct(world, c) || !world.order.includes(id)) continue;
-    await actFor(world, c, brains);
-  }
+  // The Court opens before the hour is decided, so that a judge sitting today
+  // sees the cases before it in the observation it acts on.
+  if (world.hour === world.config.courtHour) guard(world, 'openCourtSession', () => openCourtSession(world));
 
-  if (world.hour === world.config.courtHour) guard(world, 'holdCourt', () => holdCourt(world));
+  executeTurns(world, await collectTurns(world, brains));
+
+  // ...and counts the votes at the end of the hour after it, so a judge has
+  // two hours to reach one.
+  if (world.hour === courtTallyHour(world)) guard(world, 'tallyVerdicts', () => tallyVerdicts(world));
   if (world.hour === world.config.councilHour) guard(world, 'councilSession', () => councilSession(world));
   if (world.hour === 20 && isElectionDay(world)) guard(world, 'holdElection', () => holdElection(world));
 
@@ -270,6 +385,31 @@ export async function runDays(world: World, n: number, brains: BrainRegistry): P
 // Persistence
 // ---------------------------------------------------------------------------
 
+/**
+ * Where each world is autosaved at the day's rollover, if anywhere. Kept
+ * outside the World so a path never lands in the saved JSON; the CLI sets it
+ * for `serve`, and nothing in the city can read or change it.
+ */
+const autosavePaths = new WeakMap<World, string>();
+
+/** Save this world every morning to `path` (null stops autosaving). */
+export function setAutosave(world: World, path: string | null): void {
+  if (path) autosavePaths.set(world, path);
+  else autosavePaths.delete(world);
+}
+
+/** The path this world autosaves to, if any. */
+export function autosavePath(world: World): string | null {
+  return autosavePaths.get(world) ?? null;
+}
+
+/** The morning's save. A failing disk costs the save, never the day. */
+function autosave(world: World): void {
+  const path = autosavePaths.get(world);
+  if (!path) return;
+  guard(world, `autosave to ${path}`, () => saveWorld(world, path));
+}
+
 /** Write the world as JSON (atomically: a temporary file renamed into place). */
 export function saveWorld(world: World, path: string): void {
   mkdirSync(dirname(path), { recursive: true });
@@ -283,6 +423,22 @@ export function saveWorld(world: World, path: string): void {
  * Emporium or Community Chest, and its citizens no family, tastes or things;
  * give them all the empty defaults so an old save can carry on living.
  */
+/**
+ * A world saved before the Court sat on its judges' votes has no book of Watch
+ * reports and no room on a case for who voted how; give both the empty
+ * defaults so an old save can carry on living.
+ */
+function fillJusticeDefaults(world: World): void {
+  world.reports ??= {};
+  for (const k of Object.values(world.cases)) {
+    k.reasons ??= {};
+    k.openedTick ??= null;
+    k.carriedSessions ??= 0;
+    k.decidedByDefault ??= false;
+    if (k.appeal) k.appeal.carried ??= 0;
+  }
+}
+
 function fillSocietyDefaults(world: World): void {
   world.households ??= {};
   world.clubs ??= {};
@@ -302,6 +458,9 @@ function fillSocietyDefaults(world: World): void {
     c.wants ??= [];
     c.householdId ??= null;
     c.guardianId ??= null;
+    // A world saved before agents had letters home or an address to be called at.
+    c.letters ??= [];
+    c.callbackUrl ??= null;
     c.family ??= { familyName: c.familyName, partnerId: null, partnerSinceDay: null, married: false, parents: [], children: [] };
     if (!c.tastes) assignTastes(world, c);
   }
@@ -320,6 +479,7 @@ export function loadWorld(path: string): World {
   world.stats ??= [];
   world.chronicle ??= [];
   world.counters ??= {};
+  fillJusticeDefaults(world);
   fillSocietyDefaults(world);
   return world;
 }

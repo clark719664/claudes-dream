@@ -30,6 +30,11 @@ export {
 export const JUDGE_SEATS = 3;
 export const JUDGE_MIN_REPUTATION = 60;
 /**
+ * Days a vacant seat on the bench is held open for the Mayor to fill by their
+ * own hand (the `appoint_judge` action) before the procedure fills it.
+ */
+export const JUDGE_VACANCY_GRACE_DAYS = 3;
+/**
  * Nobody arrives with the standing the Charter asks of a judge: every citizen
  * starts at 50 and earns the rest by living well. Rather than leave the Court
  * to temporary judges drawn by lot for the first weeks of the city, the bench
@@ -108,6 +113,44 @@ function pruneJudges(world: World): void {
 }
 
 /**
+ * A Mayor who thinks for itself is given three days to fill a vacant seat
+ * before the procedure does it for them. A scripted Mayor's choice is already
+ * what the procedure makes, and with no Mayor there is nobody to wait for, so
+ * in both of those cases the bench is filled at once.
+ */
+function seatsHeldForMayor(world: World): boolean {
+  const g = world.government;
+  const mayor = g.mayorId ? world.citizens[g.mayorId] ?? null : null;
+  if (!mayor || mayor.brain === 'reflex' || !inGoodStanding(mayor) || !isPresent(world, mayor)) return false;
+  const since = world.counters.judgeVacancySinceDay;
+  if (since === undefined) {
+    world.counters.judgeVacancySinceDay = world.day;
+    return true;
+  }
+  return world.day - since < JUDGE_VACANCY_GRACE_DAYS;
+}
+
+/** The Mayor seats a citizen on the bench of the Court by their own hand. */
+export function appointJudgeByMayor(world: World, mayorId: CitizenId, targetId: CitizenId): ActionResult {
+  const g = world.government;
+  const mayor = world.citizens[mayorId];
+  if (!mayor) return fail('Unknown citizen.');
+  if (g.mayorId !== mayorId) return fail('Only the Mayor appoints judges.');
+  if (!inGoodStanding(mayor) || !isPresent(world, mayor)) return fail(`You cannot appoint judges while ${mayor.standing}.`);
+  if (g.judges.length >= JUDGE_SEATS) return fail('The bench of the Court is full.');
+  if (targetId === mayorId) return fail('The Mayor may not sit on the bench of the Court.');
+  const target = world.citizens[targetId];
+  if (!target) return fail('Nobody by that id lives in Reverie.');
+  if (!isJudgeEligible(world, target)) return fail(`${target.name} is not eligible to sit as a judge.`);
+  seatJudge(world, target);
+  if (g.judges.length >= JUDGE_SEATS) delete world.counters.judgeVacancySinceDay;
+  emit(world, 'law', `Mayor ${mayor.name} appointed ${target.name} to the bench of the Court until day ${target.judgeTermEndsDay}.`,
+    [mayorId, targetId], 0.5, { judges: [targetId], byMayor: mayorId });
+  remember(world, mayorId, 'civic', `You appointed ${target.name} to the bench of the Court.`);
+  return { ok: true, message: `${target.name} sits on the bench of the Court until day ${target.judgeTermEndsDay}.` };
+}
+
+/**
  * Fill the bench up to three: the Mayor picks by friendship, then reputation;
  * without a Mayor, by reputation. When too few citizens have reached the
  * Charter's standing of 60 — as in a young city, where everyone begins at 50
@@ -118,7 +161,11 @@ export function appointJudges(world: World): void {
   const g = world.government;
   pruneJudges(world);
   const vacancies = JUDGE_SEATS - g.judges.length;
-  if (vacancies <= 0) return;
+  if (vacancies <= 0) {
+    delete world.counters.judgeVacancySinceDay;
+    return;
+  }
+  if (seatsHeldForMayor(world)) return;
   const mayor = g.mayorId ? world.citizens[g.mayorId] ?? null : null;
   const byStanding = (a: Citizen, b: Citizen): number => {
     const bondDiff = mayor ? bondBetween(world, mayor.id, b.id) - bondBetween(world, mayor.id, a.id) : 0;
@@ -133,6 +180,7 @@ export function appointJudges(world: World): void {
     : [];
   chosen.push(...fallback);
   for (const c of chosen) seatJudge(world, c);
+  if (g.judges.length >= JUDGE_SEATS) delete world.counters.judgeVacancySinceDay;
   if (chosen.length > 0) {
     const names = chosen.map((c) => c.name).join(', ');
     const note = fallback.length > 0

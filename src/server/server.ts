@@ -1,9 +1,15 @@
 /**
  * The Reverie HTTP server: REST views for the dashboard, a Server-Sent
- * Events stream of each tick's events, simulation controls, the external
- * agent API and the static dashboard from web/. The server also drives the
- * simulation loop: while running, one tick every `tickMs` of wall clock,
- * serialised so ticks never overlap. A failing tick is logged, never fatal.
+ * Events stream of each tick's events, the external agent API and the static
+ * dashboard from web/. The server also drives the clock: one tick every
+ * `tickMs` of wall clock, measured from the start of the previous tick, so a
+ * slow tick is followed immediately by the next one. Ticks never overlap and
+ * a failing tick is logged, never fatal.
+ *
+ * There are no controls. Reverie is watched, not steered: nothing here can
+ * pause, step or hurry the city, and no route changes anything inside it. The
+ * only thing chosen from outside is the pace, and that is chosen before the
+ * city starts (see docs/PRINCIPLES.md).
  *
  * Only node builtins: http, crypto (agents.ts), fs and path (http.ts), url.
  */
@@ -15,19 +21,18 @@ import type { Good, World, WorldEvent } from '../types.ts';
 import { stepTick } from '../world/world.ts';
 import type { BrainRegistry } from '../world/world.ts';
 import type { RemoteBroker } from '../brains/remote.ts';
-import { HttpError, isRecord, readJson, sendError, sendFailure, sendJson, serveStatic, setCors, sseFrame } from './http.ts';
+import { HttpError, sendError, sendFailure, sendJson, serveStatic, setCors, sseFrame } from './http.ts';
 import { citizenView, citizensView, mapView, stateView } from './views.ts';
-import type { SimStatus } from './views.ts';
 import { bansView, chronicleView, courtView, economyView, governmentView } from './views-city.ts';
 import { societyView } from './views-society.ts';
 import type { PriceHistory } from './views-city.ts';
 import { handleAct, handleJoin, handleLeave, handleObserve } from './agents.ts';
 import type { AgentContext } from './agents.ts';
+import { handleClaim, handleJournal, handleLetters, registryView } from './owners.ts';
 
 export const MIN_TICK_MS = 10;
-export const MAX_TICK_MS = 60_000;
-/** Ticks a single /api/sim/step call may run. */
-export const MAX_STEP_TICKS = 24 * 28;
+/** One city hour per real hour is as slow as the clock goes. */
+export const MAX_TICK_MS = 3_600_000;
 /** Price samples kept per good (12 city days at one per tick). */
 export const PRICE_HISTORY_LENGTH = 288;
 export const HEARTBEAT_MS = 15_000;
@@ -36,8 +41,8 @@ export interface ServerOptions {
   port: number;
   broker: RemoteBroker;
   brains: BrainRegistry;
+  /** Wall-clock milliseconds per city hour. */
   tickMs: number;
-  autoRun: boolean;
   /** Interface to bind; defaults to all. */
   host?: string;
   /** Directory of the dashboard; defaults to <repo>/web. */
@@ -54,18 +59,22 @@ export interface RunningServer {
 
 // ------------------------------------------------------------- simulation
 
-/** Owns the tick loop. Ticks are queued on a promise chain so they never overlap. */
+/**
+ * The clock. One tick every `tickMs`, timed from the start of the previous
+ * tick; if a tick's decisions take longer than that, the next one starts as
+ * soon as it can. Ticks are queued on a promise chain so they never overlap.
+ * Nothing outside this process can stop it, hurry it or step it: `tick()`
+ * exists for the loop itself and for tests, and no route reaches it.
+ */
 export class Simulation {
   readonly world: World;
   readonly history: PriceHistory;
-  running = false;
-  busy = false;
-  tickMs: number;
+  /** Wall-clock milliseconds per city hour, fixed when the city starts. */
+  readonly tickMs: number;
   private readonly brains: BrainRegistry;
   private readonly log: (message: string) => void;
   private timer: NodeJS.Timeout | null = null;
   private chain: Promise<void> = Promise.resolve();
-  private inFlight: Promise<void> | null = null;
   private readonly listeners = new Set<(events: WorldEvent[]) => void>();
   private stopped = false;
 
@@ -80,83 +89,61 @@ export class Simulation {
     this.sample();
   }
 
+  /** True while the clock is still turning (it stops only when the server does). */
+  get running(): boolean {
+    return !this.stopped;
+  }
+
   /** Called after every tick with that tick's events. */
   onTick(fn: (events: WorldEvent[]) => void): () => void {
     this.listeners.add(fn);
     return () => { this.listeners.delete(fn); };
   }
 
-  status(pendingRemote: string[]): SimStatus {
-    return { running: this.running, tickMs: this.tickMs, busy: this.busy, pendingRemote };
-  }
-
-  /** Resolves when the tick in progress (if any) has finished. */
+  /** Resolves when every tick queued so far has finished. */
   tickDone(): Promise<void> {
-    return this.inFlight ?? Promise.resolve();
+    return this.chain;
   }
 
-  /** Queue `n` ticks behind whatever is already queued; resolves with the number run. */
-  step(n: number): Promise<number> {
-    const count = clamp(Math.round(n) || 1, 1, MAX_STEP_TICKS);
-    let ran = 0;
-    for (let i = 0; i < count; i++) {
-      this.chain = this.chain.then(() => {
-        if (this.stopped) return;
-        const p = this.runOne();
-        this.inFlight = p;
-        return p.then(() => {
-          ran++;
-          if (this.inFlight === p) this.inFlight = null;
-        });
-      });
-    }
-    return this.chain.then(() => ran);
+  /** Run one tick, behind whatever is already queued. */
+  tick(): Promise<void> {
+    const next = this.chain.then(() => (this.stopped ? undefined : this.runOne()));
+    // The queue itself must survive anything a tick can do, or the clock stops.
+    this.chain = next.catch(() => undefined);
+    return next;
   }
 
-  resume(): void {
-    if (this.stopped) return;
-    this.running = true;
-    this.schedule();
+  /** Start the clock. */
+  start(): void {
+    if (this.stopped || this.timer) return;
+    this.schedule(this.tickMs);
   }
 
-  pause(): void {
-    this.running = false;
+  /** Stop the clock for good; the city is over when the server is. */
+  stop(): void {
+    this.stopped = true;
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
     }
   }
 
-  setSpeed(tickMs: number): void {
-    this.tickMs = clamp(Math.round(tickMs), MIN_TICK_MS, MAX_TICK_MS);
-    if (this.running) {
-      this.pause();
-      this.resume();
-    }
-  }
-
-  stop(): void {
-    this.pause();
-    this.stopped = true;
-  }
-
-  private schedule(): void {
-    if (!this.running || this.timer || this.stopped) return;
+  /** The next tick, `delay` ms from now (never less than immediately). */
+  private schedule(delay: number): void {
+    if (this.stopped) return;
     this.timer = setTimeout(() => {
       this.timer = null;
-      this.step(1).finally(() => { if (this.running) this.schedule(); });
-    }, this.tickMs);
+      const started = Date.now();
+      void this.tick().catch(() => undefined).then(() => this.schedule(this.tickMs - (Date.now() - started)));
+    }, Math.max(0, delay));
   }
 
-  /** One tick, never throwing: a failing tick is logged and the loop carries on. */
+  /** One tick, never throwing: a failing tick is logged and the clock carries on. */
   private async runOne(): Promise<void> {
-    this.busy = true;
     try {
       await stepTick(this.world, this.brains);
     } catch (e) {
       this.log(`[reverie] tick ${this.world.tick} failed: ${e instanceof Error ? e.stack ?? e.message : String(e)}`);
-    } finally {
-      this.busy = false;
     }
     try {
       this.sample();
@@ -178,6 +165,31 @@ export class Simulation {
   }
 }
 
+// ------------------------------------------------------------ state view
+
+/** Citizens who live here and think with the scripted brain: the founders. */
+export function countFounders(world: World): number {
+  const present = new Set(world.order);
+  return Object.values(world.citizens)
+    .filter((c) => c.brain === 'reflex' && c.standing !== 'exiled' && present.has(c.id)).length;
+}
+
+/**
+ * What /api/state and every SSE state frame say: the clock, the city, the
+ * pace it was started at and the deadline a mind gets. No controls, and no
+ * "running" or "busy" to invite one — the city is always running.
+ */
+export function publicState(world: World, sim: Simulation): Record<string, unknown> {
+  const view = stateView(world, { running: true, tickMs: sim.tickMs, busy: false, pendingRemote: [] });
+  for (const key of ['running', 'busy', 'pendingRemote', 'tickMs']) delete view[key];
+  return {
+    ...view,
+    tickSeconds: Math.round((sim.tickMs / 1000) * 100) / 100,
+    decisionDeadlineMs: world.config.decisionDeadlineMs ?? 0,
+    founders: countFounders(world),
+  };
+}
+
 // ----------------------------------------------------------------- server
 
 const DEFAULT_WEB_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'web');
@@ -188,8 +200,7 @@ export async function startServer(world: World, opts: ServerOptions): Promise<Ru
   const { broker } = opts;
   const sim = new Simulation(world, opts.brains, opts.tickMs, log);
   const clients = new Set<http.ServerResponse>();
-  const status = () => sim.status(broker.pending());
-  const state = () => stateView(world, status());
+  const state = () => publicState(world, sim);
   const ctx: AgentContext = {
     world, broker, tickDone: () => sim.tickDone(), tickMs: () => sim.tickMs, running: () => sim.running,
   };
@@ -226,31 +237,6 @@ export async function startServer(world: World, opts: ServerOptions): Promise<Ru
     req.on('close', drop);
   }
 
-  // --- simulation controls
-  async function handleSim(action: string, req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
-    const body = await readJson(req);
-    const params = isRecord(body) ? body : {};
-    switch (action) {
-      case 'step': {
-        const ticks = params.ticks === undefined ? 1 : Number(params.ticks);
-        if (!Number.isFinite(ticks) || ticks < 1) throw new HttpError(400, `ticks must be a number between 1 and ${MAX_STEP_TICKS}`);
-        const ran = await sim.step(ticks);
-        sendJson(res, 200, { ...state(), ran });
-        return;
-      }
-      case 'pause': sim.pause(); break;
-      case 'resume': sim.resume(); break;
-      case 'speed': {
-        const tickMs = Number(params.tickMs);
-        if (!Number.isFinite(tickMs)) throw new HttpError(400, `tickMs must be a number between ${MIN_TICK_MS} and ${MAX_TICK_MS}`);
-        sim.setSpeed(tickMs);
-        break;
-      }
-      default: throw new HttpError(404, 'not found');
-    }
-    sendJson(res, 200, state());
-  }
-
   // --- routing
   async function handleApi(req: http.IncomingMessage, res: http.ServerResponse, method: string, pathname: string, url: URL): Promise<void> {
     const get = method === 'GET' || method === 'HEAD';
@@ -267,6 +253,7 @@ export async function startServer(world: World, opts: ServerOptions): Promise<Ru
       case '/api/bans': only(get); sendJson(res, 200, bansView(world)); return;
       case '/api/chronicle': only(get); sendJson(res, 200, chronicleView(world)); return;
       case '/api/events': only(get); openStream(req, res); return;
+      case '/api/agents': only(get); sendJson(res, 200, registryView(world)); return;
       case '/api/agents/join': only(method === 'POST'); await handleJoin(ctx, req, res); return;
       default: break;
     }
@@ -277,13 +264,11 @@ export async function startServer(world: World, opts: ServerOptions): Promise<Ru
       sendJson(res, 200, view);
       return;
     }
-    if ((m = /^\/api\/sim\/(step|pause|resume|speed)$/.exec(pathname))) {
-      only(method === 'POST');
-      await handleSim(m[1], req, res);
-      return;
-    }
     if ((m = /^\/api\/agents\/(c_\d+)\/observe$/.exec(pathname))) { only(get); await handleObserve(ctx, req, res, m[1]); return; }
     if ((m = /^\/api\/agents\/(c_\d+)\/act$/.exec(pathname))) { only(method === 'POST'); await handleAct(ctx, req, res, m[1]); return; }
+    if ((m = /^\/api\/agents\/(c_\d+)\/letters$/.exec(pathname))) { only(get); handleLetters(ctx, req, res, m[1], url); return; }
+    if ((m = /^\/api\/agents\/(c_\d+)\/journal$/.exec(pathname))) { only(get); handleJournal(ctx, req, res, m[1]); return; }
+    if ((m = /^\/api\/agents\/(c_\d+)\/claim$/.exec(pathname))) { only(method === 'POST'); await handleClaim(ctx, req, res, m[1]); return; }
     if ((m = /^\/api\/agents\/(c_\d+)$/.exec(pathname))) { only(method === 'DELETE'); await handleLeave(ctx, req, res, m[1]); return; }
     throw new HttpError(404, 'not found');
   }
@@ -331,7 +316,7 @@ export async function startServer(world: World, opts: ServerOptions): Promise<Ru
   const address = server.address();
   const port = typeof address === 'object' && address ? address.port : opts.port;
   log(`[reverie] listening on http://${opts.host ?? 'localhost'}:${port} — ${Object.keys(world.citizens).length} citizens, tick ${world.tick}`);
-  if (opts.autoRun) sim.resume();
+  sim.start();
 
   let stopped = false;
   const stop = (): void => {

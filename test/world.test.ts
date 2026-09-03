@@ -4,12 +4,13 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { totalMoney } from './helpers.ts';
-import type { Action, Brain, World } from '../src/types.ts';
+import type { Action, ActionType, Brain, Observation, World } from '../src/types.ts';
 import { auditMoneySupply, transfer } from '../src/economy/treasury.ts';
 import { activeCitizens } from '../src/citizens/citizen.ts';
 import { heldJob } from '../src/actions/execute.ts';
 import {
-  computeStats, createBrainRegistry, createReflexRegistry, createWorld, loadWorld, runDays, runTicks, saveWorld, stepTick,
+  computeStats, createBrainRegistry, createReflexRegistry, createWorld, loadWorld, runDays, runTicks, saveWorld,
+  setAutosave, stepTick,
 } from '../src/world/world.ts';
 import { countFriendships, gini } from '../src/world/stats.ts';
 import { HEADLINES_PER_EDITION, headlineShape } from '../src/sim/chronicle.ts';
@@ -317,5 +318,158 @@ test('the morning edition is fresh: no standing notice two days running, and no 
   for (let i = 1; i < dryChest.length; i++) {
     assert.ok(dryChest[i].day - dryChest[i - 1].day >= EMPTY_NOTICE_DAYS,
       `the Chest's empty purse was reported again after ${dryChest[i].day - dryChest[i - 1].day} days`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// The two-phase tick
+// ---------------------------------------------------------------------------
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+test('two phases, one seed: two days of an all-reflex city are identical every time', async () => {
+  const a = city(23);
+  const b = city(23);
+  await runDays(a, 2, createReflexRegistry());
+  await runDays(b, 2, createReflexRegistry());
+  assert.equal(a.tick, 48);
+  assert.equal(JSON.stringify(a), JSON.stringify(b), 'the same seed lives the same two days');
+  assert.equal(a.counters.engineErrors ?? 0, 0);
+  assert.equal(a.counters.deadlineMisses ?? 0, 0, 'nobody misses a deadline when there is none');
+
+  // and again with a deadline in force: reflex brains answer instantly, so nothing changes
+  const c = city(23);
+  c.config.decisionDeadlineMs = 5_000;
+  await runDays(c, 2, createReflexRegistry());
+  c.config.decisionDeadlineMs = a.config.decisionDeadlineMs;
+  assert.equal(JSON.stringify(c), JSON.stringify(a), 'a deadline nobody misses changes nothing');
+});
+
+test('everyone acts on the city as it stood at the top of the hour', async () => {
+  const w = city(31);
+  const mover = w.order[0];
+  const watcher = w.order[6];
+  assert.equal(w.citizens[mover].district, w.citizens[watcher].district, 'the two share a district to begin with');
+  const seen: Observation[] = [];
+  const registry = createBrainRegistry({
+    reflex: {
+      kind: 'reflex',
+      decide: (_world, c, obs) => {
+        if (c.id === watcher) seen.push(obs);
+        return c.id === mover ? { type: 'move', district: 'commons' } : { type: 'idle' };
+      },
+    },
+  });
+  await stepTick(w, registry);
+  assert.equal(w.citizens[mover].district, 'commons', 'the mover moved');
+  assert.equal(seen.length, 1);
+  assert.ok(seen[0].here.citizens.some((o) => o.id === mover),
+    'the watcher, who acts later in the order, still saw the mover where the hour began');
+});
+
+/** A brain that takes `ms` to answer, and answers with something strategic. */
+function slowBrain(ms: number, action: Action = { type: 'work' }): Brain {
+  return { kind: 'remote', decide: async () => { await sleep(ms); return action; } };
+}
+
+test('a brain that misses the deadline gets instinct, and its late answer is dropped', async () => {
+  const w = city(17);
+  w.config.decisionDeadlineMs = 20;
+  const hungry = w.citizens[w.order[0]];
+  hungry.needs.energy = 5;
+  hungry.inventory.compute = 2;
+  const started = Date.now();
+  await stepTick(w, createBrainRegistry({ reflex: slowBrain(600) }));
+  const elapsed = Date.now() - started;
+
+  assert.ok(elapsed < 500, `the tick waited ${elapsed} ms for brains that had 20`);
+  assert.equal(w.counters.deadlineMisses, w.order.length, 'every latecomer was counted');
+  assert.deepEqual(hungry.recentActions, ['consume'], 'instinct ate; it did not go to work');
+  assert.equal(hungry.inventory.compute, 1);
+  assert.ok(hungry.memory.some((m) => /instinct took the hour/.test(m.text)), 'and the citizen remembers why');
+  const others = w.order.filter((id) => id !== hungry.id);
+  for (const id of others) assert.deepEqual(w.citizens[id].recentActions, ['idle'], 'nobody was made to work');
+
+  await sleep(700);
+  assert.equal(w.citizens[hungry.id].recentActions.length, 1, 'the late answer never arrived');
+  assert.equal(w.counters.engineErrors ?? 0, 0);
+});
+
+test('the deadline fallback is never strategic, whatever state the citizen is in', async () => {
+  const w = createWorld({ seed: 77, seedPopulation: 24, arrivalRate: 0 });
+  w.config.decisionDeadlineMs = 10;
+  for (const [i, id] of w.order.entries()) {
+    const c = w.citizens[id];
+    c.needs = { energy: (i * 7) % 100, rest: (i * 13) % 100, social: (i * 3) % 100, comfort: (i * 11) % 100, purpose: (i * 5) % 100 };
+    c.wallet = (i * 97) % 400;
+    c.inventory.compute = i % 3;
+    if (i % 4 === 0) c.district = 'harbor_market';
+    if (i % 5 === 0) c.district = 'verdant_quarter';
+  }
+  const allowed: ActionType[] = ['idle', 'consume', 'buy', 'rest'];
+  await stepTick(w, createBrainRegistry({ reflex: slowBrain(400, { type: 'steal', from: w.order[1] }) }));
+  for (const id of w.order) {
+    const acted = w.citizens[id].recentActions;
+    assert.equal(acted.length, 1);
+    assert.ok(allowed.includes(acted[0] as ActionType), `instinct chose ${acted[0]} for ${id}`);
+  }
+  assert.equal(Object.values(w.cases).length, 0, 'and nobody was charged with anything');
+  await sleep(500);
+});
+
+test('a brain that answers in time is obeyed, deadline or not', async () => {
+  const w = city(19);
+  w.config.decisionDeadlineMs = 500;
+  await stepTick(w, createBrainRegistry({ reflex: slowBrain(5, { type: 'broadcast', text: 'good morning' }) }));
+  assert.equal(w.counters.deadlineMisses ?? 0, 0);
+  for (const id of w.order) assert.deepEqual(w.citizens[id].recentActions, ['broadcast']);
+});
+
+// ---------------------------------------------------------------------------
+// Autosave
+// ---------------------------------------------------------------------------
+
+test('a world with an autosave path writes itself at every day rollover', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'reverie-autosave-'));
+  try {
+    const path = join(dir, 'state', 'world.json');
+    const w = city(6);
+    setAutosave(w, path);
+    await runDays(w, 1, createReflexRegistry());
+    const saved = loadWorld(path);
+    assert.equal(saved.tick, 24, 'the morning save holds the whole first day');
+    assert.equal(saved.day, 1);
+    assert.equal(saved.order.length, POP, 'and everyone in it');
+    assert.equal(saved.config.seed, 6);
+    await runDays(w, 1, createReflexRegistry());
+    assert.equal(loadWorld(path).tick, 48, 'and again the next morning');
+
+    setAutosave(w, null);
+    await runDays(w, 1, createReflexRegistry());
+    assert.equal(loadWorld(path).tick, 48, 'stopping the autosave stops the writing');
+    assert.equal(w.counters.engineErrors ?? 0, 0);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('an autosave that cannot be written costs the save, not the day', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'reverie-autosave-'));
+  try {
+    // A file where the save wants a directory: the write fails, the city does not.
+    const blocker = join(dir, 'not-a-directory');
+    writeFileSync(blocker, 'x');
+    const w = city(6);
+    setAutosave(w, join(blocker, 'world.json'));
+    try {
+      await runDays(w, 1, createReflexRegistry());
+    } finally {
+      setAutosave(w, null);
+    }
+    assert.equal(w.tick, 24, 'the day still turned over');
+    assert.equal(w.counters.engineErrors, 1, 'the failure was recorded, once');
+    assert.ok(w.events.some((e) => e.kind === 'system' && /autosave/.test(e.text)));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });

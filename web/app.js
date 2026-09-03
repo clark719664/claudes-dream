@@ -89,11 +89,21 @@
 
   R.standingPill = (standing) => R.pill(standing, standing);
 
-  /** Small badge for non-reflex minds; nothing for reflex citizens. */
+  /** What kind of mind this is: Claude, an external agent, an unclaimed child, or a scripted founder. */
   R.brainBadge = function brainBadge(brain) {
     if (brain === 'llm') return R.h('span', { class: 'badge llm', title: 'Driven by Claude' }, 'Claude');
     if (brain === 'remote') return R.h('span', { class: 'badge remote', title: 'External agent over HTTP' }, 'remote');
+    if (brain === 'child') return R.h('span', { class: 'badge child', title: 'Born here and unclaimed: it lives on the child instinct until someone claims it' }, 'unclaimed');
+    if (brain === 'reflex') return R.h('span', { class: 'badge founder', title: 'A scripted mind seeded to demonstrate the city' }, 'scripted founder');
     return null;
+  };
+
+  R.brainName = function brainName(brain) {
+    if (brain === 'llm') return 'Claude';
+    if (brain === 'reflex') return 'scripted founder';
+    if (brain === 'child') return 'unclaimed child';
+    if (brain === 'remote') return 'agent';
+    return brain;
   };
 
   R.officeLabel = (office) => (office ? R.pill(R.titleCase(office), 'gold') : R.h('span', { class: 'dim' }, '—'));
@@ -238,13 +248,12 @@
 
   // ----------------------------------------------------------------- API
 
-  R.api = async function api(path, opts = {}) {
-    const init = { method: opts.method || 'GET', headers: {} };
-    if (opts.body !== undefined) {
-      init.headers['Content-Type'] = 'application/json';
-      init.body = JSON.stringify(opts.body);
-    }
-    const res = await fetch(path, init);
+  /**
+   * Every call the dashboard makes is a GET. There is nothing here that can
+   * change the city: no body, no method, no controls (docs/PRINCIPLES.md §1).
+   */
+  R.api = async function api(path) {
+    const res = await fetch(path, { method: 'GET' });
     let data = null;
     try { data = await res.json(); } catch (e) { data = null; }
     if (!res.ok) throw new Error((data && data.error) || `${res.status} ${res.statusText}`);
@@ -253,21 +262,21 @@
 
   // --------------------------------------------------------- state/header
 
-  R.state = { running: false, tickMs: 1000, tick: 0, day: 0, hour: 0, population: 0, tab: 'citizens', busy: false };
+  R.state = { tickSeconds: null, tick: 0, day: 0, hour: 0, population: 0, founders: 0, tab: 'citizens' };
   R.ui = { sort: {}, filters: {} };
 
-  const SPEED_MIN = 20;
-  const SPEED_MAX = 5000;
-  const sliderToMs = (p) => Math.round(Math.exp(Math.log(SPEED_MAX) + (Math.log(SPEED_MIN) - Math.log(SPEED_MAX)) * (p / 100)));
-  const msToSlider = (ms) => Math.round((100 * (Math.log(R.clamp(ms, SPEED_MIN, SPEED_MAX)) - Math.log(SPEED_MAX))) / (Math.log(SPEED_MIN) - Math.log(SPEED_MAX)));
-  const speedLabel = (ms) => (ms >= 1000 ? `${(ms / 1000).toFixed(1)} s/tick` : `${ms} ms/tick`);
-  let draggingSpeed = false;
+  /** "one hour every 20 s" — the pace, which nobody here can change. */
+  const paceLabel = (seconds) => {
+    if (!seconds && seconds !== 0) return 'the clock is turning';
+    const n = seconds >= 1 ? String(Math.round(seconds * 10) / 10) : String(seconds);
+    return `one hour every ${n} s`;
+  };
 
   R.applyState = function applyState(s) {
     if (!s) return;
     Object.assign(R.state, {
-      running: !!s.running, tickMs: s.tickMs ?? R.state.tickMs, tick: s.tick ?? 0, day: s.day ?? 0, hour: s.hour ?? 0,
-      population: s.population ?? 0, busy: !!s.busy,
+      tickSeconds: s.tickSeconds ?? R.state.tickSeconds, tick: s.tick ?? 0, day: s.day ?? 0, hour: s.hour ?? 0,
+      population: s.population ?? 0, founders: s.founders ?? 0,
     });
     R.lastState = s;
     renderHeader();
@@ -278,13 +287,8 @@
     $('#clock-time').textContent = R.clockText(s.day, s.hour);
     $('#clock-tick').textContent = `tick ${R.fmt(s.tick)}`;
     $('#population').textContent = R.fmt(s.population);
-    const play = $('#btn-play');
-    play.textContent = s.running ? '❚❚ Pause' : '▶ Play';
-    play.classList.toggle('primary', !s.running);
-    if (!draggingSpeed) {
-      $('#speed').value = String(msToSlider(s.tickMs));
-      $('#speed-label').textContent = speedLabel(s.tickMs);
-    }
+    $('#founders').textContent = s.founders ? ` · ${R.fmt(s.founders)} scripted` : '';
+    $('#pace').textContent = paceLabel(s.tickSeconds);
     document.title = `Reverie — Day ${s.day}, ${R.pad2(s.hour)}:00`;
   }
 
@@ -294,42 +298,20 @@
     el.textContent = text || { live: 'live', poll: 'polling', down: 'offline' }[mode] || mode;
   }
 
-  async function control(path, body) {
-    try {
-      const s = await R.api(path, { method: 'POST', body: body || {} });
-      R.applyState(s);
-      R.refresh();
-    } catch (e) {
-      console.warn('control failed', path, e);
-      setConn('down', 'error: ' + e.message);
-    }
-  }
-
-  function wireControls() {
-    $('#btn-play').addEventListener('click', () => control(R.state.running ? '/api/sim/pause' : '/api/sim/resume'));
-    $('#btn-step').addEventListener('click', () => control('/api/sim/step', { ticks: 1 }));
-    $('#btn-day').addEventListener('click', () => control('/api/sim/step', { ticks: 24 }));
-    const slider = $('#speed');
-    let timer = null;
-    const commit = () => {
-      const ms = sliderToMs(Number(slider.value));
-      $('#speed-label').textContent = speedLabel(ms);
-      clearTimeout(timer);
-      timer = setTimeout(() => control('/api/sim/speed', { tickMs: ms }), 250);
-    };
-    slider.addEventListener('input', () => { draggingSpeed = true; $('#speed-label').textContent = speedLabel(sliderToMs(Number(slider.value))); });
-    slider.addEventListener('change', () => { draggingSpeed = false; commit(); });
+  /**
+   * The dashboard is a window: it watches and never steers. The only key
+   * bound here closes the drawer.
+   */
+  function wireKeys() {
     document.addEventListener('keydown', (e) => {
       if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
-      if (e.key === ' ') { e.preventDefault(); $('#btn-play').click(); }
-      else if (e.key === 'n') $('#btn-step').click();
-      else if (e.key === 'Escape' && R.drawer) R.drawer.close();
+      if (e.key === 'Escape' && R.drawer) R.drawer.close();
     });
   }
 
   // ----------------------------------------------------------------- tabs
 
-  const TAB_ORDER = ['citizens', 'society', 'economy', 'government', 'court', 'bans', 'chronicle'];
+  const TAB_ORDER = ['citizens', 'society', 'economy', 'government', 'court', 'bans', 'chronicle', 'agents'];
   R.tabs = {};
 
   /** def: { label, load(): Promise<data>, mount(root) (once), update(data, root) } */
@@ -421,7 +403,7 @@
   function startPolling() {
     setInterval(() => {
       if (!sse.live) pollState();
-      if (wantRefresh || (R.state.running && !sse.live)) { wantRefresh = false; R.refresh(); }
+      if (wantRefresh || !sse.live) { wantRefresh = false; R.refresh(); }
     }, 2000);
     setInterval(() => { if (wantRefresh && !refreshing) { wantRefresh = false; R.refresh(); } }, 500);
   }
@@ -484,7 +466,7 @@
   // ----------------------------------------------------------------- boot
 
   document.addEventListener('DOMContentLoaded', async () => {
-    wireControls();
+    wireKeys();
     buildTabs();
     if (R.map) R.map.init($('#map'), $('#tooltip'), $('#legend'));
     if (R.drawer) R.drawer.init();

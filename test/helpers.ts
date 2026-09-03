@@ -2,6 +2,7 @@
  * Test helpers shared by every module's tests. Deliberately dependency-free:
  * builds raw objects so a module can be tested before the others exist.
  */
+import { neutralCharacter } from '../src/types.ts';
 import type { Citizen, CitizenId, DistrictId, World, WorldConfig } from '../src/types.ts';
 import { emptyWorld } from '../src/world/scaffold.ts';
 import { nextId } from '../src/util/ids.ts';
@@ -26,6 +27,7 @@ export function makeCitizen(world: World, overrides: CitizenOverrides = {}): Cit
     brain: 'reflex',
     arrivedDay: world.day,
     personality: { curiosity: 0.5, diligence: 0.5, sociability: 0.5, honesty: 0.5, ambition: 0.5 },
+    character: neutralCharacter(),
     skills: { crafting: 20, analysis: 20, rhetoric: 20, care: 20, commerce: 20, artistry: 20 },
     needs: { energy: 80, rest: 80, social: 80, comfort: 80, purpose: 80 },
     mood: 80,
@@ -51,6 +53,8 @@ export function makeCitizen(world: World, overrides: CitizenOverrides = {}): Cit
     recentOffences: [],
     memory: [],
     inbox: [],
+    notes: [],
+    letters: [],
     shiftsToday: 0,
     recentActions: [],
     office: null,
@@ -62,6 +66,7 @@ export function makeCitizen(world: World, overrides: CitizenOverrides = {}): Cit
       giftsGiven: 0, giftsReceived: 0, showsPerformed: 0, storiesPublished: 0, votesCast: 0,
     },
     apiKeyHash: null,
+    callbackUrl: null,
     exiledCaseId: null,
     exiledDay: null,
     // society
@@ -80,6 +85,7 @@ export function makeCitizen(world: World, overrides: CitizenOverrides = {}): Cit
     guardianId: null,
     ...overrides,
     ...(overrides.personality ? { personality: { ...overrides.personality } } : {}),
+    ...(overrides.character ? { character: { ...overrides.character } } : {}),
   };
   world.citizens[id] = c;
   world.order.push(id);

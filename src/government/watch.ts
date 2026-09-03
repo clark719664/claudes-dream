@@ -1,18 +1,23 @@
 /**
  * The Watch: detection of offences, citizen reports, detention and the daily
- * housekeeping of the force. The Watch cannot punish — every detected offence
- * becomes a charge for the Court (court.fileCharge).
+ * housekeeping of the force.
+ *
+ * The Watch cannot punish, and it does not prosecute of its own accord either.
+ * What an officer notices becomes a **report** (government/reports.ts) before
+ * that officer, and what a citizen reports goes to the Watch's shared inbox;
+ * an officer decides whether to file it as a charge before the Court, drop it,
+ * or leave it to lapse. Detection is a roll; prosecution is a decision.
  */
 import { clamp } from '../types.ts';
 import type {
-  ActionResult, BuildingId, CaseId, Citizen, CitizenId, LawCode, OffenceRecord, World,
+  ActionResult, BuildingId, Citizen, CitizenId, LawCode, OffenceRecord, ReportId, World,
 } from '../types.ts';
 import { LAWS } from '../data/laws.ts';
-import { chance, rand } from '../util/rng.ts';
+import { chance, pick, rand } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
 import { applyForJob, createCityJob, openJobs } from '../economy/jobs.ts';
 import { bondBetween, adjustBond } from '../citizens/relationships.ts';
-import { fileCharge } from './court.ts';
+import { expireReports, openReport, pruneBribes, watchSession } from './reports.ts';
 
 /** Offences remembered per citizen (newest last). */
 export const RECENT_OFFENCES_LENGTH = 20;
@@ -100,14 +105,15 @@ export function detectionProbability(
 }
 
 /**
- * Record an offence and roll for detection. A detected offence becomes a
- * charge filed by the Watch with evidence that grows with witnesses.
+ * Record an offence and roll for detection. What the Watch notices becomes a
+ * report before the officer who noticed it — with evidence that grows with
+ * witnesses — and it is that officer who decides whether to charge it.
  */
 export function commitOffence(
   world: World, actorId: CitizenId, law: LawCode, ctx: OffenceContext = {},
-): { detected: boolean; caseId: CaseId | null } {
+): { detected: boolean; reportId: ReportId | null } {
   const actor = world.citizens[actorId];
-  if (!actor || !LAWS[law]) return { detected: false, caseId: null };
+  if (!actor || !LAWS[law]) return { detected: false, reportId: null };
   const victim = ctx.victimId && ctx.victimId !== actorId ? world.citizens[ctx.victimId] ?? null : null;
   const amount = Math.max(0, Math.round(ctx.amount ?? 0));
 
@@ -118,29 +124,31 @@ export function commitOffence(
   }
   actor.stats.offencesCommitted++;
 
-  const officers = officersOnDuty(world).filter((o) => o.id !== actorId).length;
+  const onDuty = officersOnDuty(world).filter((o) => o.id !== actorId);
   const witnesses = witnessesOf(world, actor);
-  const p = detectionProbability(world, actor, law, witnesses, officers, ctx.visibilityMod ?? 0);
+  const p = detectionProbability(world, actor, law, witnesses, onDuty.length, ctx.visibilityMod ?? 0);
   const severity = currentSeverity(world, law);
   const name = LAWS[law].name.toLowerCase();
 
   if (!chance(world, p)) {
     if (victim) remember(world, victim.id, 'crime', `Someone committed ${name} against you${amount > 0 ? ` (${amount} ℓ)` : ''}; the Watch saw nothing.`);
-    return { detected: false, caseId: null };
+    return { detected: false, reportId: null };
   }
 
   const evidence = clamp(0.5 + 0.5 * rand(world) + witnesses / 20, 0.3, 1);
   offence.detected = true;
   actor.stats.offencesDetected++;
-  const kase = fileCharge(world, {
-    defendantId: actorId, law, evidence, filedBy: 'watch', victimId: victim?.id, amount,
+  const officer = onDuty.length > 0 ? pick(world, onDuty) : null;
+  const report = openReport(world, {
+    officerId: officer?.id ?? null, suspectId: actorId, law, evidence, victimId: victim?.id, amount,
     description: describeOffence(world, actor, law, ctx),
   });
-  emit(world, 'offence', `The Watch caught ${actor.name} in an act of ${name}${victim ? ` against ${victim.name}` : ''}.`,
-    victim ? [actorId, victim.id] : [actorId], severity >= 4 ? 0.8 : 0.5, { law, caseId: kase.id, evidence });
-  remember(world, actorId, 'crime', `The Watch caught you (${name}); you are charged in case ${kase.id}.`);
-  if (victim) remember(world, victim.id, 'crime', `${actor.name} committed ${name} against you and was caught by the Watch (case ${kase.id}).`);
-  return { detected: true, caseId: kase.id };
+  const by = officer ? `Officer ${officer.name} made a report (${report.id})` : `the report (${report.id}) waits for an officer`;
+  emit(world, 'offence', `The Watch caught ${actor.name} in an act of ${name}${victim ? ` against ${victim.name}` : ''}; ${by}.`,
+    victim ? [actorId, victim.id] : [actorId], severity >= 4 ? 0.8 : 0.5, { law, reportId: report.id, evidence });
+  remember(world, actorId, 'crime', `The Watch caught you (${name}); ${officer ? `Officer ${officer.name} holds` : 'the Watch holds'} a report against you (${report.id}).`);
+  if (victim) remember(world, victim.id, 'crime', `${actor.name} committed ${name} against you and was caught by the Watch (report ${report.id}).`);
+  return { detected: true, reportId: report.id };
 }
 
 function sameFamily(a: LawCode, b: LawCode): boolean {
@@ -158,9 +166,11 @@ function matchingOffence(world: World, accused: Citizen, law: LawCode): OffenceR
 }
 
 /**
- * A citizen reports another to the Watch. A report that matches something the
- * accused actually did (and got away with) becomes a solid charge; a baseless
- * one is still filed, thinly, and may cost the reporter a False report charge.
+ * A citizen reports another to the Watch. The report goes to the Watch's
+ * shared inbox, where any officer may take it up: one that matches something
+ * the accused actually did (and got away with) carries real evidence, and a
+ * baseless one carries almost none — and may bring a report of a False report
+ * (L12) down on the citizen who made it.
  */
 export function reportOffence(world: World, reporterId: CitizenId, accusedId: CitizenId, law: LawCode, text?: string): ActionResult {
   const reporter = world.citizens[reporterId];
@@ -180,33 +190,39 @@ export function reportOffence(world: World, reporterId: CitizenId, accusedId: Ci
     match.detected = true;
     accused.stats.offencesDetected++;
     const actual = match.law;
-    const kase = fileCharge(world, {
-      defendantId: accusedId, law: actual, evidence: isVictim ? 0.75 : 0.6, filedBy: reporterId,
+    const report = openReport(world, {
+      officerId: null, suspectId: accusedId, law: actual, evidence: isVictim ? 0.75 : 0.6,
       victimId: match.victimId ?? undefined, amount: match.amount,
       description: `${LAWS[actual].name}: ${accused.name}, reported by ${reporter.name}${isVictim ? ' (the victim)' : ''}${note ? ` — "${note}"` : ''}`,
     });
-    remember(world, reporterId, 'civic', `You reported ${accused.name} for ${LAWS[actual].name.toLowerCase()}; the Watch opened case ${kase.id}.`);
-    return { ok: true, message: `The Watch took your report and charged ${accused.name} (case ${kase.id}).` };
+    emit(world, 'offence', `${reporter.name} reported ${accused.name} to the Watch for ${LAWS[actual].name.toLowerCase()} (${report.id}).`,
+      [reporterId, accusedId], 0.3, { law: actual, reportId: report.id, reportedBy: reporterId });
+    remember(world, reporterId, 'civic', `You reported ${accused.name} for ${LAWS[actual].name.toLowerCase()}; the Watch opened report ${report.id}.`);
+    return { ok: true, message: `The Watch took your report against ${accused.name} (report ${report.id}); an officer decides whether to charge it.` };
   }
 
-  const kase = fileCharge(world, {
-    defendantId: accusedId, law, evidence: 0.2, filedBy: reporterId,
+  const report = openReport(world, {
+    officerId: null, suspectId: accusedId, law, evidence: 0.2,
     description: `${LAWS[law].name}: ${accused.name}, on the uncorroborated word of ${reporter.name}${note ? ` — "${note}"` : ''}`,
   });
-  remember(world, reporterId, 'civic', `You reported ${accused.name} for ${LAWS[law].name.toLowerCase()} (case ${kase.id}); the Watch found nothing to corroborate it.`);
+  emit(world, 'offence', `${reporter.name} reported ${accused.name} to the Watch for ${LAWS[law].name.toLowerCase()} (${report.id}); nothing corroborates it.`,
+    [reporterId, accusedId], 0.2, { law, reportId: report.id, reportedBy: reporterId });
+  remember(world, reporterId, 'civic', `You reported ${accused.name} for ${LAWS[law].name.toLowerCase()} (report ${report.id}); the Watch found nothing to corroborate it.`);
   if (chance(world, 0.5)) {
     reporter.recentOffences.push({ tick: world.tick, law: 'L12', detected: true, victimId: accusedId, amount: 0 });
     if (reporter.recentOffences.length > RECENT_OFFENCES_LENGTH) reporter.recentOffences.shift();
     reporter.stats.offencesCommitted++;
     reporter.stats.offencesDetected++;
-    const counter = fileCharge(world, {
-      defendantId: reporterId, law: 'L12', evidence: 0.7, filedBy: 'watch', victimId: accusedId,
+    const onDuty = officersOnDuty(world).filter((o) => o.id !== reporterId);
+    const officer = onDuty.length > 0 ? pick(world, onDuty) : null;
+    const counter = openReport(world, {
+      officerId: officer?.id ?? null, suspectId: reporterId, law: 'L12', evidence: 0.7, victimId: accusedId,
       description: `False report: ${reporter.name} accused ${accused.name} of ${LAWS[law].name.toLowerCase()} without cause`,
     });
-    remember(world, reporterId, 'crime', `The Watch charged you with making a false report (case ${counter.id}).`);
-    return { ok: true, message: `The Watch filed your report (case ${kase.id}) but found nothing behind it, and charged you with a false report (case ${counter.id}).` };
+    remember(world, reporterId, 'crime', `The Watch made a report of a false report against you (${counter.id}).`);
+    return { ok: true, message: `The Watch took your report (${report.id}) but found nothing behind it, and made a report of a false report against you (${counter.id}).` };
   }
-  return { ok: true, message: `The Watch filed your report against ${accused.name} (case ${kase.id}), though it found little to support it.` };
+  return { ok: true, message: `The Watch took your report against ${accused.name} (report ${report.id}), though it found little to support it.` };
 }
 
 /** Join the Watch through an open Watch Officer position. */
@@ -232,12 +248,22 @@ export function detain(world: World, cId: CitizenId, untilTick: number): void {
 }
 
 /** Release everyone whose detention has expired. */
-export function tickWatch(world: World): void {
+function releaseDetainees(world: World): void {
   for (const c of Object.values(world.citizens)) {
     if (c.detainedUntilTick === null || c.detainedUntilTick > world.tick) continue;
     c.detainedUntilTick = null;
     if (c.standing !== 'exiled') remember(world, c.id, 'crime', 'The Watch released you from the Watch House.');
   }
+}
+
+/**
+ * The Watch's hour: detentions run out, scripted officers deal with what is
+ * before them, and reports nobody acted on lapse into the record.
+ */
+export function tickWatch(world: World): void {
+  releaseDetainees(world);
+  watchSession(world);
+  expireReports(world);
 }
 
 /** The Mayor's favourite officer (by bond, then analysis); without a Mayor the sharpest one. */
@@ -266,6 +292,7 @@ function ensureWatchJobs(world: World): void {
  * post is vacant, and the city keeps enough Watch positions open.
  */
 export function dailyWatch(world: World): void {
+  pruneBribes(world);
   for (const key of Object.keys(world.counters)) {
     if (!key.startsWith('scrutiny:')) continue;
     const left = (world.counters[key] ?? 0) - 1;

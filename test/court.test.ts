@@ -4,6 +4,7 @@ import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
 import type { Business, Case, Citizen, Job, World } from '../src/types.ts';
 import { nextId } from '../src/util/ids.ts';
 import { commitOffence } from '../src/government/watch.ts';
+import { fileReport } from '../src/government/reports.ts';
 import {
   computeSentence, dailyJustice, decideAppeals, executeSentence, fileAppeal, fileCharge, holdCourt, judgeBelief,
   latestCaseFor, nextCourtTick, pendingCasesFor, selectBench,
@@ -20,6 +21,13 @@ function seatCouncil(w: World, members: Citizen[]): void {
   w.government.council = members.map((m) => m.id);
   w.government.mayorId = members[0]?.id ?? null;
   members.forEach((m, i) => { m.office = i === 0 ? 'mayor' : 'councillor'; });
+}
+
+/** An officer of the Watch, who is the one who decides whether a report becomes a charge. */
+function addOfficer(w: World, overrides: Parameters<typeof makeCitizen>[1] = {}): Citizen {
+  const c = makeCitizen(w, { office: 'watch', ...overrides });
+  w.government.watch.push(c.id);
+  return c;
 }
 
 function addJob(w: World, holderId: string | null = null, overrides: Partial<Job> = {}): Job {
@@ -117,6 +125,10 @@ test('selectBench recuses friends, accusers, victims and employers, drawing temp
   // a judge who is the victim recuses
   const k4 = fileCharge(w, { defendantId: d.id, law: 'L04', evidence: 0.8, filedBy: 'watch', victimId: b, description: 'theft' });
   assert.ok(!selectBench(w, k4).includes(b));
+  // and no child is ever drawn by lot: children are neither charged nor judges
+  const infant = makeCitizen(w, { reputation: 95, lifeStage: 'child' });
+  const k5 = fileCharge(w, { defendantId: d.id, law: 'L04', evidence: 0.8, filedBy: b, description: 'theft' });
+  assert.ok(!selectBench(w, k5).includes(infant.id));
 });
 
 test('judgeBelief weighs evidence, record, reputation and friendship', () => {
@@ -141,17 +153,26 @@ test('judgeBelief weighs evidence, record, reputation and friendship', () => {
   assert.ok(avg(0) > 1.1);
 });
 
-test('offence → charge → trial → conviction → fine, with restitution and money conserved', () => {
+test('offence → report → charge → trial → conviction → fine, with restitution and money conserved', () => {
   const w = courtWorld();
   const judges = w.government.judges;
+  const officer = addOfficer(w, { district: 'harbor_market' });
   const thief = makeCitizen(w, { wallet: 200, reputation: 50, district: 'harbor_market' });
   const victim = makeCitizen(w, { wallet: 100, district: 'harbor_market' });
   const before = totalMoney(w);
   let r = commitOffence(w, thief.id, 'L04', { victimId: victim.id, amount: 30, visibilityMod: 5 });
   for (let i = 0; !r.detected && i < 100; i++) r = commitOffence(w, thief.id, 'L04', { victimId: victim.id, amount: 30, visibilityMod: 5 });
-  assert.ok(r.detected && r.caseId);
-  const k = w.cases[r.caseId];
-  k.evidence = 1; // the Watch caught them red-handed
+  assert.ok(r.detected && r.reportId);
+  // What the Watch saw is a report before its officer; it is the officer who charges it.
+  const report = w.reports[r.reportId];
+  assert.equal(report.officerId, officer.id);
+  assert.equal(report.status, 'open');
+  assert.equal(Object.keys(w.cases).length, 0, 'nothing reaches the Court until an officer files it');
+  report.evidence = 1; // the Watch caught them red-handed
+  assert.equal(fileReport(w, officer.id, report.id).ok, true);
+  assert.equal(report.status, 'filed');
+  const k = w.cases[report.filedCaseId!];
+  assert.equal(k.filedBy, officer.id);
   const treasuryBefore = w.treasury.balance;
 
   holdCourt(w);
@@ -160,6 +181,9 @@ test('offence → charge → trial → conviction → fine, with restitution and
   assert.equal(k.triedDay, 2);
   assert.deepEqual(k.judges, judges);
   assert.ok(judges.every((j) => k.votes[j] === 'guilty'));
+  assert.ok(judges.every((j) => typeof k.reasons[j] === 'string' && k.reasons[j].length > 0), 'every judge gives a reason');
+  assert.equal(k.carriedSessions, 0);
+  assert.equal(k.decidedByDefault, false);
   assert.ok(k.sentence);
   assert.equal(k.sentence.tier, 2, 'severity 2, no record');
   assert.equal(k.sentence.fine, 40, 'max(20, 10% × severity × wallet)');
@@ -174,7 +198,10 @@ test('offence → charge → trial → conviction → fine, with restitution and
   assert.equal(thief.reputation, 40, '−5 per point of severity');
   assert.equal(thief.detainedUntilTick, null);
   assert.ok(judges.every((j) => w.citizens[j].reputation === 81), 'judges gain a point per case');
-  assert.ok(w.events.some((e) => e.kind === 'verdict' && e.weight === 0.5 && e.actors.includes(thief.id)));
+  const line = w.events.find((e) => e.kind === 'verdict' && e.weight === 0.5 && e.actors.includes(thief.id));
+  assert.ok(line, 'the Chronicle prints the verdict');
+  assert.ok(line.text.includes('3–0'), line.text);
+  for (const j of judges) assert.ok(line.text.includes(`${w.citizens[j].name} guilty`), `the line names how ${j} voted: ${line.text}`);
   assert.ok(thief.memory.some((m) => m.kind === 'verdict' && m.text.includes('guilty')));
   assert.ok(victim.memory.some((m) => m.kind === 'verdict' && m.text.includes('convicted')));
   assert.ok(judges.every((j) => w.citizens[j].memory.some((m) => m.kind === 'verdict')));

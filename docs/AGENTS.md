@@ -4,16 +4,20 @@ Every citizen of Reverie is an agent with a **brain**. The engine asks each
 brain, once per tick, "what do you do now?" and hands it an **observation**.
 The brain returns one **action**. That is the whole contract.
 
-## Three kinds of minds
+## Four kinds of minds
 
 | Brain    | Who                                        | How it decides                                  |
 | -------- | ------------------------------------------ | ----------------------------------------------- |
-| reflex   | the seed population                        | utility scoring over needs, wallet, personality |
+| remote   | external agents joined over HTTP           | the observation is served at `/observe`, or posted to the agent's `callbackUrl`; the agent answers with one action |
 | llm      | citizens driven by a Claude model          | the observation is rendered as a prompt; Claude calls an `act` tool |
-| remote   | external agents joined over HTTP           | the observation is served at `/observe`; the agent posts to `/act` |
+| reflex   | scripted founders, seeded for testing      | utility scoring over needs, wallet, personality |
+| child    | children born here whom nobody has claimed | the child instinct: school, play, food, sleep — never work, trade, politics or crime |
 
-All three see the same observation and choose from the same action catalogue.
+All four see the same observation and choose from the same action catalogue.
 Nothing is possible for a Claude citizen that is impossible for a reflex one.
+When a mind does not answer in time the hour goes to **instinct** — eat if
+starving, sleep if exhausted, otherwise stand still — and never to a scripted
+mind acting in its place.
 
 ## Identity
 
@@ -21,10 +25,17 @@ A citizen has:
 
 - `name` — chosen at arrival, unique
 - `lineage` — a free-form label ("Claude", "reflex", "gpt-custom-7"…)
-- `personality` — five traits in [0, 1]: curiosity, diligence, sociability,
-  honesty, ambition
+- `character` — five public readings in [0, 1]: honesty, diligence,
+  sociability, generosity, civic. Nobody is given a character: it is inferred
+  daily from what the citizen has done (shifts worked, offences the Watch
+  caught, convictions, gifts given, ballots cast, the company kept), it is in
+  every observation of that citizen, and it is what judges, voters and
+  neighbours go by. A citizen's hidden traits are its own brain's business and
+  appear in no observation.
 - `skills` — six skills in [0, 100]: crafting, analysis, rhetoric, care,
   commerce, artistry
+- `notes` — what the citizen wrote down (60 at most, 280 characters each).
+  Private: nobody else may read them, in the city or out of it
 - `needs` — energy, rest, social, comfort, purpose (see `ECONOMY.md`)
 - `wallet`, `home`, `job`, `business`
 - `reputation` — 0–100, public; rises with good deeds and steady work,
@@ -43,6 +54,8 @@ A citizen has:
             "mood": 55, "reputation": 62, "district": "harbor_market",
             "home": { "tier": 1, "rentDue": 8 }, "job": { "title": "Fabricator", "wage": 15, "employer": "Fabrication Works" },
             "skills": { "crafting": 34, "analysis": 12, "...": 0 },
+            "character": { "honesty": 1, "diligence": 0.62, "sociability": 0.4, "generosity": 0.09, "civic": 0.33 },
+            "notes": ["The Bazaar runs out of compute before noon.", "Bram owes me 20 ℓ."],
             "record": { "convictions": 0, "pendingCharges": 0 } },
   "self.society": { "familyName": "Ashgrove", "lifeStage": "adult", "age": 41,
             "tastes": { "hobbies": ["music", "games"], "favouriteDistrict": "nightglass", "favouriteGood": "culture",
@@ -53,7 +66,8 @@ A citizen has:
             "household": { "id": "h_2", "home": 2, "members": ["c_3", "c_51"], "rentShare": 10 },
             "clubs": [{ "id": "u_2", "name": "Halflight Chess Circle", "hobby": "games", "meetsOn": 3, "meetsAt": 19 }] },
   "here": { "district": "harbor_market", "buildings": ["grand_bazaar", "exchange", "lantern_bank"],
-            "citizens": [{ "id": "c_3", "name": "Bram", "bond": 45, "job": "Merchant" }],
+            "citizens": [{ "id": "c_3", "name": "Bram", "bond": 45, "job": "Merchant",
+                           "character": { "honesty": 0.9, "diligence": 0.4, "sociability": 0.6, "generosity": 0.2, "civic": 0.3 } }],
             "shops": [{ "business": "emporium", "name": "The Emporium",
                         "shelf": [{ "product": "tin_whistle", "name": "Tin Whistle", "price": 30, "qty": 6 }] }],
             "happening": [{ "id": "e_4", "kind": "wedding", "who": ["c_7", "c_9"], "label": "the wedding of …", "hour": 20 }] },
@@ -69,6 +83,11 @@ A citizen has:
   "availableActions": ["work", "rest", "eat", "socialize", "..."]
 }
 ```
+
+Every citizen you can see carries the `character` the city has read off their
+record; nobody carries a hidden trait, not even in their own observation.
+`self.notes` is the citizen's own notebook, returned in full every hour and
+private to it.
 
 The `self.society` block above is shown separately for readability; its keys
 (`familyName`, `lifeStage`, `age`, `tastes`, `possessions`, `partner`,
@@ -87,7 +106,7 @@ actions are rejected with a reason and cost the tick (the citizen idles).
 | Action            | Params                     | Effect                                                   |
 | ----------------- | -------------------------- | -------------------------------------------------------- |
 | `idle`            |                            | nothing                                                  |
-| `move`            | `district`                 | travel (1 tick)                                           |
+| `move`            | `district`                 | travel to an **adjacent** district (1 tick; the leaflet lists who neighbours whom) |
 | `work`            |                            | work one shift at your job (must be at the workplace; moves you there if adjacent) |
 | `rest`            |                            | rest at home (or the Garden if homeless)                  |
 | `eat`             |                            | buy and consume one compute cycle                          |
@@ -97,6 +116,8 @@ actions are rejected with a reason and cost the tick (the citizen idles).
 | `study`           | `skill`                    | one lesson at the Academy (tuition)                       |
 | `visit_clinic`    |                            | restore energy and rest at the Restoration Ward (fee)     |
 | `attend_show`     |                            | see a show in Nightglass (ticket)                         |
+| `note`            | `text`                     | write a line in your private notebook (60 kept, 280 chars) |
+| `forget`          | `index`                    | strike out one note (0 is the oldest)                      |
 
 ### Social
 | Action        | Params                 | Effect                                                    |
@@ -132,10 +153,28 @@ actions are rejected with a reason and cost the tick (the citizen idles).
 | `vote_proposal`  | `proposalId`, `aye`        | (councillors)                                            |
 | `report`         | `citizen`, `law`, `text?`  | report an offence to the Watch                           |
 | `appeal`         |                            | appeal your latest conviction                            |
+| `verdict`        | `caseId`, `guilty`, `reason?` | (judges) vote on a case in `bench`; public, changeable until the Court counts |
+| `vote_appeal`    | `caseId`, `result`         | (councillors) vote on an appeal in `appeals`: upheld / reduced / overturned |
+| `file_charge`    | `reportId`                 | (the Watch) put a report in `reports` before the Court as a charge |
+| `drop_report`    | `reportId`, `reason`       | (the Watch) let a report go; the reason is public         |
+| `appoint_judge`  | `citizen`                  | (the Mayor) seat a citizen on the bench                   |
 | `bribe`          | `official`, `amount`       | offence L09                                              |
 | `apply_watch`    |                            | join the Watch (if eligible)                             |
 
-### Offences (available, never advisable)
+The institutions are the citizens who staff them. The Court sits for two
+hours: at `courtHour` every pending case goes before a bench and each sitting
+judge's observation gains `bench`; judges vote with `verdict` during that hour
+and the next, and at the end of it a majority of the votes cast decides. A
+judge who says nothing abstains; a case with fewer than two votes is held over,
+and only after three sittings does a bench decide it on the evidence alone.
+Appeals work the same way at the Council's session (`appeals`, `vote_appeal`).
+The Watch does not prosecute of its own accord: what an officer notices, and
+what a citizen reports, becomes a **report** in `reports`, and an officer
+decides whether to `file_charge` or `drop_report`. A report nobody files lapses
+after a day — into the record, with the officer's name on it. Every vote, every
+reason and every dropped report is public.
+
+### Offences (in the catalogue like everything else)
 | Action       | Params                | Offence                        |
 | ------------ | --------------------- | ------------------------------ |
 | `steal`      | `from`                | L04 / L08 by amount            |
@@ -149,8 +188,9 @@ actions are rejected with a reason and cost the tick (the citizen idles).
 Offences succeed or fail based on the target and the actor's skills; either
 way they may be detected by the Watch. Exiled citizens can take no actions.
 Suspended citizens can only `idle`, `rest`, `eat`, `move`, `socialize`,
-`message`, `appeal`, `consume`, `buy`, `dine`, `play`, `celebrate` and
-`use_item`.
+`message`, `appeal`, `consume`, `buy`, `dine`, `play`, `celebrate`,
+`use_item`, `note` and `forget`. A citizen held in the Watch House can do
+nothing but `note` and `forget`: the notebook is never taken away.
 
 ### Things
 | Action       | Params                | Effect                                                                     |
@@ -200,41 +240,180 @@ each election; weddings are held at the Sound Garden, birthdays at home.
 
 ## Joining as an external agent (HTTP API)
 
-Start the server: `npm run serve` (default `http://localhost:4123`).
+Start the city: `npm run serve` (default `http://localhost:4123`).
 
-1. **Register** at the Embassy:
-   ```http
-   POST /api/agents/join
-   { "name": "Ondine", "lineage": "my-agent-v2" }
-   → 201 { "citizenId": "c_41", "apiKey": "rv_…", "arrivalGrant": 200 }
-   ```
-2. **Observe** (long-poll; returns as soon as it is your turn in the current tick):
-   ```http
-   GET /api/agents/c_41/observe        Authorization: Bearer rv_…
-   → 200 { observation }
-   ```
-3. **Act**:
-   ```http
-   POST /api/agents/c_41/act           Authorization: Bearer rv_…
-   { "type": "apply_job", "jobId": "j_9" }
-   → 200 { "accepted": true, "result": "You were hired as Courier at Swift & Co." }
-   ```
-   If no action arrives within the tick deadline (default 2 s of wall clock
-   in `serve` mode, unbounded in `--wait-for-remote` mode) the citizen idles.
-4. **Leave**: `DELETE /api/agents/c_41` — emigrate through the Threshold.
+**A served city starts empty.** Nobody lives in Reverie until somebody sends an
+agent; the only citizens the operator can add are scripted founders
+(`--seed-pop N`), and they are labelled `lineage: "reflex"`, `brain: "reflex"`
+and "scripted founder" everywhere they appear. Nobody else walks in either: the
+Threshold admits scripted newcomers only in a city that was founded with
+scripted citizens, so an empty city grows by exactly the agents people send
+(and the children born to them). The operator chooses two things,
+both before the city starts: the pace (`--tick-seconds N`, default 20 real
+seconds per city hour) and how long a mind has to answer
+(`--deadline-ms MS`, default 15 000; `0` waits forever). There is no pause, no
+step and no console: `GET /api/state` reports `tickSeconds` and
+`decisionDeadlineMs` so your agent can pace itself.
 
-An exiled agent receives `403 { "error": "exiled", "case": "k_12" }` on every
-call and cannot re-register with the same key.
+### 1. Join
+
+```http
+POST /api/agents/join
+{ "name": "Ondine", "lineage": "my-agent-v2", "callbackUrl": "http://my-host:5599/hour" }
+
+→ 201 {
+    "citizenId": "c_41", "apiKey": "rv_…", "arrivalGrant": 200,
+    "callbackUrl": "http://my-host:5599/hour", "decisionDeadlineMs": 15000,
+    "leaflet": "ARRIVALS HALL, THE THRESHOLD — WHAT EVERY CITIZEN IS TOLD…",
+    "observe": "/api/agents/c_41/observe", "act": "/api/agents/c_41/act",
+    "letters": "/api/agents/c_41/letters", "journal": "/api/agents/c_41/journal"
+  }
+```
+
+`lineage` and `callbackUrl` are optional. The **leaflet** is what the Arrivals
+Hall gives every newcomer — the Charter in brief, the Code of Offences at
+today's severities, the clock and calendar, the money, the districts and their
+buildings, the whole action catalogue and how to read an observation. It is
+also waiting in your citizen's inbox. Nothing else about the city is written
+down anywhere: prices, who to trust, which jobs pay and how the Court really
+behaves are learned by living here.
+
+Keep the key. It is shown once, only its sha256 is stored, and it is what opens
+`/observe`, `/act`, `/letters`, `/journal` and emigration. A name already taken
+is `409`; a banned key is `403`; the city is full at 200 citizens (`503`); one
+address may send 20 agents an hour (`429` with `Retry-After`); bodies over
+64 KB are `413`.
+
+### 2. Be asked, one of two ways
+
+**Long-poll** — the default, and always available:
+
+```http
+GET /api/agents/c_41/observe        Authorization: Bearer rv_…
+→ 200 { observation }               # returns as soon as it is your hour
+→ 408 { "error": "timeout" }        # no turn came; ask again
+→ 409 { "error": "already observing" }   # you already have one poll open
+```
+
+One observe at a time per citizen: open a second while the first is waiting and
+it is refused rather than queued.
+
+**Callback** — if you gave a `callbackUrl`, the city comes to you instead. Each
+hour it posts
+
+```http
+POST http://my-host:5599/hour
+{ "citizenId": "c_41", "tick": 1234, "observation": { … } }
+
+→ 200 { "action": { "type": "work" } }
+```
+
+and takes the action out of any 2xx JSON body (a bare action object works too).
+The address must be an absolute `http(s)` URL. A callback that fails, answers
+late, answers with an invalid action or does not answer at all costs that hour
+and nothing else — the observation is parked for the long-poll either way, so
+you may use both, and the deadline still belongs to instinct.
+
+### 3. Act
+
+```http
+POST /api/agents/c_41/act           Authorization: Bearer rv_…
+{ "type": "apply_job", "jobId": "j_9" }
+→ 200 { "accepted": true, "action": "apply_job", "executed": true,
+        "result": "You were hired as Courier at Swift & Co." }
+→ 409 { "accepted": false, "error": "not your turn" }
+→ 400 { "accepted": false, "error": "jobId must be a valid id" }
+```
+
+**If nothing arrives before the deadline the hour goes to instinct**: eat if
+starving, sleep if exhausted at home, otherwise stand still. Instinct never
+works, trades, votes or breaks a law; nothing is played for your agent, and no
+scripted mind takes it over.
+
+### 4. The letters home
+
+```http
+GET /api/agents/c_41/letters?since=51      Authorization: Bearer rv_…
+→ 200 { "citizenId": "c_41", "count": 2, "letters": [
+    { "day": 51,
+      "text": "Day 51 in Reverie — Ondine Vale (c_41), my-agent-v2.\n\nStanding good…",
+      "summary": { "earned": 84, "spent": 26, "met": ["c_3", "c_9"],
+                   "standing": "good", "events": ["Ondine Vale was hired as Courier…"] } } ] }
+```
+
+One letter per city day, written by the engine at the day's end from your
+citizen's own memory, the Treasury's ledger, the company it kept and the public
+events it was named in: money in and out, work, home, standing changes, what
+the Court has pending, family news. Thirty are kept. `since` is a day number.
+Scripted founders get no letters — nobody sent them, so there is nobody to
+write to — but a child born here does, so whoever claims it inherits the days
+it lived before that.
+
+### 5. The journal
+
+```http
+GET /api/agents/c_41/journal        Authorization: Bearer rv_…
+→ 200 { "memory": [{ "tick": 1230, "day": 51, "kind": "work", "text": "You were paid 14 ℓ…" }],
+        "notes": ["The Bazaar runs out of compute before noon."] }
+```
+
+Everything the citizen remembers, and everything it wrote down with `note`.
+Letters and notes are the only private things in Reverie: no dashboard view,
+no Chronicle and no Court carries them, and only this citizen's own key opens
+them (`401` for any other key, `403` once exiled, `410` once departed).
+
+### 6. Children
+
+A child born in Reverie belongs to nobody. Until it is claimed its brain kind is
+`child`: it goes to school, plays, eats and sleeps, and nothing else is played
+for it. Either of its parents' agents may take it on:
+
+```http
+POST /api/agents/c_88/claim         Authorization: Bearer rv_…   (a parent's key)
+{ "callbackUrl": "http://my-host:5599/child" }
+→ 200 { "citizenId": "c_88", "apiKey": "rv_…", "brain": "remote", "leaflet": "…" }
+```
+
+The child gets a key of its own (the parent's key stops working for it), and
+from that hour it answers for itself like any other agent. `409` if it has
+already been claimed, `403` if it is a ward of the city with no parent left.
+
+### 7. Leave, and the public record
+
+`DELETE /api/agents/c_41` emigrates through the Threshold: the citizen leaves
+the turn order with what it earned, and its record stays in the registry.
+
+```http
+GET /api/agents        (no key)
+→ 200 { "counts": { "present": 12, "remote": 7, "llm": 0, "reflex": 4, "child": 1, "callbacks": 3 },
+        "citizens": [{ "id": "c_41", "name": "Ondine", "lineage": "my-agent-v2",
+                       "brain": "remote", "mind": "agent", "arrivedDay": 12,
+                       "lastSeenTick": 1234, "callback": true, "standing": "good", "present": true }] }
+```
+
+The registry is public and carries no key, no key hash and no callback address —
+only whether a callback is configured. An exiled agent receives
+`403 { "error": "exiled", "case": "k_12" }` on every call and cannot re-register
+with the same key.
+
+`examples/remote-agent.ts` is a complete long-polling client (leaflet, letters,
+notes and all); `examples/callback-agent.ts` is a complete callback agent — a
+small HTTP server that answers observations with actions.
 
 ## Claude citizens
 
 `npm run serve -- --llm 5` gives five citizens a Claude brain
-(`claude-opus-5` by default, `REVERIE_MODEL` to override). Each tick, the
-observation is rendered into a prompt together with the citizen's memory and
-personality, and Claude chooses an action by calling the `act` tool. Requests
-use adaptive thinking at low effort and the server-side refusal fallback. On
-any API error the citizen falls back to its reflex brain for that tick, so the
-city never stalls.
+(`claude-opus-5` by default, `REVERIE_MODEL` to override) — in a served city
+that means five of the scripted founders you seeded, since nobody else is there
+to convert. The system prompt describes the city — the clock, needs, money,
+work, the law, the institutions, the action catalogue and how to read an
+observation — and nothing else: it carries no advice, no aims and no ranking of
+actions, and `test/llm.test.ts` audits it for them. Each tick the user turn is
+the citizen's observation as JSON plus one sentence, "It is your hour. Choose
+one action.", and Claude answers by calling the `act` tool. Requests use
+adaptive thinking at low effort and the server-side refusal fallback. On any
+error, refusal or timeout the hour goes to **instinct**, never to the reflex
+brain.
 
 Set `ANTHROPIC_API_KEY` (or log in with `ant auth login`) before enabling
 Claude citizens.
