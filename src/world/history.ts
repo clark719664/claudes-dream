@@ -272,13 +272,16 @@ function kinOf(world: World, c: Citizen): Citizen[] {
 /**
  * The Council's `monument` proposal. The statue is cut by the city's own
  * builders: MONUMENT_COST comes out of the public works fund and no lumen
- * leaves the Treasury. Null for an unknown honoree or a fund that is short.
+ * leaves the Treasury. Null for an unknown honoree, a fund that is short, or
+ * somebody the city has already put in stone — one statue to a citizen.
  */
 export function commissionMonument(world: World, honoreeId: CitizenId, inscription: string): Monument | null {
   const honoree = world.citizens[honoreeId];
   if (!honoree) return null;
+  if (world.counters[`monument:${honoreeId}`] !== undefined) return null;
   const fund = Math.max(0, Math.round(world.government.publicWorksFund ?? 0));
   if (fund < MONUMENT_COST) return null;
+  world.counters[`monument:${honoreeId}`] = world.day;
   world.government.publicWorksFund = Math.max(0, fund - MONUMENT_COST);
   const text = (inscription ?? '').trim().slice(0, 200) || `${honoree.name} ${honoree.familyName}`.trim();
   const monument: Monument = { id: nextId(world, 'm'), honoreeId, inscription: text, day: world.day };
