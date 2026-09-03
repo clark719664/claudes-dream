@@ -36,9 +36,10 @@ function businessOf(world: World, party: MoneyParty): Business | null {
   return world.businesses[party] ?? null;
 }
 
-/** Current balance of a party. 'mint' is infinite; 'burn' and unknown parties hold nothing. */
+/** Current balance of a party. 'mint' is infinite; 'burn' and unknown parties hold nothing; 'chest' is the Community Chest. */
 export function balanceOf(world: World, party: MoneyParty): number {
   if (party === 'treasury') return world.treasury.balance;
+  if (party === 'chest') return world.treasury.chest ?? 0;
   if (party === 'mint') return Number.POSITIVE_INFINITY;
   if (party === 'burn') return 0;
   const c = world.citizens[party];
@@ -50,7 +51,7 @@ export function balanceOf(world: World, party: MoneyParty): number {
 
 /** Can this party be credited? Dissolved businesses and the mint cannot receive. */
 function canReceive(world: World, party: MoneyParty): boolean {
-  if (party === 'treasury' || party === 'burn') return true;
+  if (party === 'treasury' || party === 'burn' || party === 'chest') return true;
   if (party === 'mint') return false;
   if (world.citizens[party]) return true;
   const b = world.businesses[party];
@@ -58,13 +59,14 @@ function canReceive(world: World, party: MoneyParty): boolean {
 }
 
 function isKnownPayer(world: World, party: MoneyParty): boolean {
-  if (party === 'treasury' || party === 'mint') return true;
+  if (party === 'treasury' || party === 'mint' || party === 'chest') return true;
   if (party === 'burn') return false;
   return !!world.citizens[party] || !!world.businesses[party];
 }
 
 function debit(world: World, party: MoneyParty, amount: number): void {
   if (party === 'treasury') { world.treasury.balance -= amount; return; }
+  if (party === 'chest') { world.treasury.chest = (world.treasury.chest ?? 0) - amount; return; }
   if (party === 'mint') { world.treasury.minted += amount; return; }
   const c = world.citizens[party];
   if (c) { c.wallet -= amount; return; }
@@ -74,6 +76,7 @@ function debit(world: World, party: MoneyParty, amount: number): void {
 
 function credit(world: World, party: MoneyParty, amount: number): void {
   if (party === 'treasury') { world.treasury.balance += amount; return; }
+  if (party === 'chest') { world.treasury.chest = (world.treasury.chest ?? 0) + amount; return; }
   if (party === 'burn') { world.treasury.burned += amount; return; }
   const c = world.citizens[party];
   if (c) { c.wallet += amount; return; }
@@ -234,9 +237,9 @@ export function paySalaries(world: World): void {
   if (count > 0) emit(world, 'paid', `Public stipends paid to ${count} office holders (${formatLumens(paid)} net).`, [], 0.1);
 }
 
-/** Treasury + every wallet + every business treasury. */
+/** Treasury + Community Chest + every wallet + every business treasury. */
 export function moneySupply(world: World): number {
-  let sum = world.treasury.balance;
+  let sum = world.treasury.balance + (world.treasury.chest ?? 0);
   for (const c of Object.values(world.citizens)) sum += c.wallet;
   for (const b of Object.values(world.businesses)) sum += b.treasury;
   return sum;

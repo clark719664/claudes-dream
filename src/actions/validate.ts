@@ -5,11 +5,12 @@
 import { ACTION_TYPES, DISTRICT_IDS, GOODS, SKILLS } from '../types.ts';
 import type { Action, ActionType, BusinessKind, HousingTier, LawCode, ProposalKind } from '../types.ts';
 import { LAW_CODES } from '../data/laws.ts';
+import { HOBBIES, PRODUCT_IDS } from '../data/catalogue.ts';
 
 const BUSINESS_KINDS: readonly BusinessKind[] = ['workshop', 'cafe', 'studio', 'shop', 'clinic', 'courier'];
 const PROPOSAL_KINDS: readonly ProposalKind[] = [
   'income_tax', 'sales_tax', 'dividend', 'min_wage', 'law_severity', 'pardon', 'public_works',
-  'appoint_judge', 'dismiss_judge', 'remove_mayor', 'charter',
+  'appoint_judge', 'dismiss_judge', 'remove_mayor', 'charter', 'charity',
 ];
 const MAX_TEXT = 280;
 
@@ -49,6 +50,8 @@ const CID = /^c_\d+$/;
 const JID = /^j_\d+$/;
 const PID = /^p_\d+$/;
 const BID = /^[a-z_]+$/;
+const IID = /^i_\d+$/;
+const UID = /^u_\d+$/;
 
 export function validateAction(input: unknown): { ok: true; action: Action } | { ok: false; error: string } {
   try {
@@ -59,6 +62,7 @@ export function validateAction(input: unknown): { ok: true; action: Action } | {
     switch (type) {
       case 'idle': case 'work': case 'rest': case 'eat': case 'visit_clinic': case 'attend_show':
       case 'quit_job': case 'perform': case 'appeal': case 'apply_watch': case 'evade_tax':
+      case 'break_up': case 'start_family': case 'celebrate':
         action = { type }; break;
       case 'move': action = { type, district: oneOf(a.district, 'district', DISTRICT_IDS) }; break;
       case 'buy': action = { type, good: oneOf(a.good, 'good', GOODS), qty: int(a.qty, 'qty', 1, 1000) }; break;
@@ -113,6 +117,21 @@ export function validateAction(input: unknown): { ok: true; action: Action } | {
       case 'vandalize': action = { type, building: id(a.building, 'building', BID) }; break;
       case 'extort': action = { type, target: id(a.target, 'target', CID), amount: int(a.amount, 'amount', 1, 100000) }; break;
       case 'sabotage': action = { type, building: id(a.building, 'building', BID) }; break;
+      // society
+      case 'buy_item': action = { type, productId: oneOf(a.productId, 'productId', PRODUCT_IDS) }; break;
+      case 'use_item': action = { type, itemId: id(a.itemId, 'itemId', IID) }; break;
+      case 'gift_item': action = { type, to: id(a.to, 'to', CID), itemId: id(a.itemId, 'itemId', IID) }; break;
+      case 'craft': action = { type, productId: oneOf(a.productId, 'productId', PRODUCT_IDS) }; break;
+      case 'set_price': action = { type, productId: oneOf(a.productId, 'productId', PRODUCT_IDS), price: int(a.price, 'price', 1, 100000) }; break;
+      case 'date': action = { type, with: id(a.with, 'with', CID) }; break;
+      case 'propose_partnership': action = { type, to: id(a.to, 'to', CID) }; break;
+      case 'marry': action = { type, to: id(a.to, 'to', CID) }; break;
+      case 'move_in': action = { type, with: id(a.with, 'with', CID) }; break;
+      case 'found_club': action = { type, hobby: oneOf(a.hobby, 'hobby', HOBBIES), name: str(a.name, 'name', 40) }; break;
+      case 'join_club': case 'leave_club': case 'attend_club': action = { type, clubId: id(a.clubId, 'clubId', UID) }; break;
+      case 'dine': action = { type, ...(a.with !== undefined && a.with !== null ? { with: id(a.with, 'with', CID) } : {}) }; break;
+      case 'play': action = { type, ...(a.with !== undefined && a.with !== null ? { with: id(a.with, 'with', CID) } : {}) }; break;
+      case 'donate': action = { type, amount: int(a.amount, 'amount', 1, 100000) }; break;
       default: {
         const never: never = type;
         throw new Error(`unknown action ${String(never)}`);

@@ -2,11 +2,9 @@
  * The catalogue of things a citizen can want: hobbies, products, family names,
  * and the calendar of festivals. Pure data.
  */
-import type { DistrictId, Good, Need, Skill, BuildingId } from '../types.ts';
+import type { DistrictId, Good, Need, Skill, BuildingId, Hobby, ProductCategory } from '../types.ts';
 
-export type Hobby =
-  | 'music' | 'reading' | 'art' | 'gardening' | 'cooking'
-  | 'tinkering' | 'astronomy' | 'games' | 'dancing' | 'running';
+export type { Hobby, ProductCategory } from '../types.ts';
 
 export const HOBBIES: readonly Hobby[] = [
   'music', 'reading', 'art', 'gardening', 'cooking', 'tinkering', 'astronomy', 'games', 'dancing', 'running',
@@ -33,9 +31,6 @@ export const HOBBY_INFO: Record<Hobby, HobbyInfo> = {
   dancing: { id: 'dancing', name: 'Dancing', skill: 'artistry', district: 'nightglass', venue: 'sound_garden', categories: ['attire'] },
   running: { id: 'running', name: 'Running', skill: 'care', district: 'commons', venue: 'central_plaza', categories: ['attire'] },
 };
-
-export type ProductCategory =
-  | 'instrument' | 'book' | 'art' | 'furniture' | 'plant' | 'companion' | 'attire' | 'game' | 'tool';
 
 export interface Product {
   id: string;

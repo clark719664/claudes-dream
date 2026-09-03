@@ -33,7 +33,7 @@ function makeBusiness(world: World, ownerId: string, treasury = 100): Business {
     id: 'b_1', name: 'Swift Couriers', kind: 'courier', ownerId, treasury, district: 'harbor_market',
     buildingId: 'shopfronts_harbor', employees: [], jobs: [],
     inventory: { compute: 0, energy: 0, goods: 0, culture: 0, knowledge: 0 },
-    foundedDay: 0, rentPerDay: 8, daysNegative: 0, revenueToday: 0, costsToday: 0, dissolvedDay: null,
+    foundedDay: 0, rentPerDay: 8, daysNegative: 0, revenueToday: 0, costsToday: 0, dissolvedDay: null, shelf: {},
   };
   world.businesses[b.id] = b;
   return b;

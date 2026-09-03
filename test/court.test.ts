@@ -38,7 +38,7 @@ function addBusiness(w: World, ownerId: string, treasury = 120): Business {
   const b: Business = {
     id, name: 'Glass Works', kind: 'workshop', ownerId, treasury, district: 'harbor_market', buildingId: 'shopfronts_harbor',
     employees: [], jobs: [], inventory: { compute: 0, energy: 0, goods: 0, culture: 0, knowledge: 0 }, foundedDay: w.day,
-    rentPerDay: 15, daysNegative: 0, revenueToday: 0, costsToday: 0, dissolvedDay: null,
+    rentPerDay: 15, daysNegative: 0, revenueToday: 0, costsToday: 0, dissolvedDay: null, shelf: {},
   };
   w.businesses[id] = b;
   w.citizens[ownerId].businessId = id;

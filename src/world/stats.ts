@@ -49,6 +49,24 @@ export function countFriendships(world: World, active: Citizen[]): number {
   return pairs.size;
 }
 
+/** Present couples, counted once each: partnered pairs and married pairs. */
+export function countCouples(active: Citizen[]): { partnerships: number; marriages: number } {
+  const present = new Map(active.map((c) => [c.id, c]));
+  const seen = new Set<string>();
+  let partnerships = 0;
+  let marriages = 0;
+  for (const c of active) {
+    const p = c.family?.partnerId;
+    if (!p || !present.has(p)) continue;
+    const key = c.id < p ? `${c.id}|${p}` : `${p}|${c.id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (c.family.married) marriages++;
+    else partnerships++;
+  }
+  return { partnerships, marriages };
+}
+
 /** Has a job, or runs a business: a livelihood either way. */
 function hasLivelihood(world: World, c: Citizen): boolean {
   if (heldJob(world, c)) return true;
@@ -85,6 +103,9 @@ export function computeStats(world: World, day: number = summarisedDay(world)): 
     if (k.verdict === 'guilty' && k.triedDay === day) convictions++;
   }
   const exiles = world.bans.filter((b) => b.day === day).length;
+  const { partnerships, marriages } = countCouples(active);
+  let possessions = 0;
+  for (const c of active) possessions += c.possessions?.length ?? 0;
 
   return {
     day,
@@ -104,5 +125,11 @@ export function computeStats(world: World, day: number = summarisedDay(world)): 
     exiles,
     businesses: activeBusinesses(world).length,
     friendships: countFriendships(world, active),
+    partnerships,
+    marriages,
+    children: active.filter((c) => c.lifeStage === 'child').length,
+    clubs: Object.values(world.clubs ?? {}).filter((k) => k.members.length > 0).length,
+    chest: world.treasury.chest ?? 0,
+    possessions,
   };
 }

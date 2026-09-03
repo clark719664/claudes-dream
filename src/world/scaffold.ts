@@ -7,6 +7,7 @@ import type { Good, Housing, Market, MarketGood, Treasury, World, WorldConfig, G
 import { BUILDINGS, DISTRICTS } from '../data/city.ts';
 import { defaultSeverities } from '../data/laws.ts';
 import { seedState } from '../util/rng.ts';
+import { initEmporium } from '../society/shops.ts';
 
 export const FOUNDING_PRICES: Record<Good, number> = {
   compute: 6, energy: 3, goods: 12, culture: 8, knowledge: 15,
@@ -39,7 +40,7 @@ export function createHousing(): Housing {
 export function createTreasury(founding: number): Treasury {
   return {
     balance: founding, foundingSupply: founding, minted: 0, burned: 0,
-    revenueToday: 0, spendToday: 0, ledger: [], totals: {},
+    revenueToday: 0, spendToday: 0, ledger: [], totals: {}, chest: 0,
   };
 }
 
@@ -60,7 +61,7 @@ export function emptyWorld(overrides: Partial<WorldConfig> = {}): World {
   const config: WorldConfig = { ...DEFAULT_CONFIG, ...overrides };
   const buildings = structuredClone(BUILDINGS);
   const districts = structuredClone(DISTRICTS);
-  return {
+  const world: World = {
     version: 1,
     config,
     rng: seedState(config.seed),
@@ -74,7 +75,10 @@ export function emptyWorld(overrides: Partial<WorldConfig> = {}): World {
     loans: {},
     government: createGovernment(config),
     cases: {}, bans: [],
+    households: {}, clubs: {}, emporium: {}, happenings: [],
     events: [], tickEvents: [], chronicle: [], stats: [],
     counters: {},
   };
+  initEmporium(world);
+  return world;
 }

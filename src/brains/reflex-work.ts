@@ -10,6 +10,8 @@ import { districtDistance } from '../data/city.ts';
 import { chance, rand } from '../util/rng.ts';
 import { bankOpen, creditLimit, avgDailyIncome } from '../economy/bank.ts';
 import { isQualified, openJobs } from '../economy/jobs.ts';
+import { daysOfCover } from '../economy/market.ts';
+import { GLUT_COVER_DAYS } from '../economy/planning.ts';
 import { vacancies } from '../economy/housing.ts';
 import { talentOf } from '../citizens/citizen.ts';
 import { bondBetween } from '../citizens/relationships.ts';
@@ -28,10 +30,14 @@ export const FOUNDING_AMBITION = 0.6;
 /** Chance per working hour that an employed citizen glances at the job board for something clearly better. */
 export const JOB_HOP_CHANCE = 0.005;
 /** An owner raises an unfilled job's wage up to this multiple of the template wage. */
-export const MAX_WAGE_RAISE = 1.6;
+export const MAX_WAGE_RAISE = 1.4;
 /** Below this price ratio, with this much unsold stock, a producer's shifts are cut short: the city has more than it needs. */
 export const GLUT_RATIO = 0.75;
 export const GLUT_STOCK = 150;
+/** Shifts a producer works on a glut day (the shelf holds more than GLUT_COVER_DAYS of their good). */
+export const GLUT_SHIFTS = 4;
+/** An owner whose business has been in the red this many days trims staff. */
+export const TRIM_STAFF_AFTER_DAYS = 2;
 
 function effectiveWage(world: World, job: Job): number {
   return Math.max(world.government.minWage, job.wage);
@@ -61,7 +67,8 @@ export function shiftsWanted(world: World, c: Citizen): number {
   const job = heldJob(world, c);
   const good = job?.output.good;
   if (good && (priceRatio(world, good) >= 1.5 || world.market.goods[good].stock <= 0)) n = Math.max(n, max - 2);
-  else if (good && priceRatio(world, good) < GLUT_RATIO && world.market.goods[good].stock > GLUT_STOCK) n = Math.min(n, 4);
+  else if (good && daysOfCover(world, good) > GLUT_COVER_DAYS) n = Math.min(n, GLUT_SHIFTS);
+  else if (good && priceRatio(world, good) < GLUT_RATIO && world.market.goods[good].stock > GLUT_STOCK) n = Math.min(n, GLUT_SHIFTS);
   return clamp(Math.round(n), 2, max);
 }
 
@@ -194,6 +201,19 @@ export function tryBusiness(ctx: Ctx): Action | null {
     return kind ? { type: 'found_business', name: businessName(world, kind), kind } : null;
   }
   const open = biz.jobs.map((id) => world.jobs[id]).filter((j): j is Job => !!j && j.holderId === null);
+  // in the red for days with more than one on the payroll: let the least productive hand go before the bank does
+  if (biz.daysNegative >= TRIM_STAFF_AFTER_DAYS && biz.employees.length > 1 && ctx.can.has('fire')) {
+    let weakest: Citizen | null = null;
+    let weakestSkill = Infinity;
+    for (const id of biz.employees) {
+      const o = world.citizens[id];
+      const j = o ? heldJob(world, o) : null;
+      if (!o || !j) continue;
+      const skill = j.skill ? o.skills[j.skill] : 0;
+      if (skill < weakestSkill) { weakestSkill = skill; weakest = o; }
+    }
+    if (weakest) return { type: 'fire', citizen: weakest.id };
+  }
   if (open.length > 0 && biz.treasury >= effectiveWage(world, open[0])) {
     const acquaintances = [...here].sort((a, b) => bondBetween(world, c.id, b.id) - bondBetween(world, c.id, a.id));
     for (const o of acquaintances) {
@@ -211,9 +231,9 @@ export function tryBusiness(ctx: Ctx): Action | null {
     const ceiling = Math.round(Math.max(template.wage, world.government.minWage) * MAX_WAGE_RAISE);
     if (job.wage < ceiling) return { type: 'set_wage', jobId: job.id, wage: Math.min(ceiling, job.wage + 2) };
   }
-  if (open.length === 0 && biz.treasury > 300 && biz.jobs.length < 6 && chance(world, 0.2)) {
+  if (open.length === 0 && biz.daysNegative === 0 && biz.treasury > 300 && biz.jobs.length < 6 && chance(world, 0.2)) {
     const t = BUSINESS_JOBS[biz.kind][0];
-    if (t) return { type: 'post_job', title: t.title, wage: Math.max(t.wage, world.government.minWage) + 1, skill: t.skill, minSkill: t.minSkill };
+    if (t) return { type: 'post_job', title: t.title, wage: Math.max(t.wage, world.government.minWage), skill: t.skill, minSkill: t.minSkill };
   }
   return null;
 }

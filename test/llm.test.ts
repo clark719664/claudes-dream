@@ -18,19 +18,24 @@ function sampleObservation(world: World, c: Citizen): Observation {
   return {
     tick: world.tick, day: world.day, hour: world.hour,
     self: {
-      id: c.id, name: c.name, lineage: c.lineage, standing: c.standing, wallet: c.wallet, needs: { ...c.needs },
+      id: c.id, name: c.name, familyName: c.familyName, lineage: c.lineage, lifeStage: c.lifeStage, age: 0,
+      standing: c.standing, wallet: c.wallet, needs: { ...c.needs },
       mood: c.mood, reputation: c.reputation, district: c.district,
       home: { tier: c.homeTier, rentPerDay: 0, arrearsDays: 0 },
       job: { id: 'j_1', title: 'Fabricator', wage: 15, employer: 'City of Reverie', district: 'foundry_row', shiftsToday: 2 },
       business: null, loan: null, skills: { ...c.skills }, personality: { ...c.personality }, inventory: { ...c.inventory },
       office: null, record: { convictions: 0, strikes: 0, pendingCharges: 0, finesOwed: 0, serviceDaysLeft: 0 }, detained: false,
+      tastes: { ...c.tastes, wants: [] }, possessions: [], partner: null, family: [], household: null, clubs: [],
     },
     here: {
       district: c.district, districtName: 'The Commons',
       buildings: [{ id: 'central_plaza', name: 'Central Plaza', kind: 'plaza', damage: 0 }],
       citizens: [{ id: 'c_99', name: 'Bram', bond: 45, job: 'Merchant', office: null, reputation: 60, standing: 'good' }],
+      shops: [], happening: [],
     },
     friends: [], rivals: [],
+    affection: [],
+    calendar: { weekday: 0, restDay: false, festivalToday: null, nextFestival: { name: 'Lantern Night', inDays: 14 }, birthdaysToday: [] },
     market: {
       compute: { price: 6, stock: 400 }, energy: { price: 3, stock: 400 }, goods: { price: 12, stock: 120 },
       culture: { price: 8, stock: 60 }, knowledge: { price: 15, stock: 20 },

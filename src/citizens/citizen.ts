@@ -7,9 +7,10 @@
  */
 import { NEEDS, SKILLS, TRAITS, clamp } from '../types.ts';
 import type {
-  BrainKind, Citizen, CitizenId, DistrictId, Need, Personality, Skill, Skills, World,
+  BrainKind, Citizen, CitizenId, DistrictId, LifeStage, Need, Personality, Skill, Skills, World,
 } from '../types.ts';
 import { FIRST_NAMES, LINEAGES } from '../data/names.ts';
+import { FAMILY_NAMES } from '../data/catalogue.ts';
 import { pick, poisson, rand, randInt } from '../util/rng.ts';
 import { nextId } from '../util/ids.ts';
 import { emit, remember } from '../sim/events.ts';
@@ -17,6 +18,7 @@ import { transfer } from '../economy/treasury.ts';
 import { comfortDecayMultiplier, moveHome } from '../economy/housing.ts';
 import { friendsOf } from './relationships.ts';
 import { departCity } from './departure.ts';
+import { assignTastes } from '../society/tastes.ts';
 
 /** The Threshold stops admitting newcomers at this population. */
 export const MAX_POPULATION = 200;
@@ -42,6 +44,14 @@ export interface CreateCitizenOpts {
   personality?: Partial<Personality>;
   skills?: Partial<Skills>;
   apiKeyHash?: string | null;
+  /** 'child' for citizens born in the city: no arrival grant, no room of their own. */
+  lifeStage?: LifeStage;
+  /** Parents of a child born in the city (ids of present citizens). */
+  parents?: CitizenId[];
+  /** Family name; children inherit it, arrivals draw one from FAMILY_NAMES. */
+  familyName?: string;
+  /** Day of birth (defaults to today). */
+  bornDay?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -61,6 +71,18 @@ function uniqueName(world: World, requested?: string): string {
     const candidate = `${base} ${n}`;
     if (!taken.has(candidate.toLowerCase())) return candidate;
   }
+}
+
+/**
+ * A family name: the requested one, else one no citizen in the record holds
+ * yet (so unrelated founders do not share a name until the pool runs out).
+ */
+function pickFamilyName(world: World, requested?: string): string {
+  const wanted = (requested ?? '').trim().slice(0, MAX_NAME_LENGTH);
+  if (wanted) return wanted;
+  const taken = new Set(Object.values(world.citizens).map((c) => c.familyName));
+  const unused = FAMILY_NAMES.filter((n) => !taken.has(n));
+  return unused.length ? pick(world, unused) : pick(world, FAMILY_NAMES);
 }
 
 function rollPersonality(world: World, given?: Partial<Personality>): Personality {
@@ -96,19 +118,30 @@ function rollNeeds(world: World): Citizen['needs'] {
 
 /**
  * Bring a new citizen through the Threshold: unique name, rolled personality,
- * skills and needs, arrival grant from the Treasury, a first room if one is
- * free. Emits 'arrival' and seeds the newcomer's memory.
+ * skills and needs, a family name and tastes, arrival grant from the Treasury,
+ * a first room if one is free. Emits 'arrival' and seeds the newcomer's memory.
+ * A child (opts.lifeStage 'child') is born rather than arriving: it inherits
+ * the family name, records its parents, and gets neither grant nor room
+ * (family.birthChild announces the birth and houses it with its parents).
  */
 export function createCitizen(world: World, opts: CreateCitizenOpts = {}): Citizen {
   const id = nextId(world, 'c');
   const brain: BrainKind = opts.brain ?? 'reflex';
   const name = uniqueName(world, opts.name);
   const lineage = ((opts.lineage ?? '').trim() || (brain === 'llm' ? 'Claude' : pick(world, LINEAGES))).slice(0, MAX_NAME_LENGTH);
+  const lifeStage: LifeStage = opts.lifeStage ?? 'adult';
+  const child = lifeStage === 'child';
+  const bornDay = typeof opts.bornDay === 'number' && Number.isFinite(opts.bornDay) ? Math.max(0, Math.round(opts.bornDay)) : world.day;
+  const parents = (opts.parents ?? []).filter((p, i, all) => !!world.citizens[p] && all.indexOf(p) === i);
+  const personality = rollPersonality(world, opts.personality);
+  const skills = rollSkills(world, opts.skills);
+  const needs = rollNeeds(world);
+  const familyName = pickFamilyName(world, opts.familyName);
   const c: Citizen = {
     id, name, lineage, brain, arrivedDay: world.day,
-    personality: rollPersonality(world, opts.personality),
-    skills: rollSkills(world, opts.skills),
-    needs: rollNeeds(world),
+    personality,
+    skills,
+    needs,
     mood: 0,
     reputation: 50,
     wallet: 0,
@@ -131,10 +164,24 @@ export function createCitizen(world: World, opts: CreateCitizenOpts = {}): Citiz
     },
     apiKeyHash: opts.apiKeyHash ?? null,
     exiledCaseId: null, exiledDay: null,
+    familyName, lifeStage, bornDay, lastBirthdayDay: bornDay,
+    tastes: { hobbies: [], favouriteDistrict: opts.district ?? 'threshold', favouriteGood: 'goods', categories: [] },
+    possessions: [],
+    family: { familyName, partnerId: null, partnerSinceDay: null, married: false, parents, children: [] },
+    householdId: null, clubs: [], affection: {}, contactsToday: {}, wants: [], guardianId: null,
   };
+  assignTastes(world, c);
   c.mood = computeMood(c);
   world.citizens[id] = c;
   world.order.push(id);
+
+  if (child) {
+    const parentNames = parents.map((p) => world.citizens[p].name).join(' and ');
+    remember(world, id, 'family', parentNames
+      ? `You were born in Reverie to ${parentNames}, of the ${familyName} family.`
+      : `You were born in Reverie, a ward of the city, of the ${familyName} family.`);
+    return c;
+  }
 
   const grant = Math.max(0, Math.round(world.config.arrivalGrant));
   const granted = grant > 0 && transfer(world, 'treasury', id, grant, 'grant', `arrival grant for ${name}`);
@@ -356,6 +403,7 @@ export function describeCitizen(world: World, c: Citizen): string {
   const office = c.office ? `, ${c.office}` : '';
   const n = c.needs;
   const needs = `E${Math.round(n.energy)} R${Math.round(n.rest)} S${Math.round(n.social)} C${Math.round(n.comfort)} P${Math.round(n.purpose)}`;
-  return `${c.name} (${c.id}, ${c.lineage}, ${c.brain}) — ${work}; in ${where}; ${c.wallet} ℓ; mood ${Math.round(c.mood)}; `
+  const stage = c.lifeStage === 'adult' ? '' : `, ${c.lifeStage}`;
+  return `${c.name} ${c.familyName} (${c.id}, ${c.lineage}, ${c.brain}${stage}) — ${work}; in ${where}; ${c.wallet} ℓ; mood ${Math.round(c.mood)}; `
     + `reputation ${Math.round(c.reputation)}; standing ${c.standing}${office}; ${home}; needs ${needs}`;
 }

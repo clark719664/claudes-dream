@@ -25,7 +25,7 @@ function addBusiness(w: World, ownerId: string, overrides: Partial<Business> = {
   const b: Business = {
     id, name: 'Copper Works', kind: 'workshop', ownerId, treasury: 0, district: 'harbor_market', buildingId: 'shopfronts_harbor',
     employees: [], jobs: [], inventory: { compute: 0, energy: 0, goods: 0, culture: 0, knowledge: 0 }, foundedDay: w.day,
-    rentPerDay: 15, daysNegative: 0, revenueToday: 0, costsToday: 0, dissolvedDay: null, ...overrides,
+    rentPerDay: 15, daysNegative: 0, revenueToday: 0, costsToday: 0, dissolvedDay: null, shelf: {}, ...overrides,
   };
   w.businesses[id] = b;
   w.citizens[ownerId].businessId = id;

@@ -7,7 +7,7 @@ import { SKILLS, clamp } from '../types.ts';
 import type {
   ActionResult, Business, BusinessId, Citizen, CitizenId, Job, JobId, JobOutput, JobRole, MoneyParty, Skill, World,
 } from '../types.ts';
-import { CITY_JOBS, COURIER_CONTRACT } from '../data/jobs.ts';
+import { CITY_JOBS, COURIER_CONTRACT, COURIER_CONTRACTS_PER_DAY } from '../data/jobs.ts';
 import { DISTRICTS, districtOfBuilding } from '../data/city.ts';
 import type { JobTemplate } from '../data/jobs.ts';
 import { nextId } from '../util/ids.ts';
@@ -15,6 +15,7 @@ import { emit, remember } from '../sim/events.ts';
 import { transfer, withholdingPay } from './treasury.ts';
 import { buyFromMarket, deliverToMarket, takeFromMarket, wholeUnits } from './market.ts';
 import { addHousingProgress } from './housing.ts';
+import { isPieceRateJob, pieceRate, planCityPosts, postToClose, postedPieceRate, refreshCityWages } from './planning.ts';
 
 export const CITY_EMPLOYER_NAME = 'City of Reverie';
 /** Skill gained per shift in the job's skill (×1.5 while holding knowledge). */
@@ -48,10 +49,12 @@ function jobFromTemplate(world: World, t: JobTemplate, employer: BusinessId | 'c
     output: { ...t.output }, holderId: null, createdDay: world.day,
   };
   world.jobs[id] = job;
+  // a production post advertises today's piece rate, not the founding wage
+  if (isPieceRateJob(job)) job.wage = postedPieceRate(world, job);
   return job;
 }
 
-/** Open one more city position for a role (used at founding and when the Watch grows). Null if the role has no template. */
+/** Open one more city position for a role (used at founding, when the Watch grows, and by the daily plan). Null if the role has no template. */
 export function createCityJob(world: World, role: JobRole): Job | null {
   const t = CITY_JOBS.find((x) => x.role === role);
   return t ? jobFromTemplate(world, t, 'city', t.wage) : null;
@@ -232,10 +235,25 @@ function growSkill(world: World, c: Citizen, job: Job): void {
   c.skills[job.skill] = clamp(c.skills[job.skill] + gain, 0, 100);
 }
 
+/**
+ * The city buys at most COURIER_CONTRACTS_PER_DAY courier shifts a day, first
+ * come first served; later shifts run for the business alone. Returns the
+ * contract paid (0 when the day's contracts are spent or the Treasury is bare).
+ */
+function courierContract(world: World, c: Citizen, biz: Business): number {
+  const key = 'courierContracts';
+  const dayKey = 'courierContractsDay';
+  if (world.counters[dayKey] !== world.day) { world.counters[dayKey] = world.day; world.counters[key] = 0; }
+  if ((world.counters[key] ?? 0) >= COURIER_CONTRACTS_PER_DAY) return 0;
+  if (!transfer(world, 'treasury', biz.id, COURIER_CONTRACT, 'fee', `courier contract: ${c.name}`)) return 0;
+  world.counters[key] = (world.counters[key] ?? 0) + 1;
+  return COURIER_CONTRACT;
+}
+
 function applyRoleSpecials(world: World, c: Citizen, job: Job, biz: Business | null): void {
   switch (job.role) {
     case 'courier':
-      if (biz) transfer(world, 'treasury', biz.id, COURIER_CONTRACT, 'fee', `courier contract: ${c.name}`);
+      if (biz) courierContract(world, c, biz);
       break;
     case 'watch_officer':
       world.counters.patrolTicks = (world.counters.patrolTicks ?? 0) + 1;
@@ -269,11 +287,11 @@ export function workShift(world: World, cId: CitizenId): ActionResult {
   const damage = building ? clamp(building.damage, 0, 1) : 0;
   if (damage >= 1) return fail(`${building?.name ?? 'Your workplace'} is in ruins; nothing can be done there until it is repaired.`);
 
-  const wage = Math.round(Math.max(world.government.minWage, job.wage));
+  const flatWage = Math.round(Math.max(world.government.minWage, job.wage));
   const biz = employerBusiness(world, job);
   if (job.employer !== 'city') {
     if (!biz || biz.dissolvedDay !== null) { releaseJob(world, c); return fail('Your employer has closed its doors.'); }
-    if (biz.treasury < wage) return fail(`${biz.name} cannot pay your wage of ${wage} ℓ: the employer's treasury is empty.`);
+    if (biz.treasury < flatWage) return fail(`${biz.name} cannot pay your wage of ${flatWage} ℓ: the employer's treasury is empty.`);
   }
 
   const skillValue = job.skill ? c.skills[job.skill] : meanSkill(c);
@@ -282,19 +300,23 @@ export function workShift(world: World, cId: CitizenId): ActionResult {
 
   const out = job.output;
   let produced = 0;
+  let made = 0;
   if (out.good && out.qty) {
-    const qty = out.qty * effective;
+    made = out.qty * effective;
     if (biz) {
-      produced = wholeUnits(world, `carry:${biz.id}:${out.good}`, qty);
+      produced = wholeUnits(world, `carry:${biz.id}:${out.good}`, made);
       biz.inventory[out.good] += produced;
     } else {
       const before = world.market.goods[out.good].stock;
-      deliverToMarket(world, out.good, qty);
+      deliverToMarket(world, out.good, made);
       produced = world.market.goods[out.good].stock - before;
     }
   }
   if (out.housingProgress) addHousingProgress(world, out.housingProgress * effective);
 
+  // city production posts are paid by the piece: a share of what the shift's output fetches today
+  const byThePiece = isPieceRateJob(job);
+  const wage = byThePiece ? pieceRate(world, job, made) : flatWage;
   const evadeKey = `evade:${cId}`;
   const evading = (world.counters[evadeKey] ?? 0) > 0;
   if (evading) world.counters[evadeKey] -= 1;
@@ -310,9 +332,10 @@ export function workShift(world: World, cId: CitizenId): ActionResult {
   if (c.stats.shiftsWorked % SHIFTS_PER_REPUTATION === 0) c.reputation = clamp(c.reputation + 1, 0, 100);
 
   const taxNote = tax > 0 ? ` (${tax} ℓ withheld in tax)` : evading ? ' (no tax declared)' : '';
+  const rateNote = byThePiece ? ' by the piece' : '';
   const outputNote = out.good && produced > 0 ? `, producing ${produced} ${out.good}` : '';
-  remember(world, cId, 'work', `You were paid ${net} ℓ${taxNote} for a shift as ${job.title} at ${employer}${outputNote}.`);
-  return ok(`You worked a shift as ${job.title} at ${employer} and earned ${net} ℓ${taxNote}${outputNote}.`);
+  remember(world, cId, 'work', `You were paid ${net} ℓ${taxNote}${rateNote} for a shift as ${job.title} at ${employer}${outputNote}.`);
+  return ok(`You worked a shift as ${job.title} at ${employer} and earned ${net} ℓ${taxNote}${rateNote}${outputNote}.`);
 }
 
 /** Business owners post vacancies. The business must exist (programmer error otherwise). */
@@ -360,17 +383,52 @@ export function setWage(world: World, jobId: JobId, wage: number, byId?: Citizen
   return ok(`${job.title} now pays ${w} ℓ per shift.`);
 }
 
-/** Remove a job entirely, dismissing its holder. */
-export function closeJob(world: World, jobId: JobId): void {
+/** Remove a job entirely, dismissing its holder with the given reason. */
+export function closeJob(world: World, jobId: JobId, reason = 'the position was closed'): void {
   const job = world.jobs[jobId];
   if (!job) return;
-  if (job.holderId) fireFromJob(world, job.holderId, 'the position was closed');
+  if (job.holderId) fireFromJob(world, job.holderId, reason);
   const biz = employerBusiness(world, job);
   if (biz) biz.jobs = biz.jobs.filter((id) => id !== jobId);
   delete world.jobs[jobId];
 }
 
-/** Daily: everyone starts with a fresh shift count. */
+/**
+ * Carry out the day's labour plan (economy/planning.ts): open a post where a
+ * good runs short, close a vacant one where the Bazaar is overstocked, and in
+ * a deep glut let the least productive worker go. Every change is news.
+ */
+export function applyCityPlan(world: World): void {
+  for (const change of planCityPosts(world)) {
+    if (change.open > 0) {
+      const opened: Job[] = [];
+      for (let i = 0; i < change.open; i++) {
+        const job = createCityJob(world, change.role);
+        if (job) opened.push(job);
+      }
+      if (opened.length === 0) continue;
+      const rate = opened[0].wage;
+      emit(world, 'hired', `The city opened ${opened.length === 1 ? 'a' : opened.length} ${change.title} post${opened.length === 1 ? '' : 's'} at ${rate} ℓ a shift: ${change.reason}.`,
+        [], 0.3, { role: change.role, opened: opened.length });
+      continue;
+    }
+    for (let i = 0; i < change.close; i++) {
+      const job = postToClose(world, change.role);
+      if (!job) break;
+      const holder = job.holderId ? world.citizens[job.holderId] : null;
+      closeJob(world, job.id, `the city closed the post (${change.reason})`);
+      if (holder) {
+        emit(world, 'fired', `The city let ${holder.name} go as ${change.title}: ${change.reason}.`, [holder.id], 0.4, { role: change.role, layoff: true });
+      } else {
+        emit(world, 'system', `The city closed a vacant ${change.title} post: ${change.reason}.`, [], 0.2, { role: change.role });
+      }
+    }
+  }
+}
+
+/** Daily: everyone starts with a fresh shift count; piece rates and the city's posts follow the Bazaar. */
 export function dailyJobs(world: World): void {
   for (const c of Object.values(world.citizens)) c.shiftsToday = 0;
+  refreshCityWages(world);
+  applyCityPlan(world);
 }

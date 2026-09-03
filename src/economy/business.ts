@@ -57,7 +57,7 @@ export function foundBusiness(world: World, ownerId: CitizenId, name: string, ki
     id, name: trimmed, kind, ownerId, treasury: 0, district, buildingId, employees: [], jobs: [],
     inventory: { compute: 0, energy: 0, goods: 0, culture: 0, knowledge: 0 },
     foundedDay: world.day, rentPerDay: BUSINESS_RENT[kind], daysNegative: 0,
-    revenueToday: 0, costsToday: 0, dissolvedDay: null,
+    revenueToday: 0, costsToday: 0, dissolvedDay: null, shelf: {},
   };
   world.businesses[id] = biz;
   if (!transfer(world, ownerId, id, BUSINESS_CAPITAL, 'capital', `founding capital for ${trimmed}`)) {
@@ -139,7 +139,8 @@ function settleDay(world: World, biz: Business): void {
     if (tax > 0) transfer(world, biz.id, 'treasury', Math.min(tax, biz.treasury), 'profit_tax', `profit tax for ${biz.name}`);
   }
 
-  if (owner && (owner.standing === 'good' || owner.standing === 'probation') && biz.treasury > PAYOUT_RESERVE) {
+  // the owner is paid out of a profitable day's surplus; a loss-making business keeps its capital to trade on
+  if (owner && (owner.standing === 'good' || owner.standing === 'probation') && profit > 0 && biz.treasury > PAYOUT_RESERVE) {
     const payout = Math.round((biz.treasury - PAYOUT_RESERVE) * PAYOUT_SHARE);
     const { net, tax } = withholdingPay(world, biz.id, owner.id, payout, 'payout', `owner's payout from ${biz.name}`);
     if (net > 0) remember(world, owner.id, 'money', `${biz.name} paid you ${net} ℓ (${tax} ℓ withheld in tax); profit today ${profit} ℓ.`);

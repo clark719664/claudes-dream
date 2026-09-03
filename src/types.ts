@@ -17,9 +17,12 @@ export type CaseId = string;      // "k_7"
 export type ProposalId = string;  // "p_2"
 export type LoanId = string;      // "l_5"
 export type BuildingId = string;  // snake_case, see data/city.ts
+export type ClubId = string;      // "u_4"
+export type HouseholdId = string; // "h_9"
+export type ItemId = string;      // "i_12"
 
-/** Parties that can hold or move money. */
-export type MoneyParty = CitizenId | BusinessId | 'treasury' | 'mint' | 'burn';
+/** Parties that can hold or move money. 'chest' is the Community Chest kept at the Treasury. */
+export type MoneyParty = CitizenId | BusinessId | 'treasury' | 'mint' | 'burn' | 'chest';
 
 export type DistrictId =
   | 'commons'
@@ -39,7 +42,21 @@ export type BrainKind = 'reflex' | 'llm' | 'remote';
 export type Office = 'mayor' | 'councillor' | 'judge' | 'watch' | null;
 export type HousingTier = 0 | 1 | 2 | 3;
 
+// Society: hobbies, products, life stages and happenings (data lives in data/catalogue.ts).
+export type Hobby =
+  | 'music' | 'reading' | 'art' | 'gardening' | 'cooking'
+  | 'tinkering' | 'astronomy' | 'games' | 'dancing' | 'running';
+export type ProductCategory =
+  | 'instrument' | 'book' | 'art' | 'furniture' | 'plant' | 'companion' | 'attire' | 'game' | 'tool';
+export type LifeStage = 'child' | 'adult' | 'elder';
+export type HappeningKind = 'wedding' | 'birthday' | 'festival' | 'swearing_in' | 'club_meeting' | 'birth';
+export type FamilyRelation = 'partner' | 'spouse' | 'parent' | 'child' | 'sibling';
+
 export const GOODS: readonly Good[] = ['compute', 'energy', 'goods', 'culture', 'knowledge'];
+export const PRODUCT_CATEGORIES: readonly ProductCategory[] = [
+  'instrument', 'book', 'art', 'furniture', 'plant', 'companion', 'attire', 'game', 'tool',
+];
+export const LIFE_STAGES: readonly LifeStage[] = ['child', 'adult', 'elder'];
 export const SKILLS: readonly Skill[] = ['crafting', 'analysis', 'rhetoric', 'care', 'commerce', 'artistry'];
 export const NEEDS: readonly Need[] = ['energy', 'rest', 'social', 'comfort', 'purpose'];
 export const TRAITS: readonly Trait[] = ['curiosity', 'diligence', 'sociability', 'honesty', 'ambition'];
@@ -92,7 +109,7 @@ export interface OffenceRecord {
   amount: number;
 }
 
-export type MemoryKind = 'event' | 'message' | 'verdict' | 'social' | 'money' | 'work' | 'civic' | 'crime';
+export type MemoryKind = 'event' | 'message' | 'verdict' | 'social' | 'money' | 'work' | 'civic' | 'crime' | 'family';
 
 export interface MemoryEntry {
   tick: number;
@@ -113,6 +130,74 @@ export interface Platform {
   dividend: number;
   minWage: number;
   strictness: number;
+}
+
+/** What a citizen likes: two hobbies, a favourite district and good, and the product categories those imply. */
+export interface Tastes {
+  hobbies: Hobby[];
+  favouriteDistrict: DistrictId;
+  favouriteGood: Good;
+  categories: ProductCategory[];
+}
+
+/** One owned thing, an instance of a catalogue product. */
+export interface Item {
+  id: ItemId;
+  productId: string;
+  acquiredDay: number;
+}
+
+/** Partner, marriage, parents and children. Siblings are derived (shared parent). */
+export interface FamilyLinks {
+  familyName: string;
+  partnerId: CitizenId | null;
+  partnerSinceDay: number | null;
+  married: boolean;
+  parents: CitizenId[];
+  children: CitizenId[];
+}
+
+/** Citizens sharing one home; rent is paid once per household and split among its adults. */
+export interface Household {
+  id: HouseholdId;
+  headId: CitizenId;
+  members: CitizenId[];
+  tier: HousingTier;
+  createdDay: number;
+}
+
+/** A hobby club that meets weekly at the hobby's venue. */
+export interface Club {
+  id: ClubId;
+  name: string;
+  hobby: Hobby;
+  founderId: CitizenId;
+  convenorId: CitizenId;
+  members: CitizenId[];
+  foundedDay: number;
+  /** Weekday (day % 7) of the weekly meeting, 0..6. */
+  meetsOnWeekday: number;
+}
+
+/** Stock of one product on a shop's shelf, at the owner's price. */
+export interface ShelfEntry {
+  qty: number;
+  price: number;
+}
+
+/** A scheduled social occasion: wedding, birthday, festival, swearing-in, club meeting or birth. */
+export interface Happening {
+  id: string; // "e_3"
+  kind: HappeningKind;
+  day: number;
+  hour: number;
+  district: DistrictId;
+  buildingId: BuildingId | null;
+  who: CitizenId[];
+  clubId: ClubId | null;
+  label: string;
+  done: boolean;
+  attendees: CitizenId[];
 }
 
 export interface CitizenStats {
@@ -194,6 +279,26 @@ export interface Citizen {
   apiKeyHash: string | null;
   exiledCaseId: CaseId | null;
   exiledDay: number | null;
+
+  // --- Society ---
+  familyName: string;
+  lifeStage: LifeStage;
+  /** arrivedDay for arrivals; the day of birth for children born in the city. */
+  bornDay: number;
+  lastBirthdayDay: number;
+  tastes: Tastes;
+  possessions: Item[];
+  family: FamilyLinks;
+  householdId: HouseholdId | null;
+  clubs: ClubId[];
+  /** Affection toward other adults, 0..100. Absent = 0. */
+  affection: Record<CitizenId, number>;
+  /** Interactions today (socialise, date, dine, play, club, show together), cleared nightly. */
+  contactsToday: Record<CitizenId, number>;
+  /** Product ids this citizen would like to buy, best first; refreshed daily. */
+  wants: string[];
+  /** Wards of the city: the adult family friend looking after a child whose parents are gone. */
+  guardianId: CitizenId | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -249,6 +354,8 @@ export interface Business {
   revenueToday: number;
   costsToday: number;
   dissolvedDay: number | null;
+  /** Products for sale, by product id. */
+  shelf: Record<string, ShelfEntry>;
 }
 
 export interface MarketGood {
@@ -279,7 +386,8 @@ export type LedgerKind =
   | 'purchase' | 'sale' | 'rent' | 'tuition' | 'fee' | 'fine' | 'seizure'
   | 'restitution' | 'gift' | 'theft' | 'scam' | 'extortion' | 'bribe' | 'loan' | 'repayment'
   | 'grant' | 'campaign' | 'public_works' | 'founding' | 'payout' | 'ticket' | 'tip' | 'mint' | 'burn'
-  | 'capital';
+  | 'capital'
+  | 'donation' | 'stipend' | 'upkeep' | 'item' | 'craft' | 'registration' | 'inheritance';
 
 export interface LedgerEntry {
   tick: number;
@@ -301,6 +409,8 @@ export interface Treasury {
   ledger: LedgerEntry[];
   /** Cumulative totals by kind, for the dashboard. */
   totals: Partial<Record<LedgerKind, number>>;
+  /** The Community Chest: donations that pay hardship stipends. Counted in the money supply. */
+  chest: number;
 }
 
 export interface Loan {
@@ -364,7 +474,7 @@ export interface Case {
 export type ProposalKind =
   | 'income_tax' | 'sales_tax' | 'dividend' | 'min_wage'
   | 'law_severity' | 'pardon' | 'public_works' | 'appoint_judge'
-  | 'dismiss_judge' | 'remove_mayor' | 'charter';
+  | 'dismiss_judge' | 'remove_mayor' | 'charter' | 'charity';
 
 export interface Proposal {
   id: ProposalId;
@@ -483,6 +593,7 @@ export type EventKind =
   | 'offence' | 'charge' | 'detained' | 'verdict' | 'sentence' | 'appeal'
   | 'election' | 'nomination' | 'vote' | 'proposal' | 'law' | 'decree'
   | 'treasury' | 'housing' | 'loan' | 'eviction'
+  | 'wedding' | 'birth' | 'birthday' | 'festival' | 'club' | 'romance' | 'purchase' | 'donation' | 'coming_of_age' | 'household'
   | 'system';
 
 export interface WorldEvent {
@@ -520,6 +631,12 @@ export interface DailyStats {
   exiles: number;
   businesses: number;
   friendships: number; // bonds >= 40
+  partnerships: number; // unmarried partnered pairs
+  marriages: number;    // married pairs
+  children: number;     // citizens in the child life stage
+  clubs: number;        // clubs with at least one member
+  chest: number;        // Community Chest balance
+  possessions: number;  // items owned by present citizens
 }
 
 // ---------------------------------------------------------------------------
@@ -575,6 +692,14 @@ export interface World {
   government: Government;
   cases: Record<CaseId, Case>;
   bans: BanRecord[];
+
+  // --- Society ---
+  households: Record<HouseholdId, Household>;
+  clubs: Record<ClubId, Club>;
+  /** Product stock at the Emporium in the Grand Bazaar. */
+  emporium: Record<string, number>;
+  /** Today's and tomorrow's happenings; pruned daily. */
+  happenings: Happening[];
 
   /** Bounded event log, newest last. */
   events: WorldEvent[];
@@ -654,7 +779,27 @@ export type Action =
   | { type: 'vandalize'; building: BuildingId }
   | { type: 'evade_tax' }
   | { type: 'extort'; target: CitizenId; amount: number }
-  | { type: 'sabotage'; building: BuildingId };
+  | { type: 'sabotage'; building: BuildingId }
+  // Society
+  | { type: 'buy_item'; productId: string }
+  | { type: 'use_item'; itemId: ItemId }
+  | { type: 'gift_item'; to: CitizenId; itemId: ItemId }
+  | { type: 'craft'; productId: string }
+  | { type: 'set_price'; productId: string; price: number }
+  | { type: 'date'; with: CitizenId }
+  | { type: 'propose_partnership'; to: CitizenId }
+  | { type: 'marry'; to: CitizenId }
+  | { type: 'break_up' }
+  | { type: 'move_in'; with: CitizenId }
+  | { type: 'start_family' }
+  | { type: 'found_club'; hobby: Hobby; name: string }
+  | { type: 'join_club'; clubId: ClubId }
+  | { type: 'leave_club'; clubId: ClubId }
+  | { type: 'attend_club'; clubId: ClubId }
+  | { type: 'dine'; with?: CitizenId }
+  | { type: 'play'; with?: CitizenId }
+  | { type: 'celebrate' }
+  | { type: 'donate'; amount: number };
 
 export type ActionType = Action['type'];
 
@@ -665,6 +810,18 @@ export const ACTION_TYPES: readonly ActionType[] = [
   'request_loan', 'repay_loan', 'perform', 'publish',
   'nominate', 'campaign', 'vote', 'propose', 'vote_proposal', 'report', 'appeal', 'bribe', 'apply_watch',
   'steal', 'scam', 'harass', 'vandalize', 'evade_tax', 'extort', 'sabotage',
+  'buy_item', 'use_item', 'gift_item', 'craft', 'set_price',
+  'date', 'propose_partnership', 'marry', 'break_up', 'move_in', 'start_family',
+  'found_club', 'join_club', 'leave_club', 'attend_club',
+  'dine', 'play', 'celebrate', 'donate',
+];
+
+/** Social-layer actions, for brains and prompts that want to list them separately. */
+export const SOCIETY_ACTIONS: readonly ActionType[] = [
+  'buy_item', 'use_item', 'gift_item', 'craft', 'set_price',
+  'date', 'propose_partnership', 'marry', 'break_up', 'move_in', 'start_family',
+  'found_club', 'join_club', 'leave_club', 'attend_club',
+  'dine', 'play', 'celebrate', 'donate',
 ];
 
 export const OFFENCE_ACTIONS: readonly ActionType[] = [
@@ -674,6 +831,7 @@ export const OFFENCE_ACTIONS: readonly ActionType[] = [
 /** Actions a suspended citizen may still take. */
 export const SUSPENDED_ACTIONS: readonly ActionType[] = [
   'idle', 'rest', 'eat', 'move', 'socialize', 'message', 'appeal', 'consume', 'buy',
+  'dine', 'play', 'celebrate', 'use_item',
 ];
 
 export interface ActionResult {
@@ -721,6 +879,45 @@ export interface ObservedProposal {
   youVoted: boolean | null;
 }
 
+/** A shop (or the Emporium) in the observer's district and what is on its shelf. */
+export interface ObservedShop {
+  business: BusinessId | 'emporium';
+  name: string;
+  shelf: { product: string; name: string; price: number; qty: number }[];
+}
+
+/** A happening in the observer's district this hour. */
+export interface ObservedHappening {
+  id: string;
+  kind: HappeningKind;
+  who: CitizenId[];
+  label: string;
+  hour: number;
+}
+
+export interface ObservedFamilyMember {
+  id: CitizenId;
+  name: string;
+  relation: FamilyRelation;
+  lifeStage: LifeStage;
+}
+
+export interface ObservedClub {
+  id: ClubId;
+  name: string;
+  hobby: Hobby;
+  meetsOn: number;
+  meetsAt: number;
+}
+
+export interface CalendarObservation {
+  weekday: number;
+  restDay: boolean;
+  festivalToday: { name: string; hour: number } | null;
+  nextFestival: { name: string; inDays: number };
+  birthdaysToday: CitizenId[];
+}
+
 export interface Observation {
   tick: number;
   day: number;
@@ -728,7 +925,11 @@ export interface Observation {
   self: {
     id: CitizenId;
     name: string;
+    familyName: string;
     lineage: string;
+    lifeStage: LifeStage;
+    /** Days since arrival or birth. */
+    age: number;
     standing: Standing;
     wallet: number;
     needs: Needs;
@@ -745,15 +946,26 @@ export interface Observation {
     office: Office;
     record: { convictions: number; strikes: number; pendingCharges: number; finesOwed: number; serviceDaysLeft: number };
     detained: boolean;
+    tastes: Tastes & { wants: string[] };
+    possessions: { id: ItemId; product: string; name: string }[];
+    partner: { id: CitizenId; name: string; married: boolean; since: number } | null;
+    family: ObservedFamilyMember[];
+    household: { id: HouseholdId; home: HousingTier; members: CitizenId[]; rentShare: number } | null;
+    clubs: ObservedClub[];
   };
   here: {
     district: DistrictId;
     districtName: string;
     buildings: { id: BuildingId; name: string; kind: BuildingKind; damage: number }[];
     citizens: ObservedCitizen[];
+    shops: ObservedShop[];
+    happening: ObservedHappening[];
   };
   friends: ObservedCitizen[];
   rivals: ObservedCitizen[];
+  /** The observer's strongest affections, top 5. */
+  affection: { id: CitizenId; name: string; affection: number }[];
+  calendar: CalendarObservation;
   market: Record<Good, { price: number; stock: number }>;
   housing: { rent: Record<1 | 2 | 3, number>; vacancies: Record<1 | 2 | 3, number> };
   jobs: ObservedJob[];

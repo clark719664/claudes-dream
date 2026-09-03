@@ -17,6 +17,8 @@ export interface CitizenOverrides extends Partial<Omit<Citizen, 'id'>> {
 /** Insert a raw citizen into the world (no arrival grant, no events). */
 export function makeCitizen(world: World, overrides: CitizenOverrides = {}): Citizen {
   const id: CitizenId = nextId(world, 'c');
+  const bornDay = overrides.bornDay ?? overrides.arrivedDay ?? world.day;
+  const familyName = overrides.familyName ?? 'Test';
   const c: Citizen = {
     id,
     name: overrides.name ?? `Test${id}`,
@@ -62,6 +64,20 @@ export function makeCitizen(world: World, overrides: CitizenOverrides = {}): Cit
     apiKeyHash: null,
     exiledCaseId: null,
     exiledDay: null,
+    // society
+    familyName,
+    lifeStage: 'adult',
+    bornDay,
+    lastBirthdayDay: bornDay,
+    tastes: { hobbies: ['music', 'games'], favouriteDistrict: 'commons', favouriteGood: 'culture', categories: ['instrument', 'game'] },
+    possessions: [],
+    family: { familyName, partnerId: null, partnerSinceDay: null, married: false, parents: [], children: [] },
+    householdId: null,
+    clubs: [],
+    affection: {},
+    contactsToday: {},
+    wants: [],
+    guardianId: null,
     ...overrides,
     ...(overrides.personality ? { personality: { ...overrides.personality } } : {}),
   };
@@ -70,9 +86,9 @@ export function makeCitizen(world: World, overrides: CitizenOverrides = {}): Cit
   return c;
 }
 
-/** Sum of all money holdings, for conservation checks. */
+/** Sum of all money holdings (Treasury, Community Chest, wallets, business tills), for conservation checks. */
 export function totalMoney(world: World): number {
-  let sum = world.treasury.balance;
+  let sum = world.treasury.balance + (world.treasury.chest ?? 0);
   for (const c of Object.values(world.citizens)) sum += c.wallet;
   for (const b of Object.values(world.businesses)) sum += b.treasury;
   return sum;
