@@ -52,9 +52,19 @@ export const CITY_JOBS: JobTemplate[] = [
  */
 export const PIECE_RATE_ROLES: readonly JobRole[] = ['forge_operator', 'power_technician', 'fabricator', 'performer', 'artist'];
 export const PIECE_RATE_SHARE = 0.8;
+/** A piece rate is capped at this multiple of the template wage... */
 export const PIECE_RATE_CEILING = 1.5;
+/** ...or of the minimum wage, whichever is higher, so a master still out-earns a novice when the Council raises the floor. */
+export const PIECE_RATE_MIN_WAGE_CEILING = 1.25;
 /** Productivity of the typical worker whose piece rate the job board quotes. */
 export const POSTED_RATE_PRODUCTIVITY = 0.65;
+/**
+ * City posts are six-hour posts: the city spreads its work so that more
+ * citizens have a livelihood, and a shortage is met by opening posts rather
+ * than by one master working the clock round. Business owners set their own
+ * hours (up to WorldConfig.maxShiftsPerDay).
+ */
+export const CITY_SHIFTS_PER_DAY = 6;
 
 export interface PostLimits {
   /** Posts the city keeps open even in a glut. */
@@ -69,15 +79,23 @@ export interface PostLimits {
  * holds more than a week of it. Builders follow housing vacancies instead.
  */
 export const CITY_POST_LIMITS: Partial<Record<JobRole, PostLimits>> = {
-  forge_operator: { min: 3, max: 8 },
+  forge_operator: { min: 2, max: 8 },
   power_technician: { min: 2, max: 7 },
-  fabricator: { min: 2, max: 6 },
+  fabricator: { min: 1, max: 6 },
   builder: { min: 1, max: 4 },
   performer: { min: 1, max: 3 },
-  artist: { min: 1, max: 2 },
+  artist: { min: 0, max: 2 },
 };
 /** Every this many citizens above the seed population adds one to each role's maximum. */
 export const POST_PER_CITIZENS = 15;
+/**
+ * Service posts the city grows with its population (the Watch grows on its
+ * own rules in government/watch.ts): one more post per role for every
+ * SERVICE_POST_PER_CITIZENS citizens above the seed population. Service
+ * posts are never closed while someone holds them.
+ */
+export const SERVICE_SCALED_ROLES: readonly JobRole[] = ['medic', 'teacher', 'librarian', 'researcher', 'journalist', 'merchant'];
+export const SERVICE_POST_PER_CITIZENS = 12;
 
 // ---------------------------------------------------------------------------
 // Businesses

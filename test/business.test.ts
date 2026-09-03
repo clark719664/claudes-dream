@@ -37,7 +37,7 @@ test('foundBusiness splits the founding cost, posts jobs and picks premises by k
     assert.equal(job.employer, biz.id);
     assert.equal(job.role, 'fabricator');
     assert.equal(job.district, 'harbor_market');
-    assert.equal(job.wage, 14);
+    assert.equal(job.wage, 9); // template wages sit at the founding minimum wage
   }
   assert.equal(totalMoney(w), before);
   const ev = w.events.find((e) => e.kind === 'business_founded');
@@ -129,19 +129,19 @@ test('dailyBusinesses collects rent, taxes profit, pays the owner and conserves 
   const t0 = w.treasury.balance;
   const wallet0 = owner.wallet;
   dailyBusinesses(w);
-  // rent 15 → costs 65 → profit 235 → tax 24 → treasury 461 → payout 181 (tax 27, net 154) → 280
-  assert.equal(biz.treasury, 280);
-  assert.equal(owner.wallet, wallet0 + 154);
-  assert.equal(w.treasury.balance, t0 + 15 + 24 + 27);
-  assert.equal(w.treasury.totals.rent, 15);
+  // rent 12 → costs 62 → profit 238 → tax 24 → treasury 464 → payout 182 (tax 27, net 155) → 282
+  assert.equal(biz.treasury, 282);
+  assert.equal(owner.wallet, wallet0 + 155);
+  assert.equal(w.treasury.balance, t0 + 12 + 24 + 27);
+  assert.equal(w.treasury.totals.rent, 12);
   assert.equal(w.treasury.totals.profit_tax, 24);
-  assert.equal(w.treasury.totals.payout, 154);
-  assert.equal(owner.stats.totalEarned, 154);
+  assert.equal(w.treasury.totals.payout, 155);
+  assert.equal(owner.stats.totalEarned, 155);
   assert.equal(biz.revenueToday, 0);
   assert.equal(biz.costsToday, 0);
   assert.equal(biz.daysNegative, 0);
   assert.equal(totalMoney(w), before);
-  assert.ok(owner.memory.some((m) => m.text.includes('154 ℓ')));
+  assert.ok(owner.memory.some((m) => m.text.includes('155 ℓ')));
 });
 
 test('a business with no profit pays no profit tax and no payout below the reserve', () => {
@@ -150,10 +150,26 @@ test('a business with no profit pays no profit tax and no payout below the reser
   biz.treasury = 90;
   const wallet0 = owner.wallet;
   dailyBusinesses(w);
-  assert.equal(biz.treasury, 75);
+  assert.equal(biz.treasury, 78);
   assert.equal(owner.wallet, wallet0);
   assert.equal(w.treasury.totals.profit_tax, undefined);
   assert.equal(biz.daysNegative, 0); // still covers tomorrow's rent
+});
+
+test('a loss-making day pays the owner nothing: the capital stays in the business', () => {
+  const w = makeWorld();
+  const { owner, biz } = founded(w);
+  biz.treasury = 400;
+  biz.revenueToday = 20;
+  biz.costsToday = 80;
+  const wallet0 = owner.wallet;
+  const before = totalMoney(w);
+  dailyBusinesses(w);
+  assert.equal(owner.wallet, wallet0);
+  assert.equal(biz.treasury, 400 - BUSINESS_RENT.workshop);
+  assert.equal(biz.daysNegative, 0, 'a loss with cash in hand is not yet underwater');
+  assert.ok(owner.memory.some((m) => /lost 72 ℓ today/.test(m.text)), 'the loss includes the rent');
+  assert.equal(totalMoney(w), before);
 });
 
 test('three days underwater means bankruptcy: staff dismissed, owner marked, record kept', () => {

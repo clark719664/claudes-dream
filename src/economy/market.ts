@@ -9,17 +9,20 @@
  */
 import { GOODS, clamp } from '../types.ts';
 import type { ActionResult, BusinessId, Citizen, CitizenId, Good, Inventory, World } from '../types.ts';
+import { CITY_JOBS, PIECE_RATE_ROLES, PIECE_RATE_SHARE, POSTED_RATE_PRODUCTIVITY } from '../data/jobs.ts';
 import { emit, remember } from '../sim/events.ts';
 import { balanceOf, transfer } from './treasury.ts';
 
 /** Proportional price step per tick when demand and supply diverge. */
 export const PRICE_STEP = 0.05;
 /**
- * Fraction of the gap to the founding price closed every tick. The founding
- * price is the anchor; flows push a price away from it and this pulls it back,
- * so a moderate imbalance settles in a band instead of walking to a bound.
+ * Fraction of the gap to the anchor price closed every tick. The anchor is
+ * the founding price, or the cost of making the good at the current minimum
+ * wage if that is higher (see anchorPrice); flows push a price away from it
+ * and this pulls it back, so a moderate imbalance settles in a band instead
+ * of walking to a bound.
  */
-export const MEAN_REVERSION = 0.01;
+export const MEAN_REVERSION = 0.02;
 /** Prices never exceed this multiple of the founding price. */
 export const PRICE_CAP_MULTIPLIER = 20;
 /**
@@ -39,11 +42,11 @@ export const FLOW_WINDOW_TICKS = 24;
 export const COMFORT_COVER_DAYS = 3;
 /**
  * Least upward pressure (as a share of a full step) while the shelf is bare
- * and buyers are going without. Against the 1% pull toward the founding price
- * it settles a lasting famine at about twice that price: a real scarcity
+ * and buyers are going without. Against the 2% pull toward the anchor price
+ * it settles a lasting famine at about 1.6× that price: a real scarcity
  * signal that can never walk to the cap on its own.
  */
-export const SHORTAGE_PRESSURE = 0.1;
+export const SHORTAGE_PRESSURE = 0.15;
 /**
  * Days of demand the Bazaar will hold before it stops buying a good from
  * citizens and businesses. Without this the Treasury would pay for every
@@ -52,7 +55,7 @@ export const SHORTAGE_PRESSURE = 0.1;
  * overproduction is bounded. City production is not bought and is managed
  * by the labour plan instead (economy/planning.ts).
  */
-export const BAZAAR_MAX_COVER_DAYS = 10;
+export const BAZAAR_MAX_COVER_DAYS = 4;
 /** Supply rate (units per tick) below which the ratio treats supply as "about one unit a day". */
 const MIN_SUPPLY_RATE = 1 / FLOW_WINDOW_TICKS;
 /** A single trade worth at least this much is newsworthy enough for the log. */
@@ -86,6 +89,41 @@ export function wholeUnits(world: World, key: string, qty: number): number {
 
 export function marketPrice(world: World, good: Good): number {
   return world.market.goods[good].price;
+}
+
+/**
+ * What a unit of a city-made good costs to make at the current minimum wage:
+ * the wage of a typical shift divided by the share of its output the wage
+ * covers (data/jobs.ts piece rates), for the most productive post making the
+ * good. Null for goods no piece-rate post makes.
+ */
+export function costPrice(world: World, good: Good): number | null {
+  let unitsPerWage = 0;
+  for (const t of CITY_JOBS) {
+    if (t.output.good !== good || !PIECE_RATE_ROLES.includes(t.role)) continue;
+    unitsPerWage = Math.max(unitsPerWage, (t.output.qty ?? 0) * POSTED_RATE_PRODUCTIVITY * PIECE_RATE_SHARE);
+  }
+  if (unitsPerWage <= 0) return null;
+  return Math.max(0, world.government.minWage) / unitsPerWage;
+}
+
+/**
+ * The price a good drifts back toward: its founding price, or its cost at
+ * the current minimum wage when the Council has set that higher. A higher
+ * minimum wage therefore passes through to prices rather than bankrupting
+ * every producer, and at the founding minimum wage the anchor is the
+ * founding price by construction.
+ */
+export function anchorPrice(world: World, good: Good): number {
+  const base = world.market.goods[good].basePrice;
+  const cost = costPrice(world, good);
+  return cost === null ? base : Math.max(base, cost);
+}
+
+/** Price relative to its anchor (1 = where it would settle with supply and demand balanced). */
+export function priceVsAnchor(world: World, good: Good): number {
+  const anchor = anchorPrice(world, good);
+  return anchor > 0 ? world.market.goods[good].price / anchor : 1;
 }
 
 /** Units buyers asked for this tick that the shelf could not provide (cleared by tickMarket). */
@@ -275,9 +313,10 @@ function setEffectivePrice(world: World, good: Good, value: number): void {
  * as a shortage and add a small fixed pressure (SHORTAGE_PRESSURE), because
  * in a city where the Bazaar pays fixed wages and keeps the takings a full
  * rationing price would only starve the poor. Every tick the price also
- * drifts 1% of the way back toward the founding price, so a glut settles at
- * a discount and a squeeze at a premium rather than at the floor or the cap.
- * A merchant on shift smooths the market (half step).
+ * drifts 2% of the way back toward its anchor (the founding price, or the
+ * cost of production at the minimum wage), so a glut settles at a discount
+ * and a squeeze at a premium rather than at the floor or the cap. A merchant
+ * on shift smooths the market (half step).
  */
 export function tickMarket(world: World): void {
   const m = world.market;
@@ -291,7 +330,7 @@ export function tickMarket(world: World): void {
     const unmet = unmetDemand(world, good);
     const short = g.stock <= 0 && (g.demandTick > 0 || unmet > 0);
     const current = effectivePrice(world, good);
-    let next = current + (g.basePrice - current) * MEAN_REVERSION;
+    let next = current + (anchorPrice(world, good) - current) * MEAN_REVERSION;
     if (g.demandTick > 0 || g.supplyTick > 0 || unmet > 0) {
       const flow = clamp((rates.demand - rates.supply) / Math.max(rates.supply, MIN_SUPPLY_RATE), -1, 1);
       let ratio = flow * coverGate(daysOfCover(world, good), flow > 0);

@@ -18,24 +18,31 @@
 import { clamp } from '../types.ts';
 import type { Good, Job, JobRole, World } from '../types.ts';
 import {
-  CITY_JOBS, CITY_POST_LIMITS, PIECE_RATE_CEILING, PIECE_RATE_ROLES, PIECE_RATE_SHARE, POSTED_RATE_PRODUCTIVITY, POST_PER_CITIZENS,
+  CITY_JOBS, CITY_POST_LIMITS, PIECE_RATE_CEILING, PIECE_RATE_MIN_WAGE_CEILING, PIECE_RATE_ROLES, PIECE_RATE_SHARE,
+  POSTED_RATE_PRODUCTIVITY, POST_PER_CITIZENS, SERVICE_POST_PER_CITIZENS, SERVICE_SCALED_ROLES,
 } from '../data/jobs.ts';
 import type { JobTemplate } from '../data/jobs.ts';
-import { daysOfCover } from './market.ts';
+import { daysOfCover, flowRates, priceVsAnchor } from './market.ts';
 import { vacancies } from './housing.ts';
 
 /** Above this many days of cover the city stops filling vacant posts for the good. */
-export const GLUT_COVER_DAYS = 8;
+export const GLUT_COVER_DAYS = 6;
 /** Above this many days of cover the city lets a worker go each day. */
-export const LAYOFF_COVER_DAYS = 14;
+export const LAYOFF_COVER_DAYS = 12;
 /** Below this many days of cover (or in a reported shortage) the city opens a post each day. */
 export const SHORTAGE_COVER_DAYS = 2;
-/** A price this far above founding also counts as a shortage. */
+/** A price this far above its anchor also counts as a shortage. */
 export const SHORTAGE_PRICE_RATIO = 1.3;
+/** Supply running this far ahead of demand (smoothed over a day) is a glut even on a thin shelf... */
+export const OVERSUPPLY_RATIO = 1.2;
+/** ...and with the price this far below its anchor the city lets a worker go. */
+export const CRUSHED_PRICE_RATIO = 0.8;
 /** Free housing units above which the Builders' Yard slows down... */
 export const HOUSING_SLACK_FREEZE = 8;
 /** ...and below which it hires. */
 export const HOUSING_SLACK_BUILD = 3;
+/** With this share of adults out of work (and homes not in surplus) the Yard hires anyway: public works. */
+export const JOBLESS_SHARE_FOR_WORKS = 0.3;
 /** The plan waits for the demand averages to settle before touching any post. */
 export const PLANNING_FROM_DAY = 2;
 
@@ -65,7 +72,7 @@ export function pieceRate(world: World, job: Job, units: number): number {
   const price = world.market.goods[good]?.price ?? 0;
   const base = cityTemplate(job.role)?.wage ?? job.wage;
   const floor = Math.round(world.government.minWage);
-  const ceiling = Math.max(floor, Math.round(base * PIECE_RATE_CEILING));
+  const ceiling = Math.max(floor, Math.round(base * PIECE_RATE_CEILING), Math.round(floor * PIECE_RATE_MIN_WAGE_CEILING));
   const value = Number.isFinite(units) && units > 0 ? units * price * PIECE_RATE_SHARE : 0;
   return clamp(Math.round(value), floor, ceiling);
 }
@@ -80,11 +87,6 @@ export function refreshCityWages(world: World): void {
   for (const job of Object.values(world.jobs)) {
     if (isPieceRateJob(job)) job.wage = postedPieceRate(world, job);
   }
-}
-
-function priceRatio(world: World, good: Good): number {
-  const g = world.market.goods[good];
-  return g && g.basePrice > 0 ? g.price / g.basePrice : 1;
 }
 
 /** Most posts of a role the city will keep open at the current population. */
@@ -119,32 +121,77 @@ function goodSignal(world: World, template: JobTemplate): Signal {
   const good = template.output.good as Good;
   const cover = daysOfCover(world, good);
   const g = world.market.goods[good];
-  const ratio = priceRatio(world, good);
+  const ratio = priceVsAnchor(world, good);
+  const rates = flowRates(world, good);
   const shortage = world.market.shortages.includes(good) || (g.stock <= 0);
   const atLoss = postRunsAtLoss(world, template);
   const dear = ratio >= SHORTAGE_PRICE_RATIO && !atLoss;
   const short = shortage || cover < SHORTAGE_COVER_DAYS || dear;
-  const glut = !short && (cover > GLUT_COVER_DAYS || atLoss);
-  const deep = glut && (cover > LAYOFF_COVER_DAYS || (atLoss && cover > SHORTAGE_COVER_DAYS * 2));
+  const oversupplied = rates.supply > rates.demand * OVERSUPPLY_RATIO && rates.supply * 24 >= 1;
+  const glut = !short && (cover > GLUT_COVER_DAYS || atLoss || oversupplied);
+  const deep = glut && (cover > LAYOFF_COVER_DAYS || (atLoss && cover > SHORTAGE_COVER_DAYS * 2) || (oversupplied && ratio < CRUSHED_PRICE_RATIO));
   const days = cover >= 100 ? 'months' : `${cover.toFixed(1)} days`;
   let reason: string;
   if (shortage) reason = `the Bazaar has run out of ${good}`;
   else if (short && !dear) reason = `the Bazaar holds only ${days} of ${good}`;
-  else if (dear) reason = `${good} sells at ${g.price} ℓ, well above its founding price`;
+  else if (dear) reason = `${good} sells at ${g.price} ℓ, well above its usual price`;
   else if (atLoss && cover <= GLUT_COVER_DAYS) reason = `at ${g.price} ℓ a unit a shift's ${good} is worth less than the minimum wage`;
+  else if (oversupplied && cover <= GLUT_COVER_DAYS) reason = `${good} is made faster than it sells (${Math.round(rates.supply * 24)} a day against ${Math.round(rates.demand * 24)})`;
   else reason = `the Bazaar holds ${days} of ${good}`;
   return { short, glut, deep, reason };
+}
+
+/** Share of present adults in good standing with neither a job nor a business. */
+export function joblessShare(world: World): number {
+  let adults = 0;
+  let jobless = 0;
+  for (const id of world.order) {
+    const c = world.citizens[id];
+    if (!c || (c.standing !== 'good' && c.standing !== 'probation') || c.lifeStage === 'child') continue;
+    adults++;
+    const job = c.jobId ? world.jobs[c.jobId] : null;
+    const biz = c.businessId ? world.businesses[c.businessId] : null;
+    if (!(job && job.holderId === c.id) && !(biz && biz.dissolvedDay === null)) jobless++;
+  }
+  return adults === 0 ? 0 : jobless / adults;
 }
 
 function housingSignal(world: World): Signal {
   const v = vacancies(world);
   const slack = v[1] + v[2] + v[3];
-  const short = slack < HOUSING_SLACK_BUILD;
-  const glut = slack > HOUSING_SLACK_FREEZE;
-  const reason = short
+  const jobless = joblessShare(world);
+  const works = jobless >= JOBLESS_SHARE_FOR_WORKS && slack <= HOUSING_SLACK_FREEZE;
+  const short = slack < HOUSING_SLACK_BUILD || works;
+  const glut = !short && slack > HOUSING_SLACK_FREEZE;
+  const reason = slack < HOUSING_SLACK_BUILD
     ? `only ${slack} home${slack === 1 ? '' : 's'} stand${slack === 1 ? 's' : ''} empty`
-    : `${slack} homes stand empty`;
+    : works ? `${Math.round(jobless * 100)}% of the city is out of work, so the Yard builds ahead of need`
+      : `${slack} homes stand empty`;
   return { short, glut, deep: glut, reason };
+}
+
+/** Service posts a role should have at the current population. */
+export function servicePostsWanted(world: World, role: JobRole): number {
+  const template = cityTemplate(role);
+  if (!template || !SERVICE_SCALED_ROLES.includes(role)) return 0;
+  const growth = Math.floor(Math.max(0, world.order.length - world.config.seedPopulation) / SERVICE_POST_PER_CITIZENS);
+  return template.slots + growth;
+}
+
+/** Grow (or, when the city shrinks, stop refilling) the service posts that follow population. */
+function planServicePosts(world: World, changes: PostChange[]): void {
+  for (const role of SERVICE_SCALED_ROLES) {
+    const template = cityTemplate(role);
+    if (!template) continue;
+    const posts = Object.values(world.jobs).filter((j) => j.employer === 'city' && j.role === role);
+    const wanted = servicePostsWanted(world, role);
+    const population = world.order.length;
+    if (posts.length < wanted) {
+      changes.push({ role, title: template.title, open: 1, close: 0, layoff: false, reason: `the city has grown to ${population} citizens` });
+    } else if (posts.length > wanted && posts.some((j) => j.holderId === null)) {
+      changes.push({ role, title: template.title, open: 0, close: 1, layoff: false, reason: `the city has shrunk to ${population} citizens` });
+    }
+  }
 }
 
 function signalFor(world: World, template: JobTemplate): Signal | null {
@@ -161,6 +208,7 @@ function signalFor(world: World, template: JobTemplate): Signal | null {
 export function planCityPosts(world: World): PostChange[] {
   if (world.day < PLANNING_FROM_DAY) return [];
   const changes: PostChange[] = [];
+  planServicePosts(world, changes);
   for (const template of CITY_JOBS) {
     const limits = CITY_POST_LIMITS[template.role];
     if (!limits) continue;

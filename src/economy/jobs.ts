@@ -7,7 +7,7 @@ import { SKILLS, clamp } from '../types.ts';
 import type {
   ActionResult, Business, BusinessId, Citizen, CitizenId, Job, JobId, JobOutput, JobRole, MoneyParty, Skill, World,
 } from '../types.ts';
-import { CITY_JOBS, COURIER_CONTRACT, COURIER_CONTRACTS_PER_DAY } from '../data/jobs.ts';
+import { CITY_JOBS, CITY_SHIFTS_PER_DAY, COURIER_CONTRACT, COURIER_CONTRACTS_PER_DAY } from '../data/jobs.ts';
 import { DISTRICTS, districtOfBuilding } from '../data/city.ts';
 import type { JobTemplate } from '../data/jobs.ts';
 import { nextId } from '../util/ids.ts';
@@ -16,7 +16,7 @@ import { transfer, withholdingPay } from './treasury.ts';
 import { buyFromMarket, deliverToMarket, takeFromMarket, wholeUnits } from './market.ts';
 import { addHousingProgress } from './housing.ts';
 import { isPieceRateJob, pieceRate, planCityPosts, postToClose, postedPieceRate, refreshCityWages } from './planning.ts';
-import { cityCanPay, dailyBudget, isBudgetedJob, noteCitySpend } from './budget.ts';
+import { cityCanPay, dailyBudget, isBudgetedJob, noteCitySpend, notePieceWage } from './budget.ts';
 
 export const CITY_EMPLOYER_NAME = 'City of Reverie';
 /** Skill gained per shift in the job's skill (×1.5 while holding knowledge). */
@@ -290,6 +290,9 @@ export function workShift(world: World, cId: CitizenId): ActionResult {
   const [start, end] = world.config.workHours;
   if (world.hour < start || world.hour >= end) return fail(`${employer} is closed at this hour (open ${start}:00–${end}:00).`);
   if (c.shiftsToday >= world.config.maxShiftsPerDay) return fail(`You have already worked ${c.shiftsToday} shifts today.`);
+  if (job.employer === 'city' && c.shiftsToday >= CITY_SHIFTS_PER_DAY) {
+    return fail(`City posts are ${CITY_SHIFTS_PER_DAY}-hour posts; you have worked yours today.`);
+  }
   const building = world.buildings[job.buildingId];
   const damage = building ? clamp(building.damage, 0, 1) : 0;
   if (damage >= 1) return fail(`${building?.name ?? 'Your workplace'} is in ruins; nothing can be done there until it is repaired.`);
@@ -331,7 +334,7 @@ export function workShift(world: World, cId: CitizenId): ActionResult {
   if (evading) world.counters[evadeKey] -= 1;
   const payer: MoneyParty = biz ? biz.id : 'treasury';
   const { net, tax } = withholdingPay(world, payer, cId, wage, 'wage', `shift as ${job.title}`, evading ? { taxRate: 0 } : undefined);
-  if (isBudgetedJob(job)) noteCitySpend(world, net);
+  if (!biz) { if (byThePiece) notePieceWage(world, net); else noteCitySpend(world, net); }
 
   applyRoleSpecials(world, c, job, biz);
   growSkill(world, c, job);

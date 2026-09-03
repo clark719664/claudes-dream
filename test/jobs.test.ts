@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
 import type { Business, Citizen, Job, JobRole, World } from '../src/types.ts';
-import { CITY_JOBS, COURIER_CONTRACT } from '../src/data/jobs.ts';
+import { CITY_JOBS, CITY_SHIFTS_PER_DAY, COURIER_CONTRACT, COURIER_CONTRACTS_PER_DAY } from '../src/data/jobs.ts';
 import { unmetDemand } from '../src/economy/market.ts';
 import {
   applyForJob, closeJob, createCityJob, createCityJobs, dailyJobs, employerName, fireFromJob, isQualified, openJobs,
@@ -49,7 +49,9 @@ test('createCityJobs opens every founding slot exactly once', () => {
   const forge = cityJob(w, 'forge_operator');
   assert.equal(forge.employer, 'city');
   assert.equal(forge.district, 'foundry_row');
-  assert.equal(forge.wage, 14);
+  // a production post advertises the piece rate a typical worker earns at today's prices: 3 × 0.65 × 6 ℓ × 0.8 = 9.36 → 9
+  assert.equal(forge.wage, 9);
+  assert.equal(cityJob(w, 'medic').wage, 16, 'service posts keep their flat wage');
   assert.equal(employerName(w, forge), 'City of Reverie');
   assert.ok(createCityJob(w, 'watch_officer'));
   assert.equal(Object.values(w.jobs).filter((j) => j.role === 'watch_officer').length, 4);
@@ -141,7 +143,7 @@ test('fireFromJob clears the job and tells everyone', () => {
   assert.equal(w.events.filter((e) => e.kind === 'fired').length, 1);
 });
 
-test('workShift at a city job pays a taxed wage, draws energy and delivers output', () => {
+test('workShift at a city production post pays a taxed piece rate, draws energy and delivers output', () => {
   const w = makeWorld();
   createCityJobs(w);
   const { c, job } = worker(w, 'forge_operator');
@@ -150,11 +152,13 @@ test('workShift at a city job pays a taxed wage, draws energy and delivers outpu
   const compute0 = w.market.goods.compute.stock;
   const res = workShift(w, c.id);
   assert.equal(res.ok, true, res.message);
-  assert.equal(c.wallet, 12); // 14 gross − 2 tax
-  assert.equal(w.treasury.balance, t0 - 12);
-  assert.equal(w.treasury.totals.income_tax, 2);
-  assert.equal(c.stats.totalEarned, 12);
-  assert.equal(c.stats.totalTaxPaid, 2);
+  assert.match(res.message, /by the piece/);
+  // 1.8 compute × 6 ℓ × 0.8 = 8.64 → floored at the minimum wage of 9; 1 ℓ withheld in tax
+  assert.equal(c.wallet, 8);
+  assert.equal(w.treasury.balance, t0 - 8);
+  assert.equal(w.treasury.totals.income_tax, 1);
+  assert.equal(c.stats.totalEarned, 8);
+  assert.equal(c.stats.totalTaxPaid, 1);
   assert.equal(c.stats.shiftsWorked, 1);
   assert.equal(c.shiftsToday, 1);
   assert.equal(w.market.goods.energy.stock, 399);
@@ -165,11 +169,58 @@ test('workShift at a city job pays a taxed wage, draws energy and delivers outpu
   assert.equal(c.skills.crafting, 20.5);
   assert.equal(c.needs.purpose, 88);
   assert.equal(c.needs.rest, 76);
-  assert.ok(c.memory.some((m) => m.kind === 'work' && m.text.includes('12 ℓ')));
+  assert.ok(c.memory.some((m) => m.kind === 'work' && m.text.includes('8 ℓ') && m.text.includes('by the piece')));
   assert.equal(totalMoney(w), before);
   workShift(w, c.id);
   assert.equal(w.market.goods.compute.stock, compute0 + 3);
   assert.equal(job.holderId, c.id);
+});
+
+test('the piece rate follows output, price and the minimum wage, within its ceiling', () => {
+  const w = makeWorld();
+  createCityJobs(w);
+  const { c } = worker(w, 'forge_operator', { skills: { crafting: 100, analysis: 20, rhetoric: 20, care: 20, commerce: 20, artistry: 20 } });
+  // a master makes 3 compute: 3 × 6 × 0.8 = 14.4 → 14 gross, 12 net
+  assert.equal(workShift(w, c.id).ok, true);
+  assert.equal(c.wallet, 12);
+  // a shortage doubles the price: 3 × 12 × 0.8 = 28.8, capped at 1.5 × the founding wage of 14 = 21 gross → 18 net
+  w.market.goods.compute.price = 12;
+  workShift(w, c.id);
+  assert.equal(c.wallet, 30);
+  // deflation: 3 × 2 × 0.8 = 4.8 → floored at the minimum wage 9 → 8 net
+  w.market.goods.compute.price = 2;
+  workShift(w, c.id);
+  assert.equal(c.wallet, 38);
+  // a higher minimum wage lifts both floor and ceiling (1.25 × 20 = 25): 3 × 6 × 0.8 = 14 → 20 gross → 17 net
+  w.government.minWage = 20;
+  w.market.goods.compute.price = 6;
+  workShift(w, c.id);
+  assert.equal(c.wallet, 55);
+  // a flat-wage service post is untouched by prices
+  const medic = worker(w, 'medic', { skills: { crafting: 20, analysis: 20, rhetoric: 20, care: 40, commerce: 20, artistry: 20 } }).c;
+  w.government.minWage = 9;
+  const r = workShift(w, medic.id);
+  assert.equal(r.ok, true, r.message);
+  assert.doesNotMatch(r.message, /by the piece/);
+  assert.equal(medic.wallet, 14); // 16 − 2
+});
+
+test('city posts are six-hour posts; business hours run to the config limit', () => {
+  const w = makeWorld();
+  createCityJobs(w);
+  const { c } = worker(w, 'forge_operator');
+  for (let i = 0; i < CITY_SHIFTS_PER_DAY; i++) assert.equal(workShift(w, c.id).ok, true);
+  const capped = workShift(w, c.id);
+  assert.equal(capped.ok, false);
+  assert.match(capped.message, /-hour posts/);
+  assert.equal(c.shiftsToday, CITY_SHIFTS_PER_DAY);
+  const owner = makeCitizen(w);
+  const biz = makeBusiness(w, owner.id, 1000);
+  const job = postJob(w, biz.id, { title: 'Courier', wage: 9, skill: null, minSkill: 0, role: 'courier' });
+  const hand = makeCitizen(w, { district: 'harbor_market', wallet: 0 });
+  applyForJob(w, hand.id, job.id);
+  for (let i = 0; i < w.config.maxShiftsPerDay; i++) assert.equal(workShift(w, hand.id).ok, true);
+  assert.equal(workShift(w, hand.id).ok, false);
 });
 
 test('workShift enforces place, hours, shift limit, standing, detention and ruined buildings', () => {
@@ -200,7 +251,7 @@ test('workShift enforces place, hours, shift limit, standing, detention and ruin
   assert.match(workShift(w, c.id).message, /ruins/);
   w.buildings.compute_forge.damage = 0.5;
   assert.equal(workShift(w, c.id).ok, true);
-  assert.equal(c.wallet, 12); // wage unaffected by damage, output is
+  assert.equal(c.wallet, 8); // half the output is worth less than the minimum wage, which still floors the piece rate
   assert.equal(workShift(w, 'c_404').ok, false);
   // a dangling job reference is cleaned up
   const orphan = makeCitizen(w, { jobId: 'j_999' });
@@ -251,12 +302,12 @@ test('tax evasion skips income tax for the counted shifts only', () => {
   w.counters[`evade:${c.id}`] = 2;
   workShift(w, c.id);
   workShift(w, c.id);
-  assert.equal(c.wallet, 28);
+  assert.equal(c.wallet, 18); // two shifts at the 9 ℓ floor, nothing declared
   assert.equal(c.stats.totalTaxPaid, 0);
   assert.equal(w.counters[`evade:${c.id}`], 0);
   workShift(w, c.id);
-  assert.equal(c.wallet, 40);
-  assert.equal(c.stats.totalTaxPaid, 2);
+  assert.equal(c.wallet, 26);
+  assert.equal(c.stats.totalTaxPaid, 1);
 });
 
 test('role specials: watch patrols, journalist scrutiny, merchant smoothing', () => {
@@ -278,10 +329,12 @@ test('knowledge speeds learning and is consumed every ten shifts; steady work bu
   createCityJobs(w);
   const { c } = worker(w, 'librarian', { inventory: { compute: 0, energy: 0, goods: 0, culture: 0, knowledge: 1 } });
   w.config.maxShiftsPerDay = 100;
-  for (let i = 0; i < 10; i++) workShift(w, c.id);
+  // a city post is six hours a day, so the day is reset between batches
+  const shift = () => { c.shiftsToday = 0; assert.equal(workShift(w, c.id).ok, true); };
+  for (let i = 0; i < 10; i++) shift();
   assert.equal(c.skills.analysis, 27.5); // 10 × 0.75
   assert.equal(c.inventory.knowledge, 0);
-  for (let i = 0; i < 10; i++) workShift(w, c.id);
+  for (let i = 0; i < 10; i++) shift();
   assert.equal(c.skills.analysis, 32.5); // 10 × 0.5
   assert.equal(c.reputation, 51); // +1 at 20 shifts
 });
@@ -318,6 +371,38 @@ test('business jobs are paid by the business, couriers earn city contracts, and 
   biz.dissolvedDay = 1;
   assert.match(workShift(w, c.id).message, /closed/);
   assert.equal(c.jobId, null);
+});
+
+test('the city buys a bounded number of courier shifts a day; the rest run for the business alone', () => {
+  const w = makeWorld();
+  const owner = makeCitizen(w);
+  const biz = makeBusiness(w, owner.id, 1000);
+  const jobs = [0, 1, 2].map(() => postJob(w, biz.id, { title: 'Courier', wage: 9, skill: null, minSkill: 0, role: 'courier' }));
+  const hands = jobs.map((job) => {
+    const c = makeCitizen(w, { district: 'harbor_market', wallet: 0 });
+    assert.equal(applyForJob(w, c.id, job.id).ok, true);
+    return c;
+  });
+  w.hour = 10;
+  w.config.maxShiftsPerDay = 20;
+  const t0 = w.treasury.balance;
+  let paid = 0;
+  for (let round = 0; round < 4; round++) {
+    for (const c of hands) {
+      const before = biz.treasury;
+      assert.equal(workShift(w, c.id).ok, true);
+      if (biz.treasury > before - 9) paid++;
+    }
+  }
+  assert.equal(paid, COURIER_CONTRACTS_PER_DAY, 'exactly the daily pool of contracts was paid');
+  assert.equal(w.treasury.balance, t0 - COURIER_CONTRACTS_PER_DAY * COURIER_CONTRACT + 12, '12 shifts of tax came back');
+  // a new day refills the pool
+  w.day += 1;
+  w.tick += 24;
+  for (const c of hands) c.shiftsToday = 0;
+  const before = biz.treasury;
+  assert.equal(workShift(w, hands[0].id).ok, true);
+  assert.equal(biz.treasury, before - 9 + COURIER_CONTRACT);
 });
 
 test('business production goes to the business inventory and buys energy from the Bazaar', () => {
@@ -373,11 +458,16 @@ test('postJobAsOwner, setWage and closeJob guard ownership and the minimum wage'
   assert.ok(w.events.some((e) => e.kind === 'fired'));
 });
 
-test('dailyJobs resets shift counts', () => {
+test('dailyJobs resets shift counts, refreshes piece rates and sets the wage budget', () => {
   const w = makeWorld();
+  createCityJobs(w);
   const a = makeCitizen(w, { shiftsToday: 7 });
   const b = makeCitizen(w, { shiftsToday: 2 });
+  w.market.goods.compute.price = 12;
   dailyJobs(w);
   assert.equal(a.shiftsToday, 0);
   assert.equal(b.shiftsToday, 0);
+  assert.equal(cityJob(w, 'forge_operator').wage, 19, 'the board quotes today\'s piece rate: 3 × 0.65 × 12 × 0.8 = 18.7');
+  assert.ok((w.counters.cityWageBudget ?? 0) > 0, 'a wage budget was set');
+  assert.ok(w.events.some((e) => e.kind === 'treasury' && /wage budget/.test(e.text)));
 });

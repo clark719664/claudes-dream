@@ -6,13 +6,13 @@
 import { clamp } from '../types.ts';
 import type { Action, Citizen, HousingTier, Job, Skill, World } from '../types.ts';
 import type { BusinessKind } from '../types.ts';
-import { BUSINESS_JOBS, COURIER_CONTRACTS_PER_DAY } from '../data/jobs.ts';
+import { BUSINESS_JOBS, CITY_SHIFTS_PER_DAY, COURIER_CONTRACTS_PER_DAY } from '../data/jobs.ts';
 import { districtDistance } from '../data/city.ts';
 import { chance, rand } from '../util/rng.ts';
 import { bankOpen, creditLimit, avgDailyIncome } from '../economy/bank.ts';
 import { isQualified, openJobs } from '../economy/jobs.ts';
 import { activeBusinesses } from '../economy/business.ts';
-import { bazaarBuying, daysOfCover } from '../economy/market.ts';
+import { bazaarBuying, daysOfCover, priceVsAnchor } from '../economy/market.ts';
 import { GLUT_COVER_DAYS } from '../economy/planning.ts';
 import { cityCanPay, isBudgetedJob } from '../economy/budget.ts';
 import { vacancies } from '../economy/housing.ts';
@@ -90,16 +90,16 @@ function workplaceUsable(world: World, job: Job): boolean {
  * when the whole city needs them at their post.
  */
 export function shiftsWanted(world: World, c: Citizen): number {
-  const max = world.config.maxShiftsPerDay;
+  const job = heldJob(world, c);
+  const max = job?.employer === 'city' ? Math.min(world.config.maxShiftsPerDay, CITY_SHIFTS_PER_DAY) : world.config.maxShiftsPerDay;
   let n = 4 + c.personality.diligence * 6;
   if (c.wallet > 800) n -= 1;
   if (c.wallet > 2000) n -= 1;
-  const job = heldJob(world, c);
   const good = job?.output.good;
-  if (good && (priceRatio(world, good) >= 1.5 || world.market.goods[good].stock <= 0)) n = Math.max(n, max - 2);
+  if (good && (priceVsAnchor(world, good) >= 1.5 || world.market.goods[good].stock <= 0)) n = Math.max(n, max - 2);
   else if (good && daysOfCover(world, good) > GLUT_COVER_DAYS) n = Math.min(n, GLUT_SHIFTS);
-  else if (good && priceRatio(world, good) < GLUT_RATIO && world.market.goods[good].stock > GLUT_STOCK) n = Math.min(n, GLUT_SHIFTS);
-  return clamp(Math.round(n), 2, max);
+  else if (good && priceVsAnchor(world, good) < GLUT_RATIO && world.market.goods[good].stock > GLUT_STOCK) n = Math.min(n, GLUT_SHIFTS);
+  return clamp(Math.round(n), Math.min(2, max), max);
 }
 
 /** Ask the Lantern Bank for a modest loan (callers decide when it is needed). */

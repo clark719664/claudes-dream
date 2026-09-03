@@ -4,7 +4,8 @@
  * have been paid, the Treasury sets aside what it may spend on city wages
  * and contracts that day:
  *
- *     budget = yesterday's revenue + DRAWDOWN_RATE × balance − today's fixed spend
+ *     budget = yesterday's revenue − yesterday's piece wages
+ *              + DRAWDOWN_RATE × balance − today's fixed spend
  *
  * floored at a small share of the balance so the city never shuts down while
  * it has money. Shifts at city posts draw on the budget first come, first
@@ -18,7 +19,9 @@
  * Piece-rate production posts (economy/planning.ts) are outside the budget:
  * their pay is a share of what their output fetches, and the Bazaar sells
  * that output on at price plus tax, so the forges pay for themselves and the
- * city never starves itself to balance the books. Gluts are handled by the
+ * city never starves itself to balance the books. What they were paid
+ * yesterday is still deducted from today's budget, so the whole of public
+ * spending stays inside revenue plus the drawdown. Gluts are handled by the
  * labour plan, not the budget.
  */
 import type { Job, World } from '../types.ts';
@@ -27,7 +30,7 @@ import { formatLumens } from './treasury.ts';
 import { isPieceRateJob } from './planning.ts';
 
 /** Share of the Treasury balance the city may spend beyond its revenue each day. */
-export const DRAWDOWN_RATE = 0.008;
+export const DRAWDOWN_RATE = 0.006;
 /** The budget never falls below this share of the balance (nor below BUDGET_FLOOR_MIN)... */
 export const BUDGET_FLOOR_RATE = 0.01;
 export const BUDGET_FLOOR_MIN = 200;
@@ -39,6 +42,8 @@ export const AUSTERITY_SHARE = 0.6;
 const BUDGET_KEY = 'cityWageBudget';
 const SPENT_KEY = 'cityWagesToday';
 const YESTERDAY_KEY = 'cityWagesYesterday';
+const PIECE_KEY = 'cityPieceWagesToday';
+const PIECE_YESTERDAY_KEY = 'cityPieceWagesYesterday';
 
 /** City posts whose shifts draw on the wage budget: every flat-wage post (piece work pays for itself). */
 export function isBudgetedJob(job: Job): boolean {
@@ -74,6 +79,17 @@ export function noteCitySpend(world: World, amount: number): void {
   world.counters[SPENT_KEY] = cityWagesToday(world) + Math.round(amount);
 }
 
+/** Record a piece-rate wage (net): outside today's budget, deducted from tomorrow's. */
+export function notePieceWage(world: World, amount: number): void {
+  if (!Number.isFinite(amount) || amount <= 0) return;
+  world.counters[PIECE_KEY] = (world.counters[PIECE_KEY] ?? 0) + Math.round(amount);
+}
+
+/** Piece wages the Treasury paid yesterday (net). */
+export function pieceWagesYesterday(world: World): number {
+  return world.counters[PIECE_YESTERDAY_KEY] ?? 0;
+}
+
 /**
  * Set today's budget from yesterday's takings and today's fixed spend. Called
  * at the morning rollover after the dividend and stipends have gone out and
@@ -83,22 +99,26 @@ export function dailyBudget(world: World): void {
   const t = world.treasury;
   const revenue = Math.max(0, t.revenueToday);
   const fixed = Math.max(0, t.spendToday);
+  const piece = world.counters[PIECE_KEY] ?? 0;
   const drawdown = Math.max(0, t.balance) * DRAWDOWN_RATE;
   const floor = Math.max(BUDGET_FLOOR_MIN, Math.round(Math.max(0, t.balance) * BUDGET_FLOOR_RATE));
-  const budget = Math.min(Math.max(0, t.balance), Math.max(floor, Math.round(revenue + drawdown - fixed)));
+  const budget = Math.min(Math.max(0, t.balance), Math.max(floor, Math.round(revenue - piece + drawdown - fixed)));
   const yesterday = cityWagesToday(world);
   world.counters[YESTERDAY_KEY] = yesterday;
+  world.counters[PIECE_YESTERDAY_KEY] = piece;
   world.counters[SPENT_KEY] = 0;
+  world.counters[PIECE_KEY] = 0;
   world.counters[BUDGET_KEY] = budget;
 
   const austerity = yesterday > 0 && budget < yesterday * AUSTERITY_SHARE;
   if (austerity) {
     emit(world, 'treasury',
-      `Austerity at City Hall: after ${formatLumens(fixed)} of dividend and stipends the city can afford only ${formatLumens(budget)} of wages today `
-      + `(it paid ${formatLumens(yesterday)} yesterday); city workers' hours will be cut.`,
-      [], 0.5, { budget, yesterday, revenue, fixed });
+      `Austerity at City Hall: after ${formatLumens(fixed)} of dividend and stipends and ${formatLumens(piece)} of piece wages the city can afford only `
+      + `${formatLumens(budget)} of salaried wages today (it paid ${formatLumens(yesterday)} yesterday); city workers' hours will be cut.`,
+      [], 0.5, { budget, yesterday, revenue, fixed, piece });
   } else {
-    emit(world, 'treasury', `City wage budget for the day: ${formatLumens(budget)} (revenue ${formatLumens(revenue)}, fixed spend ${formatLumens(fixed)}).`,
-      [], 0.1, { budget, yesterday, revenue, fixed });
+    emit(world, 'treasury',
+      `City wage budget for the day: ${formatLumens(budget)} (revenue ${formatLumens(revenue)}, piece wages ${formatLumens(piece)}, fixed spend ${formatLumens(fixed)}).`,
+      [], 0.1, { budget, yesterday, revenue, fixed, piece });
   }
 }

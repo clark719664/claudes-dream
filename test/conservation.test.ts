@@ -57,15 +57,19 @@ test('lumens are conserved through every kind of movement in the city', () => {
   const forge = Object.values(w.jobs).find((j) => j.role === 'forge_operator')!;
   assert.ok(applyForJob(w, alice.id, forge.id).ok);
   const walletBefore = alice.wallet;
+  const treasuryAtShift = w.treasury.balance;
   const shift = workShift(w, alice.id);
   assert.ok(shift.ok, shift.message);
-  const gross = Math.max(w.government.minWage, forge.wage);
-  const tax = Math.round(gross * w.government.incomeTax);
-  assert.equal(alice.wallet, walletBefore + gross - tax);
-  assert.equal(alice.stats.totalEarned, gross - tax);
-  assert.equal(alice.stats.totalTaxPaid, tax);
+  // a forge post pays by the piece: Alice (crafting 40) makes 2.1 compute worth 12.6 ℓ, 80% of which is 10 ℓ gross
+  const net = alice.wallet - walletBefore;
+  const tax = alice.stats.totalTaxPaid;
+  assert.ok(net > 0 && tax > 0, `paid ${net} net, ${tax} tax`);
+  assert.equal(net + tax, 10);
+  assert.equal(alice.stats.totalEarned, net);
+  assert.equal(w.treasury.balance, treasuryAtShift - net, 'only the net wage left the Treasury');
   assert.equal(w.treasury.totals.income_tax, tax, 'tax on a city wage is recorded, not round-tripped');
-  assert.equal(w.treasury.totals.wage, gross - tax);
+  assert.equal(w.treasury.totals.wage, net);
+  assert.ok(forge.wage >= w.government.minWage, 'the board quotes at least the minimum wage');
   conserved(w, 'city wage');
 
   // --- purchase and sale --------------------------------------------------
