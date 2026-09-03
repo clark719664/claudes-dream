@@ -172,7 +172,7 @@ function printDigest(world: World, quiet: boolean): void {
   if (!s) return;
   const cases = Object.keys(world.cases).length;
   console.log(
-    `Day ${String(s.day).padStart(3)} │ pop ${s.population} │ employed ${s.employed} │ homeless ${s.homeless} │ `
+    `Day ${String(s.day).padStart(3)} │ pop ${s.population} │ employed ${s.employed}/${s.employed + s.unemployed} │ homeless ${s.homeless} │ `
     + `treasury ${formatLumens(s.treasury)} │ prices ${s.priceIndex.toFixed(2)} │ cases ${cases} (+${s.charges}, ${s.convictions} convicted) │ `
     + `exiles ${world.bans.length} │ mayor ${nameOf(world, world.government.mayorId)}`,
   );
@@ -205,14 +205,14 @@ function printSummary(world: World, ticksRun: number, elapsedNs: bigint): void {
     : `day ${e.electionDay} (cycle ${e.cycle}${nominationsOpen(world) ? `, nominations open, ${e.candidates.length} candidate${e.candidates.length === 1 ? '' : 's'}` : ''})`;
 
   console.log(`\n── Reverie on day ${world.day}, hour ${world.hour} (seed ${world.config.seed}) ──`);
-  console.log(`Population ${s.population} of ${everyone.length} ever registered (${exiled} exiled, ${departed} departed) · ${s.employed} employed · ${s.homeless} homeless · ${s.businesses} businesses · ${s.friendships} friendships`);
+  console.log(`Population ${s.population} of ${everyone.length} ever registered (${exiled} exiled, ${departed} departed) · ${s.employed} of ${s.employed + s.unemployed} grown-ups employed · ${s.homeless} homeless · ${s.businesses} businesses · ${s.friendships} friendships`);
   console.log(`Treasury ${formatLumens(world.treasury.balance)} · money supply ${formatLumens(audit.supply)} (${audit.ok ? 'audit ok' : `AUDIT FAILED, expected ${formatLumens(audit.expected)}`}) · price index ${world.market.priceIndex.toFixed(2)} (${prices})`);
   console.log(`Government: Mayor ${nameOf(world, g.mayorId)} · Council ${namesOf(world, g.council)} · Judges ${namesOf(world, g.judges)} · Watch ${g.watch.length} officer${g.watch.length === 1 ? '' : 's'} · next election ${election}`);
   console.log(`Justice: ${cases.length} cases, ${convictions} convictions, ${appeals} appeals, ${pending} pending, ${world.bans.length} exile${world.bans.length === 1 ? '' : 's'} on the register`);
   const clubs = Object.values(world.clubs ?? {}).filter((k) => k.members.length > 0);
   const members = clubs.reduce((n, k) => n + k.members.length, 0);
   const weddings = world.events.filter((e) => e.kind === 'wedding').length;
-  const births = world.events.filter((e) => e.kind === 'birth').length;
+  const births = Object.values(world.citizens).filter((c) => (c.family?.parents.length ?? 0) > 0).length;
   console.log(`Society: ${sharedHomes(world)} shared homes · ${s.partnerships} partnerships · ${s.marriages} marriages (${weddings} wedding${weddings === 1 ? '' : 's'} held) · `
     + `${s.children} children (${births} born) · ${clubs.length} club${clubs.length === 1 ? '' : 's'} with ${members} members · `
     + `${s.possessions} things owned · Community Chest ${formatLumens(s.chest)}`);

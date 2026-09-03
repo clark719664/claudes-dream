@@ -5,7 +5,8 @@ import type { Business, Household, Job, World } from '../src/types.ts';
 import { EMPORIUM_FOUNDING_STOCK, MAX_POSSESSIONS, PRODUCTS, PRODUCT_IDS } from '../src/data/catalogue.ts';
 import { nextId } from '../src/util/ids.ts';
 import {
-  CRAFT_MARKUP, EMPORIUM_ID, EMPORIUM_MAX_STOCK, EMPORIUM_NAME, buyItem, craftProduct, dailyPossessions, giftItem, initEmporium,
+  CRAFT_MARKUP, CRAFT_UNDERCUT, EMPORIUM_ID, EMPORIUM_MAX_STOCK, EMPORIUM_NAME, buyItem, craftProduct, dailyPossessions,
+  defaultShelfPrice, emporiumPrice, giftItem, initEmporium, materialCost,
   restockEmporium, sellersOf, setPrice, shopsIn, useItem, workplaceOf,
 } from '../src/society/shops.ts';
 
@@ -293,7 +294,17 @@ test('craftProduct consumes recipe goods from the business, buying what is short
   let r = craftProduct(w, owner.id, 'tin_whistle');
   assert.equal(r.ok, true, r.message);
   assert.equal(biz.inventory.goods, 0);
-  assert.deepEqual(biz.shelf.tin_whistle, { qty: 1, price: Math.round(PRODUCTS.tin_whistle.basePrice * CRAFT_MARKUP) });
+  const whistle = PRODUCTS.tin_whistle;
+  assert.deepEqual(biz.shelf.tin_whistle, { qty: 1, price: defaultShelfPrice(w, whistle) },
+    'a new line is priced by the shop itself, not by the catalogue');
+  assert.equal(defaultShelfPrice(w, whistle), Math.round(emporiumPrice(w, whistle) * CRAFT_UNDERCUT),
+    'at founding prices the bench undercuts the Emporium');
+  assert.ok(defaultShelfPrice(w, whistle) >= Math.round(materialCost(w, whistle) * CRAFT_MARKUP) - 1,
+    'and still clears the cost of the goods it is made from');
+  w.market.goods.goods.price = 40;
+  assert.equal(defaultShelfPrice(w, whistle), Math.round(materialCost(w, whistle) * CRAFT_MARKUP),
+    'when materials are dear the price follows them up instead');
+  w.market.goods.goods.price = 12;
   assert.equal(biz.treasury, 100, 'nothing bought when the goods are in stock');
   assert.equal(owner.shiftsToday, 1);
   assert.equal(owner.skills.crafting, 20.5);

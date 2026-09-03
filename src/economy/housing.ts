@@ -6,6 +6,7 @@
 import { clamp } from '../types.ts';
 import type { ActionResult, CitizenId, HousingTier, World } from '../types.ts';
 import { emit, remember } from '../sim/events.ts';
+import { householdRent } from '../society/households.ts';
 import { residentIds, transfer } from './treasury.ts';
 
 type PaidTier = 1 | 2 | 3;
@@ -120,11 +121,18 @@ export function addHousingProgress(world: World, amount: number): void {
   world.counters.housingNext = next;
 }
 
-/** Daily rent collection, arrears, evictions and the comfort of a good home. */
+/**
+ * Daily rent collection, arrears, evictions and the comfort of a good home.
+ * A citizen who shares a household pays through it — one rent per roof, split
+ * among its adults (society/households.householdRent); everyone else pays for
+ * their own unit here.
+ */
 export function dailyHousing(world: World): void {
+  householdRent(world);
   const residents = residentIds(world);
   for (const c of Object.values(world.citizens)) {
     if (!isPaidTier(c.homeTier)) continue;
+    if (c.householdId && world.households?.[c.householdId]?.members.includes(c.id)) continue;
     // exiles and emigrants have left: their unit is quietly freed
     if (!residents.has(c.id)) { vacate(world, c.id); continue; }
     const tier = c.homeTier;

@@ -19,6 +19,13 @@
 
   const hourText = (h) => `${R.pad2(h)}:00`;
 
+  /** "Ashgrove", "Ashgrove & Vale", "Ashgrove, Vale & Thorne". */
+  function joinNames(names) {
+    const list = (names || []).filter(Boolean);
+    if (list.length <= 1) return list[0] || '';
+    return `${list.slice(0, -1).join(', ')} & ${list[list.length - 1]}`;
+  }
+
   const stagePill = (stage) => R.stagePill(stage);
 
   function personLink(p) {
@@ -73,13 +80,16 @@
       R.h('span', { class: 'who' }, personLink(m), ' ', stagePill(m.lifeStage)),
       R.h('span', { class: 'rel muted small' }, RELATION_LABEL[m.relation] || m.relation),
       R.h('span', { class: 'num small' }, m.lifeStage === 'child' ? `${m.age}d old` : m.rentShare ? `${R.lumens(m.rentShare)}/day` : '—')));
+    const kids = members.filter((m) => m.lifeStage === 'child').length;
+    const adults = members.length - kids;
+    const who = `${adults} adult${adults === 1 ? '' : 's'}${kids ? ` and ${kids} child${kids === 1 ? '' : 'ren'}` : ''}`;
     return R.h('div', { class: 'household' },
       R.h('div', { class: 'head' },
-        R.h('b', null, (home.familyNames || []).join(' & ') || 'Household'),
+        R.h('b', null, joinNames(home.familyNames) || 'Household'),
         R.h('span', { class: 'spacer' }),
         R.pill(home.tierName, home.tier >= 2 ? 'good' : 'neutral')),
       R.h('div', { class: 'sub muted small' },
-        `${members.length} of ${home.capacity} at home · rent ${R.lumens(home.rent)}/day · since day ${home.createdDay}`,
+        `${who} · sleeps ${home.capacity} · rent ${R.lumens(home.rent)}/day · since day ${home.createdDay}`,
         home.arrearsDays ? R.h('span', { class: 'warn-text' }, ` · ${home.arrearsDays}d in arrears`) : null),
       R.h('div', { class: 'members' }, rows));
   }
@@ -87,7 +97,7 @@
   // ---------------------------------------------------------------- clubs
 
   function clubCard(k) {
-    const when = `${k.meetsOnName}s at ${hourText(k.meetsAtHour)} · ${k.venue ? k.venue.name : ''}`;
+    const when = `${k.meetsOnName ? `${k.meetsOnName}s` : 'weekly'} at ${hourText(k.meetsAtHour)}${k.venue ? ` · ${k.venue.name}` : ''}`;
     return R.h('div', { class: 'club' },
       R.h('div', { class: 'head' },
         R.h('b', null, k.name),
@@ -105,10 +115,15 @@
 
   function chestMovements(list, empty, sign) {
     if (!list || !list.length) return R.h('div', { class: 'empty' }, empty);
-    return R.h('ul', { class: 'list' }, list.map((l) => R.h('li', null,
-      R.h('span', { class: 'when' }, `d${l.day}`),
-      R.h('span', null, sign === '+' ? l.fromName : l.toName, R.h('span', { class: 'muted small' }, ` · ${l.memo}`)),
-      R.h('span', { class: `num ${sign === '+' ? 'pos' : 'neg'}` }, `${sign}${R.lumens(l.amount)}`))));
+    return R.h('ul', { class: 'list' }, list.map((l) => {
+      const who = (sign === '+' ? l.fromName : l.toName) || '—';
+      const memo = l.memo && !l.memo.toLowerCase().includes(who.toLowerCase()) ? l.memo : '';
+      return R.h('li', null,
+        R.h('span', { class: 'when' }, `d${l.day}`),
+        R.h('span', null, who, memo ? R.h('span', { class: 'muted small' }, ` · ${memo}`) : null),
+        R.h('span', { class: 'spacer' }),
+        R.h('span', { class: `num ${sign === '+' ? 'pos' : 'neg'}` }, `${sign}${R.lumens(l.amount)}`));
+    }));
   }
 
   // -------------------------------------------------------- shelves, news
@@ -139,7 +154,11 @@
     return R.h('ul', { class: 'list' }, list.map((e) => R.h('li', null,
       R.h('span', { class: 'when' }, `d${e.day}`),
       R.h('span', null, e.text,
-        e.who && e.who.length ? R.h('span', { class: 'muted small' }, ' — ', e.who.map((p, i) => R.h('span', null, i ? ', ' : '', personLink(p)))) : null))));
+        e.who && e.who.length
+          ? R.h('span', { class: 'muted small' }, ' — ',
+            e.who.map((p, i) => R.h('span', null, i ? ', ' : '', personLink(p))),
+            e.others ? ` and ${e.others} more` : null)
+          : null))));
   }
 
   // ------------------------------------------------------------------ tab

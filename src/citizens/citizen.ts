@@ -16,6 +16,7 @@ import { nextId } from '../util/ids.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
 import { comfortDecayMultiplier, moveHome } from '../economy/housing.ts';
+import { joblessShare } from '../economy/planning.ts';
 import { friendsOf } from './relationships.ts';
 import { departCity } from './departure.ts';
 import { assignTastes } from '../society/tastes.ts';
@@ -29,6 +30,22 @@ export const CRITICAL_NEED = 20;
 /** With fewer eligible councillors than this, the Threshold admits newcomers faster. */
 export const MIN_ELIGIBLE_FOR_COUNCIL = 3;
 const ELEVATED_ARRIVAL_MULTIPLIER = 3;
+/**
+ * Word of a city with no work gets around: above this share of adults out of
+ * work, fewer newcomers try their luck at the Threshold, and by
+ * JOBLESS_SHARE_FOR_NO_ARRIVALS none do, so the city stops growing faster than
+ * it can employ. A Council short of candidates still draws people in.
+ */
+export const JOBLESS_SHARE_FOR_SLOW_ARRIVALS = 0.1;
+export const JOBLESS_SHARE_FOR_NO_ARRIVALS = 0.35;
+
+/** Share of the arrival rate the Threshold sees at this level of unemployment. */
+export function arrivalAppetite(jobless: number): number {
+  const span = JOBLESS_SHARE_FOR_NO_ARRIVALS - JOBLESS_SHARE_FOR_SLOW_ARRIVALS;
+  return clamp(1 - (jobless - JOBLESS_SHARE_FOR_SLOW_ARRIVALS) / span, 0, 1);
+}
+/** Days between notices that the Threshold is quiet (the Chronicle needs no daily reminder). */
+const SLOW_ARRIVAL_NOTICE_DAYS = 7;
 const OFFICE_PURPOSE_PER_DAY = 3;
 const INBOX_LENGTH = 20;
 const MAX_NAME_LENGTH = 40;
@@ -321,17 +338,28 @@ function expireProbation(world: World, c: Citizen): void {
   emit(world, 'law', `${c.name}'s probation ended; they are back in good standing.`, [c.id], 0.2);
 }
 
-/** Newcomers at the Threshold: Poisson arrivals, faster when the Council is short of candidates. */
+/**
+ * Newcomers at the Threshold: Poisson arrivals, faster when the Council is
+ * short of candidates, slower when the city has no work to offer.
+ */
 function admitArrivals(world: World): void {
   const active = activeCitizens(world);
   let population = active.length;
   if (population >= MAX_POPULATION) return;
   const eligible = active.filter((c) => isEligibleCandidate(world, c)).length;
   const elevated = world.day >= CANDIDACY_RESIDENCY_DAYS && eligible < MIN_ELIGIBLE_FOR_COUNCIL;
+  const jobless = joblessShare(world);
+  const appetite = arrivalAppetite(jobless);
+  const slow = !elevated && appetite < 1;
   const baseRate = Math.max(0, world.config.arrivalRate);
-  let n = poisson(world, elevated ? baseRate * ELEVATED_ARRIVAL_MULTIPLIER : baseRate);
+  const rate = elevated ? baseRate * ELEVATED_ARRIVAL_MULTIPLIER : baseRate * appetite;
+  let n = poisson(world, rate);
   if (elevated && n > 0) {
     emit(world, 'system', `With only ${eligible} citizens eligible for the Council, the Threshold admits newcomers at an elevated rate.`, [], 0.3);
+  }
+  if (slow && world.day - (world.counters.slowArrivalsNoticeDay ?? -SLOW_ARRIVAL_NOTICE_DAYS) >= SLOW_ARRIVAL_NOTICE_DAYS) {
+    world.counters.slowArrivalsNoticeDay = world.day;
+    emit(world, 'system', `${Math.round(jobless * 100)}% of Reverie is out of work; word travels, and the Threshold is quiet.`, [], 0.3, { jobless });
   }
   for (; n > 0 && population < MAX_POPULATION; n--) {
     createCitizen(world, { brain: 'reflex' });

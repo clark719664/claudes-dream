@@ -31,7 +31,8 @@ const idNumber = (id: string) => Number(id.slice(id.indexOf('_') + 1)) || 0;
 export function economyView(world: World, history: PriceHistory): Record<string, unknown> {
   const present = presentSet(world);
   const living = Object.values(world.citizens).filter((c) => isPresentIn(world, c, present));
-  const employed = living.filter((c) => c.jobId !== null && world.jobs[c.jobId]?.holderId === c.id).length;
+  const grownUps = living.filter((c) => c.lifeStage !== 'child');
+  const employed = grownUps.filter((c) => c.jobId !== null && world.jobs[c.jobId]?.holderId === c.id).length;
   const jobs = Object.values(world.jobs);
   const t = world.treasury;
   const goods = {} as Record<Good, Record<string, unknown>>;
@@ -76,7 +77,7 @@ export function economyView(world: World, history: PriceHistory): Record<string,
       createdDay: j.createdDay,
     })),
     employment: {
-      employed, unemployed: living.length - employed, jobsTotal: jobs.length,
+      employed, unemployed: grownUps.length - employed, jobsTotal: jobs.length,
       jobsOpen: jobs.filter((j) => j.holderId === null).length, jobsFilled: jobs.filter((j) => j.holderId !== null).length,
     },
     loans: {

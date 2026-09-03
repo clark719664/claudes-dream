@@ -169,7 +169,7 @@ let society: SocietyCity | null = null;
  */
 async function societyCity(): Promise<SocietyCity> {
   if (society) return society;
-  const w = createWorld({ seed: 5, seedPopulation: 4, arrivalRate: 0 });
+  const w = createWorld({ seed: 5, seedPopulation: 8, arrivalRate: 0 });
   const [a, b, kid, other] = Object.values(w.citizens);
 
   for (const c of [a, b, kid]) c.familyName = 'Ashgrove';
@@ -221,7 +221,8 @@ async function societyCity(): Promise<SocietyCity> {
   w.businesses[businessId] = shop;
   other.businessId = businessId;
 
-  w.events.push({ tick: w.tick, day: w.day, kind: 'wedding', text: `${a.name} and ${b.name} were married at the Sound Garden.`, actors: [a.id, b.id], weight: 0.9 });
+  // the whole city turns out for a wedding: the view lists a few and counts the rest
+  w.events.push({ tick: w.tick, day: w.day, kind: 'wedding', text: `${a.name} and ${b.name} were married at the Sound Garden.`, actors: Object.keys(w.citizens), weight: 0.9 });
   w.events.push({ tick: w.tick, day: w.day, kind: 'birth', text: `${kid.name} Ashgrove was born at the Restoration Ward.`, actors: [kid.id, a.id, b.id], weight: 0.8 });
 
   const brains: BrainRegistry = { brainFor: () => idle };
@@ -282,7 +283,8 @@ test('GET /api/society shows households, clubs, happenings, the Chest and the sh
   assert.equal(donations[0].toName, 'The Community Chest');
 
   assert.equal((s.recentWeddings as Json[]).length, 1);
-  assert.equal(((s.recentWeddings as Json[])[0].who as Json[]).length, 2);
+  assert.equal(((s.recentWeddings as Json[])[0].who as Json[]).length, 6, 'a crowded wedding lists a few guests');
+  assert.equal((s.recentWeddings as Json[])[0].others, 2, 'and counts the rest');
   assert.equal((s.recentBirths as Json[]).length, 1);
 
   const emporium = s.emporium as Json;

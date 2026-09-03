@@ -52,7 +52,11 @@ who is a citizen, who holds office, and who has been banned.
 ## The Court
 
 - Three judges, appointed by the Council for 56-day terms. Judges are paid by
-  the Treasury.
+  the Treasury. The Charter asks a judge to stand at 60 in the city's regard
+  with a clean record; since everyone arrives at 50 and earns the rest by
+  living well, a young city fills the seats it cannot otherwise fill with the
+  most respected citizens it has (never below 50, never anyone convicted),
+  and the appointment says as much.
 - The Court sits every day at tick 10 and hears every pending charge.
 - **Procedure for each case:**
   1. Judges who must recuse (friend, employer, employee, or accuser of the

@@ -8,17 +8,17 @@
  * already keeps and turns them into one ordinary action.
  */
 import type { Action, Citizen, CitizenId, Club, Hobby, Item, World } from '../types.ts';
-import {
-  CLUB_FOUNDING_FEE, HOBBY_INFO, PRODUCTS, REST_DAY_EXEMPT_ROLES, START_FAMILY_SAVINGS,
-} from '../data/catalogue.ts';
+import { CLUB_FOUNDING_FEE, PRODUCTS, REST_DAY_EXEMPT_ROLES, START_FAMILY_SAVINGS } from '../data/catalogue.ts';
 import { districtDistance } from '../data/city.ts';
 import { chance, pick } from '../util/rng.ts';
 import { bondBetween } from '../citizens/relationships.ts';
 import { MAX_CLUBS_PER_CITIZEN, clubVenue, clubsFor, meetingOf } from '../society/clubs.ts';
 import { CELEBRATABLE, happeningsAt, happeningsToday, isFoundersDay, isRestDay } from '../society/calendar.ts';
-import { MARRIAGE_MIN_BOND, MARRIAGE_MIN_DAYS, PARTNERSHIP_AFFECTION, affectionBetween, dateVenueIn } from '../society/romance.ts';
+import {
+  MARRIAGE_MIN_BOND, MARRIAGE_MIN_DAYS, PARTNERSHIP_AFFECTION, affectionBetween, dateVenueIn, weddingFor,
+} from '../society/romance.ts';
 import { START_FAMILY_BOND } from '../society/family.ts';
-import { householdOf } from '../society/households.ts';
+import { householdCapacity, householdOf } from '../society/households.ts';
 import { sellersOf, shopsIn } from '../society/shops.ts';
 import { preferenceScore } from '../society/tastes.ts';
 import { dineVenueIn, playVenueIn } from '../actions/society.ts';
@@ -35,8 +35,9 @@ export const COURTSHIP_CHANCE = 0.35;
 export const COURTING_AFFECTION = 20;
 /** Bond at which a friend is worth taking out. */
 export const COURTING_BOND = 45;
-/** Daily chance of asking to start a family, of founding a club, and of giving to the Chest. */
-export const START_FAMILY_CHANCE = 0.15;
+/** Daily chance of asking someone to be your partner, of starting a family, of founding a club, of giving. */
+export const PROPOSE_CHANCE = 0.5;
+export const START_FAMILY_CHANCE = 0.06;
 export const FOUND_CLUB_CHANCE = 0.05;
 export const DONATE_CHANCE = 0.05;
 /** Honesty and purse from which a citizen gives to the Community Chest. */
@@ -276,6 +277,17 @@ function willingPartner(ctx: Ctx): Citizen | null {
   return best;
 }
 
+/**
+ * A household with a cot free and no child under this roof still growing up:
+ * a reflex couple raise one child at a time, and only where there is room for
+ * them (the tier's capacity, plus the cot a newborn is always given).
+ */
+function roomForOneMore(world: World, c: Citizen): boolean {
+  const home = householdOf(world, c.id);
+  if (!home || home.members.length > householdCapacity(home)) return false;
+  return !c.family.children.some((id) => world.citizens[id]?.lifeStage === 'child');
+}
+
 /** An evening with a partner: dinner out, a walk in the Garden, or a table at the Tavern. */
 function eveningWithPartner(ctx: Ctx, partner: Citizen): Action | null {
   const { world, c } = ctx;
@@ -295,22 +307,28 @@ export function tryRomance(ctx: Ctx): Action | null {
     if (partner.district !== c.district) return null;
     const together = world.day - (c.family.partnerSinceDay ?? world.day);
     const bond = Math.min(bondBetween(world, c.id, partner.id), bondBetween(world, partner.id, c.id));
-    if (ctx.can.has('marry') && together >= MARRIAGE_MIN_DAYS && bond > MARRIAGE_MIN_BOND && c.personality.sociability > 0.5) {
+    if (ctx.can.has('marry') && together >= MARRIAGE_MIN_DAYS && bond > MARRIAGE_MIN_BOND
+      && c.personality.sociability > 0.5 && !weddingFor(world, c.id, partner.id)) {
       return { type: 'marry', to: partner.id };
     }
     const home = householdOf(world, c.id);
-    if (ctx.can.has('move_in') && (!home || householdOf(world, partner.id)?.id !== home.id) && partner.homeTier > 0) {
+    const theirs = householdOf(world, partner.id);
+    if (ctx.can.has('move_in') && partner.homeTier > 0 && (!home || theirs?.id !== home.id)
+      && (!theirs || theirs.members.length < householdCapacity(theirs))) {
       return { type: 'move_in', with: partner.id };
     }
     if (ctx.can.has('start_family') && bond > START_FAMILY_BOND && c.wallet + partner.wallet >= START_FAMILY_SAVINGS
-      && onceToday(world, 'startFamily', c.id) && chance(world, START_FAMILY_CHANCE)) {
+      && roomForOneMore(world, c) && onceToday(world, 'startFamily', c.id) && chance(world, START_FAMILY_CHANCE)) {
       return { type: 'start_family' };
     }
     return eveningWithPartner(ctx, partner);
   }
 
   const willing = willingPartner(ctx);
-  if (willing && ctx.can.has('propose_partnership')) return { type: 'propose_partnership', to: willing.id };
+  if (willing && ctx.can.has('propose_partnership')
+    && onceToday(world, 'propose', c.id) && chance(world, PROPOSE_CHANCE)) {
+    return { type: 'propose_partnership', to: willing.id };
+  }
   if (!clock.evening && !restDayOff(ctx)) return null;
   const sweetheart = courtingCandidate(ctx);
   if (!sweetheart) return null;

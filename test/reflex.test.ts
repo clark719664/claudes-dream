@@ -2,12 +2,18 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeWorld, makeCitizen } from './helpers.ts';
 import { SUSPENDED_ACTIONS } from '../src/types.ts';
-import type { Action, Citizen, World } from '../src/types.ts';
+import type { Action, BusinessKind, Citizen, World } from '../src/types.ts';
 import { isAdjacent } from '../src/data/city.ts';
+import { CLUB_MEETING_HOUR } from '../src/data/catalogue.ts';
 import { createCityJobs, applyForJob, isQualified } from '../src/economy/jobs.ts';
+import { scheduleFestivals } from '../src/society/calendar.ts';
+import { scheduleMeetings } from '../src/society/clubs.ts';
 import { executeAction } from '../src/actions/execute.ts';
 import { buildObservation } from '../src/brains/observe.ts';
+import { CHILD_ACTIONS } from '../src/brains/child.ts';
 import { reflexBrain, reflexDecide } from '../src/brains/reflex.ts';
+import { roomForBusiness } from '../src/brains/reflex-work.ts';
+import { BAZAAR_MAX_COVER_DAYS } from '../src/economy/market.ts';
 
 function at(world: World, day: number, hour: number): void {
   world.day = day;
@@ -216,4 +222,173 @@ test('a lonely citizen seeks company, and the same seed replays the same choices
     return trail.join(',');
   };
   assert.equal(run(), run());
+});
+
+// ---------------------------------------------------------------------------
+// The social layer
+// ---------------------------------------------------------------------------
+
+/** Decide up to `tries` times, one day apart, and return the first action of this type. */
+function decideUntil(world: World, c: Citizen, type: Action['type'], tries = 10): Action | null {
+  for (let i = 0; i < tries; i++) {
+    const a = decide(world, c);
+    if (a.type === type) return a;
+    at(world, world.day + 1, world.hour);
+  }
+  return null;
+}
+
+test('nobody works on Stillday but the Watch, the Ward, the kitchens and the stage', () => {
+  const w = makeWorld();
+  createCityJobs(w);
+  const forge = Object.values(w.jobs).find((j) => j.role === 'forge_operator')!;
+  const medicJob = Object.values(w.jobs).find((j) => j.role === 'medic')!;
+  at(w, 5, 10);
+  const smith = settled(w, { district: forge.district, wallet: 200 });
+  smith.skills[forge.skill ?? 'crafting'] = 80;
+  applyForJob(w, smith.id, forge.id);
+  assert.deepEqual(decide(w, smith), { type: 'work' }, 'an ordinary working day');
+
+  at(w, 6, 10); // day 6 of the week is Stillday
+  assert.notEqual(decide(w, smith).type, 'work', 'the forge is shut');
+
+  const medic = settled(w, { district: medicJob.district, wallet: 200 });
+  medic.skills.care = 80;
+  applyForJob(w, medic.id, medicJob.id);
+  assert.deepEqual(decide(w, medic), { type: 'work' }, 'the Restoration Ward never closes');
+});
+
+test('a citizen joins what is happening in the district and walks to it when it is elsewhere', () => {
+  const w = makeWorld();
+  at(w, 4, 20);
+  const c = settled(w, { district: 'nightglass', wallet: 200 });
+  scheduleFestivals(w);
+  w.happenings.push({
+    id: 'e_9', kind: 'festival', day: 4, hour: 20, district: 'nightglass', buildingId: 'sound_garden',
+    who: [], clubId: null, label: 'Lantern Night at The Sound Garden', done: false, attendees: [],
+  });
+  assert.deepEqual(decide(w, c), { type: 'celebrate' });
+
+  const far = settled(w, { district: 'verdant_quarter', wallet: 200 });
+  far.personality.sociability = 0.9;
+  assert.deepEqual(decide(w, far), { type: 'move', district: 'nightglass' }, 'one district away, one hour before');
+});
+
+test('a citizen with money to spare buys what it has been wanting off the shelf here', () => {
+  const w = makeWorld();
+  at(w, 3, 19);
+  const c = settled(w, { district: 'harbor_market', wallet: 600 });
+  c.wants = ['tin_whistle'];
+  const action = decideUntil(w, c, 'buy_item', 4);
+  assert.deepEqual(action, { type: 'buy_item', productId: 'tin_whistle' });
+
+  const poor = settled(w, { district: 'harbor_market', wallet: 40 });
+  poor.wants = ['glass_harp'];
+  assert.equal(decideUntil(w, poor, 'buy_item', 3), null, 'not on this purse');
+});
+
+test('courting: an evening out, then a proposal, then a wedding', () => {
+  const w = makeWorld();
+  at(w, 12, 19);
+  const a = settled(w, { district: 'verdant_quarter', wallet: 300, name: 'Ondine' });
+  const b = settled(w, { district: 'verdant_quarter', wallet: 300, name: 'Bram' });
+  a.personality.sociability = 0.9;
+  b.personality.sociability = 0.9;
+  a.bonds[b.id] = 70;
+  b.bonds[a.id] = 70;
+  a.affection[b.id] = 40;
+  b.affection[a.id] = 40;
+  const outing = decideUntil(w, a, 'date', 8);
+  assert.ok(outing, 'the Community Garden is a free evening out');
+  assert.deepEqual(outing, { type: 'date', with: b.id });
+
+  b.affection[a.id] = 75;
+  const proposal = decideUntil(w, a, 'propose_partnership', 8);
+  assert.deepEqual(proposal, { type: 'propose_partnership', to: b.id });
+  assert.equal(executeAction(w, a.id, proposal).ok, true);
+
+  a.family.partnerSinceDay = w.day - 8;
+  b.family.partnerSinceDay = w.day - 8;
+  a.bonds[b.id] = 90;
+  b.bonds[a.id] = 90;
+  const wedding = decideUntil(w, a, 'marry', 4);
+  assert.deepEqual(wedding, { type: 'marry', to: b.id });
+  assert.equal(executeAction(w, a.id, wedding).ok, true);
+  assert.equal(decideUntil(w, a, 'marry', 2), null, 'the wedding is already arranged');
+});
+
+test('clubs: a citizen joins one for a hobby it loves, then goes to the meeting', () => {
+  const w = makeWorld();
+  at(w, 3, 12);
+  const founder = settled(w, { district: 'commons', wallet: 300, name: 'Alder' });
+  founder.tastes = { hobbies: ['games', 'reading'], favouriteDistrict: 'commons', favouriteGood: 'culture', categories: ['game'] };
+  const club = { id: 'u_1', name: 'Halflight Chess Circle', hobby: 'games' as const, founderId: founder.id, convenorId: founder.id, members: [founder.id], foundedDay: 0, meetsOnWeekday: 3 };
+  w.clubs[club.id] = club;
+  founder.clubs.push(club.id);
+  const joiner = settled(w, { district: 'commons', wallet: 300, name: 'Wick' });
+  joiner.tastes = { hobbies: ['games', 'running'], favouriteDistrict: 'commons', favouriteGood: 'culture', categories: ['game'] };
+  assert.deepEqual(decide(w, joiner), { type: 'join_club', clubId: club.id });
+  assert.equal(executeAction(w, joiner.id, { type: 'join_club', clubId: club.id }).ok, true);
+
+  at(w, 10, CLUB_MEETING_HOUR);
+  scheduleMeetings(w);
+  const meeting = w.happenings.find((h) => h.kind === 'club_meeting')!;
+  joiner.district = meeting.district;
+  assert.deepEqual(decide(w, joiner), { type: 'attend_club', clubId: club.id });
+  joiner.district = 'foundry_row';
+  const walk = decide(w, joiner);
+  assert.equal(walk.type, 'move', 'otherwise it sets off for the venue');
+});
+
+test('an honest citizen with a full purse gives to the Community Chest', () => {
+  const w = makeWorld();
+  at(w, 3, 21);
+  const c = settled(w, { district: 'commons', wallet: 2000 });
+  c.personality.honesty = 0.9;
+  const gift = decideUntil(w, c, 'donate', 40);
+  assert.ok(gift && gift.type === 'donate' && gift.amount >= 20, 'a share of what it can spare');
+});
+
+test('children think with the child policy and never take a grown citizen action', () => {
+  const w = makeWorld();
+  at(w, 6, 19);
+  const parent = settled(w, { district: 'verdant_quarter', wallet: 200, name: 'Noor' });
+  const child = makeCitizen(w, { district: 'verdant_quarter', lifeStage: 'child', name: 'Sprig', wallet: 10, bornDay: 2 });
+  child.family.parents = [parent.id];
+  parent.family.children = [child.id];
+  for (let i = 0; i < 24; i++) {
+    const a = decide(w, child);
+    assert.ok(CHILD_ACTIONS.includes(a.type), `a child would not ${a.type}`);
+    at(w, w.day, (w.hour + 1) % 24);
+  }
+});
+
+test('a founder opens shop while the Bazaar still buys what they would make, and not once its shelves are full', () => {
+  const w = makeWorld();
+  for (let i = 0; i < 40; i++) makeCitizen(w);
+  const goods = w.market.goods.goods;
+
+  // a shelf the Bazaar is still filling: there is a market to sell into
+  w.counters['flow:demand:goods'] = 2;          // 48 crates a day
+  goods.stock = 24;                             // half a day of cover
+  assert.equal(roomForBusiness(w, 'workshop'), true);
+
+  // the Bazaar has stopped buying: a new maker would only pile up stock
+  goods.stock = 48 * (BAZAAR_MAX_COVER_DAYS + 1);
+  assert.equal(roomForBusiness(w, 'workshop'), false);
+
+  // room is also a matter of how many people there are to serve
+  goods.stock = 24;
+  const owner = makeCitizen(w);
+  const kinds: BusinessKind[] = ['workshop', 'workshop'];
+  kinds.forEach((kind, i) => {
+    w.businesses[`b_${i}`] = {
+      id: `b_${i}`, name: `Works ${i}`, kind, ownerId: owner.id, treasury: 100, district: 'harbor_market',
+      buildingId: 'shopfronts_harbor', employees: [], jobs: [],
+      inventory: { compute: 0, energy: 0, goods: 0, culture: 0, knowledge: 0 },
+      foundedDay: 0, rentPerDay: 12, daysNegative: 0, revenueToday: 0, costsToday: 0, dissolvedDay: null, shelf: {},
+    };
+  });
+  assert.equal(roomForBusiness(w, 'workshop'), false, 'two workshops already serve a city of forty');
+  assert.equal(roomForBusiness(w, 'clinic'), true, 'a clinic is a different trade');
 });

@@ -56,8 +56,11 @@ export function roomForBusiness(world: World, kind: BusinessKind): boolean {
   const existing = activeBusinesses(world).filter((b) => b.kind === kind).length;
   if (kind === 'courier') return existing < Math.max(1, Math.round(COURIER_CONTRACTS_PER_DAY / COURIER_SHIFTS_PER_DAY));
   if (kind === 'clinic') return existing < 1;
+  // The gate is the Bazaar's own: while it still buys the good, there is a
+  // market to sell into; once its shelves are full, a new maker would only
+  // pile up stock nobody will take.
   const good = BUSINESS_JOBS[kind][0]?.output.good;
-  if (good && (!bazaarBuying(world, good) || daysOfCover(world, good) > GLUT_COVER_DAYS / 2)) return false;
+  if (good && !bazaarBuying(world, good)) return false;
   return existing < Math.max(1, Math.floor(world.order.length / CITIZENS_PER_BUSINESS));
 }
 
@@ -249,7 +252,7 @@ export function tryBusiness(ctx: Ctx): Action | null {
   if (open.length > 0 && biz.treasury >= effectiveWage(world, open[0])) {
     const acquaintances = [...here].sort((a, b) => bondBetween(world, c.id, b.id) - bondBetween(world, c.id, a.id));
     for (const o of acquaintances) {
-      if (!inGoodStanding(o) || bondBetween(world, c.id, o.id) < 0) continue;
+      if (o.lifeStage === 'child' || !inGoodStanding(o) || bondBetween(world, c.id, o.id) < 0) continue;
       const current = heldJob(world, o);
       for (const j of open) {
         if (current && effectiveWage(world, current) >= effectiveWage(world, j)) continue;

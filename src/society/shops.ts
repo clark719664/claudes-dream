@@ -28,8 +28,10 @@ export const EMPORIUM_BUILDING = 'grand_bazaar';
 export const EMPORIUM_RESTOCK_CHANCE = 0.15;
 /** The Emporium never holds more than this of any product. */
 export const EMPORIUM_MAX_STOCK = 10;
-/** Default shelf price of a crafted product, as a multiple of the base price. */
+/** What a maker asks over the cost of the materials when it sets its own price. */
 export const CRAFT_MARKUP = 1.2;
+/** ...and how far it undercuts the Emporium's price for the same thing, when it can. */
+export const CRAFT_UNDERCUT = 0.95;
 /** Businesses that can craft and sell products. */
 export const CRAFTING_KINDS: readonly BusinessKind[] = ['shop', 'workshop', 'studio'];
 export const MAX_PRICE = 100_000;
@@ -310,8 +312,22 @@ export function workplaceOf(world: World, c: Citizen): Business | null {
   return employer && employer.dissolvedDay === null ? employer : null;
 }
 
-export function defaultShelfPrice(product: Product): number {
-  return Math.max(1, Math.round(product.basePrice * CRAFT_MARKUP));
+/** What the materials for one unit cost at today's Bazaar prices. */
+export function materialCost(world: World, product: Product): number {
+  let cost = 0;
+  for (const [good, qty] of Object.entries(product.recipe)) cost += world.market.goods[good as Good].price * Math.max(0, qty);
+  return cost;
+}
+
+/**
+ * What a maker asks for a new line on the shelf until the owner says
+ * otherwise: a shade under the Emporium's price for the same thing — a local
+ * bench undercuts the importer — but never below the materials plus a
+ * margin, or the shop would craft itself out of business.
+ */
+export function defaultShelfPrice(world: World, product: Product): number {
+  const floor = materialCost(world, product) * CRAFT_MARKUP;
+  return Math.max(1, Math.round(Math.max(floor, emporiumPrice(world, product) * CRAFT_UNDERCUT)));
 }
 
 /**
@@ -344,7 +360,7 @@ export function craftProduct(world: World, cId: CitizenId, productId: string): A
   for (const [good, qty] of recipe) biz.inventory[good] -= Math.max(0, Math.round(qty));
 
   biz.shelf ??= {};
-  const entry = biz.shelf[productId] ?? (biz.shelf[productId] = { qty: 0, price: defaultShelfPrice(product) });
+  const entry = biz.shelf[productId] ?? (biz.shelf[productId] = { qty: 0, price: defaultShelfPrice(world, product) });
   const first = entry.qty <= 0;
   entry.qty += 1;
 

@@ -88,15 +88,27 @@ function anyoneElse(world: World, c: Citizen): boolean {
   return world.order.some((id) => id !== c.id && world.citizens[id] !== undefined && world.citizens[id].standing !== 'exiled');
 }
 
+/** Everyone this citizen might reasonably ask for a place: family, and friends they are close to. */
+function movingInCandidates(world: World, c: Citizen): Set<CitizenId> {
+  const out = new Set<CitizenId>();
+  if (c.family.partnerId) out.add(c.family.partnerId);
+  for (const id of c.family.parents) {
+    out.add(id);
+    for (const sibling of world.citizens[id]?.family.children ?? []) out.add(sibling);
+  }
+  for (const id of c.family.children) out.add(id);
+  for (const [id, bond] of Object.entries(c.bonds)) if (bond >= MOVE_IN_BOND) out.add(id);
+  out.delete(c.id);
+  return out;
+}
+
 /** A home this citizen could join: a partner's, a relative's, or a close friend's, with room in it. */
 function anyHomeToJoin(world: World, c: Citizen): boolean {
-  for (const id of world.order) {
-    if (id === c.id) continue;
+  for (const id of movingInCandidates(world, c)) {
     const o = world.citizens[id];
-    if (!o || o.standing === 'exiled' || o.homeTier === 0) continue;
+    if (!o || o.standing === 'exiled' || o.homeTier === 0 || !world.order.includes(id)) continue;
     const home = householdOf(world, o.id);
-    if (home && home.id === c.householdId) continue;
-    if (home && home.members.length >= householdCapacity(home)) continue;
+    if (home && (home.id === c.householdId || home.members.length >= householdCapacity(home))) continue;
     if (relationBetween(world, c.id, o.id) || bondBetween(world, o.id, c.id) >= MOVE_IN_BOND) return true;
   }
   return false;
@@ -277,7 +289,11 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     case 'quit_job': return quitJob(world, c.id);
     case 'found_business': return foundBusiness(world, c.id, action.name, action.kind);
     case 'post_job': return doPostJob(world, c, { title: action.title, wage: action.wage, skill: action.skill, minSkill: action.minSkill });
-    case 'hire': return doHire(world, c, action.citizen, action.jobId);
+    case 'hire': {
+      // Children do not take work in Reverie, however friendly the offer.
+      if (world.citizens[action.citizen]?.lifeStage === 'child') return fail('Children of Reverie do not take work; they go to school.');
+      return doHire(world, c, action.citizen, action.jobId);
+    }
     case 'fire': return doFire(world, c, action.citizen);
     case 'set_wage': return doSetWage(world, c, action.jobId, action.wage);
     case 'request_loan': return requestLoan(world, c.id, action.amount);

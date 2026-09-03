@@ -6,9 +6,9 @@ import type { Business, Job, World } from '../src/types.ts';
 import { nextId } from '../src/util/ids.ts';
 import { FAMILY_NAMES, HOBBIES } from '../src/data/catalogue.ts';
 import {
-  MAX_POPULATION, activeCitizens, adjustReputation, canAct, computeMood, createCitizen, currentCycleStartDay,
-  dailyCitizens, describeCitizen, emigrate, hasCandidacyResidency, hasCriticalNeed, isEligibleCandidate, isEligibleVoter,
-  isPresent, talentOf, tickNeeds,
+  JOBLESS_SHARE_FOR_NO_ARRIVALS, JOBLESS_SHARE_FOR_SLOW_ARRIVALS, MAX_POPULATION, activeCitizens, adjustReputation,
+  arrivalAppetite, canAct, computeMood, createCitizen, currentCycleStartDay, dailyCitizens, describeCitizen, emigrate,
+  hasCandidacyResidency, hasCriticalNeed, isEligibleCandidate, isEligibleVoter, isPresent, talentOf, tickNeeds,
 } from '../src/citizens/citizen.ts';
 
 function addJob(w: World, overrides: Partial<Job> = {}): Job {
@@ -274,9 +274,20 @@ test('dailyCitizens resets shifts, trims memory, rotates the order, ends probati
   assert.equal(Object.keys(w.citizens).length, 4, 'no arrivals at rate 0');
 });
 
-test('dailyCitizens admits reflex newcomers and never exceeds the population cap', () => {
+test('arrivalAppetite falls from a full stream to none as the city runs out of work', () => {
+  assert.equal(arrivalAppetite(0), 1);
+  assert.equal(arrivalAppetite(JOBLESS_SHARE_FOR_SLOW_ARRIVALS), 1);
+  assert.equal(arrivalAppetite(JOBLESS_SHARE_FOR_NO_ARRIVALS), 0);
+  assert.equal(arrivalAppetite(1), 0);
+  const half = (JOBLESS_SHARE_FOR_SLOW_ARRIVALS + JOBLESS_SHARE_FOR_NO_ARRIVALS) / 2;
+  assert.ok(Math.abs(arrivalAppetite(half) - 0.5) < 1e-9, 'halfway between, half as many come');
+});
+
+test('dailyCitizens admits reflex newcomers while there is work, goes quiet when there is none, and never exceeds the cap', () => {
   const w = makeWorld({ arrivalRate: 4 });
-  makeCitizen(w);
+  const worker = makeCitizen(w);
+  addJob(w, { holderId: worker.id });
+  worker.jobId = w.jobs[Object.keys(w.jobs)[0]].id;
   const before = totalMoney(w);
   for (let d = 1; d <= 3; d++) {
     w.day = d;
@@ -284,12 +295,30 @@ test('dailyCitizens admits reflex newcomers and never exceeds the population cap
     dailyCitizens(w);
   }
   const pop = activeCitizens(w);
-  assert.ok(pop.length > 1, 'newcomers arrived');
+  assert.ok(pop.length > 1, 'newcomers arrived while the city had work');
   assert.ok(pop.slice(1).every((c) => c.brain === 'reflex' && c.arrivedDay >= 1));
   assert.equal(totalMoney(w), before);
 
+  // word of a city with no work gets around: the Threshold goes quiet, and says so once a week
+  const idle = makeWorld({ arrivalRate: 50 });
+  for (let i = 0; i < 10; i++) makeCitizen(idle);
+  idle.day = 3;
+  idle.tick = 72;
+  dailyCitizens(idle);
+  assert.equal(activeCitizens(idle).length, 10, 'nobody tries their luck in a city with no work');
+  const notices = () => idle.events.filter((e) => e.text.includes('the Threshold is quiet')).length;
+  assert.equal(notices(), 1);
+  idle.day = 4;
+  idle.tick = 96;
+  dailyCitizens(idle);
+  assert.equal(notices(), 1, 'the Chronicle is not told again the next morning');
+
   const full = makeWorld({ arrivalRate: 50 });
-  for (let i = 0; i < MAX_POPULATION - 1; i++) makeCitizen(full);
+  for (let i = 0; i < MAX_POPULATION - 1; i++) {
+    const c = makeCitizen(full);
+    const job = addJob(full, { holderId: c.id });
+    c.jobId = job.id;
+  }
   full.day = 1;
   full.tick = 24;
   dailyCitizens(full);

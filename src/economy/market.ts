@@ -55,7 +55,7 @@ export const SHORTAGE_PRESSURE = 0.15;
  * overproduction is bounded. City production is not bought and is managed
  * by the labour plan instead (economy/planning.ts).
  */
-export const BAZAAR_MAX_COVER_DAYS = 4;
+export const BAZAAR_MAX_COVER_DAYS = 6;
 /** Supply rate (units per tick) below which the ratio treats supply as "about one unit a day". */
 const MIN_SUPPLY_RATE = 1 / FLOW_WINDOW_TICKS;
 /** A single trade worth at least this much is newsworthy enough for the log. */

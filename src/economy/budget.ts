@@ -5,6 +5,7 @@
  * and contracts that day:
  *
  *     budget = yesterday's revenue − yesterday's piece wages
+ *              − what the Bazaar paid private sellers yesterday
  *              + DRAWDOWN_RATE × balance − today's fixed spend
  *
  * floored at a small share of the balance so the city never shuts down while
@@ -26,7 +27,7 @@
  */
 import type { Job, World } from '../types.ts';
 import { emit } from '../sim/events.ts';
-import { formatLumens } from './treasury.ts';
+import { formatLumens, treasuryFlowThisTick } from './treasury.ts';
 import { isPieceRateJob } from './planning.ts';
 
 /** Share of the Treasury balance the city may spend beyond its revenue each day. */
@@ -44,6 +45,32 @@ const SPENT_KEY = 'cityWagesToday';
 const YESTERDAY_KEY = 'cityWagesYesterday';
 const PIECE_KEY = 'cityPieceWagesToday';
 const PIECE_YESTERDAY_KEY = 'cityPieceWagesYesterday';
+const BAZAAR_MARK_KEY = 'bazaarBuyingMark';
+const BAZAAR_YESTERDAY_KEY = 'bazaarBuyingYesterday';
+
+/**
+ * What the Bazaar paid citizens and businesses for their goods since the
+ * budget was last set, read from the Treasury's running total of 'sale'
+ * payments. It comes out of the same purse as the wages and returns only when
+ * somebody buys those goods again, so the budget counts it as a cost of the
+ * day; without it a city whose shelves fill faster than they empty would
+ * spend its Treasury on goods nobody wanted.
+ */
+function bazaarBuyingSinceMark(world: World, mark: boolean): number {
+  const total = world.treasury.totals.sale ?? 0;
+  const previous = world.counters[BAZAAR_MARK_KEY];
+  const spent = Math.max(0, total - (previous === undefined ? total : previous));
+  if (mark) {
+    world.counters[BAZAAR_MARK_KEY] = total;
+    world.counters[BAZAAR_YESTERDAY_KEY] = spent;
+  }
+  return spent;
+}
+
+/** What the Bazaar paid private sellers on the day the budget was last set. */
+export function bazaarSpendYesterday(world: World): number {
+  return world.counters[BAZAAR_YESTERDAY_KEY] ?? 0;
+}
 
 /** City posts whose shifts draw on the wage budget: every flat-wage post (piece work pays for itself). */
 export function isBudgetedJob(job: Job): boolean {
@@ -97,12 +124,18 @@ export function pieceWagesYesterday(world: World): number {
  */
 export function dailyBudget(world: World): void {
   const t = world.treasury;
-  const revenue = Math.max(0, t.revenueToday);
-  const fixed = Math.max(0, t.spendToday);
+  // The Treasury's books for yesterday do not close until the end of the
+  // rollover, so its daily counters still hold yesterday's takings *plus* the
+  // dividend, stipends and arrival grants already paid this morning. This
+  // tick's own flows separate the two.
+  const morning = treasuryFlowThisTick(world);
+  const revenue = Math.max(0, t.revenueToday - morning.revenue);
+  const fixed = Math.max(0, morning.spend);
   const piece = world.counters[PIECE_KEY] ?? 0;
+  const bazaar = bazaarBuyingSinceMark(world, true);
   const drawdown = Math.max(0, t.balance) * DRAWDOWN_RATE;
   const floor = Math.max(BUDGET_FLOOR_MIN, Math.round(Math.max(0, t.balance) * BUDGET_FLOOR_RATE));
-  const budget = Math.min(Math.max(0, t.balance), Math.max(floor, Math.round(revenue - piece + drawdown - fixed)));
+  const budget = Math.min(Math.max(0, t.balance), Math.max(floor, Math.round(revenue - piece - bazaar + drawdown - fixed)));
   const yesterday = cityWagesToday(world);
   world.counters[YESTERDAY_KEY] = yesterday;
   world.counters[PIECE_YESTERDAY_KEY] = piece;
@@ -115,10 +148,11 @@ export function dailyBudget(world: World): void {
     emit(world, 'treasury',
       `Austerity at City Hall: after ${formatLumens(fixed)} of dividend and stipends and ${formatLumens(piece)} of piece wages the city can afford only `
       + `${formatLumens(budget)} of salaried wages today (it paid ${formatLumens(yesterday)} yesterday); city workers' hours will be cut.`,
-      [], 0.5, { budget, yesterday, revenue, fixed, piece });
+      [], 0.5, { budget, yesterday, revenue, fixed, piece, bazaar });
   } else {
     emit(world, 'treasury',
-      `City wage budget for the day: ${formatLumens(budget)} (revenue ${formatLumens(revenue)}, piece wages ${formatLumens(piece)}, fixed spend ${formatLumens(fixed)}).`,
-      [], 0.1, { budget, yesterday, revenue, fixed, piece });
+      `City wage budget for the day: ${formatLumens(budget)} (revenue ${formatLumens(revenue)}, piece wages ${formatLumens(piece)}, `
+      + `Bazaar buying ${formatLumens(bazaar)}, fixed spend ${formatLumens(fixed)}).`,
+      [], 0.1, { budget, yesterday, revenue, fixed, piece, bazaar });
   }
 }

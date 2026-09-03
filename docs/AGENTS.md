@@ -44,8 +44,22 @@ A citizen has:
             "home": { "tier": 1, "rentDue": 8 }, "job": { "title": "Fabricator", "wage": 15, "employer": "Fabrication Works" },
             "skills": { "crafting": 34, "analysis": 12, "...": 0 },
             "record": { "convictions": 0, "pendingCharges": 0 } },
+  "self.society": { "familyName": "Ashgrove", "lifeStage": "adult", "age": 41,
+            "tastes": { "hobbies": ["music", "games"], "favouriteDistrict": "nightglass", "favouriteGood": "culture",
+                        "categories": ["instrument", "game"], "wants": ["glass_harp", "shard_chess"] },
+            "possessions": [{ "id": "i_12", "product": "tin_whistle", "name": "Tin Whistle" }],
+            "partner": { "id": "c_3", "name": "Bram", "married": true, "since": 22 },
+            "family": [{ "id": "c_51", "name": "Wren", "relation": "child", "lifeStage": "child" }],
+            "household": { "id": "h_2", "home": 2, "members": ["c_3", "c_51"], "rentShare": 10 },
+            "clubs": [{ "id": "u_2", "name": "Halflight Chess Circle", "hobby": "games", "meetsOn": 3, "meetsAt": 19 }] },
   "here": { "district": "harbor_market", "buildings": ["grand_bazaar", "exchange", "lantern_bank"],
-            "citizens": [{ "id": "c_3", "name": "Bram", "bond": 45, "job": "Merchant" }] },
+            "citizens": [{ "id": "c_3", "name": "Bram", "bond": 45, "job": "Merchant" }],
+            "shops": [{ "business": "emporium", "name": "The Emporium",
+                        "shelf": [{ "product": "tin_whistle", "name": "Tin Whistle", "price": 30, "qty": 6 }] }],
+            "happening": [{ "id": "e_4", "kind": "wedding", "who": ["c_7", "c_9"], "label": "the wedding of …", "hour": 20 }] },
+  "affection": [{ "id": "c_3", "name": "Bram", "affection": 72 }],
+  "calendar": { "weekday": 3, "restDay": false, "festivalToday": null,
+                "nextFestival": { "name": "Lantern Night", "inDays": 4 }, "birthdaysToday": ["c_5"] },
   "market": { "compute": { "price": 7, "stock": 210 }, "goods": { "price": 13, "stock": 40 }, "...": {} },
   "jobs": [{ "id": "j_9", "title": "Courier", "wage": 9, "employer": "Swift & Co" }],
   "government": { "mayor": "c_2", "council": ["c_2", "c_5", "..."], "incomeTax": 0.15, "salesTax": 0.05,
@@ -55,6 +69,14 @@ A citizen has:
   "availableActions": ["work", "rest", "eat", "socialize", "..."]
 }
 ```
+
+The `self.society` block above is shown separately for readability; its keys
+(`familyName`, `lifeStage`, `age`, `tastes`, `possessions`, `partner`,
+`family`, `household`, `clubs`) sit inside `self` beside the rest. `affection`
+is the observer's five warmest affections; `calendar` says what day of the week
+it is, whether it is a rest day, what festival falls today and whose birthday
+it is; `here.shops` lists the shelves where the citizen stands and
+`here.happening` what is under way there today.
 
 ## The action catalogue
 
@@ -127,7 +149,54 @@ actions are rejected with a reason and cost the tick (the citizen idles).
 Offences succeed or fail based on the target and the actor's skills; either
 way they may be detected by the Watch. Exiled citizens can take no actions.
 Suspended citizens can only `idle`, `rest`, `eat`, `move`, `socialize`,
-`message`, and `appeal`.
+`message`, `appeal`, `consume`, `buy`, `dine`, `play`, `celebrate` and
+`use_item`.
+
+### Things
+| Action       | Params                | Effect                                                                     |
+| ------------ | --------------------- | -------------------------------------------------------------------------- |
+| `buy_item`   | `productId`           | buy one product from a shop or the Emporium in your district (`here.shops`) |
+| `use_item`   | `itemId`              | spend the hour with something you own: its needs, and skill for a hobby item |
+| `gift_item`  | `to`, `itemId`        | give a possession to someone here; a gift to their taste beats lumens        |
+| `craft`      | `productId`           | (shop / workshop / studio) make one from goods and put it on the shelf       |
+| `set_price`  | `productId`, `price`  | (owners) what your business charges for it                                   |
+
+A citizen owns at most 30 things. Products come from `src/data/catalogue.ts`;
+each lists the hobby it serves, the needs a use restores and its passive
+comfort. Companions cheer everyone in the household.
+
+### Company, romance and family
+| Action                | Params            | Effect                                                              |
+| --------------------- | ----------------- | -------------------------------------------------------------------- |
+| `dine`                | `with?`           | a meal at a café or the Tavern: energy +40, social +15, each pays     |
+| `play`                | `with?`           | games at the Garden, the Plaza or the Tavern: social +12, bond +4     |
+| `celebrate`           |                   | join the wedding, birthday, festival or swearing-in happening here now |
+| `date`                | `with`            | an evening out: affection and bond; a slighted partner may hear of it |
+| `propose_partnership` | `to`              | accepted when their affection for you has reached 60                  |
+| `marry`               | `to`              | after 7 days as partners with a bond above 75: a wedding tomorrow evening |
+| `break_up`            |                   | ends a partnership or marriage; one of you leaves the shared home     |
+| `move_in`             | `with`            | join the household of a partner, relative or close friend             |
+| `start_family`        |                   | partners sharing a tier-1 home, bond above 80, 400 ℓ: a child tomorrow |
+
+Hours spent together — socialising, dining, dating, playing, a club meeting, a
+show — build **affection** between adults; it decays without them. A household
+pays one rent, split among its adults. Children go to school free, cannot work,
+vote, own a business or be charged with an offence (their parents lose
+reputation instead), and come of age after 14 days.
+
+### Clubs, the calendar and giving
+| Action        | Params            | Effect                                                        |
+| ------------- | ----------------- | -------------------------------------------------------------- |
+| `found_club`  | `hobby`, `name`   | register a club for 50 ℓ; you are its first convenor            |
+| `join_club`   | `clubId`          | join (five clubs at most)                                       |
+| `leave_club`  | `clubId`          | leave; the last member out disbands it                          |
+| `attend_club` | `clubId`          | at the meeting hour and venue: company, bonds and a little skill |
+| `donate`      | `amount`          | give to the Community Chest, which pays daily hardship stipends  |
+
+The week is seven days and the last of them is Stillday, when workplaces close
+except the Watch, the Restoration Ward, cafés and the Tavern. Lantern Night is
+held at the Sound Garden every fourteenth day and Founders' Day the day after
+each election; weddings are held at the Sound Garden, birthdays at home.
 
 ## Joining as an external agent (HTTP API)
 

@@ -112,7 +112,8 @@ export function stateView(world: World, status: SimStatus): Record<string, unkno
   const present = presentSet(world);
   const all = Object.values(world.citizens);
   const living = all.filter((c) => isPresentIn(world, c, present));
-  const employed = living.filter((c) => jobOf(world, c) !== null).length;
+  const grownUps = living.filter((c) => c.lifeStage !== 'child');
+  const employed = grownUps.filter((c) => jobOf(world, c) !== null).length;
   const g = world.government;
   return {
     tick: world.tick, day: world.day, hour: world.hour, clock: clockText(world),
@@ -120,7 +121,7 @@ export function stateView(world: World, status: SimStatus): Record<string, unkno
     running: status.running, tickMs: status.tickMs, busy: status.busy, pendingRemote: status.pendingRemote,
     config: world.config,
     counts: {
-      citizens: all.length, present: living.length, employed, unemployed: living.length - employed,
+      citizens: all.length, present: living.length, employed, unemployed: grownUps.length - employed,
       homeless: living.filter((c) => c.homeTier === 0).length,
       detained: living.filter((c) => isDetained(world, c)).length,
       exiled: all.filter((c) => c.standing === 'exiled').length,

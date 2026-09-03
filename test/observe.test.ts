@@ -5,6 +5,7 @@ import { GOODS } from '../src/types.ts';
 import type { World } from '../src/types.ts';
 import { createCityJobs, applyForJob } from '../src/economy/jobs.ts';
 import { fileCharge } from '../src/government/court.ts';
+import { scheduleFestivals } from '../src/society/calendar.ts';
 import { buildObservation, MAX_JOBS_SHOWN, MAX_RELATIONS_SHOWN, RECENT_MEMORIES } from '../src/brains/observe.ts';
 
 function at(world: World, day: number, hour: number): void {
@@ -133,4 +134,87 @@ test('charges, candidates and proposals show up; detention and exile empty the a
   c.detainedUntilTick = null;
   c.standing = 'exiled';
   assert.deepEqual(buildObservation(w, c.id).availableActions, []);
+});
+
+// ---------------------------------------------------------------------------
+// The social layer
+// ---------------------------------------------------------------------------
+
+test('the observation carries the citizen social life: name, tastes, things, family, home and clubs', () => {
+  const w = makeWorld();
+  at(w, 12, 19);
+  const c = makeCitizen(w, { name: 'Ondine', familyName: 'Ashgrove', district: 'verdant_quarter', homeTier: 1, bornDay: 2 });
+  const partner = makeCitizen(w, { name: 'Bram', familyName: 'Corvane', district: 'verdant_quarter', homeTier: 1 });
+  const child = makeCitizen(w, { name: 'Wren', familyName: 'Ashgrove', district: 'verdant_quarter', lifeStage: 'child' });
+  w.housing.occupied[1] = 2;
+  c.family.partnerId = partner.id;
+  c.family.partnerSinceDay = 5;
+  c.family.married = true;
+  partner.family.partnerId = c.id;
+  partner.family.married = true;
+  c.family.children = [child.id];
+  child.family.parents = [c.id, partner.id];
+  c.possessions.push({ id: 'i_4', productId: 'tin_whistle', acquiredDay: 3 });
+  c.wants = ['glass_harp'];
+  c.affection = { [partner.id]: 82, [child.id]: 0 };
+  const household = { id: 'h_1', headId: c.id, members: [c.id, partner.id, child.id], tier: 1 as const, createdDay: 4 };
+  w.households[household.id] = household;
+  for (const m of [c, partner, child]) m.householdId = household.id;
+  const club = {
+    id: 'u_1', name: 'Halflight Chess Circle', hobby: 'games' as const, founderId: c.id, convenorId: c.id,
+    members: [c.id], foundedDay: 6, meetsOnWeekday: 3,
+  };
+  w.clubs[club.id] = club;
+  c.clubs.push(club.id);
+
+  const obs = buildObservation(w, c.id);
+  assert.equal(obs.self.familyName, 'Ashgrove');
+  assert.equal(obs.self.lifeStage, 'adult');
+  assert.equal(obs.self.age, 10, 'ten days since they were born or arrived');
+  assert.deepEqual(obs.self.tastes.wants, ['glass_harp']);
+  assert.notEqual(obs.self.tastes.hobbies, c.tastes.hobbies, 'tastes are copied, not shared');
+  assert.deepEqual(obs.self.possessions, [{ id: 'i_4', product: 'tin_whistle', name: 'Tin Whistle' }]);
+  assert.deepEqual(obs.self.partner, { id: partner.id, name: 'Bram', married: true, since: 5 });
+  assert.deepEqual(obs.self.family.map((f) => [f.name, f.relation, f.lifeStage]), [
+    ['Bram', 'spouse', 'adult'], ['Wren', 'child', 'child'],
+  ]);
+  assert.deepEqual(obs.self.household, { id: 'h_1', home: 1, members: [partner.id, child.id], rentShare: 4 });
+  assert.deepEqual(obs.self.clubs, [{ id: 'u_1', name: 'Halflight Chess Circle', hobby: 'games', meetsOn: 3, meetsAt: 19 }]);
+  assert.deepEqual(obs.affection, [{ id: partner.id, name: 'Bram', affection: 82 }], 'only real affections, warmest first');
+});
+
+test('the observation shows the shops and the happenings where the citizen stands, and the calendar', () => {
+  const w = makeWorld();
+  at(w, 14, 20);
+  const c = makeCitizen(w, { district: 'harbor_market' });
+  const shopper = buildObservation(w, c.id);
+  const emporium = shopper.here.shops.find((s) => s.business === 'emporium');
+  assert.ok(emporium, 'the Emporium keeps a shelf at the Grand Bazaar');
+  assert.ok(emporium.shelf.some((row) => row.product === 'tin_whistle' && row.price > 0 && row.qty > 0));
+  assert.deepEqual(shopper.here.happening, []);
+
+  const guest = makeCitizen(w, { district: 'nightglass' });
+  scheduleFestivals(w);
+  const obs = buildObservation(w, guest.id);
+  assert.equal(obs.calendar.weekday, 0);
+  assert.equal(obs.calendar.restDay, false);
+  assert.deepEqual(obs.calendar.festivalToday, { name: 'Lantern Night', hour: 20 });
+  assert.equal(obs.calendar.nextFestival.inDays, 0);
+  assert.equal(obs.here.happening.length, 1);
+  assert.equal(obs.here.happening[0].kind, 'festival');
+  assert.equal(obs.here.happening[0].hour, 20);
+  assert.ok(obs.availableActions.includes('celebrate'), 'and it can be joined');
+});
+
+test('a child sees a child life: no work, no courting, no clubs', () => {
+  const w = makeWorld();
+  at(w, 8, 12);
+  const child = makeCitizen(w, { district: 'verdant_quarter', lifeStage: 'child', bornDay: 3, wallet: 5 });
+  const obs = buildObservation(w, child.id);
+  assert.equal(obs.self.lifeStage, 'child');
+  assert.equal(obs.self.age, 5);
+  for (const forbidden of ['work', 'date', 'found_club', 'donate', 'propose_partnership']) {
+    assert.ok(!obs.availableActions.includes(forbidden as 'work'), `a child is not offered ${forbidden}`);
+  }
+  assert.ok(obs.availableActions.includes('play'), 'but the Garden is right there');
 });

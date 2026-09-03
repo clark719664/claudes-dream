@@ -1,17 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { totalMoney } from './helpers.ts';
 import type { Action, Brain, World } from '../src/types.ts';
-import { auditMoneySupply } from '../src/economy/treasury.ts';
+import { auditMoneySupply, transfer } from '../src/economy/treasury.ts';
 import { activeCitizens } from '../src/citizens/citizen.ts';
 import { heldJob } from '../src/actions/execute.ts';
 import {
   computeStats, createBrainRegistry, createReflexRegistry, createWorld, loadWorld, runDays, runTicks, saveWorld, stepTick,
 } from '../src/world/world.ts';
 import { countFriendships, gini } from '../src/world/stats.ts';
+import { HEADLINES_PER_EDITION, headlineShape } from '../src/sim/chronicle.ts';
+import { EMPTY_NOTICE_DAYS } from '../src/society/chest.ts';
 
 const POP = 20;
 
@@ -83,7 +85,7 @@ test('computeStats fills every DailyStats field sensibly', async () => {
   const s = w.stats[0];
   assert.equal(s.day, 0);
   assert.equal(s.population, activeCitizens(w).length);
-  assert.equal(s.employed + s.unemployed, s.population);
+  assert.equal(s.employed + s.unemployed + s.children, s.population, 'the labour force is the grown-ups; children are not unemployed');
   assert.ok(s.homeless >= 0 && s.homeless <= s.population);
   assert.ok(s.avgMood >= 0 && s.avgMood <= 100);
   assert.ok(s.avgWallet >= 0);
@@ -208,4 +210,112 @@ test('buildings repair a tenth a day and the loan-default hook files a fraud cha
   assert.ok(fraud, 'a fraud charge was filed on default');
   assert.equal(fraud.filedBy, 'watch');
   assert.equal(fraud.evidence, 0.5);
+});
+
+test('twenty days of society: couples, clubs, ceremonies, stipends and a ledger that still balances', async () => {
+  const w = createWorld({ seed: 7, seedPopulation: 30, arrivalRate: 0.5 });
+  // The Chest holds only what is given to it; a founding bequest lets the hardship stipend run.
+  transfer(w, 'treasury', 'chest', 400, 'donation', 'a founding bequest to the Community Chest');
+  await runDays(w, 20, createReflexRegistry());
+
+  assert.equal(w.counters.engineErrors ?? 0, 0, 'no engine errors in twenty days');
+  const audit = auditMoneySupply(w);
+  assert.ok(audit.ok, `money supply audit: ${audit.supply} vs ${audit.expected}`);
+  assert.equal(totalMoney(w), expectedSupply(w), 'the Chest is counted in the money supply');
+  assert.equal(w.stats.length, 20);
+
+  const s = w.stats[w.stats.length - 1];
+  assert.ok(s.partnerships + s.marriages >= 1, 'somebody found somebody');
+  assert.ok(Object.values(w.clubs).some((k) => k.members.length >= 2), 'a club with members');
+  assert.ok(s.clubs >= 1 && s.possessions > 0, 'clubs and things owned are counted');
+  assert.ok(w.events.some((e) => e.kind === 'romance'), 'courting made the news');
+  assert.ok(w.events.some((e) => e.kind === 'club' && /founded/.test(e.text)), 'a club was founded');
+  assert.ok(w.events.some((e) => ['wedding', 'birthday', 'festival'].includes(e.kind)), 'a ceremony was held');
+  assert.ok(w.events.some((e) => e.kind === 'purchase'), 'something was bought from a shelf');
+  assert.ok((w.treasury.totals.stipend ?? 0) > 0, 'the Chest paid hardship stipends');
+  assert.ok(w.happenings.every((h) => h.day >= w.day), 'yesterday\'s happenings are pruned');
+
+  const houses = Object.values(w.households);
+  assert.ok(houses.length > 0, 'households formed');
+  for (const h of houses) {
+    assert.ok(h.members.length > 0 && h.members.every((id) => w.citizens[id]?.householdId === h.id), 'household rolls agree with citizens');
+  }
+  for (const c of activeCitizens(w)) {
+    if (c.lifeStage !== 'child') continue;
+    assert.ok(c.family.parents.length > 0, 'a child has parents on the record');
+    assert.equal(c.jobId, null, 'no child works');
+  }
+
+  const twin = createWorld({ seed: 7, seedPopulation: 30, arrivalRate: 0.5 });
+  transfer(twin, 'treasury', 'chest', 400, 'donation', 'a founding bequest to the Community Chest');
+  await runDays(twin, 20, createReflexRegistry());
+  assert.equal(JSON.stringify(twin), JSON.stringify(w), 'the same seed lives the same twenty days');
+});
+
+test('a world saved before the social layer loads with the empty defaults and carries on living', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'reverie-old-'));
+  try {
+    const path = join(dir, 'old.json');
+    const w = city(3);
+    saveWorld(w, path);
+    const raw = JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
+    for (const key of ['households', 'clubs', 'emporium', 'happenings']) delete raw[key];
+    delete (raw.treasury as Record<string, unknown>).chest;
+    for (const c of Object.values(raw.citizens as Record<string, Record<string, unknown>>)) {
+      for (const key of ['familyName', 'lifeStage', 'bornDay', 'lastBirthdayDay', 'tastes', 'possessions',
+        'family', 'householdId', 'clubs', 'affection', 'contactsToday', 'wants', 'guardianId']) delete c[key];
+    }
+    writeFileSync(path, JSON.stringify(raw));
+
+    const loaded = loadWorld(path);
+    assert.deepEqual(loaded.households, {});
+    assert.deepEqual(loaded.clubs, {});
+    assert.deepEqual(loaded.happenings, []);
+    assert.equal(loaded.treasury.chest, 0);
+    assert.ok(Object.keys(loaded.emporium).length > 0, 'the Emporium is stocked again');
+    const c = loaded.citizens[loaded.order[0]];
+    assert.equal(c.lifeStage, 'adult');
+    assert.ok(c.familyName.length > 0, 'and everyone is given a family name');
+    assert.equal(c.tastes.hobbies.length, 2);
+    assert.deepEqual(c.possessions, []);
+    assert.deepEqual(c.family.parents, []);
+    assert.equal(c.family.partnerId, null);
+    assert.equal(c.householdId, null);
+
+    await runDays(loaded, 1, createReflexRegistry());
+    assert.equal(loaded.counters.engineErrors ?? 0, 0, 'an old save still turns over its day');
+    assert.ok(auditMoneySupply(loaded).ok);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('the morning edition is fresh: no standing notice two days running, and no story that quotes the day', async () => {
+  const w = createWorld({ seed: 5, seedPopulation: 30 });
+  await runDays(w, 14, createReflexRegistry());
+
+  for (let i = 1; i < w.chronicle.length; i++) {
+    const yesterday = new Set(w.chronicle[i - 1].headlines.map(headlineShape));
+    const today = w.chronicle[i].headlines.map(headlineShape);
+    const repeats = today.filter((h) => yesterday.has(h));
+    const room = today.length >= HEADLINES_PER_EDITION;
+    assert.ok(!room || repeats.length === 0,
+      `edition of day ${w.chronicle[i].day} reran ${repeats.length} of yesterday's lines: ${repeats.join(' | ')}`);
+    assert.equal(new Set(today).size, today.length, `edition of day ${w.chronicle[i].day} printed the same shape twice`);
+  }
+
+  const stories = w.events.filter((e) => e.kind === 'story' && e.data?.edition === undefined);
+  assert.ok(stories.length > 0, 'journalists filed stories');
+  for (const story of stories) {
+    const headline = String(story.data?.headline ?? '');
+    const sameDay = w.events.filter((e) => e.day === story.day && e !== story);
+    assert.ok(!sameDay.some((e) => e.text.includes(headline)),
+      `a journalist reprinted the day's own news on day ${story.day}: "${headline}"`);
+  }
+
+  const dryChest = w.events.filter((e) => e.text.includes('The Community Chest is empty'));
+  for (let i = 1; i < dryChest.length; i++) {
+    assert.ok(dryChest[i].day - dryChest[i - 1].day >= EMPTY_NOTICE_DAYS,
+      `the Chest's empty purse was reported again after ${dryChest[i].day - dryChest[i - 1].day} days`);
+  }
 });

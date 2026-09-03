@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
 import type { Business, World } from '../src/types.ts';
 import {
-  auditMoneySupply, balanceOf, dailyTreasuryRollover, formatLumens, moneySupply, payDividend, paySalaries,
-  transfer, withholdingPay,
+  auditMoneySupply, balanceOf, dailyTreasuryRollover, formatLumens, lastBalanceSheet, moneySupply, payDividend, paySalaries,
+  transfer, treasuryFlowThisTick, withholdingPay,
 } from '../src/economy/treasury.ts';
 
 function makeBusiness(world: World, ownerId: string, treasury = 100): Business {
@@ -314,4 +314,28 @@ test('the Community Chest holds money like any other party and counts toward the
   assert.equal(totalMoney(w), before);
   assert.equal(auditMoneySupply(w).ok, true);
   assert.equal(transfer(w, 'chest', 'chest', 5, 'stipend', 'self'), false);
+});
+
+test("the Treasury keeps this tick's flows apart and publishes yesterday's balance sheet", () => {
+  const w = makeWorld();
+  const c = makeCitizen(w, { wallet: 500 });
+  assert.deepEqual(treasuryFlowThisTick(w), { revenue: 0, spend: 0 });
+  assert.deepEqual(lastBalanceSheet(w), { revenue: 0, spend: 0 }, 'no books have closed yet');
+
+  transfer(w, c.id, 'treasury', 100, 'rent', 'yesterday');
+  transfer(w, 'treasury', c.id, 40, 'dividend', 'yesterday');
+  assert.deepEqual(treasuryFlowThisTick(w), { revenue: 100, spend: 40 });
+
+  w.tick += 1;
+  assert.deepEqual(treasuryFlowThisTick(w), { revenue: 0, spend: 0 }, 'a new hour starts at nothing');
+  transfer(w, c.id, 'treasury', 7, 'fee', 'this morning');
+  transfer(w, c.id, c.id, 5, 'gift', 'not the Treasury at all');
+  assert.deepEqual(treasuryFlowThisTick(w), { revenue: 7, spend: 0 }, 'only the Treasury\'s own flows count');
+  assert.equal(w.treasury.revenueToday, 107, 'the day still holds both hours');
+
+  dailyTreasuryRollover(w);
+  assert.deepEqual(lastBalanceSheet(w), { revenue: 107, spend: 40 }, 'the day that just closed, as the Chronicle prints it');
+  assert.equal(w.treasury.revenueToday, 0);
+  transfer(w, c.id, 'treasury', 3, 'fee', 'the new day');
+  assert.deepEqual(lastBalanceSheet(w), { revenue: 107, spend: 40 }, 'and it stands until the next close');
 });

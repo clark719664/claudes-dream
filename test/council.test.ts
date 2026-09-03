@@ -1,11 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
-import type { Citizen, Job, Platform, World } from '../src/types.ts';
+import type { Citizen, Job, Platform, Proposal, World } from '../src/types.ts';
 import { nextId } from '../src/util/ids.ts';
 import {
-  appointJudges, campaign, castBallot, councilSession, councillorDisposition, dailyGovernment, daysToElection, enactProposal,
-  holdElection, nominate, openNominations, tableProposal, voteOnProposal, voterPreference,
+  JUDGE_FALLBACK_REPUTATION, appointJudges, campaign, castBallot, councilSession, councillorDisposition, dailyGovernment,
+  daysToElection, enactProposal, holdElection, nominate, openNominations, tableProposal, treasuryDeficitShare,
+  voteOnProposal, voterPreference,
 } from '../src/government/council.ts';
 
 const NEUTRAL: Platform = { tax: 0.5, dividend: 0.5, minWage: 0.5, strictness: 0.5 };
@@ -256,19 +257,51 @@ test('appointJudges fills the bench, the Mayor favouring friends; other office h
   tarnished.record.convictions.push({ caseId: 'k_1', law: 'L01', severity: 1, tier: 1, day: 1 });
   const officer = makeCitizen(w, { reputation: 95, office: 'watch' });
   w.government.watch.push(officer.id);
-  makeCitizen(w, { reputation: 59 });
+  const almost = makeCitizen(w, { reputation: 59 });
   mayor.bonds[crony.id] = 80;
   appointJudges(w);
-  assert.deepEqual(w.government.judges, [crony.id, stranger.id]);
+  assert.deepEqual(w.government.judges, [crony.id, stranger.id, almost.id],
+    'two citizens stand at 60; the third seat goes to the most reputable of the rest');
   assert.equal(crony.office, 'judge');
   assert.equal(crony.judgeTermEndsDay, 10 + w.config.judgeTermDays);
-  assert.ok(w.events.some((e) => e.kind === 'law' && e.weight === 0.4 && e.text.includes(mayor.name)));
-  const later = makeCitizen(w, { reputation: 70 });
-  appointJudges(w);
-  assert.deepEqual(w.government.judges, [crony.id, stranger.id, later.id]);
+  const notice = w.events.find((e) => e.kind === 'law' && e.weight === 0.4);
+  assert.ok(notice && notice.text.includes(mayor.name) && /Too few citizens yet stand at 60/.test(notice.text));
+  assert.equal(notice.data?.fallback, 1);
   makeCitizen(w, { reputation: 99 });
   appointJudges(w);
   assert.equal(w.government.judges.length, 3, 'the bench is full');
+});
+
+test('the bench never falls below the fallback standing: nobody tarnished, suspended or half-forgotten sits', () => {
+  const w = makeWorld();
+  w.day = 4;
+  const good = makeCitizen(w, { reputation: JUDGE_FALLBACK_REPUTATION });
+  const poorlyThoughtOf = makeCitizen(w, { reputation: JUDGE_FALLBACK_REPUTATION - 1 });
+  const convicted = makeCitizen(w, { reputation: 90 });
+  convicted.record.convictions.push({ caseId: 'k_2', law: 'L04', severity: 3, tier: 3, day: 2 });
+  const suspended = makeCitizen(w, { reputation: 90, standing: 'suspended' });
+  const child = makeCitizen(w, { reputation: 90 });
+  child.lifeStage = 'child';
+  appointJudges(w);
+  assert.deepEqual(w.government.judges, [good.id]);
+  assert.equal(poorlyThoughtOf.office, null);
+  assert.equal(convicted.office, null);
+  assert.equal(suspended.office, null);
+  assert.equal(child.office, null);
+});
+
+test('with nobody fit to judge, the Court is told once a day that it must draw judges by lot', () => {
+  const w = makeWorld();
+  w.day = 2;
+  makeCitizen(w, { reputation: JUDGE_FALLBACK_REPUTATION - 5 });
+  appointJudges(w);
+  appointJudges(w);
+  const lot = w.events.filter((e) => e.text.includes('draw temporary judges by lot'));
+  assert.equal(lot.length, 1, 'one notice a day, however often the Council looks at the bench');
+  assert.deepEqual(w.government.judges, []);
+  w.day = 3;
+  appointJudges(w);
+  assert.equal(w.events.filter((e) => e.text.includes('draw temporary judges by lot')).length, 2, 'a new day, a new notice');
 });
 
 test('enactProposal applies every kind: severity, dividend, pardon, judges, mayor', () => {
@@ -321,7 +354,7 @@ test('dailyGovernment prunes ineligible councillors, opens nominations, appoints
   third.standing = 'suspended';
   const builder = makeCitizen(w, { wallet: 0 });
   addJob(w, builder.id);
-  makeCitizen(w, { reputation: 75 });
+  const reputable = makeCitizen(w, { reputation: 75 });
   w.government.publicWorksFund = 1000;
   const before = totalMoney(w);
   const progress = w.housing.progress;
@@ -334,7 +367,8 @@ test('dailyGovernment prunes ineligible councillors, opens nominations, appoints
   assert.equal(w.counters.nominationsOpenedDay, 0, 'nominations for the first election opened');
   assert.equal(w.government.election.resolved, false);
   assert.ok(w.events.some((e) => e.kind === 'election' && e.text.includes('Nominations')));
-  assert.equal(w.government.judges.length, 1);
+  assert.deepEqual(w.government.judges, [reputable.id, builder.id],
+    'the one citizen who stands at 60 takes a seat, and the most reputable of the rest fills the second');
   assert.equal(builder.wallet, 100, 'a tenth of the fund a day');
   assert.equal(w.government.publicWorksFund, 900);
   assert.equal(w.housing.progress, progress + 20);
@@ -385,4 +419,83 @@ test('with no Council seated, petitions are held over and lapse after a week', (
   councilSession(w);
   assert.equal(w.government.proposals[1].status, 'passed');
   assert.equal(w.government.dividend, 20);
+});
+
+// ---------------------------------------------------------------------------
+// What a councillor weighs: the cost of living, idle hands, the balance sheet
+// ---------------------------------------------------------------------------
+
+/** A proposal as the session sees it, without going through tableProposal. */
+function proposalOf(w: World, proposerId: string, kind: Proposal['kind'], value: number): Proposal {
+  return {
+    id: 'p_test', kind, value, lawCode: null, targetId: null, summary: 'test', proposerId, petition: false,
+    tabledDay: w.day, status: 'open', votes: {}, decidedDay: null, needed: 3,
+  };
+}
+
+/** How often a whole Council says aye, so the rng's ±0.1 of noise cannot decide a test. */
+function ayes(w: World, members: Citizen[], p: Proposal): number {
+  let n = 0;
+  for (const m of members) for (let i = 0; i < 20; i++) if (councillorDisposition(w, m.id, p)) n++;
+  return n / (members.length * 20);
+}
+
+test('a councillor on the minimum wage backs a rise in a cheap city and refuses it in a dear one', () => {
+  const w = makeWorld();
+  const council = makeCouncil(w, 5);
+  for (const m of council) addJob(w, m.id, { wage: w.government.minWage });
+  const outsider = makeCitizen(w);
+  addJob(w, outsider.id);
+  const rise = proposalOf(w, outsider.id, 'min_wage', w.government.minWage + 2);
+
+  w.market.priceIndex = 1;
+  assert.equal(ayes(w, council, rise), 1, 'at founding prices the floor costs a worker nothing');
+  w.market.priceIndex = 1.6;
+  assert.equal(ayes(w, council, rise), 0, 'with the Bazaar half as dear again, the rise is a rise in their own costs');
+});
+
+test('a councillor paid well above the floor has nothing to gain from raising it', () => {
+  const w = makeWorld();
+  const council = makeCouncil(w, 5);
+  for (const m of council) addJob(w, m.id, { wage: w.government.minWage * 4 });
+  const outsider = makeCitizen(w);
+  addJob(w, outsider.id);
+  w.market.priceIndex = 1.2;
+  const rise = proposalOf(w, outsider.id, 'min_wage', w.government.minWage + 2);
+  assert.ok(ayes(w, council, rise) < 0.5, 'the raise is somebody else’s, the prices are theirs');
+});
+
+test('idle hands turn a Council against the wage floor', () => {
+  const w = makeWorld();
+  const council = makeCouncil(w, 5);
+  for (const m of council) addJob(w, m.id, { wage: w.government.minWage });
+  const rise = proposalOf(w, council[0].id, 'min_wage', w.government.minWage + 2);
+  w.market.priceIndex = 1;
+  const busy = ayes(w, council, rise);
+  for (let i = 0; i < 10; i++) makeCitizen(w);     // ten citizens, no work between them
+  const idle = ayes(w, council, rise);
+  assert.equal(busy, 1);
+  assert.ok(idle < busy, `a city out of work is readier to hear that the floor is the reason (${idle} < ${busy})`);
+});
+
+test('the morning balance sheet: a deficit argues for taxes and against the dividend', () => {
+  const w = makeWorld();
+  const council = makeCouncil(w, 5);
+  for (const m of council) addJob(w, m.id);
+  const cut = proposalOf(w, council[0].id, 'sales_tax', w.government.salesTax - 0.02);
+  const dividendRise = proposalOf(w, council[0].id, 'dividend', w.government.dividend + 5);
+
+  assert.equal(treasuryDeficitShare(w), 0, 'no balance sheet has been printed yet');
+  const balancedCut = ayes(w, council, cut);
+  const balancedDividend = ayes(w, council, dividendRise);
+
+  w.counters.treasuryRevenueYesterday = 2000;
+  w.counters.treasurySpendYesterday = 3000;
+  assert.ok(Math.abs(treasuryDeficitShare(w) - 0.5) < 1e-9);
+  assert.ok(ayes(w, council, cut) < balancedCut, 'a Council that spent half again as much as it took does not cut taxes');
+  assert.ok(ayes(w, council, dividendRise) < balancedDividend, 'nor does it raise the dividend');
+
+  w.counters.treasuryRevenueYesterday = 3000;
+  w.counters.treasurySpendYesterday = 2000;
+  assert.equal(treasuryDeficitShare(w), 0, 'a surplus is no argument at all');
 });

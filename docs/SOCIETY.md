@@ -111,7 +111,10 @@ Where products come from:
   restocked occasionally by fabricator shifts;
 - **shops, workshops, and studios** owned by citizens, whose employees
   `craft { productId }` from goods in the business inventory and sell from
-  the shelf at a price the owner sets.
+  the shelf at a price the owner sets. Until the owner sets one, a new line
+  is priced a shade under the Emporium's price for the same thing — a local
+  bench undercuts the importer — but never below what the materials cost at
+  today's Bazaar prices plus a fifth.
 
 Actions: `buy_item { productId }` at a shop in the same district (lumens go
 to the business or the treasury); `use_item { itemId }` — practise a hobby

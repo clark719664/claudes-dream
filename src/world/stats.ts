@@ -90,7 +90,9 @@ export function summarisedDay(world: World): number {
 export function computeStats(world: World, day: number = summarisedDay(world)): DailyStats {
   const active = activeCitizens(world);
   const wallets = active.map((c) => c.wallet);
-  const employed = active.filter((c) => hasLivelihood(world, c)).length;
+  // Children are not idle hands: the city's labour force is its grown-ups.
+  const grownUps = active.filter((c) => c.lifeStage !== 'child');
+  const employed = grownUps.filter((c) => hasLivelihood(world, c)).length;
 
   let offences = 0;
   for (const c of Object.values(world.citizens)) {
@@ -111,7 +113,7 @@ export function computeStats(world: World, day: number = summarisedDay(world)): 
     day,
     population: active.length,
     employed,
-    unemployed: active.length - employed,
+    unemployed: grownUps.length - employed,
     homeless: active.filter((c) => c.homeTier === 0).length,
     avgMood: round(mean(active.map((c) => c.mood)), 1),
     avgWallet: round(mean(wallets), 1),

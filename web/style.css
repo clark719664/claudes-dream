@@ -397,5 +397,8 @@ td.wrap { white-space: normal; max-width: 420px; }
 
 .drawer .list li.kin { justify-content: flex-start; }
 
+/* twelve columns need room: the wrapper scrolls rather than squeezing them */
+#citizens-table table { min-width: 980px; }
+
 .citizen.child .body { transform: scale(0.62); }
 .citizen.child .ring { r: 0.62; }

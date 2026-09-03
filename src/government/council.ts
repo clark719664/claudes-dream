@@ -11,7 +11,8 @@ import { LAWS } from '../data/laws.ts';
 import { nextId } from '../util/ids.ts';
 import { rand } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
-import { transfer } from '../economy/treasury.ts';
+import { lastBalanceSheet, transfer } from '../economy/treasury.ts';
+import { joblessShare } from '../economy/planning.ts';
 import { addHousingProgress } from '../economy/housing.ts';
 import { bondBetween } from '../citizens/relationships.ts';
 import { isDetained, isPresent, sittingCouncil } from './cases.ts';
@@ -28,6 +29,14 @@ export {
 
 export const JUDGE_SEATS = 3;
 export const JUDGE_MIN_REPUTATION = 60;
+/**
+ * Nobody arrives with the standing the Charter asks of a judge: every citizen
+ * starts at 50 and earns the rest by living well. Rather than leave the Court
+ * to temporary judges drawn by lot for the first weeks of the city, the bench
+ * falls back to the most reputable citizens who are at least this well
+ * thought of and have never been convicted.
+ */
+export const JUDGE_FALLBACK_REPUTATION = 50;
 /** A proposal nobody can vote on (no Council seated) lapses after this many days. */
 export const PROPOSAL_LAPSE_DAYS = 7;
 /** Decided proposals kept for the record. */
@@ -66,11 +75,12 @@ function residualOffice(world: World, cId: CitizenId): 'watch' | null {
 // Judges
 // ---------------------------------------------------------------------------
 
-/** Good standing, reputation ≥ 60, clean record, no other office. */
-export function isJudgeEligible(world: World, c: Citizen): boolean {
+/** Good standing, reputation at or above `minReputation` (60 by the Charter), clean record, no other office, grown up. */
+export function isJudgeEligible(world: World, c: Citizen, minReputation: number = JUDGE_MIN_REPUTATION): boolean {
   const g = world.government;
   if (c.standing !== 'good' || !isPresent(world, c) || isDetained(world, c)) return false;
-  if (c.reputation < JUDGE_MIN_REPUTATION || c.record.convictions.length > 0) return false;
+  if (c.lifeStage === 'child') return false;
+  if (c.reputation < minReputation || c.record.convictions.length > 0) return false;
   if (c.office !== null || isCouncillor(world, c.id) || g.watch.includes(c.id) || g.judges.includes(c.id)) return false;
   return true;
 }
@@ -97,26 +107,41 @@ function pruneJudges(world: World): void {
   }
 }
 
-/** Fill the bench up to three: the Mayor picks by friendship, then reputation; without a Mayor, by reputation. */
+/**
+ * Fill the bench up to three: the Mayor picks by friendship, then reputation;
+ * without a Mayor, by reputation. When too few citizens have reached the
+ * Charter's standing of 60 — as in a young city, where everyone begins at 50
+ * — the remaining seats go to the most reputable citizens above
+ * JUDGE_FALLBACK_REPUTATION with clean records, and the appointment says so.
+ */
 export function appointJudges(world: World): void {
   const g = world.government;
   pruneJudges(world);
   const vacancies = JUDGE_SEATS - g.judges.length;
   if (vacancies <= 0) return;
   const mayor = g.mayorId ? world.citizens[g.mayorId] ?? null : null;
-  const pool = Object.values(world.citizens).filter((c) => isJudgeEligible(world, c));
-  pool.sort((a, b) => {
+  const byStanding = (a: Citizen, b: Citizen): number => {
     const bondDiff = mayor ? bondBetween(world, mayor.id, b.id) - bondBetween(world, mayor.id, a.id) : 0;
     return bondDiff || b.reputation - a.reputation || a.id.localeCompare(b.id);
-  });
-  const chosen = pool.slice(0, vacancies);
+  };
+  const everyone = Object.values(world.citizens);
+  const chosen = everyone.filter((c) => isJudgeEligible(world, c)).sort(byStanding).slice(0, vacancies);
+  const seated = new Set(chosen.map((c) => c.id));
+  const fallback = chosen.length < vacancies
+    ? everyone.filter((c) => !seated.has(c.id) && isJudgeEligible(world, c, JUDGE_FALLBACK_REPUTATION))
+      .sort(byStanding).slice(0, vacancies - chosen.length)
+    : [];
+  chosen.push(...fallback);
   for (const c of chosen) seatJudge(world, c);
   if (chosen.length > 0) {
     const names = chosen.map((c) => c.name).join(', ');
-    emit(world, 'law', mayor
+    const note = fallback.length > 0
+      ? ` Too few citizens yet stand at ${JUDGE_MIN_REPUTATION} in the city's regard, so the bench is filled out with the most respected the city has.`
+      : '';
+    emit(world, 'law', (mayor
       ? `Mayor ${mayor.name} appointed ${names} to the bench of the Court.`
-      : `With no Mayor to choose, ${names} ${chosen.length > 1 ? 'were' : 'was'} appointed to the bench by standing in the community.`,
-    [...(mayor ? [mayor.id] : []), ...chosen.map((c) => c.id)], 0.4, { judges: chosen.map((c) => c.id) });
+      : `With no Mayor to choose, ${names} ${chosen.length > 1 ? 'were' : 'was'} appointed to the bench by standing in the community.`) + note,
+    [...(mayor ? [mayor.id] : []), ...chosen.map((c) => c.id)], 0.4, { judges: chosen.map((c) => c.id), fallback: fallback.length });
   } else if (g.judges.length === 0 && world.counters.noJudgesNoticeDay !== world.day) {
     world.counters.noJudgesNoticeDay = world.day;
     emit(world, 'law', 'No citizen is eligible to serve as judge; the Court will draw temporary judges by lot.', [], 0.3);
@@ -198,6 +223,42 @@ function direction(p: Proposal, current: number): number {
 }
 
 /**
+ * How heavily the price index weighs against raising the minimum wage: at the
+ * founding prices it costs a rise nothing, and by the time the Bazaar is half
+ * as dear again it outweighs what a worker on the floor stands to gain.
+ */
+export const COST_OF_LIVING_WEIGHT = 1;
+
+/** Share of adults out of work above which the wage floor starts to look like the reason nobody is hiring... */
+export const JOBLESS_TOLERANCE = 0.15;
+/** ...how heavily that argument then weighs, and how far it can go. */
+export const JOBLESS_WEIGHT = 2;
+export const JOBLESS_WEIGHT_CAP = 0.4;
+
+/** How heavily this morning's balance sheet weighs on a vote that moves money... */
+export const BALANCE_SHEET_WEIGHT = 0.6;
+/** ...and on the dividend, which a Council would rather not be seen cutting. */
+export const BALANCE_SHEET_DIVIDEND_WEIGHT = 0.1;
+
+/**
+ * How far the city's spending ran beyond its takings yesterday, as a share of
+ * those takings, from the balance sheet the Chronicle printed this morning
+ * ("Treasury: 63,325 ℓ (+3,894 revenue, −5,271 spend)" reads 0.35). Zero when
+ * the books balanced, so the pressure it puts on a vote fades as they do.
+ */
+export function treasuryDeficitShare(world: World): number {
+  const sheet = lastBalanceSheet(world);
+  if (sheet.revenue <= 0) return 0;
+  return clamp((sheet.spend - sheet.revenue) / sheet.revenue, 0, 1);
+}
+
+/** What the citizen is actually paid a shift, or 0 if they hold no job. */
+function heldWage(world: World, c: Citizen): number {
+  const job = c.jobId ? world.jobs[c.jobId] : null;
+  return job && job.holderId === c.id ? job.wage : 0;
+}
+
+/**
  * How a reflex councillor votes: self-interest, their platform, friendship
  * with the proposer (weighted more by the dishonest), rivalry, a little noise.
  */
@@ -214,6 +275,8 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
   const bondTarget = target ? bondBetween(world, councillorId, target.id) : 0;
   const population = Math.max(1, world.order.length);
   const treasuryStrained = world.treasury.balance < g.dividend * population * 5;
+  // Every citizen reads the Treasury's balance sheet in the morning Chronicle.
+  const deficit = treasuryDeficitShare(world);
   let score = 0;
 
   switch (p.kind) {
@@ -223,6 +286,7 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
       if (owner || rich) score -= 0.2 * d;
       if (poor) score += 0.1 * d;
       if (treasuryStrained) score += 0.15 * d;
+      score += deficit * BALANCE_SHEET_WEIGHT * d;
       break;
     }
     case 'dividend': {
@@ -231,13 +295,25 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
       if (poor) score += 0.2 * d;
       if (owner || rich) score -= 0.1 * d;
       if (treasuryStrained) score -= 0.25 * d;
+      score -= deficit * BALANCE_SHEET_DIVIDEND_WEIGHT * d;
       break;
     }
     case 'min_wage': {
       const d = direction(p, g.minWage);
       score += (platform.minWage - 0.5) * 0.4 * d;
       if (owner) score -= 0.2 * d;
-      if (employed && !owner) score += 0.15 * d;
+      // Only a wage at or near the floor moves when the floor moves: a
+      // councillor already paid well above it has nothing to gain.
+      const wage = heldWage(world, c);
+      if (employed && !owner && wage > 0 && wage <= Math.max(g.minWage, p.value)) score += 0.15 * d;
+      // Everybody shops. The Bazaar's prices are anchored to what the city's
+      // production costs at the minimum wage (economy/market.ts), so a
+      // councillor who has watched the price of compute climb reads another
+      // rise as a rise in their own cost of living.
+      score -= (world.market.priceIndex - 1) * COST_OF_LIVING_WEIGHT * d;
+      // A city with idle hands hears the argument that the floor is what keeps
+      // the forges and the workshops from taking anybody on.
+      score -= clamp((joblessShare(world) - JOBLESS_TOLERANCE) * JOBLESS_WEIGHT, 0, JOBLESS_WEIGHT_CAP) * d;
       break;
     }
     case 'law_severity': {

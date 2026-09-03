@@ -23,6 +23,12 @@ export const BIG_DONATION = 100;
 export const DONOR_PURPOSE = 5;
 /** A need below this is critical (mirrors citizens/citizen.ts CRITICAL_NEED). */
 export const CRITICAL_NEED = 20;
+/**
+ * An empty Chest with claimants waiting is news the first morning it happens;
+ * after that it is a standing condition, and the Chronicle is only reminded
+ * of it this often (the morning edition has a city to report on).
+ */
+export const EMPTY_NOTICE_DAYS = 7;
 
 export type Hardship = 'ward' | 'homeless' | 'critical need';
 
@@ -122,8 +128,14 @@ export function dailyChest(world: World): void {
       list.slice(0, count).map((r) => r.citizen.id), 0.1, { paid, count, chest: chestBalance(world) });
   }
   if (unpaid > 0) {
-    emit(world, 'system', `The Community Chest is empty: ${unpaid} citizen${unpaid === 1 ? '' : 's'} in hardship went without a stipend today.`,
-      list.slice(count).map((r) => r.citizen.id), 0.5, { unpaid, chest: chestBalance(world) });
+    const last = world.counters.chestEmptyNoticeDay;
+    if (last === undefined || world.day - last >= EMPTY_NOTICE_DAYS) {
+      world.counters.chestEmptyNoticeDay = world.day;
+      emit(world, 'system', `The Community Chest is empty: ${unpaid} citizen${unpaid === 1 ? '' : 's'} in hardship went without a stipend today.`,
+        list.slice(count).map((r) => r.citizen.id), 0.5, { unpaid, chest: chestBalance(world) });
+    }
+  } else if (world.counters.chestEmptyNoticeDay !== undefined) {
+    delete world.counters.chestEmptyNoticeDay;   // the Chest paid everyone: the next dry morning is news again
   }
 }
 

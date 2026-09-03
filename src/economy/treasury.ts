@@ -84,6 +84,45 @@ function credit(world: World, party: MoneyParty, amount: number): void {
   if (b) b.treasury += amount;
 }
 
+const FLOW_TICK_KEY = 'treasuryFlowTick';
+const FLOW_REVENUE_KEY = 'treasuryRevenueTick';
+const FLOW_SPEND_KEY = 'treasurySpendTick';
+const REVENUE_YESTERDAY_KEY = 'treasuryRevenueYesterday';
+const SPEND_YESTERDAY_KEY = 'treasurySpendYesterday';
+
+/**
+ * The Treasury's own flows within the current tick. The morning rollover pays
+ * the dividend, the stipends and the arrival grants before the day's wage
+ * budget is set (economy/budget.ts), and those payments land in the same daily
+ * counters as yesterday's takings, which are not closed until the end of the
+ * rollover. Recording each tick's flows separately lets the budget tell
+ * "what the city took yesterday" from "what it has already committed today".
+ */
+function noteTreasuryFlow(world: World, revenue: number, spend: number): void {
+  if (world.counters[FLOW_TICK_KEY] !== world.tick) {
+    world.counters[FLOW_TICK_KEY] = world.tick;
+    world.counters[FLOW_REVENUE_KEY] = 0;
+    world.counters[FLOW_SPEND_KEY] = 0;
+  }
+  if (revenue > 0) world.counters[FLOW_REVENUE_KEY] = (world.counters[FLOW_REVENUE_KEY] ?? 0) + revenue;
+  if (spend > 0) world.counters[FLOW_SPEND_KEY] = (world.counters[FLOW_SPEND_KEY] ?? 0) + spend;
+}
+
+/** What the Treasury has taken in and paid out so far this tick. */
+export function treasuryFlowThisTick(world: World): { revenue: number; spend: number } {
+  if (world.counters[FLOW_TICK_KEY] !== world.tick) return { revenue: 0, spend: 0 };
+  return { revenue: world.counters[FLOW_REVENUE_KEY] ?? 0, spend: world.counters[FLOW_SPEND_KEY] ?? 0 };
+}
+
+/**
+ * The balance sheet the Chronicle printed this morning: the revenue and spend
+ * of the day that just closed. Everyone in the city can read it, so citizens
+ * (councillors above all) may weigh it when they vote.
+ */
+export function lastBalanceSheet(world: World): { revenue: number; spend: number } {
+  return { revenue: world.counters[REVENUE_YESTERDAY_KEY] ?? 0, spend: world.counters[SPEND_YESTERDAY_KEY] ?? 0 };
+}
+
 /** Keep each business's daily revenue/cost counters in step with its cash flows. */
 function trackBusinessFlows(world: World, from: MoneyParty, to: MoneyParty, amount: number, kind: LedgerKind): void {
   const dest = businessOf(world, to);
@@ -118,6 +157,7 @@ export function transfer(
   t.totals[kind] = (t.totals[kind] ?? 0) + amt;
   if (to === 'treasury') t.revenueToday += amt;
   if (from === 'treasury') t.spendToday += amt;
+  if (to === 'treasury' || from === 'treasury') noteTreasuryFlow(world, to === 'treasury' ? amt : 0, from === 'treasury' ? amt : 0);
   trackBusinessFlows(world, from, to, amt, kind);
   return true;
 }
@@ -275,6 +315,8 @@ export function dailyTreasuryRollover(world: World): string {
   } else {
     emit(world, 'treasury', report, [], 0.2, { balance: t.balance, revenue, spend });
   }
+  world.counters[REVENUE_YESTERDAY_KEY] = revenue;
+  world.counters[SPEND_YESTERDAY_KEY] = spend;
   t.revenueToday = 0;
   t.spendToday = 0;
   return report;

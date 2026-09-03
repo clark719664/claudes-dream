@@ -27,6 +27,8 @@ import { isPresentIn, nameOf, partyName, presentSet } from './views.ts';
 export const CHEST_LEDGER_LENGTH = 12;
 /** Weddings and births shown on the Society tab. */
 export const CEREMONY_VIEW_LENGTH = 8;
+/** Names listed for one ceremony; a wedding may have the whole district as guests. */
+export const CEREMONY_NAMES = 6;
 
 // ---------------------------------------------------------------- helpers
 
@@ -177,7 +179,8 @@ function ceremonies(world: World, kind: 'wedding' | 'birth', present: Set<Citize
   for (let i = world.events.length - 1; i >= 0 && out.length < CEREMONY_VIEW_LENGTH; i--) {
     const e = world.events[i];
     if (e.kind !== kind) continue;
-    out.push({ tick: e.tick, day: e.day, text: e.text, who: people(world, e.actors, present) });
+    const who = people(world, e.actors, present);
+    out.push({ tick: e.tick, day: e.day, text: e.text, who: who.slice(0, CEREMONY_NAMES), others: Math.max(0, who.length - CEREMONY_NAMES) });
   }
   return out;
 }

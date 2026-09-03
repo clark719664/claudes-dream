@@ -4,14 +4,14 @@
  * who wronged them, and — for journalists — the story of the day.
  */
 import { clamp } from '../types.ts';
-import type { Action, Citizen, CitizenId, EventKind, LawCode, Platform, ProposalKind, World } from '../types.ts';
+import type { Action, Citizen, CitizenId, EventKind, LawCode, Platform, ProposalKind, World, WorldEvent } from '../types.ts';
 import { LAWS } from '../data/laws.ts';
 import { chance, pick, rand } from '../util/rng.ts';
 import { vacancies } from '../economy/housing.ts';
 import { bondBetween, friendsOf } from '../citizens/relationships.ts';
 import { hasUndetectedRecentOffence, topStories } from '../sim/chronicle.ts';
 import { REPORT_WINDOW_TICKS } from '../government/watch.ts';
-import { councillorDisposition, impliedPlatform, isCouncillor, voterPreference } from '../government/council.ts';
+import { councillorDisposition, impliedPlatform, isCouncillor, treasuryDeficitShare, voterPreference } from '../government/council.ts';
 import { districtName, isPresent, parseGrievance } from '../actions/common.ts';
 import type { Grievance } from '../actions/common.ts';
 import { inGoodStanding, stepTo } from './reflex-util.ts';
@@ -85,6 +85,14 @@ export function treasuryStrained(world: World): boolean {
   return world.treasury.balance < world.government.dividend * population * 20;
 }
 
+/** A gap this wide between spending and takings is one a councillor would table a motion about. */
+export const NOTICEABLE_DEFICIT = 0.1;
+
+/** The Treasury needs steadying: little left, or yesterday's spending well beyond its takings. */
+export function treasuryNeedsSteadying(world: World): boolean {
+  return treasuryStrained(world) || treasuryDeficitShare(world) >= NOTICEABLE_DEFICIT;
+}
+
 /** A proposal (or petition) drawn from the citizen's platform, their friendships and the state of the city. */
 export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
   const { world, c } = ctx;
@@ -92,7 +100,7 @@ export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
   const platform = c.platform ?? impliedPlatform(world, c);
   const population = Math.max(1, world.order.length);
   const healthy = world.treasury.balance > g.dividend * population * 10;
-  const strained = treasuryStrained(world);
+  const strained = treasuryNeedsSteadying(world);
   const pct = (x: number) => `${Math.round(x * 100)}%`;
   const r2 = (x: number) => Math.round(x * 100) / 100;
   const options: ReflexProposal[] = [];
@@ -100,11 +108,16 @@ export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
   if (platform.tax > 0.6 && g.incomeTax <= 0.45) options.push({ kind: 'income_tax', value: r2(g.incomeTax + 0.05), summary: `Raise income tax to ${pct(g.incomeTax + 0.05)} to fund the city` });
   if (platform.tax < 0.4 && g.incomeTax >= 0.05) options.push({ kind: 'income_tax', value: r2(g.incomeTax - 0.05), summary: `Cut income tax to ${pct(g.incomeTax - 0.05)} and let citizens keep their wages` });
   if (strained && g.incomeTax <= 0.45) options.push({ kind: 'income_tax', value: r2(g.incomeTax + 0.05), summary: `Raise income tax to ${pct(g.incomeTax + 0.05)} to steady the Treasury` });
+  if (strained && g.salesTax <= 0.23) options.push({ kind: 'sales_tax', value: r2(g.salesTax + 0.02), summary: `Raise sales tax to ${pct(g.salesTax + 0.02)}; the Bazaar can carry the city` });
   if (platform.tax > 0.6 && g.salesTax <= 0.23) options.push({ kind: 'sales_tax', value: r2(g.salesTax + 0.02), summary: `Raise sales tax to ${pct(g.salesTax + 0.02)}` });
   if (platform.tax < 0.4 && g.salesTax >= 0.02) options.push({ kind: 'sales_tax', value: r2(g.salesTax - 0.02), summary: `Lower sales tax to ${pct(g.salesTax - 0.02)} to cheapen the Bazaar` });
   if (platform.dividend > 0.6 && g.dividend <= 55 && healthy) options.push({ kind: 'dividend', value: g.dividend + 5, summary: `Raise the citizen's dividend to ${g.dividend + 5} ℓ a day` });
-  if ((platform.dividend < 0.4 || strained) && g.dividend >= 5) {
-    options.push({ kind: 'dividend', value: g.dividend - 5, summary: strained
+  // The dividend is what the city's poorest live on; a deficit is met with
+  // taxes first, and the dividend is only trimmed when the Treasury itself
+  // is running out.
+  const desperate = treasuryStrained(world);
+  if ((platform.dividend < 0.4 || desperate) && g.dividend >= 5) {
+    options.push({ kind: 'dividend', value: g.dividend - 5, summary: desperate
       ? `Trim the dividend to ${g.dividend - 5} ℓ to steady the Treasury`
       : `Lower the dividend to ${g.dividend - 5} ℓ; work should pay, not the Treasury` });
   }
@@ -163,7 +176,7 @@ export function tryCivic(ctx: Ctx): Action | null {
   if (isCouncillor(world, c.id) && inGoodStanding(c)) {
     const pending = g.proposals.filter((p) => p.status === 'open' && p.votes[c.id] === undefined);
     if (pending.length > 0) return { type: 'vote_proposal', proposalId: pending[0].id, aye: councillorDisposition(world, c.id, pending[0]) };
-    if (can.has('propose') && !clock.night && chance(world, treasuryStrained(world) ? PROPOSE_CHANCE * 3 : PROPOSE_CHANCE)) {
+    if (can.has('propose') && !clock.night && chance(world, treasuryNeedsSteadying(world) ? PROPOSE_CHANCE * 3 : PROPOSE_CHANCE)) {
       const spec = proposalFromPlatform(ctx);
       if (spec) return proposeAction(spec);
     }
@@ -235,7 +248,44 @@ export function tryReport(ctx: Ctx): Action | null {
 // Journalism
 // ---------------------------------------------------------------------------
 
-/** A journalist files one story a day: an exposé when a friend was wronged by someone who got away with it, else the day's top event. */
+/**
+ * What the Chronicle calls each kind of news. A journalist writes their own
+ * line about the day — copying out the event's own sentence would only print
+ * back what the city read this morning, and chronicle.ts refuses it.
+ */
+const ANGLES: Partial<Record<EventKind, string>> = {
+  arrival: 'New at the Threshold', departure: 'A place left empty', exile: 'Through the Exile Gate', pardon: 'Called home',
+  hired: 'Taken on', fired: 'Let go', quit: 'Walked out', shortage: 'Empty shelves', price: 'What things cost',
+  business_founded: 'A new sign over the door', business_bankrupt: 'The doors are shut',
+  offence: 'Crime in the city', charge: 'The Watch lays a charge', detained: 'A night in the Watch House',
+  verdict: 'The Court decides', sentence: 'The reckoning', appeal: 'The case goes up',
+  election: 'The city votes', nomination: 'Standing for the Council', proposal: 'Before the Council',
+  law: 'At City Hall', decree: 'By decree', treasury: "The city's purse", housing: 'A question of rooms',
+  loan: 'The Lantern Bank', eviction: 'Turned out', wedding: 'Vows exchanged', birth: 'A new citizen',
+  birthday: 'Another year', festival: 'The city celebrates', club: 'The clubs', romance: 'Hearts in the city',
+  purchase: 'Trade', donation: 'Charity', coming_of_age: 'Coming of age', household: 'Under one roof',
+  insult: 'Hard words', show: 'On the stage', system: 'From the city',
+};
+
+/** How a citizen is introduced in print: what they do, and where they live. */
+function pressDescription(world: World, c: Citizen): string {
+  const job = c.jobId ? world.jobs[c.jobId] : null;
+  const held = job && job.holderId === c.id ? job.title.toLowerCase() : null;
+  const biz = c.businessId ? world.businesses[c.businessId] : null;
+  const where = districtName(world, c.district);
+  if (held) return `${c.name}, ${held} of ${where}`;
+  if (biz && biz.dissolvedDay === null) return `${c.name} of ${biz.name}, ${where}`;
+  return `${c.name}, out of work in ${where}`;
+}
+
+/** The journalist's own headline for a story: the angle, and who it is about (or who is reporting). */
+export function headlineFor(world: World, journalist: Citizen, story: WorldEvent, subject: Citizen | null): string {
+  const angle = ANGLES[story.kind] ?? 'From the city';
+  if (subject) return `${angle}: ${pressDescription(world, subject)}`;
+  return `${angle}: ${journalist.name} reports from ${districtName(world, journalist.district)}, day ${world.day}`;
+}
+
+/** A journalist files one story a day: an exposé when a friend was wronged by someone who got away with it, else the day's news in their own words. */
 export function tryPublish(ctx: Ctx): Action | null {
   const { world, c, job } = ctx;
   if (!job || job.role !== 'journalist' || !ctx.can.has('publish')) return null;
@@ -256,10 +306,15 @@ export function tryPublish(ctx: Ctx): Action | null {
     }
   }
   const printed = new Set(world.events.filter((e) => e.day === world.day && e.kind === 'story').map((e) => String(e.data?.headline ?? '')));
-  const story = [...topStories(world, world.day, 8), ...topStories(world, world.day - 1, 8)]
-    .find((e) => e.weight >= 0.3 && !UNPRINTABLE.includes(e.kind) && !printed.has(e.text.slice(0, 200)));
-  if (!story) return null;
-  world.counters[key] = world.day;
-  const about = PERSONAL_NEWS.includes(story.kind) ? story.actors.find((id) => id !== c.id && world.citizens[id] !== undefined) : undefined;
-  return about ? { type: 'publish', headline: story.text.slice(0, 200), about } : { type: 'publish', headline: story.text.slice(0, 200) };
+  const stories = [...topStories(world, world.day, 8), ...topStories(world, world.day - 1, 8)]
+    .filter((e) => e.weight >= 0.3 && !UNPRINTABLE.includes(e.kind));
+  for (const story of stories) {
+    const subjectId = PERSONAL_NEWS.includes(story.kind) ? story.actors.find((id) => id !== c.id && world.citizens[id] !== undefined) : undefined;
+    const subject = subjectId ? world.citizens[subjectId] : null;
+    const headline = headlineFor(world, c, story, subject ?? null);
+    if (printed.has(headline)) continue;
+    world.counters[key] = world.day;
+    return subject ? { type: 'publish', headline, about: subject.id } : { type: 'publish', headline };
+  }
+  return null;
 }

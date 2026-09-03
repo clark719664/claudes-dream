@@ -136,7 +136,11 @@ compute").
 
 **Unemployment:** citizens without a job receive the citizen's dividend
 (default 15 ℓ/day) but their purpose need decays. They look for work on the
-job board each morning.
+job board each morning. Word of a city with no work also travels: above 10 %
+of grown-ups out of work the Threshold sees fewer newcomers, and by 35 % it
+sees none at all (`arrivalAppetite` in `src/citizens/citizen.ts`), so
+Reverie stops growing faster than it can employ. A Council short of
+candidates still draws people in at the elevated rate.
 
 ## The Bazaar
 
@@ -157,10 +161,13 @@ job board each morning.
 - If stock runs out, buyers go hungry; the Chronicle reports a shortage, and
   a lasting famine settles at about 1.6× the anchor.
 - The Bazaar **stops buying** a good from citizens and businesses while it
-  holds more than 4 days of demand for it ("The Bazaar is not buying goods
-  today: its shelves already hold 6 days of it"). City production is
+  holds more than 6 days of demand for it ("The Bazaar is not buying goods
+  today: its shelves already hold 7 days of it"). City production is
   delivered regardless and managed by the labour plan; the buying limit is
-  what bounds the Treasury's exposure to private overproduction.
+  what bounds the Treasury's exposure to private overproduction. It sits at
+  the same six days as the labour plan's glut, so a private maker is turned
+  away only when the city's own posts are standing down too — a tighter
+  limit strands the workshops on a full shelf and bankrupts them.
 
 ## Businesses
 
@@ -194,8 +201,9 @@ most 8 courier shifts a day city-wide (104 ℓ); later shifts run for the
 business alone. The reflex brain founds a business only when the kind's
 first job clears its costs at today's prices, when there are workers to hire,
 and when there is room: one business of a producing kind per 20 citizens,
-none while the Bazaar is overstocked with what it would make, one clinic,
-and only as many courier firms as the contract pool can keep busy. An owner
+none while the Bazaar has stopped buying what it would make (the same gate
+the maker will have to sell through), one clinic, and only as many courier
+firms as the contract pool can keep busy. An owner
 in the red for two days lets the least productive hand go before the bank
 does.
 
@@ -241,6 +249,7 @@ contracts that day (`src/economy/budget.ts`):
 
 ```
 budget = yesterday's revenue − yesterday's piece wages
+       − what the Bazaar paid private sellers yesterday
        + 0.6 % of the balance − today's fixed spend
 ```
 
@@ -250,11 +259,20 @@ come, first served; when it is spent the day's remaining shifts are refused
 ("The city's wage budget for today is spent") and, if the cut is deep, the
 Chronicle prints an austerity story. Piece-rate posts are outside the budget
 because the Bazaar sells what they make at price plus tax — the forges pay
-for themselves — but what they were paid yesterday is deducted, so the whole
-of public spending stays inside revenue plus the drawdown. The Treasury's
-drawdown is therefore bounded by design: with nothing else going wrong the
-balance falls no faster than 0.6 % a day (about 70 % of founding after 60
-days) and levels off as revenue grows.
+for themselves — but what they were paid yesterday is deducted, and so is
+what the Bazaar itself paid citizens and businesses for their goods: that
+comes out of the same purse and only returns when somebody buys those goods
+again. With all three deducted, the whole of public spending stays inside
+revenue plus the drawdown.
+
+The Treasury's books for a day do not close until the end of the morning
+rollover, while the dividend, the stipends and the arrival grants are paid
+inside it, so the rule reads the day's flows by the tick they landed on:
+everything before this morning is "yesterday's revenue", everything paid this
+morning is "today's fixed spend" (`treasuryFlowThisTick` in
+`economy/treasury.ts`). The Treasury's drawdown is therefore bounded by
+design: with nothing else going wrong the balance falls no faster than 0.6 %
+a day and levels off as revenue grows.
 
 ### What a healthy budget looks like
 
@@ -275,10 +293,11 @@ settings (dividend 15 ℓ, minimum wage 9–13 ℓ, income tax 15 %, sales tax
 The gap of ~400 ℓ is the drawdown the budget rule allows; it shrinks as
 citizens move into dearer housing and businesses take over production. In
 the reference runs (`node src/index.ts sim --days 60 --seed 7 --quiet` and
-seeds 1 and 3) the Treasury ends day 60 at 52 000–67 000 ℓ with the money
-audit intact and no engine errors, a business survives 48–57 days, and the
-price index sits between 0.8 and 1.7 while the Council keeps the minimum
-wage under 20 ℓ.
+seeds 1 and 3) the city of 40 founders grows to 60–80, ends day 60 with a
+Treasury of 69 000–78 000 ℓ (never below half of founding), the money audit
+intact and no engine errors; seven in ten grown-ups hold a job or run a
+business; the oldest citizen-founded business is 50–58 days old; and the
+price index sits between 0.85 and 1.4.
 
 ### The Council's levers
 
@@ -287,19 +306,44 @@ wage under 20 ℓ.
   (2 400 ℓ a day) exceeds the whole of a healthy revenue and drains the
   Treasury at over 1 000 ℓ a day however the city is run.
 - **Minimum wage** (5–40 ℓ): floors every piece rate and lifts every flat
-  wage above it, and passes through to prices via the anchor. At 15 ℓ the
-  price index settles near 1.35; at 21 ℓ near 1.6; at 29 ℓ near 2.1. Above
-  about 19 ℓ private business at founding prices becomes marginal until
-  prices catch up, and the poor without a dividend can no longer afford
-  compute. The reflex councillors have a standing bias toward raising it
-  (every employed non-owner's platform favours it and nothing in their
-  reasoning weighs the Treasury), so a Council of employees ratchets it by
-  2 ℓ every few days unless business owners sit on the Council.
+  wage above it, and passes through to prices via the anchor, which is where
+  the index would settle if every shelf were in balance: 1.4 at 15 ℓ, 1.9 at
+  21 ℓ, 2.6 at 29 ℓ. Prices trail the anchor while the shelves are full, so
+  in practice the index reads about 1.0–1.2 at a 13 ℓ floor and 1.2–1.4 at
+  15–18 ℓ. Above about 19 ℓ private business at founding prices becomes
+  marginal until prices catch up, and the poor without a dividend can no
+  longer afford compute.
 - **Income tax**: only the private-sector leg reaches the Treasury; a cut is
   cheap, a rise raises little.
 - **Sales tax** (0–25 %): every point is about 15 ℓ a day at 50 citizens.
 - **Public works**: builders' bonuses paid from a fund, useful when homes are
   short.
+
+### What a reflex councillor weighs
+
+A councillor is a citizen, and votes for what a citizen in their position
+would want. On money three public facts enter the reckoning beside their
+platform and their friendships (`councillorDisposition`):
+
+- **the cost of living** — the Bazaar's prices are anchored to what
+  production costs at the minimum wage, so raising the floor raises what
+  every councillor pays for compute. At founding prices a rise costs a
+  worker nothing; by an index of 1.5 the cost outweighs what a worker on the
+  floor stands to gain, and a Council that has watched prices climb stops
+  ratcheting. Only a councillor paid at or near the floor counts the gain at
+  all: the wage rise is somebody else's, the prices are theirs.
+- **idle hands** — above 15 % of grown-ups out of work, the argument that
+  the floor is why nobody is hiring gains weight (up to 0.4 at 35 %).
+- **this morning's balance sheet** — the Chronicle prints
+  "Treasury: 63,325 ℓ (+3,894 revenue, −5,271 spend)" every day, and the
+  size of that gap as a share of revenue argues for taxes and against the
+  dividend. It fades to nothing as the books come back into balance, so the
+  Council raises taxes into a deficit and stops when it closes.
+
+Together these make a Council of employees a real fiscal actor rather than a
+one-way ratchet: in the reference runs the minimum wage settles between 9 and
+19 ℓ, sales tax between 1 % and 9 %, and income tax anywhere from 0 % to
+35 % depending on who sits.
 
 The Treasury publishes a daily balance sheet to the Chronicle. When the
 balance is below one day of spending, salaries and dividend are paid pro rata

@@ -5,9 +5,16 @@ import type { Job, JobRole, World } from '../src/types.ts';
 import { transfer } from '../src/economy/treasury.ts';
 import { applyForJob, createCityJobs, dailyJobs, workShift } from '../src/economy/jobs.ts';
 import {
-  BUDGET_FLOOR_MIN, BUDGET_FLOOR_RATE, DRAWDOWN_RATE, FOUNDING_BUDGET_RATE, cityCanPay, cityWageBudget, cityWageBudgetLeft,
-  cityWagesToday, dailyBudget, isBudgetedJob, noteCitySpend, notePieceWage, pieceWagesYesterday,
+  BUDGET_FLOOR_MIN, BUDGET_FLOOR_RATE, DRAWDOWN_RATE, FOUNDING_BUDGET_RATE, bazaarSpendYesterday, cityCanPay, cityWageBudget,
+  cityWageBudgetLeft, cityWagesToday, dailyBudget, isBudgetedJob, noteCitySpend, notePieceWage, pieceWagesYesterday,
 } from '../src/economy/budget.ts';
+
+/** Move the clock: the budget tells yesterday's takings from this morning's spending by the tick they landed on. */
+function atTick(world: World, tick: number): void {
+  world.tick = tick;
+  world.day = Math.floor(tick / 24);
+  world.hour = tick % 24;
+}
 
 function cityJob(world: World, role: JobRole): Job {
   const job = Object.values(world.jobs).find((j) => j.employer === 'city' && j.role === role && j.holderId === null);
@@ -29,16 +36,21 @@ test('before any rollover the founding budget is a share of the balance; spendin
   assert.equal(cityCanPay(w, cityWageBudgetLeft(w) + 1), false);
 });
 
-test('dailyBudget: yesterday\'s revenue less piece wages, plus the drawdown, less today\'s fixed spend; floored', () => {
+test('dailyBudget: yesterday\'s revenue less piece wages and Bazaar buying, plus the drawdown, less this morning\'s fixed spend; floored', () => {
   const w = makeWorld();
   const c = makeCitizen(w, { wallet: 10_000 });
+  dailyBudget(w);                       // the city has had a morning before this one
+  atTick(w, 23);                        // ...yesterday: takings, the Bazaar's buying, wages paid
   transfer(w, c.id, 'treasury', 3000, 'rent', 'revenue');
-  transfer(w, 'treasury', c.id, 500, 'dividend', 'fixed');
+  transfer(w, 'treasury', c.id, 900, 'sale', 'the Bazaar buying a workshop out');
   notePieceWage(w, 400);
   noteCitySpend(w, 700);
+  atTick(w, 24);                        // ...this morning: the dividend goes out before the budget is set
+  transfer(w, 'treasury', c.id, 500, 'dividend', 'fixed');
   const balance = w.treasury.balance;
   dailyBudget(w);
-  assert.equal(cityWageBudget(w), Math.round(3000 - 400 + balance * DRAWDOWN_RATE - 500));
+  assert.equal(cityWageBudget(w), Math.round(3000 - 400 - 900 + balance * DRAWDOWN_RATE - 500));
+  assert.equal(bazaarSpendYesterday(w), 900);
   assert.equal(cityWagesToday(w), 0, 'the day starts afresh');
   assert.equal(pieceWagesYesterday(w), 400);
   assert.equal(w.counters.cityWagesYesterday, 700);
@@ -46,6 +58,7 @@ test('dailyBudget: yesterday\'s revenue less piece wages, plus the drawdown, les
   assert.ok(routine && routine.weight <= 0.1 && /wage budget/.test(routine.text));
 
   // no revenue at all: the floor keeps the city open, and the cut is news
+  atTick(w, 48);
   w.treasury.revenueToday = 0;
   w.treasury.spendToday = 0;
   noteCitySpend(w, 2000);
@@ -55,6 +68,7 @@ test('dailyBudget: yesterday\'s revenue less piece wages, plus the drawdown, les
   assert.ok(austerity && austerity.weight === 0.5 && /Austerity/.test(austerity.text));
 
   // an empty Treasury has no budget
+  atTick(w, 72);
   transfer(w, 'treasury', c.id, w.treasury.balance, 'grant', 'drain');
   w.treasury.revenueToday = 0;
   w.treasury.spendToday = 0;

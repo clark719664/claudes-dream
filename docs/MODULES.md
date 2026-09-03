@@ -319,7 +319,7 @@ holdElection(world): void
   // tally; top 5 seated (ties by reputation); mayor = top; incumbents lose office; results, turnout; emit 'election' 1.0;
   // if no candidates: council stays, emit 0.6 "no candidates"; schedule next: cycle++, nominationsOpenDay = electionDay + cycleDays − 7,
   // electionDay += cycleDays; reset candidates/ballots/platforms/visibility; government.cycle = cycle.
-appointJudges(world): void   // fill up to 3 judges: candidates = eligible (reputation ≥ 60, no convictions, standing good, not councillor/mayor/watch); mayor picks by bond then reputation; no mayor → highest reputation; judgeTermEndsDay = day + judgeTermDays; emit 'law' 0.4
+appointJudges(world): void   // fill up to 3 judges: candidates = eligible (reputation ≥ 60, no convictions, standing good, adult, not councillor/mayor/watch); mayor picks by bond then reputation; no mayor → highest reputation; seats left empty for want of anyone at 60 go to the most reputable eligible citizens at or above JUDGE_FALLBACK_REPUTATION (50), and the announcement says so; judgeTermEndsDay = day + judgeTermDays; emit 'law' 0.4; with nobody at all eligible, the "temporary judges by lot" notice is emitted at most once a day
 daysToElection(world): number
 dailyGovernment(world): void   // openNominations when day === nominationsOpenDay; appointJudges if vacancies; publicWorksFund spending; remove councillors who are no longer eligible (exiled/suspended)
 ```

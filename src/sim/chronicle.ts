@@ -45,26 +45,86 @@ export function topStories(world: World, day: number, limit = HEADLINES_PER_EDIT
 }
 
 /**
- * Print the morning edition: yesterday's top five events as headlines plus
- * the Treasury's daily report. Pushed to world.chronicle (bounded), replacing
- * an edition already printed today. Emits a low-weight 'story' notice.
+ * The shape of a headline: its words with every number blanked out. Two
+ * lines of the same shape are the same standing notice on a different day
+ * ("The Community Chest is empty: 4 citizens..." / "...7 citizens..."), and
+ * an edition that runs one two mornings in a row reads like a stuck clock.
+ */
+export function headlineShape(text: string): string {
+  return text.toLowerCase().replace(/\d+([.,]\d+)*/g, '#').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Print the morning edition: yesterday's five best stories plus the
+ * Treasury's daily report. The editor takes the weightiest story of each
+ * shape it has not just run — a page with the same sentence twice under
+ * different numbers, or with yesterday's standing notice at the top again,
+ * is a page that tells the city nothing — and only falls back to repeats
+ * when the day had nothing else in it. Pushed to world.chronicle (bounded),
+ * replacing an edition already printed today. Emits a low-weight 'story'
+ * notice.
  */
 export function printMorningEdition(world: World, treasuryReport: string): ChronicleEdition {
   const reportedDay = Math.max(0, world.day - 1);
-  const stories = topStories(world, reportedDay);
+  const previous = world.chronicle[world.chronicle.length - 1];
+  const printedYesterday = new Set((previous?.headlines ?? []).map(headlineShape));
+  const candidates = topStories(world, reportedDay, HEADLINES_PER_EDITION * 4);
+  const stories: WorldEvent[] = [];
+  const shapes = new Set<string>();
+  const taken = new Set<WorldEvent>();
+  // fresh news of its own shape first, then anything of a new shape, then repeats
+  for (const pass of [0, 1, 2]) {
+    for (const e of candidates) {
+      if (stories.length >= HEADLINES_PER_EDITION) break;
+      if (taken.has(e)) continue;
+      const shape = headlineShape(e.text);
+      if (pass < 2 && shapes.has(shape)) continue;
+      if (pass === 0 && printedYesterday.has(shape)) continue;
+      stories.push(e);
+      taken.add(e);
+      shapes.add(shape);
+    }
+  }
   const headlines = stories.length
     ? stories.map((s) => s.text)
     : [`A quiet day in Reverie: nothing of note was reported on day ${reportedDay}.`];
   const edition: ChronicleEdition = { day: world.day, headlines, treasuryReport };
 
-  const last = world.chronicle[world.chronicle.length - 1];
-  if (last && last.day === world.day) world.chronicle[world.chronicle.length - 1] = edition;
+  if (previous && previous.day === world.day) world.chronicle[world.chronicle.length - 1] = edition;
   else world.chronicle.push(edition);
   if (world.chronicle.length > CHRONICLE_LENGTH) world.chronicle.splice(0, world.chronicle.length - CHRONICLE_LENGTH);
 
   emit(world, 'story', `The Chronicle, day ${world.day}: "${headlines[0]}"`, [], 0.2,
     { edition: world.day, headlines, treasuryReport });
   return edition;
+}
+
+/** Words as the Chronicle compares them: case, punctuation and spacing set aside. */
+function normalise(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/** A headline long enough that repeating it word for word can only be a quotation. */
+export const QUOTE_LENGTH = 40;
+
+/**
+ * Is this "story" just something that already happened today, copied out?
+ * The Chronicle prints what the city has not already read: an event's own
+ * sentence (or another journalist's headline from the same day) is not a
+ * story, and the returned text says which line it was.
+ */
+export function quotesTodaysNews(world: World, headline: string): string | null {
+  const wanted = normalise(headline);
+  if (!wanted) return null;
+  for (const e of world.events) {
+    if (e.day !== world.day) continue;
+    const other = normalise(e.text);
+    if (!other) continue;
+    if (other === wanted) return e.text;
+    if (wanted.length >= QUOTE_LENGTH && other.includes(wanted)) return e.text;
+    if (other.length >= QUOTE_LENGTH && wanted.includes(other)) return e.text;
+  }
+  return null;
 }
 
 /** True when the citizen has an offence the Watch never saw, within the exposé window. */
@@ -88,6 +148,10 @@ export function journalistStory(world: World, journalistId: CitizenId, headline:
   }
   const text = (headline ?? '').trim().slice(0, MAX_HEADLINE_LENGTH);
   if (!text) return { ok: false, message: 'A story needs a headline.' };
+  const quoted = quotesTodaysNews(world, text);
+  if (quoted) {
+    return { ok: false, message: `The city read that this morning ("${quoted.slice(0, 80)}…"); a story has to add something of your own.` };
+  }
   const subject = about ? world.citizens[about] : undefined;
   if (about && !subject) return { ok: false, message: 'Nobody by that id lives in Reverie.' };
 

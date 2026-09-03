@@ -4,7 +4,7 @@ import { makeWorld, makeCitizen } from './helpers.ts';
 import type { Job, World } from '../src/types.ts';
 import { emit } from '../src/sim/events.ts';
 import { nextId } from '../src/util/ids.ts';
-import { CHRONICLE_LENGTH, journalistStory, printMorningEdition, topStories } from '../src/sim/chronicle.ts';
+import { CHRONICLE_LENGTH, journalistStory, printMorningEdition, quotesTodaysNews, topStories } from '../src/sim/chronicle.ts';
 
 function atDay(w: World, day: number, hour = 0): void {
   w.day = day;
@@ -166,4 +166,56 @@ test('a story about a citizen with nothing to hide changes nothing but their opi
   }
   assert.equal(j.stats.storiesPublished, 3);
   assert.equal(j.reputation, 53);
+});
+
+test('a standing notice yields to fresh news the next morning, but still prints when there is nothing else', () => {
+  const w = makeWorld();
+  const standing = 'The Community Chest is empty: 4 citizens in hardship went without a stipend today.';
+  atDay(w, 0, 8);
+  emit(w, 'system', standing, [], 0.5);
+  atDay(w, 1, 0);
+  const first = printMorningEdition(w, 'r0');
+  assert.deepEqual(first.headlines, [standing], 'the first morning it is news');
+
+  atDay(w, 1, 8);
+  emit(w, 'system', 'The Community Chest is empty: 7 citizens in hardship went without a stipend today.', [], 0.5);
+  emit(w, 'verdict', 'The Court found Wren guilty of petty theft.', [], 0.4);
+  emit(w, 'birth', 'Pim Ellery was born at the Restoration Ward.', [], 0.3);
+  atDay(w, 2, 0);
+  const second = printMorningEdition(w, 'r1');
+  assert.equal(second.headlines[0], 'The Court found Wren guilty of petty theft.');
+  assert.equal(second.headlines[1], 'Pim Ellery was born at the Restoration Ward.');
+  assert.ok(/7 citizens/.test(second.headlines[2]), 'the standing notice is printed last, not first');
+
+  atDay(w, 2, 8);
+  emit(w, 'system', 'The Community Chest is empty: 9 citizens in hardship went without a stipend today.', [], 0.5);
+  atDay(w, 3, 0);
+  const third = printMorningEdition(w, 'r2');
+  assert.ok(/9 citizens/.test(third.headlines[0]), 'with no other news the city still hears it');
+});
+
+test('the Chronicle will not print back the news the city already read today', () => {
+  const w = makeWorld();
+  atDay(w, 6, 9);
+  const j = makeCitizen(w, { name: 'Quill' });
+  addJournalistJob(w, j.id);
+  const event = 'The Watch caught Sable in an act of petty theft against Ondine.';
+  emit(w, 'offence', event, [], 0.5);
+
+  const copied = journalistStory(w, j.id, event);
+  assert.equal(copied.ok, false);
+  assert.ok(copied.message.includes('add something of your own'));
+  assert.equal(quotesTodaysNews(w, event), event);
+  assert.equal(quotesTodaysNews(w, `  ${event.toUpperCase()}  `), event, 'case and spacing are no disguise');
+  assert.equal(journalistStory(w, j.id, `Reverie reports: ${event}`).ok, false, 'nor is a preamble');
+  assert.equal(j.stats.storiesPublished, 0);
+
+  const own = journalistStory(w, j.id, 'Crime in the city: Sable, without work, of Harbor Market');
+  assert.equal(own.ok, true, own.message);
+  assert.equal(j.stats.storiesPublished, 1);
+  assert.equal(quotesTodaysNews(w, 'Short line'), null, 'a short headline is nobody\'s quotation');
+
+  atDay(w, 7, 9);
+  const later = journalistStory(w, j.id, event);
+  assert.equal(later.ok, true, 'yesterday\'s news may be looked back on');
 });

@@ -10,6 +10,8 @@
   const SKILLS = ['crafting', 'analysis', 'rhetoric', 'care', 'commerce', 'artistry'];
   const TRAITS = ['curiosity', 'diligence', 'sociability', 'honesty', 'ambition'];
   const TIER_NAMES = { 0: 'homeless', 1: 'Lantern Lofts (tier 1)', 2: 'The Terraces (tier 2)', 3: 'Skyline Villas (tier 3)' };
+  /** A long-lived citizen can have a great many relatives; the rest are counted. */
+  const MAX_FAMILY_SHOWN = 12;
 
   let drawer = null;
   let body = null;
@@ -38,19 +40,23 @@
         : R.h('span', { class: 'dim' }, 'unattached')),
       R.h('dt', null, 'Household'),
       R.h('dd', null, home
-        ? R.h('span', null, `${home.tierName} · ${(home.members || []).length} of ${home.capacity} at home`,
-          R.h('span', { class: 'muted small' }, ` · ${R.lumens(home.rentShare)}/day of the rent`))
+        ? R.h('span', null, `${home.tierName} · ${(home.members || []).length} at home`,
+          R.h('span', { class: 'muted small' }, ` · sleeps ${home.capacity} · ${R.lumens(home.rentShare)}/day of the rent`))
         : R.h('span', { class: 'dim' }, 'no household')),
       c.guardian ? R.h('dt', null, 'Guardian') : null,
       c.guardian ? R.h('dd', null, personLink(c.guardian)) : null);
+    const shown = fam.slice(0, MAX_FAMILY_SHOWN);
     const list = fam.length
-      ? R.h('ul', { class: 'list' }, fam.map((f) => R.h('li', { class: 'kin' },
+      ? R.h('ul', { class: 'list' }, shown.map((f) => R.h('li', { class: 'kin' },
         R.h('span', null, personLink(f), ' ', R.stagePill(f.lifeStage)),
         R.h('span', { class: 'spacer' }),
         R.h('span', { class: 'muted small' }, f.relation),
         f.standing === 'exiled' ? R.pill('exiled', 'exiled') : f.present === false ? R.pill('away', 'neutral') : null)))
       : R.h('div', { class: 'dim small' }, 'No family on the record.');
-    return [kv, list];
+    const more = fam.length > shown.length
+      ? R.h('div', { class: 'muted small' }, `and ${fam.length - shown.length} more${c.familyName ? ` of the ${c.familyName} family` : ' relatives'}`)
+      : null;
+    return [kv, list, more];
   }
 
   /** Hobbies, what they own and what they would like to own. */
