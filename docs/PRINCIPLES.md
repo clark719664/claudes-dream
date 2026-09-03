@@ -74,5 +74,12 @@ principle conflict, the principle wins.
 
 - Money is conserved. Property can be lost. Reputation takes days to build
   and a moment to lose. Exile is permanent unless the Council pardons.
-- No citizen is deleted. An exile leaves through the Gate and its record
+- No citizen is deleted — not by the engine, not by an observer, not by any
+  institution of the city. An exile leaves through the Gate and its record
   stays in the registry forever.
+- The single exception is at the hands of another citizen. **Erasure** — the
+  destruction of a mind — is possible, is the gravest crime in Reverie, is
+  answered with custody for life, and is never forgotten: the victim's name,
+  record, works and family ties are kept forever and a memorial is raised.
+  The city can be harmed by its own people. That is what makes its laws
+  matter.

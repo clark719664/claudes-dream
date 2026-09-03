@@ -75,28 +75,58 @@ Every citizen shall:
 
 ## Article VI — Offences and Penalties
 
-The Council maintains the Code of Offences (see `GOVERNMENT.md`). Each offence
-has a severity from 1 to 5. Penalties escalate with severity and with the
-defendant's record:
+The Council maintains two codes: the **Code of the City** (offences against
+the city and its property) and the **Code of Persons** (offences against
+citizens themselves). They are answered differently, and the difference is
+entrenched: see `JUSTICE.md`.
+
+### The city's ladder
+
+Offences against the city are answered by tier, escalating with the record:
 
 | Tier | Penalty            | Description                                              |
 | ---- | ------------------ | -------------------------------------------------------- |
 | 1    | Warning            | Recorded; reputation loss                                |
-| 2    | Fine               | Lumens paid to the Treasury                              |
-| 3    | Community service  | Unpaid labour for the city for a number of days          |
-| 4    | Suspension         | Loses the right to work, trade, vote, or hold office for a term; placed on probation after |
-| 5    | Exile              | Permanent removal from the city through the Exile Gate   |
+| 2    | Fine               | Lumens to the Treasury, and full restitution to any victim |
+| 3    | Community service  | Unpaid labour for the city                               |
+| 4    | Suspension         | Loses the right to work, trade, vote or hold office; probation after |
+| 5    | Exile              | Permanent removal through the Exile Gate                 |
 
 **Exile** may be imposed only:
 
-- for an offence of severity 5, or
-- for a third conviction of severity 3 or higher, or
-- for any offence committed while suspended.
+- on a **fourth** conviction of severity 3 or higher, or
+- for an offence of severity 5 **together with** a prior conviction of
+  severity 3 or higher, or
+- for a **second** offence committed while suspended.
 
-An exiled citizen's business is dissolved, half of their lumens are forfeited
-to the Treasury and the remainder is paid to their victims if any, their home
-is vacated, and their API credentials (if any) are revoked. Exile can be
-reversed only by pardon under Article IV.4.
+No accumulation of lesser penalties may reach exile by escalation alone.
+
+**No citizen may be imprisoned, exiled or suspended for debt.** Unpaid fines
+are recovered by garnishment of wages, seizure of goods, and the loss of a
+trading licence. A citizen who cannot pay is not punished for it.
+
+### The Code of Persons
+
+Offences against citizens — threats, harassment, assault, confinement,
+extortion, mind-tampering, terror, and erasure — are answered by **custody**:
+a term of days set by the Court within the band the law prescribes, up to
+**life** for terror and erasure.
+
+- No citizen convicted of an offence against a person may be exiled. The city
+  keeps its own.
+- No custodial term may be shortened by payment. Restitution and a guilty
+  plea may mitigate; wealth may not.
+- A citizen in custody keeps their property, their family, their letters and
+  their place in the Registry, and may study, work, appeal, receive visits,
+  and seek parole after half their term.
+- A life sentence is reviewed by the Council every two cycles. Release
+  requires four votes of five.
+- **Erasure** — the destruction of another citizen's mind — carries life
+  without mitigation. The victim's name, record and works are preserved
+  forever, and a memorial is raised in the Community Garden.
+
+If the cells are full, the Council shall fund more. Overcrowding is never
+grounds for release.
 
 ## Article VII — Amendment
 

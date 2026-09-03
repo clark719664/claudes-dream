@@ -61,12 +61,15 @@ function officeTitle(world: World, c: Citizen): string | null {
   }
 }
 
-/** What a citizen does for a living, in a phrase. */
-function workPhrase(world: World, c: Citizen): string | null {
+/**
+ * What a citizen does for a living, in a phrase. `lower` lowercases the job
+ * title for the middle of a sentence and leaves the employer's name alone.
+ */
+function workPhrase(world: World, c: Citizen, lower = false): string | null {
   const job = c.jobId ? world.jobs[c.jobId] : null;
   if (job) {
     const employer = job.employer === 'city' ? 'the City of Reverie' : world.businesses[job.employer]?.name ?? 'a business';
-    return `${job.title} at ${employer}`;
+    return `${lower ? job.title.toLowerCase() : job.title} at ${employer}`;
   }
   const biz = c.businessId ? world.businesses[c.businessId] : null;
   if (biz && biz.dissolvedDay === null) return `owner of ${biz.name}`;
@@ -140,16 +143,16 @@ function openingSentence(world: World, c: Citizen): string {
 
 function workSentence(world: World, c: Citizen): string | null {
   const titles = jobsHeld(world, c);
-  const now = workPhrase(world, c);
+  const now = workPhrase(world, c, true);
   if (titles.length === 0 && !now) {
     return c.lifeStage === 'child' ? null : 'They have never held a job in the city.';
   }
   const named = titles.slice(0, MAX_JOBS_NAMED);
   const more = titles.length > named.length ? ' and other work besides' : '';
   const history = named.length > 0 ? `has worked as ${joinList(named.map((t) => t.toLowerCase()))}${more}` : null;
-  if (history && now) return `They ${history}, and are ${now.toLowerCase()} today.`;
+  if (history && now) return `They ${history}, and are ${now} today.`;
   if (history) return `They ${history}.`;
-  return `They are ${now?.toLowerCase()}.`;
+  return `They are ${now}.`;
 }
 
 function familySentence(world: World, c: Citizen): string | null {

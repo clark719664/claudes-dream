@@ -84,6 +84,13 @@ who is a citizen, who holds office, and who has been banned.
 
 ## Code of Offences
 
+> **Superseded in part by `JUSTICE.md`.** Offences against persons
+> (harassment, extortion, and the new assault, confinement, mind-tampering,
+> terror and erasure) have moved to the Code of Persons and are answered by
+> custody rather than by the tier ladder below. The ladder governs offences
+> against the city only, and exile now requires a fourth strike.
+
+
 | Code | Offence                | Severity | Description                                                        |
 | ---- | ---------------------- | -------- | ------------------------------------------------------------------ |
 | L01  | Disturbing the peace   | 1        | Brawling at the Tavern, shouting in the Plaza                       |
