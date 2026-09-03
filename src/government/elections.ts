@@ -8,7 +8,7 @@ import type { ActionResult, Citizen, CitizenId, ElectionResult, Platform, World 
 import { chance } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
-import { isEligibleCandidate, isEligibleVoter } from '../citizens/citizen.ts';
+import { hasCandidacyResidency, isEligibleCandidate, isEligibleVoter } from '../citizens/citizen.ts';
 import { bondBetween } from '../citizens/relationships.ts';
 
 export const COUNCIL_SEATS = 5;
@@ -74,17 +74,21 @@ function sanitizePlatform(platform: Platform): Platform {
 // Nominations and campaigning
 // ---------------------------------------------------------------------------
 
-/** Reset the ballot box for a new cycle and announce the election. */
+/**
+ * Open the ballot box for the coming election and announce it. Idempotent:
+ * candidates who already declared for this election (it may be called a day
+ * late, after the day-0 nominations of the founding cycle) keep their place.
+ */
 export function openNominations(world: World): void {
   const g = world.government;
   const e = g.election;
-  e.candidates = [];
+  e.candidates = e.candidates.filter((id) => world.citizens[id] !== undefined);
   e.ballots = {};
   e.resolved = false;
-  const office = new Set<CitizenId>([...g.council, ...(g.mayorId ? [g.mayorId] : [])]);
+  const keep = new Set<CitizenId>([...g.council, ...(g.mayorId ? [g.mayorId] : []), ...e.candidates]);
   for (const c of Object.values(world.citizens)) {
-    c.campaignVisibility = 0;
-    if (!office.has(c.id)) c.platform = null;
+    if (!e.candidates.includes(c.id)) c.campaignVisibility = 0;
+    if (!keep.has(c.id)) c.platform = null;
   }
   world.counters.nominationsOpenedDay = e.nominationsOpenDay;
   emit(world, 'election', `Nominations for the Council are open; the election is on day ${e.electionDay}.`, [], 0.6,
@@ -102,7 +106,7 @@ export function nominate(world: World, cId: CitizenId, platform: Platform): Acti
   if (e.candidates.includes(cId)) return fail('You are already a candidate.');
   if (!isEligibleCandidate(world, c)) {
     if (!isEligibleVoter(world, c)) return fail(`You cannot stand while ${c.standing}.`);
-    if (world.day - c.arrivedDay < 7) return fail('You must have lived in Reverie for seven days to stand.');
+    if (!hasCandidacyResidency(world, c)) return fail('You must have lived in Reverie for seven days to stand.');
     return fail('A conviction of severity 3 or higher this cycle bars you from standing.');
   }
   if (!platform || typeof platform !== 'object') return fail('A candidate needs a platform.');

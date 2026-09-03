@@ -233,10 +233,20 @@ export function currentCycleStartDay(world: World): number {
   return Math.max(0, world.government.election.electionDay - world.config.cycleDays);
 }
 
-/** Eligible voter, resident ≥ 7 days, no conviction of severity ≥ 3 this cycle. */
+/**
+ * Resident long enough to stand for the Council. Founders — citizens who were
+ * there on day 0 — count as residents from the start, otherwise nobody could
+ * stand in the founding election on day 7 and the city would have no Council
+ * for its first cycle.
+ */
+export function hasCandidacyResidency(world: World, c: Citizen): boolean {
+  return c.arrivedDay === 0 || world.day - c.arrivedDay >= CANDIDACY_RESIDENCY_DAYS;
+}
+
+/** Eligible voter, resident ≥ 7 days (founders exempt), no conviction of severity ≥ 3 this cycle. */
 export function isEligibleCandidate(world: World, c: Citizen): boolean {
   if (!isEligibleVoter(world, c)) return false;
-  if (world.day - c.arrivedDay < CANDIDACY_RESIDENCY_DAYS) return false;
+  if (!hasCandidacyResidency(world, c)) return false;
   const cycleStart = currentCycleStartDay(world);
   return !c.record.convictions.some((k) => k.severity >= 3 && k.day >= cycleStart);
 }

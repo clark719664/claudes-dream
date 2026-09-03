@@ -51,7 +51,12 @@ export function marketPrice(world: World, good: Good): number {
   return world.market.goods[good].price;
 }
 
-/** Buy from the Bazaar: price + sales tax, both to the Treasury. Unmet demand still counts as demand. */
+/**
+ * Buy from the Bazaar: price + sales tax, both to the Treasury. Only completed
+ * purchases count as demand: a failed attempt against an empty shelf must not
+ * drive the price (otherwise a shortage ratchets the price to the cap and it
+ * never comes down, because nobody can buy at the cap either).
+ */
 export function buyFromMarket(world: World, buyer: CitizenId | BusinessId, good: Good, qty: number): ActionResult {
   const q = Number.isFinite(qty) ? Math.round(qty) : 0;
   if (q <= 0) return fail('Quantity must be a positive whole number.');
@@ -61,8 +66,7 @@ export function buyFromMarket(world: World, buyer: CitizenId | BusinessId, good:
   if (!holder) return fail('Unknown or inactive buyer.');
 
   if (mg.stock < q) {
-    mg.demandTick += q;
-    mg.demandDay += q;
+    world.counters[`unmet:${good}`] = (world.counters[`unmet:${good}`] ?? 0) + q;
     return fail(mg.stock <= 0
       ? `The Bazaar has no ${good} in stock.`
       : `The Bazaar only has ${mg.stock} ${good} in stock.`);
@@ -127,15 +131,16 @@ export function deliverToMarket(world: World, good: Good, qty: number): void {
   mg.supplyDay += units;
 }
 
-/** Production inputs drawn by city jobs. Takes up to qty, returns what was taken; the whole request counts as demand. */
+/** Production inputs drawn by city jobs. Takes up to qty and returns what was taken, which counts as demand. */
 export function takeFromMarket(world: World, good: Good, qty: number): number {
   const q = Number.isFinite(qty) ? Math.max(0, Math.round(qty)) : 0;
   const mg = world.market.goods[good];
   if (!mg || q === 0) return 0;
   const taken = Math.min(q, mg.stock);
+  if (taken < q) world.counters[`unmet:${good}`] = (world.counters[`unmet:${good}`] ?? 0) + (q - taken);
   mg.stock -= taken;
-  mg.demandTick += q;
-  mg.demandDay += q;
+  mg.demandTick += taken;
+  mg.demandDay += taken;
   return taken;
 }
 
@@ -173,7 +178,8 @@ export function tickMarket(world: World): void {
       setEffectivePrice(world, good, current * (1 + step * ratio));
     }
 
-    if (g.stock <= 0 && g.demandTick > 0) {
+    const unmet = world.counters[`unmet:${good}`] ?? 0;
+    if (g.stock <= 0 && (g.demandTick > 0 || unmet > 0)) {
       shortages.push(good);
       const key = `shortage:${good}`;
       if (world.counters[key] !== world.day) {
@@ -183,6 +189,7 @@ export function tickMarket(world: World): void {
     }
     g.demandTick = 0;
     g.supplyTick = 0;
+    delete world.counters[`unmet:${good}`];
   }
   m.shortages = shortages;
 }

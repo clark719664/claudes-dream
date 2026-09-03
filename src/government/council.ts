@@ -57,6 +57,11 @@ export function isCouncillor(world: World, cId: CitizenId): boolean {
   return g.mayorId === cId || g.council.includes(cId);
 }
 
+/** The office a citizen falls back to when they leave the Council: their Watch post, if any. */
+function residualOffice(world: World, cId: CitizenId): 'watch' | null {
+  return world.government.watch.includes(cId) ? 'watch' : null;
+}
+
 // ---------------------------------------------------------------------------
 // Judges
 // ---------------------------------------------------------------------------
@@ -339,7 +344,7 @@ export function enactProposal(world: World, p: Proposal): void {
       break;
     case 'remove_mayor': {
       if (!target || g.mayorId !== target.id) { text = `${target?.name ?? 'The target'} is not the Mayor; nothing changed.`; break; }
-      target.office = g.council.includes(target.id) ? 'councillor' : null;
+      target.office = g.council.includes(target.id) ? 'councillor' : residualOffice(world, target.id);
       g.mayorId = null;
       const next = succeedMayor(world, target.id);
       remember(world, target.id, 'civic', 'The Council removed you from the office of Mayor.');
@@ -430,7 +435,7 @@ function pruneCouncil(world: World): void {
     if (c && inGoodStanding(c) && isPresent(world, c)) continue;
     g.council = g.council.filter((m) => m !== id);
     if (g.mayorId === id) g.mayorId = null;
-    if (c && (c.office === 'councillor' || c.office === 'mayor')) c.office = null;
+    if (c && (c.office === 'councillor' || c.office === 'mayor')) c.office = residualOffice(world, id);
     if (c) emit(world, 'law', `${c.name} no longer sits on the Council (${c.standing}).`, [id], 0.5);
   }
   if (g.mayorId === null && g.council.length > 0) {
