@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Citizen, World } from '../src/types.ts';
 import { MASTER_SKILL } from '../src/data/metropolis.ts';
-import { makeCitizen, makeWorld } from './helpers.ts';
+import { makeCitizen, makeWorld, totalMoney } from './helpers.ts';
 import {
   MENTORSHIP_DAYS, MENTOR_DAILY_BOND, MENTOR_DAILY_PURPOSE, MENTOR_SKILL_MULTIPLIER,
   MENTOR_START_BOND, MENTOR_TEACHING_GROWTH,
@@ -219,4 +219,17 @@ test('a mastership can be ended from either side, and ending nothing is safe', (
 test('a daily pass on an empty city throws nothing', () => {
   const w = makeWorld();
   assert.doesNotThrow(() => dailyMentorship(w));
+});
+
+test('a mastership moves no money', () => {
+  const w = makeWorld();
+  const old = elder(w);
+  const student = makeCitizen(w);
+  const before = totalMoney(w);
+  mentor(w, old.id, student.id);
+  for (let day = 1; day <= MENTORSHIP_DAYS + 1; day++) {
+    w.day = day;
+    dailyMentorship(w);
+  }
+  assert.equal(totalMoney(w), before, 'teaching is not a trade');
 });

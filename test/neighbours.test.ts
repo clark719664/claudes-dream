@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Happening, World } from '../src/types.ts';
-import { makeCitizen, makeWorld } from './helpers.ts';
+import { makeCitizen, makeWorld, totalMoney } from './helpers.ts';
 import {
   BLOCK_PARTY_BOND, BLOCK_PARTY_COMFORT, BLOCK_PARTY_HOUR, BLOCK_PARTY_SOCIAL, BLOCK_PARTY_WEEKDAY,
   NEIGHBOUR_BOND, NEIGHBOUR_BOND_CAP,
@@ -194,4 +194,28 @@ test('the block hears the news, and an empty block hears nothing', () => {
   tellNeighbours(w, 'c_nobody', 'Anything.');
   tellNeighbours(w, a.id, '   ');
   assert.equal(b.memory.length, 1, 'nothing empty, nothing from nowhere');
+});
+
+test('a block party moves no money, and a world with no homes still rolls over', () => {
+  const w = makeWorld();
+  const a = makeCitizen(w, { homeBuildingId: LOFTS, district: 'verdant_quarter' });
+  makeCitizen(w, { homeBuildingId: LOFTS, district: 'verdant_quarter' });
+  const before = totalMoney(w);
+  w.day = BLOCK_PARTY_WEEKDAY;
+  scheduleBlockParties(w);
+  const h = partyAt(w, LOFTS);
+  assert.ok(h);
+  holdBlockParty(w, h);
+  dailyNeighbours(w);
+  assert.equal(totalMoney(w), before, 'a party on the landing costs nobody a lumen');
+
+  const old = makeWorld();
+  const homeless = makeCitizen(old);
+  Reflect.deleteProperty(homeless, 'homeBuildingId');
+  Reflect.deleteProperty(old, 'happenings');
+  old.day = BLOCK_PARTY_WEEKDAY;
+  assert.doesNotThrow(() => dailyNeighbours(old));
+  assert.doesNotThrow(() => scheduleBlockParties(old));
+  assert.deepEqual(neighboursOf(old, homeless.id), []);
+  assert.equal(a.wallet, w.citizens[a.id].wallet);
 });

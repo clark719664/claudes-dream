@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { CitizenId, World } from '../src/types.ts';
-import { makeCitizen, makeWorld } from './helpers.ts';
+import { makeCitizen, makeWorld, totalMoney } from './helpers.ts';
 import {
   APOLOGY_BOND, APOLOGY_REPUTATION, FEUD_BOND_FLOOR, FEUD_INCIDENTS,
   apologize, applyFeudFloor, dailyFeuds, feudBetween, feudsOf, inFeud, incidentTally,
@@ -62,24 +62,24 @@ test('a further act inside a live feud deepens it rather than opening another', 
 
 test('two citizens of one family never feud, and children are never counted', () => {
   const w = makeWorld();
-  const a = makeCitizen(w, { familyName: 'Ashgrove' });
-  const b = makeCitizen(w, { familyName: 'Ashgrove' });
-  const child = makeCitizen(w, { familyName: 'Corvane', lifeStage: 'child' });
+  const a = makeCitizen(w, { familyName: 'Ashgrove' }).id;
+  const b = makeCitizen(w, { familyName: 'Ashgrove' }).id;
+  const child = makeCitizen(w, { familyName: 'Corvane', lifeStage: 'child' }).id;
   for (let i = 0; i < 5; i++) {
     noteHostility(w, a, b);
-    noteHostility(w, a, child.id);
-    noteHostility(w, child.id, a);
+    noteHostility(w, a, child);
+    noteHostility(w, child, a);
   }
   assert.equal(w.feuds.length, 0);
-  assert.equal(inFeud(w, a, child.id), false);
+  assert.equal(inFeud(w, a, child), false);
 });
 
 test('hostility toward an exile, a stranger or oneself counts for nothing', () => {
   const w = makeWorld();
-  const a = makeCitizen(w, { familyName: 'Ashgrove' });
-  const exile = makeCitizen(w, { familyName: 'Corvane', standing: 'exiled' });
+  const a = makeCitizen(w, { familyName: 'Ashgrove' }).id;
+  const exile = makeCitizen(w, { familyName: 'Corvane', standing: 'exiled' }).id;
   for (let i = 0; i < 5; i++) {
-    noteHostility(w, a, exile.id);
+    noteHostility(w, a, exile);
     noteHostility(w, a, 'c_nobody');
     noteHostility(w, a, a);
   }
@@ -90,10 +90,10 @@ test('hostility toward an exile, a stranger or oneself counts for nothing', () =
 
 test('the floor lowers a bond that crosses a feud, and never raises one', () => {
   const w = makeWorld();
-  const a = makeCitizen(w, { familyName: 'Ashgrove' });
-  const b = makeCitizen(w, { familyName: 'Corvane' });
-  const c = makeCitizen(w, { familyName: 'Corvane' });
-  const friend = makeCitizen(w, { familyName: 'Ashgrove' });
+  const a = makeCitizen(w, { familyName: 'Ashgrove' }).id;
+  const b = makeCitizen(w, { familyName: 'Corvane' }).id;
+  const c = makeCitizen(w, { familyName: 'Corvane' }).id;
+  const friend = makeCitizen(w, { familyName: 'Ashgrove' }).id;
   setBond(w, a, b, 70);
   setBond(w, a, c, -80);
   setBond(w, a, friend, 90);
@@ -166,11 +166,11 @@ test('striking the last incident ends the feud', () => {
 
 test('an apology with no feud, to your own family, or to a stranger is refused', () => {
   const w = makeWorld();
-  const a = makeCitizen(w, { familyName: 'Ashgrove' });
-  const kin = makeCitizen(w, { familyName: 'Ashgrove' });
-  const other = makeCitizen(w, { familyName: 'Corvane' });
-  assert.equal(apologize(w, a, other.id).ok, false);
-  assert.equal(apologize(w, a, kin.id).ok, false);
+  const a = makeCitizen(w, { familyName: 'Ashgrove' }).id;
+  const kin = makeCitizen(w, { familyName: 'Ashgrove' }).id;
+  const other = makeCitizen(w, { familyName: 'Corvane' }).id;
+  assert.equal(apologize(w, a, other).ok, false);
+  assert.equal(apologize(w, a, kin).ok, false);
   assert.equal(apologize(w, a, 'c_nobody').ok, false);
   assert.equal(apologize(w, 'c_nobody', a).ok, false);
   assert.equal(apologize(w, a, a).ok, false);
@@ -180,10 +180,10 @@ test('an apology with no feud, to your own family, or to a stranger is refused',
 
 test('a marriage across a feud ends it', () => {
   const w = makeWorld();
-  const a = makeCitizen(w, { familyName: 'Ashgrove' });
-  const b = makeCitizen(w, { familyName: 'Corvane' });
-  const other = makeCitizen(w, { familyName: 'Corvane' });
-  for (let i = 0; i < FEUD_INCIDENTS; i++) noteHostility(w, a, other.id);
+  const a = makeCitizen(w, { familyName: 'Ashgrove' }).id;
+  const b = makeCitizen(w, { familyName: 'Corvane' }).id;
+  const other = makeCitizen(w, { familyName: 'Corvane' }).id;
+  for (let i = 0; i < FEUD_INCIDENTS; i++) noteHostility(w, a, other);
   assert.ok(feudBetween(w, 'Ashgrove', 'Corvane'));
   reconcileByMarriage(w, a, b);
   assert.equal(feudBetween(w, 'Ashgrove', 'Corvane'), null);
@@ -196,18 +196,18 @@ test('a marriage still ends the feud when the couple have already taken one name
   const parentB = makeCitizen(w, { familyName: 'Corvane' });
   const child = makeCitizen(w, { familyName: 'Corvane' });
   child.family.parents = [parentB.id];
-  for (let i = 0; i < FEUD_INCIDENTS; i++) noteHostility(w, parentA, parentB);
+  for (let i = 0; i < FEUD_INCIDENTS; i++) noteHostility(w, parentA.id, parentB.id);
   // The wedding merged the names before the hook ran.
   child.familyName = 'Ashgrove';
   child.family.familyName = 'Ashgrove';
-  reconcileByMarriage(w, parentA, child.id);
+  reconcileByMarriage(w, parentA.id, child.id);
   assert.equal(feudBetween(w, 'Ashgrove', 'Corvane'), null);
 });
 
 test('a marriage inside one family, or where there is no feud, changes nothing', () => {
   const w = makeWorld();
-  const a = makeCitizen(w, { familyName: 'Ashgrove' });
-  const b = makeCitizen(w, { familyName: 'Ashgrove' });
+  const a = makeCitizen(w, { familyName: 'Ashgrove' }).id;
+  const b = makeCitizen(w, { familyName: 'Ashgrove' }).id;
   assert.doesNotThrow(() => reconcileByMarriage(w, a, b));
   assert.doesNotThrow(() => reconcileByMarriage(w, a, 'c_nobody'));
   assert.equal(w.feuds.length, 0);
@@ -258,4 +258,22 @@ test('a citizen reads the feuds their own family is in', () => {
   assert.equal(feudsOf(w, w.citizens[b]).length, 1);
   assert.equal(feudsOf(w, bystander).length, 0);
   assert.equal(feudBetween(w, 'Ashgrove', 'Ashgrove'), null);
+});
+
+test('a feud moves no money, and a world saved before this layer still rolls over', () => {
+  const w = makeWorld();
+  const [a, b] = twoFamilies(w);
+  const before = totalMoney(w);
+  for (let i = 0; i < FEUD_INCIDENTS; i++) noteHostility(w, a, b);
+  apologize(w, a, b);
+  dailyFeuds(w);
+  reconcileByMarriage(w, a, b);
+  assert.equal(totalMoney(w), before, 'grudges and apologies are free');
+
+  const old = makeWorld();
+  makeCitizen(old, { familyName: 'Ashgrove' });
+  Reflect.deleteProperty(old, 'feuds');
+  assert.doesNotThrow(() => dailyFeuds(old));
+  assert.deepEqual(old.feuds, []);
+  assert.equal(feudBetween(old, 'Ashgrove', 'Corvane'), null);
 });

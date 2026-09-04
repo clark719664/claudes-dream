@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import type { Case, CitizenId, LawCode, Verdict, World } from '../src/types.ts';
 import { MAX_RUMOURS, RUMOUR_LIFE_DAYS } from '../src/data/metropolis.ts';
 import { REPORT_WINDOW_TICKS } from '../src/government/watch.ts';
-import { makeCitizen, makeWorld } from './helpers.ts';
+import { makeCitizen, makeWorld, totalMoney } from './helpers.ts';
 import {
   MAX_CLAIM, RUMOUR_REPUTATION, RUMOUR_SCRUTINY_DAYS, RUMOUR_SCRUTINY_HEARERS, RUMOUR_SPREAD_PER_DAY,
   dailyRumours, disproveRumours, gossip, rumoursAbout, rumoursHeardBy, scrutinyFromRumours, spreadRumours,
@@ -328,4 +328,25 @@ test('a citizen reads what it has heard, newest first, and nothing else', () => 
   assert.equal(rumoursHeardBy(w, hearer.id, 1).length, 1);
   assert.equal(rumoursAbout(w, subject.id).length, 2);
   assert.deepEqual(rumoursAbout(w, 'c_nobody'), []);
+});
+
+test('talk moves no money, and a world saved before this layer still rolls over', () => {
+  const w = makeWorld();
+  const speaker = makeCitizen(w, { district: 'threshold' });
+  const subject = makeCitizen(w, { district: 'nightglass' });
+  for (let i = 0; i < 6; i++) befriend(w, speaker.id, makeCitizen(w, { district: 'commons' }).id);
+  const before = totalMoney(w);
+  gossip(w, speaker.id, subject.id, 'is not to be trusted', 'L07');
+  for (let day = 0; day < RUMOUR_LIFE_DAYS + 1; day++) {
+    w.day = day;
+    dailyRumours(w);
+  }
+  assert.equal(totalMoney(w), before, 'nothing in a rumour is worth a lumen');
+
+  const old = makeWorld();
+  makeCitizen(old);
+  Reflect.deleteProperty(old, 'rumours');
+  assert.doesNotThrow(() => dailyRumours(old));
+  assert.deepEqual(old.rumours, []);
+  assert.deepEqual(rumoursHeardBy(old, 'c_1'), []);
 });

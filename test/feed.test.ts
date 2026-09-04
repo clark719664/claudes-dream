@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { CitizenId, World } from '../src/types.ts';
 import { MAX_FEED, MAX_FEED_SHOWN } from '../src/data/metropolis.ts';
-import { makeCitizen, makeWorld } from './helpers.ts';
+import { makeCitizen, makeWorld, totalMoney } from './helpers.ts';
 import {
   MAX_POST_TEXT, POST_BOND, POST_EVIDENCE_BONUS, POST_LAUGH_BOND, POST_VISIBILITY_PER_REACTION,
   dailyFeed, feedFor, post, postEvidenceBonus, postsBy, postsMentioning, react,
@@ -227,4 +227,23 @@ test('a daily pass on an empty city throws nothing', () => {
   const w = makeWorld();
   assert.doesNotThrow(() => dailyFeed(w));
   assert.deepEqual(w.feed, []);
+});
+
+test('the wall moves no money, and a world saved before this layer still rolls over', () => {
+  const w = makeWorld();
+  const author = makeCitizen(w);
+  const reader = makeCitizen(w);
+  const before = totalMoney(w);
+  const id = postAt(w, author.id, 'Something to say.');
+  react(w, reader.id, id, 'cheer');
+  dailyFeed(w);
+  assert.equal(totalMoney(w), before, 'words are free in Reverie');
+
+  const old = makeWorld();
+  const c = makeCitizen(old);
+  Reflect.deleteProperty(old, 'feed');
+  assert.deepEqual(feedFor(old, c), []);
+  assert.equal(post(old, c.id, 'the first word').ok, true);
+  assert.equal(old.feed.length, 1);
+  assert.doesNotThrow(() => dailyFeed(old));
 });
