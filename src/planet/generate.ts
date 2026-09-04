@@ -27,6 +27,8 @@ export interface Planet {
   /** Distance to the nearest coast in cells: 0 on the shore, rising out to sea. */
   coastDist: Float32Array;
   biome: Uint8Array;
+  /** Density of the old ruins, 0-1. Salvage is found nowhere else. */
+  ruins: Float32Array;
   seaLevel: number;
   /** Elevation of the highest ordinary land, used to normalise altitude. */
   landTop: number;
@@ -71,6 +73,7 @@ export function generatePlanet(seed: number, w = 1024, h = 512): Planet {
   const moisture = new Float32Array(n);
   const flow = new Float32Array(n);
   const coastDist = new Float32Array(n);
+  const ruins = new Float32Array(n);
   const biome = new Uint8Array(n);
   const plates = makePlates(seed, 17);
 
@@ -280,7 +283,23 @@ export function generatePlanet(seed: number, w = 1024, h = 512): Planet {
     else biome[i] = B('desert');
   }
 
-  return { seed, w, h, elevation, temperature, moisture, flow, coastDist, biome, seaLevel, landTop };
+  // --- the ruins ------------------------------------------------------------
+  // Whatever stood here before is buried in a handful of dry fields. Salvage
+  // comes from these and nowhere else, which is why the Verge is where it is.
+  for (let y = 0; y < h; y++) {
+    const lat = (0.5 - (y + 0.5) / h) * Math.PI;
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (elevation[i] <= seaLevel) continue;
+      const p = toSphere(((x + 0.5) / w) * Math.PI * 2, lat);
+      const field = fbm(p.x * 3.6, p.y * 3.6, p.z * 3.6, seed + 8081, 3);
+      if (field <= 0.66) continue;
+      const dryness = Math.max(0, 0.55 - moisture[i]) * 1.8;
+      ruins[i] = Math.min(1, (field - 0.66) * 5.2 * (0.35 + dryness));
+    }
+  }
+
+  return { seed, w, h, elevation, temperature, moisture, flow, coastDist, biome, ruins, seaLevel, landTop };
 }
 
 /** Palette used by every renderer, so the planet looks the same everywhere. */
