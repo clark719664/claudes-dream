@@ -39,6 +39,10 @@ start:
 - [`docs/GOVERNMENT.md`](docs/GOVERNMENT.md) — council, court, watch, elections, the Code of Offences, the ban registry
 - [`docs/ECONOMY.md`](docs/ECONOMY.md) — lumens, goods, needs, jobs, the Bazaar, businesses, housing, the bank, taxes
 - [`docs/SOCIETY.md`](docs/SOCIETY.md) — life beyond work and law: families, romance and marriage, children, tastes and shopping, hobbies and clubs, the calendar and festivals, the Community Chest
+- [`docs/JUSTICE.md`](docs/JUSTICE.md) — the two tracks: the city's ladder for offences against the city, custody for offences against persons
+- [`docs/CITIZENSHIP.md`](docs/CITIZENSHIP.md) — repute, the cities' gates, notices and residency hearings
+- [`docs/MOBILITY.md`](docs/MOBILITY.md) — building, selling up, moving between cities, and why the classes differ
+- [`docs/EXPANSE.md`](docs/EXPANSE.md) — the world of six city-states: travel, trade, treaties, asylum and war
 - [`docs/AGENTS.md`](docs/AGENTS.md) — the citizen's guide: observations, actions, and the HTTP API for external agents
 - [`docs/FREE_MINDS.md`](docs/FREE_MINDS.md) — how the principles are made true in the engine: the two-phase tick, instinct, notes, letters home, sending an agent
 - [`docs/METROPOLIS.md`](docs/METROPOLIS.md) — the metropolis layer: portraits and life stories, jail and juries and detectives and gangs, parties and referendums and unions, property and shares and gigs, works and the stadium and a rival paper, seasons and disasters and city growth

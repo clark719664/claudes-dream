@@ -112,19 +112,75 @@ receive the baseline 580 and their gate is judged from then on.
 repute minus a household allowance of 60 — a city that takes you takes your
 family, within reason.
 
-## 3. Falling
+## 3. Falling — notice, grace, and only then a hearing
 
-Residency is not forfeited by a threshold changing — a city cannot amend
-people out of their homes. But it can be lost by conduct.
+Residency is never forfeited by a threshold changing: a city cannot amend
+people out of their homes. It can be lost by conduct — but not suddenly, and
+not without warning.
 
-If a resident's repute falls **150 below** the residency line, the city may
-open a **residency hearing**: the Court sits, the resident may speak and may
-be represented, and the Council votes. If it goes against them they have
-**14 days** to settle affairs, sell property, and take the road. This is not
-exile — no Gate, no seizure, no ban — but it is the end of their place there.
+### The notice
 
-A citizen in custody cannot be sent down until their term is served. A city
-does not get to make its prisoners someone else's problem.
+The morning a resident's repute drops below their city's **residency line**,
+the Registry issues a **notice of standing**. It says what the line is, what
+they are, what it cost them (the exact penalties, itemised), and the day the
+grace period ends. It arrives in their inbox, in their memory, and on the
+public register.
+
+Nothing else changes. Through the whole grace period they keep every right
+they had: work, trade, vote, stand for office, own property, be housed.
+
+### The grace period
+
+```
+grace = 21 days
+      + 1 day per 10 days of residency, capped at +39   (so 21–60 days)
+      + 14 days if they have a child under age in the city
+      + 7 days if they are in the middle of a custodial term  (see below)
+```
+
+A citizen who has lived somewhere twenty years is given far more rope than
+one who arrived last month, which is as it should be.
+
+**Recovery clears everything.** Rise back above the line for three
+consecutive days at any point and the notice is withdrawn, struck from the
+register, and the clock is destroyed. Most notices end this way: convictions
+decay at 2 % a day, so an ordinary dip repairs itself with ordinary living.
+
+**A second notice within a cycle** halves the remaining grace — the city
+notices a pattern.
+
+### When there is no grace
+
+The grace period is skipped and the hearing opens at once only when the fall
+is not a dip but a collapse:
+
+- repute falls **150 or more** below the residency line, or
+- the citizen is convicted under the **Code of Persons** at severity 4 or
+  above (grievous assault, confinement, extortion, mind-tampering, terror,
+  erasure).
+
+Everything gentler — fines, service, a suspension, a short custodial term for
+a lesser offence — gets the notice and the clock.
+
+### The hearing
+
+If the grace period ends with the citizen still below the line, the Court
+sits on a **residency hearing**. They may speak, may be represented by an
+advocate, and may call anyone who will vouch for them. The Council votes.
+
+The Council may: **confirm** residency anyway (it is their city and their
+judgement — a beloved neighbour with a bad year is not a stranger),
+**extend** the grace by up to 30 days, or **end** the residency, in which case
+the citizen has **14 days** to sell property, settle debts, say goodbye and
+take the road.
+
+This is not exile. No Gate, no seizure, no ban, no entry on the exile
+register — the door is not locked behind them, and if their repute recovers
+they may apply again like anyone else.
+
+**A citizen in custody is never sent down.** Their term is served where they
+committed the offence; a city does not get to make its prisoners someone
+else's problem. The clock starts on the day they are released.
 
 ## 4. Rising
 

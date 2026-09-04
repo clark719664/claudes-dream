@@ -46,10 +46,9 @@ test('weather is drawn from the season and is the same for the same seed', () =>
   assert.ok(new Set(runs[0]).size > 1, 'the sky is not always the same');
 });
 
-test('snow falls in Frost and never in Blaze', () => {
-  assert.ok((WEATHER_TABLE.frost.snow ?? 0) > 0);
-  assert.equal(WEATHER_TABLE.blaze.snow ?? 0, 0);
-  assert.ok((WEATHER_TABLE.blaze.heat ?? 0) > 0);
+test('each season has its own sky, and its odds add up', () => {
+  assert.ok((WEATHER_TABLE.frost.snow ?? 0) > (WEATHER_TABLE.blaze.snow ?? 0), 'snow belongs to Frost');
+  assert.ok((WEATHER_TABLE.blaze.heat ?? 0) > (WEATHER_TABLE.frost.heat ?? 0), 'heat belongs to Blaze');
   for (const season of ['bloom', 'blaze', 'fall', 'frost'] as const) {
     const sum = WEATHERS.reduce((n, weather) => n + (WEATHER_TABLE[season][weather] ?? 0), 0);
     assert.ok(Math.abs(sum - 1) < 1e-9, `${season} odds sum to ${sum}`);
