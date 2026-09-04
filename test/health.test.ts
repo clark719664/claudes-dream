@@ -191,7 +191,7 @@ test('the Ward needs a medic, and sometimes fails anyway; the fee is kept either
   const w = makeWorld({ seed: 11 });
   const hospital = addHospital(w);
   hospital.damage = 1; // the Hospital is in ruins, so the Ward is what there is
-  const c = makeCitizen(w, { district: 'verdant_quarter', wallet: 1000 });
+  const c = makeCitizen(w, { district: 'verdant_quarter', wallet: 60 * HOSPITAL_FEE + 100 });
   assert.equal(wardHasMedic(w), false);
   assert.equal(venueFor(w, c), null, 'a ruined Hospital and no medic is nowhere at all');
   assert.equal(treat(w, c.id).ok, false, 'nowhere to be treated');
