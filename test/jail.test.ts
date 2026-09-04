@@ -1,255 +1,460 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
-import type { Case, Citizen, World } from '../src/types.ts';
-import { JAILED_ACTIONS } from '../src/types.ts';
-import { JAIL_CELLS, JAIL_MAX_DAYS } from '../src/data/metropolis.ts';
-import { nextId } from '../src/util/ids.ts';
+import type { Case, CaseId, Citizen, CitizenId, World } from '../src/types.ts';
+import { transfer } from '../src/economy/treasury.ts';
 import {
-  dailyJail, daysLeft, isJailed, jailCaseOf, jailCells, jailCitizen, jailRoster, jailedCitizens, overcrowded,
-  releaseFromJail,
+  CROWDING_COMFORT, CUSTODY_ACTIONS, CUSTODY_ALSO_ALLOWS, CUSTODY_FORBIDS, KEEP_CELLS, KEEP_COST,
+  KEEP_THRESHOLD_DAYS, custodyCapacity, custodyCodeOf, custodyDependants, custodyOf, dailyJail, daysLeft,
+  exileForbidden, fundKeep, isJailed, jailCaseOf, jailCells, jailCitizen, jailRoster, jailedCitizens, keepBuilt,
+  keepObligation, makeRestrainingOrder, mayActInCustody, overcrowded, releaseForSpace, releaseFromJail,
+  harmOfCase, isCustodialCase, pleadGuilty, pleadedGuilty, restitutionOwed, restrainedFrom, sentenceCaseToCustody,
+  sentenceToCustody, takeIntoCustody, visitPrisoner, workInCustody,
 } from '../src/government/jail.ts';
-import { computeSentence, executeSentence, fileCharge, holdCourt } from '../src/government/court.ts';
-import { revokeSentence } from '../src/government/sentencing.ts';
-import { standingAllows } from '../src/government/registry.ts';
+import { custodialConvictions } from '../src/government/custody.ts';
 
-function addJudge(w: World): Citizen {
-  const j = makeCitizen(w, { office: 'judge', reputation: 80, judgeTermEndsDay: w.day + 56 });
-  j.character.honesty = 1;
-  w.government.judges.push(j.id);
-  return j;
+/** A charge in the book, for the cases custody reads restitution and victims from. */
+function makeCase(w: World, spec: Partial<Case> & { defendantId: CitizenId }): Case {
+  const id = `k_${Object.keys(w.cases).length + 1}` as CaseId;
+  const k: Case = {
+    id, law: 'L04', severity: 3, evidence: 1, filedTick: w.tick, filedBy: 'watch',
+    victimId: spec.victimId ?? null, amount: spec.amount ?? 0, description: 'for the test', status: 'tried',
+    triedDay: w.day, judges: [], votes: {}, reasons: {}, openedTick: null, carriedSessions: 0,
+    decidedByDefault: false, verdict: 'guilty', sentence: null, appeal: null,
+    jury: [], juryVotes: {}, juryReasons: {}, advocateId: null, advocacy: 0,
+    ...spec,
+  };
+  w.cases[k.id] = k;
+  return k;
 }
 
-/** A world at the court hour with a bench that will convict. */
-function courtWorld(): World {
+/** Move the city on a day, running the morning roll. */
+function nextDay(w: World): void {
+  w.day += 1;
+  w.tick = w.day * 24 + 8;
+  w.hour = 8;
+  dailyJail(w);
+}
+
+// ---------------------------------------------------------------------------
+// A term, and what it does and does not take
+// ---------------------------------------------------------------------------
+
+test('a custodial sentence is days in custody, and takes nothing else away', () => {
   const w = makeWorld();
-  w.day = 2; w.hour = 10; w.tick = 2 * 24 + 10;
-  w.jailCells = JAIL_CELLS;
-  addJudge(w); addJudge(w); addJudge(w);
-  return w;
-}
-
-/** A charge with whatever severity the test wants, filed straight into the book. */
-function charge(w: World, defendantId: string, law: Case['law'] = 'L08'): Case {
-  return fileCharge(w, { defendantId, law, evidence: 1, filedBy: 'watch', description: 'for the test' });
-}
-
-test('a tier-4 sentence is the cells, for `severity` days capped at JAIL_MAX_DAYS', () => {
-  const w = courtWorld();
-  const thief = makeCitizen(w, { wallet: 300, homeTier: 1 });
-  w.housing.occupied[1] = 1;
+  w.day = 2;
+  const d = makeCitizen(w, { name: 'Hand', homeTier: 2, office: 'councillor', wallet: 400 });
+  w.housing.occupied[2] = 1;
+  const victim = makeCitizen(w, { name: 'Hurt' });
+  const jobId = 'j_1';
+  w.jobs[jobId] = {
+    id: jobId, role: 'fabricator', title: 'Fabricator', employer: 'city', buildingId: 'fabrication_works',
+    district: 'foundry_row', skill: 'crafting', minSkill: 0, minReputation: 0, wage: 15, output: {},
+    holderId: d.id, createdDay: 0,
+  };
+  d.jobId = jobId;
+  w.government.council.push(d.id);
+  const k = makeCase(w, { defendantId: d.id, victimId: victim.id, amount: 0 });
   const before = totalMoney(w);
 
-  const k = charge(w, thief.id, 'L08'); // grand theft, severity 4, clean record
-  holdCourt(w);
+  const term = sentenceToCustody(w, {
+    citizenId: d.id, caseId: k.id, code: 'P03', harm: { injuryDays: 7 }, victimId: victim.id,
+  });
 
-  assert.equal(k.verdict, 'guilty');
-  assert.equal(k.sentence?.tier, 4);
-  assert.equal(k.sentence?.jailDays, 4, 'severity 4, and 4 is under the cap');
-  assert.equal(k.sentence?.suspensionDays, 0, 'jail is its own rung, not a suspension');
-  assert.ok(isJailed(thief));
-  assert.equal(thief.jailedUntilDay, w.day + 4);
-  assert.equal(jailCaseOf(w, thief.id), k.id);
-  assert.equal(thief.standing, 'good', 'jail is a state, not a standing');
-  assert.equal(thief.homeTier, 1, 'the cells do not take a home');
-  assert.equal(totalMoney(w), before, 'only the fine moved money');
+  assert.equal(term.code, 'P03');
+  assert.ok(term.days >= 5 && term.days <= 15, 'assault is 5–15 days');
+  assert.ok(isJailed(d));
+  assert.equal(d.jailedUntilDay, w.day + term.days);
+  assert.equal(jailCaseOf(w, d.id), k.id);
+  assert.equal(custodyCodeOf(w, d.id), 'P03');
 
-  // The cap holds however grave the offence and however long the record.
-  const other = makeCitizen(w, { wallet: 100 });
-  jailCitizen(w, other.id, 40, k.id);
-  assert.equal(other.jailedUntilDay, w.day + JAIL_MAX_DAYS);
-  jailCitizen(w, other.id, -3, k.id);
-  assert.equal(other.jailedUntilDay, w.day + JAIL_MAX_DAYS, 'a shorter term never shortens one already running');
+  // Not a standing, not a fine, not an exile.
+  assert.equal(d.standing, 'good', 'custody is a state, not a standing');
+  assert.equal(d.homeTier, 2, 'the household keeps its home');
+  assert.equal(d.jobId, jobId, 'the sentence ends and the city expects them back');
+  assert.equal(d.office, 'councillor');
+  assert.equal(d.wallet, 400, 'no fine, no seizure: the days are the whole of it');
+  assert.equal(totalMoney(w), before, 'custody moves no money at all');
+  assert.equal(w.bans.length, 0);
+
+  // And the record now closes the Gate to them forever.
+  assert.equal(custodialConvictions(w, d.id), 1);
+  assert.ok(exileForbidden(w, d.id));
+  assert.ok(victim.memory.some((m) => m.text.includes('for what they did to you')));
+  assert.ok(w.events.some((e) => e.kind === 'sentence' && e.text.includes('assault')));
 });
 
-test('a jailed citizen may only write, message and appeal — and keeps its job, home and office', () => {
+test('a violent citizen is never exiled, however long the record gets', () => {
   const w = makeWorld();
-  const c = makeCitizen(w, { homeTier: 2, office: 'councillor' });
-  const job = nextId(w, 'j');
-  w.jobs[job] = {
-    id: job, role: 'fabricator', title: 'Fabricator', employer: 'city', buildingId: 'fabrication_works',
-    district: 'foundry_row', skill: 'crafting', minSkill: 0, minReputation: 0, wage: 15, output: {},
-    holderId: c.id, createdDay: 0,
-  };
-  c.jobId = job;
-  w.government.council.push(c.id);
-
-  jailCitizen(w, c.id, 3, 'k_1');
-  assert.ok(isJailed(c));
-  assert.equal(c.jobId, job, 'the sentence ends and the city expects them back at work');
-  assert.equal(c.homeTier, 2);
-  assert.equal(c.office, 'councillor');
-  assert.equal(c.district, 'commons', 'the cells are at the Watch House');
-  assert.equal(c.shiftsToday, w.config.maxShiftsPerDay, 'the day is gone');
-
-  for (const allowed of JAILED_ACTIONS) assert.ok(standingAllows(c, allowed), `${allowed} is never taken away`);
-  for (const forbidden of ['work', 'move', 'steal', 'vote', 'buy', 'socialize'] as const) {
-    assert.equal(standingAllows(c, forbidden), false, `${forbidden} is out of reach from a cell`);
+  const d = makeCitizen(w, { name: 'Repeat' });
+  for (let i = 0; i < 4; i++) {
+    const k = makeCase(w, { defendantId: d.id });
+    sentenceToCustody(w, { citizenId: d.id, caseId: k.id, code: 'P04', harm: 1 });
+    releaseFromJail(w, d, 'the term is served');
   }
-  assert.ok(w.events.some((e) => e.kind === 'jail' && e.weight === 0.6));
-  assert.ok(c.memory.some((m) => m.text.includes('cells at the Watch House')));
+  assert.equal(custodialConvictions(w, d.id), 4, 'a fourth conviction, and every one of them violent');
+  assert.equal(d.standing, 'good');
+  assert.equal(w.bans.length, 0, 'the ladder is not this track and the Gate is not this answer');
+  assert.match(exileForbidden(w, d.id) ?? '', /forbids exiling them/);
 });
 
-test('the term ends on the day it says, and not before', () => {
+test('a prisoner may write, appeal, study, work and be visited — and nothing else', () => {
+  const w = makeWorld();
+  const c = makeCitizen(w, { name: 'Held' });
+  jailCitizen(w, c.id, 6, 'k_1');
+  assert.ok(isJailed(c));
+  assert.equal(c.district, 'commons', 'the cells are at the Watch House');
+
+  for (const allowed of [...CUSTODY_ACTIONS, ...CUSTODY_ALSO_ALLOWS]) {
+    assert.ok(mayActInCustody(w, c, allowed), `${allowed} is not taken away`);
+  }
+  for (const forbidden of CUSTODY_FORBIDS) {
+    assert.equal(mayActInCustody(w, c, forbidden), false, `${forbidden} is out of reach from custody`);
+  }
+  assert.equal(mayActInCustody(w, c, 'visit'), false, 'a prisoner is visited; they do not visit');
+
+  const free = makeCitizen(w, { name: 'Free' });
+  assert.ok(mayActInCustody(w, free, 'work'), 'and none of this touches anybody who is not in custody');
+});
+
+test('the term ends on the day it says, and not a day before', () => {
   const w = makeWorld();
   const c = makeCitizen(w);
   jailCitizen(w, c.id, 2, 'k_5');
   assert.equal(daysLeft(w, c), 2);
 
-  w.day = 1;
-  dailyJail(w);
+  nextDay(w);
   assert.ok(isJailed(c), 'a day short is still a day');
   assert.equal(daysLeft(w, c), 1);
 
-  w.day = 2;
-  dailyJail(w);
+  nextDay(w);
   assert.equal(isJailed(c), false);
-  assert.equal(c.jailedUntilDay, null);
-  assert.equal(jailCaseOf(w, c.id), null, 'the Watch House forgets whose cell it was');
+  assert.equal(jailCaseOf(w, c.id), null, 'the register forgets whose cell it was');
   assert.ok(w.events.some((e) => e.kind === 'jail' && e.text.includes('the term is served')));
 });
 
-test('a seventh prisoner forces the earliest release, and the crowding is news', () => {
-  const w = makeWorld();
-  w.jailCells = 6;
-  const held: Citizen[] = [];
-  for (let i = 0; i < 7; i++) {
-    const c = makeCitizen(w, { name: `Held${i}` });
-    // Descending terms, so the shortest remaining is the last one jailed.
-    jailCitizen(w, c.id, 5 - Math.min(4, i), `k_${100 + i}`);
-    held.push(c);
-  }
-  assert.equal(jailedCitizens(w).length, 7);
-  assert.ok(overcrowded(w));
-
-  dailyJail(w);
-  assert.equal(jailedCitizens(w).length, jailCells(w), 'the city let one out rather than build a cell overnight');
-  assert.equal(overcrowded(w), false);
-  const freed = held.filter((c) => !isJailed(c));
-  assert.equal(freed.length, 1);
-  assert.equal(daysLeft(w, held[0]), 5, 'the one with most of their term left stays');
-  assert.ok(w.events.some((e) => e.kind === 'jail' && e.weight === 0.7 && e.text.includes('over its 6 cells')));
-  assert.ok(freed[0].memory.some((m) => m.text.includes('the cells are full')));
-});
-
-test('an appeal that sets the conviction aside empties the cell at once', () => {
-  const w = courtWorld();
-  const d = makeCitizen(w, { wallet: 200 });
-  const k = charge(w, d.id, 'L08');
-  holdCourt(w);
-  assert.ok(isJailed(d));
-
-  revokeSentence(w, k, 'good');
-  assert.equal(isJailed(d), false, 'the conviction was struck, so the cell is not the citizen\'s any more');
-  assert.equal(d.standing, 'good');
-  assert.ok(w.events.some((e) => e.kind === 'jail' && e.text.includes('set aside on appeal')));
-});
-
-test('the city does not jail children, and jails nobody who has left', () => {
+test('the city does not jail children, and nobody who has left', () => {
   const w = makeWorld();
   const kid = makeCitizen(w, { lifeStage: 'child', name: 'Small' });
-  jailCitizen(w, kid.id, 3, 'k_9');
+  assert.equal(takeIntoCustody(w, { citizenId: kid.id, caseId: 'k_9', days: 3 }), null);
   assert.equal(isJailed(kid), false);
   assert.ok(w.events.some((e) => e.kind === 'jail' && e.text.includes('does not jail its children')));
 
   const gone = makeCitizen(w);
   gone.standing = 'exiled';
   w.order = w.order.filter((id) => id !== gone.id);
-  jailCitizen(w, gone.id, 3, 'k_9');
-  assert.equal(isJailed(gone), false);
-
-  // Unknown ids and empty cells are quiet.
-  jailCitizen(w, 'c_nobody', 3, 'k_9');
+  assert.equal(takeIntoCustody(w, { citizenId: gone.id, caseId: 'k_9', days: 3 }), null);
+  assert.equal(takeIntoCustody(w, { citizenId: 'c_nobody', caseId: 'k_9', days: 3 }), null);
   releaseFromJail(w, kid, 'nothing to release');
   dailyJail(w);
   assert.deepEqual(jailRoster(w), []);
-  assert.equal(overcrowded(w), false);
 });
 
-test('the roster is the public roll, oldest release first', () => {
+test('the roll is public: who is held, for what, until when, and where', () => {
   const w = makeWorld();
   const a = makeCitizen(w, { name: 'Ada' });
   const b = makeCitizen(w, { name: 'Bram' });
-  jailCitizen(w, a.id, 4, 'k_2');
-  jailCitizen(w, b.id, 1, 'k_3');
+  const ka = makeCase(w, { defendantId: a.id });
+  sentenceToCustody(w, { citizenId: a.id, caseId: ka.id, code: 'P04', harm: 1 });   // 60 days
+  jailCitizen(w, b.id, 1, 'k_99');
+
   const roster = jailRoster(w);
-  assert.deepEqual(roster.map((r) => r.name), ['Bram', 'Ada']);
-  assert.deepEqual(roster.map((r) => r.caseId), ['k_3', 'k_2']);
-  assert.equal(roster[0].until, w.day + 1);
+  assert.deepEqual(roster.map((r) => r.name), ['Bram', 'Ada'], 'soonest out, first on the roll');
+  assert.equal(roster[1].code, 'P04');
+  assert.equal(roster[1].where, 'watch house', 'no Keep yet, so the Watch House holds them');
+  assert.equal(roster[0].life, false);
 });
 
-test('a heavier record climbs to the cells from a lesser offence, and money is conserved', () => {
-  const w = courtWorld();
-  const d = makeCitizen(w, { wallet: 120 });
-  d.record.convictions.push(
-    { caseId: 'k_a', law: 'L03', severity: 2, tier: 2, day: 0 },
-    { caseId: 'k_b', law: 'L04', severity: 2, tier: 3, day: 1 },
-  );
+// ---------------------------------------------------------------------------
+// Overcrowding never opens a cell
+// ---------------------------------------------------------------------------
+
+test('overcrowding never opens a cell: nobody is released for room, ever', () => {
+  const w = makeWorld();
+  w.jailCells = 3;
+  const held: Citizen[] = [];
+  for (let i = 0; i < 6; i++) {
+    const c = makeCitizen(w, { name: `Held${i}` });
+    const k = makeCase(w, { defendantId: c.id });
+    sentenceToCustody(w, { citizenId: c.id, caseId: k.id, code: 'P03', harm: 1 });
+    held.push(c);
+  }
+  assert.equal(jailedCitizens(w).length, 6);
+  assert.ok(overcrowded(w), '6 people, 3 cells');
+  const comfort = held.map((c) => c.needs.comfort);
+
+  nextDay(w);
+
+  assert.equal(jailedCitizens(w).length, 6, 'not one door opened for room');
+  assert.ok(overcrowded(w));
+  for (let i = 0; i < held.length; i++) {
+    assert.equal(held[i].needs.comfort, comfort[i] - CROWDING_COMFORT, 'they are held at a mood penalty');
+  }
+  assert.equal(keepObligation(w), w.day, 'and the Council is obliged to fund the Keep from that day');
+  assert.ok(w.events.some((e) => e.kind === 'jail' && e.text.includes('nobody will be')));
+
+  // The story runs every single day it lasts.
+  const day1 = w.events.filter((e) => e.kind === 'jail' && e.text.includes('owed Reverie a Keep')).length;
+  nextDay(w);
+  const day2 = w.events.filter((e) => e.kind === 'jail' && e.text.includes('owed Reverie a Keep')).length;
+  assert.equal(day2, day1 + 1, 'the Chronicle runs it again');
+  assert.equal(jailedCitizens(w).length, 6);
+
+  // And asking directly gets the same answer.
+  const asked = releaseForSpace(w, held[0].id);
+  assert.equal(asked.ok, false);
+  assert.match(asked.message, /Crowding is not a reason/);
+});
+
+test('the Council discharges its obligation by funding the Keep out of public works', () => {
+  const w = makeWorld();
+  w.jailCells = 1;
+  for (let i = 0; i < 2; i++) {
+    const c = makeCitizen(w, { name: `Held${i}` });
+    jailCitizen(w, c.id, 10, `k_${i}`);
+  }
   const before = totalMoney(w);
-  const k = charge(w, d.id, 'L04'); // petty theft, severity 2, two priors
-  const s = computeSentence(w, k);
-  assert.equal(s.tier, 4);
-  assert.equal(s.jailDays, 2, 'the cells hold you for the severity of what you did, not the length of your record');
-  k.sentence = s;
-  k.verdict = 'guilty';
-  executeSentence(w, k);
-  assert.ok(isJailed(d));
-  assert.equal(totalMoney(w), before);
+  assert.equal(custodyCapacity(w), 1);
+  nextDay(w);
+  assert.equal(keepBuilt(w), false, 'an empty works fund builds nothing');
+  assert.ok(keepObligation(w) !== null);
+
+  w.government.publicWorksFund = KEEP_COST + 50;
+  nextDay(w);
+  assert.ok(keepBuilt(w), 'with the money committed, the Charter\'s "shall" is discharged');
+  assert.equal(w.government.publicWorksFund, 50);
+  assert.equal(custodyCapacity(w), 1 + KEEP_CELLS);
+  assert.equal(overcrowded(w), false);
+  assert.equal(keepObligation(w), null);
+  assert.equal(totalMoney(w), before, 'the works fund is a commitment, not a purse: no lumen moved');
+  assert.ok(w.events.some((e) => e.kind === 'jail' && e.text.includes('The Keep is built')));
 });
 
-test('a second term lengthens the stay, a nonsense term is still a day, and the overflow goes to the Undercroft', () => {
+test('a long term belongs in the Keep, and until there is one it is served at the Watch House', () => {
+  const w = makeWorld();
+  const c = makeCitizen(w, { name: 'Long' });
+  const k = makeCase(w, { defendantId: c.id });
+  const term = sentenceToCustody(w, { citizenId: c.id, caseId: k.id, code: 'P07', harm: 0.5 });
+  assert.ok(term.days >= KEEP_THRESHOLD_DAYS);
+  assert.equal(c.district, 'commons', 'no Keep yet');
+  const comfort = c.needs.comfort;
+
+  nextDay(w);
+  assert.equal(c.needs.comfort < comfort, true, 'held in the cells at a mood penalty');
+  assert.ok(w.events.some((e) => e.kind === 'jail' && e.text.includes('because the city has no Keep')));
+
+  w.government.publicWorksFund = KEEP_COST;
+  assert.ok(fundKeep(w));
+  assert.equal(custodyOf(w, c.id)?.where, 'keep');
+  assert.ok(c.memory.some((m) => m.text.includes('moved from the cells at the Watch House to the Keep')));
+});
+
+// ---------------------------------------------------------------------------
+// Parole
+// ---------------------------------------------------------------------------
+
+test('labour in custody pays the victim first and the prisoner second', () => {
+  const w = makeWorld();
+  const d = makeCitizen(w, { name: 'Worker', wallet: 0 });
+  const victim = makeCitizen(w, { name: 'Owed', wallet: 0 });
+  const k = makeCase(w, { defendantId: d.id, victimId: victim.id, amount: 8 });
+  sentenceToCustody(w, { citizenId: d.id, caseId: k.id, code: 'P06', harm: 0, victimId: victim.id });
+  const before = totalMoney(w);
+
+  const first = workInCustody(w, d.id);
+  assert.ok(first.ok);
+  assert.equal(victim.wallet, 5, 'the whole of the first day went to the victim');
+  assert.equal(d.wallet, 0);
+  assert.equal(workInCustody(w, d.id).ok, false, 'one shift a day');
+
+  w.day += 1;
+  workInCustody(w, d.id);
+  assert.equal(victim.wallet, 8, 'the debt is settled');
+  assert.ok(d.wallet > 0, 'and the rest reaches the citizen');
+  assert.equal(restitutionOwed(w, d.id).amount, 0);
+  assert.equal(totalMoney(w), before, 'the Treasury paid the wage; nothing was made');
+
+  const free = makeCitizen(w);
+  assert.equal(workInCustody(w, free.id).ok, false, 'there is no labour in custody outside custody');
+});
+
+test('family and friends may visit, once a day, where the prisoner is held', () => {
+  const w = makeWorld();
+  const d = makeCitizen(w, { name: 'Held' });
+  const kin = makeCitizen(w, { name: 'Sister' });
+  const friend = makeCitizen(w, { name: 'Friend' });
+  const stranger = makeCitizen(w, { name: 'Nobody' });
+  d.family.parents = ['c_parent'];
+  kin.family.parents = ['c_parent'];
+  friend.bonds[d.id] = 70;
+  d.bonds[friend.id] = 70;
+  jailCitizen(w, d.id, 5, 'k_1');
+  d.needs.social = 20;
+
+  assert.equal(visitPrisoner(w, stranger.id, d.id).ok, false, 'custody is not a public gallery');
+  assert.ok(visitPrisoner(w, kin.id, d.id).ok);
+  assert.ok(visitPrisoner(w, friend.id, d.id).ok);
+  assert.equal(visitPrisoner(w, kin.id, d.id).ok, false, 'once a day');
+  assert.ok(d.needs.social > 20, 'a visit is worth something');
+  assert.ok(d.memory.some((m) => m.text.includes('came to see you')));
+
+  const elsewhere = makeCitizen(w, { name: 'Far', district: 'archive' });
+  elsewhere.bonds[d.id] = 70;
+  d.bonds[elsewhere.id] = 70;
+  assert.equal(visitPrisoner(w, elsewhere.id, d.id).ok, false, 'you have to go there');
+  jailCitizen(w, kin.id, 2, 'k_2');
+  assert.equal(visitPrisoner(w, kin.id, d.id).ok, false, 'and you cannot be inside yourself');
+});
+
+test('the household keeps its home and the Chest keeps the dependants', () => {
+  const w = makeWorld();
+  transfer(w, 'treasury', 'chest', 200, 'donation', 'the city funds the Chest');
+  const d = makeCitizen(w, { name: 'Held', homeTier: 1 });
+  w.housing.occupied[1] = 1;
+  const child = makeCitizen(w, { name: 'Kid', lifeStage: 'child', wallet: 0, homeTier: 0 });
+  const before = totalMoney(w);
+  d.family.children = [child.id];
+  child.family.parents = [d.id];
+  jailCitizen(w, d.id, 20, 'k_1');
+
+  assert.deepEqual(custodyDependants(w, d).map((c) => c.id), [child.id], 'a child below the hardship line');
+  d.rentArrearsDays = 2;
+  nextDay(w);
+
+  assert.equal(d.homeTier, 1, 'the household keeps its home');
+  assert.equal(d.rentArrearsDays, 0, 'and no eviction is built out of the days the city took');
+  assert.ok(child.memory.some((m) => m.text.includes('the home is yours')), 'the Chest carries the dependants');
+  assert.ok(w.events.some((e) => e.kind === 'jail' && e.text.includes('the Community Chest carries Kid')));
+  assert.equal(totalMoney(w), before, 'custody itself moves no money');
+
+  // Said once, not every morning: a household is not news twice.
+  const said = w.events.filter((e) => e.text.includes('the Community Chest carries')).length;
+  nextDay(w);
+  assert.equal(w.events.filter((e) => e.text.includes('the Community Chest carries')).length, said);
+
+  // Somebody who can keep themselves is nobody's dependant.
+  const partner = makeCitizen(w, { name: 'Comfortable', homeTier: 1, wallet: 500 });
+  w.housing.occupied[1] += 1;
+  d.family.partnerId = partner.id;
+  assert.equal(custodyDependants(w, d).some((c) => c.id === partner.id), false);
+
+  // And nobody starves in a cell: the Watch House feeds who it holds.
+  d.needs.energy = 0;
+  d.needs.rest = 0;
+  nextDay(w);
+  assert.ok(d.needs.energy >= 40 && d.needs.rest >= 40);
+});
+
+test('a second sentence lengthens the stay and a nonsense term is still a day', () => {
   const w = makeWorld();
   w.day = 5;
-
-  // Two sentences in one sitting: the later release date is the one that holds.
   const twice = makeCitizen(w, { name: 'Twice' });
   jailCitizen(w, twice.id, 4, 'k_201');
   jailCitizen(w, twice.id, 2, 'k_202');
   assert.equal(twice.jailedUntilDay, w.day + 4, 'a lighter second term never shortens the first');
-  jailCitizen(w, twice.id, 5, 'k_203');
-  assert.equal(twice.jailedUntilDay, w.day + 5, 'a heavier one does lengthen it');
+  jailCitizen(w, twice.id, 9, 'k_203');
+  assert.equal(twice.jailedUntilDay, w.day + 9);
 
-  // Nothing the Court can hand down puts somebody in for less than a day or
-  // for longer than the cells are meant to hold anybody.
   const odd = makeCitizen(w, { name: 'Odd' });
   jailCitizen(w, odd.id, 0, 'k_204');
   assert.equal(daysLeft(w, odd), 1);
+  jailCitizen(w, odd.id, Number.NaN, 'k_205');
+  assert.equal(daysLeft(w, odd), 1);
+
+  // Nothing caps a custodial term any more: the band does that, not the cells.
   const long = makeCitizen(w, { name: 'Long' });
-  jailCitizen(w, long.id, 99, 'k_205');
-  assert.equal(daysLeft(w, long), JAIL_MAX_DAYS);
+  jailCitizen(w, long.id, 180, 'k_206');
+  assert.equal(daysLeft(w, long), 180);
+});
 
-  // The Watch House fills, and the Cells annex takes the rest once it is open.
-  const w2 = makeWorld();
-  w2.jailCells = 2;
-  w2.openDistricts = [...w2.openDistricts, 'undercroft'];
-  const cells: Citizen[] = [];
-  for (let i = 0; i < 4; i++) {
-    const c = makeCitizen(w2, { name: `Cell${i}`, district: 'nightglass' });
-    jailCitizen(w2, c.id, 3, `k_${300 + i}`);
-    cells.push(c);
-  }
-  assert.deepEqual(cells.slice(0, 3).map((c) => c.district), ['commons', 'commons', 'commons']);
-  assert.equal(cells[3].district, 'undercroft', 'the Watch House was full, so the annex took them');
-  assert.ok(overcrowded(w2), 'an annex is not more cells: the crowding is still a crisis');
-
-  // And the crisis is answered by release, not by more cells appearing.
-  dailyJail(w2);
-  assert.equal(jailedCitizens(w2).length, 2);
+test('a restraining order is made once, and stands in the record', () => {
+  const w = makeWorld();
+  const d = makeCitizen(w, { name: 'Near' });
+  const victim = makeCitizen(w, { name: 'Kept' });
+  const k = makeCase(w, { defendantId: d.id, victimId: victim.id });
+  sentenceToCustody(w, { citizenId: d.id, caseId: k.id, code: 'P02', harm: 0, victimId: victim.id });
+  assert.ok(restrainedFrom(w, d.id, victim.id), 'harassment carries one whether or not the term is a day');
+  const orders = w.events.filter((e) => e.kind === 'law' && e.text.includes('restraining order')).length;
+  makeRestrainingOrder(w, d.id, victim.id);
+  assert.equal(w.events.filter((e) => e.kind === 'law' && e.text.includes('restraining order')).length, orders);
+  assert.equal(restrainedFrom(w, d.id, makeCitizen(w).id), false);
 });
 
 test('a world saved before the cells were built still counts them', () => {
   const w = makeWorld();
-  // An old save, or a hand-made world: the default stands rather than crashing.
   (w as unknown as { jailCells: unknown }).jailCells = undefined;
-  assert.equal(jailCells(w), JAIL_CELLS);
+  assert.equal(jailCells(w), 6);
   (w as unknown as { jailCells: unknown }).jailCells = Number.NaN;
-  assert.equal(jailCells(w), JAIL_CELLS);
+  assert.equal(jailCells(w), 6);
   w.jailCells = 0;
   assert.equal(jailCells(w), 0, 'a city may decide it has no cells at all');
+
+  // And with no cells at all, the city still holds who it holds.
   const c = makeCitizen(w, { name: 'Nobody' });
   jailCitizen(w, c.id, 2, 'k_400');
   assert.ok(overcrowded(w));
-  dailyJail(w);
-  assert.equal(isJailed(c), false, 'with no cells to hold anybody, nobody is held');
-  assert.deepEqual(jailRoster(w), []);
+  nextDay(w);
+  assert.ok(isJailed(c), 'crowding is a crisis, not a release valve');
+});
+
+// ---------------------------------------------------------------------------
+// From a charge to a term
+// ---------------------------------------------------------------------------
+
+test('a tried case becomes a term: harm off the record, mitigation off what was done', () => {
+  const w = makeWorld();
+  w.day = 4;
+  const d = makeCitizen(w, { name: 'Hand' });
+  const victim = makeCitizen(w, { name: 'Hurt', lifeStage: 'elder' });
+  victim.mood = 30;
+  victim.health = { glitched: true, sinceDay: 1 };
+  const k = makeCase(w, { defendantId: d.id, victimId: victim.id, amount: 120, law: 'P06' as 'L04', status: 'pending' });
+
+  assert.ok(isCustodialCase(k), 'a P code is not the ladder\'s business');
+  assert.equal(isCustodialCase({ law: 'L08' }), false);
+  const harm = harmOfCase(w, k);
+  assert.equal(harm.lumens, 120);
+  assert.equal(harm.injuryDays, 3);
+  assert.equal(harm.needsDamage, 40);
+  assert.equal(harm.vulnerableVictim, true, 'an elder');
+
+  // A plea before the bench sits is worth a fifth; after it, nothing.
+  assert.ok(pleadGuilty(w, d.id, k.id).ok);
+  assert.ok(pleadedGuilty(w, k.id));
+  assert.equal(pleadGuilty(w, d.id, k.id).ok, false, 'you plead once');
+  const late = makeCase(w, { defendantId: d.id, status: 'in_session', law: 'P03' as 'L04' });
+  assert.equal(pleadGuilty(w, d.id, late.id).ok, false, 'the bench is already sitting');
+
+  const term = sentenceCaseToCustody(w, k);
+  assert.ok(term);
+  assert.equal(term?.code, 'P06');
+  assert.ok(isJailed(d));
+  // The same case with no plea and no advocate is a longer term.
+  const other = makeCitizen(w, { name: 'Second' });
+  const k2 = makeCase(w, { defendantId: other.id, victimId: victim.id, amount: 120, law: 'P06' as 'L04' });
+  const plain = sentenceCaseToCustody(w, k2);
+  assert.ok((plain?.days ?? 0) > (term?.days ?? 0), 'pleading guilty in time is worth a fifth');
+
+  // A charge on the other track is not this file's business at all.
+  const civic = makeCase(w, { defendantId: other.id, law: 'L08' });
+  assert.equal(sentenceCaseToCustody(w, civic), null);
+});
+
+test('an advocate who argued mitigation, and a victim made whole, both shorten the term', () => {
+  const w = makeWorld();
+  const bare = makeCitizen(w, { name: 'Bare' });
+  const spoken = makeCitizen(w, { name: 'Spoken' });
+  const repaid = makeCitizen(w, { name: 'Repaid' });
+  const victim = makeCitizen(w, { name: 'Hurt' });
+  const k1 = makeCase(w, { defendantId: bare.id, victimId: victim.id, amount: 100, law: 'P05' as 'L04' });
+  const k2 = makeCase(w, { defendantId: spoken.id, victimId: victim.id, amount: 100, law: 'P05' as 'L04', advocacy: 0.2 });
+  const k3 = makeCase(w, { defendantId: repaid.id, victimId: victim.id, amount: 100, law: 'P05' as 'L04' });
+  w.counters[`restitutionPaid:${k3.id}`] = w.day;
+
+  const plain = sentenceCaseToCustody(w, k1);
+  const argued = sentenceCaseToCustody(w, k2);
+  const mended = sentenceCaseToCustody(w, k3);
+  assert.ok((argued?.days ?? 0) < (plain?.days ?? 0), 'somebody spoke for them');
+  assert.ok((mended?.days ?? 0) < (plain?.days ?? 0), 'the victim was made whole first');
+  assert.ok((mended?.days ?? 0) >= 15, 'and neither goes below the floor of the band');
 });

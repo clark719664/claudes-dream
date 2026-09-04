@@ -231,7 +231,7 @@ test('three convictions in a cycle bust the gang, and its people are their own a
   assert.equal(bustCheck(w, g), false);
   for (let i = 0; i < BUST_CONVICTIONS; i++) {
     g.members.map((id) => w.citizens[id])[i].record.convictions.push(
-      { caseId: `k_${i}`, law: 'L15', severity: 5, tier: 6, day: w.day - 1 },
+      { caseId: `k_${i}`, law: 'L15', severity: 5, tier: 5, day: w.day - 1 },
     );
   }
   assert.equal(convictionsThisCycle(w, g), BUST_CONVICTIONS);

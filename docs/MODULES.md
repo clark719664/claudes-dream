@@ -255,10 +255,19 @@ holdCourt(world): void
   // Release detention. Emit 'verdict' weight 0.5 (0.9 for exile); remember defendant, victim, judges.
   // Judges get reputation +1 per case; a judge who convicted a friend/acquitted a rival: nothing (bias is silent).
 computeSentence(world, c: Case): Sentence
-  // tier = severity + min(2, count of prior convictions with severity ≥ 2); clamp 1..5; convicted while suspended → 5.
-  // Exile also if strikes (prior convictions severity ≥ 3) >= 2 and this severity ≥ 3.
-  // tier 1: warning (reputation −5). tier 2: fine = max(20, round(wallet×0.10×severity)). tier 3: fine as tier 2 + serviceDays = severity.
-  // tier 4: suspensionDays = 3×severity + fine. tier 5: exile.
+  // The civic ladder has FIVE rungs and jail is not one of them (`JUSTICE.md` §1, Charter Article VI).
+  // tier = min(4, severity) + min(2, prior CIVIC convictions of severity ≥ 2 not struck off), CLAMPED AT 4:
+  //   escalation can never reach exile.
+  // tier 5 (exile) only when lawfulExile(world, c) holds — see below.
+  // tier 1: warning (reputation −5). tier 2: fine = max(20, round(wallet×0.10×severity)) + full restitution.
+  // tier 3: the fine + serviceDays = severity. tier 4: the fine + suspensionDays = 3×severity
+  //   (REDUCED_EXILE_SUSPENSION_DAYS = 15 when an appeal reduces an exile). tier 5: exile.
+lawfulExile(world, c: Case): boolean          // government/sentencing.ts
+  // Charter Article VI, and the only door to tier 5: a civic offence AND one of
+  //   (a) severity ≥ 3 with three prior convictions of severity ≥ 3 (this is the fourth),
+  //   (b) severity 5 with at least one prior conviction of severity ≥ 3,
+  //   (c) the second offence committed while suspended (offencesWhileSuspended >= 2).
+  // Never for an offence against a person: the city keeps its own.
 executeSentence(world, c: Case): void
   // records conviction on defendant (record.convictions, strikes), reputation −5×severity; fine: pay what wallet allows
   // to treasury ('fine'), rest → finesOwed (finesOwedSinceDay = day); service → communityServiceDaysLeft; suspension → registry.suspendCitizen;
@@ -271,11 +280,36 @@ decideAppeals(world): void
   // majority (ties uphold). reduced → tier −1 and re-execute the lighter sentence (a reduced exile becomes suspension 15 days and cancels exile);
   // overturned → conviction removed, fines refunded from treasury, standing restored. status 'closed'. Emit 'appeal' 0.6.
 dailyJustice(world): void
-  // execute deferred exiles whose executeOnDay <= day and status 'tried'; finesOwed unpaid for ≥2 days → charge L10 (once per case);
-  // pay finesOwed from wallet when possible; communityServiceDaysLeft−−(citizen forfeits half the day's dividend);
+  // execute deferred exiles whose executeOnDay <= day and status 'tried'; close stale convictions;
+  // dailyRecovery(world, chargeContempt) collects debts (government/recovery.ts — NOT the wallet sweep it used to be);
+  // communityServiceDaysLeft−−(citizen forfeits half the day's dividend);
   // judges whose term ended → removed (office null); 
 pendingCasesFor(world, cId): Case[]
 latestCaseFor(world, cId): Case | null
+```
+
+## src/government/recovery.ts
+
+```ts
+// Civil recovery: what an unpaid fine reaches, and where it stops. No citizen
+// is imprisoned, exiled or suspended for debt (Charter Article VI, `JUSTICE.md` §1).
+dailyRecovery(world, onContempt?): void
+  // every resident, in turn order: strikeOffRestitution, then the ladder below.
+garnishWages(world, c): number       // 25% of earnings since the last sweep (stats.totalEarned), capped by the debt and the wallet.
+                                     // Wages only: the dividend, gifts and the Chest's stipend are never garnished.
+seizePossessions(world, c): number   // after 3 days: goods, then possessions cheapest-first, sold at the Bazaar;
+                                     // proceeds to the Treasury against the debt, the surplus back to the citizen.
+seizeBusinessStock(world, c): number // after 5 days: the owner's business stock, the same way.
+revokeTradingLicence(world, c)       // after 7 days: the business may not trade until the debt clears; restored by
+restoreTradingLicence(world, c)      //   settling. tradingLicenceRevoked(world, businessId) is the public check.
+ableToPay(world, c): boolean         // lumens in hand, earnings since the debt began, or goods/stock/till to sell.
+recoveryStep(world, c): RecoveryStep // 'none' | 'garnishment' | 'seizure' | 'stock' | 'licence' | 'contempt'
+clearDebtFromChest(world, c): number // after 21 days the Chest may clear a debt of someone with no job, no business and no lumens.
+payRestitution(world, cId, caseId): ActionResult  // the convict pays their victim what is still owed, in full.
+strikeOffRestitution(world, c): CaseId[]          // full restitution + 14 clean days → one conviction stops counting
+                                                  //   (escalation AND the Charter's strike tally); the record keeps it.
+// Contempt (L10) is charged only after CONTEMPT_AFTER_DAYS = 14 days of non-payment by a citizen who ableToPay,
+// through the handler court.ts passes in. Poverty is never contempt.
 ```
 
 ## src/government/registry.ts

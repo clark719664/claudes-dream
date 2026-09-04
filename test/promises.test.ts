@@ -10,8 +10,8 @@ import assert from 'node:assert/strict';
 import type { Citizen, Platform, World } from '../src/types.ts';
 import { makeCitizen, makeWorld } from './helpers.ts';
 import {
-  PLATFORM_FIELDS, PROMISE_MARGIN, dailyPromises, keptShare, platformInWords, positionOf, promiseState, promisesOf,
-  recordPlatform, settingFor,
+  MIN_WAGE_CEILING, MIN_WAGE_FLOOR, PLATFORM_FIELDS, PROMISE_MARGIN, dailyPromises, keptShare, platformInWords,
+  positionOf, promiseState, promisesOf, recordPlatform, settingFor,
 } from '../src/politics/promises.ts';
 
 /** A platform that asks for the city exactly as it is, but for the fields named. */
@@ -45,7 +45,7 @@ test('the city\'s settings read as a platform, and a platform reads back as sett
   const w = makeWorld();
   w.government.incomeTax = 0.25;
   w.government.dividend = 30;
-  w.government.minWage = 22.5;
+  w.government.minWage = (MIN_WAGE_FLOOR + MIN_WAGE_CEILING) / 2;
   assert.equal(positionOf(w, 'tax'), 0.5);
   assert.equal(positionOf(w, 'dividend'), 0.5);
   assert.equal(Math.round(positionOf(w, 'minWage') * 100) / 100, 0.5);
@@ -53,7 +53,8 @@ test('the city\'s settings read as a platform, and a platform reads back as sett
 
   assert.equal(settingFor(w, 'tax', 0.5), 0.25);
   assert.equal(settingFor(w, 'dividend', 0.5), 30);
-  assert.equal(settingFor(w, 'minWage', 0), 5);
+  assert.equal(settingFor(w, 'minWage', 0), MIN_WAGE_FLOOR);
+  assert.equal(settingFor(w, 'minWage', 1), MIN_WAGE_CEILING, 'the Charter\'s band is the whole of the scale');
   assert.equal(settingFor(w, 'strictness', 1), 5);
   assert.equal(settingFor(w, 'tax', NaN), 0.25, 'nonsense is read as the middle');
   for (const field of PLATFORM_FIELDS) assert.ok(Number.isFinite(positionOf(w, field)));
@@ -198,7 +199,7 @@ test('a platform reads back in words, and nonsense reads as the middle of the ro
   assert.equal(platformInWords({ tax: 0.1, dividend: 0.1, minWage: 0.9, strictness: 0.9 }),
     'a light tax, a lean dividend, a high wage floor and a strict law');
   assert.equal(platformInWords({ tax: 0.5, dividend: 0.5, minWage: 0.5, strictness: 0.5 }),
-    'the tax the city has, the dividend the city has, the wage floor the city has and the law as it stands');
+    'the city exactly as it is', 'a platform that asks for nothing is one position, not four');
   assert.equal(platformInWords(null), platformInWords({ tax: 0.5, dividend: 0.5, minWage: 0.5, strictness: 0.5 }));
   assert.equal(platformInWords({ tax: Number.NaN, dividend: 4, minWage: -2, strictness: 0.5 }),
     'the tax the city has, a generous dividend, a low wage floor and the law as it stands');

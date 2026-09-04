@@ -1,7 +1,7 @@
 /**
  * Social actions: company, letters, gifts, insults and speeches in the
  * Plaza. Bonds move through citizens/relationships; repeated hostility
- * becomes harassment (L05) and shouting nonstop becomes spam (L02).
+ * becomes harassment (P02, custody) and shouting nonstop becomes spam (L02).
  */
 import { clamp } from '../types.ts';
 import type { ActionResult, Citizen, CitizenId, World } from '../types.ts';
@@ -107,8 +107,10 @@ export function doInsult(world: World, c: Citizen, targetId: CitizenId): ActionR
   remember(world, c.id, 'social', `You insulted ${t.name} in ${where}.`);
   emit(world, 'insult', `${c.name} insulted ${t.name} in ${where}.`, [c.id, t.id], 0.2);
   if (count >= INSULTS_FOR_HARASSMENT) {
-    const r = commitOffence(world, c.id, 'L05', { victimId: t.id });
-    return ok(`You insulted ${t.name} again; this is becoming harassment.`, { offence: 'L05', detected: r.detected });
+    // Sustained hostility toward one citizen is harassment — an offence
+    // against a *person* (P02), answered by custody and never by a fine.
+    const r = commitOffence(world, c.id, 'P02', { victimId: t.id });
+    return ok(`You insulted ${t.name} again; this is becoming harassment.`, { offence: 'P02', detected: r.detected });
   }
   return ok(`You insulted ${t.name}.`);
 }

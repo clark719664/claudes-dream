@@ -18,7 +18,7 @@
  */
 import { clamp } from '../types.ts';
 import type { ActionResult, Case, CaseId, Citizen, CitizenId, ObservedBenchCase, Verdict, World } from '../types.ts';
-import { LAWS } from '../data/laws.ts';
+import { offenceName, trackOf } from '../data/laws.ts';
 import { JURY_SEVERITY, JURY_SIZE } from '../data/metropolis.ts';
 import { normal, shuffle } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
@@ -27,7 +27,7 @@ import { areFriends, areRivals, bondBetween } from '../citizens/relationships.ts
 import { areFamily } from '../society/family.ts';
 import { publicDefenders } from './advocates.ts';
 import { GUILT_THRESHOLD, judgeBelief } from './bench.ts';
-import { byFiling, canSit, isDetained, isPresent, nameOf } from './cases.ts';
+import { byFiling, canSit, isDetained, isPresent, nameOf, priorsOf } from './cases.ts';
 import { isJailed } from './jail.ts';
 
 /** How much more a juror's reading wanders than a judge's. */
@@ -112,7 +112,7 @@ export function seatJury(world: World, k: Case): CitizenId[] {
   k.jury = drawn;
 
   const d = nameOf(world, k.defendantId);
-  const offence = LAWS[k.law]?.name.toLowerCase() ?? k.law;
+  const offence = offenceName(k.law).toLowerCase();
   const names = drawn.map((id) => nameOf(world, id)).join(', ');
   emit(world, 'charge', `${drawn.length} ${drawn.length === 1 ? 'juror was' : 'jurors were'} drawn by lot for case ${k.id} against ${d} (${offence}): ${names}.`,
     [k.defendantId, ...drawn], 0.4, { caseId: k.id, jury: [...drawn] });
@@ -242,11 +242,11 @@ export function juryFor(world: World, cId: CitizenId): ObservedBenchCase[] {
     const d = world.citizens[k.defendantId];
     return {
       caseId: k.id, defendant: k.defendantId, defendantName: d?.name ?? k.defendantId,
-      law: k.law, lawName: LAWS[k.law]?.name ?? k.law, severity: k.severity,
+      law: k.law, lawName: offenceName(k.law), track: trackOf(k.law), severity: k.severity,
       evidence: Math.round(k.evidence * 100) / 100,
       victim: k.victimId, victimName: k.victimId ? nameOf(world, k.victimId) : null,
       description: k.description,
-      priorConvictions: d ? d.record.convictions.filter((x) => x.caseId !== k.id).length : 0,
+      priorConvictions: priorsOf(world, k).length,
       bench: [...k.judges], votes: { ...k.votes },
       youVoted: k.juryVotes?.[cId] ?? null, carriedSessions: k.carriedSessions,
       jury: juryOf(k), advocate: k.advocateId ?? null,

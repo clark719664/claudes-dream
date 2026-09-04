@@ -218,3 +218,44 @@ test('readership shares add to one, whoever is in the city', () => {
   assert.equal(after.ledger, 0.5, 'an exile reads nothing here');
   assert.equal(a.paper, 'chronicle');
 });
+
+test('the Ledger will not open on the story the Chronicle opened on', () => {
+  const w = makeWorld();
+  w.day = 0;
+  // One story outweighs everything else, so both desks reach for it first.
+  // The Ledger would print this one in its own words ("the public purse"),
+  // so the echo is only caught if the two are compared in the same voice.
+  emit(w, 'exile', 'Halcyon Sunder was exiled; 40 ℓ were seized by the Treasury.', [], 0.9);
+  emit(w, 'trade', 'The Bazaar paid 240 ℓ for a crate of compute.', [], 0.5);
+  w.day = 1;
+  const chronicle = printMorningEdition(w, REPORT);
+  const ledger = printLedgerEdition(w, REPORT);
+  assert.equal(chronicle.headlines[0], 'Halcyon Sunder was exiled; 40 ℓ were seized by the Treasury.');
+  assert.notEqual(ledger.headlines[0], chronicle.headlines[0], 'a front page that reprints the other is not a second paper');
+  assert.ok(ledger.headlines.includes('The market paid 240 ℓ for a crate of compute.'));
+  assert.ok(ledger.headlines.some((h) => h.includes('Halcyon Sunder was exiled')), 'the story still runs, lower down');
+  assert.ok(ledger.headlines.some((h) => h.includes('the public purse')), 'and in the Ledger\'s words');
+});
+
+test('with one story in the day, both papers print it', () => {
+  const w = makeWorld();
+  w.day = 0;
+  emit(w, 'exile', 'Halcyon Sunder was exiled from Reverie through the Exile Gate.', [], 0.9);
+  w.day = 1;
+  const chronicle = printMorningEdition(w, REPORT);
+  const ledger = printLedgerEdition(w, REPORT);
+  assert.equal(ledger.headlines[0], chronicle.headlines[0], 'nothing is invented to avoid an echo');
+});
+
+test('the Ledger says constables, the bench, the market and residents', () => {
+  const w = makeWorld();
+  const ev: WorldEvent = {
+    tick: 0, day: 0, kind: 'verdict', text: 'The Watch took Bram to the Court; the Bazaar lost 40 ℓ and two citizens saw it.',
+    actors: [], weight: 0.5,
+  } as unknown as WorldEvent;
+  assert.equal(
+    rewrite(w, 'ledger', ev),
+    'The constables took Bram to the bench; the market lost 40 ℓ and two residents saw it.',
+  );
+  assert.equal(rewrite(w, 'chronicle', ev), ev.text, 'the paper of record prints what was said');
+});

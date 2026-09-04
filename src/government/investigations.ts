@@ -22,9 +22,9 @@
  */
 import { clamp } from '../types.ts';
 import type {
-  Citizen, CitizenId, Investigation, LawCode, ObservedInvestigation, World,
+  Citizen, CitizenId, Investigation, OffenceCode, ObservedInvestigation, World,
 } from '../types.ts';
-import { LAWS } from '../data/laws.ts';
+import { isCivicLaw, isPersonLaw, offenceName, offenceSeverity } from '../data/laws.ts';
 import { chance, rand } from '../util/rng.ts';
 import { nextId } from '../util/ids.ts';
 import { emit, remember } from '../sim/events.ts';
@@ -49,7 +49,7 @@ export const ABUSE_TRACE_WEIGHT = 0.8;
 
 export interface Trace {
   suspectId: CitizenId;
-  law: LawCode;
+  law: OffenceCode;
   tick: number;
   weight: number;
 }
@@ -63,8 +63,8 @@ function book(world: World): Record<string, Investigation> {
   return world.investigations;
 }
 
-function severityOf(world: World, law: LawCode): number {
-  return world.government.lawSeverity[law] ?? LAWS[law]?.severity ?? 1;
+function severityOf(world: World, law: OffenceCode): number {
+  return offenceSeverity(world, law);
 }
 
 /**
@@ -115,7 +115,7 @@ export function traces(world: World): Trace[] {
     for (const o of c.recentOffences) {
       if (o.detected) continue;
       if (world.tick - o.tick > TRACE_WINDOW_TICKS) continue;
-      if (!LAWS[o.law]) continue;
+      if (!isCivicLaw(o.law) && !isPersonLaw(o.law)) continue;
       out.push({ suspectId: c.id, law: o.law, tick: o.tick, weight: clamp(severityOf(world, o.law) / 5, 0.1, 1) });
     }
     const abuse = world.counters[abuseKey(c.id)] ?? 0;
@@ -131,7 +131,7 @@ export function traces(world: World): Trace[] {
  * was done, with the detective's own eye for it, and with how loudly the
  * city's journalists have been asking questions.
  */
-export function findTrace(world: World, detective: Citizen): { suspectId: CitizenId; law: LawCode } | null {
+export function findTrace(world: World, detective: Citizen): { suspectId: CitizenId; law: OffenceCode } | null {
   const open = traces(world).filter((t) => t.suspectId !== detective.id && !underInvestigation(world, t.suspectId));
   if (open.length === 0) return null;
 
@@ -153,12 +153,12 @@ export function findTrace(world: World, detective: Citizen): { suspectId: Citize
 }
 
 /** Open a file on somebody. Only the detective is told; the suspect is not. */
-export function openInvestigation(world: World, detectiveId: CitizenId, suspectId: CitizenId, law: LawCode): Investigation | null {
+export function openInvestigation(world: World, detectiveId: CitizenId, suspectId: CitizenId, law: OffenceCode): Investigation | null {
   const detective = world.citizens[detectiveId];
   const suspect = world.citizens[suspectId];
   if (!detective || !suspect || suspectId === detectiveId) return null;
   if (!isPresent(world, suspect) || suspect.lifeStage === 'child') return null;
-  if (!LAWS[law]) return null;
+  if (!isCivicLaw(law) && !isPersonLaw(law)) return null;
   if (underInvestigation(world, suspectId)) return null;
 
   const v: Investigation = {
@@ -168,7 +168,7 @@ export function openInvestigation(world: World, detectiveId: CitizenId, suspectI
   book(world)[v.id] = v;
   world.counters[progressKey(v.id)] = world.day;
 
-  const offence = LAWS[law].name.toLowerCase();
+  const offence = offenceName(law).toLowerCase();
   emit(world, 'investigation', `The Watch is looking into an act of ${offence} nobody was charged with.`, [], 0.4,
     { investigation: v.id, law });
   remember(world, detectiveId, 'civic',
@@ -211,10 +211,10 @@ export function pursue(world: World, detective: Citizen): void {
       continue;
     }
 
-    const offence = LAWS[v.law].name.toLowerCase();
+    const offence = offenceName(v.law).toLowerCase();
     const report = openReport(world, {
       officerId: null, suspectId: v.suspectId, law: v.law, evidence: v.evidence,
-      description: `${LAWS[v.law].name}: ${suspect.name}, from Detective ${detective.name}'s investigation ${v.id}`,
+      description: `${offenceName(v.law)}: ${suspect.name}, from Detective ${detective.name}'s investigation ${v.id}`,
     });
     v.reportId = report.id;
     v.closedDay = world.day;
@@ -297,7 +297,7 @@ export function investigationsFor(world: World, cId: CitizenId): ObservedInvesti
     .sort((a, b) => a.openedDay - b.openedDay || a.id.localeCompare(b.id))
     .map((v) => ({
       id: v.id, suspect: v.suspectId, suspectName: nameOf(world, v.suspectId),
-      law: v.law, lawName: LAWS[v.law]?.name ?? v.law,
+      law: v.law, lawName: offenceName(v.law),
       evidence: Math.round(v.evidence * 100) / 100, openedDay: v.openedDay,
     }));
 }

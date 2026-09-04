@@ -15,9 +15,9 @@
  */
 import { clamp } from '../types.ts';
 import type {
-  ActionResult, Citizen, CitizenId, LawCode, ObservedReport, Report, ReportId, World,
+  ActionResult, Citizen, CitizenId, ObservedReport, OffenceCode, Report, ReportId, World,
 } from '../types.ts';
-import { LAWS } from '../data/laws.ts';
+import { isCivicLaw, isPersonLaw, isRetiredLaw, offenceName, trackOf } from '../data/laws.ts';
 import { nextId } from '../util/ids.ts';
 import { emit, remember } from '../sim/events.ts';
 import { fileCharge } from './court.ts';
@@ -37,7 +37,7 @@ function fail(message: string): ActionResult { return { ok: false, message }; }
 export interface ReportSpec {
   officerId: CitizenId | null;
   suspectId: CitizenId;
-  law: LawCode;
+  law: OffenceCode;
   evidence: number;
   victimId?: CitizenId | null;
   amount?: number;
@@ -57,7 +57,7 @@ export function openReport(world: World, spec: ReportSpec): Report {
     id: nextId(world, 'r'),
     officerId: spec.officerId && world.citizens[spec.officerId] ? spec.officerId : null,
     suspectId: spec.suspectId,
-    law: LAWS[spec.law] ? spec.law : 'L01',
+    law: isPersonLaw(spec.law) || isCivicLaw(spec.law) || isRetiredLaw(spec.law) ? spec.law : 'L01',
     evidence: Number.isFinite(spec.evidence) ? clamp(spec.evidence, 0, 1) : 0,
     tick: world.tick,
     victimId,
@@ -70,7 +70,7 @@ export function openReport(world: World, spec: ReportSpec): Report {
   book[report.id] = report;
   if (report.officerId) {
     remember(world, report.officerId, 'civic',
-      `You made a report of ${LAWS[report.law].name.toLowerCase()} against ${nameOf(world, report.suspectId)} (${report.id}); `
+      `You made a report of ${offenceName(report.law).toLowerCase()} against ${nameOf(world, report.suspectId)} (${report.id}); `
       + `it lapses in ${REPORT_EXPIRY_TICKS} hours unless you file it as a charge.`);
   }
   return report;
@@ -102,7 +102,7 @@ export function reportsFor(world: World, officerId: CitizenId): Report[] {
 export function observedReportsFor(world: World, cId: CitizenId): ObservedReport[] {
   return reportsFor(world, cId).map((r) => ({
     id: r.id, suspect: r.suspectId, suspectName: nameOf(world, r.suspectId),
-    law: r.law, lawName: LAWS[r.law]?.name ?? r.law, evidence: Math.round(r.evidence * 100) / 100,
+    law: r.law, lawName: offenceName(r.law), track: trackOf(r.law), evidence: Math.round(r.evidence * 100) / 100,
     victim: r.victimId, amount: r.amount, description: r.description, tick: r.tick,
     shared: r.officerId === null,
     expiresInTicks: Math.max(0, r.tick + REPORT_EXPIRY_TICKS - world.tick),
@@ -163,11 +163,11 @@ export function dropReport(world: World, officerId: CitizenId, reportId: ReportI
     noteAbuseOfOffice(world, officerId, `dropped report ${found.id} against ${nameOf(world, found.suspectId)} after a bribe`);
   }
   const suspect = nameOf(world, found.suspectId);
-  emit(world, 'law', `Officer ${officer?.name ?? officerId} dropped the report of ${LAWS[found.law].name.toLowerCase()} against ${suspect} (${found.id}): "${words}".`,
+  emit(world, 'law', `Officer ${officer?.name ?? officerId} dropped the report of ${offenceName(found.law).toLowerCase()} against ${suspect} (${found.id}): "${words}".`,
     [officerId, found.suspectId], 0.3, { reportId: found.id, law: found.law, officer: officerId });
   remember(world, officerId, 'civic', `You dropped report ${found.id} against ${suspect}: "${words}".`);
   if (found.victimId) {
-    remember(world, found.victimId, 'crime', `The Watch dropped the report of ${LAWS[found.law].name.toLowerCase()} against ${suspect}: "${words}".`);
+    remember(world, found.victimId, 'crime', `The Watch dropped the report of ${offenceName(found.law).toLowerCase()} against ${suspect}: "${words}".`);
   }
   return { ok: true, message: `You dropped report ${found.id}: "${words}".` };
 }
@@ -181,7 +181,7 @@ export function expireReports(world: World): void {
     if (world.tick - r.tick < REPORT_EXPIRY_TICKS) continue;
     r.status = 'expired';
     const suspect = nameOf(world, r.suspectId);
-    const offence = LAWS[r.law].name.toLowerCase();
+    const offence = offenceName(r.law).toLowerCase();
     const held = r.officerId ? `unfiled by Officer ${nameOf(world, r.officerId)}` : 'unfiled by the Watch';
     emit(world, 'system', `The report of ${offence} against ${suspect} (${r.id}) lapsed, ${held}.`,
       r.officerId ? [r.officerId, r.suspectId] : [r.suspectId], 0.3,

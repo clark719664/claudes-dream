@@ -4,6 +4,7 @@ import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
 import {
   addHousingProgress, comfortDecayMultiplier, dailyHousing, evict, moveHome, vacancies,
 } from '../src/economy/housing.ts';
+import { createHousehold, householdOf, joinHousehold } from '../src/society/households.ts';
 
 test('vacancies reflect capacity minus occupancy', () => {
   const w = makeWorld();
@@ -153,4 +154,49 @@ test('comfortDecayMultiplier matches the housing table', () => {
   assert.equal(comfortDecayMultiplier(1), 1.0);
   assert.equal(comfortDecayMultiplier(2), 0.7);
   assert.equal(comfortDecayMultiplier(3), 0.4);
+});
+
+test('a housemate who moves out on their own does not take the household\'s unit with them', () => {
+  const w = makeWorld();
+  const host = makeCitizen(w, { name: 'Ondine' });
+  const lodger = makeCitizen(w, { name: 'Bram' });
+  assert.equal(moveHome(w, host.id, 2).ok, true);
+  assert.equal(w.housing.occupied[2], 1, 'one roof, one unit');
+  const h = createHousehold(w, host.id);
+  assert.equal(joinHousehold(w, lodger.id, host.id).ok, true);
+  assert.equal(lodger.homeTier, 2);
+  assert.equal(w.housing.occupied[2], 1, 'moving in shares the unit, it does not take a second');
+
+  // The lodger takes a place of their own: the household keeps its unit.
+  assert.equal(moveHome(w, lodger.id, 1).ok, true);
+  assert.equal(w.housing.occupied[2], 1, 'the household still holds its unit');
+  assert.equal(w.housing.occupied[1], 1, 'and the mover holds a new one');
+  assert.equal(lodger.householdId, null, 'they are off the old household');
+  assert.equal(householdOf(w, lodger.id), null);
+  assert.deepEqual(h.members, [host.id]);
+
+  // And when the last of them leaves, the unit comes back.
+  assert.equal(moveHome(w, host.id, 0).ok, true);
+  assert.equal(w.housing.occupied[2], 0);
+  assert.equal(w.households[h.id], undefined, 'the household is dissolved with the last member out');
+});
+
+test('occupancy tracks roofs, not heads, however people move', () => {
+  const w = makeWorld();
+  const people = [makeCitizen(w), makeCitizen(w), makeCitizen(w), makeCitizen(w)];
+  for (const p of people) assert.equal(moveHome(w, p.id, 1).ok, true);
+  assert.equal(w.housing.occupied[1], 4);
+  createHousehold(w, people[0].id);
+  assert.equal(joinHousehold(w, people[1].id, people[0].id).ok, true);
+  assert.equal(w.housing.occupied[1], 3, 'two under one roof hold one unit');
+
+  assert.equal(moveHome(w, people[1].id, 3).ok, true);
+  assert.equal(moveHome(w, people[2].id, 0).ok, true);
+  const roofs = new Set<string>();
+  for (const c of Object.values(w.citizens)) {
+    if (!c.homeTier) continue;
+    roofs.add(`${c.homeTier}:${c.householdId ?? c.id}`);
+  }
+  const counted = w.housing.occupied[1] + w.housing.occupied[2] + w.housing.occupied[3];
+  assert.equal(counted, roofs.size, 'the register counts exactly the roofs that are lived under');
 });

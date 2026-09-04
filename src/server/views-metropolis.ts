@@ -14,7 +14,7 @@ import type {
 } from '../types.ts';
 import { PAPERS } from '../types.ts';
 import { PAPER_INFO, SEASON_NAMES, WEATHER_NAMES } from '../data/metropolis.ts';
-import { LAWS } from '../data/laws.ts';
+import { LAWS, offenceName } from '../data/laws.ts';
 import { epithet } from '../identity/biography.ts';
 import { describeSky } from '../world/seasons.ts';
 import { activeDisasters } from '../world/disasters.ts';
@@ -278,7 +278,7 @@ export function caseExtras(world: World, k: Case): Record<string, unknown> {
 function investigationRow(world: World, i: Investigation): Record<string, unknown> {
   return {
     id: i.id, suspectId: i.suspectId, suspect: nameOf(world, i.suspectId),
-    law: i.law, lawName: LAWS[i.law]?.name ?? i.law,
+    law: i.law, lawName: offenceName(i.law),
     evidence: round2(i.evidence), openedDay: i.openedDay, closedDay: i.closedDay,
     detectiveId: i.detectiveId, detective: nameOf(world, i.detectiveId),
     caseId: i.caseId, reportId: i.reportId,

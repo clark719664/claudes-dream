@@ -133,9 +133,27 @@ const LEDGER_STYLE: readonly [RegExp, string][] = [
   [/\braised\b/g, 'forced up'],
   [/\blowered\b/g, 'eased'],
   [/\bwas convicted of\b/g, 'was found guilty of'],
+  [/\bThe Watch\b/g, 'The constables'],
+  [/\bthe Watch\b/g, 'the constables'],
+  [/\bThe Court\b/g, 'The bench'],
+  [/\bthe Court\b/g, 'the bench'],
+  [/\bthe Grand Bazaar\b/g, 'the market'],
+  [/\bThe Grand Bazaar\b/g, 'The market'],
+  [/\bthe Bazaar\b/g, 'the market'],
+  [/\bThe Bazaar\b/g, 'The market'],
+  [/\bcitizens\b/g, 'residents'],
+  [/\bcitizen\b/g, 'resident'],
   [/\bbusiness\b/g, 'firm'],
   [/\btax\b/g, 'levy'],
 ];
+
+/** One line put through the Ledger's style book. */
+export function inLedgerVoice(text: string): string {
+  let out = String(text ?? '');
+  if (!out) return '';
+  for (const [re, to] of LEDGER_STYLE) out = out.replace(re, to);
+  return out.replace(/\s{2,}/g, ' ').trim();
+}
 
 /**
  * The same fact in a paper's words. The Chronicle prints what was said; the
@@ -144,9 +162,7 @@ const LEDGER_STYLE: readonly [RegExp, string][] = [
 export function rewrite(world: World, paper: PaperId, ev: WorldEvent): string {
   const text = String(ev?.text ?? '');
   if (paper !== 'ledger' || !text) return text;
-  let out = text;
-  for (const [re, to] of LEDGER_STYLE) out = out.replace(re, to);
-  return out.replace(/\s{2,}/g, ' ').trim();
+  return inLedgerVoice(text);
 }
 
 // ---------------------------------------------------------------------------
@@ -186,6 +202,21 @@ export function printLedgerEdition(world: World, treasuryReport: string): PaperE
   }
   if (headlines.length === 0) {
     headlines.push(`Quiet on the quay: nothing worth the ink on day ${reportedDay}.`);
+  }
+  // The Ledger does not follow the Chronicle's lead. Where both papers hold
+  // the same story best of the day — and on a quiet day they often do — the
+  // Ledger runs it, but not at the top: a front page that reprints the other
+  // paper's is not a second paper. It only ever demotes; nothing is dropped
+  // and nothing is invented.
+  const rival = frontPage(world, 'chronicle');
+  if (rival && rival.day === world.day && headlines.length > 1) {
+    // Compared in the Ledger's own words: the same fact rewritten reads
+    // differently, and the whole point is to catch the same *story*.
+    const lead = headlineShape(inLedgerVoice(rival.headlines?.[0] ?? ''));
+    if (lead && headlineShape(headlines[0]) === lead) {
+      const other = headlines.findIndex((h) => headlineShape(h) !== lead);
+      if (other > 0) [headlines[0], headlines[other]] = [headlines[other], headlines[0]];
+    }
   }
 
   const edition: PaperEdition = { day: world.day, paper: 'ledger', headlines, treasuryReport };

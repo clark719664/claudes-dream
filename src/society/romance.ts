@@ -406,7 +406,7 @@ export function holdWedding(world: World, h: Happening): void {
       g.stats.giftsGiven += 1;
       to.stats.giftsReceived += 1;
       const name = PRODUCTS[item.productId]?.name ?? item.productId;
-      presents.push(`${g.name} gave a ${name}`);
+      presents.push(`${g.name}'s ${name}`);
       remember(world, g.id, 'social', `You gave ${to.name} your ${name} as a wedding present.`);
       remember(world, to.id, 'family', `${g.name} gave you a ${name} as a wedding present.`);
       continue;

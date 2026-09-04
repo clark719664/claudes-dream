@@ -18,7 +18,7 @@ import { clamp } from '../types.ts';
 export const STARVING = 25;
 /** Below this rest a citizen at home will sleep. */
 export const EXHAUSTED = 20;
-/** Homes and the Community Garden are in the Verdant Quarter; `rest` works nowhere else. */
+/** Where a citizen with no address of its own lies down: the Community Garden. */
 export const HOME_DISTRICT: DistrictId = 'verdant_quarter';
 /** The food of Reverie. */
 export const FOOD: Good = 'compute';

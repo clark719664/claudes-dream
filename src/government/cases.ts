@@ -2,10 +2,49 @@
  * Small helpers shared by the Court, its appeals and sentencing: ordering of
  * cases, who is present and able to sit, and the record lookups both use.
  */
-import type { Case, CaseId, Citizen, CitizenId, World } from '../types.ts';
+import type { Case, CaseId, Citizen, CitizenId, Conviction, Track, World } from '../types.ts';
+import { trackOf } from '../data/laws.ts';
 
 export function caseNumber(id: CaseId): number {
   return Number(id.slice(2)) || 0;
+}
+
+/** Which of the two systems answers this charge: the ladder, or custody. */
+export function trackOfCase(k: { law: string }): Track {
+  return trackOf(k.law);
+}
+
+/** A charge is answered by custody when it names the Code of Persons. */
+export function isCustodial(k: { law: string }): boolean {
+  return trackOf(k.law) === 'person';
+}
+
+/** The day a charge was laid. */
+export function chargedDay(k: { filedTick: number }): number {
+  return Math.floor(k.filedTick / 24);
+}
+
+/**
+ * The convictions that count as **prior** to a case.
+ *
+ * A prior is a conviction the defendant already carried *when they did the
+ * thing they are now charged with* — so it must have been recorded on a day
+ * before the charge was laid. Two charges laid on the same day, and tried in
+ * the same sitting, are not each other's priors: convicting somebody at ten
+ * o'clock does not make them a recidivist at eleven. Without this rule a first
+ * offender who did two things in one afternoon is sentenced as a repeat
+ * offender for the second of them, and the ladder — which adds a rung per
+ * prior, and whose fourth strike is the Gate — climbs on nothing.
+ *
+ * The same rule serves the bench (what a judge may weigh against a defendant)
+ * and sentencing (what the ladder escalates on), because they are the same
+ * question.
+ */
+export function priorsOf(world: World, k: Case): Conviction[] {
+  const d = world.citizens[k.defendantId];
+  if (!d) return [];
+  const laid = chargedDay(k);
+  return d.record.convictions.filter((c) => c.caseId !== k.id && c.day < laid);
 }
 
 /** Oldest first: filing tick, then case number. */

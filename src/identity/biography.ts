@@ -11,7 +11,7 @@
  * between ticks.
  */
 import type { Citizen, CitizenId, Milestone, Work, World } from '../types.ts';
-import { LAWS } from '../data/laws.ts';
+import { offenceName } from '../data/laws.ts';
 import { CHILDHOOD_DAYS, ELDER_DAYS } from '../data/catalogue.ts';
 
 /** Most sentences a life story runs to. */
@@ -199,7 +199,7 @@ function recordSentence(world: World, c: Citizen): string | null {
   const convictions = c.record?.convictions ?? [];
   if (c.standing === 'exiled') {
     const last = convictions[convictions.length - 1];
-    const law = last ? LAWS[last.law]?.name?.toLowerCase() ?? last.law : null;
+    const law = last ? offenceName(last.law).toLowerCase() : null;
     const day = c.exiledDay ?? last?.day ?? world.day;
     const caseNote = c.exiledCaseId ? ` (${c.exiledCaseId})` : last ? ` (${last.caseId})` : '';
     return law
@@ -207,7 +207,7 @@ function recordSentence(world: World, c: Citizen): string | null {
       : `They were exiled through the Gate on day ${day}${caseNote}.`;
   }
   if (convictions.length === 0) return null;
-  const laws = [...new Set(convictions.map((k) => LAWS[k.law]?.name?.toLowerCase() ?? k.law))];
+  const laws = [...new Set(convictions.map((k) => offenceName(k.law).toLowerCase()))];
   return `The Court convicted them ${convictions.length === 1 ? 'once' : `${count(convictions.length)} times`}, for ${joinList(laws.slice(0, 3))}.`;
 }
 

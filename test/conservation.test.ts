@@ -199,6 +199,10 @@ test('lumens are conserved through every kind of movement in the city', () => {
   conserved(w, 'rent');
 
   // --- exile: half the wallet seized, the rest to the victim ------------------
+  // Charter Article VI: a severity-5 offence reaches the Gate only alongside a
+  // prior conviction of severity >= 3, so Alice has one on her record.
+  alice.record.convictions.push({ caseId: 'k_prior', law: 'L06', severity: 3, tier: 3, day: w.day - 1 });
+  alice.record.strikes = 1;
   transfer(w, 'mint', alice.id, 300, 'mint', 'test top-up');
   const sabotage = fileCharge(w, { defendantId: alice.id, law: 'L13', evidence: 1, filedBy: 'watch', description: 'sabotage' });
   holdCourt(w);

@@ -32,7 +32,7 @@ function settled(world: World, overrides: Parameters<typeof makeCitizen>[1] = {}
   return c;
 }
 
-test('a hungry citizen eats what it has, or buys a cycle; when the Bazaar is empty it looks for the clinic or friends', () => {
+test('a hungry citizen eats what it has, or buys a cycle; when the Bazaar is empty it goes to earn, then to the Ward', () => {
   const w = makeWorld();
   at(w, 1, 12);
   const c = settled(w, { wallet: 100, district: 'commons' });
@@ -53,6 +53,16 @@ test('a hungry citizen eats what it has, or buys a cycle; when the Bazaar is emp
   const doctor = makeCitizen(w, { district: 'verdant_quarter' });
   doctor.skills.care = 40;
   applyForJob(w, doctor.id, medic.id);
+
+  // A city with empty shelves needs hands at its posts more than it needs
+  // another queue at the Ward: hunger does not outrank the working day.
+  const first = decide(w, c);
+  assert.equal(first.type, 'apply_job', 'the hungry look for work before they look for alms');
+
+  // With work already in hand and nothing to buy, the Ward it is.
+  const post = Object.values(w.jobs).find((j) => j.role === 'librarian')!;
+  applyForJob(w, c.id, post.id);
+  c.shiftsToday = 99;
   const a = decide(w, c);
   assert.deepEqual(a, { type: 'move', district: 'verdant_quarter' }, 'heads for the Restoration Ward in a shortage');
   c.district = 'verdant_quarter';

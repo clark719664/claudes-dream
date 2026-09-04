@@ -12,7 +12,7 @@
  */
 import type { Case, Citizen, CitizenId, World } from '../types.ts';
 import { GOAL_INFO } from '../data/metropolis.ts';
-import { LAWS } from '../data/laws.ts';
+import { LAWS, offenceName, trackOf } from '../data/laws.ts';
 import { characterOf } from '../citizens/character.ts';
 import { isDetained } from '../citizens/citizen.ts';
 import { bondBetween, friendsOf, rivalsOf } from '../citizens/relationships.ts';
@@ -103,7 +103,7 @@ function recordOf(world: World, c: Citizen): Record<string, unknown> {
     .filter((k: Case) => k.defendantId === c.id)
     .sort((a, b) => b.filedTick - a.filedTick)
     .map((k) => ({
-      id: k.id, law: k.law, lawName: LAWS[k.law]?.name ?? k.law, severity: k.severity, status: k.status,
+      id: k.id, law: k.law, lawName: offenceName(k.law), track: trackOf(k.law), severity: k.severity, status: k.status,
       verdict: k.verdict, day: Math.floor(k.filedTick / 24), triedDay: k.triedDay, sentence: k.sentence,
       jury: (k.jury ?? []).length, advocateId: k.advocateId ?? null,
       advocate: k.advocateId ? nameOf(world, k.advocateId) : null,
@@ -111,7 +111,7 @@ function recordOf(world: World, c: Citizen): Record<string, unknown> {
   const ban = [...world.bans].reverse().find((b) => b.citizenId === c.id) ?? null;
   return {
     convictions: (c.record?.convictions ?? []).map((v) => ({
-      ...v, lawName: LAWS[v.law]?.name ?? v.law,
+      ...v, lawName: offenceName(v.law),
     })),
     strikes: c.record?.strikes ?? 0,
     standing: c.standing,

@@ -14,6 +14,7 @@ import {
   apologize, applyFeudFloor, dailyFeuds, feudBetween, feudsOf, inFeud, incidentTally,
   noteHostility, reconcileByMarriage,
 } from '../src/social/feuds.ts';
+import { doExtort, doScam, doSteal } from '../src/actions/offences.ts';
 
 function bond(world: World, a: CitizenId, b: CitizenId): number {
   return world.citizens[a].bonds[b] ?? 0;
@@ -276,4 +277,35 @@ test('a feud moves no money, and a world saved before this layer still rolls ove
   assert.doesNotThrow(() => dailyFeuds(old));
   assert.deepEqual(old.feuds, []);
   assert.equal(feudBetween(old, 'Ashgrove', 'Corvane'), null);
+});
+
+// -------------------------------------------------- crimes between families
+
+test('a hand in your pocket is a hostile act: three thefts across two names open a feud', () => {
+  const w = makeWorld();
+  const thief = makeCitizen(w, { name: 'Halcyon', familyName: 'Sunder', district: 'commons', wallet: 0 });
+  const victim = makeCitizen(w, { name: 'Ilse', familyName: 'Yarrow', district: 'commons', wallet: 500 });
+  // The victim notices a bungled attempt every time, whether the Watch does or not.
+  victim.skills.analysis = 100;
+  for (let i = 0; i < FEUD_INCIDENTS; i++) {
+    w.tick += 1;
+    doSteal(w, thief, victim.id);
+  }
+  const f = feudBetween(w, 'Sunder', 'Yarrow');
+  assert.ok(f, 'three thefts from the same name is a quarrel between the two');
+  assert.equal(f?.families.includes('Sunder'), true);
+});
+
+test('extortion and a scam count the same way, and a crime against your own name counts for nothing', () => {
+  const w = makeWorld();
+  const rogue = makeCitizen(w, { familyName: 'Sunder', district: 'commons', skills: { commerce: 100 } as never });
+  const kin = makeCitizen(w, { familyName: 'Sunder', district: 'commons', wallet: 500 });
+  for (let i = 0; i < FEUD_INCIDENTS + 2; i++) { w.tick += 1; doExtort(w, rogue, kin.id, 5); }
+  assert.equal(w.feuds?.length ?? 0, 0, 'a family does not feud with itself');
+
+  const other = makeCitizen(w, { familyName: 'Yarrow', district: 'commons', wallet: 500 });
+  w.tick += 1; doExtort(w, rogue, other.id, 5);
+  w.tick += 1; doScam(w, rogue, other.id, 5);
+  assert.equal(incidentTally(w, 'Sunder', 'Yarrow'), 2, 'two acts, two incidents');
+  assert.equal(feudBetween(w, 'Sunder', 'Yarrow'), null, 'and two is not three');
 });

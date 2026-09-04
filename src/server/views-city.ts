@@ -156,7 +156,7 @@ export function governmentView(world: World): Record<string, unknown> {
 function caseView(world: World, k: Case): Record<string, unknown> {
   return {
     id: k.id, defendantId: k.defendantId, defendantName: nameOf(world, k.defendantId),
-    law: k.law, lawName: LAWS[k.law]?.name ?? k.law, severity: k.severity, evidence: Math.round(k.evidence * 100) / 100,
+    law: k.law, lawName: offenceName(k.law), track: trackOf(k.law), severity: k.severity, evidence: Math.round(k.evidence * 100) / 100,
     filedTick: k.filedTick, filedDay: Math.floor(k.filedTick / 24), filedBy: k.filedBy,
     filedByName: k.filedBy === 'watch' ? 'the Watch' : nameOf(world, k.filedBy),
     victimId: k.victimId, victimName: nameOf(world, k.victimId), amount: k.amount, description: k.description,
@@ -199,7 +199,7 @@ export function courtView(world: World): Record<string, unknown> {
       .map((r) => ({
         id: r.id, officerId: r.officerId, officerName: r.officerId ? nameOf(world, r.officerId) : null,
         suspectId: r.suspectId, suspectName: nameOf(world, r.suspectId),
-        law: r.law, lawName: LAWS[r.law]?.name ?? r.law, evidence: Math.round(r.evidence * 100) / 100,
+        law: r.law, lawName: offenceName(r.law), track: trackOf(r.law), evidence: Math.round(r.evidence * 100) / 100,
         tick: r.tick, day: Math.floor(r.tick / 24), victimId: r.victimId, victimName: nameOf(world, r.victimId),
         amount: r.amount, description: r.description, status: r.status,
         filedCaseId: r.filedCaseId, droppedReason: r.droppedReason,

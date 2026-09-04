@@ -13,7 +13,7 @@ import { chance, pick } from '../util/rng.ts';
 import { talentOf } from '../citizens/citizen.ts';
 import { bondBetween } from '../citizens/relationships.ts';
 import { teacherOnStaff } from '../actions/daily.ts';
-import { costOf, inStock, makeCtx, stepTo } from './reflex-util.ts';
+import { costOf, homeDistrictOf, inStock, makeCtx, stepTo } from './reflex-util.ts';
 import type { Ctx } from './reflex-util.ts';
 
 /** Everything a child may do; anything else the policy might produce is turned into idling. */
@@ -133,12 +133,12 @@ function tryClinic(ctx: Ctx): Action | null {
   return ctx.can.has('visit_clinic') ? { type: 'visit_clinic' } : null;
 }
 
-/** Bedtime at night, a nap when worn out; home is in the Verdant Quarter (the Garden for a child with no home). */
+/** Bedtime at night, a nap when worn out; a child sleeps under its family's roof (the Garden when it has none). */
 function trySleep(ctx: Ctx): Action | null {
-  const { c, clock } = ctx;
+  const { world, c, clock } = ctx;
   const wants = c.needs.rest < CHILD_TIRED || (clock.night && c.needs.rest < CHILD_SLEEP_UNTIL);
   if (!wants) return null;
-  return stepTo(ctx, 'verdant_quarter') ?? { type: 'rest' };
+  return stepTo(ctx, homeDistrictOf(world, c)) ?? { type: 'rest' };
 }
 
 /** Whatever is being celebrated here right now is irresistible. */
@@ -185,6 +185,6 @@ export function childDecide(world: World, c: Citizen, obs: Observation): Action 
     action = step(ctx);
     if (action) break;
   }
-  if (!action) action = ctx.clock.night ? (stepTo(ctx, 'verdant_quarter') ?? { type: 'rest' }) : play(ctx);
+  if (!action) action = ctx.clock.night ? (stepTo(ctx, homeDistrictOf(world, c)) ?? { type: 'rest' }) : play(ctx);
   return CHILD_ACTIONS.includes(action.type) ? action : IDLE;
 }

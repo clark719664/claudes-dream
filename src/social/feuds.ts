@@ -124,9 +124,12 @@ function openFeud(world: World, a: string, b: string, incidents: number, over: C
 }
 
 /**
- * One hostile act between two families. Inside a live feud it simply deepens
- * it; outside one it counts toward FEUD_INCIDENTS. Children are never part of
- * it, and a family cannot feud with itself.
+ * One hostile act between two families, of the kind the injured family knows
+ * the name behind: an insult to their face, a hand in their pocket they saw,
+ * a demand for money with a threat behind it. A crime nobody was named for
+ * belongs to nobody's family and counts against no name. Inside a live feud
+ * it simply deepens it; outside one it counts toward FEUD_INCIDENTS. Children
+ * are never part of it, and a family cannot feud with itself.
  */
 export function noteHostility(world: World, actorId: CitizenId, targetId: CitizenId): void {
   if (actorId === targetId) return;

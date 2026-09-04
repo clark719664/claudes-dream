@@ -157,7 +157,10 @@ test('every dashboard endpoint answers with the shape the app expects', async ()
   assert.equal(((eco.treasury as Json).audit as Json).ok, true);
 
   const gov = await json(await get('/api/government'));
-  assert.equal((gov.laws as unknown[]).length, 17, 'the Code gained defamation (L16) and insider trading (L17)');
+  assert.equal((gov.laws as unknown[]).length, 15,
+    'the live Code of the City: 17 numbers less the two retired to the Code of Persons (L05, L15)');
+  assert.ok(!(gov.laws as { code: string }[]).some((l) => l.code === 'L05' || l.code === 'L15'),
+    'a retired number is not law the Council can legislate');
   assert.equal(typeof (gov.election as Json).daysToElection, 'number');
   assert.ok(Array.isArray(gov.proposals));
 

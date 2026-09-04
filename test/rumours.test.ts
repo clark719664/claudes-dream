@@ -238,6 +238,21 @@ test('a false rumour, disproved, is defamation by whoever started it', () => {
   assert.ok(speaker.memory.some((m) => m.text.includes('false')));
 });
 
+test('talk that accused nobody of a crime is not defamation, however wrong it was', () => {
+  const w = makeWorld();
+  const speaker = makeCitizen(w, { name: 'Ondine' });
+  const subject = makeCitizen(w, { name: 'Bram' });
+  const start = subject.reputation;
+  gossip(w, speaker.id, subject.id, 'has not been seen at work in days');
+  assert.equal(w.rumours[0].law, null);
+  w.day = RUMOUR_LIFE_DAYS;
+  disproveRumours(w);
+  assert.equal(w.rumours[0].disprovedDay, RUMOUR_LIFE_DAYS, 'it still comes to nothing');
+  assert.equal(speaker.recentOffences.length, 0, 'and nobody is charged for it');
+  assert.equal(speaker.stats.offencesCommitted, 0);
+  assert.ok(subject.reputation <= start, 'the subject still paid for it while it ran');
+});
+
 test('a truthful rumour that ages out is no defamation', () => {
   const w = makeWorld();
   const speaker = makeCitizen(w);

@@ -3,7 +3,7 @@
  * checks, and the memory format victims use to name who wronged them (the id
  * is included so a victim — reflex or Claude — can file a report).
  */
-import type { ActionResult, Citizen, CitizenId, DistrictId, LawCode, World } from '../types.ts';
+import type { ActionResult, Citizen, CitizenId, DistrictId, OffenceCode, World } from '../types.ts';
 
 export function fail(message: string, extra: Partial<ActionResult> = {}): ActionResult {
   return { ok: false, message, ...extra };
@@ -65,11 +65,12 @@ export const GRAND_THEFT_THRESHOLD = 50;
 
 export interface Grievance {
   actorId: CitizenId;
-  law: LawCode;
+  /** Either code: a victim's grievance may belong to either track. */
+  law: OffenceCode;
   amount: number;
 }
 
-const GRIEVANCE_RE = /\((c_\d+)\) (picked your pocket for (\d+) ℓ|tried to pick your pocket|scammed you out of (\d+) ℓ|tried to sell you something|extorted (\d+) ℓ from you|threatened you|harassed you|insulted you)/;
+const GRIEVANCE_RE = /\((c_\d+)\) (picked your pocket for (\d+) ℓ|tried to pick your pocket|scammed you out of (\d+) ℓ|tried to sell you something|extorted (\d+) ℓ from you|threatened you|harassed you|insulted you|assaulted you|beat you|held you against your will)/;
 
 /**
  * Read a victim's memory ("Bram (c_3) picked your pocket for 34 ℓ.") back
@@ -87,7 +88,12 @@ export function parseGrievance(text: string): Grievance | null {
   if (phrase.startsWith('tried to pick')) return { actorId, law: 'L04', amount: 0 };
   if (phrase.startsWith('scammed')) return { actorId, law: 'L07', amount: Number(m[4]) };
   if (phrase.startsWith('tried to sell')) return { actorId, law: 'L07', amount: 0 };
-  if (phrase.startsWith('extorted')) return { actorId, law: 'L15', amount: Number(m[5]) };
-  if (phrase.startsWith('threatened')) return { actorId, law: 'L15', amount: 0 };
-  return { actorId, law: 'L05', amount: 0 };
+  // Extortion and harassment left the Code of the City with the two-track
+  // reform: they are offences against a *person* and read as P06 and P02.
+  if (phrase.startsWith('extorted')) return { actorId, law: 'P06', amount: Number(m[5]) };
+  if (phrase.startsWith('threatened')) return { actorId, law: 'P01', amount: 0 };
+  if (phrase.startsWith('assaulted')) return { actorId, law: 'P03', amount: 0 };
+  if (phrase.startsWith('beat')) return { actorId, law: 'P04', amount: 0 };
+  if (phrase.startsWith('held you')) return { actorId, law: 'P05', amount: 0 };
+  return { actorId, law: 'P02', amount: 0 };
 }

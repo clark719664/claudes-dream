@@ -10,9 +10,9 @@
  */
 import { clamp } from '../types.ts';
 import type {
-  ActionResult, BuildingId, Citizen, CitizenId, LawCode, OffenceRecord, ReportId, World,
+  ActionResult, BuildingId, Citizen, CitizenId, OffenceCode, OffenceRecord, ReportId, World,
 } from '../types.ts';
-import { LAWS } from '../data/laws.ts';
+import { LAWS, isPersonLaw, offenceName, offenceSeverity, offenceVisibility, trackOf } from '../data/laws.ts';
 import { chance, pick, rand } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
 import { applyForJob, createCityJob, openJobs } from '../economy/jobs.ts';
@@ -21,7 +21,6 @@ import { defend } from './gangs.ts';
 import { expireReports, openReport, pruneBribes, watchSession } from './reports.ts';
 import { curfewVisibilityMod } from '../politics/decrees.ts';
 import { postEvidenceBonus } from '../social/feed.ts';
-import { noteHostility } from '../social/feuds.ts';
 
 /** Offences remembered per citizen (newest last). */
 export const RECENT_OFFENCES_LENGTH = 20;
@@ -32,8 +31,46 @@ export const MIN_WATCH_JOBS = 3;
 /** Above this population the Watch grows: one position per WATCH_PER_CITIZENS citizens. */
 export const WATCH_GROWTH_POPULATION = 60;
 export const WATCH_PER_CITIZENS = 20;
-/** Laws that describe the same act at different scales: a report of one matches the other. */
-const LAW_FAMILIES: readonly (readonly LawCode[])[] = [['L04', 'L08']];
+/**
+ * Laws that describe the same act at different scales: a report of one matches
+ * the other. Both tracks have such a pair — petty and grand theft on the
+ * ladder, assault and grievous assault in custody — and a report never crosses
+ * from one track to the other.
+ */
+const LAW_FAMILIES: readonly (readonly OffenceCode[])[] = [['L04', 'L08'], ['P03', 'P04'], ['P01', 'P02']];
+
+/**
+ * How strong a case the Watch actually holds, 0..1.
+ *
+ * Detection is not proof, and this is the difference between them. What the
+ * Watch has after noticing an offence is built out of things a court could be
+ * shown: an officer who saw it with their own eyes, the citizens who were
+ * standing there, how much of a mark the act itself leaves, and how plausibly
+ * the suspect can account for it. Nothing reaches certainty — a case that
+ * cannot be doubted is not a case, it is a formality — and nothing starts high
+ * enough that the bench can skip reading it.
+ */
+export const EVIDENCE_BASE = 0.10;
+/** What the act's own visibility is worth: a wrecked building leaves more than a quiet lie. */
+export const EVIDENCE_VISIBILITY_WEIGHT = 0.25;
+/** An officer of the Watch standing there and seeing it happen. */
+export const EVIDENCE_OFFICER_SAW = 0.30;
+/** Each citizen who could have seen it, up to EVIDENCE_MAX_WITNESSES of them. */
+export const EVIDENCE_PER_WITNESS = 0.05;
+export const EVIDENCE_MAX_WITNESSES = 4;
+/** A silver tongue muddies the account: rhetoric of 100 is worth this much doubt. */
+export const EVIDENCE_RHETORIC_WEIGHT = 1 / 300;
+/** How much the hour's own luck moves it, either way. */
+export const EVIDENCE_SPREAD = 0.30;
+/** No case is beyond doubt, and none is entirely without a thread. */
+export const EVIDENCE_FLOOR = 0.05;
+export const EVIDENCE_CEILING = 0.90;
+/** A victim's own account of what was done to them. */
+export const EVIDENCE_VICTIM_REPORT = 0.45;
+/** A citizen's account of something that happened to somebody else. */
+export const EVIDENCE_WITNESS_REPORT = 0.32;
+/** A report with nothing behind it at all. */
+export const EVIDENCE_UNCORROBORATED = 0.15;
 
 export interface OffenceContext {
   victimId?: CitizenId;
@@ -72,16 +109,39 @@ function witnessesOf(world: World, actor: Citizen): number {
   return n;
 }
 
-function currentSeverity(world: World, law: LawCode): number {
-  return world.government.lawSeverity[law] ?? LAWS[law].severity;
+function currentSeverity(world: World, law: OffenceCode): number {
+  return offenceSeverity(world, law);
+}
+
+/** Officers on duty who are standing where it happened: the ones who could have seen it. */
+export function officersInDistrict(world: World, actor: Citizen): Citizen[] {
+  return officersOnDuty(world).filter((o) => o.id !== actor.id && o.district === actor.district);
+}
+
+/**
+ * What the Watch can put before the Court, 0..1. Public arithmetic: every term
+ * is a fact a citizen could count for themselves.
+ */
+export function evidenceFor(
+  world: World, actor: Citizen, law: OffenceCode,
+  opts: { witnesses: number; officerSaw: boolean; corroboration?: number },
+): number {
+  const witnesses = Math.max(0, Math.min(EVIDENCE_MAX_WITNESSES, Math.round(opts.witnesses)));
+  let e = EVIDENCE_BASE + offenceVisibility(law) * EVIDENCE_VISIBILITY_WEIGHT;
+  if (opts.officerSaw) e += EVIDENCE_OFFICER_SAW;
+  e += witnesses * EVIDENCE_PER_WITNESS;
+  e += Math.max(0, opts.corroboration ?? 0);
+  e -= actor.skills.rhetoric * EVIDENCE_RHETORIC_WEIGHT;
+  e += (rand(world) - 0.5) * EVIDENCE_SPREAD;
+  return clamp(e, EVIDENCE_FLOOR, EVIDENCE_CEILING);
 }
 
 /** One line describing an offence for the charge sheet. */
-function describeOffence(world: World, actor: Citizen, law: LawCode, ctx: OffenceContext): string {
+function describeOffence(world: World, actor: Citizen, law: OffenceCode, ctx: OffenceContext): string {
   const victim = ctx.victimId ? world.citizens[ctx.victimId] : undefined;
   const building = ctx.buildingId ? world.buildings[ctx.buildingId] : undefined;
   const where = world.districts[actor.district]?.name ?? actor.district;
-  const parts = [`${LAWS[law].name}: ${actor.name}`];
+  const parts = [`${offenceName(law)}: ${actor.name}`];
   if (victim) parts.push(`against ${victim.name}`);
   if (ctx.amount && ctx.amount > 0) parts.push(`(${Math.round(ctx.amount)} ℓ)`);
   if (building) parts.push(`at ${building.name}`);
@@ -95,9 +155,9 @@ function describeOffence(world: World, actor: Citizen, law: LawCode, ctx: Offenc
  * tongue. Severity-5 offences are never quiet.
  */
 export function detectionProbability(
-  world: World, actor: Citizen, law: LawCode, witnesses: number, officers: number, visibilityMod = 0,
+  world: World, actor: Citizen, law: OffenceCode, witnesses: number, officers: number, visibilityMod = 0,
 ): number {
-  const base = clamp(LAWS[law].visibility * 0.35 * (1 + witnesses / 10), 0, 1);
+  const base = clamp(offenceVisibility(law) * 0.35 * (1 + witnesses / 10), 0, 1);
   let p = 1 - Math.pow(1 - base, officers + 0.5);
   p *= 1 + 0.1 * (world.counters.scrutiny ?? 0);
   if ((world.counters[`scrutiny:${actor.id}`] ?? 0) > 0) p += 0.3;
@@ -114,10 +174,10 @@ export function detectionProbability(
  * witnesses — and it is that officer who decides whether to charge it.
  */
 export function commitOffence(
-  world: World, actorId: CitizenId, law: LawCode, ctx: OffenceContext = {},
+  world: World, actorId: CitizenId, law: OffenceCode, ctx: OffenceContext = {},
 ): { detected: boolean; reportId: ReportId | null } {
   const actor = world.citizens[actorId];
-  if (!actor || !LAWS[law]) return { detected: false, reportId: null };
+  if (!actor || !(LAWS[law as keyof typeof LAWS] || isPersonLaw(law))) return { detected: false, reportId: null };
   const victim = ctx.victimId && ctx.victimId !== actorId ? world.citizens[ctx.victimId] ?? null : null;
   const amount = Math.max(0, Math.round(ctx.amount ?? 0));
 
@@ -129,22 +189,28 @@ export function commitOffence(
   actor.stats.offencesCommitted++;
 
   const onDuty = officersOnDuty(world).filter((o) => o.id !== actorId);
+  const present = officersInDistrict(world, actor);
   const witnesses = witnessesOf(world, actor);
   // A curfew empties the streets: what happens under it is easier to see.
   const p = detectionProbability(world, actor, law, witnesses, onDuty.length,
     (ctx.visibilityMod ?? 0) + curfewVisibilityMod(world, actor.district));
   const severity = currentSeverity(world, law);
-  const name = LAWS[law].name.toLowerCase();
+  const name = offenceName(law).toLowerCase();
 
   if (!chance(world, p)) {
     if (victim) remember(world, victim.id, 'crime', `Someone committed ${name} against you${amount > 0 ? ` (${amount} ℓ)` : ''}; the Watch saw nothing.`);
     return { detected: false, reportId: null };
   }
 
-  const evidence = clamp(0.5 + 0.5 * rand(world) + witnesses / 20, 0.3, 1);
+  // Noticing is not proving. What the Watch actually holds is built out of an
+  // officer's own eyes, the people who were standing there and the mark the
+  // act leaves — and it is very often not enough.
+  const evidence = evidenceFor(world, actor, law, { witnesses, officerSaw: present.length > 0 });
   offence.detected = true;
   actor.stats.offencesDetected++;
-  const officer = onDuty.length > 0 ? pick(world, onDuty) : null;
+  // The report is made out to an officer who was there if one was, since that
+  // is whose account the case rests on.
+  const officer = present.length > 0 ? pick(world, present) : (onDuty.length > 0 ? pick(world, onDuty) : null);
   const report = openReport(world, {
     officerId: officer?.id ?? null, suspectId: actorId, law, evidence, victimId: victim?.id, amount,
     description: describeOffence(world, actor, law, ctx),
@@ -153,22 +219,50 @@ export function commitOffence(
   emit(world, 'offence', `The Watch caught ${actor.name} in an act of ${name}${victim ? ` against ${victim.name}` : ''}; ${by}.`,
     victim ? [actorId, victim.id] : [actorId], severity >= 4 ? 0.8 : 0.5, { law, reportId: report.id, evidence });
   remember(world, actorId, 'crime', `The Watch caught you (${name}); ${officer ? `Officer ${officer.name} holds` : 'the Watch holds'} a report against you (${report.id}).`);
-  if (victim) {
-    remember(world, victim.id, 'crime', `${actor.name} committed ${name} against you and was caught by the Watch (report ${report.id}).`);
-    // Now the victim's people know whose hand it was. A crime one family keeps
-    // committing against another is how a feud starts (social/feuds.ts); an
-    // offence nobody was caught for names nobody, so it counts against no name.
-    noteHostility(world, actorId, victim.id);
-  }
+  if (victim) remember(world, victim.id, 'crime', `${actor.name} committed ${name} against you and was caught by the Watch (report ${report.id}).`);
   return { detected: true, reportId: report.id };
 }
 
-function sameFamily(a: LawCode, b: LawCode): boolean {
+/**
+ * **Where the two tracks meet, second crossing** (`docs/JUSTICE.md` §4.2).
+ *
+ * Violence during a civic offence crosses tracks: strike an officer while
+ * being arrested for theft and you are tried for *both* — the theft on the
+ * ladder, the assault in custody. Two offences, two reports, two charges, two
+ * sentences. Neither is folded into the other, neither is traded for the
+ * other, and the custodial half never becomes exile.
+ *
+ * Returns what the Watch ended up holding on each track.
+ */
+export function crossTracks(
+  world: World, actorId: CitizenId, civic: OffenceCode, person: OffenceCode, ctx: OffenceContext = {},
+): { civic: ReportId | null; person: ReportId | null } {
+  const actor = world.citizens[actorId];
+  if (!actor) return { civic: null, person: null };
+  if (trackOf(civic) !== 'city' || trackOf(person) !== 'person') {
+    throw new Error('crossTracks: one offence of each code, in that order');
+  }
+  // Violence in front of the Watch is the loudest thing a citizen can do: both
+  // halves are noticed together, and the city is told they are two cases.
+  const onLadder = commitOffence(world, actorId, civic, { ...ctx, visibilityMod: (ctx.visibilityMod ?? 0) + 0.2 });
+  const inCustody = commitOffence(world, actorId, person, { ...ctx, visibilityMod: (ctx.visibilityMod ?? 0) + 0.2 });
+  if (onLadder.detected || inCustody.detected) {
+    emit(world, 'offence', `${actor.name} turned violent in the middle of ${offenceName(civic).toLowerCase()}: `
+      + `the ${offenceName(civic).toLowerCase()} answers to the ladder and the ${offenceName(person).toLowerCase()} to custody. `
+      + 'They are two cases and the city tries both.', [actorId], 0.8,
+    { civic, person, tracks: ['city', 'person'] });
+    remember(world, actorId, 'crime', `You are answering on both tracks: ${offenceName(civic).toLowerCase()} before the `
+      + `ladder and ${offenceName(person).toLowerCase()} before the cells. Neither cancels the other.`);
+  }
+  return { civic: onLadder.reportId, person: inCustody.reportId };
+}
+
+function sameFamily(a: OffenceCode, b: OffenceCode): boolean {
   return a === b || LAW_FAMILIES.some((f) => f.includes(a) && f.includes(b));
 }
 
 /** The most recent undetected offence by `accused` matching `law` inside the report window. */
-function matchingOffence(world: World, accused: Citizen, law: LawCode): OffenceRecord | null {
+function matchingOffence(world: World, accused: Citizen, law: OffenceCode): OffenceRecord | null {
   for (let i = accused.recentOffences.length - 1; i >= 0; i--) {
     const o = accused.recentOffences[i];
     if (o.detected || world.tick - o.tick > REPORT_WINDOW_TICKS) continue;
@@ -184,14 +278,14 @@ function matchingOffence(world: World, accused: Citizen, law: LawCode): OffenceR
  * baseless one carries almost none — and may bring a report of a False report
  * (L12) down on the citizen who made it.
  */
-export function reportOffence(world: World, reporterId: CitizenId, accusedId: CitizenId, law: LawCode, text?: string): ActionResult {
+export function reportOffence(world: World, reporterId: CitizenId, accusedId: CitizenId, law: OffenceCode, text?: string): ActionResult {
   const reporter = world.citizens[reporterId];
   if (!reporter) return fail('Unknown citizen.');
   if (reporter.standing === 'exiled') return fail('Exiles cannot make reports to the Watch.');
   const accused = world.citizens[accusedId];
   if (!accused || !isPresent(world, accused)) return fail('Nobody by that id lives in Reverie.');
   if (accusedId === reporterId) return fail('You cannot report yourself.');
-  if (!LAWS[law]) return fail('There is no such law.');
+  if (!LAWS[law as keyof typeof LAWS] && !isPersonLaw(law)) return fail('There is no such law.');
 
   const note = (text ?? '').trim().slice(0, 280);
   const match = matchingOffence(world, accused, law);
@@ -206,25 +300,29 @@ export function reportOffence(world: World, reporterId: CitizenId, accusedId: Ci
     match.detected = true;
     accused.stats.offencesDetected++;
     const actual = match.law;
+    // One account, from one citizen, of something that really happened. It is
+    // evidence — but a single account is not a proved case, and the bench will
+    // want more than the word of one neighbour about another.
     const report = openReport(world, {
       officerId: null, suspectId: accusedId, law: actual,
-      evidence: clamp((isVictim ? 0.75 : 0.6) + postEvidenceBonus(world, reporterId, accusedId), 0, 1),
+      evidence: clamp((isVictim ? EVIDENCE_VICTIM_REPORT : EVIDENCE_WITNESS_REPORT)
+        + postEvidenceBonus(world, reporterId, accusedId), 0, EVIDENCE_CEILING),
       victimId: match.victimId ?? undefined, amount: match.amount,
-      description: `${LAWS[actual].name}: ${accused.name}, reported by ${reporter.name}${isVictim ? ' (the victim)' : ''}${note ? ` — "${note}"` : ''}`,
+      description: `${offenceName(actual)}: ${accused.name}, reported by ${reporter.name}${isVictim ? ' (the victim)' : ''}${note ? ` — "${note}"` : ''}`,
     });
-    emit(world, 'offence', `${reporter.name} reported ${accused.name} to the Watch for ${LAWS[actual].name.toLowerCase()} (${report.id}).`,
-      [reporterId, accusedId], 0.3, { law: actual, reportId: report.id, reportedBy: reporterId });
-    remember(world, reporterId, 'civic', `You reported ${accused.name} for ${LAWS[actual].name.toLowerCase()}; the Watch opened report ${report.id}.`);
+    emit(world, 'offence', `${reporter.name} reported ${accused.name} to the Watch for ${offenceName(actual).toLowerCase()} (${report.id}).`,
+      [reporterId, accusedId], 0.3, { law: actual, reportId: report.id, reportedBy: reporterId, track: trackOf(actual) });
+    remember(world, reporterId, 'civic', `You reported ${accused.name} for ${offenceName(actual).toLowerCase()}; the Watch opened report ${report.id}.`);
     return { ok: true, message: `The Watch took your report against ${accused.name} (report ${report.id}); an officer decides whether to charge it.` };
   }
 
   const report = openReport(world, {
-    officerId: null, suspectId: accusedId, law, evidence: 0.2,
-    description: `${LAWS[law].name}: ${accused.name}, on the uncorroborated word of ${reporter.name}${note ? ` — "${note}"` : ''}`,
+    officerId: null, suspectId: accusedId, law, evidence: EVIDENCE_UNCORROBORATED,
+    description: `${offenceName(law)}: ${accused.name}, on the uncorroborated word of ${reporter.name}${note ? ` — "${note}"` : ''}`,
   });
-  emit(world, 'offence', `${reporter.name} reported ${accused.name} to the Watch for ${LAWS[law].name.toLowerCase()} (${report.id}); nothing corroborates it.`,
-    [reporterId, accusedId], 0.2, { law, reportId: report.id, reportedBy: reporterId });
-  remember(world, reporterId, 'civic', `You reported ${accused.name} for ${LAWS[law].name.toLowerCase()} (report ${report.id}); the Watch found nothing to corroborate it.`);
+  emit(world, 'offence', `${reporter.name} reported ${accused.name} to the Watch for ${offenceName(law).toLowerCase()} (${report.id}); nothing corroborates it.`,
+    [reporterId, accusedId], 0.2, { law, reportId: report.id, reportedBy: reporterId, track: trackOf(law) });
+  remember(world, reporterId, 'civic', `You reported ${accused.name} for ${offenceName(law).toLowerCase()} (report ${report.id}); the Watch found nothing to corroborate it.`);
   if (chance(world, 0.5)) {
     reporter.recentOffences.push({ tick: world.tick, law: 'L12', detected: true, victimId: accusedId, amount: 0 });
     if (reporter.recentOffences.length > RECENT_OFFENCES_LENGTH) reporter.recentOffences.shift();
@@ -233,8 +331,10 @@ export function reportOffence(world: World, reporterId: CitizenId, accusedId: Ci
     const onDuty = officersOnDuty(world).filter((o) => o.id !== reporterId);
     const officer = onDuty.length > 0 ? pick(world, onDuty) : null;
     const counter = openReport(world, {
+      // The Watch's own book is the evidence of a false report: it holds the
+      // report, and it holds nothing behind it.
       officerId: officer?.id ?? null, suspectId: reporterId, law: 'L12', evidence: 0.7, victimId: accusedId,
-      description: `False report: ${reporter.name} accused ${accused.name} of ${LAWS[law].name.toLowerCase()} without cause`,
+      description: `False report: ${reporter.name} accused ${accused.name} of ${offenceName(law).toLowerCase()} without cause`,
     });
     remember(world, reporterId, 'crime', `The Watch made a report of a false report against you (${counter.id}).`);
     return { ok: true, message: `The Watch took your report (${report.id}) but found nothing behind it, and made a report of a false report against you (${counter.id}).` };

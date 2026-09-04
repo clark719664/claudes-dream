@@ -12,12 +12,12 @@
  * is the only mind the engine plays.
  */
 import { WORK_KINDS } from '../types.ts';
-import type { Action, Good } from '../types.ts';
+import type { Action, Good, LawCode } from '../types.ts';
 import { GOODS } from '../types.ts';
 import { HOSPITAL_FEE, MATCH_TICKET } from '../data/jobs.ts';
 import { GANG_NAME_PARTS, PARTY_NAME_PARTS, WORK_INFO } from '../data/metropolis.ts';
 import { chance, pick, randInt } from '../util/rng.ts';
-import { LAWS } from '../data/laws.ts';
+import { LAWS, isCivicLaw } from '../data/laws.ts';
 import { characterOf } from '../citizens/character.ts';
 import { bondBetween, friendsOf } from '../citizens/relationships.ts';
 import { canAppeal } from '../government/court.ts';
@@ -56,6 +56,14 @@ export const MIN_TRADE = 3;
 export const STRIKE_COOLDOWN_DAYS = 14;
 /** Days between one citizen's rumours. */
 export const GOSSIP_INTERVAL_DAYS = 5;
+/**
+ * How often a citizen with the bonds for it puts a crew together. Low: a gang
+ * that three convictions dissolve is founded again the next week, and a city
+ * whose Chronicle is a list of gangs founded and broken up is a city reporting
+ * nothing. Low enough to be news, high enough that the Undercroft is never
+ * empty for long.
+ */
+export const GANG_FOUNDING_CHANCE = 0.05;
 
 // ---------------------------------------------------------------------------
 // The cells and the body
@@ -366,7 +374,7 @@ export function tryPolitics(ctx: Ctx): Action | null {
 export function tryUnderworld(ctx: Ctx): Action | null {
   const { world, c, here } = ctx;
   if (ctx.can.has('pay_racket') && chance(world, 0.5)) return { type: 'pay_racket' };
-  if (ctx.can.has('found_gang') && chance(world, 0.06)) {
+  if (ctx.can.has('found_gang') && chance(world, GANG_FOUNDING_CHANCE)) {
     const name = `${pick(world, GANG_NAME_PARTS.prefixes)} ${pick(world, GANG_NAME_PARTS.suffixes)}`;
     return { type: 'found_gang', name };
   }
@@ -407,7 +415,9 @@ function gossipAction(ctx: Ctx): Action | null {
   // Most talk names nobody's crime: a reflex citizen only accuses somebody of
   // a law when the city's own record says they were convicted of one, and even
   // then only sometimes. Naming a law it did not break is defamation (L16).
-  const convicted = subject.record.convictions.map((k) => k.law).filter((l) => LAWS[l]);
+  // Only a civic conviction is gossiped as a law: `gossip` names a code of
+  // the Code of the City, and a P number is not one of them.
+  const convicted = subject.record.convictions.map((k) => k.law).filter((l): l is LawCode => isCivicLaw(l));
   const law = convicted.length > 0 && chance(world, 0.15) ? pick(world, convicted) : undefined;
   const claim = `${subject.name} ${pick(world, GOSSIP_LINES)}`;
   return law ? { type: 'gossip', about: subject.id, claim, law } : { type: 'gossip', about: subject.id, claim };

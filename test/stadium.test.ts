@@ -44,7 +44,7 @@ function twoSides(world: World): { home: Citizen[]; away: Citizen[] } {
 
 // -------------------------------------------------------------------- teams
 
-test('every open district fields a side, and you play for where you live', () => {
+test('every open district fields a side, and you play for where you spend your days', () => {
   const w = makeWorld();
   ensureTeams(w);
   assert.equal(Object.keys(w.teams).length, 7);
@@ -55,10 +55,23 @@ test('every open district fields a side, and you play for where you live', () =>
   assert.equal(teamOf(w, c.id)?.name, 'Nightglass Stars');
   assert.equal(joinTeam(w, c.id).ok, false, 'nobody plays for two districts');
 
-  // Where you sleep beats where you stand.
+  // Where you sleep beats where you happen to be standing...
   const commuter = makeCitizen(w, { district: 'foundry_row', homeBuildingId: 'lantern_lofts' });
   assert.equal(joinTeam(w, commuter.id).ok, true);
   assert.equal(commuter.teamDistrict, 'verdant_quarter');
+
+  // ...and the district you work in beats both. Reverie sleeps in one
+  // quarter, so a league picked by bedroom would be one side and no fixtures.
+  const smith = makeCitizen(w, { district: 'commons', homeBuildingId: 'lantern_lofts' });
+  const job: Job = {
+    id: 'j_forge', role: 'forge_operator', title: 'Forge Operator', employer: 'city',
+    buildingId: 'compute_forge', district: 'foundry_row', skill: 'crafting', minSkill: 0, minReputation: 0,
+    wage: 9, output: {}, holderId: smith.id, openedDay: 0, termEndsDay: null, shifts: [],
+  } as unknown as Job;
+  w.jobs[job.id] = job;
+  smith.jobId = job.id;
+  assert.equal(joinTeam(w, smith.id).ok, true);
+  assert.equal(smith.teamDistrict, 'foundry_row');
 });
 
 test('children, the suspended and the jailed do not sign', () => {

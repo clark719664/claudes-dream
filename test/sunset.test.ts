@@ -17,6 +17,15 @@ function makeElder(w: World, overrides: Record<string, unknown> = {}): Citizen {
   } as Parameters<typeof makeCitizen>[1]);
 }
 
+test('the Archive road opens inside the life of a city anyone would run', () => {
+  // Elderhood at ELDER_DAYS and a fortnight of it before the Archive will
+  // hear you: both have to fall inside a reference run, or the one death in
+  // Reverie is a rule nobody ever reaches and the Garden stays empty.
+  const REFERENCE_RUN_DAYS = 120;
+  assert.ok(ELDER_DAYS < REFERENCE_RUN_DAYS, `elderhood at ${ELDER_DAYS} days is past the end of the run`);
+  assert.ok(SUNSET_MIN_AGE_DAYS < REFERENCE_RUN_DAYS, `the Archive at ${SUNSET_MIN_AGE_DAYS} days is past the end of the run`);
+});
+
 test('only an elder in good standing, old enough and free, may take the Archive road', () => {
   const w = makeWorld();
   w.day = SUNSET_MIN_AGE_DAYS + 1;

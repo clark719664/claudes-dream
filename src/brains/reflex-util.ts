@@ -83,6 +83,19 @@ export function stepTo(ctx: Ctx, district: DistrictId): Action | null {
   return next ? { type: 'move', district: next } : null;
 }
 
+/**
+ * Where this citizen sleeps: the district of the block the register gave it,
+ * and the Verdant Quarter (the Community Garden) when it has no address at
+ * all. The city's homes are not all in one quarter — the Hilltop Villas
+ * stand in the Heights and the Tunnels under the Harbor — so a mind that
+ * walks to the Verdant Quarter to lie down is a mind that never sleeps.
+ * `actions/daily.doRest` reads the address the same way.
+ */
+export function homeDistrictOf(world: World, c: Citizen): DistrictId {
+  const home = c.homeBuildingId ? world.buildings[c.homeBuildingId] : null;
+  return home && c.homeTier > 0 ? home.district : 'verdant_quarter';
+}
+
 /** What `qty` units cost at the Bazaar today, sales tax included. */
 export function costOf(world: World, good: Good, qty = 1): number {
   return Math.round(world.market.goods[good].price * qty * (1 + clamp(world.government.salesTax, 0, 1)));

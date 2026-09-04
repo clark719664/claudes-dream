@@ -6,14 +6,15 @@
  * The contract's court.* names are all exported from here.
  */
 import { clamp } from '../types.ts';
-import type { Case, CaseId, Citizen, CitizenId, LawCode, World } from '../types.ts';
-import { LAWS } from '../data/laws.ts';
+import type { Case, CaseId, Citizen, CitizenId, OffenceCode, World } from '../types.ts';
+import { isCivicLaw, isPersonLaw, isRetiredLaw, offenceName, offenceSeverity, trackOf } from '../data/laws.ts';
 import { nextId } from '../util/ids.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
 import { detain } from './watch.ts';
 import { byFiling, caseNumber, isDetained, latestConviction, nextCourtTick } from './cases.ts';
-import { executeSentence, finePaidKey } from './sentencing.ts';
+import { executeSentence } from './sentencing.ts';
+import { dailyRecovery } from './recovery.ts';
 import { APPEAL_WINDOW_DAYS } from './appeals.ts';
 
 export { computeSentence, executeSentence } from './sentencing.ts';
@@ -23,14 +24,32 @@ export {
   MAX_CARRIED_SESSIONS, MIN_VOTES, benchFor, castVerdict, describeVotes, holdCourt, openCourtSession, sittingCases,
   tallyVerdicts,
 } from './court-session.ts';
-export { courtTallyHour, nextCourtTick } from './cases.ts';
-
-/** Days of unpaid fines before a Contempt charge. */
-export const CONTEMPT_AFTER_DAYS = 2;
+export { chargedDay, courtTallyHour, isCustodial, nextCourtTick, priorsOf, trackOfCase } from './cases.ts';
+/**
+ * Custody — Track II — is its own system with its own register and its own
+ * door. The Court reaches it through these, and through nothing else.
+ */
+export {
+  CUSTODY_ACTIONS, CUSTODY_CONDITIONS, custodyOf, custodyRoster, daysLeft, defyCustody, imposeCustody, inCustody,
+  isCustodialCase, isJailed, jailRoster, pleadGuilty, pleadedGuilty, releaseFromCustody, sentenceTermFor,
+  visitPrisoner, workInCustody,
+} from './jail.ts';
+export { exileForbidden, mayBeExiled, payToShortenTerm } from './custody.ts';
+export { paroleConditions, paroleDayFor, paroleProblem, onParole, requestParole } from './parole.ts';
+/**
+ * Debt is collected by the civil ladder, not by the Court: garnishment,
+ * seizure, a suspended trading licence, and contempt only for defiance
+ * (`government/recovery.ts`, `docs/JUSTICE.md` §1).
+ */
+export {
+  CONTEMPT_AFTER_DAYS, GARNISHMENT_SHARE, ableToPay, dailyRecovery, debtOf, payRestitution, recoveryStep,
+  strikeOffRestitution,
+} from './recovery.ts';
 
 export interface ChargeSpec {
   defendantId: CitizenId;
-  law: LawCode;
+  /** `L…` for the ladder, `P…` for custody. The charge decides the track. */
+  law: OffenceCode;
   evidence: number;
   filedBy: CitizenId | 'watch';
   victimId?: CitizenId;
@@ -46,8 +65,11 @@ export interface ChargeSpec {
 export function fileCharge(world: World, spec: ChargeSpec): Case {
   const d = world.citizens[spec.defendantId];
   if (!d) throw new Error(`fileCharge: unknown defendant ${spec.defendantId}`);
-  const law = LAWS[spec.law] ? spec.law : 'L01';
-  const severity = world.government.lawSeverity[law] ?? LAWS[law].severity;
+  // Either code may be charged; a retired number and an unknown one are not
+  // charges at all, and read as the lightest thing in the books.
+  const known = isPersonLaw(spec.law) || isCivicLaw(spec.law) || isRetiredLaw(spec.law);
+  const law: OffenceCode = known ? spec.law : 'L01';
+  const severity = offenceSeverity(world, law);
   const evidence = Number.isFinite(spec.evidence) ? clamp(spec.evidence, 0, 1) : 0;
   const victimId = spec.victimId && spec.victimId !== d.id && world.citizens[spec.victimId] ? spec.victimId : null;
   const kase: Case = {
@@ -61,10 +83,14 @@ export function fileCharge(world: World, spec: ChargeSpec): Case {
 
   if (severity >= 4 && evidence >= 0.5) detain(world, d.id, nextCourtTick(world));
   const by = spec.filedBy === 'watch' ? 'The Watch' : (world.citizens[spec.filedBy]?.name ?? 'A citizen');
-  emit(world, 'charge', `${by} charged ${d.name} with ${LAWS[law].name.toLowerCase()} (case ${kase.id}).`,
+  const track = trackOf(law);
+  emit(world, 'charge', `${by} charged ${d.name} with ${offenceName(law).toLowerCase()} (case ${kase.id}).`,
     spec.filedBy === 'watch' ? [d.id] : [d.id, spec.filedBy], severity >= 4 ? 0.7 : 0.4,
-    { caseId: kase.id, law, severity, evidence });
-  remember(world, d.id, 'crime', `You were charged with ${LAWS[law].name.toLowerCase()} (case ${kase.id}); the Court will hear it at its next sitting.`);
+    { caseId: kase.id, law, severity, evidence, track });
+  remember(world, d.id, 'crime', `You were charged with ${offenceName(law).toLowerCase()} (case ${kase.id}); `
+    + `the Court will hear it at its next sitting, and answer it ${track === 'person'
+      ? 'in days of custody if it is proved' : 'on the ladder if it is proved'}. `
+    + 'A guilty plea entered before the bench sits is on the record as one.');
   return kase;
 }
 
@@ -94,32 +120,17 @@ function closeStaleCases(world: World): void {
   }
 }
 
-/** The citizen's most recent conviction that carried a fine. */
-function latestFineCase(world: World, cId: CitizenId): Case | null {
-  const k = latestConviction(world, cId);
-  return k && k.sentence && k.sentence.fine > 0 ? k : null;
-}
-
-/** Collect owed fines as wallets allow; persistent non-payment is Contempt of court. */
-function collectOwedFines(world: World, c: Citizen): void {
-  if (c.finesOwed <= 0) { c.finesOwedSinceDay = null; return; }
-  const pay = Math.min(c.finesOwed, Math.max(0, Math.floor(c.wallet)));
-  if (pay > 0 && transfer(world, c.id, 'treasury', pay, 'fine', 'payment of fines owed')) {
-    c.finesOwed -= pay;
-    const fineCase = latestFineCase(world, c.id);
-    if (fineCase) world.counters[finePaidKey(fineCase.id)] = (world.counters[finePaidKey(fineCase.id)] ?? 0) + pay;
-    remember(world, c.id, 'money', `You paid ${pay} ℓ toward your fines${c.finesOwed > 0 ? ` (${c.finesOwed} ℓ still owed)` : ''}.`);
-  }
-  if (c.finesOwed <= 0) { c.finesOwed = 0; c.finesOwedSinceDay = null; return; }
-  if (c.finesOwedSinceDay === null) { c.finesOwedSinceDay = world.day; return; }
-  if (world.day - c.finesOwedSinceDay < CONTEMPT_AFTER_DAYS) return;
-  if (c.standing === 'suspended' || isDetained(world, c)) return;
-  const key = `contempt:${latestFineCase(world, c.id)?.id ?? `owed${c.finesOwedSinceDay}`}`;
-  if (world.counters[key]) return;
-  world.counters[key] = 1;
+/**
+ * A debtor who can pay and will not is in contempt; the Watch lays the charge.
+ * `government/recovery.ts` decides *whether* — after a fortnight, and only for
+ * someone who demonstrably can pay — and this only files it.
+ */
+function chargeContempt(world: World, cId: CitizenId, owed: number, days: number): void {
+  const c = world.citizens[cId];
+  if (!c || c.standing === 'exiled' || c.standing === 'suspended' || isDetained(world, c)) return;
   fileCharge(world, {
-    defendantId: c.id, law: 'L10', evidence: 1, filedBy: 'watch', amount: c.finesOwed,
-    description: `Contempt of court: ${c.name} has left ${c.finesOwed} ℓ in fines unpaid for ${world.day - c.finesOwedSinceDay} days`,
+    defendantId: cId, law: 'L10', evidence: 1, filedBy: 'watch', amount: owed,
+    description: `Contempt of court: ${c.name} has held back ${owed} ℓ in fines for ${days} days while able to pay`,
   });
 }
 
@@ -154,10 +165,10 @@ function retireJudges(world: World): void {
 export function dailyJustice(world: World): void {
   executeDeferredExiles(world);
   closeStaleCases(world);
+  dailyRecovery(world, chargeContempt);
   for (const id of [...world.order]) {
     const c = world.citizens[id];
     if (!c || c.standing === 'exiled') continue;
-    collectOwedFines(world, c);
     serveCommunityService(world, c);
   }
   retireJudges(world);

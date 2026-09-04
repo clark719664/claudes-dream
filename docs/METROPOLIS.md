@@ -66,8 +66,11 @@ feeds the others, and all of it shows up in the Chronicle and on the map.
   over days until a charge is filed. Officials who abuse office (appointing
   friends, dropping charges for bribes) leave traces too, so abuse of office
   charges actually happen.
-- **Gangs.** A citizen with honesty < 0.3 and three or more low-honesty
-  bonds may `found_gang { name }`. Gangs recruit (`recruit`), run
+- **Gangs.** A citizen the city reads as dishonest (`character.honesty`, not
+  a hidden trait) with three or more equally doubted bonds may
+  `found_gang { name }`. The thresholds are calibrated to that reading, which
+  starts at 1 for everyone and only falls with detected crime — see
+  `src/government/gangs.ts`. Gangs recruit (`recruit`), run
   **protection rackets** on businesses (`racket { business }`: the owner pays
   or suffers vandalism), split loot, and protect members (a member reported
   by a rival is defended by intimidation, which is **P02** and answered by

@@ -45,13 +45,38 @@ function fail(message: string): ActionResult { return { ok: false, message }; }
 /** The counter holding the tick a citizen last posted. */
 function postKey(cId: CitizenId): string { return `post:${cId}`; }
 
+/**
+ * The reactions to one post, counted in a single pass. The wall is read by
+ * every citizen every hour, so this is one of the hottest things in the
+ * engine: it counts by key rather than building an array of values, and every
+ * reader of a post asks for its tally once and keeps it.
+ */
+export interface PostTally { cheers: number; frowns: number; laughs: number; total: number }
+
+function tallyOf(p: Post): PostTally {
+  let cheers = 0;
+  let frowns = 0;
+  let laughs = 0;
+  let total = 0;
+  for (const key in p.reactions) {
+    const v = p.reactions[key];
+    total++;
+    if (v === 'cheer') cheers++;
+    else if (v === 'frown') frowns++;
+    else if (v === 'laugh') laughs++;
+  }
+  return { cheers, frowns, laughs, total };
+}
+
 function reactionCount(p: Post): number {
-  return Object.keys(p.reactions).length;
+  let n = 0;
+  for (const key in p.reactions) if (key) n++;
+  return n;
 }
 
 function countOf(p: Post, kind: ReactionKind): number {
   let n = 0;
-  for (const v of Object.values(p.reactions)) if (v === kind) n++;
+  for (const key in p.reactions) if (p.reactions[key] === kind) n++;
   return n;
 }
 
@@ -128,16 +153,16 @@ export function react(world: World, cId: CitizenId, postId: string, kind: Reacti
 // Reading
 // ---------------------------------------------------------------------------
 
-function observed(world: World, p: Post, readerId: CitizenId): ObservedPost {
+function observed(world: World, p: Post, readerId: CitizenId, tally = tallyOf(p)): ObservedPost {
   return {
     id: p.id,
     author: p.authorId,
     authorName: world.citizens[p.authorId]?.name ?? p.authorId,
     day: p.day,
     text: p.text,
-    cheers: countOf(p, 'cheer'),
-    frowns: countOf(p, 'frown'),
-    laughs: countOf(p, 'laugh'),
+    cheers: tally.cheers,
+    frowns: tally.frowns,
+    laughs: tally.laughs,
     youReacted: p.reactions[readerId] ?? null,
   };
 }
@@ -154,16 +179,27 @@ export function feedFor(world: World, c: Citizen, limit = MAX_FEED_SHOWN): Obser
   for (const p of feed) {
     if (p.authorId === c.id || friends.has(p.authorId)) wanted.add(p.id);
   }
+  // Each candidate is tallied once, not once per comparison: the sort below
+  // used to recount every reaction on every post it looked at, which is most
+  // of what reading the wall cost the engine.
   const cutoff = world.day - POPULAR_POST_DAYS;
-  const loudest = feed
-    .filter((p) => p.day >= cutoff && !wanted.has(p.id) && reactionCount(p) > 0)
-    .sort((a, b) => reactionCount(b) - reactionCount(a) || b.day - a.day || a.id.localeCompare(b.id))
-    .slice(0, limit);
-  for (const p of loudest) wanted.add(p.id);
+  const tallies = new Map<string, PostTally>();
+  const loud: Post[] = [];
+  for (const p of feed) {
+    if (p.day < cutoff || wanted.has(p.id)) continue;
+    const tally = tallyOf(p);
+    if (tally.total === 0) continue;
+    tallies.set(p.id, tally);
+    loud.push(p);
+  }
+  loud.sort((a, b) => (tallies.get(b.id)!.total - tallies.get(a.id)!.total)
+    || b.day - a.day || a.id.localeCompare(b.id));
+  for (const p of loud.slice(0, limit)) wanted.add(p.id);
 
   const out: ObservedPost[] = [];
   for (let i = feed.length - 1; i >= 0 && out.length < limit; i--) {
-    if (wanted.has(feed[i].id)) out.push(observed(world, feed[i], c.id));
+    const p = feed[i];
+    if (wanted.has(p.id)) out.push(observed(world, p, c.id, tallies.get(p.id)));
   }
   return out;
 }

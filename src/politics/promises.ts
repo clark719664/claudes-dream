@@ -71,6 +71,10 @@ export function platformInWords(platform: Platform | null | undefined): string {
     return v < 1 / 3 ? 0 : v > 2 / 3 ? 2 : 1;
   };
   const p = platform ?? { tax: 0.5, dividend: 0.5, minWage: 0.5, strictness: 0.5 };
+  // A platform that asks for nothing to change is one position, not four:
+  // "the tax the city has, the dividend the city has, the wage floor the city
+  // has and the law as it stands" is a sentence nobody would print.
+  if (PLATFORM_FIELDS.every((field) => stance(p[field]) === 1)) return 'the city exactly as it is';
   const parts = PLATFORM_FIELDS.map((field) => PLATFORM_WORDS[field][stance(p[field])]);
   return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
 }

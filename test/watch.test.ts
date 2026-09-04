@@ -273,3 +273,4 @@ test('officers who are detained or not in good standing are off duty', () => {
   addOfficer(w, { detainedUntilTick: 9 });
   assert.equal(officersOnDuty(w).length, 1);
 });
+

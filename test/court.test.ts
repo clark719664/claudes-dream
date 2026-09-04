@@ -225,9 +225,13 @@ test('an acquittal closes the case, releases the defendant and leaves no record'
   assert.equal(fileAppeal(w, d.id).ok, false, 'nothing to appeal');
 });
 
-test('a severity-5 offence means exile, executed only after the appeal window', () => {
+test('a severity-5 offence with a prior strike means exile, executed only after the appeal window', () => {
   const w = courtWorld();
   const saboteur = makeCitizen(w, { wallet: 1000, reputation: 50, homeTier: 1 });
+  // Charter Article VI: severity 5 reaches the Gate only WITH a prior conviction
+  // of severity >= 3. Without this line the same sabotage is a suspension.
+  saboteur.record.convictions.push({ caseId: 'k_old', law: 'L06', severity: 3, tier: 3, day: 0 });
+  saboteur.record.strikes = 1;
   w.housing.occupied[1] = 1;
   const biz = addBusiness(w, saboteur.id, 120);
   w.hour = 9; w.tick = 2 * 24 + 9;
@@ -240,7 +244,7 @@ test('a severity-5 offence means exile, executed only after the appeal window', 
   assert.equal(k.verdict, 'guilty');
   assert.equal(k.status, 'tried');
   assert.ok(k.sentence?.exile);
-  assert.equal(k.sentence?.tier, 6, 'severity 5 is exile, the top of the six-tier ladder');
+  assert.equal(k.sentence?.tier, 5, 'exile is the fifth and last rung');
   assert.equal(k.sentence?.executeOnDay, 3);
   assert.equal(k.sentence?.executed, false);
   assert.equal(saboteur.standing, 'good', 'not yet: the appeal window is open');
@@ -270,9 +274,22 @@ test('a severity-5 offence means exile, executed only after the appeal window', 
   assert.deepEqual(ban.judges, w.government.judges);
   assert.deepEqual(ban.votes, k.votes);
   assert.equal(ban.appealed, false);
-  assert.equal(saboteur.record.convictions.length, 1);
-  assert.equal(saboteur.record.strikes, 1);
+  assert.equal(saboteur.record.convictions.length, 2, 'the old strike and this one');
+  assert.equal(saboteur.record.strikes, 2);
   assert.ok(w.events.some((e) => e.kind === 'exile' && e.weight === 1.0));
+});
+
+test('the same sabotage on a clean record is a suspension, not exile', () => {
+  const w = courtWorld();
+  const saboteur = makeCitizen(w, { wallet: 1000, reputation: 50 });
+  const k = fileCharge(w, { defendantId: saboteur.id, law: 'L13', evidence: 1, filedBy: 'watch', description: 'sabotage of the Power Station' });
+  holdCourt(w);
+  assert.equal(k.verdict, 'guilty');
+  assert.equal(k.sentence?.exile, false, 'a first-time saboteur is suspended, not exiled');
+  assert.equal(k.sentence?.tier, 4, 'severity capped at 4: no civic offence starts at the Gate');
+  assert.equal(k.sentence?.suspensionDays, 15, '3 days per point of severity');
+  assert.equal(saboteur.standing, 'suspended');
+  assert.equal(w.bans.length, 0);
 });
 
 test('an appeal can reduce an exile to a 15-day suspension', () => {
@@ -282,9 +299,11 @@ test('an appeal can reduce an exile to a 15-day suspension', () => {
   const council = [1, 2, 3, 4, 5].map(() => makeCitizen(w, { reputation: 60 }));
   seatCouncil(w, council);
   for (const m of council) m.bonds[d.id] = 50; // friends, but not devoted ones
-  const k = fileCharge(w, { defendantId: d.id, law: 'L15', evidence: 1, filedBy: 'watch', description: 'extortion' });
+  d.record.convictions.push({ caseId: 'k_old', law: 'L06', severity: 3, tier: 3, day: 0 });
+  d.record.strikes = 1;
+  const k = fileCharge(w, { defendantId: d.id, law: 'L13', evidence: 1, filedBy: 'watch', description: 'sabotage' });
   holdCourt(w);
-  assert.ok(k.sentence?.exile);
+  assert.ok(k.sentence?.exile, 'severity 5 with a prior strike is exile');
   const before = totalMoney(w);
 
   w.hour = 14; w.tick = 2 * 24 + 14;
@@ -305,8 +324,8 @@ test('an appeal can reduce an exile to a 15-day suspension', () => {
   assert.equal(k.appeal?.decidedDay, 3);
   assert.ok(council.every((m) => k.appeal?.votes[m.id] === 'reduced'));
   assert.equal(k.sentence?.exile, false);
-  assert.equal(k.sentence?.tier, 5, 'a reduced exile is a suspension, one rung down');
-  assert.equal(k.sentence?.suspensionDays, 15);
+  assert.equal(k.sentence?.tier, 4, 'a reduced exile is a suspension, one rung down');
+  assert.equal(k.sentence?.suspensionDays, 15, 'a reduced exile is a fixed fortnight and a day');
   assert.equal(k.sentence?.executed, true);
   assert.equal(d.standing, 'suspended');
   assert.equal(d.suspendedUntilDay, 18);
@@ -315,8 +334,8 @@ test('an appeal can reduce an exile to a 15-day suspension', () => {
   assert.equal(totalMoney(w), before);
   assert.equal(w.bans.length, 0, 'no ban record: the exile was cancelled');
   assert.ok(w.order.includes(d.id));
-  assert.equal(d.record.convictions.length, 1);
-  assert.equal(d.record.convictions[0].tier, 5);
+  assert.equal(d.record.convictions.length, 2, 'the old conviction, and this one recorded again at its new rung');
+  assert.equal(d.record.convictions[1].tier, 4);
   w.day = 4; w.hour = 0; w.tick = 96;
   dailyJustice(w);
   assert.equal(d.standing, 'suspended', 'the reduced sentence is what stands');
@@ -331,10 +350,10 @@ test('an overturned appeal refunds the fine and restores standing; an upheld one
   for (const m of council) m.bonds[d.id] = 80; // devoted friends overturn
   const k = fileCharge(w, { defendantId: d.id, law: 'L08', evidence: 1, filedBy: 'watch', description: 'grand theft' });
   holdCourt(w);
-  assert.equal(k.sentence?.tier, 4, 'grand theft with a clean record is jail, the new fourth rung');
-  assert.equal(k.sentence?.jailDays, 4);
-  assert.equal(d.standing, 'good', 'jail is not a standing: the cells take the days, not the citizenship');
-  assert.equal(d.jailedUntilDay, w.day + 4);
+  assert.equal(k.sentence?.tier, 4, 'grand theft with a clean record is suspension, the last rung before the Gate');
+  assert.equal(k.sentence?.jailDays, 0, 'the ladder never fills a cell');
+  assert.equal(k.sentence?.suspensionDays, 12, '3 days per point of severity');
+  assert.equal(d.standing, 'suspended');
   const fine = k.sentence!.fine;
   assert.equal(d.wallet, 300 - fine);
   const before = totalMoney(w);
@@ -343,8 +362,8 @@ test('an overturned appeal refunds the fine and restores standing; an upheld one
   decideAppeals(w);
   assert.equal(k.appeal?.result, 'overturned');
   assert.equal(d.wallet, 300, 'fine refunded');
-  assert.equal(d.standing, 'good');
-  assert.equal(d.jailedUntilDay, null, 'an overturned conviction empties the cell at once');
+  assert.equal(d.standing, 'good', 'an overturned conviction lifts the suspension at once');
+  assert.equal(d.suspendedUntilDay, null);
   assert.equal(d.record.convictions.length, 0);
   assert.equal(d.reputation, 50, 'reputation restored');
   assert.equal(totalMoney(w), before);
@@ -353,6 +372,8 @@ test('an overturned appeal refunds the fine and restores standing; an upheld one
   // a Council of victims and hardliners upholds an exile, which is then carried out at once
   const w2 = courtWorld();
   const d2 = makeCitizen(w2, { wallet: 100 });
+  d2.record.convictions.push({ caseId: 'k_old', law: 'L07', severity: 3, tier: 3, day: 0 });
+  d2.record.strikes = 1;
   const hard = [1, 2, 3].map(() => makeCitizen(w2, { platform: { tax: 0.5, dividend: 0.5, minWage: 0.5, strictness: 0.9 } }));
   seatCouncil(w2, hard);
   const k2 = fileCharge(w2, { defendantId: d2.id, law: 'L13', evidence: 1, filedBy: 'watch', victimId: hard[0].id, description: 'sabotage' });
@@ -389,34 +410,29 @@ test('the appeal window is one day', () => {
   assert.equal(fileAppeal(w, d2.id).ok, false);
 });
 
-test('computeSentence escalates with the record, suspension and strikes', () => {
+test('the ladder climbs with the record and stops at suspension: escalation never reaches the Gate', () => {
   const w = courtWorld();
   const d = makeCitizen(w, { wallet: 100 });
   const k = fileCharge(w, { defendantId: d.id, law: 'L04', evidence: 1, filedBy: 'watch', description: 'x' });
-  assert.equal(computeSentence(w, k).tier, 2);
+  assert.equal(computeSentence(w, k).tier, 2, 'severity 2, no record');
   assert.equal(computeSentence(w, k).fine, 20, 'fines floor at 20 ℓ');
   d.record.convictions.push({ caseId: 'k_a', law: 'L03', severity: 2, tier: 2, day: 0 });
-  assert.equal(computeSentence(w, k).tier, 3);
+  assert.equal(computeSentence(w, k).tier, 3, 'one prior of severity 2 is one rung');
   assert.equal(computeSentence(w, k).serviceDays, 2);
   d.record.convictions.push({ caseId: 'k_b', law: 'L04', severity: 2, tier: 3, day: 1 });
   d.record.convictions.push({ caseId: 'k_c', law: 'L04', severity: 2, tier: 3, day: 1 });
   const s4 = computeSentence(w, k);
   assert.equal(s4.tier, 4, 'at most two steps of escalation');
-  assert.equal(s4.jailDays, 2, 'the fourth rung is the cells, for `severity` days');
-  assert.equal(s4.suspensionDays, 0);
-  d.standing = 'suspended';
-  assert.equal(computeSentence(w, k).exile, true, 'convicted while suspended');
-  d.standing = 'good';
-  d.record.convictions = [
-    { caseId: 'k_x', law: 'L05', severity: 3, tier: 3, day: 0 },
-    { caseId: 'k_y', law: 'L06', severity: 3, tier: 4, day: 1 },
-  ];
-  assert.equal(computeSentence(w, k).exile, false, 'two strikes but a minor offence');
-  const serious = fileCharge(w, { defendantId: d.id, law: 'L05', evidence: 1, filedBy: 'watch', description: 'x' });
-  assert.equal(computeSentence(w, serious).exile, true, 'third strike');
+  assert.equal(s4.suspensionDays, 6, '3 days per point of severity');
+  assert.equal(s4.jailDays, 0, 'the cells are not a rung of this ladder');
+  assert.equal(s4.exile, false);
+  // Eight more petty convictions change nothing: the climb ends at suspension.
+  for (let i = 0; i < 8; i++) d.record.convictions.push({ caseId: `k_x${i}`, law: 'L04', severity: 2, tier: 4, day: 1 });
+  assert.equal(computeSentence(w, k).tier, 4, 'no length of record reaches exile by escalation alone');
+  assert.equal(computeSentence(w, k).exile, false);
 });
 
-test('office holders convicted of severity ≥ 3 lose office; unpaid fines are owed, then Contempt', () => {
+test('office holders convicted of severity ≥ 3 lose office; a fine nobody can pay is never contempt', () => {
   const w = courtWorld();
   const councillor = makeCitizen(w, { office: 'councillor', wallet: 5 });
   w.government.council.push(councillor.id);
@@ -432,29 +448,36 @@ test('office holders convicted of severity ≥ 3 lose office; unpaid fines are o
   assert.equal(councillor.communityServiceDaysLeft, 3);
   assert.equal(totalMoney(w), before);
 
-  // days pass without a lumen: the fine stays owed and Contempt follows once
+  // Eighteen days pass without a lumen. No wage to garnish, nothing to seize,
+  // no business to close: the Charter forbids everything else, so nothing else
+  // happens. Poverty is not defiance and never becomes a charge.
   w.government.dividend = 0;
-  w.day = 3; w.tick = 72;
-  dailyJustice(w);
-  assert.equal(pendingCasesFor(w, councillor.id).length, 0);
-  assert.equal(councillor.communityServiceDaysLeft, 2);
-  w.day = 4; w.tick = 96;
-  dailyJustice(w);
-  const contempt = pendingCasesFor(w, councillor.id);
-  assert.equal(contempt.length, 1);
-  assert.equal(contempt[0].law, 'L10');
-  assert.equal(contempt[0].evidence, 1);
-  w.day = 5; w.tick = 120;
-  dailyJustice(w);
-  assert.equal(pendingCasesFor(w, councillor.id).length, 1, 'charged once per case');
-  // money arrives: the debt is collected
-  councillor.wallet = 10;
-  w.day = 6; w.tick = 144;
+  for (let day = 3; day <= 20; day++) {
+    w.day = day; w.tick = day * 24;
+    dailyJustice(w);
+  }
+  assert.equal(councillor.finesOwed, 15, 'the debt stands against future income');
+  assert.equal(pendingCasesFor(w, councillor.id).length, 0, 'no contempt charge: they cannot pay');
+  assert.equal(councillor.standing, 'good', 'and no suspension, no cell and no gate for a debt');
+  assert.equal(councillor.communityServiceDaysLeft, 0, 'the service was served');
+  assert.equal(totalMoney(w), before);
+
+  // Then work comes: a quarter of every wage is garnished until the debt clears.
+  councillor.wallet = 40;
+  councillor.stats.totalEarned += 40;
   const b2 = totalMoney(w);
+  w.day = 21; w.tick = 21 * 24;
   dailyJustice(w);
-  assert.equal(councillor.wallet, 0);
+  assert.equal(councillor.wallet, 30, 'a quarter of the wage, and not a lumen more');
   assert.equal(councillor.finesOwed, 5);
   assert.equal(totalMoney(w), b2);
+  councillor.wallet = 60;
+  councillor.stats.totalEarned += 20;
+  w.day = 22; w.tick = 22 * 24;
+  dailyJustice(w);
+  assert.equal(councillor.finesOwed, 0, 'a quarter of 20 ℓ covers the last 5 ℓ');
+  assert.equal(councillor.wallet, 55);
+  assert.equal(councillor.finesOwedSinceDay, null, 'the debt is closed');
 });
 
 test('community service forfeits half the dividend and judges retire at the end of their term', () => {
@@ -517,6 +540,8 @@ test('when nobody can sit the case is held over, not dropped', () => {
 test('with no Council seated an appeal is held over, then reviewed by the Court on the evidence', () => {
   const w = courtWorld();
   const d = makeCitizen(w, { wallet: 100 });
+  d.record.convictions.push({ caseId: 'k_old', law: 'L06', severity: 3, tier: 3, day: 0 });
+  d.record.strikes = 1;
   const k = fileCharge(w, { defendantId: d.id, law: 'L13', evidence: 0.9, filedBy: 'watch', description: 'sabotage' });
   holdCourt(w);
   assert.ok(k.sentence?.exile);
@@ -538,6 +563,8 @@ test('with no Council seated an appeal is held over, then reviewed by the Court 
   // weak evidence is reduced instead
   const w2 = courtWorld();
   const d2 = makeCitizen(w2, { wallet: 100 });
+  d2.record.convictions.push({ caseId: 'k_old2', law: 'L06', severity: 3, tier: 3, day: 0 });
+  d2.record.strikes = 1;
   const k2 = fileCharge(w2, { defendantId: d2.id, law: 'L13', evidence: 0.5, filedBy: 'watch', description: 'sabotage' });
   holdCourt(w2);
   if (k2.verdict === 'guilty') {

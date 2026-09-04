@@ -26,6 +26,8 @@ import { journalistStory, printMorningEdition } from '../src/sim/chronicle.ts';
 import { commitOffence, dailyWatch, reportOffence, tickWatch } from '../src/government/watch.ts';
 import { canAppeal, dailyJustice, fileAppeal, fileCharge, holdCourt } from '../src/government/court.ts';
 import { dailyStandings, standingAllows } from '../src/government/registry.ts';
+import { MAX_LADDER_TIER, TIER_EXILE, lawfulExile } from '../src/government/sentencing.ts';
+import { debtOf } from '../src/government/recovery.ts';
 import {
   appointJudges, campaign, castBallot, councilSession, dailyGovernment, holdElection, impliedPlatform, isCouncillor,
   isElectionDay, nominate, nominationsOpen, tableProposal, voteOnProposal, voterPreference,
@@ -326,6 +328,27 @@ function checkInvariants(w: World): void {
     if (k.filedBy !== 'watch') assert.ok(!k.judges.includes(k.filedBy), `${at}: ${k.id} judged by the accuser`);
     if (k.status === 'pending') assert.ok(w.day - Math.floor(k.filedTick / 24) <= 2, `${at}: ${k.id} pending for too long`);
     if (k.sentence?.exile && k.sentence.executed) assert.equal(w.citizens[k.defendantId].standing === 'exiled' || w.bans.some((b) => b.citizenId === k.defendantId), true, `${at}: executed exile without ban`);
+    if (k.sentence) {
+      // The ladder has five rungs and the fifth has a lock on it: every exile
+      // the city has ever carried out must answer one of Article VI's three
+      // conditions, and nothing else may climb past suspension.
+      assert.ok(k.sentence.tier >= 1 && k.sentence.tier <= TIER_EXILE, `${at}: ${k.id} sentenced off the ladder (tier ${k.sentence.tier})`);
+      if (k.sentence.exile) {
+        assert.equal(k.sentence.tier, TIER_EXILE, `${at}: ${k.id} exiles from the wrong rung`);
+        assert.ok(lawfulExile(w, k), `${at}: ${k.id} exiled ${k.defendantId} on no ground the Charter allows`);
+      } else {
+        assert.ok(k.sentence.tier <= MAX_LADDER_TIER, `${at}: ${k.id} climbed past suspension without the Charter`);
+      }
+    }
+  }
+  // Nobody has been suspended or exiled for a debt: the civil ladder is the
+  // whole of what an unpaid fine reaches (Charter Article VI).
+  for (const c of Object.values(w.citizens)) {
+    if (debtOf(c) <= 0) continue;
+    const convictions = c.record.convictions.length;
+    if (c.standing === 'suspended' || c.standing === 'exiled') {
+      assert.ok(convictions > 0, `${at}: ${c.name} lost their standing with a debt and no conviction behind it`);
+    }
   }
   for (const p of g.proposals) {
     if (p.status === 'open') assert.ok(w.day - p.tabledDay <= 8, `${at}: proposal ${p.id} open for ${w.day - p.tabledDay} days`);

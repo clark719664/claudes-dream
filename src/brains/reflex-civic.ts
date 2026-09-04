@@ -4,7 +4,7 @@
  * who wronged them, and — for journalists — the story of the day.
  */
 import { clamp } from '../types.ts';
-import type { Action, Citizen, CitizenId, EventKind, LawCode, Platform, ProposalKind, World, WorldEvent } from '../types.ts';
+import type { Action, Citizen, CitizenId, EventKind, LawCode, OffenceCode, Platform, ProposalKind, World, WorldEvent } from '../types.ts';
 import { LAWS } from '../data/laws.ts';
 import { chance, pick, rand } from '../util/rng.ts';
 import { vacancies } from '../economy/housing.ts';
@@ -27,7 +27,7 @@ export const PROPOSE_CHANCE = 0.1 / 8;
 const PETITION_CHANCE = 0.02 / 8;
 const STRICTER_LAWS: readonly LawCode[] = ['L04', 'L07', 'L05', 'L03', 'L12'];
 const LENIENT_LAWS: readonly LawCode[] = ['L04', 'L03', 'L12', 'L02'];
-const THEFT_FAMILY: readonly LawCode[] = ['L04', 'L08'];
+const THEFT_FAMILY: readonly OffenceCode[] = ['L04', 'L08'];
 /** Events a journalist will not turn into a story of their own (other stories most of all). */
 const UNPRINTABLE: readonly EventKind[] = ['story', 'paid', 'vote', 'message', 'trade', 'social'];
 /** Events whose first actor is fairly named as the subject of the story. */
@@ -89,6 +89,13 @@ export function treasuryStrained(world: World): boolean {
   return world.treasury.balance < world.government.dividend * population * 20;
 }
 
+/**
+ * What a councillor puts into the works fund when it is empty and the
+ * Treasury is not: enough for the Builders' Yard's wages with a monument's
+ * worth left over, so the fund is a thing the city can actually build from.
+ */
+export const PUBLIC_WORKS_TOPUP = 1200;
+
 /** A gap this wide between spending and takings is one a councillor would table a motion about. */
 export const NOTICEABLE_DEFICIT = 0.1;
 
@@ -141,7 +148,14 @@ export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
       options.push({ kind: 'law_severity', value: g.lawSeverity[law] - 1, lawCode: law, summary: `Go easier on ${LAWS[law].name.toLowerCase()} (severity ${g.lawSeverity[law] - 1})` });
     }
   }
+  // Public works pay the Builders' Yard, and what is left in the fund is what
+  // the city has to build a tram or raise a monument with. A councillor puts
+  // money in it when the Lofts are full, and again whenever the fund has run
+  // dry on a healthy Treasury: an empty fund is a city that cannot build.
   if (vacancies(world)[1] === 0 && world.treasury.balance > 5000) options.push({ kind: 'public_works', value: 500, summary: 'Fund 500 ℓ of public works to build more homes' });
+  if (healthy && g.publicWorksFund < PUBLIC_WORKS_TOPUP) {
+    options.push({ kind: 'public_works', value: PUBLIC_WORKS_TOPUP, summary: `Commit ${PUBLIC_WORKS_TOPUP} ℓ to the public works fund; the city has building to do` });
+  }
   const exiledFriend = Object.values(world.citizens).find((o) => o.standing === 'exiled' && bondBetween(world, c.id, o.id) > 50);
   if (exiledFriend) options.push({ kind: 'pardon', value: 0, targetId: exiledFriend.id, summary: `Pardon ${exiledFriend.name} and let them come home` });
   const mayor = g.mayorId ? world.citizens[g.mayorId] : null;
@@ -195,12 +209,12 @@ export function tryCivic(ctx: Ctx): Action | null {
 // Reports
 // ---------------------------------------------------------------------------
 
-function sameFamily(a: LawCode, b: LawCode): boolean {
+function sameFamily(a: OffenceCode, b: OffenceCode): boolean {
   return a === b || (THEFT_FAMILY.includes(a) && THEFT_FAMILY.includes(b));
 }
 
 /** The accused still has an offence against this victim that the Watch never saw. */
-function hasOpenOffence(world: World, accused: Citizen, victimId: CitizenId, law: LawCode): boolean {
+function hasOpenOffence(world: World, accused: Citizen, victimId: CitizenId, law: OffenceCode): boolean {
   return accused.recentOffences.some((o) => !o.detected && world.tick - o.tick <= REPORT_WINDOW_TICKS
     && sameFamily(o.law, law) && (o.victimId === victimId || o.victimId === null));
 }
@@ -282,6 +296,12 @@ function pressDescription(world: World, c: Citizen): string {
   return `${c.name}, out of work in ${where}`;
 }
 
+/** The angle a headline was written from: everything before the colon. */
+function angleOf(headline: string): string {
+  const at = headline.indexOf(':');
+  return (at > 0 ? headline.slice(0, at) : headline).trim().toLowerCase();
+}
+
 /** The journalist's own headline for a story: the angle, and who it is about (or who is reporting). */
 export function headlineFor(world: World, journalist: Citizen, story: WorldEvent, subject: Citizen | null): string {
   const angle = ANGLES[story.kind] ?? 'From the city';
@@ -309,14 +329,19 @@ export function tryPublish(ctx: Ctx): Action | null {
       return { type: 'publish', headline: `${LAWS[g.law].name} in ${districtName(world, subject.district)}: ${subject.name} named by a victim`, about: subject.id };
     }
   }
-  const printed = new Set(world.events.filter((e) => e.day === world.day && e.kind === 'story').map((e) => String(e.data?.headline ?? '')));
+  // Two journalists filing "From the city: <name> reports from <district>" on
+  // the same morning is two column inches of nothing. A desk takes an angle
+  // only once a day, whoever else has already taken it.
+  const printed = new Set(world.events
+    .filter((e) => e.day === world.day && e.kind === 'story')
+    .map((e) => angleOf(String(e.data?.headline ?? ''))));
   const stories = [...topStories(world, world.day, 8), ...topStories(world, world.day - 1, 8)]
     .filter((e) => e.weight >= 0.3 && !UNPRINTABLE.includes(e.kind));
   for (const story of stories) {
     const subjectId = PERSONAL_NEWS.includes(story.kind) ? story.actors.find((id) => id !== c.id && world.citizens[id] !== undefined) : undefined;
     const subject = subjectId ? world.citizens[subjectId] : null;
     const headline = headlineFor(world, c, story, subject ?? null);
-    if (printed.has(headline)) continue;
+    if (printed.has(angleOf(headline))) continue;
     world.counters[key] = world.day;
     return subject ? { type: 'publish', headline, about: subject.id } : { type: 'publish', headline };
   }

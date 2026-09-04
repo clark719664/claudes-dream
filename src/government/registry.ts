@@ -12,6 +12,7 @@ import { JAILED_ACTIONS, SUSPENDED_ACTIONS } from '../types.ts';
 import type {
   ActionResult, ActionType, BanRecord, CaseId, Citizen, CitizenId, LawCode, World,
 } from '../types.ts';
+import { isCivicLaw } from '../data/laws.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
 import { fireFromJob } from '../economy/jobs.ts';
@@ -157,12 +158,20 @@ function seizeAssets(world: World, c: Citizen, caseId: CaseId): { seized: number
   return { seized, restitution };
 }
 
-/** The law an exile is recorded under: the case, else the latest conviction. */
+/**
+ * The law an exile is recorded under: the case, else the latest conviction.
+ * Always a **civic** code — the Charter forbids exiling anybody for an offence
+ * against a person, so no `P…` number ever reaches the ban register
+ * (`government/custody.ts exileForbidden`, `government/sentencing.ts lawfulExile`).
+ */
 function lawForBan(world: World, c: Citizen, caseId: CaseId): LawCode {
   const kase = world.cases[caseId];
-  if (kase) return kase.law;
-  const last = c.record.convictions[c.record.convictions.length - 1];
-  return last ? last.law : 'L10';
+  if (kase && isCivicLaw(kase.law)) return kase.law as LawCode;
+  for (let i = c.record.convictions.length - 1; i >= 0; i--) {
+    const k = c.record.convictions[i];
+    if (isCivicLaw(k.law)) return k.law as LawCode;
+  }
+  return 'L10';
 }
 
 /**

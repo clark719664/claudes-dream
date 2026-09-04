@@ -20,12 +20,12 @@
  * record.
  */
 import type { ActionResult, Case, CitizenId, ObservedBenchCase, Verdict, World } from '../types.ts';
-import { LAWS } from '../data/laws.ts';
+import { offenceName, trackOf } from '../data/laws.ts';
 import { emit, remember } from '../sim/events.ts';
 import { adjustReputation } from '../citizens/citizen.ts';
 import { assignDefender } from './advocates.ts';
 import { GUILT_THRESHOLD, judgeBelief, selectBench } from './bench.ts';
-import { byFiling, canSit, courtTallyHour, isPresent, nameOf } from './cases.ts';
+import { byFiling, canSit, courtTallyHour, isPresent, nameOf, priorsOf } from './cases.ts';
 import { castJuryVote, describeJury, fillJuryVotes, juryOf, juryTally, needsJury, seatJury, seatedJurors } from './jury.ts';
 import { computeSentence, describeSentence, executeSentence } from './sentencing.ts';
 import { APPEAL_WINDOW_DAYS } from './appeals.ts';
@@ -146,7 +146,7 @@ function openCase(world: World, k: Case): void {
     seatJury(world, k);
   }
 
-  const offence = LAWS[k.law].name.toLowerCase();
+  const offence = offenceName(k.law).toLowerCase();
   const names = bench.map((id) => nameOf(world, id)).join(', ');
   emit(world, 'law', `The Court opened case ${k.id} against ${d.name} (${offence}) before ${names}.`,
     [d.id, ...bench], 0.2, { caseId: k.id, judges: bench });
@@ -220,7 +220,7 @@ function decideCase(world: World, k: Case): void {
     if (juror && k.juryVotes?.[id] !== undefined) adjustReputation(world, juror, 1);
   }
 
-  const offence = LAWS[k.law].name.toLowerCase();
+  const offence = offenceName(k.law).toLowerCase();
   const tally = `${guilty}–${total - guilty}`;
   const how = `${tally}: ${describeVotes(world, k)}`;
   if (verdict === 'guilty') {
@@ -293,11 +293,13 @@ export function benchFor(world: World, judgeId: CitizenId): ObservedBenchCase[] 
     const d = world.citizens[k.defendantId];
     out.push({
       caseId: k.id, defendant: k.defendantId, defendantName: d?.name ?? k.defendantId,
-      law: k.law, lawName: LAWS[k.law]?.name ?? k.law, severity: k.severity,
+      law: k.law, lawName: offenceName(k.law), track: trackOf(k.law), severity: k.severity,
       evidence: Math.round(k.evidence * 100) / 100,
       victim: k.victimId, victimName: k.victimId ? nameOf(world, k.victimId) : null,
       description: k.description,
-      priorConvictions: d ? d.record.convictions.filter((x) => x.caseId !== k.id).length : 0,
+      // What the defendant already carried when this charge was laid. A
+      // conviction from this same sitting is not one (`cases.ts priorsOf`).
+      priorConvictions: priorsOf(world, k).length,
       bench: [...k.judges], votes: { ...k.votes },
       youVoted: k.votes[judgeId] ?? null, carriedSessions: k.carriedSessions,
       jury: juryOf(k), advocate: k.advocateId ?? null,

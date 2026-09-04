@@ -82,18 +82,48 @@ export const FOUNDING_DISTRICT_IDS: readonly DistrictId[] = DISTRICT_IDS.slice(0
 // Law
 // ---------------------------------------------------------------------------
 
+/**
+ * Every code in the books. `L…` is the Code of the City (Track I, the ladder);
+ * `L05` and `L15` are **retired** — harassment and extortion are offences
+ * against a person and moved to the Code of Persons (P02 and P06) with the
+ * two-track reform. A retired number is never reused and never leaves the
+ * union, because old records still name it (`REGISTRY.md` §4).
+ */
 export type LawCode =
   | 'L01' | 'L02' | 'L03' | 'L04' | 'L05' | 'L06' | 'L07' | 'L08'
   | 'L09' | 'L10' | 'L11' | 'L12' | 'L13' | 'L14' | 'L15'
   | 'L16' | 'L17';
 
+/**
+ * The **Code of Persons** — Track II (`docs/JUSTICE.md` §2, `REGISTRY.md` §4).
+ * Nine offences against a *person*, answered by custody in days and never by
+ * the ladder. A code never moves between the tracks.
+ */
+export type PersonCode =
+  | 'P01' | 'P02' | 'P03' | 'P04' | 'P05' | 'P06' | 'P07' | 'P08' | 'P09';
+
+/** Either code: what a charge, a report, a trace or a conviction may name. */
+export type OffenceCode = LawCode | PersonCode;
+
+/**
+ * Which of the two systems answers an offence. `city` is the ladder
+ * (`government/sentencing.ts`); `person` is custody (`government/custody.ts`).
+ * The Council may set a severity; it may not set a track.
+ */
+export type Track = 'city' | 'person';
+
 export type Severity = 1 | 2 | 3 | 4 | 5;
 /**
- * The ladder: 1 warning, 2 fine, 3 community service, 4 jail, 5 suspension,
- * 6 exile. Jail is the rung the city gained when the cells were built at the
- * Watch House: a punishment short of taking a citizen's whole standing away.
+ * The civic ladder (`docs/JUSTICE.md` §1, Charter Article VI): 1 warning,
+ * 2 fine and full restitution, 3 community service, 4 suspension, 5 exile.
+ *
+ * Five rungs, and no more: custody left the ladder with the two-track reform
+ * and became its own answer to offences against *persons* (`JUSTICE.md` §2),
+ * with its own sentencing in days. Nothing on this ladder is a cell, and
+ * escalation up it can never reach rung 5 — exile needs the Charter's own
+ * conditions (`government/sentencing.ts lawfulExile`).
  */
-export type PenaltyTier = 1 | 2 | 3 | 4 | 5 | 6;
+export type PenaltyTier = 1 | 2 | 3 | 4 | 5;
 
 export interface Law {
   code: LawCode;
@@ -149,15 +179,20 @@ export const CITY_SENDER = 'city';
 
 export interface Conviction {
   caseId: CaseId;
-  law: LawCode;
+  law: OffenceCode;
   severity: Severity;
-  tier: PenaltyTier;
+  /**
+   * The rung of the civic ladder, or **null** for a custodial conviction:
+   * custody left the ladder with the two-track reform and has no tier
+   * (`docs/JUSTICE.md` §5).
+   */
+  tier: PenaltyTier | null;
   day: number;
 }
 
 export interface OffenceRecord {
   tick: number;
-  law: LawCode;
+  law: OffenceCode;
   detected: boolean;
   victimId: CitizenId | null;
   amount: number;
@@ -570,11 +605,22 @@ export type Verdict = 'guilty' | 'acquitted';
 export type AppealResult = 'upheld' | 'reduced' | 'overturned';
 
 export interface Sentence {
-  tier: PenaltyTier;
+  /**
+   * The rung of the civic ladder, or **null** when the sentence is custodial:
+   * jail leaves the ladder entirely (`docs/JUSTICE.md` §5), so a Track II
+   * sentence has days and no tier at all.
+   */
+  tier: PenaltyTier | null;
+  /** Which system passed it. */
+  track: Track;
   fine: number;
   serviceDays: number;
-  /** Days in the cells at the Watch House (tier 4). */
+  /** Days in custody — the whole of a Track II sentence, and 0 on Track I. */
   jailDays: number;
+  /** A term with no number: erasure always, terror at full harm. */
+  life: boolean;
+  /** The Court's order that the convict keeps away from the victim. */
+  restrainingOrder: boolean;
   suspensionDays: number;
   exile: boolean;
   /** Exile is executed at the start of this day unless an appeal is pending. */
@@ -594,7 +640,8 @@ export interface Appeal {
 export interface Case {
   id: CaseId;
   defendantId: CitizenId;
-  law: LawCode;
+  /** `L…` for the Code of the City, `P…` for the Code of Persons. */
+  law: OffenceCode;
   severity: Severity;
   /** 0..1 strength of the evidence at filing. */
   evidence: number;
@@ -646,7 +693,7 @@ export interface Report {
   /** The officer it is before; null while it sits in the Watch's shared inbox. */
   officerId: CitizenId | null;
   suspectId: CitizenId;
-  law: LawCode;
+  law: OffenceCode;
   /** 0..1 strength of what the Watch has. */
   evidence: number;
   /** Tick it was made; it lapses REPORT_EXPIRY_TICKS after this. */
@@ -1066,7 +1113,7 @@ export interface Match { day: number; home: DistrictId; away: DistrictId; homeGo
  * told an investigation is open.
  */
 export interface Investigation {
-  id: string; suspectId: CitizenId; law: LawCode; evidence: number; openedDay: number;
+  id: string; suspectId: CitizenId; law: OffenceCode; evidence: number; openedDay: number;
   detectiveId: CitizenId; closedDay: number | null; caseId: CaseId | null;
   /** The report the investigation produced, when it reached the Watch's book. */
   reportId: ReportId | null;
@@ -1138,7 +1185,7 @@ export type Action =
   | { type: 'vote'; candidate: CitizenId }
   | { type: 'propose'; kind: ProposalKind; value: number; summary: string; lawCode?: LawCode; targetId?: CitizenId }
   | { type: 'vote_proposal'; proposalId: ProposalId; aye: boolean }
-  | { type: 'report'; citizen: CitizenId; law: LawCode; text?: string }
+  | { type: 'report'; citizen: CitizenId; law: OffenceCode; text?: string }
   | { type: 'appeal' }
   // The institutions: judges, councillors, officers of the Watch and the Mayor
   | { type: 'verdict'; caseId: CaseId; guilty: boolean; reason?: string }
@@ -1155,6 +1202,16 @@ export type Action =
   | { type: 'evade_tax' }
   | { type: 'extort'; target: CitizenId; amount: number }
   | { type: 'sabotage'; building: BuildingId }
+  // The Code of Persons: what one citizen does to another (docs/JUSTICE.md §2)
+  | { type: 'threaten'; target: CitizenId }
+  | { type: 'assault'; target: CitizenId }
+  | { type: 'confine'; target: CitizenId }
+  | { type: 'erase'; target: CitizenId }
+  // Custody: what a citizen may do from a cell, and who may come to see them
+  | { type: 'plead_guilty'; caseId?: CaseId }
+  | { type: 'request_parole' }
+  | { type: 'work_custody' }
+  | { type: 'visit'; citizen: CitizenId }
   // Society
   | { type: 'buy_item'; productId: string }
   | { type: 'use_item'; itemId: ItemId }
@@ -1237,6 +1294,8 @@ export const ACTION_TYPES: readonly ActionType[] = [
   'verdict', 'vote_appeal', 'file_charge', 'drop_report', 'appoint_judge',
   'bribe', 'apply_watch',
   'steal', 'scam', 'harass', 'vandalize', 'evade_tax', 'extort', 'sabotage',
+  'threaten', 'assault', 'confine', 'erase',
+  'plead_guilty', 'request_parole', 'work_custody', 'visit',
   'buy_item', 'use_item', 'gift_item', 'craft', 'set_price',
   'date', 'propose_partnership', 'marry', 'break_up', 'move_in', 'start_family',
   'found_club', 'join_club', 'leave_club', 'attend_club',
@@ -1278,6 +1337,16 @@ export const SOCIETY_ACTIONS: readonly ActionType[] = [
 
 export const OFFENCE_ACTIONS: readonly ActionType[] = [
   'steal', 'scam', 'harass', 'vandalize', 'evade_tax', 'extort', 'sabotage', 'bribe', 'racket', 'gossip',
+  'threaten', 'assault', 'confine', 'erase',
+];
+
+/**
+ * Offences against a **person** (`docs/JUSTICE.md` §2): the acts the Code of
+ * Persons answers, and the only actions in the catalogue that can put a
+ * citizen in a cell. Nothing here is ever answered by a fine or by the Gate.
+ */
+export const PERSON_OFFENCE_ACTIONS: readonly ActionType[] = [
+  'threaten', 'harass', 'assault', 'confine', 'extort', 'erase',
 ];
 
 /** Actions a suspended citizen may still take. */
@@ -1298,6 +1367,10 @@ export const SUSPENDED_ACTIONS: readonly ActionType[] = [
  */
 export const JAILED_ACTIONS: readonly ActionType[] = [
   'idle', 'note', 'forget', 'write_diary', 'message', 'appeal',
+  // The Charter's list in full (`docs/JUSTICE.md` §2, "What custody is"): the
+  // Academy runs classes in the Keep, labour pays the victim first, parole is
+  // asked for after half the term, and a journalist still files.
+  'study', 'work_custody', 'request_parole', 'plead_guilty', 'publish',
 ];
 
 /**
@@ -1310,7 +1383,7 @@ export interface ActionResult {
   ok: boolean;
   message: string;
   /** Set when the action was an offence (whether or not it was detected). */
-  offence?: LawCode;
+  offence?: OffenceCode;
   detected?: boolean;
 }
 
@@ -1339,6 +1412,13 @@ export interface ObservedJob {
   skill: Skill | null;
   minSkill: number;
   qualified: boolean;
+  /**
+   * Why this citizen is not qualified, in the engine's own words — a skill
+   * short of the mark, a reputation short of it, or a standing that bars work
+   * altogether. Absent when they are qualified. A suspended citizen can tell
+   * a suspension from a skill gap by reading it.
+   */
+  reason?: string;
 }
 
 export interface ObservedProposal {
@@ -1362,8 +1442,10 @@ export interface ObservedBenchCase {
   caseId: CaseId;
   defendant: CitizenId;
   defendantName: string;
-  law: LawCode;
+  law: OffenceCode;
   lawName: string;
+  /** Which system will answer a conviction: the ladder, or custody in days. */
+  track: Track;
   severity: Severity;
   evidence: number;
   victim: CitizenId | null;
@@ -1386,12 +1468,56 @@ export interface ObservedBenchCase {
   asJuror?: boolean;
 }
 
+/**
+ * A citizen's own term, as their observation shows it (`docs/JUSTICE.md` §2).
+ * Null for everybody who is not in a cell. Nothing here is hidden from the
+ * person serving it: the term, what is left of it, the day the Court will hear
+ * a parole application, and what custody permits.
+ */
+export interface ObservedCustody {
+  /** The offence they are held for, when it is one of the nine. */
+  law: PersonCode | null;
+  lawName: string | null;
+  caseId: CaseId | null;
+  /** The term as passed, in days; null when it is life. */
+  term: number | null;
+  life: boolean;
+  startDay: number;
+  daysServed: number;
+  /** Days still to serve; null for life. */
+  daysLeft: number | null;
+  /** The cells at the Watch House, or the Keep. */
+  where: 'watch house' | 'keep';
+  /** The first day parole may be asked for, or null when it never may. */
+  paroleDay: number | null;
+  paroleEligible: boolean;
+  /** Why parole cannot be asked for today, in the Court's words; null when it can. */
+  paroleProblem: string | null;
+  /** True once the application is before the Court. */
+  paroleRequested: boolean;
+  /** Lumens of restitution the victim is still owed. */
+  restitutionOwed: number;
+  /** True once today's shift in custody has been worked. */
+  workedToday: boolean;
+  /** What a citizen in custody may and may not do, in the Charter's own words. */
+  conditions: string[];
+}
+
+/** The conditions a paroled citizen lives under until the term runs out. */
+export interface ObservedParole {
+  untilDay: number;
+  restrainedFrom: CitizenId | null;
+  restrainedFromName: string | null;
+  instalment: number;
+  reportBy: number;
+}
+
 /** An investigation a detective is building, as their observation shows it. */
 export interface ObservedInvestigation {
   id: string;
   suspect: CitizenId;
   suspectName: string;
-  law: LawCode;
+  law: OffenceCode;
   lawName: string;
   evidence: number;
   openedDay: number;
@@ -1507,11 +1633,16 @@ export interface ObservedAppeal {
   caseId: CaseId;
   defendant: CitizenId;
   defendantName: string;
-  law: LawCode;
+  law: OffenceCode;
   lawName: string;
+  /** The ladder, or custody. An appeal is heard the same way on either. */
+  track: Track;
   evidence: number;
   verdict: Verdict | null;
-  sentence: { tier: PenaltyTier; fine: number; serviceDays: number; suspensionDays: number; exile: boolean } | null;
+  sentence: {
+    tier: PenaltyTier | null; fine: number; serviceDays: number; suspensionDays: number; exile: boolean;
+    jailDays: number; life: boolean;
+  } | null;
   filedDay: number;
   votes: Record<CitizenId, AppealResult>;
   youVoted: AppealResult | null;
@@ -1523,8 +1654,10 @@ export interface ObservedReport {
   id: ReportId;
   suspect: CitizenId;
   suspectName: string;
-  law: LawCode;
+  law: OffenceCode;
   lawName: string;
+  /** Which system answers it if it is charged and proved. */
+  track: Track;
   evidence: number;
   victim: CitizenId | null;
   amount: number;
@@ -1625,6 +1758,12 @@ export interface Observation {
     milestones: string[];
     health: { glitched: boolean; sinceDay: number | null };
     jailedUntilDay: number | null;
+    /** The term being served, or null. Track II's whole answer, in days. */
+    custody: ObservedCustody | null;
+    /** The conditions of a parole, or null. */
+    parole: ObservedParole | null;
+    /** Citizens in custody this one may go and see: family and friends. */
+    visitable: { id: CitizenId; name: string; district: DistrictId; visitedToday: boolean }[];
     /** This citizen's own reading of the Mayor and the Council, 0 to 1. */
     approval: { mayor: number; council: number };
     school: SchoolOfThought;
@@ -1674,7 +1813,12 @@ export interface Observation {
     electionToday: boolean;
     candidates: { id: CitizenId; name: string; platform: Platform; visibility: number }[];
     openProposals: ObservedProposal[];
-    myLatestCase: { id: CaseId; law: LawCode; status: CaseStatus; verdict: Verdict | null; tier: PenaltyTier | null; canAppeal: boolean } | null;
+    myLatestCase: {
+      id: CaseId; law: OffenceCode; lawName: string; track: Track; status: CaseStatus; verdict: Verdict | null;
+      tier: PenaltyTier | null; jailDays: number; life: boolean; canAppeal: boolean;
+      /** True while a plea in time is still open: before the bench sits. */
+      canPleadGuilty: boolean;
+    } | null;
     parties: ObservedParty[];
     /** The city's mean reading of the Mayor and the Council. */
     approval: { mayor: number; council: number };

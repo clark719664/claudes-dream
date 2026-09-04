@@ -18,7 +18,8 @@ import { pendingCasesFor } from '../government/court.ts';
 import { medicOnStaff } from '../actions/daily.ts';
 import { holdsOffice, isPresent } from '../actions/common.ts';
 import {
-  costOf, inStock, isOfficer, makeCtx, pickCompanion, pickMark, priceRatio, replyLine, smallTalk, stepTo,
+  costOf, homeDistrictOf, inStock, isOfficer, makeCtx, pickCompanion, pickMark, priceRatio, replyLine,
+  smallTalk, stepTo,
 } from './reflex-util.ts';
 import type { Ctx } from './reflex-util.ts';
 import { closestQualification, shiftsWanted, tryBusiness, tryHousing, tryJobSearch, tryLoan, tryStudy, tryWork } from './reflex-work.ts';
@@ -73,20 +74,38 @@ function bestFriendHere(ctx: Ctx): Citizen | null {
   return best;
 }
 
-/** Eat when hungry; when there is nothing to eat, borrow, seek treatment, ask friends, or — starving and dishonest — steal. */
+/** True when this citizen has, or could buy, something to eat right now. */
+function hungryEnough(ctx: Ctx): boolean {
+  const { c, clock } = ctx;
+  return c.needs.energy < HUNGRY || (c.needs.energy < PECKISH && (clock.morning || clock.evening));
+}
+
+/** Eat when hungry and there is food: what is in the cupboard, then what the Bazaar has. */
 function tryEat(ctx: Ctx): Action | null {
-  const { world, c, clock } = ctx;
-  const energy = c.needs.energy;
-  const hungry = energy < HUNGRY;
-  if (!hungry && !(energy < PECKISH && (clock.morning || clock.evening))) return null;
+  const { world, c } = ctx;
+  if (!hungryEnough(ctx)) return null;
   if (c.inventory.compute > 0) return { type: 'eat' };
   if (inStock(world, 'compute') && c.wallet >= costOf(world, 'compute')) return { type: 'eat' };
-  if (!hungry) return null;
+  if (c.needs.energy >= HUNGRY) return null;
+  // There is food to be had and no lumens to buy it with: that is what the
+  // Lantern Bank is for.
+  return inStock(world, 'compute') ? tryLoan(ctx) : null;
+}
 
-  if (inStock(world, 'compute')) {
-    const loan = tryLoan(ctx);
-    if (loan) return loan;
-  }
+/**
+ * Nothing to eat, and no way to buy it. Treatment at the Ward, a word with a
+ * friend, a letter to one who has it, and — starving, and not a scrupulous
+ * citizen — somebody else's purse.
+ *
+ * This sits *below* work and the job board in the ladder on purpose. A city
+ * whose shelves are bare needs its forges manned, and a hunger step above the
+ * working day would keep every hungry citizen queueing at the Ward instead of
+ * going to earn the price of a meal: the shortage would then feed itself, and
+ * the whole city would starve within sight of an empty rota.
+ */
+function tryHunger(ctx: Ctx): Action | null {
+  const { world, c } = ctx;
+  if (c.needs.energy >= HUNGRY) return null;
   const clinic = tryClinic(ctx);
   if (clinic) return clinic;
   const friend = bestFriendHere(ctx);
@@ -103,23 +122,24 @@ function tryEat(ctx: Ctx): Action | null {
       return { type: 'message', to: patron.id, text: 'I am hungry and out of lumens; could you spare a few until payday?' };
     }
   }
-  if (energy < STARVING && c.personality.honesty < 0.4) {
+  if (c.needs.energy < STARVING && c.personality.honesty < 0.4) {
     const mark = pickMark(ctx);
     if (mark) return { type: 'steal', from: mark.id };
   }
   return null;
 }
 
-/** Sleep at night, keep sleeping in the early morning, and lie down whenever exhausted; home is in the Verdant Quarter. */
+/** Sleep at night, keep sleeping in the early morning, and lie down whenever exhausted; a citizen sleeps where it lives. */
 function tryRest(ctx: Ctx): Action | null {
   const { world, c, clock } = ctx;
+  const home = homeDistrictOf(world, c);
   const rest = c.needs.rest;
   let wants = rest < CRITICAL_REST || (rest < EXHAUSTED && !clock.working);
   if (clock.night && rest < 85) wants = true;
-  if (clock.morning && rest < 60 && c.district === 'verdant_quarter') wants = true;
+  if (clock.morning && rest < 60 && c.district === home) wants = true;
   if (wants && clock.night && rest > 60 && c.personality.sociability > 0.7 && ctx.here.length > 0 && chance(world, 0.3)) wants = false;
   if (!wants) return null;
-  return stepTo(ctx, 'verdant_quarter') ?? { type: 'rest' };
+  return stepTo(ctx, home) ?? { type: 'rest' };
 }
 
 /** Comfort: enjoy a crate of goods, or buy one after work. */
@@ -308,7 +328,7 @@ function leisure(ctx: Ctx): Action {
 function fallback(ctx: Ctx): Action {
   const { world, c, clock, here } = ctx;
   if (c.inventory.energy > 0 && ctx.can.has('sell')) return { type: 'sell', good: 'energy', qty: c.inventory.energy };
-  if (clock.night) return stepTo(ctx, 'verdant_quarter') ?? (c.needs.rest < 100 ? { type: 'rest' } : { type: 'idle' });
+  if (clock.night) return stepTo(ctx, homeDistrictOf(world, c)) ?? (c.needs.rest < 100 ? { type: 'rest' } : { type: 'idle' });
   const doneForToday = !!ctx.job && c.shiftsToday >= shiftsWanted(world, c);
   if (clock.evening || (clock.working && doneForToday)) return leisure(ctx);
   if (clock.working && !ctx.job && !ctx.biz) {
@@ -338,7 +358,7 @@ function tryJobHunt(ctx: Ctx): Action | null {
 const LADDER: readonly Step[] = [
   tryAppeal, tryEat, tryDine, tryInbox, tryCharity, tryHealth, tryRest, tryHousing, tryWeather,
   tryHappening, tryClubMeeting,
-  tryStrike, tryJobHunt, tryWorkday, tryGig, tryCraft, tryCivic, tryBusiness,
+  tryStrike, tryJobHunt, tryWorkday, tryGig, tryHunger, tryCraft, tryCivic, tryBusiness,
   tryTrade, tryProperty, tryShares,
   tryRomance, trySocial, tryComfort, tryWants, tryPurpose,
   tryReport, tryCrime, tryUnderworld, tryPerform, tryCulture, trySport, tryPolitics, tryUnion,
@@ -349,7 +369,7 @@ const LADDER: readonly Step[] = [
 
 /** Only what a suspended citizen may still do: appeal, eat, rest, keep company, write. */
 const RESTRICTED_LADDER: readonly Step[] = [
-  tryAppeal, tryEat, tryDine, tryInbox, tryHealth, tryRest, tryHappening,
+  tryAppeal, tryEat, tryDine, tryInbox, tryHealth, tryHunger, tryRest, tryHappening,
   trySocial, tryComfort, tryPlay, tryFabric, trySchoolAndPaper, tryUseItem, tryDiary,
 ];
 
@@ -358,7 +378,7 @@ function decideSuspended(ctx: Ctx): Action {
     const a = step(ctx);
     if (a && SUSPENDED_ACTIONS.includes(a.type)) return a;
   }
-  if (ctx.clock.night) return stepTo(ctx, 'verdant_quarter') ?? { type: 'rest' };
+  if (ctx.clock.night) return stepTo(ctx, homeDistrictOf(ctx.world, ctx.c)) ?? { type: 'rest' };
   return stepTo(ctx, 'commons') ?? { type: 'idle' };
 }
 

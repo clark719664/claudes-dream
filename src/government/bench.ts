@@ -4,16 +4,42 @@
  * belief formula is the internal state of a scripted judge, the way the reflex
  * brain's utilities are. A judge who thinks for itself never sees it.
  */
+import { clamp } from '../types.ts';
 import type { Case, Citizen, CitizenId, World } from '../types.ts';
 import { normal, shuffle } from '../util/rng.ts';
 import { characterOf } from '../citizens/character.ts';
 import { areFriends, bondBetween } from '../citizens/relationships.ts';
 import { areFamily } from '../society/family.ts';
 import { advocacyDiscount } from './advocates.ts';
-import { canSit } from './cases.ts';
+import { canSit, priorsOf } from './cases.ts';
 
-/** A scripted judge votes guilty when its belief in guilt exceeds this. */
+/**
+ * A scripted judge votes guilty when its belief in guilt exceeds this.
+ *
+ * It is a *standard of proof*, not a dial for the conviction rate: it says how
+ * sure a judge must be, and it has not moved. What used to make it meaningless
+ * was the number on the other side of it — the Watch handed the Court evidence
+ * pinned at 1.00 for almost every charge (`watch.ts evidenceFor` now builds a
+ * case out of what an officer and the witnesses actually saw), and the bench
+ * counted a conviction handed down an hour earlier the same day as a prior
+ * (`cases.ts priorsOf` now does not).
+ */
 export const GUILT_THRESHOLD = 0.55;
+/**
+ * What a record is worth to a judge weighing *this* charge. Small, and
+ * deliberately: the question before the bench is whether the defendant did
+ * this, not whether they are the sort of citizen who might have. A first
+ * offender is never carried over the line by it, and a defendant with ten
+ * convictions is not convicted on a case that would have acquitted a stranger.
+ */
+export const RECORD_WEIGHT = 0.08;
+/** What the city's regard for the defendant is worth, either way. */
+export const REPUTATION_WEIGHT = 0.10;
+/** A friend on the bench, and the victim's friend on the bench. */
+export const BOND_DEFENDANT_WEIGHT = 0.20;
+export const BOND_VICTIM_WEIGHT = 0.10;
+/** How far a judge's reading of the same page wanders from another's. */
+export const JUDGE_NOISE = 0.05;
 /** Judges (permanent or temporary) need at least this reputation. */
 export const JUDGE_MIN_REPUTATION = 60;
 /** A full bench. */
@@ -101,17 +127,21 @@ export function judgeBelief(world: World, judgeId: CitizenId, c: Case): number {
   if (!judge || !d) return 0;
   const bondD = bondBetween(world, judgeId, d.id);
   const bondV = c.victimId ? bondBetween(world, judgeId, c.victimId) : 0;
-  const priors = d.record.convictions.filter((k) => k.caseId !== c.id).length;
+  // A conviction handed down in this same sitting is not a prior: see
+  // `cases.ts priorsOf`. A first offender is tried as a first offender.
+  const priors = priorsOf(world, c).length;
   let belief = c.evidence;
-  belief += priors > 0 ? 0.15 : 0;
-  belief -= 0.20 * (bondD / 100);
-  belief += 0.10 * (1 - d.reputation / 100);
-  belief += 0.10 * (bondV / 100);
-  belief += normal(world) * 0.05;
+  belief += priors > 0 ? RECORD_WEIGHT : 0;
+  belief -= BOND_DEFENDANT_WEIGHT * (bondD / 100);
+  belief += REPUTATION_WEIGHT * (1 - d.reputation / 100);
+  belief += BOND_VICTIM_WEIGHT * (bondV / 100);
+  belief += normal(world) * JUDGE_NOISE;
   // The thumb on the scale is weighed by the judge's public character — what
   // the city has watched them do — never by a hidden trait nobody can see.
   belief -= (1 - characterOf(judge).honesty) * 0.1 * Math.sign(bondD);
   // Somebody spoke for the defendant, and speaking well is worth something.
   belief -= advocacyDiscount(world, c);
-  return belief;
+  // A belief is how likely the bench thinks it is that this citizen did it.
+  // There is no such thing as more certain than certain.
+  return clamp(belief, 0, 1);
 }

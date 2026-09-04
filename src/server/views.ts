@@ -11,7 +11,7 @@ import { employerName, openJobs } from '../economy/jobs.ts';
 import { daysToElection, isElectionDay, nominationsOpen } from '../government/council.ts';
 import { pendingCasesFor } from '../government/court.ts';
 import { ageOf } from '../society/family.ts';
-import { LAWS } from '../data/laws.ts';
+import { LAWS, offenceName, trackOf } from '../data/laws.ts';
 import {
   affectionsView, citizenClubsView, citizenHouseholdView, familyView, partnerView, possessionsView, wantsView,
 } from './views-society.ts';
@@ -330,7 +330,7 @@ export function citizenView(world: World, id: CitizenId): Record<string, unknown
     .filter((k) => k.defendantId === id)
     .sort((a, b) => b.filedTick - a.filedTick)
     .map((k) => ({
-      id: k.id, law: k.law, lawName: LAWS[k.law]?.name ?? k.law, severity: k.severity, status: k.status, verdict: k.verdict,
+      id: k.id, law: k.law, lawName: offenceName(k.law), track: trackOf(k.law), severity: k.severity, status: k.status, verdict: k.verdict,
       day: Math.floor(k.filedTick / 24), triedDay: k.triedDay, sentence: k.sentence,
       appeal: k.appeal ? { filedDay: k.appeal.filedDay, result: k.appeal.result } : null,
     }));

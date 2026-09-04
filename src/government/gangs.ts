@@ -9,7 +9,8 @@
  * Gangs recruit in their turf, run **protection rackets** on the businesses
  * there (pay, or the shopfront is done over), split the take, and defend their
  * own — a member reported to the Watch is answered with intimidation, which is
- * itself an offence and is charged like one. Every racket is Extortion (L15)
+ * itself an offence and is charged like one. Every racket is Extortion (P06,
+ * custody: coercion by threat of harm is an offence against a person)
  * whether the owner pays or not; the street just does not talk about it, which
  * is what the visibility penalty is.
  *
@@ -30,14 +31,26 @@ import { isPresent, nameOf } from './cases.ts';
 import { isJailed } from './jail.ts';
 import { REPORT_WINDOW_TICKS, commitOffence, reportOffence } from './watch.ts';
 
-/** The reading of honesty below which a citizen may found a gang. */
-export const GANG_MAX_HONESTY = 0.3;
+/**
+ * Who may put a crew together, read off the **city's** reading of them
+ * (`citizens/character.ts`), never a hidden trait.
+ *
+ * That reading is not a personality score spread evenly over nought to one:
+ * it starts at 1 for everybody and comes down only with detected offences and
+ * convictions, so in a city that mostly behaves the whole of the bottom tenth
+ * sits around 0.7 and almost nobody ever reaches 0.3. Thresholds written for
+ * a hidden trait therefore name nobody at all, and the Undercroft stays
+ * empty however much crime there is. These are set where the city's own
+ * distribution puts "somebody the city plainly does not trust" and "friends
+ * it has doubts about".
+ */
+export const GANG_MAX_HONESTY = 0.55;
 /** Friends of the same reputation a founder needs behind them. */
 export const GANG_MIN_BONDS = 3;
 /** The reading of honesty a founder's friends must be under to count. */
-export const GANG_FRIEND_HONESTY = 0.4;
+export const GANG_FRIEND_HONESTY = 0.7;
 /** The reading of honesty above which nobody is worth approaching. */
-export const RECRUIT_MAX_HONESTY = 0.5;
+export const RECRUIT_MAX_HONESTY = 0.75;
 /** Bond a recruit needs with the member who approaches them. */
 export const RECRUIT_MIN_BOND = 40;
 /** Share of a business's till a racket takes. */
@@ -267,7 +280,7 @@ export function racket(world: World, cId: CitizenId, businessId: BusinessId): Ac
   }
   world.counters[racketKey(businessId)] = cycle;
 
-  const caught = commitOffence(world, cId, 'L15', {
+  const caught = commitOffence(world, cId, 'P06', {
     victimId: owner.id, amount: paid, buildingId: biz.buildingId, visibilityMod: RACKET_VISIBILITY_MOD,
   });
   emit(world, 'gang', paid > 0
@@ -338,7 +351,7 @@ export function splitLoot(world: World): void {
 
 /**
  * A member reported to the Watch is answered. Another member standing where
- * the reporter is leans on them — and intimidation is Harassment (L05), so the
+ * the reporter is leans on them — and intimidation is Harassment (P02), so the
  * defence of a gang is itself a thing the gang can be charged with.
  */
 export function defend(world: World, memberId: CitizenId, reporterId: CitizenId): boolean {
@@ -355,7 +368,7 @@ export function defend(world: World, memberId: CitizenId, reporterId: CitizenId)
 
   recordHostility(world, enforcer.id, reporterId);
   adjustBond(world, enforcer.id, reporterId, -15);
-  const caught = commitOffence(world, enforcer.id, 'L05', { victimId: reporterId, visibilityMod: 0.05 });
+  const caught = commitOffence(world, enforcer.id, 'P02', { victimId: reporterId, visibilityMod: 0.05 });
   emit(world, 'gang', `${enforcer.name} of ${g.name} leaned on ${reporter.name} for going to the Watch.`,
     [enforcer.id, reporterId], 0.5, { gang: g.id, defended: memberId, detected: caught.detected });
   remember(world, reporterId, 'crime', `${enforcer.name} of ${g.name} leaned on you for reporting ${nameOf(world, memberId)}.`);
@@ -380,8 +393,12 @@ export function bustCheck(world: World, g: Gang): boolean {
   return g.bustedDay === null && convictionsThisCycle(world, g) >= BUST_CONVICTIONS;
 }
 
-/** Dissolve a gang. Nobody is punished for it; the thing simply stops existing. */
-export function bustGang(world: World, g: Gang, reason: string): void {
+/**
+ * Dissolve a gang. Nobody is punished for it; the thing simply stops existing.
+ * `by` says whose doing it was: a bust is the Watch's work and is news, a
+ * gang that ran out of people folded on its own and is a line in the register.
+ */
+export function bustGang(world: World, g: Gang, reason: string, by: 'watch' | 'itself' = 'watch'): void {
   if (g.bustedDay !== null) return;
   g.bustedDay = world.day;
   const members = [...g.members];
@@ -390,8 +407,8 @@ export function bustGang(world: World, g: Gang, reason: string): void {
     if (c && c.gangId === g.id) c.gangId = null;
     remember(world, id, 'crime', `${g.name} is finished: ${reason}`);
   }
-  emit(world, 'gang', `The Watch broke up ${g.name}: ${reason}`, members, 0.9,
-    { gang: g.id, members: members.length });
+  const text = by === 'watch' ? `The Watch broke up ${g.name}: ${reason}` : `${g.name} is no more: ${reason}.`;
+  emit(world, 'gang', text, members, by === 'watch' ? 0.9 : 0.2, { gang: g.id, members: members.length, by });
 }
 
 /** Members who left, were exiled, or are no longer adults are no longer members. */
@@ -421,7 +438,7 @@ export function dailyGangs(world: World): void {
   for (const g of liveGangs(world)) {
     pruneMembers(world, g);
     if (g.members.length === 0) {
-      bustGang(world, g, 'nobody was left in it');
+      bustGang(world, g, 'nobody was left in it', 'itself');
       continue;
     }
     if (bustCheck(world, g)) {

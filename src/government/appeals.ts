@@ -13,14 +13,15 @@
  */
 import { clamp } from '../types.ts';
 import type {
-  ActionResult, AppealResult, Case, Citizen, CitizenId, ObservedAppeal, PenaltyTier, World,
+  ActionResult, AppealResult, Case, Citizen, CitizenId, ObservedAppeal, PenaltyTier, Sentence, World,
 } from '../types.ts';
-import { LAWS } from '../data/laws.ts';
+import { offenceName, trackOf } from '../data/laws.ts';
+import { bandOf } from './persons.ts';
 import { rand } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
 import { areFriends, areRivals, bondBetween } from '../citizens/relationships.ts';
 import { byFiling, isPresent, latestConviction, nameOf, sittingCouncil } from './cases.ts';
-import { describeSentence, executeSentence, revokeSentence, sentenceForTier } from './sentencing.ts';
+import { TIER_WARNING, describeSentence, executeSentence, revokeSentence, sentenceForTier } from './sentencing.ts';
 
 /** Days after the verdict during which an appeal may be filed. */
 export const APPEAL_WINDOW_DAYS = 1;
@@ -47,7 +48,7 @@ export function fileAppeal(world: World, cId: CitizenId): ActionResult {
   if (world.day - k.triedDay > APPEAL_WINDOW_DAYS) return fail('The appeal window has closed.');
   k.status = 'appealed';
   k.appeal = { filedDay: world.day, decidedDay: null, result: null, votes: {}, carried: 0 };
-  emit(world, 'appeal', `${c.name} appealed their conviction for ${LAWS[k.law].name.toLowerCase()} (case ${k.id}) to the Council.`,
+  emit(world, 'appeal', `${c.name} appealed their conviction for ${offenceName(k.law).toLowerCase()} (case ${k.id}) to the Council.`,
     [cId], 0.5, { caseId: k.id });
   remember(world, cId, 'civic', `You appealed case ${k.id} to the Council; it will decide at its next session.`);
   return { ok: true, message: `Your appeal in case ${k.id} will be heard at the next Council session.` };
@@ -113,16 +114,26 @@ export function appealsFor(world: World, cId: CitizenId): ObservedAppeal[] {
     if (!appeal) continue;
     out.push({
       caseId: k.id, defendant: k.defendantId, defendantName: nameOf(world, k.defendantId),
-      law: k.law, lawName: LAWS[k.law]?.name ?? k.law, evidence: Math.round(k.evidence * 100) / 100,
+      law: k.law, lawName: offenceName(k.law), track: trackOf(k.law), evidence: Math.round(k.evidence * 100) / 100,
       verdict: k.verdict,
-      sentence: s ? { tier: s.tier, fine: s.fine, serviceDays: s.serviceDays, suspensionDays: s.suspensionDays, exile: s.exile } : null,
+      sentence: s ? {
+        tier: s.tier, fine: s.fine, serviceDays: s.serviceDays, suspensionDays: s.suspensionDays, exile: s.exile,
+        jailDays: s.jailDays, life: s.life,
+      } : null,
       filedDay: appeal.filedDay, votes: { ...appeal.votes }, youVoted: appeal.votes[cId] ?? null, carried: appeal.carried,
     });
   }
   return out;
 }
 
-/** Carry out the Council's decision; returns a phrase describing the effect. */
+/**
+ * Carry out the Council's decision; returns a phrase describing the effect.
+ *
+ * A reduction is one rung down the five-rung ladder, and a reduced **exile**
+ * is the rung below it: suspension, for the fixed `REDUCED_EXILE_SUSPENSION_DAYS`
+ * fortnight (`government/sentencing.ts`). The Council can only ever lower a
+ * sentence here — no appeal has ever raised one, and none may reach exile.
+ */
 function applyAppeal(world: World, k: Case, result: AppealResult): string {
   const s = k.sentence;
   const d = world.citizens[k.defendantId];
@@ -136,11 +147,36 @@ function applyAppeal(world: World, k: Case, result: AppealResult): string {
     return 'the conviction was overturned';
   }
   const wasExile = s.exile;
+  // A custodial sentence has no rung to step down: the Council reduces a term
+  // by a quarter of what the band gave, never below the floor of the band, and
+  // it can never turn custody into a fine or into exile (`JUSTICE.md` §2).
+  if (s.track === 'person') {
+    revokeSentence(world, k, 'probation');
+    k.sentence = reduceCustody(world, k, s);
+    executeSentence(world, k);
+    return `the sentence was reduced to ${describeSentence(k.sentence)}`;
+  }
   revokeSentence(world, k, 'probation');
-  const tier = Math.max(1, s.tier - 1) as PenaltyTier;
+  const tier = Math.max(TIER_WARNING, (s.tier ?? TIER_WARNING) - 1) as PenaltyTier;
   k.sentence = sentenceForTier(world, k, tier, { fromExile: wasExile });
   executeSentence(world, k);
   return `the sentence was reduced to ${describeSentence(k.sentence)}`;
+}
+
+/** How much of a custodial term an appeal on sentence can take off. */
+export const CUSTODY_APPEAL_REDUCTION = 0.25;
+
+/**
+ * A reduced custodial sentence: a quarter off the days, held at the floor of
+ * the band the code prescribes. A **life** term is never reduced by any
+ * multiplier — erasure least of all, which only a Council pardon can ever
+ * open (`docs/JUSTICE.md` §3).
+ */
+function reduceCustody(world: World, k: Case, s: Sentence): Sentence {
+  if (s.life) return { ...s, executed: false, executeOnDay: null };
+  const floor = bandOf(k.law).min;
+  const days = Math.max(floor, Math.round(s.jailDays * (1 - CUSTODY_APPEAL_REDUCTION)));
+  return { ...s, jailDays: days, executed: false, executeOnDay: null };
 }
 
 /** "Ada upheld, Bram reduced" — how the Council divided, by name. */
@@ -197,7 +233,7 @@ export function decideAppeals(world: World): void {
     k.status = 'closed';
 
     const name = nameOf(world, k.defendantId);
-    const offence = LAWS[k.law].name.toLowerCase();
+    const offence = offenceName(k.law).toLowerCase();
     const who = byCourt ? 'With no Council seated, the Court reviewed and' : 'The Council';
     const verb = result === 'upheld' ? 'upheld' : result === 'reduced' ? 'reduced' : 'overturned';
     const how = byCourt ? 'on the evidence alone'
