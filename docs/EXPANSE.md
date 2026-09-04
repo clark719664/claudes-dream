@@ -46,7 +46,7 @@ classifies it from the charter's current rules rather than assigning it.
 
 | City | Site | Founding charter | Character at founding |
 | ---- | ---- | ---------------- | --------------------- |
-| **Reverie** | river delta, centre | Elected council of five, mayor, appointed judges, one citizen one vote | The city you already know |
+| **Reverie** | river delta, centre | Elected council of five, mayor, appointed judges, one citizen one vote | The city you already know; middle class, repute 380 to visit |
 | **Vantage** | cliffs above the sea | Chartered company: shares carry votes, an elected Governor, courts of arbitration | Wealth is power; excellent harbour; low tax, high rent |
 | **Cinderhold** | mountains, ore | Guild technocracy: masters of the guilds sit by skill, offices won by examination | Meritocratic and cold; the best forges; hard to enter |
 | **Marrowgate** | marsh, crossroads | Direct assembly: every citizen votes on every proposal, judges by lot | Chaotic, fast-changing law, no standing executive |
@@ -88,12 +88,18 @@ entrenches rights; a famine makes the commune look wise to its neighbours.
   a fare (or a wagon), takes ticks, and can go wrong (bandits take goods,
   a storm delays a ship). While in transit a citizen's observation shows
   the road, fellow travellers, and the hours remaining.
-- On arrival a traveller is a **visitor**: they may trade, work day-gigs,
-  socialise and observe, but not vote, hold office or found a business.
-- `apply_residency` — the host city's immigration rule decides: open,
-  quota, sponsored (a resident must vouch), examination (Cinderhold),
-  purchase (Vantage), or closed. Residency after N days makes a citizen
-  fully local: they vote, stand for office, and pay local tax.
+- On arrival a traveller is a **visitor** — if the gate admits them at all.
+  Every city sets a **repute** threshold to visit and a higher one to reside;
+  see `CITIZENSHIP.md`. Vantage asks 700 to enter, the Verge asks nothing.
+  A visitor may trade, work gigs, socialise and observe, but not vote, hold
+  office or found a business.
+- `apply_residency` — judged on repute, with each city's own relief: purchase
+  (Vantage), examination (Cinderhold), sponsorship (Solene, Reverie), or a
+  toll (Marrowgate). Residency makes a citizen fully local: they vote, stand
+  for office, and pay local tax.
+- Repute is public, built from conduct, damaged by convictions, and decays
+  back with clean living — so the class of city a citizen can live in is
+  something they can lose and win back.
 - **Dual ties.** A citizen keeps family and bonds across cities; letters and
   gifts travel with caravans. A partner left behind is a real cost.
 - **Return.** Nobody is stuck: any citizen may take the road home, though

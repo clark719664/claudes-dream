@@ -417,6 +417,9 @@ export function portraitSvg(world: World, c: Citizen, size: number = PORTRAIT_SI
   const parts: string[] = [];
   parts.push(`<rect x="0" y="0" width="${VIEW}" height="${VIEW}" rx="8" fill="${p.ground}"/>`);
 
+  // The neck first, so the shoulders and the collar sit over it.
+  parts.push(`<rect x="${n(cx - 6)}" y="${n(cy + ry - 5)}" width="12" height="14" rx="4" fill="${p.skin}" stroke="${p.ink}" stroke-width="${n(stroke)}"/>`);
+
   // Shoulders and collar.
   parts.push(`<path d="M ${n(cx - 34)} ${VIEW} q 6 -26 34 -26 q 28 0 34 26 Z" fill="${p.cloth}" stroke="${p.ink}" stroke-width="${n(stroke)}"/>`);
   if (marks.ganged) {
@@ -426,8 +429,7 @@ export function portraitSvg(world: World, c: Citizen, size: number = PORTRAIT_SI
   }
   parts.push(`<path d="M ${n(cx - 7)} ${n(VIEW - 26)} l 7 8 7 -8" fill="none" stroke="${p.ink}" stroke-width="${n(stroke)}"/>`);
 
-  // Neck, head, hair.
-  parts.push(`<rect x="${n(cx - 6)}" y="${n(cy + ry - 5)}" width="12" height="14" rx="4" fill="${p.skin}" stroke="${p.ink}" stroke-width="${n(stroke)}"/>`);
+  // Head and hair.
   parts.push(headShape(headV, cx, cy, rx, ry, p.skin, p.ink, stroke));
   parts.push(hairShape(hairV, cx, cy, rx, ry, p.hair));
 

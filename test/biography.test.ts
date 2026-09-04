@@ -229,7 +229,7 @@ test('a timeline is the fixed points and the milestones, in order and without re
   const days = rows.map((r) => r.day);
   assert.deepEqual(days, [...days].sort((a, b) => a - b), 'in day order');
   assert.equal(new Set(rows.map((r) => `${r.day}|${r.text}`)).size, rows.length, 'no repeats');
-  assert.equal(rows[0].text, 'Born in Reverie to Ilse and Bram.');
+  assert.equal(rows[0].text, 'Born in Reverie to Ilse Test and Bram Test.');
   assert.ok(rows.some((r) => r.day === CHILDHOOD_DAYS && r.text === 'Came of age.'));
   assert.ok(rows.some((r) => r.day === 60 && r.text.startsWith('Married')));
   assert.equal(rows.filter((r) => r.text.includes('mastered a craft')).length, 1);

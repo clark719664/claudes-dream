@@ -190,15 +190,22 @@ export function templatedLine(world: World, c: Citizen): string {
 // What the Chronicle quotes
 // ---------------------------------------------------------------------------
 
+/** How much weight the day's events put on each citizen, in one pass. */
+function dayWeights(world: World, day: number): Map<CitizenId, number> {
+  const weights = new Map<CitizenId, number>();
+  for (const e of world.events) {
+    if (e.day !== day) continue;
+    for (const id of e.actors) weights.set(id, (weights.get(id) ?? 0) + e.weight);
+  }
+  return weights;
+}
+
 /** How much the city was looking at this citizen on that day. */
-function notability(world: World, c: Citizen, day: number): number {
+function notability(world: World, c: Citizen, weights: Map<CitizenId, number>): number {
   let score = (c.reputation ?? 0) / 100;
   if (c.office !== null) score += 1;
   if (world.government?.mayorId === c.id) score += 1;
-  for (const e of world.events) {
-    if (e.day === day && e.actors.includes(c.id)) score += e.weight;
-  }
-  return score;
+  return score + (weights.get(c.id) ?? 0);
 }
 
 /**
@@ -208,13 +215,14 @@ function notability(world: World, c: Citizen, day: number): number {
 export function quotableDiaries(world: World, day: number, limit: number): { c: Citizen; text: string }[] {
   const wanted = Math.max(0, Math.floor(Number.isFinite(limit) ? limit : 0));
   if (wanted === 0) return [];
+  const weights = dayWeights(world, day);
   const rows: { c: Citizen; text: string; score: number }[] = [];
   for (const id of world.order) {
     const c = world.citizens[id];
     if (!c) continue;
     const entry = (c.diary ?? []).filter((e) => e?.day === day).pop();
     if (!entry?.text) continue;
-    rows.push({ c, text: entry.text, score: notability(world, c, day) });
+    rows.push({ c, text: entry.text, score: notability(world, c, weights) });
   }
   rows.sort((a, b) => b.score - a.score || (a.c.id < b.c.id ? -1 : a.c.id > b.c.id ? 1 : 0));
   return rows.slice(0, wanted).map(({ c, text }) => ({ c, text }));

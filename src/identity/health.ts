@@ -18,7 +18,7 @@
  * is weather that happens to bodies.
  */
 import { NEEDS, clamp } from '../types.ts';
-import type { ActionResult, Business, Citizen, CitizenId, DistrictId, World } from '../types.ts';
+import type { ActionResult, Business, BuildingId, Citizen, CitizenId, DistrictId, World } from '../types.ts';
 import { HOSPITAL_FEE } from '../data/jobs.ts';
 import { chance } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
@@ -75,8 +75,25 @@ function present(world: World, c: Citizen): boolean {
   return c.standing !== 'exiled' && world.order.includes(c.id);
 }
 
+/** Everyone living in the city, as a set: presence is asked about a great deal. */
+function presentIds(world: World): Set<CitizenId> {
+  const ids = new Set<CitizenId>();
+  for (const id of world.order) {
+    if (world.citizens[id]?.standing !== 'exiled') ids.add(id);
+  }
+  return ids;
+}
+
+/**
+ * Held: in the cells at the Watch House, or in whatever custody the city keeps
+ * (the custodial track reads the same way). Somebody held is out of reach of a
+ * glitch going round a stairwell, and out of reach of the Ward as well.
+ */
 function isJailed(world: World, c: Citizen): boolean {
-  return typeof c.jailedUntilDay === 'number' && c.jailedUntilDay > world.day;
+  const held = c.jailedUntilDay;
+  const custody = (c as { custodyUntilDay?: number | null }).custodyUntilDay;
+  return (typeof held === 'number' && held > world.day)
+    || (typeof custody === 'number' && custody > world.day);
 }
 
 function fullName(c: Citizen): string {
@@ -120,28 +137,37 @@ export function glitchedIn(world: World, d: DistrictId): Citizen[] {
   const out: Citizen[] = [];
   for (const id of world.order) {
     const c = world.citizens[id];
-    if (c && present(world, c) && isGlitched(c) && c.district === d) out.push(c);
+    if (c && c.standing !== 'exiled' && isGlitched(c) && c.district === d) out.push(c);
   }
   return out;
 }
 
-/** The people who share a citizen's home or its stairwell. */
-export function householdAndNeighbours(world: World, c: Citizen): Citizen[] {
+/**
+ * The people who share a citizen's home or its stairwell. `living` may be
+ * passed in when many citizens are being checked in one pass.
+ */
+export function householdAndNeighbours(world: World, c: Citizen, living?: Set<CitizenId>): Citizen[] {
+  const alive = living ?? presentIds(world);
   const out: Citizen[] = [];
   const seen = new Set<CitizenId>([c.id]);
   const push = (other: Citizen | undefined): void => {
-    if (!other || seen.has(other.id) || !present(world, other)) return;
+    if (!other || seen.has(other.id) || !alive.has(other.id)) return;
     seen.add(other.id);
     out.push(other);
   };
   const household = c.householdId ? world.households[c.householdId] : null;
   for (const id of household?.members ?? []) push(world.citizens[id]);
   const block = c.homeBuildingId;
-  if (block) {
-    for (const id of world.order) {
-      const other = world.citizens[id];
-      if (other && other.homeBuildingId === block) push(other);
-    }
+  if (block) for (const other of blockMates(world, block, alive)) push(other);
+  return out;
+}
+
+/** Everyone whose home is in one building, in turn order. */
+function blockMates(world: World, block: BuildingId, alive: Set<CitizenId>): Citizen[] {
+  const out: Citizen[] = [];
+  for (const id of world.order) {
+    const other = world.citizens[id];
+    if (other && other.homeBuildingId === block && alive.has(id)) out.push(other);
   }
   return out;
 }
@@ -156,9 +182,11 @@ export function strikeGlitch(world: World, c: Citizen, cause: string): void {
   if (health.glitched) return;
   health.glitched = true;
   health.sinceDay = world.day;
-  c.needs.purpose = clamp(c.needs.purpose - GLITCH_MOOD_COST, 0, 100);
-  c.needs.comfort = clamp(c.needs.comfort - GLITCH_MOOD_COST, 0, 100);
-  c.mood = computeMood(c);
+  if (c.needs) {
+    c.needs.purpose = clamp(c.needs.purpose - GLITCH_MOOD_COST, 0, 100);
+    c.needs.comfort = clamp(c.needs.comfort - GLITCH_MOOD_COST, 0, 100);
+    c.mood = computeMood(c);
+  }
   emit(world, 'health', `${fullName(c)} has a glitch (${cause}).`, [c.id], 0.3, { cause, district: c.district });
   remember(world, c.id, 'health', `A glitch took hold of you (${cause}); you run at half speed until it is treated.`);
   for (const other of householdAndNeighbours(world, c)) {
@@ -173,8 +201,10 @@ export function cureGlitch(world: World, c: Citizen, where: string): void {
   const days = health.sinceDay === null ? 0 : Math.max(0, world.day - health.sinceDay);
   health.glitched = false;
   health.sinceDay = null;
-  c.needs.purpose = clamp(c.needs.purpose + CURE_PURPOSE, 0, 100);
-  c.mood = computeMood(c);
+  if (c.needs) {
+    c.needs.purpose = clamp(c.needs.purpose + CURE_PURPOSE, 0, 100);
+    c.mood = computeMood(c);
+  }
   emit(world, 'health', `${fullName(c)}'s glitch cleared at ${where}.`, [c.id], 0.2, { where, days });
   remember(world, c.id, 'health', `Your glitch cleared at ${where} after ${days === 1 ? 'a day' : `${days} days`}.`);
 }
@@ -235,6 +265,7 @@ export function venueFor(world: World, c: Citizen): Venue | null {
 export function treat(world: World, cId: CitizenId): ActionResult {
   const c = world.citizens[cId];
   if (!c) return FAIL('There is no such citizen.');
+  if (isJailed(world, c)) return FAIL('You are held at the Watch House; nobody is taking you to the Ward.');
   const venue = venueFor(world, c);
   if (!venue) {
     return FAIL('There is nowhere to be treated here; the Hospital and the Restoration Ward are in the Verdant Quarter.');
@@ -243,9 +274,11 @@ export function treat(world: World, cId: CitizenId): ActionResult {
   if (!transfer(world, c.id, venue.payee, HOSPITAL_FEE, 'fee', `treatment at ${venue.place}`)) {
     return FAIL('The fee could not be paid.');
   }
-  c.needs.energy = clamp(c.needs.energy + TREATMENT_RESTORE, 0, 100);
-  c.needs.rest = clamp(c.needs.rest + TREATMENT_RESTORE, 0, 100);
-  c.mood = computeMood(c);
+  if (c.needs) {
+    c.needs.energy = clamp(c.needs.energy + TREATMENT_RESTORE, 0, 100);
+    c.needs.rest = clamp(c.needs.rest + TREATMENT_RESTORE, 0, 100);
+    c.mood = computeMood(c);
+  }
   if (!isGlitched(c)) {
     return OK(`You were seen at ${venue.place} for ${HOSPITAL_FEE} ℓ (energy and rest +${TREATMENT_RESTORE}).`);
   }
@@ -262,14 +295,15 @@ export function treat(world: World, cId: CitizenId): ActionResult {
 
 /** Every untreated glitch reaches for the people who share a home with it. */
 export function spreadGlitches(world: World): void {
+  const alive = presentIds(world);
   const carriers: Citizen[] = [];
   for (const id of world.order) {
     const c = world.citizens[id];
-    if (c && present(world, c) && isGlitched(c) && !isJailed(world, c)) carriers.push(c);
+    if (c && alive.has(id) && isGlitched(c) && !isJailed(world, c)) carriers.push(c);
   }
   for (const carrier of carriers) {
     const p = (carrier.homeTier ?? 0) >= SPREAD_SHELTER_TIER ? SPREAD_CHANCE / 2 : SPREAD_CHANCE;
-    for (const other of householdAndNeighbours(world, carrier)) {
+    for (const other of householdAndNeighbours(world, carrier, alive)) {
       if (isGlitched(other) || isJailed(world, other)) continue;
       if (chance(world, p)) strikeGlitch(world, other, `caught from ${carrier.name}`);
     }
@@ -316,7 +350,7 @@ export function checkOutbreaks(world: World): void {
 export function dailyHealth(world: World): void {
   for (const id of [...world.order]) {
     const c = world.citizens[id];
-    if (!c || !present(world, c)) continue;
+    if (!c || c.standing === 'exiled') continue;
     healthOf(c);
     if (isJailed(world, c)) continue;
     if (isGlitched(c)) { recoverOnOwn(world, c); continue; }

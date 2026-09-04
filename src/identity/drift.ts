@@ -36,10 +36,6 @@ function round4(v: number): number {
   return Math.round(v * 10_000) / 10_000;
 }
 
-function present(world: World, c: Citizen): boolean {
-  return c.standing !== 'exiled' && world.order.includes(c.id);
-}
-
 function holdsOffice(world: World, c: Citizen): boolean {
   const g = world.government;
   if (c.office !== null) return true;
@@ -124,7 +120,7 @@ export function applyDrift(world: World, c: Citizen, pull: Partial<Personality>)
 export function dailyDrift(world: World): void {
   for (const id of world.order) {
     const c = world.citizens[id];
-    if (!c || !present(world, c)) continue;
+    if (!c || c.standing === 'exiled') continue;
     ensureBirthTraits(c);
     applyDrift(world, c, driftFor(world, c));
   }

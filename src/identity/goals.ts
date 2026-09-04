@@ -15,7 +15,7 @@
  * same progress.
  */
 import { GOAL_KINDS, SKILLS, clamp } from '../types.ts';
-import type { Citizen, CitizenId, Goal, GoalKind, World } from '../types.ts';
+import type { Citizen, CitizenId, Goal, GoalKind, Milestone, World } from '../types.ts';
 import { GOALS_PER_CITIZEN, MASTER_SKILL, MAX_MILESTONES } from '../data/metropolis.ts';
 import { CHILDHOOD_DAYS, ELDER_DAYS } from '../data/catalogue.ts';
 import { shuffle } from '../util/rng.ts';
@@ -61,10 +61,6 @@ export interface ObservedGoal {
 // Small local readings (no import of citizens/citizen.ts: that file calls this
 // one, and a cycle through module initialisation is not worth the convenience)
 // ---------------------------------------------------------------------------
-
-function present(world: World, c: Citizen): boolean {
-  return c.standing !== 'exiled' && world.order.includes(c.id);
-}
 
 function round2(v: number): number {
   return Math.round(clamp(v, 0, 1) * 100) / 100;
@@ -243,13 +239,13 @@ export function recordMilestone(world: World, c: Citizen, text: string, weight =
   if (!Array.isArray(c.milestones)) c.milestones = [];
   c.milestones.push({ day: world.day, text: line });
   if (c.milestones.length > MAX_MILESTONES) c.milestones.splice(0, c.milestones.length - MAX_MILESTONES);
-  c.needs.purpose = clamp(c.needs.purpose + MILESTONE_PURPOSE, 0, 100);
+  if (c.needs) c.needs.purpose = clamp(c.needs.purpose + MILESTONE_PURPOSE, 0, 100);
   emit(world, 'milestone', line, [c.id], weight, { day: world.day });
   remember(world, c.id, 'event', line);
 }
 
 /** The milestones of a citizen, oldest first. */
-export function milestonesOf(world: World, cId: CitizenId, limit?: number): { day: number; text: string }[] {
+export function milestonesOf(world: World, cId: CitizenId, limit?: number): Milestone[] {
   const c = world.citizens[cId];
   const all = c?.milestones ?? [];
   return typeof limit === 'number' && limit >= 0 ? all.slice(Math.max(0, all.length - limit)) : all.slice();
@@ -268,7 +264,7 @@ export function milestonesOf(world: World, cId: CitizenId, limit?: number): { da
 export function dailyGoals(world: World): void {
   for (const id of world.order) {
     const c = world.citizens[id];
-    if (!c || !present(world, c)) continue;
+    if (!c || c.standing === 'exiled') continue;
     if (!Array.isArray(c.goals) || c.goals.length === 0) continue;
     if (c.lifeStage === 'child') continue;
     for (const goal of c.goals) {
