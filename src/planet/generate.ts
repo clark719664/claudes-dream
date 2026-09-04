@@ -100,6 +100,10 @@ export function generatePlanet(seed: number, w = 1024, h = 512): Planet {
       const cont2 = fbm(p.x * 2.60, p.y * 2.60, p.z * 2.60, seed + 772, 2);
       let e = (cont - 0.47) * 4.2 + (cont2 - 0.5) * 0.9;
       e += pa.oceanic ? -0.14 : 0.14;
+      // Lesser landmasses: a mid-frequency field that clears the water only at
+      // its peaks, giving a couple of small continents away from the main ones.
+      const cont3 = fbm(p.x * 4.1, p.y * 4.1, p.z * 4.1, seed + 773, 3);
+      e += Math.max(0, cont3 - 0.585) * 3.4;
 
       // Boundaries: convergence lifts mountains, divergence opens rifts.
       const rel = { x: pa.drift.x - pb.drift.x, y: pa.drift.y - pb.drift.y, z: pa.drift.z - pb.drift.z };
@@ -112,9 +116,17 @@ export function generatePlanet(seed: number, w = 1024, h = 512): Planet {
       e += (fbm(p.x * 2.6, p.y * 2.6, p.z * 2.6, seed + 17, 6) - 0.5) * 0.40;
       e += (ridged(p.x * 3.2, p.y * 3.2, p.z * 3.2, seed + 331, 5) - 0.42) * 0.40;
       e += (fbm(p.x * 7.5, p.y * 7.5, p.z * 7.5, seed + 88, 4) - 0.5) * 0.14;
-      // A few island arcs in the deep, rare enough not to speckle the ocean.
-      const arc = ridged(p.x * 5.5, p.y * 5.5, p.z * 5.5, seed + 1777, 3);
-      e += Math.max(0, arc - 0.88) * 2.2;
+      // Island arcs form where an oceanic plate is driven under another, so
+      // they follow convergent boundaries in chains rather than scattering.
+      if (pa.oceanic) {
+        const arc = ridged(p.x * 7.5, p.y * 7.5, p.z * 7.5, seed + 1777, 3);
+        e += nearness * Math.max(0, towards) * Math.max(0, arc - 0.52) * 3.2;
+      }
+      // Hotspots: rare isolated peaks far from any boundary, in short chains.
+      const hot = fbm(p.x * 2.9, p.y * 2.9, p.z * 2.9, seed + 2311, 2);
+      if (hot > 0.795) {
+        e += (hot - 0.795) * 4.0 * ridged(p.x * 9.5, p.y * 9.5, p.z * 9.5, seed + 2312, 2);
+      }
 
       elevation[y * w + x] = e;
     }
