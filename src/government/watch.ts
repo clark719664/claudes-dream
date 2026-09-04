@@ -21,6 +21,7 @@ import { defend } from './gangs.ts';
 import { expireReports, openReport, pruneBribes, watchSession } from './reports.ts';
 import { curfewVisibilityMod } from '../politics/decrees.ts';
 import { postEvidenceBonus } from '../social/feed.ts';
+import { noteHostility } from '../social/feuds.ts';
 
 /** Offences remembered per citizen (newest last). */
 export const RECENT_OFFENCES_LENGTH = 20;
@@ -152,7 +153,13 @@ export function commitOffence(
   emit(world, 'offence', `The Watch caught ${actor.name} in an act of ${name}${victim ? ` against ${victim.name}` : ''}; ${by}.`,
     victim ? [actorId, victim.id] : [actorId], severity >= 4 ? 0.8 : 0.5, { law, reportId: report.id, evidence });
   remember(world, actorId, 'crime', `The Watch caught you (${name}); ${officer ? `Officer ${officer.name} holds` : 'the Watch holds'} a report against you (${report.id}).`);
-  if (victim) remember(world, victim.id, 'crime', `${actor.name} committed ${name} against you and was caught by the Watch (report ${report.id}).`);
+  if (victim) {
+    remember(world, victim.id, 'crime', `${actor.name} committed ${name} against you and was caught by the Watch (report ${report.id}).`);
+    // Now the victim's people know whose hand it was. A crime one family keeps
+    // committing against another is how a feud starts (social/feuds.ts); an
+    // offence nobody was caught for names nobody, so it counts against no name.
+    noteHostility(world, actorId, victim.id);
+  }
   return { detected: true, reportId: report.id };
 }
 

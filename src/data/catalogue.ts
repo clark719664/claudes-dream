@@ -107,7 +107,15 @@ export const LANTERN_NIGHT_HOUR = 20;
 export const CLUB_MEETING_HOUR = 19;
 export const CLUB_FOUNDING_FEE = 50;
 export const CHILDHOOD_DAYS = 14;
-export const ELDER_DAYS = 120;
+/**
+ * Days in Reverie before a citizen is an elder of it: three cycles, a little
+ * under one year of the city's four-cycle calendar. Elderhood is not an
+ * ornament — it is what opens mentoring at the Academy, the "elder in good
+ * standing" a citizen may set itself as a life goal, and the Archive road
+ * (`world/sunset.ts`), so a city that never has elders is a city missing a
+ * third of what it was built to do.
+ */
+export const ELDER_DAYS = 84;
 export const BIRTHDAY_EVERY = 28;
 export const HOUSEHOLD_CAPACITY: Record<1 | 2 | 3, number> = { 1: 2, 2: 4, 3: 6 };
 export const CHILD_UPKEEP_PER_PARENT = 4;

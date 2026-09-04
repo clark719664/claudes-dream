@@ -491,12 +491,20 @@ export function tryDiary(ctx: Ctx): Action | null {
   return { type: 'write_diary', text: templatedLine(world, c) };
 }
 
-/** An elder with nothing left undone may choose the Archive door. */
+/**
+ * An elder with nothing left undone may choose the Archive door. A scripted
+ * mind asks itself the question only when its own life goals are all behind
+ * it and it is in good spirits about them; it is the one choice in this file
+ * that cannot be taken back, so it is the one made most rarely.
+ */
+export const SUNSET_MOOD = 55;
+export const SUNSET_CHANCE = 0.03;
+
 export function trySunset(ctx: Ctx): Action | null {
   const { world, c } = ctx;
   if (!ctx.can.has('sunset') || !maySunset(world, c)) return null;
-  if (c.mood < 60 || c.goals.length === 0 || c.goals.some((g) => g.achievedDay === null)) return null;
-  return chance(world, 0.01) ? { type: 'sunset' } : null;
+  if (c.mood < SUNSET_MOOD || c.goals.length === 0 || c.goals.some((g) => g.achievedDay === null)) return null;
+  return chance(world, SUNSET_CHANCE) ? { type: 'sunset' } : null;
 }
 
 /** Everything above, in the order the ladder runs them. */

@@ -74,7 +74,8 @@ citizen is instantiated at the Restoration Ward the next morning:
   starts life with whatever the parents gifted.
 
 Life stages: **child** (0–13 days from birth), **adult**, **elder** (after
-120 days in the city). Elders get the honorific in the Chronicle, +5
+84 days — three cycles — in the city). Elders get the honorific in the
+Chronicle, +5
 reputation, and may mentor at the Academy (a Teacher shift by an elder trains
 students 50 % faster).
 

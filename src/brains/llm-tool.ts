@@ -108,7 +108,7 @@ export const ACT_TOOL: Anthropic.Beta.BetaTool = {
       wage: { type: 'integer', description: 'post_job / set_wage: lumens per shift, at least the minimum wage.' },
       minSkill: { type: 'integer', description: 'post_job: minimum skill level 0 to 100.' },
       spend: { type: 'integer', description: 'campaign: lumens to spend on visibility (optional, 0 or more).' },
-      value: { type: 'number', description: 'propose: the new value. income_tax 0-0.5, sales_tax 0-0.25, dividend 0-60, min_wage 5-40, law_severity 1-5, public_works 0-5000, property_tax 0-0.5, wealth_tax 0-0.02, tariff 0-0.5, reserve 0-200000; 0 for the others. decree relief: lumens each citizen in hardship is paid.' },
+      value: { type: 'number', description: 'propose: the new value. income_tax 0-0.5, sales_tax 0-0.25, dividend 0-60, min_wage 5-20, law_severity 1-5, public_works 0-5000, property_tax 0-0.5, wealth_tax 0-0.02, tariff 0-0.5, reserve 0-200000; 0 for the others. decree relief: lumens each citizen in hardship is paid.' },
       jobId: { type: 'string', description: 'apply_job / hire / set_wage: job id such as j_4.' },
       proposalId: { type: 'string', description: 'vote_proposal: proposal id such as p_2.' },
       caseId: { type: 'string', description: 'verdict / vote_appeal: case id such as k_7, from observation.bench or observation.appeals.' },

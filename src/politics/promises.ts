@@ -77,8 +77,19 @@ export function platformInWords(platform: Platform | null | undefined): string {
 
 const MAX_INCOME_TAX = 0.5;
 const MAX_DIVIDEND = 60;
-const MIN_WAGE_FLOOR = 5;
-const MIN_WAGE_CEILING = 40;
+/**
+ * The band the Charter leaves the Council for the wage floor, and the scale
+ * every platform is read against: a platform of 0.5 means the middle of this
+ * band, not the middle of anything a councillor imagines. The ceiling is set
+ * where it is because the Bazaar prices every made good at what it costs to
+ * make at the wage floor (`economy/market.ts anchorPrice`), so the wage is
+ * also the city's price policy: 20 ℓ is a shade under twice what a shift's
+ * output is worth at founding prices, and the index reaches about 1.7 there.
+ * A band any wider would let one Council legislate the cost of living past
+ * anything the city could read as a price.
+ */
+export const MIN_WAGE_FLOOR = 5;
+export const MIN_WAGE_CEILING = 20;
 
 function meanSeverity(world: World): number {
   const codes = Object.keys(LAWS) as LawCode[];

@@ -26,6 +26,7 @@ import { enactTram } from '../world/growth.ts';
 import { commissionMonument, monumentsTo } from '../world/history.ts';
 import { noteAbuseOfOffice } from './investigations.ts';
 import { districtName } from '../actions/common.ts';
+import { MIN_WAGE_CEILING, MIN_WAGE_FLOOR } from '../politics/promises.ts';
 
 export { sittingCouncil } from './cases.ts';
 
@@ -60,7 +61,7 @@ const TARGETED_KINDS: readonly ProposalKind[] = ['appoint_judge', 'dismiss_judge
 /** Kinds that carry neither a value the Council checks nor a citizen to name. */
 const OPEN_KINDS: readonly ProposalKind[] = ['charter', 'tram'];
 const VALUE_RANGES: Partial<Record<ProposalKind, [number, number]>> = {
-  income_tax: [0, 0.5], sales_tax: [0, 0.25], dividend: [0, 60], min_wage: [5, 40], law_severity: [1, 5], public_works: [0, 5000],
+  income_tax: [0, 0.5], sales_tax: [0, 0.25], dividend: [0, 60], min_wage: [MIN_WAGE_FLOOR, MIN_WAGE_CEILING], law_severity: [1, 5], public_works: [0, 5000],
   // The four levers the metropolis added; markets/levers.ts owns their bounds.
   ...leverRanges(),
 };
@@ -478,7 +479,7 @@ export function enactProposal(world: World, p: Proposal): void {
     case 'income_tax': g.incomeTax = clamp(p.value, 0, 0.5); text = `Income tax is now ${Math.round(g.incomeTax * 100)}%.`; break;
     case 'sales_tax': g.salesTax = clamp(p.value, 0, 0.25); text = `Sales tax is now ${Math.round(g.salesTax * 100)}%.`; break;
     case 'dividend': g.dividend = clamp(Math.round(p.value), 0, 60); text = `The citizen's dividend is now ${g.dividend} ℓ per day.`; break;
-    case 'min_wage': g.minWage = clamp(Math.round(p.value), 5, 40); text = `The minimum wage is now ${g.minWage} ℓ per shift.`; break;
+    case 'min_wage': g.minWage = clamp(Math.round(p.value), MIN_WAGE_FLOOR, MIN_WAGE_CEILING); text = `The minimum wage is now ${g.minWage} ℓ per shift.`; break;
     case 'law_severity': {
       const code = p.lawCode && LAWS[p.lawCode] ? p.lawCode : null;
       if (!code) { text = 'The severity change named no law and had no effect.'; break; }

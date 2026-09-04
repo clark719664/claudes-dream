@@ -18,8 +18,10 @@
  * Nothing lasts. A rumour whose subject was acquitted of the law it named, or
  * one that has gone RUMOUR_LIFE_DAYS without ever becoming a charge, is
  * **disproved**: the subject gets back half of what the talk cost them, and a
- * rumour that was false all along exposes its source to a charge of
- * defamation (L16) — spread with the Watch's eye already on the speaker.
+ * rumour that **named a law** the subject never broke exposes its source to a
+ * charge of defamation (L16) — spread with the Watch's eye already on the
+ * speaker. Talk that accused nobody of a crime is answered by nothing: the
+ * Code has no offence of being wrong about where somebody was on Stillday.
  *
  * The subject is never told a rumour has started. They hear it the way anyone
  * hears anything: when it reaches a friend of theirs.
@@ -242,7 +244,12 @@ export function disproveRumours(world: World): void {
     emit(world, 'rumour', `The rumour about ${subject?.name ?? r.aboutId} ("${r.claim}") came to nothing: ${how}.`,
       [r.aboutId, r.sourceId], 0.6, { rumourId: r.id, truthful: r.truthful, cost, restored: back });
 
-    if (r.truthful || !source || !isPresent(world, source)) continue;
+    // Defamation is an accusation that would not stand up, not idle talk: a
+    // rumour that named a law the subject never broke. Talk that accused
+    // nobody of anything costs the subject reputation while it runs and
+    // nothing after — the city has no charge for having been wrong about
+    // somebody's whereabouts.
+    if (r.law === null || r.truthful || !source || !isPresent(world, source)) continue;
     const caught = commitOffence(world, r.sourceId, 'L16', {
       victimId: r.aboutId, visibilityMod: DEFAMATION_VISIBILITY,
     });

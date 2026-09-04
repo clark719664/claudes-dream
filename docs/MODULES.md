@@ -297,7 +297,7 @@ standingAllows(c, actionType): boolean    // exiled → nothing; suspended → S
 ```ts
 tableProposal(world, proposerId, spec: { kind; value; summary; lawCode?; targetId? }): ActionResult
   // councillors table proposals; others petition (petition: true). needed = 4 for pardon/charter/remove_mayor else 3.
-  // Value ranges: income_tax 0..0.5, sales_tax 0..0.25, dividend 0..60, min_wage 5..40, law_severity 1..5 (lawCode required),
+  // Value ranges: income_tax 0..0.5, sales_tax 0..0.25, dividend 0..60, min_wage 5..20, law_severity 1..5 (lawCode required),
   // public_works 0..5000, appoint_judge/dismiss_judge/pardon/remove_mayor need targetId. One open proposal per proposer.
 voteOnProposal(world, voterId, proposalId, aye): ActionResult   // councillors only
 councillorDisposition(world, councillorId, p: Proposal): boolean

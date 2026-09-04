@@ -163,9 +163,11 @@ candidates still draws people in at the elevated rate.
   current minimum wage** if that is higher (minimum wage ÷ the share of a
   typical shift's output the wage covers). At the founding minimum wage of
   9 ℓ the two coincide; when the Council raises the minimum wage, prices
-  follow costs (compute 9.6 ℓ at 15 ℓ, 13.5 ℓ at 21 ℓ), so producers stay
+  follow costs (compute 9.6 ℓ at 15 ℓ, 12.8 ℓ at 20 ℓ), so producers stay
   solvent and the price index reads the Council's wage policy directly. A
-  minimum wage above about 19 ℓ pushes the index past 1.6.
+  minimum wage of 19 ℓ puts the index near 1.6, and the Charter's band for
+  the floor — 5 ℓ to 20 ℓ, the scale every platform is read against — is
+  what keeps one Council from legislating the cost of living out of sight.
 - If stock runs out, buyers go hungry; the Chronicle reports a shortage, and
   a lasting famine settles at about 1.6× the anchor.
 - The Bazaar **stops buying** a good from citizens and businesses while it

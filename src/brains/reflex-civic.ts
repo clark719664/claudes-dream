@@ -12,6 +12,7 @@ import { bondBetween, friendsOf } from '../citizens/relationships.ts';
 import { hasUndetectedRecentOffence, topStories } from '../sim/chronicle.ts';
 import { REPORT_WINDOW_TICKS } from '../government/watch.ts';
 import { councillorDisposition, impliedPlatform, isCouncillor, treasuryDeficitShare, voterPreference } from '../government/council.ts';
+import { MIN_WAGE_CEILING, MIN_WAGE_FLOOR } from '../politics/promises.ts';
 import { districtName, isPresent, parseGrievance } from '../actions/common.ts';
 import type { Grievance } from '../actions/common.ts';
 import { inGoodStanding, stepTo } from './reflex-util.ts';
@@ -124,8 +125,8 @@ export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
       ? `Trim the dividend to ${g.dividend - 5} ℓ to steady the Treasury`
       : `Lower the dividend to ${g.dividend - 5} ℓ; work should pay, not the Treasury` });
   }
-  if (platform.minWage > 0.6 && g.minWage <= 38) options.push({ kind: 'min_wage', value: g.minWage + 2, summary: `Raise the minimum wage to ${g.minWage + 2} ℓ a shift` });
-  if (platform.minWage < 0.4 && g.minWage >= 6) options.push({ kind: 'min_wage', value: g.minWage - 1, summary: `Lower the minimum wage to ${g.minWage - 1} ℓ so businesses can hire` });
+  if (platform.minWage > 0.6 && g.minWage <= MIN_WAGE_CEILING - 1) options.push({ kind: 'min_wage', value: g.minWage + 1, summary: `Raise the minimum wage to ${g.minWage + 1} ℓ a shift` });
+  if (platform.minWage < 0.4 && g.minWage >= MIN_WAGE_FLOOR + 1) options.push({ kind: 'min_wage', value: g.minWage - 1, summary: `Lower the minimum wage to ${g.minWage - 1} ℓ so businesses can hire` });
   if (platform.strictness > 0.65) {
     const laws = STRICTER_LAWS.filter((l) => g.lawSeverity[l] < 5);
     if (laws.length) {
