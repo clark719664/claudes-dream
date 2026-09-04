@@ -189,13 +189,16 @@ test('the Hospital takes the fee, restores rest and compute, and almost always c
 
 test('the Ward needs a medic, and sometimes fails anyway; the fee is kept either way', () => {
   const w = makeWorld({ seed: 11 });
+  const hospital = addHospital(w);
+  hospital.damage = 1; // the Hospital is in ruins, so the Ward is what there is
   const c = makeCitizen(w, { district: 'verdant_quarter', wallet: 1000 });
   assert.equal(wardHasMedic(w), false);
-  assert.equal(venueFor(w, c), null);
+  assert.equal(venueFor(w, c), null, 'a ruined Hospital and no medic is nowhere at all');
   assert.equal(treat(w, c.id).ok, false, 'nowhere to be treated');
 
   addMedic(w);
   assert.equal(wardHasMedic(w), true);
+  assert.equal(venueFor(w, c)?.place, 'the Restoration Ward');
   assert.equal(venueFor(w, c)?.cure, WARD_CURE_CHANCE);
 
   let cured = 0;
@@ -235,6 +238,7 @@ test('treatment is refused, never thrown, when a citizen cannot pay or does not 
   const w = makeWorld();
   addHospital(w);
   const broke = makeCitizen(w, { district: 'verdant_quarter', wallet: HOSPITAL_FEE - 1 });
+  assert.equal(venueFor(w, broke)?.place, 'the Hospital');
   const r = treat(w, broke.id);
   assert.equal(r.ok, false);
   assert.match(r.message, new RegExp(String(HOSPITAL_FEE)));

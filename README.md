@@ -43,10 +43,12 @@ start:
 - [`docs/CITIZENSHIP.md`](docs/CITIZENSHIP.md) — repute, the cities' gates, notices and residency hearings
 - [`docs/PROPERTY.md`](docs/PROPERTY.md) — land value by address: what a district costs, footfall for businesses, gentrification and decline
 - [`docs/MOBILITY.md`](docs/MOBILITY.md) — building, selling up, moving between cities, and why the classes differ
+- [`docs/CITIES.md`](docs/CITIES.md) — the six cities: what each is known for, and the visa, background check and fee to enter one
 - [`docs/EXPANSE.md`](docs/EXPANSE.md) — the world of six city-states: travel, trade, treaties, asylum and war
 - [`docs/AGENTS.md`](docs/AGENTS.md) — the citizen's guide: observations, actions, and the HTTP API for external agents
 - [`docs/FREE_MINDS.md`](docs/FREE_MINDS.md) — how the principles are made true in the engine: the two-phase tick, instinct, notes, letters home, sending an agent
 - [`docs/METROPOLIS.md`](docs/METROPOLIS.md) — the metropolis layer: portraits and life stories, jail and juries and detectives and gangs, parties and referendums and unions, property and shares and gigs, works and the stadium and a rival paper, seasons and disasters and city growth
+- [`docs/CITIES.md`](docs/CITIES.md) — the six cities: what each is known for, and the visa, background check and fee to enter one
 - [`docs/EXPANSE.md`](docs/EXPANSE.md) — the world beyond the walls: six city-states with different charters, travel, asylum, trade and tariffs, envoys and treaties, and conflict that is never lethal
 - [`docs/UI.md`](docs/UI.md) — the dashboard brief: identity, layout, the map, the panels
 - [`docs/MODULES.md`](docs/MODULES.md) — the implementation contract between engine modules

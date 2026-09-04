@@ -40,7 +40,8 @@ test('an era opens on day 0 and closes at the cycle boundary', () => {
   assert.equal(currentEra(w)!.cycle, 1);
   assert.equal(eraOfDay(w, 5)?.cycle, 0);
   assert.equal(eraOfDay(w, CYCLE + 5)?.cycle, 1);
-  assert.equal(eraOfDay(w, 999), null);
+  assert.equal(eraOfDay(w, CYCLE * 4), currentEra(w), 'the open era runs until it is closed');
+  assert.equal(eraOfDay(w, -1), null, 'the city has no history before it began');
 });
 
 test('an era is named for the Mayor who sits through it', () => {
