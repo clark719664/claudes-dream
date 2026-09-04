@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BIOMES, generatePlanet, LAND_FRACTION } from '../src/planet/generate.ts';
 import { productionMultipliers, surveyHinterland, describeHinterland } from '../src/planet/hinterland.ts';
-import { findSites, foundCities, leaguesBetween, cityTrade } from '../src/planet/sites.ts';
+import { findSites, foundCities, leaguesBetween, cityTrade, MAX_FROZEN_SHARE, MIN_SITE_TEMPERATURE } from '../src/planet/sites.ts';
 import { buildRoutes, fastestRoute, SPEED } from '../src/planet/routes.ts';
 
 /** A small planet: the same code paths, quick enough for a test run. */
@@ -145,4 +145,33 @@ test('routes cross real ground and take time to walk', () => {
   const fastest = fastestRoute(routes, pair.from, pair.to);
   assert.ok(fastest && fastest.ticks <= pair.ticks, 'the fastest route is no slower than any other');
   assert.equal(fastestRoute(routes, 'Nowhere', 'Elsewhere'), null);
+});
+
+test('no city is ever founded on the ice, the tundra or bare rock', () => {
+  // Across many worlds, not just this one: a harbour in the arctic is still
+  // the arctic, and a site has to be able to feed the people on it.
+  for (const seed of [1, 4, 7, 11, 19, 23, 31, 47]) {
+    const world = generatePlanet(seed, 256, 128);
+    const cities = foundCities(world, findSites(world, 40, 160));
+    assert.ok(cities.length >= 5, `seed ${seed} founded ${cities.length} cities`);
+    for (const c of cities) {
+      const biome = BIOMES[world.biome[c.y * world.w + c.x]];
+      assert.ok(!['ice', 'tundra', 'alpine'].includes(biome),
+        `seed ${seed}: ${c.name} was founded on ${biome}`);
+      assert.ok(c.hinterland.meanTemperature >= MIN_SITE_TEMPERATURE,
+        `seed ${seed}: ${c.name} is too cold (${c.hinterland.meanTemperature.toFixed(2)})`);
+      const frozen = (c.hinterland.biomes.ice ?? 0) + (c.hinterland.biomes.tundra ?? 0);
+      assert.ok(frozen <= MAX_FROZEN_SHARE,
+        `seed ${seed}: ${c.name} has ${(frozen * 100).toFixed(0)}% frozen country`);
+      assert.ok(world.elevation[c.y * world.w + c.x] > world.seaLevel,
+        `seed ${seed}: ${c.name} is not on dry land`);
+    }
+    // Vantage is the one that tempted the siting toward the poles, because a
+    // frozen coast still scores as a harbour.
+    const vantage = cities.find((c) => c.name === 'Vantage');
+    if (vantage) {
+      assert.ok(Math.abs(vantage.lat) < 1.15,
+        `seed ${seed}: Vantage sits at ${(vantage.lat * 180 / Math.PI).toFixed(0)} degrees`);
+    }
+  }
 });

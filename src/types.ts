@@ -32,7 +32,9 @@ export type DistrictId =
   | 'harbor_market'
   | 'verdant_quarter'
   | 'nightglass'
-  | 'threshold';
+  | 'threshold'
+  | 'heights'
+  | 'undercroft';
 
 export type Good = 'compute' | 'energy' | 'goods' | 'culture' | 'knowledge';
 export type Skill = 'crafting' | 'analysis' | 'rhetoric' | 'care' | 'commerce' | 'artistry';
@@ -68,7 +70,11 @@ export const NEEDS: readonly Need[] = ['energy', 'rest', 'social', 'comfort', 'p
 export const TRAITS: readonly Trait[] = ['curiosity', 'diligence', 'sociability', 'honesty', 'ambition'];
 export const DISTRICT_IDS: readonly DistrictId[] = [
   'commons', 'foundry_row', 'archive', 'harbor_market', 'verdant_quarter', 'nightglass', 'threshold',
+  'heights', 'undercroft',
 ];
+
+/** Districts the city has from its founding; the rest open with the population (world/growth.ts). */
+export const FOUNDING_DISTRICT_IDS: readonly DistrictId[] = DISTRICT_IDS.slice(0, 7);
 
 // ---------------------------------------------------------------------------
 // Law
@@ -76,10 +82,16 @@ export const DISTRICT_IDS: readonly DistrictId[] = [
 
 export type LawCode =
   | 'L01' | 'L02' | 'L03' | 'L04' | 'L05' | 'L06' | 'L07' | 'L08'
-  | 'L09' | 'L10' | 'L11' | 'L12' | 'L13' | 'L14' | 'L15';
+  | 'L09' | 'L10' | 'L11' | 'L12' | 'L13' | 'L14' | 'L15'
+  | 'L16' | 'L17';
 
 export type Severity = 1 | 2 | 3 | 4 | 5;
-export type PenaltyTier = 1 | 2 | 3 | 4 | 5;
+/**
+ * The ladder: 1 warning, 2 fine, 3 community service, 4 jail, 5 suspension,
+ * 6 exile. Jail is the rung the city gained when the cells were built at the
+ * Watch House: a punishment short of taking a citizen's whole standing away.
+ */
+export type PenaltyTier = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface Law {
   code: LawCode;
@@ -383,6 +395,36 @@ export interface Citizen {
   wants: string[];
   /** Wards of the city: the adult family friend looking after a child whose parents are gone. */
   guardianId: CitizenId | null;
+
+  // --- Metropolis ---
+  // Optional so a world saved before this layer still loads; every one of them
+  // reads as its empty default (`?? null`, `?? []`) until the citizen has one.
+  /** Two ambitions drawn at arrival or coming of age. Nothing scores them. */
+  goals?: Goal[];
+  /** The evening line, public and bounded. */
+  diary?: DiaryEntry[];
+  milestones?: Milestone[];
+  /** The traits rolled at birth; drift is measured from these and shown to nobody. */
+  birthTraits?: Personality;
+  health?: { glitched: boolean; sinceDay: number | null };
+  school?: SchoolOfThought;
+  partyId?: string | null;
+  unionId?: string | null;
+  gangId?: string | null;
+  teamDistrict?: DistrictId | null;
+  /** Day the cells let this citizen out; null when they are not in them. */
+  jailedUntilDay?: number | null;
+  /** This citizen's own reading of the Mayor and the Council, 0..1. */
+  approval?: { mayor: number; council: number };
+  works?: string[];
+  ownedUnits?: string[];
+  shares?: Record<BusinessId, number>;
+  mentorId?: CitizenId | null;
+  menteeId?: CitizenId | null;
+  paper?: PaperId;
+  sunsetDay?: number | null;
+  /** The block a citizen lives in — neighbours, rest and the map need it. */
+  homeBuildingId?: BuildingId | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -394,7 +436,8 @@ export type JobRole =
   | 'medic' | 'teacher' | 'librarian' | 'researcher' | 'journalist'
   | 'merchant' | 'banker' | 'performer' | 'artist' | 'courier'
   | 'watch_officer' | 'judge' | 'councillor' | 'mayor'
-  | 'shopkeeper' | 'cook' | 'clerk';
+  | 'shopkeeper' | 'cook' | 'clerk'
+  | 'detective' | 'advocate' | 'curator' | 'coach';
 
 export interface JobOutput {
   good?: Good;
@@ -525,6 +568,8 @@ export interface Sentence {
   tier: PenaltyTier;
   fine: number;
   serviceDays: number;
+  /** Days in the cells at the Watch House (tier 4). */
+  jailDays: number;
   suspensionDays: number;
   exile: boolean;
   /** Exile is executed at the start of this day unless an appeal is pending. */
@@ -568,6 +613,18 @@ export interface Case {
   verdict: Verdict | null;
   sentence: Sentence | null;
   appeal: Appeal | null;
+  /**
+   * Cases of severity ≥ JURY_SEVERITY are heard by the bench **and** a jury of
+   * five citizens drawn by lot. A juror's vote counts exactly as a judge's
+   * does. Empty for every lesser charge.
+   */
+  jury?: CitizenId[];
+  juryVotes?: Record<CitizenId, Verdict>;
+  juryReasons?: Record<CitizenId, string>;
+  /** The advocate the defendant hired (or the Public Defender assigned to them). */
+  advocateId?: CitizenId | null;
+  /** What the advocate's speech was worth: subtracted from every judge's belief. */
+  advocacy?: number;
 }
 
 /** What has become of a report the Watch holds. */
@@ -835,6 +892,40 @@ export interface World {
   /** Today's and tomorrow's happenings; pruned daily. */
   happenings: Happening[];
 
+  // --- Metropolis ---
+  // Optional for the same reason the Citizen's are: an older save still runs.
+  season?: Season;
+  weather?: Weather;
+  year?: number;
+  works?: Record<string, Work>;
+  parties?: Record<string, Party>;
+  referendums?: Referendum[];
+  unions?: Record<string, Union>;
+  decrees?: Decree[];
+  property?: Record<string, PropertyUnit>;
+  shares?: Record<BusinessId, ShareListing>;
+  gigs?: Record<string, Gig>;
+  outer?: OuterMarket;
+  teams?: Partial<Record<DistrictId, Team>>;
+  matches?: Match[];
+  /** Open investigations, by id. */
+  investigations?: Record<string, Investigation>;
+  /** Every gang the city has ever had, busted ones included. */
+  gangs?: Record<string, Gang>;
+  rumours?: Rumour[];
+  feuds?: Feud[];
+  feed?: Post[];
+  eras?: Era[];
+  records?: CityRecord[];
+  monuments?: Monument[];
+  memorials?: Memorial[];
+  disasters?: Disaster[];
+  openDistricts?: DistrictId[];
+  trams?: [DistrictId, DistrictId][];
+  museum?: string[];
+  /** Cells at the Watch House. More prisoners than this and someone goes free. */
+  jailCells?: number;
+
   /** Bounded event log, newest last. */
   events: WorldEvent[];
   /** Events emitted during the current tick (cleared at the start of each tick). */
@@ -865,6 +956,118 @@ export const DEFAULT_CONFIG: WorldConfig = {
   chronicleHour: 6,
   decisionDeadlineMs: 0,
 };
+
+// ---------------------------------------------------------------------------
+// The metropolis: seasons, ambitions, culture, politics, markets, the underworld
+// ---------------------------------------------------------------------------
+
+export type Season = 'bloom' | 'blaze' | 'fall' | 'frost';
+export type Weather = 'clear' | 'rain' | 'storm' | 'fog' | 'heat' | 'snow';
+export const SEASONS: readonly Season[] = ['bloom', 'blaze', 'fall', 'frost'];
+export const WEATHERS: readonly Weather[] = ['clear', 'rain', 'storm', 'fog', 'heat', 'snow'];
+
+export type GoalKind =
+  | 'hold_office' | 'become_mayor' | 'own_villa' | 'lasting_business' | 'marry'
+  | 'raise_child' | 'master_skill' | 'publish_work' | 'win_championship' | 'elder_standing'
+  | 'amass_5000' | 'club_of_ten' | 'sit_as_judge';
+export const GOAL_KINDS: readonly GoalKind[] = [
+  'hold_office', 'become_mayor', 'own_villa', 'lasting_business', 'marry',
+  'raise_child', 'master_skill', 'publish_work', 'win_championship', 'elder_standing',
+  'amass_5000', 'club_of_ten', 'sit_as_judge',
+];
+export interface Goal { kind: GoalKind; progress: number; achievedDay: number | null }
+export interface DiaryEntry { day: number; text: string }
+export interface Milestone { day: number; text: string }
+
+export type SchoolOfThought = 'makers' | 'commons' | 'lanterns' | null;
+export const SCHOOLS: readonly Exclude<SchoolOfThought, null>[] = ['makers', 'commons', 'lanterns'];
+
+export type PaperId = 'chronicle' | 'ledger';
+export const PAPERS: readonly PaperId[] = ['chronicle', 'ledger'];
+
+export type WorkKind = 'painting' | 'play' | 'song' | 'book' | 'paper' | 'expose';
+export const WORK_KINDS: readonly WorkKind[] = ['painting', 'play', 'song', 'book', 'paper', 'expose'];
+export interface Work {
+  id: string; kind: WorkKind; title: string; creatorId: CitizenId; createdDay: number;
+  quality: number; popularity: number; home: BuildingId; inMuseum: boolean;
+  reviews: { paper: PaperId; score: number; day: number }[];
+}
+
+export interface Party {
+  id: string; name: string; platform: Platform; founderId: CitizenId; leaderId: CitizenId;
+  members: CitizenId[]; foundedDay: number; seats: number;
+}
+export interface Referendum {
+  id: string; petitionId: ProposalId; question: string; day: number;
+  ayes: number; nays: number; result: 'passed' | 'failed' | null;
+}
+export interface Union {
+  id: string; role: JobRole; name: string; members: CitizenId[];
+  demandWage: number; strikingUntilDay: number | null;
+}
+export interface Decree {
+  kind: 'tax_holiday' | 'curfew' | 'relief' | 'emergency';
+  day: number; district: DistrictId | null; value: number;
+  /** Last day the decree is in force (inclusive). */
+  untilDay: number;
+  byId: CitizenId;
+}
+
+export interface PropertyUnit {
+  id: string; kind: 'home' | 'shopfront'; tier: HousingTier; buildingId: BuildingId;
+  ownerId: CitizenId | 'city'; tenantId: CitizenId | BusinessId | null; rent: number;
+}
+export interface ShareListing {
+  businessId: BusinessId; price: number; holders: Record<CitizenId, number>;
+  float: number; lastDividendDay: number | null;
+}
+export interface Gig {
+  id: string; title: string; pay: number; skill: Skill | null; minSkill: number;
+  posterId: CitizenId | BusinessId; takerId: CitizenId | null; postedDay: number; doneDay: number | null;
+}
+export interface OuterMarket { prices: Record<Good, number>; tariff: number; touristsToday: number }
+
+export interface Team { district: DistrictId; name: string; players: CitizenId[]; wins: number; losses: number; draws: number }
+export interface Match { day: number; home: DistrictId; away: DistrictId; homeGoals: number; awayGoals: number; attendance: number }
+
+/**
+ * What a detective is building against a suspect nobody caught. Evidence
+ * grows with the days worked on it; at CHARGE_EVIDENCE it becomes a report in
+ * the Watch's book, and an officer decides from there. The suspect is never
+ * told an investigation is open.
+ */
+export interface Investigation {
+  id: string; suspectId: CitizenId; law: LawCode; evidence: number; openedDay: number;
+  detectiveId: CitizenId; closedDay: number | null; caseId: CaseId | null;
+  /** The report the investigation produced, when it reached the Watch's book. */
+  reportId: ReportId | null;
+}
+
+/** A gang: a boss, its members, the district it calls its turf, and its marks. */
+export interface Gang {
+  id: string; name: string; bossId: CitizenId; members: CitizenId[]; turf: DistrictId;
+  foundedDay: number; bustedDay: number | null; rackets: BusinessId[];
+}
+
+export interface Rumour {
+  id: string; aboutId: CitizenId; sourceId: CitizenId; claim: string; law: LawCode | null;
+  truthful: boolean; day: number; heardBy: CitizenId[]; disprovedDay: number | null;
+}
+export interface Feud { families: [string, string]; sinceDay: number; incidents: number; endedDay: number | null }
+export type ReactionKind = 'cheer' | 'frown' | 'laugh';
+export const REACTIONS: readonly ReactionKind[] = ['cheer', 'frown', 'laugh'];
+export interface Post { id: string; authorId: CitizenId; day: number; text: string; reactions: Record<CitizenId, ReactionKind> }
+
+export interface Era { cycle: number; name: string; mayorId: CitizenId | null; fromDay: number; toDay: number | null }
+export interface CityRecord { key: string; label: string; holderId: CitizenId | null; value: number; day: number }
+export interface Monument { id: string; honoreeId: CitizenId; inscription: string; day: number }
+export interface Memorial { citizenId: CitizenId; day: number; epitaph: string }
+export interface Disaster {
+  kind: 'storm' | 'blackout' | 'data_flood' | 'forge_fire' | 'outbreak';
+  day: number; district: DistrictId | null; severity: number; resolvedDay: number | null;
+}
+
+export interface Menu { dish: string; price: number; quality: number; setDay: number }
 
 // ---------------------------------------------------------------------------
 // Actions

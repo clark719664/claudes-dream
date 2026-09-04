@@ -47,14 +47,26 @@ export const FOUNDING_CITIES = [
 /** How many sites the planet offers for cities that do not exist yet. */
 export const VIABLE_SITES = 60;
 
+/** Below this mean hinterland temperature nothing grows and nobody settles. */
+export const MIN_SITE_TEMPERATURE = 0.34;
+/** A site may not have more than this share of its country under ice or tundra. */
+export const MAX_FROZEN_SHARE = 0.22;
+
 function siteAt(p: Planet, x: number, y: number): Site | null {
   const i = y * p.w + x;
   if (p.elevation[i] <= p.seaLevel) return null;
   const b = BIOMES[p.biome[i]];
-  if (b === 'ice' || b === 'alpine') return null;             // nobody builds up there
+  // Nobody founds a city on the ice cap, on bare rock, or on the tundra: there
+  // is nothing to eat and nothing to build with.
+  if (b === 'ice' || b === 'alpine' || b === 'tundra') return null;
 
   const alt = Math.max(0, (p.elevation[i] - p.seaLevel) / Math.max(0.12, p.landTop - p.seaLevel));
   const h = surveyHinterland(p, x, y);
+
+  // A harbour in the arctic is still the arctic. A site must be able to feed
+  // the people who live on it, whatever else recommends it.
+  const frozen = (h.biomes.ice ?? 0) + (h.biomes.tundra ?? 0);
+  if (h.meanTemperature < MIN_SITE_TEMPERATURE || frozen > MAX_FROZEN_SHARE) return null;
   const harbour = p.coastDist[i] <= 2 && h.yields.freight > 0.25;
   const river = p.flow[i] > 600;
   const ore = h.yields.energy > 0.55 && alt > 0.30;
@@ -69,13 +81,17 @@ function siteAt(p: Planet, x: number, y: number): Site | null {
     pass = (e(-6, 0) < here - 0.05 && e(6, 0) < here - 0.05) || (e(0, -6) < here - 0.05 && e(0, 6) < here - 0.05);
   }
 
+  // Cold country is a worse place to build, short of the hard limit above.
+  const warmth = Math.max(0, Math.min(1, (h.meanTemperature - MIN_SITE_TEMPERATURE) / 0.22));
+
   const quality = Math.max(0, Math.min(1,
+    (0.55 + 0.45 * warmth) * (
     0.30 * h.landShare +
     0.22 * Math.min(1, h.yields.compute / 0.55) +
     0.14 * (harbour ? 1 : 0) +
     0.12 * (river ? 1 : 0) +
     0.10 * Math.min(1, h.yields.goods / 0.5) +
-    0.12 * (1 - Math.abs(h.meanTemperature - 0.62) * 2)));
+    0.12 * (1 - Math.abs(h.meanTemperature - 0.62) * 2))));
 
   return {
     x, y,
