@@ -128,10 +128,13 @@ test('every dashboard endpoint answers with the shape the app expects', async ()
   const map = await json(await get('/api/map'));
   assert.equal((map.districts as unknown[]).length, 7);
   assert.ok((map.buildings as unknown[]).length > 20);
+  assert.equal(map.width, 72, 'the grid is wide enough for the Heights and the Undercroft');
+  assert.equal(map.height, 40);
   const dots = map.citizens as { x: number; y: number; standing: string }[];
   assert.equal(dots.length, 6);
   for (const d of dots) {
-    assert.ok(d.x >= 0 && d.x <= 60 && d.y >= 0 && d.y <= 40, `dot inside the grid: ${d.x},${d.y}`);
+    assert.ok(d.x >= 0 && d.x <= (map.width as number) && d.y >= 0 && d.y <= (map.height as number),
+      `dot inside the grid: ${d.x},${d.y}`);
   }
 
   const list = await json(await get('/api/citizens?sort=-wallet'));

@@ -23,7 +23,12 @@ export interface SimStatus {
   pendingRemote: CitizenId[];
 }
 
-export const MAP_WIDTH = 60;
+/**
+ * The city grid. Seventy-two wide since the Heights and the Undercroft were
+ * platted along the eastern edge (`src/data/city.ts`); a city that has not
+ * opened them yet simply draws nothing over there.
+ */
+export const MAP_WIDTH = 72;
 export const MAP_HEIGHT = 40;
 
 // ---------------------------------------------------------------- helpers
@@ -118,8 +123,8 @@ function jitter(id: string): [number, number] {
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
- * Where a citizen stands on the 60 x 40 grid: jittered inside their
- * district, at the Exile Gate when exiled, at the Watch House when detained.
+ * Where a citizen stands on the grid: jittered inside their district, at the
+ * Exile Gate when exiled, at the Watch House when detained.
  */
 export function positionOf(world: World, c: Citizen): { x: number; y: number } {
   const [u, v] = jitter(c.id);

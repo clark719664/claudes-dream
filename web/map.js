@@ -1,7 +1,7 @@
 /*
  * Reverie dashboard — the SVG city map.
  *
- * Districts are labelled rounded rectangles on the 60 x 40 city grid,
+ * Districts are labelled rounded rectangles on the 72 x 40 city grid,
  * buildings are small squares (gold-edged when critical, tinted red by
  * damage), citizens are dots jittered inside their district and coloured by
  * standing; children are smaller, office holders wear a gold ring, detained

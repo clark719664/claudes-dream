@@ -27,6 +27,10 @@ import {
   restDayOff, tryBirthdayGift, tryClubLife, tryClubMeeting, tryCraft, tryDine, tryDonate, tryHappening, tryPlay,
   tryRomance, tryUseItem, tryWants,
 } from './reflex-society.ts';
+import {
+  tryCulture, tryDiary, tryFabric, tryGig, tryHealth, tryJail, tryPolitics, tryProperty, trySchoolAndPaper,
+  tryShares, trySport, tryStrike, trySunset, tryTrade, tryUnion,
+} from './reflex-metro.ts';
 import { childDecide } from './child.ts';
 
 export const HUNGRY = 30;
@@ -332,16 +336,19 @@ function tryJobHunt(ctx: Ctx): Action | null {
 }
 
 const LADDER: readonly Step[] = [
-  tryAppeal, tryEat, tryDine, tryInbox, tryCharity, tryRest, tryHousing,
+  tryAppeal, tryEat, tryDine, tryInbox, tryCharity, tryHealth, tryRest, tryHousing, tryDiary,
   tryHappening, tryClubMeeting,
-  tryJobHunt, tryWorkday, tryCraft, tryCivic, tryBusiness,
+  tryStrike, tryJobHunt, tryWorkday, tryGig, tryCraft, tryCivic, tryBusiness,
+  tryTrade, tryProperty, tryShares,
   tryRomance, trySocial, tryComfort, tryWants, tryPurpose,
-  tryReport, tryCrime, tryPerform, tryClubLife, tryBirthdayGift, tryDonate, tryUseItem, tryGift,
+  tryReport, tryCrime, tryPerform, tryCulture, trySport, tryPolitics, tryUnion,
+  tryClubLife, tryBirthdayGift, tryDonate, tryFabric, trySchoolAndPaper, tryUseItem, tryGift, trySunset,
 ];
 
 /** Only what a suspended citizen may still do: appeal, eat, rest, keep company, write. */
 const RESTRICTED_LADDER: readonly Step[] = [
-  tryAppeal, tryEat, tryDine, tryInbox, tryRest, tryHappening, trySocial, tryComfort, tryPlay, tryUseItem,
+  tryAppeal, tryEat, tryDine, tryInbox, tryHealth, tryRest, tryDiary, tryHappening,
+  trySocial, tryComfort, tryPlay, tryFabric, trySchoolAndPaper, tryUseItem,
 ];
 
 function decideSuspended(ctx: Ctx): Action {
@@ -358,6 +365,9 @@ export function reflexDecide(world: World, c: Citizen, obs: Observation): Action
   if (c.standing === 'exiled' || obs.self.detained) return { type: 'idle' };
   if (c.lifeStage === 'child') return childDecide(world, c, obs);
   const ctx = makeCtx(world, c, obs);
+  // A term in the cells takes everything but the notebook, a letter and the appeal.
+  const held = tryJail(ctx);
+  if (held) return held;
   if (c.standing === 'suspended') return decideSuspended(ctx);
   for (const step of LADDER) {
     const a = step(ctx);
