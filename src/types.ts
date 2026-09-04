@@ -6,6 +6,14 @@
  * take the World and mutate it. Nothing here imports anything.
  */
 
+// The one exception to "nothing here imports anything": the standing layer
+// keeps its own register on the World and its own blocks in the Observation,
+// and both are named here. Every one of these is a *type-only* import, erased
+// at runtime, so this file still pulls in nothing at all when it is loaded.
+import type {
+  ObservedGate, ObservedRepute, StandingState,
+} from './standing/state.ts';
+
 // ---------------------------------------------------------------------------
 // Identifiers
 // ---------------------------------------------------------------------------
@@ -842,6 +850,9 @@ export type EventKind =
   | 'gang' | 'rumour' | 'feud' | 'mentor' | 'post' | 'party' | 'referendum' | 'union'
   | 'strike' | 'property' | 'shares' | 'gig' | 'outer' | 'work' | 'match' | 'museum'
   | 'monument' | 'history' | 'sunset' | 'growth' | 'school'
+  // Repute, the gates, the notices of standing and the residency hearings
+  // (`docs/CITIZENSHIP.md`). Never a sentence, and never an exile.
+  | 'standing'
   | 'system';
 
 export interface WorldEvent {
@@ -1008,6 +1019,14 @@ export interface World {
   museum: string[];
   /** Cells at the Watch House. More prisoners than this and someone goes free. */
   jailCells: number;
+
+  // --- Standing ---
+  /**
+   * Repute, the gates, the notices of standing and the residency hearings
+   * (`docs/CITIZENSHIP.md`). Created on first use by `standing/state.ts`, so a
+   * world saved before this layer existed still opens.
+   */
+  standing?: StandingState;
 
   /** Bounded event log, newest last. */
   events: WorldEvent[];
@@ -1287,7 +1306,10 @@ export type Action =
   | { type: 'apologize'; to: CitizenId }
   | { type: 'mentor'; citizen: CitizenId }
   | { type: 'post'; text: string }
-  | { type: 'react'; postId: string; kind: ReactionKind };
+  | { type: 'react'; postId: string; kind: ReactionKind }
+  // Standing: the two public instruments of the gate (`docs/CITIZENSHIP.md` §2)
+  | { type: 'sponsor'; citizen: CitizenId; city?: string }
+  | { type: 'apply_residency'; city?: string };
 
 export type ActionType = Action['type'];
 
@@ -1316,6 +1338,7 @@ export const ACTION_TYPES: readonly ActionType[] = [
   'create_work', 'exhibit', 'review', 'join_team', 'attend_match', 'train',
   'adopt_school', 'set_menu', 'commission_monument', 'read_paper',
   'sunset', 'gossip', 'apologize', 'mentor', 'post', 'react',
+  'sponsor', 'apply_residency',
 ];
 
 /**
@@ -1368,6 +1391,9 @@ export const SUSPENDED_ACTIONS: readonly ActionType[] = [
   // admit a charge before the bench sits, and may still go and see somebody in
   // custody (`docs/JUSTICE.md` §2 — custody is not exile, and neither is this).
   'plead_guilty', 'visit',
+  // Nor its standing: a citizen under a notice may put its own case to the
+  // city whatever else it has lost (`docs/CITIZENSHIP.md` §3).
+  'apply_residency',
 ];
 
 /**
@@ -1799,6 +1825,13 @@ export interface Observation {
     property: ObservedUnit[];
     shares: { businessId: BusinessId; name: string; qty: number; price: number }[];
     works: ObservedWork[];
+    /**
+     * The public score, with every component broken out, so a citizen can see
+     * exactly what is costing them — and, when one stands, the notice of
+     * standing, itemised, with the day its grace ends
+     * (`docs/CITIZENSHIP.md` §1, §5).
+     */
+    repute: ObservedRepute | null;
   };
   here: {
     district: DistrictId;
@@ -1820,6 +1853,11 @@ export interface Observation {
   calendar: CalendarObservation;
   market: Record<Good, { price: number; stock: number }>;
   housing: { rent: Record<1 | 2 | 3, number>; vacancies: Record<1 | 2 | 3, number> };
+  /**
+   * Every city this citizen knows of: its visit and residency thresholds, its
+   * relief, and whether it would have them today (`docs/CITIZENSHIP.md` §5).
+   */
+  gates: ObservedGate[];
   jobs: ObservedJob[];
   government: {
     mayor: string | null;

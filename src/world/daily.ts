@@ -49,6 +49,9 @@ import { dailySeasons } from './seasons.ts';
 import { dailyGrowth } from './growth.ts';
 import { dailyDisasters } from './disasters.ts';
 import { dailyHistory } from './history.ts';
+import { dailyRepute } from '../standing/repute.ts';
+import { dailyNotices } from '../standing/notices.ts';
+import { dailyHearings } from '../standing/hearings.ts';
 import { dailyProperty } from '../markets/property.ts';
 import { dailyLevers } from '../markets/levers.ts';
 import { dailyGigs } from '../markets/gigs.ts';
@@ -213,6 +216,19 @@ function tallyOuterTrade(world: World): void {
   world.counters.outerBurnedTotal = burned;
 }
 
+/**
+ * Standing: the public score, recomputed from a day the city has now finished
+ * reading, then the notices it moves and the hearings they end in
+ * (`docs/CITIZENSHIP.md`). It runs last of the institutions because every
+ * figure it counts — character, convictions, custody, offices, shifts, works,
+ * children and the Chest — has already been settled this morning.
+ */
+function dailyStanding(world: World, h: DailyHooks): void {
+  h.guard(world, 'dailyRepute', () => dailyRepute(world));
+  h.guard(world, 'dailyNotices', () => dailyNotices(world));
+  h.guard(world, 'dailyHearings', () => dailyHearings(world));
+}
+
 /** Bodies, ambitions, the weather's worst and the city's memory of it. */
 function dailyLives(world: World, h: DailyHooks): void {
   h.guard(world, 'dailyHealth', () => dailyHealth(world));
@@ -234,6 +250,7 @@ export function dailyRollover(world: World, h: DailyHooks): void {
   dailySociety(world, h);
   dailyCulture(world, h);
   dailyLives(world, h);
+  dailyStanding(world, h);
   h.guard(world, 'repairBuildings', () => repairBuildings(world));
   const report = h.guard(world, 'dailyTreasuryRollover', () => dailyTreasuryRollover(world)) ?? 'Treasury: no report today.';
   h.guard(world, 'printMorningEdition', () => printMorningEdition(world, report));

@@ -9,6 +9,7 @@ import type {
 import { LAW_CODES, OFFENCE_CODES } from '../data/laws.ts';
 import { HOBBIES, PRODUCT_IDS } from '../data/catalogue.ts';
 import { DISHES } from '../data/metropolis.ts';
+import { GATES } from '../standing/gates.ts';
 
 const BUSINESS_KINDS: readonly BusinessKind[] = ['workshop', 'cafe', 'studio', 'shop', 'clinic', 'courier'];
 const PROPOSAL_KINDS: readonly ProposalKind[] = [
@@ -29,6 +30,8 @@ const JOB_ROLES: readonly JobRole[] = [
 const DISH_IDS: readonly string[] = DISHES.map((d) => d.id);
 /** The most of a good anybody may move across the water in one hour. */
 const MAX_TRADE = 999;
+/** Every city the Registry keeps a gate for; one of them, until the Expanse. */
+const CITIES: readonly string[] = Object.keys(GATES);
 
 type Rec = Record<string, unknown>;
 
@@ -247,6 +250,15 @@ export function validateAction(input: unknown): { ok: true; action: Action } | {
       case 'mentor': action = { type, citizen: id(a.citizen, 'citizen', CID) }; break;
       case 'post': action = { type, text: str(a.text, 'text') }; break;
       case 'react': action = { type, postId: id(a.postId, 'postId', OID), kind: oneOf(a.kind, 'kind', REACTIONS) }; break;
+      // Standing: the two public instruments of a city's gate. `city` is
+      // optional while there is one city; it names the gate when there are six.
+      case 'sponsor': action = {
+        type, citizen: id(a.citizen, 'citizen', CID),
+        ...(a.city !== undefined && a.city !== null ? { city: oneOf(a.city, 'city', CITIES) } : {}),
+      }; break;
+      case 'apply_residency': action = {
+        type, ...(a.city !== undefined && a.city !== null ? { city: oneOf(a.city, 'city', CITIES) } : {}),
+      }; break;
       default: {
         const never: never = type;
         throw new Error(`unknown action ${String(never)}`);

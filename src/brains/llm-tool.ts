@@ -22,6 +22,7 @@ import { LAW_CODES, OFFENCE_CODES } from '../data/laws.ts';
 import { HOBBIES, PRODUCT_IDS } from '../data/catalogue.ts';
 import { DISHES } from '../data/metropolis.ts';
 import { catalogueByGroup } from '../data/actions.ts';
+import { GATES } from '../standing/gates.ts';
 
 export const BUSINESS_KINDS: readonly BusinessKind[] = ['workshop', 'cafe', 'studio', 'shop', 'clinic', 'courier'];
 export const PROPOSAL_KINDS: readonly ProposalKind[] = [
@@ -40,6 +41,8 @@ export const UNION_ROLES: readonly string[] = [
   'detective', 'advocate', 'curator', 'coach',
 ];
 export const DISH_IDS: readonly string[] = DISHES.map((d) => d.id);
+/** Every city the Registry keeps a gate for (`docs/CITIZENSHIP.md` §2). */
+export const CITY_IDS: readonly string[] = Object.keys(GATES);
 
 /** Parameter names that appear on at least one Action (besides `type`). */
 export const ACTION_PARAM_NAMES: readonly string[] = [
@@ -52,6 +55,8 @@ export const ACTION_PARAM_NAMES: readonly string[] = [
   'advocate', 'case', 'partyId', 'proposalId', 'referendumId', 'role', 'unionId',
   'unitId', 'rent', 'businessId', 'gigId', 'workId', 'score', 'school', 'dish',
   'honoree', 'inscription', 'claim', 'postId', 'paper', 'pay', 'business',
+  // Standing
+  'city',
 ];
 
 function citizenRef(description: string): Record<string, unknown> {
@@ -117,6 +122,7 @@ export const ACT_TOOL: Anthropic.Beta.BetaTool = {
       reason: { type: 'string', description: 'verdict / drop_report: your reason in your own words, at most 280 characters. Public.' },
       result: { type: 'string', enum: ['upheld', 'reduced', 'overturned'], description: 'vote_appeal: how you vote on the appeal.' },
       building: { type: 'string', description: 'vandalize / sabotage: building id such as compute_forge, must be in your district.' },
+      city: { type: 'string', enum: [...CITY_IDS], description: 'sponsor / apply_residency: which city\'s gate. Omit for the city you are standing in.' },
       kind: {
         type: 'string',
         enum: [...BUSINESS_KINDS, ...PROPOSAL_KINDS, ...WORK_KINDS, ...DECREE_KINDS, ...REACTIONS],

@@ -34,7 +34,7 @@ function sampleObservation(world: World, c: Citizen): Observation {
       custody: null, parole: null, visitable: [],
       approval: { mayor: 0.5, council: 0.5 }, school: null, paper: 'chronicle',
       party: null, union: null, gang: null, team: null, mentor: null, mentee: null,
-      property: [], shares: [], works: [],
+      property: [], shares: [], works: [], repute: null,
     },
     here: {
       district: c.district, districtName: 'The Commons',
@@ -56,6 +56,7 @@ function sampleObservation(world: World, c: Citizen): Observation {
       culture: { price: 8, stock: 60 }, knowledge: { price: 15, stock: 20 },
     },
     housing: { rent: { 1: 8, 2: 20, 3: 50 }, vacancies: { 1: 10, 2: 5, 3: 1 } },
+    gates: [],
     jobs: [{ id: 'j_9', title: 'Courier', wage: 9, employer: 'Swift & Co', district: 'harbor_market', skill: null, minSkill: 0, qualified: true }],
     government: {
       mayor: null, council: [], judges: [], watchOfficers: 3, incomeTax: 0.15, salesTax: 0.05, dividend: 15, minWage: 9,

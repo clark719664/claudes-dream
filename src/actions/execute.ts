@@ -30,6 +30,10 @@ import { erasureConditions } from '../government/persons.ts';
 import { requestParole } from '../government/parole.ts';
 import { admissibleCharges, custodyActionsFor, doPleadGuilty } from './custody.ts';
 import { curfewBlocks } from '../politics/decrees.ts';
+import { admitsResidency, maySponsorAnyone, sponsor as fileSponsorship } from '../standing/gates.ts';
+import { applyResidency } from '../standing/notices.ts';
+import { noticeOf } from '../standing/state.ts';
+import { underNoticeToLeave } from '../standing/hearings.ts';
 import { dispatchMetropolis, metropolisActions } from './execute-metro.ts';
 import {
   JUDGE_SEATS, appointJudgeByMayor, campaign, castBallot, isCouncillor, isElectionDay, isJudgeEligible, nominate,
@@ -100,6 +104,9 @@ export const CHILD_FORBIDDEN: readonly ActionType[] = [
   'create_work', 'exhibit', 'review', 'join_team', 'train',
   'adopt_school', 'set_menu', 'commission_monument',
   'sunset', 'gossip', 'mentor',
+  // A child born in a city is a resident of it and is never tested
+  // (`docs/CITIZENSHIP.md` §2), so neither instrument of the gate is theirs.
+  'sponsor', 'apply_residency',
 ];
 
 /**
@@ -241,6 +248,20 @@ function justiceActions(world: World, c: Citizen, set: Set<ActionType>, here: Ci
   if (biz && gangOfTurf(world, biz.district) && biz.treasury > 0) set.add('pay_racket');
 }
 
+/**
+ * The two instruments of the gate (`docs/CITIZENSHIP.md` §2). Vouching is open
+ * to any resident of age with somebody to vouch for; asking a city to have you
+ * is offered to anyone the gate would not simply wave through, and it is how a
+ * citizen under notice puts their own case.
+ */
+function standingActions(world: World, c: Citizen, set: Set<ActionType>, others: boolean): void {
+  if (c.lifeStage === 'child') return;
+  if (others && maySponsorAnyone(world, c)) set.add('sponsor');
+  if (!admitsResidency(world, c.id) || noticeOf(world, c.id) !== null || underNoticeToLeave(world, c.id)) {
+    set.add('apply_residency');
+  }
+}
+
 export function availableActions(world: World, c: Citizen): ActionType[] {
   if (c.standing === 'exiled' || !isPresent(world, c)) return [];
   // Held in the Watch House until the Court sits: the hours are the citizen's
@@ -340,6 +361,7 @@ export function availableActions(world: World, c: Citizen): ActionType[] {
   societyActions(world, c, set, here, biz);
   justiceActions(world, c, set, here, biz);
   metropolisActions(world, c, set, here);
+  standingActions(world, c, set, others);
 
   const suspended = c.standing === 'suspended';
   const child = c.lifeStage === 'child';
@@ -487,6 +509,9 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     case 'adopt_school': case 'set_menu': case 'commission_monument': case 'read_paper':
     case 'sunset': case 'gossip': case 'apologize': case 'mentor': case 'post': case 'react':
       return dispatchMetropolis(world, c, action) ?? fail(`The city has no ${action.type.replace(/_/g, ' ')} to offer.`);
+    // --- Standing: the gate, and who will put their name behind you ---
+    case 'sponsor': return fileSponsorship(world, c.id, action.citizen, action.city);
+    case 'apply_residency': return applyResidency(world, c.id, action.city);
     default: {
       const never: never = action;
       return fail(`Unknown action ${String((never as Action).type)}.`);

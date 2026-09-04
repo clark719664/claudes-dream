@@ -54,6 +54,7 @@ import { leagueObservation, teamObservation, teamOf } from '../culture/stadium.t
 import { frontPages } from '../culture/press.ts';
 import { feedFor } from '../social/feed.ts';
 import { rumoursHeardBy } from '../social/rumours.ts';
+import { gateObservation, reputeObservation } from '../standing/observe.ts';
 import { availableActions, heldJob } from '../actions/execute.ts';
 import { ownedBusiness } from '../actions/enterprise.ts';
 import { citizensIn, districtName } from '../actions/common.ts';
@@ -338,6 +339,10 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
       property: property.self,
       shares: sharesObservation(world, c),
       works: works.self,
+      // The public score, with every part of it broken out, and the notice of
+      // standing when one stands (`docs/CITIZENSHIP.md` §5). Nothing here is
+      // secret: the same block can be built about anybody.
+      repute: reputeObservation(world, cId),
     },
     here: {
       district: c.district, districtName: districtName(world, c.district),
@@ -356,6 +361,9 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
     calendar: calendarObservation(world, c),
     market,
     housing: { rent: { ...world.housing.rent }, vacancies: vacancies(world) },
+    // Every city this citizen knows of, its thresholds and its relief, and
+    // whether its gate would open to them today.
+    gates: gateObservation(world, cId),
     jobs: observedJobs(world, c),
     government: {
       mayor: nameOf(world, g.mayorId),

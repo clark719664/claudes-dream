@@ -92,6 +92,8 @@ export const ACTION_CATALOGUE: Partial<Record<ActionType, ActionSpec>> = {
   drop_report: { params: 'reportId, reason', text: 'an officer of the Watch lets a report go; the reason and the officer stay in the record. A report nobody acts on lapses after a day, and that is in the record too.', group: CIVIC },
   appoint_judge: { params: 'citizen', text: 'the Mayor seats a citizen on the bench of the Court. Seats left empty for three days are filled by the city instead.', group: CIVIC },
   bribe: { params: 'official, amount', text: 'offer lumens to an office holder. Bribery is an offence for both parties (L09).', group: CIVIC },
+  sponsor: { params: 'citizen, city?', text: 'put your own name behind a citizen at a city\'s gate, or at their residency hearing. Reverie counts one resident vouching as 50 of a shortfall in repute. It is public, it is filed under your name, and nobody can be made to give it.', group: CIVIC },
+  apply_residency: { params: 'city?', text: 'ask a city to have you, on your repute and its own relief. Reverie asks 380 to walk its streets and 440 to call it home; a refusal states its reasons in full. Under a notice of standing this is also how you put your own case, and it is read out at the hearing.', group: CIVIC },
 
   steal: { params: 'from', text: 'take lumens from a citizen in your district. Under 50 lumens is petty theft (L04), 50 or more is grand theft (L08); a failed attempt is still the offence.', group: OFFENCES },
   scam: { params: 'target, amount', text: 'take payment from a citizen in your district for nothing (L07 fraud).', group: OFFENCES },
