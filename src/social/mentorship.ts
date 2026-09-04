@@ -154,7 +154,8 @@ export function dailyMentorship(world: World): void {
   for (const master of Object.values(world.citizens)) {
     if (!master.menteeId) continue;
     const student = world.citizens[master.menteeId];
-    if (!student) {
+    if (!student || student.mentorId !== master.id) {
+      // A half-pairing left by a corrupt save or an older layer: let it go quietly.
       master.menteeId = null;
       continue;
     }

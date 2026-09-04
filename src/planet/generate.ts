@@ -6,7 +6,7 @@ import { dot, fbm, fibonacciSphere, ridged, toSphere, type Vec3 } from './noise.
 
 export const PLANET_W = 4096;   // leagues around the equator
 export const PLANET_H = 2048;   // leagues pole to pole
-export const LAND_FRACTION = 0.31;
+export const LAND_FRACTION = 0.34;
 
 export type Biome =
   | 'ocean' | 'shelf' | 'ice' | 'tundra' | 'taiga' | 'forest' | 'grassland'
@@ -24,8 +24,12 @@ export interface Planet {
   moisture: Float32Array;
   /** Flow accumulation; cells above the river threshold carry water. */
   flow: Float32Array;
+  /** Distance to the nearest coast in cells: 0 on the shore, rising out to sea. */
+  coastDist: Float32Array;
   biome: Uint8Array;
   seaLevel: number;
+  /** Elevation of the highest ordinary land, used to normalise altitude. */
+  landTop: number;
 }
 
 export const BIOMES: Biome[] = [
@@ -66,6 +70,7 @@ export function generatePlanet(seed: number, w = 1024, h = 512): Planet {
   const temperature = new Float32Array(n);
   const moisture = new Float32Array(n);
   const flow = new Float32Array(n);
+  const coastDist = new Float32Array(n);
   const biome = new Uint8Array(n);
   const plates = makePlates(seed, 17);
 
@@ -88,8 +93,13 @@ export function generatePlanet(seed: number, w = 1024, h = 512): Planet {
       const { a, b, edge } = classify(p, plates);
       const pa = plates[a], pb = plates[b];
 
-      // Continental shelf from the plate's own nature.
-      let e = pa.oceanic ? -0.52 : 0.26;
+      // Continentalness: a broad multi-centre field that decides where land is
+      // at all. Plates then supply relief, rather than deciding the coastline
+      // themselves — that is what produced one huge continent and an empty sea.
+      const cont = fbm(p.x * 1.30, p.y * 1.30, p.z * 1.30, seed + 771, 2);
+      const cont2 = fbm(p.x * 2.60, p.y * 2.60, p.z * 2.60, seed + 772, 2);
+      let e = (cont - 0.47) * 4.2 + (cont2 - 0.5) * 0.9;
+      e += pa.oceanic ? -0.14 : 0.14;
 
       // Boundaries: convergence lifts mountains, divergence opens rifts.
       const rel = { x: pa.drift.x - pb.drift.x, y: pa.drift.y - pb.drift.y, z: pa.drift.z - pb.drift.z };
@@ -99,9 +109,12 @@ export function generatePlanet(seed: number, w = 1024, h = 512): Planet {
       e += nearness * towards * 1.9 * (0.35 + 0.65 * orogeny);
 
       // Fractal relief everywhere, plus a ridged component so ranges have crests.
-      e += (fbm(p.x * 2.0, p.y * 2.0, p.z * 2.0, seed + 17, 7) - 0.5) * 1.05;
-      e += (ridged(p.x * 3.2, p.y * 3.2, p.z * 3.2, seed + 331, 5) - 0.42) * 0.55;
-      e += (fbm(p.x * 7.5, p.y * 7.5, p.z * 7.5, seed + 88, 4) - 0.5) * 0.30;
+      e += (fbm(p.x * 2.6, p.y * 2.6, p.z * 2.6, seed + 17, 6) - 0.5) * 0.40;
+      e += (ridged(p.x * 3.2, p.y * 3.2, p.z * 3.2, seed + 331, 5) - 0.42) * 0.40;
+      e += (fbm(p.x * 7.5, p.y * 7.5, p.z * 7.5, seed + 88, 4) - 0.5) * 0.14;
+      // A few island arcs in the deep, rare enough not to speckle the ocean.
+      const arc = ridged(p.x * 5.5, p.y * 5.5, p.z * 5.5, seed + 1777, 3);
+      e += Math.max(0, arc - 0.88) * 2.2;
 
       elevation[y * w + x] = e;
     }
@@ -110,10 +123,14 @@ export function generatePlanet(seed: number, w = 1024, h = 512): Planet {
   // --- sea level chosen so the land fraction comes out right ---------------
   const sorted = Float32Array.from(elevation).sort();
   const seaLevel = sorted[Math.floor(n * (1 - LAND_FRACTION))];
+  // Altitude is measured against this world's own relief, not the noise range,
+  // so the same thresholds mean the same thing on every seed.
+  const landTop = sorted[Math.min(n - 1, Math.floor(n * (1 - LAND_FRACTION * 0.012)))];
+  const relief = Math.max(0.12, landTop - seaLevel);
 
   // --- climate --------------------------------------------------------------
   const isLand = (i: number): boolean => elevation[i] > seaLevel;
-  const altOf = (i: number): number => Math.max(0, (elevation[i] - seaLevel) / (1 - seaLevel));
+  const altOf = (i: number): number => Math.max(0, Math.min(1.4, (elevation[i] - seaLevel) / relief));
 
   for (let y = 0; y < h; y++) {
     const lat = (0.5 - (y + 0.5) / h) * Math.PI;
@@ -124,7 +141,7 @@ export function generatePlanet(seed: number, w = 1024, h = 512): Planet {
       const p = toSphere(((x + 0.5) / w) * Math.PI * 2, lat);
       const alt = altOf(i);
 
-      let t = solar * 1.16 - 0.10 - alt * 0.85 + (isLand(i) ? -0.04 : 0.06);
+      let t = solar * 1.28 - 0.14 - alt * 0.40 + (isLand(i) ? -0.04 : 0.06);
       t += (fbm(p.x * 3, p.y * 3, p.z * 3, seed + 601, 4) - 0.5) * 0.10;
       temperature[i] = Math.max(0, Math.min(1, t));
 
@@ -179,21 +196,63 @@ export function generatePlanet(seed: number, w = 1024, h = 512): Planet {
     if (best >= 0 && elevation[best] > seaLevel) flow[best] += flow[i];
   }
 
+  // --- distance to the coast, by a two-pass chamfer transform ---------------
+  // Water gets its distance from the shore, which is what sets the depth of
+  // the sea; land gets its distance from the water, which is what makes beaches
+  // hug the coast instead of tracking an elevation contour.
+  {
+    const BIG = 1e6;
+    for (let i = 0; i < n; i++) coastDist[i] = BIG;
+    const water = (i: number): boolean => elevation[i] <= seaLevel;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = y * w + x;
+        const here = water(i);
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
+          const yy = y + dy;
+          if (yy < 0 || yy >= h) continue;
+          if (water(yy * w + ((x + dx + w) % w)) !== here) { coastDist[i] = 0; break; }
+        }
+      }
+    }
+    const relax = (order: 'fwd' | 'rev'): void => {
+      const ys = order === 'fwd' ? [...Array(h).keys()] : [...Array(h).keys()].reverse();
+      for (const y of ys) {
+        const xs = order === 'fwd' ? [...Array(w).keys()] : [...Array(w).keys()].reverse();
+        for (const x of xs) {
+          const i = y * w + x;
+          let best = coastDist[i];
+          for (const [dx, dy, cost] of [[-1, 0, 1], [1, 0, 1], [0, -1, 1], [0, 1, 1],
+                                        [-1, -1, 1.414], [1, 1, 1.414], [-1, 1, 1.414], [1, -1, 1.414]] as const) {
+            const yy = y + dy;
+            if (yy < 0 || yy >= h) continue;
+            const v = coastDist[yy * w + ((x + dx + w) % w)] + cost;
+            if (v < best) best = v;
+          }
+          coastDist[i] = best;
+        }
+      }
+    };
+    relax('fwd'); relax('rev'); relax('fwd');
+  }
+
   // --- biomes ---------------------------------------------------------------
   const riverAt = (i: number): boolean => flow[i] > 140 && elevation[i] > seaLevel;
   for (let i = 0; i < n; i++) {
     const e = elevation[i], t = temperature[i], m = moisture[i];
     if (e <= seaLevel) {
-      biome[i] = e > seaLevel - 0.05 ? B('shelf') : B('ocean');
+      // The shelf is defined by nearness to land, not by a depth contour.
+      biome[i] = coastDist[i] <= 4 ? B('shelf') : B('ocean');
       continue;
     }
-    const alt = (e - seaLevel) / (1 - seaLevel);
-    if (e < seaLevel + 0.010) { biome[i] = B('beach'); continue; }
-    if (alt > 0.46 && t < 0.34) { biome[i] = B('alpine'); continue; }
-    if (alt > 0.56) { biome[i] = B('alpine'); continue; }
-    if (alt > 0.36) { biome[i] = B('highland'); continue; }
-    if (t < 0.20) { biome[i] = B('ice'); continue; }
-    if (t < 0.31) { biome[i] = B('tundra'); continue; }
+    const alt = Math.max(0, (e - seaLevel) / relief);
+    // A beach is low ground within a cell or two of the water.
+    if (coastDist[i] <= 1.5 && alt < 0.07) { biome[i] = B('beach'); continue; }
+    if (alt > 0.72 && t < 0.30) { biome[i] = B('alpine'); continue; }
+    if (alt > 0.86) { biome[i] = B('alpine'); continue; }
+    if (alt > 0.58) { biome[i] = B('highland'); continue; }
+    if (t < 0.15) { biome[i] = B('ice'); continue; }
+    if (t < 0.27) { biome[i] = B('tundra'); continue; }
     if (riverAt(i) && m > 0.55) { biome[i] = B('wetland'); continue; }
     if (t < 0.48) { biome[i] = m > 0.38 ? B('taiga') : B('steppe'); continue; }
     if (t < 0.74) {
@@ -209,7 +268,7 @@ export function generatePlanet(seed: number, w = 1024, h = 512): Planet {
     else biome[i] = B('desert');
   }
 
-  return { seed, w, h, elevation, temperature, moisture, flow, biome, seaLevel };
+  return { seed, w, h, elevation, temperature, moisture, flow, coastDist, biome, seaLevel, landTop };
 }
 
 /** Palette used by every renderer, so the planet looks the same everywhere. */

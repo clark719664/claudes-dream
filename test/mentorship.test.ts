@@ -233,3 +233,16 @@ test('a mastership moves no money', () => {
   }
   assert.equal(totalMoney(w), before, 'teaching is not a trade');
 });
+
+test('a half-pairing left by an older save is let go quietly', () => {
+  const w = makeWorld();
+  const old = elder(w);
+  const student = makeCitizen(w);
+  old.menteeId = student.id;            // the student was never told
+  const stray = makeCitizen(w);
+  stray.mentorId = 'c_nobody';          // a master who is not in the city
+  assert.doesNotThrow(() => dailyMentorship(w));
+  assert.equal(old.menteeId, null);
+  assert.equal(student.mentorId, null);
+  assert.equal(stray.mentorId, null);
+});

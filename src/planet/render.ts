@@ -88,16 +88,38 @@ export function shade(p: Planet, x: number, y: number, sun = { x: -0.6, y: 0.55,
     r += dry * 46; g += dry * 24; bl -= dry * 20;
     const wet = Math.max(0, m - 0.55) * 1.4;
     r -= wet * 26; g += wet * 14; bl -= wet * 6;
-    const snow = Math.max(0, (0.34 - t) * (b === 'alpine' || b === 'highland' ? 5.2 : 2.2));
-    const sn = Math.min(1, snow);
+    const snow = Math.max(0, (0.27 - t) * (b === 'alpine' || b === 'highland' ? 4.0 : 1.6));
+    const sn = Math.min(1, snow * (b === 'alpine' ? 1 : 0.55));
     r = r * (1 - sn) + 236 * sn; g = g * (1 - sn) + 240 * sn; bl = bl * (1 - sn) + 246 * sn;
   }
 
   if (b === 'ocean' || b === 'shelf') {
-    // Deeper water is darker and bluer.
-    const d = Math.max(0, Math.min(1, (p.seaLevel - p.elevation[i]) / 0.75));
-    const k = 1 - d * 0.72;
-    return [Math.round(r * k * 0.85), Math.round(g * k * 0.9), Math.round(bl * (1 - d * 0.45))];
+    // Depth is governed by distance from the shore, which is how real seas
+    // look from orbit: a bright shelf hugging the land, a slope, then abyss.
+    // Two things decide how shallow water looks: how far it is from land, and
+    // how high the sea floor actually stands. A steep margin drops away at
+    // once; a shallow one carries a wide shelf. Using only distance produced a
+    // uniform bright ring around every island, which is not what seas do.
+    const dist = p.coastDist[i];
+    const floorHeight = Math.max(0, Math.min(1, (p.elevation[i] - (p.seaLevel - 0.16)) / 0.16));
+    const near = Math.max(0, 1 - dist / 5) * floorHeight;      // shallow water
+    const shelf = 1 - near;
+    const slope = Math.min(1, Math.max(0, (dist - 4) / 12)) * (1 - floorHeight * 0.5);
+    const abyss = Math.min(1, Math.max(0, (dist - 15) / 38)) * (1 - floorHeight);
+    const stops: [number, number, number][] = [
+      [48, 116, 136],   // shore — green-blue over sand
+      [26, 76, 120],    // shelf
+      [14, 46, 88],     // slope
+      [6, 18, 44],      // abyssal plain
+    ];
+    const mix = (a: [number, number, number], c: [number, number, number], t: number): [number, number, number] =>
+      [a[0] + (c[0] - a[0]) * t, a[1] + (c[1] - a[1]) * t, a[2] + (c[2] - a[2]) * t];
+    let col = mix(stops[0], stops[1], shelf);
+    col = mix(col, stops[2], slope);
+    col = mix(col, stops[3], abyss);
+    // A little relief on the sea floor so it is not a flat wash.
+    const floorRelief = 1 + (p.elevation[i] - p.seaLevel + 0.4) * 0.12;
+    return [Math.round(col[0] * floorRelief), Math.round(col[1] * floorRelief), Math.round(col[2] * floorRelief)];
   }
 
   // Rivers drawn over the land they cut through.

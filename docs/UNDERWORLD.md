@@ -66,16 +66,15 @@ cover     = 0.15 × commerce / 100               the merchant's own trade
 p(caught) = clamp(scrutiny − cover, 0.02, 0.95)
 ```
 
-The bribe is the largest term because it is the only one that removes the
-person doing the looking rather than making the looking harder. The pass is
-worth nearly as much and costs four times the journey — 2 leagues a tick
-against 8 on the road (`PLANET.md` §4) — and closes in Frost, so smuggling is
-seasonal and a council that wants to squeeze it funds the road. Twelve crates
-is −0.40 and nothing hides a caravan: bulk trade is lawful trade, the pocket
-trade is the crime. Caught is a **seizure, not an arrest** — the load goes to
-the Bazaar and the proceeds to the Treasury through `treasury.transfer`
-(ledger kind `seizure`), and a report opens before the officer who found it,
-who then decides whether to file it.
+The bribe is the largest term because it alone removes the person doing the
+looking rather than making the looking harder. The pass is worth nearly as
+much and costs four times the journey — 2 leagues a tick against 8 on the road
+(`PLANET.md` §4) — and closes in Frost, so smuggling is seasonal and a council
+that wants to squeeze it funds the road. Twelve crates is −0.40 and nothing
+hides a caravan: bulk trade is lawful, the pocket trade is the crime. Caught
+is a **seizure, not an arrest** — the load goes to the Bazaar and the proceeds
+to the Treasury through `treasury.transfer` (kind `seizure`), and a report
+opens before the officer who found it, who decides whether to file it.
 
 ## 3. Customs is a job, and the officer is a citizen
 
@@ -89,11 +88,11 @@ serious bribe, so the choice stays a choice.
 A bribed officer is not a switch: it is `bribe { official, amount }`, the
 action that already exists, **L09, severity 4** for both sides. The lumens
 move through `treasury.transfer` like all money, so the payment sits in a
-ledger a detective can read — which is why handlers pay in goods, in foreign
-coin, or through a fence, and the exchange spread (`MOBILITY.md` §3) is the
-price of not being seen. An officer who waves through a traveller later found
-holding contraband leaves the clearest trace in the system: two public facts
-that fit together one way.
+ledger a detective can read — which is why handlers pay in goods or foreign
+coin, and the exchange spread (`MOBILITY.md` §3) is the price of not being
+seen. An officer who waves through a traveller later found holding contraband
+leaves the clearest trace in the system: two public facts that fit together
+one way.
 
 ## 4. The black market, and fencing as a trade
 
@@ -102,7 +101,7 @@ districts whose **land value** carries a low safety term (`PROPERTY.md` §1) —
 at founding the Undercroft's Night Market and the quiet end of Foundry Row,
 and everywhere at once in the Verge. Safety is offences per resident, so a
 district that becomes a market for stolen goods becomes cheap, and cheap is
-what keeps it a market. Nobody decides that loop.
+what keeps it one. Nobody decides that loop.
 
 ```
 heat = 1.0   taken in an offence the Watch detected, within 3 days
@@ -140,9 +139,8 @@ repute — repute counts public acts, and an undetected purchase is not one — 
 is word of mouth: dealings spread as rumours along friendship edges
 (`social/rumours.ts`). A well-known fence pays less, because they can; one
 reported and acquitted pays more for a cycle, because nobody believes the
-acquittal. Laundering uses what exists: a shop's shelf at a price the owner
-sets, a caravan to a city that never restricted the goods, or holding until
-the heat decays.
+acquittal. Laundering uses what exists: a shop's shelf, a caravan to a city
+that never restricted the goods, or holding until the heat decays.
 
 ## 5. Espionage
 
@@ -186,28 +184,26 @@ Council decision with a standing cost either way (`EXPANSE.md` §7), tabled as
 a `spy_disposition` proposal. **Try them**: espionage is L30, severity 5, on
 the ladder, and severity 5 alone is never exile (`JUSTICE.md` §1), so a first
 offence is the fine and a suspension — and a non-resident has no work, trade,
-office or vote to suspend, so the equivalent is the fine, deportation under
+office or vote to lose, so the equivalent is the fine, deportation under
 `CITIES.md` §4, and a gate ban of one cycle on the public register every gate
-reads. **Expel them** without trial: cheap, admits nothing, gives the other
-city nothing to answer. **Hold them for exchange**: the Watch may detain a
-severity 4–5 charge until the Court sits, and beyond that `offer_exchange` is
-the prisoner exchange of `EXPANSE.md` §8. Espionage never carries custody; a
-spy who strikes an officer resisting arrest is tried on both tracks, exactly
-as `JUSTICE.md` §4 requires. The sending city chooses too — **claim** the
-agent (standing −20 with the host) or **disavow** them (standing −5, and the
-agent is nobody's). Disavowal is cheaper and every envoy knows it, which is
-why recruiting anyone is hard the second time. The Chronicle prints both, in
-five cities, within the week.
+reads. **Expel them** without trial: cheap, and admits nothing. **Hold them
+for exchange**: the Watch may detain a severity 4–5 charge until the Court
+sits, and beyond that `offer_exchange` is the prisoner exchange of
+`EXPANSE.md` §8. Espionage never carries custody; a spy who strikes an officer
+resisting arrest is tried on both tracks, exactly as `JUSTICE.md` §4 requires.
+The sending city chooses too — **claim** the agent (standing −20 with the
+host) or **disavow** them (standing −5, and the agent is nobody's). Disavowal
+is cheaper and every envoy knows it, which is why recruiting anyone is hard
+the second time; the Chronicle prints both, in five cities, within the week.
 
 Counter-intelligence is the same detectives working inward. `assign_detective`
 is the Captain's call, printed the day it is made; `sweep` clears traces and
 warns a building for a cycle; `plant_false_papers { building, claim }` leaves
 a decoy, and if that claim surfaces in another city's prices or a rival's bid
-the leak is **proved** rather than suspected, the trail running back through
-whoever could have read it. The decoy is the sharpest tool the Watch has and
-the reason this is dangerous: a Captain who assigns detectives to a
-councillor's household has committed **abuse of office (L11)**, and all that
-catches it is that every assignment is public.
+the leak is **proved** rather than suspected. The decoy is the sharpest tool
+the Watch has and the reason this is dangerous: a Captain who assigns
+detectives to a councillor's household has committed **abuse of office
+(L11)**, and all that catches it is that every assignment is public.
 
 ## 7. The catalogue
 
@@ -265,9 +261,9 @@ poor city's border is cheap exactly when it most needs to be dear: the
 flywheel in `MOBILITY.md` §5 now has a door in it, and it turns both ways.
 
 **Innocence gets harder.** Contraband possession can be committed by a citizen
-who bought in good faith off a shelf. The Court's only defence is the price
-paid — someone who paid the lawful landed cost was probably deceived, and the
-fence is the one who knew — and it will sometimes fail. Every new offence is a
+who bought in good faith off a shelf, and the Court's only defence is the
+price paid: someone who paid the lawful landed cost was probably deceived, and
+the fence is the one who knew. It will sometimes fail. Every new offence is a
 new thing to be wrongly convicted of, and Reverie's standing among the cities
 rests on how rarely that happens.
 
