@@ -218,7 +218,9 @@ test('report: a victim naming a thief who got away puts a solid report before th
   const report = Object.values(w.reports).find((x) => x.suspectId === thief.id);
   assert.ok(report, 'the report reaches the Watch');
   assert.equal(report.officerId, null, 'a citizen\'s report waits in the shared inbox for any officer');
-  assert.equal(report.evidence, 0.75);
+  // A victim's own account of what was done to them: real evidence, and still
+  // one citizen's word (`government/watch.ts EVIDENCE_VICTIM_REPORT`).
+  assert.equal(report.evidence, 0.45);
   assert.equal(report.status, 'open');
   assert.equal(Object.keys(w.cases).length, 0, 'no officer has filed it yet');
   assert.equal(totalMoney(w), before);
@@ -233,7 +235,9 @@ test('insults become harassment on the third in a day; nonstop broadcasting beco
   assert.equal(last.offence, undefined);
   last = executeAction(w, a.id, { type: 'insult', target: b.id });
   last = executeAction(w, a.id, { type: 'insult', target: b.id });
-  assert.equal(last.offence, 'L05');
+  // Harassment is P02 now: an offence against a person, answered by custody
+  // and a restraining order, never by a rung of the civic ladder.
+  assert.equal(last.offence, 'P02');
   assert.ok((a.bonds[b.id] ?? 0) <= -45);
 
   const shouter = makeCitizen(w, { district: 'commons' });

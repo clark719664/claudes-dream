@@ -7,7 +7,7 @@ import { commitOffence } from '../src/government/watch.ts';
 import { fileReport } from '../src/government/reports.ts';
 import {
   computeSentence, dailyJustice, decideAppeals, executeSentence, fileAppeal, fileCharge, holdCourt, judgeBelief,
-  latestCaseFor, nextCourtTick, pendingCasesFor, selectBench,
+  latestCaseFor, nextCourtTick, pendingCasesFor, priorsOf, selectBench,
 } from '../src/government/court.ts';
 
 function addJudge(w: World, overrides: Parameters<typeof makeCitizen>[1] = {}): Citizen {
@@ -148,9 +148,50 @@ test('judgeBelief weighs evidence, record, reputation and friendship', () => {
     return s / 40;
   };
   assert.ok(avg(0) - avg(100) > 0.15);
-  // prior convictions count against you
-  d.record.convictions.push({ caseId: 'k_0', law: 'L01', severity: 1, tier: 1, day: 0 });
-  assert.ok(avg(0) > 1.1);
+
+  // A record counts against a defendant, and counts for little: the question
+  // before the bench is whether this citizen did *this*, not whether they are
+  // the sort who might have (`government/bench.ts RECORD_WEIGHT`). A prior
+  // must be one the defendant already carried when the charge was laid, so it
+  // is dated before the day this case was filed (`cases.ts priorsOf`).
+  const middling = makeCitizen(w, { reputation: 50 });
+  const spec = { defendantId: middling.id, law: 'L04' as const, filedBy: 'watch' as const, description: 'x' };
+  const borderline = fileCharge(w, { ...spec, evidence: 0.5 });
+  const mean = (k: Case) => {
+    let sum = 0;
+    for (let i = 0; i < 200; i++) sum += judgeBelief(w, judge, k);
+    return sum / 200;
+  };
+  const clean = mean(borderline);
+  middling.record.convictions.push({ caseId: 'k_0', law: 'L01', severity: 1, tier: 1, day: 0 });
+  const withRecord = mean(fileCharge(w, { ...spec, evidence: 0.5 }));
+  assert.ok(withRecord > clean, 'a record counts against a defendant');
+  assert.ok(withRecord - clean < 0.15, 'and it counts for little: a record is not evidence');
+
+  // Belief is how likely the bench thinks it is that this citizen did it, so
+  // there is no reading above certainty and none below impossible.
+  const certain = fileCharge(w, { ...spec, evidence: 1 });
+  assert.ok(judgeBelief(w, judge, certain) <= 1);
+  assert.ok(judgeBelief(w, judge, certain) >= 0);
+});
+
+test('a first offender is tried as a first offender, however busy an afternoon they had', () => {
+  const w = courtWorld();
+  const judge = w.government.judges[0];
+  const d = makeCitizen(w, { reputation: 50 });
+  const spec = { defendantId: d.id, law: 'L04' as const, evidence: 0.5, filedBy: 'watch' as const, description: 'x' };
+  const first = fileCharge(w, spec);
+  const second = fileCharge(w, spec);
+  // The first case is decided; the second was laid on the same day, so the
+  // conviction from the first is not a prior to it.
+  d.record.convictions.push({ caseId: first.id, law: 'L04', severity: 2, tier: 2, day: w.day });
+  assert.equal(priorsOf(w, second).length, 0, 'convicting somebody at ten does not make them a recidivist at eleven');
+  const sum = (k: Case) => {
+    let s = 0;
+    for (let i = 0; i < 100; i++) s += judgeBelief(w, judge, k);
+    return s / 100;
+  };
+  assert.ok(Math.abs(sum(second) - sum(first)) < 0.02, 'and the bench weighs the second charge as it weighed the first');
 });
 
 test('offence → report → charge → trial → conviction → fine, with restitution and money conserved', () => {

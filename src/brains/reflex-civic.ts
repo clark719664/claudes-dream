@@ -5,7 +5,7 @@
  */
 import { clamp } from '../types.ts';
 import type { Action, Citizen, CitizenId, EventKind, LawCode, OffenceCode, Platform, ProposalKind, World, WorldEvent } from '../types.ts';
-import { LAWS } from '../data/laws.ts';
+import { LAWS, offenceName } from '../data/laws.ts';
 import { chance, pick, rand } from '../util/rng.ts';
 import { vacancies } from '../economy/housing.ts';
 import { bondBetween, friendsOf } from '../citizens/relationships.ts';
@@ -25,7 +25,14 @@ export const NOMINATE_CHANCE = 0.15;
 /** Chance per free hour that a councillor with nothing on the table proposes something (≈10 % a day over a working councillor's free hours). */
 export const PROPOSE_CHANCE = 0.1 / 8;
 const PETITION_CHANCE = 0.02 / 8;
-const STRICTER_LAWS: readonly LawCode[] = ['L04', 'L07', 'L05', 'L03', 'L12'];
+/**
+ * Laws a strict citizen would have the Council treat more harshly, and a
+ * lenient one more gently. Both lists are the **Code of the City** only: the
+ * Council sets a civic severity, and a personal offence's severity moves with
+ * `government/persons.ts setPersonSeverity`, never with `law_severity`
+ * (`REGISTRY.md` §1 — the Council may set a severity, it may not set a track).
+ */
+const STRICTER_LAWS: readonly LawCode[] = ['L04', 'L07', 'L06', 'L03', 'L12'];
 const LENIENT_LAWS: readonly LawCode[] = ['L04', 'L03', 'L12', 'L02'];
 const THEFT_FAMILY: readonly OffenceCode[] = ['L04', 'L08'];
 /** Events a journalist will not turn into a story of their own (other stories most of all). */
@@ -47,7 +54,26 @@ export interface ReflexProposal {
 // Appeals
 // ---------------------------------------------------------------------------
 
-/** Appeal a fresh conviction — almost always against exile, rarely against a warning. Decided once per case. */
+/**
+ * How much a scripted citizen minds the sentence it just got: what going back
+ * to the Council would be worth.
+ *
+ * There are two answers to read, because there are two tracks. On the ladder
+ * it is the rung — 5 is the Gate, 4 a suspension, and 1 a word — and on the
+ * Code of Persons it is the days: life is worth every appeal there is, and a
+ * fortnight in a cell is worth more than any fine.
+ */
+export function appealWeight(k: { track?: string; tier: number | null; jailDays?: number; life?: boolean }): number {
+  if (k.track === 'person') {
+    if (k.life) return 0.95;
+    const days = Math.max(0, k.jailDays ?? 0);
+    return clamp(0.3 + days / 60, 0.3, 0.9);
+  }
+  const tier = k.tier ?? 1;
+  return tier >= 5 ? 0.95 : tier === 4 ? 0.8 : tier === 3 ? 0.35 : tier === 2 ? 0.15 : 0.05;
+}
+
+/** Appeal a fresh conviction — almost always against exile or a long term, rarely against a warning. Once per case. */
 export function tryAppeal(ctx: Ctx): Action | null {
   const { world, c, obs } = ctx;
   const k = obs.government.myLatestCase;
@@ -55,12 +81,7 @@ export function tryAppeal(ctx: Ctx): Action | null {
   const key = `appealDecided:${c.id}:${k.id}`;
   if (world.counters[key]) return null;
   world.counters[key] = 1;
-  // The ladder has six rungs since the metropolis: 4 is a few days in the
-  // cells, 5 a suspension, 6 the Gate. What is worth going back to the Council
-  // over rises with what the sentence actually takes away.
-  const tier = k.tier ?? 1;
-  const base = tier >= 6 ? 0.95 : tier === 5 ? 0.8 : tier === 4 ? 0.5 : tier === 3 ? 0.35 : tier === 2 ? 0.15 : 0.05;
-  const p = base + (c.personality.ambition - 0.5) * 0.3 + (c.personality.honesty - 0.5) * 0.2;
+  const p = appealWeight(k) + (c.personality.ambition - 0.5) * 0.3 + (c.personality.honesty - 0.5) * 0.2;
   return chance(world, p) ? { type: 'appeal' } : null;
 }
 
@@ -223,7 +244,12 @@ function describeGrievance(g: Grievance): string {
   switch (g.law) {
     case 'L04': case 'L08': return g.amount > 0 ? `picked my pocket for ${g.amount} ℓ` : 'tried to pick my pocket';
     case 'L07': return g.amount > 0 ? `defrauded me of ${g.amount} ℓ` : 'tried to defraud me';
-    case 'L15': return g.amount > 0 ? `extorted ${g.amount} ℓ from me` : 'threatened me for money';
+    // The Code of Persons: what a victim says happened to them, not to the city.
+    case 'P06': return g.amount > 0 ? `extorted ${g.amount} ℓ from me under threat` : 'threatened me for money';
+    case 'P01': return 'threatened me';
+    case 'P03': return 'assaulted me';
+    case 'P04': return 'beat me, and I still carry it';
+    case 'P05': return 'held me against my will';
     default: return 'keeps harassing me';
   }
 }
@@ -250,7 +276,9 @@ export function tryReport(ctx: Ctx): Action | null {
   for (const { g, insults, harassments, tick } of tallies.values()) {
     const actor = world.citizens[g.actorId];
     if (!actor || !isPresent(world, actor)) continue;
-    if (g.law === 'L05' && insults < 3 && harassments < 2) continue;
+    // Harassment is P02 now, and it is a pattern rather than one bad hour:
+    // three insults or two acts of hostility before anybody goes to the Watch.
+    if (g.law === 'P02' && insults < 3 && harassments < 2) continue;
     const key = `reported:${c.id}:${g.actorId}:${g.law}:${tick}`;
     if (world.counters[key]) continue;
     world.counters[key] = 1;
@@ -326,7 +354,7 @@ export function tryPublish(ctx: Ctx): Action | null {
       const subject = world.citizens[g.actorId];
       if (!subject || !isPresent(world, subject) || !hasUndetectedRecentOffence(world, subject)) continue;
       world.counters[key] = world.day;
-      return { type: 'publish', headline: `${LAWS[g.law].name} in ${districtName(world, subject.district)}: ${subject.name} named by a victim`, about: subject.id };
+      return { type: 'publish', headline: `${offenceName(g.law)} in ${districtName(world, subject.district)}: ${subject.name} named by a victim`, about: subject.id };
     }
   }
   // Two journalists filing "From the city: <name> reports from <district>" on

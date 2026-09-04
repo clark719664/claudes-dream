@@ -11,7 +11,8 @@ import { GOODS, SEASONS, WEATHERS } from '../src/types.ts';
 import type { Citizen, Observation, World } from '../src/types.ts';
 import { MAX_DIARY_SHOWN, MAX_FEED_SHOWN } from '../src/data/metropolis.ts';
 import { createCityJobs } from '../src/economy/jobs.ts';
-import { fileCharge, openCourtSession } from '../src/government/court.ts';
+import { fileCharge, holdCourt, openCourtSession } from '../src/government/court.ts';
+import { CUSTODY_ACTIONS } from '../src/government/jail.ts';
 import { seatJury } from '../src/government/jury.ts';
 import { openInvestigation } from '../src/government/investigations.ts';
 import { buildObservation } from '../src/brains/observe.ts';
@@ -89,8 +90,72 @@ test('a citizen in the cells sees the whole city and is offered only what a term
   const obs = buildObservation(world, plain.id);
   assertMetropolisShape(obs, 'a citizen in the cells');
   assert.equal(obs.self.jailedUntilDay, world.day + 2);
+  // The Charter's own list and nothing else (`docs/JUSTICE.md` §2): the
+  // notebook, the diary, a letter, the appeal, the plea, the lesson, the
+  // shift, the parole application, and a journalist's story.
   for (const a of obs.availableActions) {
-    assert.ok(['idle', 'note', 'forget', 'write_diary', 'message', 'appeal'].includes(a), `${a} was offered from a cell`);
+    assert.ok((CUSTODY_ACTIONS as readonly string[]).includes(a), `${a} was offered from a cell`);
+  }
+  for (const a of ['work', 'move', 'buy', 'sell', 'vote', 'socialize', 'gift', 'steal', 'harass', 'visit']) {
+    assert.ok(!obs.availableActions.includes(a as never), `${a} was offered from a cell`);
+  }
+  assert.ok(obs.availableActions.includes('work_custody'), 'a shift in custody pays the victim first');
+});
+
+test('the observation carries the term, its parole and the people who may come', () => {
+  const { world, plain } = city();
+  const victim = makeCitizen(world, { name: 'Pell', district: 'commons' });
+  const k = fileCharge(world, {
+    defendantId: plain.id, law: 'P03', evidence: 0.9, filedBy: 'watch', victimId: victim.id,
+    description: 'Assault: struck a citizen in the Commons',
+  });
+  world.hour = world.config.courtHour;
+  holdCourt(world);
+  assert.equal(world.cases[k.id].verdict !== null, true, 'the Court decided it');
+  if (world.cases[k.id].verdict !== 'guilty') return;
+
+  const obs = buildObservation(world, plain.id);
+  const custody = obs.self.custody;
+  assert.ok(custody, 'a citizen serving a term sees the term');
+  assert.equal(custody.law, 'P03');
+  assert.equal(custody.lawName, 'Assault');
+  assert.equal(custody.caseId, k.id);
+  assert.equal(custody.life, false);
+  assert.ok((custody.term ?? 0) >= 5, 'never below the floor of the band');
+  assert.equal(custody.daysServed, 0);
+  assert.equal(custody.startDay, world.day);
+  assert.equal(custody.paroleDay, world.day + Math.ceil((custody.term ?? 0) / 2));
+  assert.equal(custody.paroleEligible, false);
+  assert.match(String(custody.paroleProblem), /Half your term/);
+  assert.equal(custody.paroleRequested, false);
+  assert.equal(custody.workedToday, false);
+  assert.ok(custody.conditions.length > 0, 'the Charter\'s own list travels with the term');
+  assert.equal(obs.self.parole, null, 'nobody is on parole the day they go in');
+
+  // Custody is not exile: a friend standing where they are held may come.
+  const friend = makeCitizen(world, { name: 'Rook', district: plain.district });
+  friend.bonds[plain.id] = 70;
+  plain.bonds[friend.id] = 70;
+  const visitor = buildObservation(world, friend.id);
+  assert.deepEqual(visitor.self.visitable.map((v) => v.id), [plain.id]);
+  assert.equal(visitor.self.visitable[0].visitedToday, false);
+  assert.ok(visitor.availableActions.includes('visit'));
+});
+
+test('a job the citizen cannot take says why, and a suspension does not read as a skill gap', () => {
+  const { world, plain } = city();
+  const obs = buildObservation(world, plain.id);
+  for (const job of obs.jobs) {
+    if (job.qualified) assert.equal(job.reason, undefined, 'a job within reach needs no explanation');
+    else assert.ok(job.reason && job.reason.length > 0, `${job.title} says nothing about why not`);
+  }
+  plain.standing = 'suspended';
+  plain.suspendedUntilDay = world.day + 5;
+  const barred = buildObservation(world, plain.id).jobs;
+  assert.ok(barred.length > 0);
+  for (const job of barred) {
+    assert.equal(job.qualified, false);
+    assert.equal(job.reason, 'You cannot work while suspended.');
   }
 });
 

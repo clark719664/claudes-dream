@@ -410,22 +410,30 @@ export function sentenceToCustody(
  */
 export function imposeCustody(world: World, k: TriedCase, term: CustodyTerm): CustodyRecord | null {
   const c = world.citizens[k.defendantId];
+  // A band whose floor is zero can end at zero: P01 and P02 at no measured
+  // harm are *often a restraining order instead* (`docs/JUSTICE.md` §2), and a
+  // sentence of no days is exactly that. The order is made, the conviction is
+  // recorded, and nobody is put in a cell for a term the Court did not pass.
+  const noCell = !term.life && term.days <= 0;
   if (c) {
     recordCustodialConviction(world, k.defendantId);
     const law = personLaw(term.code);
-    emit(world, 'sentence', `The Court sentenced ${c.name} to ${describeCustodyTerm(term)} for `
-      + `${law.name.toLowerCase()} (${term.steps.join('; ')}).`, [c.id], term.life ? 0.9 : 0.6,
+    const passed = noCell
+      ? `a restraining order and no term at all${term.restrainingOrder ? '' : ', on no measured harm'}`
+      : describeCustodyTerm(term);
+    emit(world, 'sentence', `The Court sentenced ${c.name} to ${passed} for `
+      + `${law.name.toLowerCase()} (${term.steps.join('; ')}).`, [c.id], term.life ? 0.9 : noCell ? 0.4 : 0.6,
     { caseId: k.id, code: law.code, days: term.life ? null : term.days, life: term.life, harm: term.harm,
       track: 'person' });
     remember(world, k.defendantId, 'verdict',
-      `Your sentence in case ${k.id}: ${describeCustodyTerm(term)} for ${law.name.toLowerCase()}. `
+      `Your sentence in case ${k.id}: ${passed} for ${law.name.toLowerCase()}. `
       + `${term.steps.join('; ')}. No fine is asked of you and no purse can shorten it.`);
     if (k.victimId && world.citizens[k.victimId]) {
       remember(world, k.victimId, 'verdict',
-        `The Court sentenced ${c.name} to ${describeCustodyTerm(term)} for what they did to you (case ${k.id}).`);
+        `The Court sentenced ${c.name} to ${passed} for what they did to you (case ${k.id}).`);
     }
   }
-  const record = takeIntoCustody(world, {
+  const record = noCell ? null : takeIntoCustody(world, {
     citizenId: k.defendantId, caseId: k.id, days: term.days, life: term.life,
     code: term.code, victimId: k.victimId ?? null,
   });
@@ -709,6 +717,39 @@ export function visitPrisoner(world: World, visitorId: CitizenId, prisonerId: Ci
   remember(world, prisonerId, 'social', `${visitor.name} came to see you.`);
   remember(world, visitorId, 'social', `You visited ${prisoner.name} in custody.`);
   return ok(`You visited ${prisoner.name}.`);
+}
+
+/**
+ * The prisoners this citizen could go and see this hour: family and friends
+ * held where the visitor is standing, whom they have not already visited
+ * today. Custody is not exile — the difference is exactly this list — so the
+ * observation carries it and `availableActions` offers `visit` from it.
+ */
+export function visitablePrisoners(world: World, visitorId: CitizenId): Citizen[] {
+  const visitor = world.citizens[visitorId];
+  if (!visitor || isJailed(visitor) || !isPresent(world, visitor)) return [];
+  const out: Citizen[] = [];
+  for (const prisoner of jailedCitizens(world)) {
+    if (prisoner.id === visitorId || prisoner.district !== visitor.district) continue;
+    if (!areFamily(world, visitorId, prisoner.id) && !areFriends(world, visitorId, prisoner.id)) continue;
+    out.push(prisoner);
+  }
+  return out;
+}
+
+/** Has this citizen already been to see that prisoner today? */
+export function visitedToday(world: World, visitorId: CitizenId, prisonerId: CitizenId): boolean {
+  return world.counters[visitKey(visitorId, prisonerId)] === world.day;
+}
+
+/** True once today's shift in custody has been worked. */
+export function workedInCustodyToday(world: World, cId: CitizenId): boolean {
+  return world.counters[workedKey(cId)] === world.day;
+}
+
+/** Lumens of restitution the victim of the offence somebody is held for has had. */
+export function restitutionPaidInCustody(world: World, cId: CitizenId): number {
+  return Math.max(0, Math.round(world.counters[paidKey(cId)] ?? 0));
 }
 
 // ---------------------------------------------------------------------------

@@ -37,7 +37,10 @@ function addConviction(w: World, defendantId: string, victimId: string | null, a
     id, defendantId, law: 'L08', severity: 4, evidence: 0.9, filedTick: w.tick, filedBy: 'watch', victimId, amount,
     description: 'Grand theft', status: 'tried', triedDay: w.day, judges: ['c_9'], votes: { c_9: 'guilty' },
     reasons: { c_9: 'The evidence carries it.' }, openedTick: null, carriedSessions: 0, decidedByDefault: false, verdict: 'guilty',
-    sentence: { tier: 5, fine: 0, serviceDays: 0, jailDays: 0, suspensionDays: 0, exile: true, executeOnDay: w.day + 1, executed: false },
+    sentence: {
+      tier: 5, track: 'city', fine: 0, serviceDays: 0, jailDays: 0, life: false, restrainingOrder: false,
+      suspensionDays: 0, exile: true, executeOnDay: w.day + 1, executed: false,
+    },
     appeal: null,
   };
   w.cases[id] = k;

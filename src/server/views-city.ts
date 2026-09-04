@@ -10,7 +10,7 @@ import { vacancies } from '../economy/housing.ts';
 import { moneySupply } from '../economy/treasury.ts';
 import { daysToElection, isElectionDay, nominationsOpen } from '../government/council.ts';
 import { officersOnDuty } from '../government/watch.ts';
-import { LAWS, LAW_CODES } from '../data/laws.ts';
+import { LAWS, LAW_CODES, offenceName, trackOf } from '../data/laws.ts';
 import { isPresentIn, nameOf, partyName, presentSet } from './views.ts';
 import { caseExtras, courtExtras, governmentExtras } from './views-metropolis.ts';
 import { economyExtras } from './views-markets.ts';
@@ -180,14 +180,22 @@ export function courtView(world: World): Record<string, unknown> {
     .sort((a, b) => b.filedTick - a.filedTick || idNumber(b.id) - idNumber(a.id))
     .slice(0, CASE_VIEW_LENGTH)
     .map((k) => caseView(world, k));
+  const tried = count((k) => k.verdict !== null);
+  const guilty = count((k) => k.verdict === 'guilty');
   return {
     counts: {
       total: all.length,
       pending: count((k) => k.status === 'pending'), inSession: count((k) => k.status === 'in_session'),
       tried: count((k) => k.status === 'tried'),
       appealed: count((k) => k.status === 'appealed'), closed: count((k) => k.status === 'closed'),
-      guilty: count((k) => k.verdict === 'guilty'), acquitted: count((k) => k.verdict === 'acquitted'),
+      guilty, acquitted: count((k) => k.verdict === 'acquitted'),
       exiles: count((k) => k.sentence?.exile === true),
+      // The two tracks, counted apart, and the rate a city can argue about.
+      civicCharges: count((k) => trackOf(k.law) === 'city'),
+      personCharges: count((k) => trackOf(k.law) === 'person'),
+      ladderSentences: count((k) => k.sentence?.track === 'city'),
+      custodySentences: count((k) => k.sentence?.track === 'person'),
+      convictionRate: tried > 0 ? Math.round((guilty / tried) * 100) / 100 : null,
     },
     nextSessionHour: world.config.courtHour,
     cases,

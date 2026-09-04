@@ -100,8 +100,19 @@ export function isQualified(world: World, c: Citizen, job: Job): boolean {
   return true;
 }
 
-function qualificationGap(c: Citizen, job: Job): string {
+/**
+ * Why this citizen cannot take this job, in the engine's own words: a standing
+ * that bars work altogether, a reputation short of the mark, or a skill short
+ * of it. The observation shows it beside every job on the board
+ * (`brains/observe.ts`), so a suspended citizen can tell a suspension from a
+ * skill gap instead of reading "0 of 11 within reach" and learning nothing.
+ */
+export function qualificationGap(c: Citizen, job: Job, world?: World): string {
   if (c.standing !== 'good' && c.standing !== 'probation') return `You cannot work while ${c.standing}.`;
+  if (world && job.employer !== 'city') {
+    const biz = world.businesses[job.employer];
+    if (!biz || biz.dissolvedDay !== null) return 'That employer has closed its doors.';
+  }
   if (c.reputation < job.minReputation) return `That job needs reputation ${job.minReputation}; yours is ${Math.round(c.reputation)}.`;
   if (job.skill && c.skills[job.skill] < job.minSkill) {
     return `That job needs ${job.skill} ${job.minSkill}; yours is ${Math.round(c.skills[job.skill])}.`;

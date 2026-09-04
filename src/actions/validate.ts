@@ -4,9 +4,9 @@
  */
 import { ACTION_TYPES, DISTRICT_IDS, GOODS, PAPERS, REACTIONS, SCHOOLS, SKILLS, WORK_KINDS } from '../types.ts';
 import type {
-  Action, ActionType, AppealResult, BusinessKind, Decree, HousingTier, JobRole, LawCode, ProposalKind,
+  Action, ActionType, AppealResult, BusinessKind, Decree, HousingTier, JobRole, LawCode, OffenceCode, ProposalKind,
 } from '../types.ts';
-import { LAW_CODES } from '../data/laws.ts';
+import { LAW_CODES, OFFENCE_CODES } from '../data/laws.ts';
 import { HOBBIES, PRODUCT_IDS } from '../data/catalogue.ts';
 import { DISHES } from '../data/metropolis.ts';
 
@@ -136,8 +136,10 @@ export function validateAction(input: unknown): { ok: true; action: Action } | {
         ...(a.targetId ? { targetId: id(a.targetId, 'targetId', CID) } : {}),
       }; break;
       case 'vote_proposal': action = { type, proposalId: id(a.proposalId, 'proposalId', PID), aye: Boolean(a.aye) }; break;
+      // A report may name either code: the Watch takes an account of a theft
+      // and an account of an assault the same way (`docs/JUSTICE.md` §1-2).
       case 'report': action = {
-        type, citizen: id(a.citizen, 'citizen', CID), law: oneOf(a.law, 'law', LAW_CODES) as LawCode,
+        type, citizen: id(a.citizen, 'citizen', CID), law: oneOf(a.law, 'law', OFFENCE_CODES) as OffenceCode,
         ...(optStr(a.text, 'text') !== undefined ? { text: optStr(a.text, 'text') } : {}),
       }; break;
       case 'verdict': action = {
@@ -157,6 +159,15 @@ export function validateAction(input: unknown): { ok: true; action: Action } | {
       case 'vandalize': action = { type, building: id(a.building, 'building', BID) }; break;
       case 'extort': action = { type, target: id(a.target, 'target', CID), amount: int(a.amount, 'amount', 1, 100000) }; break;
       case 'sabotage': action = { type, building: id(a.building, 'building', BID) }; break;
+      // The Code of Persons: one citizen, standing here, and what is done to them.
+      case 'threaten': case 'assault': case 'confine': case 'erase':
+        action = { type, target: id(a.target, 'target', CID) }; break;
+      // Custody: a plea, an application, a shift, a visit.
+      case 'plead_guilty': action = {
+        type, ...(a.caseId !== undefined && a.caseId !== null ? { caseId: id(a.caseId, 'caseId', KID) } : {}),
+      }; break;
+      case 'request_parole': case 'work_custody': action = { type }; break;
+      case 'visit': action = { type, citizen: id(a.citizen, 'citizen', CID) }; break;
       // society
       case 'buy_item': action = { type, productId: oneOf(a.productId, 'productId', PRODUCT_IDS) }; break;
       case 'use_item': action = { type, itemId: id(a.itemId, 'itemId', IID) }; break;

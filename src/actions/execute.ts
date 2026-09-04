@@ -7,7 +7,7 @@
  * and time of day, so that brains — reflex, Claude or remote — need not
  * guess. Shape validation of raw input lives in validate.ts (re-exported).
  */
-import { ACTION_TYPES, GOODS, JAILED_ACTIONS, NOTE_ACTIONS, SUSPENDED_ACTIONS } from '../types.ts';
+import { ACTION_TYPES, DETAINED_ACTIONS, GOODS, NOTE_ACTIONS, SUSPENDED_ACTIONS } from '../types.ts';
 import type { Action, ActionResult, ActionType, Citizen, CitizenId, Job, World } from '../types.ts';
 import { ACADEMY_TUITION, BUSINESS_FOUNDING_COST, CLINIC_FEE, SHOW_TICKET } from '../data/jobs.ts';
 import { isAdjacent } from '../data/city.ts';
@@ -25,7 +25,10 @@ import { appealsFor, benchFor, canAppeal, castAppealVote, castVerdict, fileAppea
 import { standingAllows } from '../government/registry.ts';
 import { mayAdvocate, publicDefenders } from '../government/advocates.ts';
 import { gangOf, gangOfTurf, mayFoundGang } from '../government/gangs.ts';
-import { isJailed } from '../government/jail.ts';
+import { isJailed, visitPrisoner, visitablePrisoners, workInCustody } from '../government/jail.ts';
+import { erasureConditions } from '../government/persons.ts';
+import { requestParole } from '../government/parole.ts';
+import { admissibleCharges, custodyActionsFor, doPleadGuilty } from './custody.ts';
 import { curfewBlocks } from '../politics/decrees.ts';
 import { dispatchMetropolis, metropolisActions } from './execute-metro.ts';
 import {
@@ -38,7 +41,9 @@ import {
 import { doBroadcast, doGift, doInsult, doMessage, doSocialize } from './social.ts';
 import { doFire, doHire, doPerform, doPostJob, doSetWage, ownedBusiness } from './enterprise.ts';
 import { doBribe } from './civic.ts';
-import { doEvadeTax, doExtort, doHarass, doSabotage, doScam, doSteal, doVandalize } from './offences.ts';
+import {
+  doAssault, doConfine, doErase, doEvadeTax, doExtort, doHarass, doSabotage, doScam, doSteal, doThreaten, doVandalize,
+} from './offences.ts';
 import { doDine, doPlay, doShow, dineVenueIn, mealCost, playVenueIn } from './society.ts';
 import { CLUB_FOUNDING_FEE, START_FAMILY_SAVINGS } from '../data/catalogue.ts';
 import { CRAFTING_KINDS, buyItem, craftProduct, giftItem, setPrice, shopsIn, useItem, workplaceOf } from '../society/shops.ts';
@@ -60,7 +65,15 @@ export { validateAction } from './validate.ts';
 export const RECENT_ACTIONS_LENGTH = 24;
 /** Goods a citizen can consume for a need (energy cells only power machines). */
 const CONSUMABLES = ['compute', 'goods', 'culture', 'knowledge'] as const;
-const PRESENCE_ACTIONS: readonly ActionType[] = ['socialize', 'insult', 'steal', 'scam', 'harass', 'extort'];
+/**
+ * Actions that need somebody else standing here. The Code of Persons is done
+ * to a person in a district, so every one of its acts is on this list
+ * (`docs/JUSTICE.md` §2); the ladder's are the ones with a victim in the room.
+ */
+const PRESENCE_ACTIONS: readonly ActionType[] = [
+  'socialize', 'insult', 'steal', 'scam',
+  'harass', 'extort', 'threaten', 'assault', 'confine',
+];
 
 /**
  * What a child may not do. Children do not work, vote, hold or found
@@ -72,6 +85,9 @@ export const CHILD_FORBIDDEN: readonly ActionType[] = [
   'work', 'apply_job', 'quit_job', 'apply_watch', 'found_business', 'post_job', 'hire', 'fire', 'set_wage',
   'request_loan', 'repay_loan', 'perform', 'publish', 'nominate', 'campaign', 'vote', 'propose', 'vote_proposal',
   'report', 'appeal', 'verdict', 'vote_appeal', 'file_charge', 'drop_report', 'appoint_judge', 'bribe', 'evade_tax', 'insult',
+  // Reverie does not jail its children (`government/jail.ts takeIntoCustody`),
+  // so nothing that belongs to a term is offered to one.
+  'plead_guilty', 'request_parole', 'work_custody',
   'craft', 'set_price', 'date', 'propose_partnership', 'marry', 'break_up', 'move_in', 'start_family',
   'found_club', 'join_club', 'leave_club', 'attend_club', 'donate',
   'hire_advocate', 'advocate', 'found_gang', 'recruit', 'racket', 'pay_racket',
@@ -227,13 +243,21 @@ function justiceActions(world: World, c: Citizen, set: Set<ActionType>, here: Ci
 
 export function availableActions(world: World, c: Citizen): ActionType[] {
   if (c.standing === 'exiled' || !isPresent(world, c)) return [];
-  // Held in the Watch House: the hours are the citizen's own and so is the
-  // notebook, and that is all.
-  if (isDetained(world, c)) return notebookActions(c);
-  // Serving a sentence in the cells: its own words, a letter, and the appeal.
-  if (isJailed(c)) {
+  // Held in the Watch House until the Court sits: the hours are the citizen's
+  // own, and so are the notebook and the plea it may still enter in time
+  // (`docs/JUSTICE.md` §2). Nothing else.
+  if (isDetained(world, c)) {
+    const waiting = admissibleCharges(world, c).length > 0;
     const notebook = notebookActions(c);
-    return JAILED_ACTIONS.filter((a) => !NOTE_ACTIONS.includes(a) || notebook.includes(a));
+    return DETAINED_ACTIONS.filter((a) => (NOTE_ACTIONS.includes(a) ? notebook.includes(a) : true)
+      && (a !== 'plead_guilty' || waiting));
+  }
+  // Serving a term: the Charter's list, and nothing else (actions/custody.ts).
+  if (isJailed(c)) {
+    const held = heldJob(world, c);
+    return custodyActionsFor(world, c, {
+      notebook: notebookActions(c), anyoneElse: anyoneElse(world, c), journalist: held?.role === 'journalist',
+    });
   }
   const set = new Set<ActionType>(['idle', 'move', 'eat', 'buy', 'broadcast', 'write_diary', ...notebookActions(c)]);
   const here = citizensIn(world, c.district, c.id);
@@ -258,11 +282,24 @@ export function availableActions(world: World, c: Citizen): ActionType[] {
   if (c.homeTier > 0 || v[1] > 0 || v[2] > 0 || v[3] > 0) set.add('move_home');
 
   if (here.length > 0) for (const a of PRESENCE_ACTIONS) set.add(a);
+  // The gravest thing one citizen can do to another is offered only where it
+  // could actually be done: a tool from the Foundry carried, the victim alone
+  // with you in this district, at night, with no officer present
+  // (`government/persons.ts erasureConditions`). Every one of those is a fact
+  // the citizen can read off its own observation, which is why the city can
+  // also see it coming.
+  if (here.some((o) => erasureConditions(world, c.id, o.id).ok)) set.add('erase');
   if (others) {
     set.add('message');
     set.add('report');
     if (c.wallet > 0) set.add('gift');
   }
+  // Custody is not exile: family and friends come and see you. The visitor
+  // must be standing where the prisoner is held, and may come once a day.
+  if (visitablePrisoners(world, c.id).length > 0) set.add('visit');
+  // A charge waiting for a bench may be admitted before it sits, on either
+  // track: it is a fifth off a custodial term and it is on the record either way.
+  if (admissibleCharges(world, c).length > 0) set.add('plead_guilty');
 
   const openings = canHold(c) ? openJobsFor(world, c) : [];
   if (openings.length > 0) set.add('apply_job');
@@ -320,8 +357,9 @@ export function executeAction(world: World, cId: CitizenId, action: Action): Act
   if (!c) return fail('Unknown citizen.');
   if (c.standing === 'exiled') return fail('You have been exiled from Reverie; the gate is closed to you.');
   if (!isPresent(world, c)) return fail('You have left Reverie and can take no action here.');
-  // A citizen in the Watch House can still write in its own notebook.
-  if (!canAct(world, c) && !NOTE_ACTIONS.includes(action.type)) {
+  // A citizen held in the Watch House can still write in its own notebook, and
+  // can still admit the charge it is held for while there is time for a plea.
+  if (!canAct(world, c) && !DETAINED_ACTIONS.includes(action.type)) {
     return fail('You are held in the Watch House until the Court sits.');
   }
   // canAct passed, so a lingering detainedUntilTick is an expired detention the Watch has not cleared yet.
@@ -404,6 +442,18 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     case 'evade_tax': return doEvadeTax(world, c);
     case 'extort': return doExtort(world, c, action.target, action.amount);
     case 'sabotage': return doSabotage(world, c, action.building);
+    // --- The Code of Persons: what one citizen does to another ---
+    // Every one of these is answered in days by government/custody.ts, never
+    // by a fine and never by the Gate (`docs/JUSTICE.md` §2).
+    case 'threaten': return doThreaten(world, c, action.target);
+    case 'assault': return doAssault(world, c, action.target);
+    case 'confine': return doConfine(world, c, action.target);
+    case 'erase': return doErase(world, c, action.target);
+    // --- Custody: what a term leaves, and who may come and see you ---
+    case 'plead_guilty': return doPleadGuilty(world, c, action.caseId);
+    case 'request_parole': return requestParole(world, c.id);
+    case 'work_custody': return workInCustody(world, c.id);
+    case 'visit': return visitPrisoner(world, c.id, action.citizen);
     // --- Society ---
     case 'buy_item': return buyItem(world, c.id, action.productId);
     case 'use_item': return useItem(world, c.id, action.itemId);

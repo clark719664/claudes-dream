@@ -8,6 +8,7 @@ import {
   describeGang, foundGang, gangOf, gangOfTurf, gangsView, liveGangs, mayFoundGang, payRacket, racket, racketDemand,
   recruit, splitLoot,
 } from '../src/government/gangs.ts';
+import { EVIDENCE_WITNESS_REPORT } from '../src/government/watch.ts';
 
 /** Somebody the city has watched and does not trust. */
 function addCrook(w: World, name: string, honesty = 0.2, district: Citizen['district'] = 'nightglass'): Citizen {
@@ -137,7 +138,9 @@ test('a racket moves money from the till to the boss and conserves it', () => {
   assert.equal(totalMoney(w), before, 'protection money is money moved, not made');
   assert.equal(w.treasury.totals.racket, demand);
   assert.deepEqual(gangOf(w, boss.id)?.rackets, [biz.id]);
-  assert.ok(boss.recentOffences.some((o) => o.law === 'L15'), 'a racket is extortion whether it is noticed or not');
+  // Extortion left the Code of the City with the two-track reform: a racket is
+  // P06, answered by custody in days, and no fine stands in for it.
+  assert.ok(boss.recentOffences.some((o) => o.law === 'P06'), 'a racket is extortion whether it is noticed or not');
   assert.ok(w.events.some((e) => e.kind === 'gang' && e.text.includes('paid')));
 
   const again = racket(w, boss.id, biz.id);
@@ -162,7 +165,7 @@ test('an owner who refuses finds the shopfront wrecked', () => {
   assert.equal(biz.inventory.goods, 5, 'half the shelves');
   assert.equal(biz.inventory.energy, 4);
   assert.ok(owner.memory.some((m) => m.text.includes('wrecked')));
-  assert.ok(boss.recentOffences.some((o) => o.law === 'L15'));
+  assert.ok(boss.recentOffences.some((o) => o.law === 'P06'));
 });
 
 test('an owner may pay before anybody comes, and that is no offence of theirs', () => {
@@ -231,7 +234,7 @@ test('three convictions in a cycle bust the gang, and its people are their own a
   assert.equal(bustCheck(w, g), false);
   for (let i = 0; i < BUST_CONVICTIONS; i++) {
     g.members.map((id) => w.citizens[id])[i].record.convictions.push(
-      { caseId: `k_${i}`, law: 'L15', severity: 5, tier: 5, day: w.day - 1 },
+      { caseId: `k_${i}`, law: 'P06', severity: 4, tier: null, day: w.day - 1 },
     );
   }
   assert.equal(convictionsThisCycle(w, g), BUST_CONVICTIONS);
@@ -263,7 +266,8 @@ test('a member reported to the Watch is defended, and the defence is itself an o
   enforcer.district = 'nightglass';
 
   assert.equal(defend(w, boss.id, reporter.id), true);
-  assert.ok(enforcer.recentOffences.some((o) => o.law === 'L05'), 'intimidation is harassment, and it is charged like it');
+  // Harassment is P02 now, and leaning on a witness is charged like it.
+  assert.ok(enforcer.recentOffences.some((o) => o.law === 'P02'), 'intimidation is harassment, and it is charged like it');
   assert.ok(reporter.hostilityFrom[enforcer.id]?.length);
   assert.ok(reporter.bonds[enforcer.id] < 0);
   assert.ok(reporter.memory.some((m) => m.text.includes('leaned on you')));
@@ -356,7 +360,7 @@ test('a refusal may go to the Watch, and what is reported is the act already don
   const report = Object.values(w.reports).find((r) => r.suspectId === boss.id && r.law === 'L04');
   if (reported) {
     assert.ok(report, 'what the refuser knew reached the Watch as a report');
-    assert.ok(report.evidence >= 0.6, 'a witness who was there is worth more than a rumour');
+    assert.ok(report.evidence >= EVIDENCE_WITNESS_REPORT, 'a witness who was there is worth more than a rumour');
     assert.ok(wary.memory.some((m) => m.text.includes('told the Watch')));
     assert.equal(boss.stats.offencesDetected, 1);
   } else {

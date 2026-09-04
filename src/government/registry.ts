@@ -8,7 +8,7 @@
  * through economy/treasury; housing through economy/housing; jobs through
  * economy/jobs; businesses through economy/business.
  */
-import { JAILED_ACTIONS, SUSPENDED_ACTIONS } from '../types.ts';
+import { DETAINED_ACTIONS, JAILED_ACTIONS, SUSPENDED_ACTIONS } from '../types.ts';
 import type {
   ActionResult, ActionType, BanRecord, CaseId, Citizen, CitizenId, LawCode, World,
 } from '../types.ts';
@@ -281,18 +281,19 @@ export function isKeyBanned(world: World, apiKeyHash: string | null | undefined)
 }
 
 /**
- * What a citizen's standing permits: exiled and detained citizens can do
- * nothing; a citizen in the cells only the JAILED_ACTIONS subset (its own
- * words and its appeal, which are never taken away); suspended citizens only
- * the SUSPENDED_ACTIONS subset; everyone else anything (job, office and
- * location checks live in actions/execute).
+ * What a citizen's standing permits: an exile nothing; a citizen held in the
+ * Watch House awaiting the Court only the DETAINED_ACTIONS subset (its
+ * notebook and the plea it may still enter in time); a citizen serving a term
+ * only the JAILED_ACTIONS subset, which is the Charter's own list; suspended
+ * citizens only the SUSPENDED_ACTIONS subset; everyone else anything (job,
+ * office and location checks live in actions/execute).
  *
- * Jail is not a standing — a jailed citizen may be in good standing and still
- * be in a cell — so it is checked before the standing is.
+ * Neither detention nor custody is a standing — a citizen in a cell may be in
+ * good standing and still be in it — so both are checked before the standing.
  */
 export function standingAllows(c: Citizen, actionType: ActionType): boolean {
   if (c.standing === 'exiled') return false;
-  if (c.detainedUntilTick !== null) return false;
+  if (c.detainedUntilTick !== null) return DETAINED_ACTIONS.includes(actionType);
   if (c.jailedUntilDay !== null && c.jailedUntilDay !== undefined) return JAILED_ACTIONS.includes(actionType);
   if (c.standing === 'suspended') return SUSPENDED_ACTIONS.includes(actionType);
   return true;

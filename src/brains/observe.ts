@@ -6,13 +6,13 @@
  */
 import { CITY_SENDER, GOODS } from '../types.ts';
 import type {
-  Citizen, CitizenId, DistrictId, Good, Job, Observation, ObservedCitizen, ObservedClub, ObservedFamilyMember,
-  ObservedHappening, ObservedJob, ObservedProposal, ObservedShop, World,
+  Citizen, CitizenId, DistrictId, Good, Job, Observation, ObservedCitizen, ObservedClub, ObservedCustody,
+  ObservedFamilyMember, ObservedHappening, ObservedJob, ObservedParole, ObservedProposal, ObservedShop, World,
 } from '../types.ts';
 import { MAX_DIARY_SHOWN } from '../data/metropolis.ts';
 import { districtDistance } from '../data/city.ts';
 import { CLUB_MEETING_HOUR, PRODUCTS } from '../data/catalogue.ts';
-import { employerName, isQualified, openJobs } from '../economy/jobs.ts';
+import { employerName, isQualified, openJobs, qualificationGap } from '../economy/jobs.ts';
 import { loanOf } from '../economy/bank.ts';
 import { vacancies } from '../economy/housing.ts';
 import { isDetained } from '../citizens/citizen.ts';
@@ -20,6 +20,13 @@ import { characterOf } from '../citizens/character.ts';
 import { CITY_NAME } from '../citizens/orientation.ts';
 import { bondBetween, friendsOf, rivalsOf } from '../citizens/relationships.ts';
 import { appealsFor, benchFor, canAppeal, latestCaseFor, pendingCasesFor } from '../government/court.ts';
+import { offenceName, trackOf } from '../data/laws.ts';
+import {
+  CUSTODY_CONDITIONS, custodyOf, isJailed, pleadedGuilty, restitutionOwed, visitablePrisoners, visitedToday,
+  workedInCustodyToday,
+} from '../government/jail.ts';
+import { onParole, paroleConditions, paroleDayFor, paroleProblem, paroleRequested } from '../government/parole.ts';
+import { personLaw } from '../government/persons.ts';
 import { observedReportsFor } from '../government/reports.ts';
 import { daysToElection, impliedPlatform, isElectionDay, nominationsOpen } from '../government/council.ts';
 import { shopsIn } from '../society/shops.ts';
@@ -91,6 +98,9 @@ function observedJobs(world: World, c: Citizen): ObservedJob[] {
   return rows.slice(0, MAX_JOBS_SHOWN).map(({ job, qualified }) => ({
     id: job.id, title: job.title, wage: pay(job), employer: employerName(world, job), district: job.district,
     skill: job.skill, minSkill: job.minSkill, qualified,
+    // Why not, when not: a skill short of the mark reads differently from a
+    // suspension, and a citizen who cannot tell them apart cannot act on either.
+    ...(qualified ? {} : { reason: qualificationGap(c, job, world) }),
   }));
 }
 
@@ -194,6 +204,53 @@ function observedPair(world: World, id: CitizenId | null | undefined): { id: Cit
   return other ? { id: other.id, name: other.name } : null;
 }
 
+/**
+ * The term a citizen is serving, as their own observation shows it
+ * (`docs/JUSTICE.md` §2). Null for everybody who is not in a cell. Nothing
+ * here is hidden from the person serving it: the offence, the term, what is
+ * left of it, the day the Court will hear a parole application and why it will
+ * not hear one sooner, what the victim is still owed, and the Charter's own
+ * list of what custody leaves them.
+ */
+function observedCustody(world: World, c: Citizen): ObservedCustody | null {
+  const record = custodyOf(world, c.id);
+  if (!record) return null;
+  const day = paroleDayFor(world, c.id);
+  const served = Math.max(0, world.day - record.startDay);
+  return {
+    law: record.code,
+    lawName: record.code ? personLaw(record.code).name : null,
+    caseId: record.caseId,
+    term: record.life ? null : record.term,
+    life: record.life,
+    startDay: record.startDay,
+    daysServed: served,
+    daysLeft: record.life ? null : Math.max(0, record.untilDay - world.day),
+    where: record.where,
+    paroleDay: day,
+    paroleEligible: day !== null && world.day >= day,
+    paroleProblem: paroleProblem(world, c.id),
+    paroleRequested: paroleRequested(world, c.id),
+    restitutionOwed: restitutionOwed(world, c.id).amount,
+    workedToday: workedInCustodyToday(world, c.id),
+    conditions: [...CUSTODY_CONDITIONS],
+  };
+}
+
+/** The conditions a paroled citizen lives under until the term runs out; null for everybody else. */
+function observedParole(world: World, c: Citizen): ObservedParole | null {
+  if (!onParole(world, c.id)) return null;
+  const conditions = paroleConditions(world, c.id);
+  if (!conditions) return null;
+  return {
+    untilDay: conditions.probationUntilDay,
+    restrainedFrom: conditions.restrainedFrom,
+    restrainedFromName: conditions.restrainedFrom ? nameOf(world, conditions.restrainedFrom) : null,
+    instalment: conditions.instalment,
+    reportBy: conditions.reportBy,
+  };
+}
+
 /** Build the observation for a citizen. Unknown ids are a programmer error. */
 export function buildObservation(world: World, cId: CitizenId): Observation {
   const c = world.citizens[cId];
@@ -263,6 +320,12 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
       milestones: milestonesOf(world, cId, 3).map((m) => m.text),
       health: { ...healthOf(c) },
       jailedUntilDay: c.jailedUntilDay ?? null,
+      // Track II, from the inside: the term, the parole, and who may come.
+      custody: observedCustody(world, c),
+      parole: observedParole(world, c),
+      visitable: visitablePrisoners(world, c.id).map((p) => ({
+        id: p.id, name: p.name, district: p.district, visitedToday: visitedToday(world, c.id, p.id),
+      })),
       approval: { mayor: c.approval?.mayor ?? 0.5, council: c.approval?.council ?? 0.5 },
       school: c.school ?? null,
       paper: c.paper ?? 'chronicle',
@@ -308,9 +371,16 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
         return cand ? [{ id, name: cand.name, platform: cand.platform ?? impliedPlatform(world, cand), visibility: cand.campaignVisibility }] : [];
       }),
       openProposals: observedProposals(world, cId),
+      // The citizen's own last case, and which system answered it: a tier on
+      // the ladder, or days in custody. A charge still waiting for a bench can
+      // still be admitted (`docs/JUSTICE.md` §2, the plea in time).
       myLatestCase: latest ? {
-        id: latest.id, law: latest.law, status: latest.status, verdict: latest.verdict,
-        tier: latest.sentence?.tier ?? null, canAppeal: canAppeal(world, cId),
+        id: latest.id, law: latest.law, lawName: offenceName(latest.law), track: trackOf(latest.law),
+        status: latest.status, verdict: latest.verdict,
+        tier: latest.sentence?.tier ?? null,
+        jailDays: latest.sentence?.jailDays ?? 0, life: latest.sentence?.life === true,
+        canAppeal: canAppeal(world, cId),
+        canPleadGuilty: latest.status === 'pending' && !pleadedGuilty(world, latest.id),
       } : null,
       parties: partiesObservation(world, c),
       approval: cityApproval(world),

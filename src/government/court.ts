@@ -30,12 +30,16 @@ export { chargedDay, courtTallyHour, isCustodial, nextCourtTick, priorsOf, track
  * door. The Court reaches it through these, and through nothing else.
  */
 export {
-  CUSTODY_ACTIONS, CUSTODY_CONDITIONS, custodyOf, custodyRoster, daysLeft, defyCustody, imposeCustody, inCustody,
-  isCustodialCase, isJailed, jailRoster, pleadGuilty, pleadedGuilty, releaseFromCustody, sentenceTermFor,
-  visitPrisoner, workInCustody,
+  CUSTODY_ACTIONS, CUSTODY_CONDITIONS, custodyCapacity, custodyOf, custodyRoster, daysLeft, defyCustody, imposeCustody,
+  inCustody, isCustodialCase, isJailed, jailRoster, jailedCitizens, keepBuilt, pleadGuilty, pleadedGuilty,
+  releaseFromCustody, restitutionOwed, sentenceTermFor, visitPrisoner, visitablePrisoners, visitedToday,
+  workInCustody, workedInCustodyToday,
 } from './jail.ts';
 export { exileForbidden, mayBeExiled, payToShortenTerm } from './custody.ts';
-export { paroleConditions, paroleDayFor, paroleProblem, onParole, requestParole } from './parole.ts';
+export {
+  onParole, paroleBench, paroleConditions, paroleDayFor, paroleOpenedDay, paroleProblem, paroleRequested,
+  paroleVoteOf, requestParole, victimOpposesParole,
+} from './parole.ts';
 /**
  * Debt is collected by the civil ladder, not by the Court: garnishment,
  * seizure, a suspended trading licence, and contempt only for defiance

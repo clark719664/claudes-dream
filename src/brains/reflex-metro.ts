@@ -19,6 +19,7 @@ import { GANG_NAME_PARTS, PARTY_NAME_PARTS, WORK_INFO } from '../data/metropolis
 import { chance, pick, randInt } from '../util/rng.ts';
 import { LAWS, isCivicLaw } from '../data/laws.ts';
 import { characterOf } from '../citizens/character.ts';
+import { talentOf } from '../citizens/citizen.ts';
 import { bondBetween, friendsOf } from '../citizens/relationships.ts';
 import { canAppeal } from '../government/court.ts';
 import { hasWrittenToday, templatedLine } from '../identity/diary.ts';
@@ -70,19 +71,48 @@ export const GANG_FOUNDING_CHANCE = 0.05;
 // ---------------------------------------------------------------------------
 
 /**
- * A term in the cells. There is an appeal to write, a letter to send, and the
- * diary; there is nothing else, and the hours are long.
+ * A term in custody (`docs/JUSTICE.md` §2). A scripted prisoner uses what the
+ * Charter leaves it and nothing else: the appeal first, because its window is
+ * a day; then parole the moment half the term is served; then the shift that
+ * pays the victim back; then the lesson the Academy brings to the Keep; then a
+ * letter, and the diary. The list `ctx.can` holds is `availableActions`'s, so
+ * this can only ever choose from what a term actually leaves.
+ *
+ * Nothing here shortens the term, and nothing here is a way out: those are the
+ * Court's, the Council's and the calendar's, in that order.
  */
 export function tryJail(ctx: Ctx): Action | null {
-  const { world, c } = ctx;
+  const { world, c, obs } = ctx;
   if (c.jailedUntilDay === null || c.jailedUntilDay === undefined || c.jailedUntilDay <= world.day) return null;
+  const custody = obs.self.custody;
   if (ctx.can.has('appeal') && canAppeal(world, c.id)) return { type: 'appeal' };
+  // A plea before the bench sits is worth a fifth of a term; a defendant with
+  // another charge waiting and the Watch's own eyes on them takes it.
+  if (ctx.can.has('plead_guilty') && chance(world, 0.25)) return { type: 'plead_guilty' };
+  if (ctx.can.has('request_parole')) return { type: 'request_parole' };
+  if (ctx.can.has('work_custody') && (custody?.restitutionOwed ?? 0) > 0) return { type: 'work_custody' };
+  if (ctx.can.has('work_custody') && chance(world, 0.5)) return { type: 'work_custody' };
+  if (ctx.can.has('study') && c.wallet > SPARE_WALLET && chance(world, 0.3)) {
+    return { type: 'study', skill: talentOf(c) };
+  }
   if (ctx.can.has('message') && chance(world, 0.3)) {
     const friend = friendsOf(world, c.id)[0];
     if (friend) return { type: 'message', to: friend, text: 'The cells are quiet. Tell me what the city is doing without me.' };
   }
   if (ctx.can.has('write_diary') && !hasWrittenToday(world, c)) return { type: 'write_diary', text: templatedLine(world, c) };
   return { type: 'idle' };
+}
+
+/**
+ * Custody is not exile, and this is where a scripted citizen proves it: family
+ * and friends held where you are standing get a visit, once a day each.
+ */
+export function tryVisit(ctx: Ctx): Action | null {
+  const { world, obs } = ctx;
+  if (!ctx.can.has('visit')) return null;
+  const open = obs.self.visitable.filter((v) => !v.visitedToday);
+  if (open.length === 0 || !chance(world, 0.4)) return null;
+  return { type: 'visit', citizen: pick(world, open).id };
 }
 
 /** A glitch is treated where there is somewhere to treat it, and paid for. */

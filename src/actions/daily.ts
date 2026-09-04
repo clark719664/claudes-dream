@@ -165,7 +165,10 @@ export function doConsume(world: World, c: Citizen, good: Good): ActionResult {
  */
 export function doStudy(world: World, c: Citizen, skill: Skill): ActionResult {
   if (!SKILLS.includes(skill)) return fail('There is no such skill.');
-  if (c.district !== 'archive') return fail('The Academy is in the Archive; go there to study.');
+  // The Academy runs classes in the Keep (`docs/JUSTICE.md` §2): a citizen
+  // serving a term studies where they are held, and pays the same tuition.
+  const inCell = c.jailedUntilDay !== null && c.jailedUntilDay !== undefined;
+  if (!inCell && c.district !== 'archive') return fail('The Academy is in the Archive; go there to study.');
   if ((world.buildings.academy?.damage ?? 0) >= 1) return fail('The Academy is in ruins; no lessons until it is repaired.');
   if (!teacherOnStaff(world)) return fail('The Academy has no teacher at present; nobody can give lessons.');
   const tuition = c.lifeStage === 'child' ? 0 : ACADEMY_TUITION;
@@ -176,7 +179,8 @@ export function doStudy(world: World, c: Citizen, skill: Skill): ActionResult {
   if (c.lifeStage === 'child') gain += CHILD_STUDY_BONUS;
   c.skills[skill] = clamp(c.skills[skill] + gain, 0, 100);
   c.needs.purpose = clamp(c.needs.purpose + STUDY_PURPOSE, 0, 100);
-  remember(world, c.id, 'work', `You took a lesson in ${skill} at the Academy (${skill} is now ${Math.round(c.skills[skill])}).`);
+  const where = inCell ? 'in a class the Academy runs where you are held' : 'at the Academy';
+  remember(world, c.id, 'work', `You took a lesson in ${skill} ${where} (${skill} is now ${Math.round(c.skills[skill])}).`);
   return ok(`You studied ${skill} (+${gain}, now ${Math.round(c.skills[skill])})${tuition > 0 ? ` for ${tuition} ℓ` : ', free as every child of the city'}.`);
 }
 

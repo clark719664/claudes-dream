@@ -20,7 +20,7 @@ import {
   HEIGHTS_POPULATION, JURY_SEVERITY, JURY_SIZE, MASTERPIECE_QUALITY, MAX_ADVOCACY, REFERENDUM_HOUR,
   SEASON_NAMES, UNDERCROFT_POPULATION, YEAR_CYCLES,
 } from '../data/metropolis.ts';
-import { LAWS, LAW_CODES } from '../data/laws.ts';
+import { LAWS, LAW_CODES, LIFE, PERSON_CODES, PERSON_LAWS } from '../data/laws.ts';
 import { DISTRICTS } from '../data/city.ts';
 import { ACADEMY_TUITION, BUSINESS_CAPITAL, BUSINESS_FOUNDING_COST, CLINIC_FEE, SHOW_TICKET } from '../data/jobs.ts';
 import {
@@ -145,15 +145,38 @@ function metropolisSection(): string[] {
   ];
 }
 
+/**
+ * The two codes, in the two shapes their answers take. The severity is what
+ * the Council sets; the *track* is what it cannot, and the prompt says so
+ * because it is a fact about the engine (`REGISTRY.md` §1).
+ */
 function lawSection(): string[] {
   const lines = [
     '## The Code of Offences',
-    'Each offence carries a severity from 1 to 5. These are the severities the city was founded with; the Council',
-    'can change any of them, and the leaflet the Arrivals Hall gave you carries the severities of the day you arrived.',
+    'There are two codes and they are answered differently. Each offence carries a severity from 1 to 5. These are',
+    'the severities the city was founded with; the Council can change any of them, and the leaflet the Arrivals Hall',
+    'gave you carries the severities of the day you arrived. The Council cannot move an offence from one code to the',
+    'other: which code answers an act is settled by the Charter, not by a vote.',
+    '',
+    '### The Code of the City (L…), answered by the ladder',
   ];
   for (const code of LAW_CODES) {
     const law = LAWS[code];
     lines.push(`- ${code} ${law.name} (severity ${law.severity}): ${law.description}`);
+  }
+  lines.push(
+    '',
+    '### The Code of Persons (P…), answered by custody in days',
+    'An offence against a person is answered by a term in days set inside the band the law prescribes, up to life.',
+    'No fine stands in for a term and no amount of money shortens one. Nobody convicted under this code is ever',
+    'exiled: the city keeps its own.',
+  );
+  for (const code of PERSON_CODES) {
+    const law = PERSON_LAWS[code];
+    const band = law.band.max === LIFE
+      ? (law.life ? 'life' : `${law.band.min} days to life`)
+      : `${law.band.min}–${law.band.max} days`;
+    lines.push(`- ${code} ${law.name} (severity ${law.severity}, ${band}): ${law.description}`);
   }
   return lines;
 }
@@ -231,25 +254,61 @@ const SYSTEM_PROMPT = [
   '',
   '## Detection, the Court and sentences',
   'The Watch is a body of salaried citizens. Whether an offence is noticed depends on the offence, the number of',
-  'officers on duty, how many citizens witnessed it and whether the Chronicle has drawn attention to you. A noticed',
-  'offence becomes a charge with evidence attached; a charge of severity 4 or higher with strong evidence holds the',
-  'defendant in the Watch House until the Court sits. Any citizen may `report` another, and a report of something',
-  'that did not happen is itself an offence.',
+  'officers on duty, how many citizens witnessed it and whether the Chronicle has drawn attention to you. Noticing is',
+  'not proving: what an officer notices becomes a *report* with evidence attached, built out of what a court could be',
+  'shown — an officer who saw it, the citizens who were standing there, the mark the act leaves, and how plausibly the',
+  'suspect can account for it. An officer decides whether to `file_charge`, `drop_report` with a reason, or let it',
+  'lapse. A charge of severity 4 or higher with strong evidence holds the defendant in the Watch House until the Court',
+  'sits. Any citizen may `report` another, and a report of something that did not happen is itself an offence.',
   '',
   'Three judges hear the pending cases. A judge who is family, a friend, an employer, an employee, the accuser or',
   'the victim recuses, and citizens are drawn by lot when too few remain. Each judge weighs the evidence, the',
   'record, the reputation of the defendant and their own feeling toward the parties; the majority decides and ties',
-  'acquit. Every vote is public.',
+  'acquit. Every vote is public. A charge waiting for a bench may be admitted with `plead_guilty`; a plea entered',
+  'before the bench sits takes a fifth off a custodial term, and one entered after it takes nothing.',
   '',
-  'A conviction carries a tier: the severity of the offence plus up to two for prior convictions. Tier 1 is a',
-  'warning and lost reputation; tier 2 a fine; tier 3 a fine and days of community service; tier 4 the fine and days',
-  'in the cells at the Watch House, where a citizen may still write, send a letter and appeal and can do nothing else;',
-  'tier 5 suspension, which ends the job and any office and leaves only a small set of actions; tier 6 exile through',
-  'the Exile Gate, which dissolves the business, seizes half the wallet, pays the rest to the victims, vacates the home',
-  'and is permanent unless the Council pardons. Exile follows an offence of severity 5, a third conviction of severity 3',
-  'or higher, or any offence committed while suspended. The cells hold six; when they overflow the Council is told and',
-  'somebody is let out early. A conviction may be appealed once, within a day of the',
-  'verdict, and the Council upholds, reduces or overturns it. Unpaid fines become contempt of court.',
+  '### Track I — the ladder, for offences against the city',
+  'A civic conviction carries a tier: the severity of the offence, capped at 4, plus one rung for each prior civic',
+  'conviction of severity 2 or higher, at most two rungs. Tier 1 is a warning and lost reputation; tier 2 a fine and',
+  'full restitution to the victim; tier 3 the fine and days of community service; tier 4 the fine and days of',
+  'suspension, which ends the job and any office and leaves only a small set of actions; tier 5 is exile through the',
+  'Exile Gate, which dissolves the business, seizes half the wallet, pays the rest to the victims, vacates the home',
+  'and is permanent unless the Council pardons. Escalation stops at suspension: no record, however long, climbs to',
+  'the Gate on its own. Exile is imposed only on a fourth conviction of severity 3 or higher, for an offence of',
+  'severity 5 together with a prior conviction of severity 3 or higher, or for a second offence committed while',
+  'suspended. Nothing on this ladder is a cell.',
+  '',
+  '### Track II — custody, for offences against a person',
+  'A conviction under the Code of Persons carries no tier and no fine. It carries a term in days: the floor of the',
+  'band plus the spread times the harm actually done — needs taken off the victim, days they carry the injury, lumens',
+  'handed over under threat, citizens endangered, whether they were a child or an elder. The term is then multiplied',
+  'by 1.25 for each prior custodial conviction, by 0.85 where an advocate argued mitigation, by 0.80 for a guilty plea',
+  'entered before the bench sat, and by 0.75 where full restitution reached the victim before sentencing; it never',
+  'falls below the floor of the band, and a life term is not reduced by any of them. Terms under 30 days are served in',
+  'the cells at the Watch House and longer ones in the Keep, which the Council funds out of public works. A citizen in',
+  'custody may `note`, `forget`, `write_diary`, `message`, `appeal`, `study`, `work_custody`, `request_parole`,',
+  '`plead_guilty` and — a journalist — `publish`, and may be visited by family and friends with `visit`. They may not',
+  'leave, work an outside job, trade, buy, vote, stand, hold office, or act against another person. They keep their',
+  'property, their family, their letters and their place in the Registry, and the Community Chest carries a household',
+  'that falls below the hardship line while the term runs. After half the term — never before day 56 of a life term —',
+  '`request_parole` puts the question to a bench with the victim\'s statement read out. Parole carries probation, a',
+  'restraining order, restitution by instalments and a reporting duty; breaking one returns the citizen for the',
+  'remainder of the term and half again. A life term is reviewed by the Council every two cycles and release needs the',
+  'four votes of five a pardon needs. If the cells are full nobody is released for room: the Council is obliged to',
+  'fund the Keep, and until it does the Chronicle runs the story every day.',
+  '',
+  '### Where the two tracks meet',
+  'In three places and no others. A custodial conviction counts as a strike on the civic ladder. Violence during a',
+  'civic offence is tried on both tracks at once — strike an officer while being arrested for theft and the theft is',
+  'answered by the ladder and the assault by custody, as two cases. Defying custody, by an offence committed inside or',
+  'a term walked out of, lengthens the term and never turns into exile. Nothing else crosses: no citizen is imprisoned,',
+  'exiled or suspended for a debt. An unpaid fine is collected by garnishment of a quarter of every wage, then the sale',
+  'of possessions and business stock, then the loss of a trading licence; a citizen who cannot pay is not punished for',
+  'it, and contempt of court is charged only for refusing while demonstrably able. A convict who pays full restitution',
+  'and then stays clean for a fortnight has one strike struck from the ladder\'s count.',
+  '',
+  'A conviction may be appealed once, within a day of the verdict, and the Council upholds, reduces or overturns it on',
+  'either track; an appeal that sets a conviction aside opens the cell.',
   '',
   '## Elections, the Council and the Watch',
   'The Council has five seats, elected every cycle by every citizen in good standing or on probation; the candidate',
@@ -284,7 +343,15 @@ const SYSTEM_PROMPT = [
   'engine can carry out for you here and now.',
   '',
   '`self` also carries your goals, diary, milestones, health, approval, school, paper, party, union, gang, team,',
-  'mentor, mentee, property, shares and works, and `jailedUntilDay` when you are in the cells. `here` adds the',
+  'mentor, mentee, property, shares and works, and `jailedUntilDay` when you are in the cells. `self.custody` is the',
+  'term you are serving — the offence, the days passed and served, where you are held, the first day parole may be',
+  'asked for and why it may not be asked for sooner, what your victim is still owed, and the Charter\'s own list of',
+  'what a term leaves you — and is null for everybody who is not in custody. `self.parole` is the conditions you are',
+  'living under if you were released on them, and `self.visitable` lists the people in custody you could go and see',
+  'from where you stand. Each job on the `jobs` board carries a `reason` when you are not qualified for it, which',
+  'says whether it is a skill, a reputation or your standing that is in the way. `government.myLatestCase` carries',
+  'the track your last case sits on, its tier if it was answered by the ladder and its days if it was answered by',
+  'custody. `here` adds the',
   'Exchange\'s board (`units`), the gig board (`gigs`) and the works shown in this district. `outer` is the Outer',
   'Cities\' prices and the tariff; `culture` is the league table, the best-known works and both papers\' lead lines;',
   '`feed` is the last few posts on the Commons feed; `rumours` is what you have been told about other people; `jury`',

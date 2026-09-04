@@ -21,13 +21,15 @@ import { dailyBusinesses, foundBusiness, hireCitizen, hourlyBusinesses } from '.
 import { bankOpen, dailyLoans, repayLoan, requestLoan } from '../src/economy/bank.ts';
 import { dailyHousing, moveHome, vacancies } from '../src/economy/housing.ts';
 import { activeCitizens, canAct, createCitizen, dailyCitizens, emigrate, isEligibleCandidate, tickNeeds } from '../src/citizens/citizen.ts';
-import { adjustBond, dailyRelationships, friendsOf, recordHostility } from '../src/citizens/relationships.ts';
+import { adjustBond, dailyRelationships, friendsOf, hostilityCount, recordHostility } from '../src/citizens/relationships.ts';
 import { journalistStory, printMorningEdition } from '../src/sim/chronicle.ts';
 import { commitOffence, dailyWatch, reportOffence, tickWatch } from '../src/government/watch.ts';
 import { canAppeal, dailyJustice, fileAppeal, fileCharge, holdCourt } from '../src/government/court.ts';
 import { dailyStandings, standingAllows } from '../src/government/registry.ts';
 import { MAX_LADDER_TIER, TIER_EXILE, lawfulExile } from '../src/government/sentencing.ts';
 import { debtOf } from '../src/government/recovery.ts';
+import { dailyJail, jailedCitizens } from '../src/government/jail.ts';
+import { isPersonLaw } from '../src/data/laws.ts';
 import {
   appointJudges, campaign, castBallot, councilSession, dailyGovernment, holdElection, impliedPlatform, isCouncillor,
   isElectionDay, nominate, nominationsOpen, tableProposal, voteOnProposal, voterPreference,
@@ -69,16 +71,28 @@ function socialize(w: World, c: Citizen): void {
 function crime(w: World, c: Citizen): void {
   const others = present(w, c);
   if (!others.length) return;
-  const victim = pick(w, others);
+  // Hostility is sustained or it is nothing: somebody this citizen has already
+  // leaned on is the one they lean on again, which is what turns a bad hour
+  // into P02 and then, for the few who go that far, into an assault.
+  const grudge = others.find((o) => hostilityCount(w, c.id, o.id) > 0);
+  const victim = grudge ?? pick(w, others);
   const roll = randInt(w, 0, 9);
   if (roll < 6) {
     const amount = Math.min(victim.wallet, randInt(w, 10, 80));
     if (amount > 0) transfer(w, victim.id, c.id, amount, 'theft', 'stole');
     commitOffence(w, c.id, amount >= 50 ? 'L08' : 'L04', { victimId: victim.id, amount });
   } else if (roll < 8) {
+    // Harassment is P02 and answered by custody, not by a rung of the ladder
+    // (`docs/JUSTICE.md` §2); sustained hostility, and the second act is the
+    // offence. Now and then it goes further, which is P03 or P04.
     const n = recordHostility(w, c.id, victim.id);
     adjustBond(w, c.id, victim.id, -20);
-    if (n >= 2) commitOffence(w, c.id, 'L05', { victimId: victim.id });
+    if (n >= 4 && c.personality.honesty < 0.25) {
+      victim.needs.energy = clamp(victim.needs.energy - 25, 0, 100);
+      commitOffence(w, c.id, chance(w, 0.2) ? 'P04' : 'P03', { victimId: victim.id });
+    } else if (n >= 2) {
+      commitOffence(w, c.id, 'P02', { victimId: victim.id });
+    }
   } else if (roll === 8 && c.personality.honesty < 0.15) {
     // as in the reflex brain, only the truly amoral wreck critical infrastructure
     const critical = Object.values(w.buildings).find((b) => b.district === c.district && b.critical);
@@ -204,6 +218,10 @@ export function step(w: World): void {
     });
     dailyRelationships(w);
     dailyStandings(w);
+    // The morning roll of the cells, in the order world/daily.ts runs it:
+    // terms that are up are served, parole is heard, life terms go to the
+    // Council, and the crowding is counted (`docs/JUSTICE.md` §2).
+    dailyJail(w);
     dailyJustice(w);
     dailyGovernment(w);
     dailyWatch(w);
@@ -328,16 +346,25 @@ function checkInvariants(w: World): void {
     if (k.filedBy !== 'watch') assert.ok(!k.judges.includes(k.filedBy), `${at}: ${k.id} judged by the accuser`);
     if (k.status === 'pending') assert.ok(w.day - Math.floor(k.filedTick / 24) <= 2, `${at}: ${k.id} pending for too long`);
     if (k.sentence?.exile && k.sentence.executed) assert.equal(w.citizens[k.defendantId].standing === 'exiled' || w.bans.some((b) => b.citizenId === k.defendantId), true, `${at}: executed exile without ban`);
-    if (k.sentence) {
+    if (k.sentence && k.sentence.track === 'person') {
+      // Track II is not on the ladder at all: no tier, no fine, no service, no
+      // suspension, and — the Charter is flat about it — never the Gate.
+      assert.equal(k.sentence.tier, null, `${at}: ${k.id} put a custodial sentence on a rung`);
+      assert.equal(k.sentence.exile, false, `${at}: ${k.id} exiled somebody for an offence against a person`);
+      assert.equal(k.sentence.fine, 0, `${at}: ${k.id} fined somebody instead of holding them`);
+      assert.equal(k.sentence.suspensionDays, 0, `${at}: ${k.id} suspended a custodial convict`);
+    } else if (k.sentence) {
       // The ladder has five rungs and the fifth has a lock on it: every exile
       // the city has ever carried out must answer one of Article VI's three
       // conditions, and nothing else may climb past suspension.
-      assert.ok(k.sentence.tier >= 1 && k.sentence.tier <= TIER_EXILE, `${at}: ${k.id} sentenced off the ladder (tier ${k.sentence.tier})`);
+      const tier = k.sentence.tier ?? 0;
+      assert.ok(tier >= 1 && tier <= TIER_EXILE, `${at}: ${k.id} sentenced off the ladder (tier ${tier})`);
+      assert.equal(k.sentence.jailDays, 0, `${at}: ${k.id} put a cell on the civic ladder`);
       if (k.sentence.exile) {
-        assert.equal(k.sentence.tier, TIER_EXILE, `${at}: ${k.id} exiles from the wrong rung`);
+        assert.equal(tier, TIER_EXILE, `${at}: ${k.id} exiles from the wrong rung`);
         assert.ok(lawfulExile(w, k), `${at}: ${k.id} exiled ${k.defendantId} on no ground the Charter allows`);
       } else {
-        assert.ok(k.sentence.tier <= MAX_LADDER_TIER, `${at}: ${k.id} climbed past suspension without the Charter`);
+        assert.ok(tier <= MAX_LADDER_TIER, `${at}: ${k.id} climbed past suspension without the Charter`);
       }
     }
   }
@@ -349,6 +376,28 @@ function checkInvariants(w: World): void {
     if (c.standing === 'suspended' || c.standing === 'exiled') {
       assert.ok(convictions > 0, `${at}: ${c.name} lost their standing with a debt and no conviction behind it`);
     }
+  }
+  // Custody, every tick it exists: the register agrees with the citizens, a
+  // term is never a ban, and the city never exiles anybody it has held
+  // (`docs/JUSTICE.md` §2, Charter Article VI).
+  const held = jailedCitizens(w);
+  assert.deepEqual(
+    held.map((c) => c.id),
+    Object.values(w.citizens).filter((c) => c.jailedUntilDay !== null && c.jailedUntilDay !== undefined)
+      .map((c) => c.id).filter((id) => w.order.includes(id)).sort((a, b) => w.order.indexOf(a) - w.order.indexOf(b)),
+    `${at}: the jail register and the citizens disagree about who is held`,
+  );
+  for (const c of held) {
+    assert.notEqual(c.standing, 'exiled', `${at}: ${c.name} is both held and exiled`);
+    assert.ok((c.jailedUntilDay ?? 0) >= w.day, `${at}: ${c.name}'s term ran out and the door did not open`);
+  }
+  for (const c of Object.values(w.citizens)) {
+    if (!c.record.convictions.some((k) => isPersonLaw(k.law))) continue;
+    assert.notEqual(c.standing, 'exiled', `${at}: ${c.name} was exiled with a conviction against a person`);
+    assert.ok(!w.bans.some((b) => b.citizenId === c.id), `${at}: ${c.name} reached the ban register from Track II`);
+  }
+  for (const b of w.bans) {
+    assert.ok(!isPersonLaw(b.law), `${at}: the ban register holds a personal code (${b.law})`);
   }
   for (const p of g.proposals) {
     if (p.status === 'open') assert.ok(w.day - p.tabledDay <= 8, `${at}: proposal ${p.id} open for ${w.day - p.tabledDay} days`);
@@ -375,7 +424,16 @@ test(`the engine survives ${DAYS} days without breaking an invariant`, () => {
   assert.ok(g.election.results !== null, 'an election produced results');
   assert.ok(g.council.length > 0, 'a council was seated');
   assert.ok(Object.keys(w.cases).length > 0, 'cases were tried');
-  assert.ok(Object.values(w.cases).some((k) => k.verdict === 'guilty'), 'some convictions');
+  const cases = Object.values(w.cases);
+  assert.ok(cases.some((k) => k.verdict === 'guilty'), 'some convictions');
+  // Both tracks ran, and the court was a court: a city that convicts everybody
+  // it charges is not one, and neither is a city where nothing is ever proved.
+  assert.ok(cases.some((k) => k.verdict === 'acquitted'), 'some acquittals');
+  assert.ok(cases.some((k) => k.sentence?.track === 'city'), 'the ladder answered somebody');
+  assert.ok(cases.some((k) => k.sentence?.track === 'person'), 'custody answered somebody');
+  const decided = cases.filter((k) => k.verdict !== null).length;
+  const guilty = cases.filter((k) => k.verdict === 'guilty').length;
+  assert.ok(guilty / decided < 0.95, `conviction rate ${Math.round((guilty / decided) * 100)}% — that is not a court`);
   assert.ok(w.chronicle.length === 60 || w.chronicle.length === DAYS, 'chronicle printed daily');
   assert.ok(activeCitizens(w).length > SEED_POPULATION, 'the city grew');
   assert.ok(g.proposals.some((p) => p.status !== 'open'), 'proposals were decided');

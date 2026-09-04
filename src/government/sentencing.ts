@@ -165,10 +165,23 @@ export function strikesAgainst(world: World, c: Case): number {
     .filter((k) => k.severity >= STRIKE_SEVERITY && !world.counters[strikeStruckKey(k.caseId)]).length;
 }
 
-/** The day the defendant's standing suspension was imposed, or null if none is on record. */
+/**
+ * The day the defendant's standing suspension was imposed, or null if none is
+ * on record.
+ *
+ * Read off the **whole** record and not off `priorsOf`: the conviction that
+ * suspended somebody is very often *later* than the charge being weighed —
+ * that is precisely the case this answers, a charge laid on Tuesday and a
+ * suspension handed down on Wednesday — and a prior filter would hide it and
+ * count Tuesday's offence as one committed under a suspension that did not yet
+ * exist.
+ */
 function suspendedSinceDay(world: World, c: Case): number | null {
+  const d = defendantOf(world, c);
+  if (!d) return null;
   let since: number | null = null;
-  for (const k of priorConvictions(world, c)) {
+  for (const k of d.record.convictions) {
+    if (k.caseId === c.id) continue;
     // A custodial conviction has no tier and is not a suspension.
     if (k.tier === null || k.tier < TIER_SUSPENSION) continue;
     if (since === null || k.day > since) since = k.day;
@@ -197,7 +210,12 @@ export function committedWhileSuspended(world: World, c: Case): boolean {
 export function offencesWhileSuspended(world: World, c: Case): number {
   const d = defendantOf(world, c);
   if (!d) return 0;
-  let n = committedWhileSuspended(world, c) ? 1 : 0;
+  // This one counts if it was committed under a suspension — or if the day it
+  // was sentenced the Court wrote down that it was. The marker is what makes
+  // the answer stable: a standing changes (a suspension ends, a citizen goes
+  // through the Gate), and the record of what was done under it should not.
+  const own = committedWhileSuspended(world, c) || world.counters[whileSuspendedKey(c.id)] !== undefined;
+  let n = own ? 1 : 0;
   for (const k of priorConvictions(world, c)) {
     if (world.counters[whileSuspendedKey(k.caseId)]) n++;
   }

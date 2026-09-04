@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
-import type { Citizen, Job, LawCode, World } from '../src/types.ts';
+import type { Citizen, Job, LawCode, OffenceCode, World } from '../src/types.ts';
 import { nextId } from '../src/util/ids.ts';
 import {
+  EVIDENCE_CEILING, EVIDENCE_FLOOR, EVIDENCE_UNCORROBORATED, EVIDENCE_VICTIM_REPORT, EVIDENCE_WITNESS_REPORT,
   applyToWatch, commitOffence, dailyWatch, detain, detectionProbability, officersOnDuty, reportOffence, tickWatch,
 } from '../src/government/watch.ts';
 import { fileReport } from '../src/government/reports.ts';
@@ -27,7 +28,7 @@ function addOfficer(w: World, overrides: Parameters<typeof makeCitizen>[1] = {})
 }
 
 /** Roll until the Watch notices (or, with `want` false, until it misses). */
-function commitUntil(w: World, actorId: string, law: LawCode, ctx: Parameters<typeof commitOffence>[3], want: boolean) {
+function commitUntil(w: World, actorId: string, law: OffenceCode, ctx: Parameters<typeof commitOffence>[3], want: boolean) {
   for (let i = 0; i < 200; i++) {
     const r = commitOffence(w, actorId, law, ctx);
     if (r.detected === want) return r;
@@ -67,7 +68,10 @@ test('a detected offence becomes a report before the officer who saw it, and a c
   assert.ok(officers.some((o) => o.id === report.officerId), 'the officer who saw it holds it');
   assert.equal(report.victimId, victim.id);
   assert.equal(report.amount, 80);
-  assert.ok(report.evidence >= 0.3 && report.evidence <= 1);
+  // Noticing is not proving: what the Watch holds is built out of an officer's
+  // own eyes, the citizens standing there and the mark the act leaves, and it
+  // never reaches certainty (`government/watch.ts evidenceFor`).
+  assert.ok(report.evidence >= EVIDENCE_FLOOR && report.evidence <= EVIDENCE_CEILING);
   assert.equal(report.status, 'open');
   assert.equal(report.filedCaseId, null);
   assert.equal(Object.keys(w.cases).length, 0, 'the Watch does not prosecute of its own accord');
@@ -132,7 +136,7 @@ test('a citizen\'s report goes to the shared inbox, strong when it matches somet
   const rep = against(thief.id)[0];
   assert.ok(rep);
   assert.equal(rep.law, 'L08', 'the report names the offence actually committed');
-  assert.equal(rep.evidence, 0.75, 'a victim is a strong witness');
+  assert.equal(rep.evidence, EVIDENCE_VICTIM_REPORT, 'a victim is a strong witness, and one account is still one account');
   assert.equal(rep.officerId, null, 'any officer may take it up');
   assert.equal(rep.victimId, victim.id);
   assert.equal(rep.amount, 90);
@@ -145,12 +149,14 @@ test('a citizen\'s report goes to the shared inbox, strong when it matches somet
   const r2 = reportOffence(w, bystander.id, thief.id, 'L08');
   assert.equal(r2.ok, true);
   const weak = against(thief.id)[1];
-  assert.ok(weak && weak.evidence === 0.2);
-  // a bystander reporting a fresh, unseen offence gets 0.6
-  commitUntil(w, thief.id, 'L05', { victimId: victim.id, visibilityMod: -10 }, false);
-  reportOffence(w, bystander.id, thief.id, 'L05');
-  const third = against(thief.id).find((x) => x.law === 'L05');
-  assert.ok(third && third.evidence === 0.6);
+  assert.ok(weak && weak.evidence === EVIDENCE_UNCORROBORATED);
+  // A bystander reporting a fresh, unseen offence is worth less than the
+  // victim's own account — and a report of harassment names P02 now, because
+  // harassment left the Code of the City with the two-track reform.
+  commitUntil(w, thief.id, 'P02', { victimId: victim.id, visibilityMod: -10 }, false);
+  reportOffence(w, bystander.id, thief.id, 'P02');
+  const third = against(thief.id).find((x) => x.law === 'P02');
+  assert.ok(third && third.evidence === EVIDENCE_WITNESS_REPORT, 'a witness is heard, and heard as one witness');
 });
 
 test('a baseless report is taken thinly and sometimes rebounds as a False report', () => {
@@ -164,7 +170,7 @@ test('a baseless report is taken thinly and sometimes rebounds as a False report
     assert.equal(r.ok, true);
     const against = Object.values(w.reports).filter((x) => x.suspectId === accused.id);
     assert.equal(against.length, 1);
-    assert.equal(against[0].evidence, 0.2);
+    assert.equal(against[0].evidence, EVIDENCE_UNCORROBORATED);
     assert.equal(against[0].officerId, null);
     const rebound = Object.values(w.reports).filter((x) => x.suspectId === accuser.id);
     if (rebound.length) {

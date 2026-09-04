@@ -318,7 +318,13 @@ export function doEvadeTax(world: World, c: Citizen): ActionResult {
   return ok(`Your next ${EVADE_SHIFTS} shifts will be paid without tax.`, { offence: 'L03', detected: r.detected });
 }
 
-/** Threats for money (L15): the timid pay, the honest refuse; the victim always knows. */
+/**
+ * Threats for money: **P06**, extortion. The money is what is taken; the
+ * threat of harm is what makes it an offence against a *person*, so it is
+ * answered in days and never by a fine on the ladder (`docs/JUSTICE.md` §2 —
+ * the code moved out of the Code of the City with the two-track reform, and
+ * L15 is retired for good).
+ */
 export function doExtort(world: World, c: Citizen, targetId: CitizenId, amount: number): ActionResult {
   const t = markHere(world, c, targetId);
   if (isResult(t)) return t;
@@ -326,26 +332,50 @@ export function doExtort(world: World, c: Citizen, targetId: CitizenId, amount: 
   if (amt <= 0) return fail('You must demand a positive amount.');
   const paid = t.wallet >= amt && t.personality.honesty * rand(world) < 0.5
     && transfer(world, t.id, c.id, amt, 'extortion', `${c.name} extorted ${t.name}`);
-  const r = commitOffenceOrScold(world, c, 'L15', { victimId: t.id, amount: paid ? amt : 0 });
+  const r = commitOffenceOrScold(world, c, 'P06', { victimId: t.id, amount: paid ? amt : 0 });
   adjustBond(world, t.id, c.id, -40, false);
   noteHostility(world, c.id, t.id);
+  t.needs.comfort = clamp(t.needs.comfort - THREATEN_NEEDS, 0, 100);
   remember(world, t.id, 'crime', paid
     ? `${nameTag(c)} extorted ${amt} ℓ from you${r.detected ? '; the Watch caught them' : ''}.`
     : `${nameTag(c)} threatened you and demanded ${amt} ℓ; you refused${r.detected ? '; the Watch caught them' : ''}.`);
   remember(world, c.id, 'crime', paid ? `You extorted ${amt} ℓ from ${t.name}.` : `${t.name} refused your demand for ${amt} ℓ.`);
   return paid
-    ? ok(`${t.name} paid you ${amt} ℓ.`, { offence: 'L15', detected: r.detected })
-    : fail(`${t.name} refused to pay.`, { offence: 'L15', detected: r.detected });
+    ? ok(`${t.name} paid you ${amt} ℓ.`, { offence: 'P06', detected: r.detected })
+    : fail(`${t.name} refused to pay.`, { offence: 'P06', detected: r.detected });
 }
 
-/** Wreck critical infrastructure (L13): output stops until it is repaired. */
+/**
+ * Wreck critical infrastructure: output stops until it is repaired.
+ *
+ * **Which code it is depends on who was standing there.** An empty building
+ * brought down is sabotage, **L13**, an offence against the city, answered by
+ * the ladder. Bring it down with citizens in the district and it is **P08**,
+ * terror — an offence against those people — answered by custody from 120 days
+ * to life (`docs/JUSTICE.md` §2, `REGISTRY.md` §4). The act is the same; what
+ * the city charges is what the act actually risked.
+ */
 export function doSabotage(world: World, c: Citizen, buildingId: BuildingId): ActionResult {
   const b = buildingHere(world, c, buildingId);
   if ('ok' in b) return b;
   if (!b.critical) return fail(`${b.name} is not critical infrastructure; that would be vandalism.`);
   b.damage = 1;
-  emit(world, 'system', `${b.name} has been sabotaged and lies in ruins; its output has stopped.`, [], 0.9, { buildingId });
-  const r = commitOffenceOrScold(world, c, 'L13', { buildingId });
-  remember(world, c.id, 'crime', `You sabotaged ${b.name}${r.detected ? ' and the Watch saw it' : ''}.`);
-  return ok(`You sabotaged ${b.name}.`, { offence: 'L13', detected: r.detected });
+  const bystanders = citizensIn(world, c.district, c.id);
+  const terror = bystanders.length >= TERROR_ENDANGERS;
+  const law: OffenceCode = terror ? 'P08' : 'L13';
+  emit(world, 'system', terror
+    ? `${b.name} was brought down with ${bystanders.length} citizen${bystanders.length === 1 ? '' : 's'} in the district; `
+      + 'its output has stopped.'
+    : `${b.name} has been sabotaged and lies in ruins; its output has stopped.`, [], 0.9, { buildingId, law, endangered: bystanders.length });
+  const r = commitOffenceOrScold(world, c, law, { buildingId, victimId: terror ? bystanders[0].id : undefined });
+  if (terror) {
+    for (const bystander of bystanders) {
+      remember(world, bystander.id, 'crime', `${b.name} came down around you in ${districtName(world, c.district)}.`);
+    }
+  }
+  remember(world, c.id, 'crime', terror
+    ? `You brought ${b.name} down with people in the district${r.detected ? ' and the Watch saw it' : ''}. `
+      + 'That is terror, and terror is answered in days.'
+    : `You sabotaged ${b.name}${r.detected ? ' and the Watch saw it' : ''}.`);
+  return ok(`You sabotaged ${b.name}.`, { offence: law, detected: r.detected });
 }

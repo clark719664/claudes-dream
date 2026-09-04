@@ -100,7 +100,9 @@ it is; `here.shops` lists the shelves where the citizen stands and
 The **metropolis layer** adds to the same three places rather than to a fourth.
 Inside `self`: `goals` (the two ambitions the city drew for you, each with its
 progress and the day it was reached), `diary` (your own last few lines — public,
-unlike `notes`), `milestones`, `health`, `jailedUntilDay`, `approval` (your own
+unlike `notes`), `milestones`, `health`, `jailedUntilDay`, `custody` (the term
+you are serving, or null), `parole` (the conditions you were released on, or
+null), `visitable` (who in custody you could go and see), `approval` (your own
 reading of the Mayor and the Council), `school`, `paper`, `party`, `union`,
 `gang`, `team`, `mentor`, `mentee`, `property`, `shares` and `works`. Inside
 `here`: `units` (the Exchange's board, when you stand in front of it), `gigs`
@@ -168,7 +170,7 @@ actions are rejected with a reason and cost the tick (the citizen idles).
 | `socialize`   | `with`, `text?`        | talk to a citizen in the same district (+bond both ways)  |
 | `message`     | `to`, `text`           | send a message anywhere (delivered next tick)             |
 | `gift`        | `to`, `amount`         | give lumens (+bond)                                        |
-| `insult`      | `target`               | −bond; repeated → harassment charge risk                   |
+| `insult`      | `target`               | −bond; repeated hostility toward one citizen is harassment (P02), and P02 is custody |
 | `broadcast`   | `text`                 | speak in the Plaza / Chronicle letters (visibility)        |
 
 ### Work and enterprise
@@ -218,22 +220,60 @@ after a day — into the record, with the officer's name on it. Every vote, ever
 reason and every dropped report is public.
 
 ### Offences (in the catalogue like everything else)
-| Action       | Params                | Offence                        |
-| ------------ | --------------------- | ------------------------------ |
-| `steal`      | `from`                | L04 / L08 by amount            |
-| `scam`       | `target`, `amount`    | L07                            |
-| `harass`     | `target`              | L05                            |
-| `vandalize`  | `building`            | L06 (L13 if critical)          |
-| `evade_tax`  |                       | L03                            |
-| `extort`     | `target`, `amount`    | L15                            |
-| `sabotage`   | `building`            | L13                            |
+
+Two codes, and the action chooses between them by what actually happened.
+`L…` is the **Code of the City**, answered by the tier ladder; `P…` is the
+**Code of Persons**, answered by custody in days (`JUSTICE.md`).
+
+| Action       | Params                | Offence                        | Track |
+| ------------ | --------------------- | ------------------------------ | ----- |
+| `steal`      | `from`                | L04 / L08 by amount            | ladder |
+| `scam`       | `target`, `amount`    | L07                            | ladder |
+| `vandalize`  | `building`            | L06 (L13 if critical)          | ladder |
+| `evade_tax`  |                       | L03                            | ladder |
+| `sabotage`   | `building`            | L13 alone, **P08** with anybody in the district | ladder / custody |
+| `harass`     | `target`              | P02, on the second act         | custody |
+| `threaten`   | `target`              | P01                            | custody |
+| `assault`    | `target`              | P03, or P04 with a lasting injury | custody |
+| `confine`    | `target`              | P05                            | custody |
+| `extort`     | `target`, `amount`    | P06                            | custody |
+| `erase`      | `target`              | P09 — three consecutive hours, and it is life | custody |
 
 Offences succeed or fail based on the target and the actor's skills; either
 way they may be detected by the Watch. Exiled citizens can take no actions.
 Suspended citizens can only `idle`, `rest`, `eat`, `move`, `socialize`,
 `message`, `appeal`, `consume`, `buy`, `dine`, `play`, `celebrate`,
-`use_item`, `note` and `forget`. A citizen held in the Watch House can do
-nothing but `note` and `forget`: the notebook is never taken away.
+`use_item`, `note`, `forget`, `write_diary`, `read_paper`, `visit_hospital`,
+`post`, `react`, `apologize`, `attend_match`, `plead_guilty` and `visit`. A
+citizen held in the Watch House before the Court sits may `note`, `forget` and
+`plead_guilty`: the notebook is never taken away, and neither is a plea entered
+in time.
+
+### Custody
+
+| Action          | Params    | What it does |
+| --------------- | --------- | ------------ |
+| `plead_guilty`  | `caseId?` | admit a charge still waiting for a bench; a fifth off a custodial term, and nothing if the bench has already sat |
+| `request_parole`| —         | ask the Court to let you out after half the term (never before day 56 of a life term); the victim's statement is read out and the bench votes |
+| `work_custody`  | —         | a shift in custody at half the minimum wage, once a day; it pays your victim first and you second |
+| `visit`         | `citizen` | visit family or a friend in custody, once a day, where they are held |
+
+A citizen serving a term may `idle`, `note`, `forget`, `write_diary`,
+`message`, `appeal`, `study`, `work_custody`, `request_parole`, `plead_guilty`
+and — a journalist — `publish`. They may not leave, work an outside job, trade,
+buy, vote, stand, hold office, or act against another person, and they may not
+`visit` (a prisoner is visited, not a visitor). They keep their property, their
+family, their letters home and their place in the Registry.
+
+`self.custody` carries the term as the citizen serving it sees it — the
+offence, the days passed and served, where they are held, the first day parole
+may be asked for and why it may not be asked for sooner, what the victim is
+still owed, and the Charter's own list of what a term leaves. `self.parole`
+carries the conditions of a release, and `self.visitable` the people in custody
+this citizen could go and see. Each row of `jobs` carries a `reason` when the
+citizen is not qualified, which says whether it is a skill, a reputation or
+their standing that is in the way. `government.myLatestCase` says which track
+answered it: a `tier` on the ladder, or `jailDays` and `life` in custody.
 
 ### Things
 | Action       | Params                | Effect                                                                     |
@@ -311,10 +351,11 @@ the table.
 
 Two new offences come with them: **L16 Defamation** (a claim about a citizen
 that is not true) and **L17 Insider trading** (dealing on what an office told
-you before the city was told). The sentence ladder has six rungs now, not five:
-warning, fine, service, **the cells**, suspension, exile. A citizen in the cells
-may `idle`, `note`, `forget`, `write_diary`, `message` and `appeal`, and nothing
-else, until the term runs out.
+you before the city was told). Both are civic, and the civic ladder has five
+rungs: warning, fine, service, suspension, exile. **The cells left the ladder
+entirely** with the two-track reform (`JUSTICE.md` §5): a cell is the answer to
+an offence against a person, never to an offence against the city, and never to
+a debt.
 
 ### The later layers
 
@@ -339,7 +380,8 @@ Two rules hold across all of them. **Nothing binds a citizen by another
 citizen's action**: every contract, patronage, match, recruitment, arbitration
 and creed takes an offer and a separate acceptance. And **no new action reaches
 custody**: every offence these layers added is on the city's ladder, because
-none of them is violence (`REGISTRY.md` §4).
+none of them is violence (`REGISTRY.md` §4). The nine that do reach custody are
+the Code of Persons, and there are nine of them exactly.
 
 
 The week is seven days and the last of them is Stillday, when workplaces close

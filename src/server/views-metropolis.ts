@@ -34,7 +34,15 @@ import { frontPage } from '../culture/press.ts';
 import { advocateFor } from '../government/advocates.ts';
 import { juryTally, seatedJurors } from '../government/jury.ts';
 import { openInvestigations } from '../government/investigations.ts';
-import { daysLeft, jailCells, jailRoster, overcrowded } from '../government/jail.ts';
+import {
+  custodyCapacity, custodyOf, daysLeft, heldWithoutAKeep, jailCells, jailRoster, jailedCitizens, keepBuilt, keepCells,
+  keepObligation, overcrowded, restitutionOwed,
+} from '../government/jail.ts';
+import {
+  onParole, paroleBench, paroleConditions, paroleDayFor, paroleOpenedDay, paroleRequested, paroleVoteOf,
+  victimOpposesParole,
+} from '../government/parole.ts';
+import { personLaw } from '../government/persons.ts';
 import { gangsView } from '../government/gangs.ts';
 import { clockText, isPresentIn, nameOf, personCard, personCards, portraitPath, presentSet } from './views.ts';
 import { happeningsView } from './views-society.ts';
@@ -295,6 +303,72 @@ function gangRow(world: World, g: Gang, present: Set<CitizenId>): Record<string,
   };
 }
 
+/**
+ * The custody register: the whole of Track II, as the Chronicle and the
+ * dashboard print it. Every row says what the citizen is held for, the term
+ * as passed, how much of it is served, where they are held and the day the
+ * Court may hear them ask to come out.
+ */
+export function custodyRegister(world: World, present: Set<CitizenId>): Record<string, unknown> {
+  const roster = jailRoster(world).map((e) => {
+    const c = world.citizens[e.id];
+    const record = custodyOf(world, e.id);
+    const day = paroleDayFor(world, e.id);
+    return {
+      ...personCard(world, e.id, present),
+      law: e.code, lawName: e.code ? personLaw(e.code).name : null, track: 'person',
+      caseId: e.caseId,
+      term: e.life ? null : record?.term ?? null, life: e.life,
+      startDay: record?.startDay ?? null,
+      daysServed: record ? Math.max(0, world.day - record.startDay) : 0,
+      until: e.until, daysLeft: c && !e.life ? daysLeft(world, c) : null,
+      where: e.where,
+      paroleDay: day, paroleEligible: day !== null && world.day >= day,
+      paroleRequested: paroleRequested(world, e.id),
+      restitutionOwed: restitutionOwed(world, e.id).amount,
+    };
+  });
+  return {
+    cells: jailCells(world),
+    capacity: custodyCapacity(world),
+    held: roster.length,
+    lifeTerms: roster.filter((r) => r.life).length,
+    overcrowded: overcrowded(world),
+    roster,
+    // Out of the cells but still serving the term, on the Court's conditions.
+    paroled: Object.values(world.citizens)
+      .filter((c) => onParole(world, c.id))
+      .map((c) => {
+        const conditions = paroleConditions(world, c.id);
+        return {
+          ...personCard(world, c.id, present),
+          untilDay: conditions?.probationUntilDay ?? null,
+          restrainedFrom: conditions?.restrainedFrom ?? null,
+          instalment: conditions?.instalment ?? 0,
+          reportBy: conditions?.reportBy ?? null,
+        };
+      })
+      .sort((a, b) => (a.untilDay ?? 0) - (b.untilDay ?? 0) || String(a.id).localeCompare(String(b.id))),
+  };
+}
+
+/** Parole applications the Court has open, with the bench and every vote cast. */
+export function paroleHearingRows(world: World, present: Set<CitizenId>): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  for (const c of jailedCitizens(world)) {
+    if (!paroleRequested(world, c.id)) continue;
+    const bench = paroleBench(world, c.id);
+    out.push({
+      prisoner: personCard(world, c.id, present),
+      caseId: custodyOf(world, c.id)?.caseId ?? null,
+      openedDay: paroleOpenedDay(world, c.id),
+      bench: bench.map((id) => ({ ...personCard(world, id, present), vote: paroleVoteOf(world, c.id, id) })),
+      victimOpposes: victimOpposesParole(world, c.id),
+    });
+  }
+  return out.sort((a, b) => String((a.prisoner as { id: string }).id).localeCompare(String((b.prisoner as { id: string }).id)));
+}
+
 /** Investigations in progress, the cells, and the gangs the Watch knows of. */
 export function courtExtras(world: World): Record<string, unknown> {
   const present = presentSet(world);
@@ -307,16 +381,19 @@ export function courtExtras(world: World): Record<string, unknown> {
       .sort((a, b) => (b.closedDay ?? 0) - (a.closedDay ?? 0) || a.id.localeCompare(b.id))
       .slice(0, 40)
       .map((i) => investigationRow(world, i)),
-    jail: {
-      cells: jailCells(world),
-      overcrowded: overcrowded(world),
-      roster: jailRoster(world).map((e) => {
-        const c = world.citizens[e.id];
-        return {
-          ...personCard(world, e.id, present),
-          until: e.until, daysLeft: c ? daysLeft(world, c) : 0, caseId: e.caseId,
-        };
-      }),
+    // The jail register, beside the ban register (`docs/JUSTICE.md` §5): who
+    // the city is holding, for what, until when, and on what terms. A term is
+    // not a ban — it ends — so the two are read side by side and never merged.
+    jail: custodyRegister(world, present),
+    // Every parole application before the Court, with the bench, the votes
+    // cast so far and the victim's position, all of it public.
+    paroleHearings: paroleHearingRows(world, present),
+    keep: {
+      built: keepBuilt(world),
+      cells: keepCells(world),
+      capacity: custodyCapacity(world),
+      obligationSince: keepObligation(world),
+      heldWithoutAKeep: heldWithoutAKeep(world).map((c) => c.id),
     },
     gangs: gangsView(world).map((g) => gangRow(world, g, present)),
   };

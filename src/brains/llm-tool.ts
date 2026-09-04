@@ -18,7 +18,7 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { ACTION_TYPES, DISTRICT_IDS, GOODS, PAPERS, REACTIONS, SCHOOLS, SKILLS, WORK_KINDS } from '../types.ts';
 import type { BusinessKind, Decree, ProposalKind } from '../types.ts';
-import { LAW_CODES } from '../data/laws.ts';
+import { LAW_CODES, OFFENCE_CODES } from '../data/laws.ts';
 import { HOBBIES, PRODUCT_IDS } from '../data/catalogue.ts';
 import { DISHES } from '../data/metropolis.ts';
 import { catalogueByGroup } from '../data/actions.ts';
@@ -89,8 +89,8 @@ export const ACT_TOOL: Anthropic.Beta.BetaTool = {
       tier: { type: 'integer', enum: [0, 1, 2, 3], description: 'move_home: 0 move out, or the tier of home to take (1 to 3); the city gives you an address in a block of that tier.' },
       with: citizenRef('socialize / date / dine / play / move_in: who is with you, present here (move_in: whose household you join)'),
       to: citizenRef('message / gift / gift_item / propose_partnership / marry: recipient'),
-      target: citizenRef('insult / scam / harass / extort: target'),
-      citizen: citizenRef('hire / fire / report / appoint_judge / recruit / mentor: the citizen concerned'),
+      target: citizenRef('insult / scam / harass / extort / threaten / assault / confine / erase: the citizen it is done to, present here'),
+      citizen: citizenRef('hire / fire / report / appoint_judge / recruit / mentor: the citizen concerned. visit: the citizen in custody you go to see'),
       official: citizenRef('bribe: an office holder'),
       from: citizenRef('steal: victim, must be present here'),
       about: citizenRef('publish: optional subject of the story. gossip: the citizen the claim is about'),
@@ -111,7 +111,7 @@ export const ACT_TOOL: Anthropic.Beta.BetaTool = {
       value: { type: 'number', description: 'propose: the new value. income_tax 0-0.5, sales_tax 0-0.25, dividend 0-60, min_wage 5-20, law_severity 1-5, public_works 0-5000, property_tax 0-0.5, wealth_tax 0-0.02, tariff 0-0.5, reserve 0-200000; 0 for the others. decree relief: lumens each citizen in hardship is paid.' },
       jobId: { type: 'string', description: 'apply_job / hire / set_wage: job id such as j_4.' },
       proposalId: { type: 'string', description: 'vote_proposal: proposal id such as p_2.' },
-      caseId: { type: 'string', description: 'verdict / vote_appeal: case id such as k_7, from observation.bench or observation.appeals.' },
+      caseId: { type: 'string', description: 'verdict / vote_appeal: case id such as k_7, from observation.bench or observation.appeals. plead_guilty: the charge you admit (omit for the oldest charge still waiting for a bench).' },
       reportId: { type: 'string', description: 'file_charge / drop_report: report id such as r_9, from observation.reports.' },
       guilty: { type: 'boolean', description: 'verdict: true for guilty, false for not guilty.' },
       reason: { type: 'string', description: 'verdict / drop_report: your reason in your own words, at most 280 characters. Public.' },
@@ -124,7 +124,7 @@ export const ACT_TOOL: Anthropic.Beta.BetaTool = {
           + 'create_work: painting | play | song | book | paper | expose. decree: tax_holiday | curfew | relief | emergency. '
           + 'react: cheer | frown | laugh.',
       },
-      law: { type: 'string', enum: [...LAW_CODES], description: 'report: the law code you are reporting.' },
+      law: { type: 'string', enum: [...OFFENCE_CODES], description: 'report: the law code you are reporting. L… is the Code of the City, answered by the ladder; P… is the Code of Persons, answered by custody in days.' },
       lawCode: { type: 'string', enum: [...LAW_CODES], description: 'propose law_severity: which law to change.' },
       aye: { type: 'boolean', description: 'vote_proposal: true to vote aye, false for nay.' },
       productId: { type: 'string', enum: [...PRODUCT_IDS], description: 'buy_item / craft / set_price: which product of the catalogue.' },

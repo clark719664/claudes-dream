@@ -31,6 +31,7 @@ function sampleObservation(world: World, c: Citizen): Observation {
       office: null, record: { convictions: 0, strikes: 0, pendingCharges: 0, finesOwed: 0, serviceDaysLeft: 0 }, detained: false,
       tastes: { ...c.tastes, wants: [] }, possessions: [], partner: null, family: [], household: null, clubs: [],
       goals: [], diary: [], milestones: [], health: { glitched: false, sinceDay: null }, jailedUntilDay: null,
+      custody: null, parole: null, visitable: [],
       approval: { mayor: 0.5, council: 0.5 }, school: null, paper: 'chronicle',
       party: null, union: null, gang: null, team: null, mentor: null, mentee: null,
       property: [], shares: [], works: [],
@@ -123,10 +124,14 @@ test('system prompt is stable, self-contained and within budget', () => {
   // It is sent with cache_control on every request, so the ceiling guards
   // against runaway growth rather than against cost.
   const words = a.split(/\s+/).length;
-  // The metropolis roughly doubled the catalogue and added nine sections of
-  // city to describe; the ceiling still guards against runaway growth.
-  assert.ok(words > 600 && words < 8000, `unexpected size: ${words} words`);
-  for (const needle of ['Reverie', '`act`', 'exile', 'L13', 'Council', 'Watch', 'appeal', 'suspension', '280', 'character', 'notes']) {
+  // The metropolis roughly doubled the catalogue; the two-track reform added
+  // the Code of Persons, custody and parole. The ceiling still guards against
+  // runaway growth.
+  assert.ok(words > 600 && words < 9000, `unexpected size: ${words} words`);
+  for (const needle of [
+    'Reverie', '`act`', 'exile', 'L13', 'P09', 'Council', 'Watch', 'appeal', 'suspension', 'custody', 'parole',
+    '280', 'character', 'notes',
+  ]) {
     assert.ok(a.includes(needle), `system prompt is missing ${needle}`);
   }
   assert.doesNotMatch(a, /\bc_\d+\b/, 'no citizen ids');

@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
 import type { Citizen, Job, World } from '../src/types.ts';
 import { nextId } from '../src/util/ids.ts';
-import { commitOffence, reportOffence, tickWatch } from '../src/government/watch.ts';
+import { EVIDENCE_VICTIM_REPORT, commitOffence, reportOffence, tickWatch } from '../src/government/watch.ts';
 import {
   REPORT_EXPIRY_TICKS, dropReport, expireReports, fileReport, observedReportsFor, openReport, reportsFor,
 } from '../src/government/reports.ts';
@@ -186,7 +186,7 @@ test('a citizen\'s report is shared, and any officer may take it up', () => {
   const shared = Object.values(w.reports).find((x) => x.suspectId === thief.id && x.status === 'open');
   assert.ok(shared);
   assert.equal(shared.officerId, null);
-  assert.equal(shared.evidence, 0.75);
+  assert.equal(shared.evidence, EVIDENCE_VICTIM_REPORT, 'a victim\'s own account, and no more than one account');
   assert.equal(Object.keys(w.cases).length, 0, 'a report is not a charge');
   assert.ok(observedReportsFor(w, officer.id).some((x) => x.id === shared.id && x.shared));
   const filed = executeAction(w, officer.id, { type: 'file_charge', reportId: shared.id });

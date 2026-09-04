@@ -71,8 +71,15 @@
 
   const TIER_LABEL = { 1: 'warning', 2: 'fine', 3: 'community service', 4: 'suspension', 5: 'exile' };
 
+  // Two tracks, two shapes of sentence: a rung on the civic ladder, or a
+  // number of days in custody (docs/JUSTICE.md). A custodial sentence has no
+  // tier, no fine and no exile, so it is never printed as one.
   R.describeSentence = function describeSentence(s) {
     if (!s) return null;
+    if (s.track === 'person') {
+      const head = s.life ? 'custody for life' : `${s.jailDays}d custody`;
+      return s.restrainingOrder ? `${head} · restraining order` : head;
+    }
     const parts = [];
     if (s.exile) parts.push(`exile${s.executed ? ' (executed)' : s.executeOnDay !== null ? ` (day ${s.executeOnDay})` : ''}`);
     else parts.push(TIER_LABEL[s.tier] || `tier ${s.tier}`);
@@ -122,11 +129,14 @@
     update(data, root) {
       const n = data.counts || {};
       R.setTabCount('court', n.pending || '');
+      const jail = data.jail || {};
+      const rate = n.convictionRate === null || n.convictionRate === undefined ? '—' : `${Math.round(n.convictionRate * 100)}% convicted`;
       R.replace(root.querySelector('#court-cards'),
         R.card('Pending', R.fmt(n.pending), 'awaiting the 10:00 session'),
-        R.card('Convictions', R.fmt(n.guilty), `${R.fmt(n.acquitted)} acquittals`),
-        R.card('On appeal', R.fmt(n.appealed), 'decided by the Council at 14:00'),
-        R.card('Exiles ordered', R.fmt(n.exiles), `${R.fmt(n.total)} cases in all`));
+        R.card('Convictions', R.fmt(n.guilty), `${R.fmt(n.acquitted)} acquittals · ${rate}`),
+        R.card('The ladder', R.fmt(n.ladderSentences), `${R.fmt(n.exiles)} exiles ordered`),
+        R.card('Custody', R.fmt(n.custodySentences), `${R.fmt(jail.held)} held of ${R.fmt(jail.capacity)} places${jail.overcrowded ? ' · overcrowded' : ''}`),
+        R.card('On appeal', R.fmt(n.appealed), 'decided by the Council at 14:00'));
       R.replace(root.querySelector('#court-table'), R.table({ columns: CASE_COLUMNS, rows: data.cases || [], empty: 'No charges have been filed.' }));
     },
   });

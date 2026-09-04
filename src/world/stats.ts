@@ -10,7 +10,8 @@ import { moneySupply } from '../economy/treasury.ts';
 import { activeBusinesses } from '../economy/business.ts';
 import { activeCitizens } from '../citizens/citizen.ts';
 import { FRIEND_THRESHOLD } from '../citizens/relationships.ts';
-import { jailedCitizens } from '../government/jail.ts';
+import { isLifeTerm, jailedCitizens } from '../government/jail.ts';
+import { onParole } from '../government/parole.ts';
 import { liveGangs } from '../government/gangs.ts';
 import { cityApproval } from '../politics/approval.ts';
 import { liveRumours } from '../social/rumours.ts';
@@ -104,10 +105,22 @@ export function computeStats(world: World, day: number = summarisedDay(world)): 
   }
   let charges = 0;
   let convictions = 0;
+  // The two tracks are counted apart, because they are two answers: a rung on
+  // the civic ladder, or a number of days (`docs/JUSTICE.md`). An acquittal
+  // belongs to neither, and a city that never records one has no court.
+  let custodySentences = 0;
+  let ladderSentences = 0;
+  let acquittals = 0;
   for (const k of Object.values(world.cases)) {
     if (dayOfTick(k.filedTick) === day) charges++;
-    if (k.verdict === 'guilty' && k.triedDay === day) convictions++;
+    if (k.triedDay !== day) continue;
+    if (k.verdict === 'acquitted') acquittals++;
+    if (k.verdict !== 'guilty') continue;
+    convictions++;
+    if (k.sentence?.track === 'person') custodySentences++;
+    else ladderSentences++;
   }
+  const held = jailedCitizens(world);
   const exiles = world.bans.filter((b) => b.day === day).length;
   const { partnerships, marriages } = countCouples(active);
   let possessions = 0;
@@ -139,7 +152,13 @@ export function computeStats(world: World, day: number = summarisedDay(world)): 
     possessions,
     // The metropolis: the cells, the sick, the arts, the parties, the
     // underworld, what is being said, how the Mayor is read, and the water.
-    jailed: jailedCitizens(world).length,
+    jailed: held.length,
+    custody: held.length,
+    lifeTerms: held.filter((c) => isLifeTerm(world, c.id)).length,
+    paroled: active.filter((c) => onParole(world, c.id)).length,
+    custodySentences,
+    ladderSentences,
+    acquittals,
     glitched: active.filter((c) => c.health?.glitched).length,
     works: Object.keys(world.works ?? {}).length,
     parties: Object.values(world.parties ?? {}).filter((p) => p.members.length > 0).length,

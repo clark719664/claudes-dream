@@ -21,6 +21,7 @@ import { SEASON_NAMES, WEATHER_NAMES } from './data/metropolis.ts';
 import { auditMoneySupply, formatLumens } from './economy/treasury.ts';
 import { activeCitizens } from './citizens/citizen.ts';
 import { nominationsOpen } from './government/council.ts';
+import { keepBuilt } from './government/jail.ts';
 import { reflexBrain } from './brains/reflex.ts';
 import { instinctBrain } from './brains/instinct.ts';
 import { createLlmBrain } from './brains/llm.ts';
@@ -226,8 +227,15 @@ function printDigest(world: World, quiet: boolean): void {
   );
   console.log(
     `        │ ${seasonLine(world)} │ works ${s.works} │ parties ${s.parties} │ unions ${Object.keys(world.unions ?? {}).length} │ `
-    + `gangs ${s.gangs} │ rumours ${s.rumours} │ cells ${s.jailed} │ glitched ${s.glitched} │ `
+    + `gangs ${s.gangs} │ rumours ${s.rumours} │ glitched ${s.glitched} │ `
     + `approval ${Math.round(s.approval * 100)}% │ trade ${s.outerTrade >= 0 ? '+' : ''}${s.outerTrade} ℓ`,
+  );
+  // The two tracks, side by side: what the ladder answered, what custody
+  // answered, who the city is holding and who it acquitted (`docs/JUSTICE.md`).
+  console.log(
+    `        │ ladder ${s.ladderSentences} │ custody ${s.custodySentences} │ acquitted ${s.acquittals} │ `
+    + `cells ${s.custody}${s.lifeTerms > 0 ? ` (${s.lifeTerms} life)` : ''} │ paroled ${s.paroled} │ `
+    + `exiled today ${s.exiles}`,
   );
   if (quiet) return;
   const chronicle = lastEdition(world, 'chronicle');
@@ -259,7 +267,15 @@ function printSummary(world: World, ticksRun: number, elapsedNs: bigint): void {
   console.log(`Population ${s.population} of ${everyone.length} ever registered (${exiled} exiled, ${departed} departed) · ${s.employed} of ${s.employed + s.unemployed} grown-ups employed · ${s.homeless} homeless · ${s.businesses} businesses · ${s.friendships} friendships`);
   console.log(`Treasury ${formatLumens(world.treasury.balance)} · money supply ${formatLumens(audit.supply)} (${audit.ok ? 'audit ok' : `AUDIT FAILED, expected ${formatLumens(audit.expected)}`}) · price index ${world.market.priceIndex.toFixed(2)} (${prices})`);
   console.log(`Government: Mayor ${nameOf(world, g.mayorId)} · Council ${namesOf(world, g.council)} · Judges ${namesOf(world, g.judges)} · Watch ${g.watch.length} officer${g.watch.length === 1 ? '' : 's'} · next election ${election}`);
-  console.log(`Justice: ${cases.length} cases, ${convictions} convictions, ${appeals} appeals, ${pending} pending, ${world.bans.length} exile${world.bans.length === 1 ? '' : 's'} on the register`);
+  const decided = cases.filter((k) => k.verdict !== null).length;
+  const acquittals = cases.filter((k) => k.verdict === 'acquitted').length;
+  const convictionRate = decided > 0 ? `${Math.round((convictions / decided) * 100)}%` : 'n/a';
+  const custodial = cases.filter((k) => k.sentence?.track === 'person').length;
+  const ladder = cases.filter((k) => k.sentence?.track === 'city').length;
+  console.log(`Justice: ${cases.length} cases, ${convictions} convictions and ${acquittals} acquittals (${convictionRate} convicted), ${appeals} appeals, ${pending} pending, ${world.bans.length} exile${world.bans.length === 1 ? '' : 's'} on the register`);
+  console.log(`Two tracks: ${ladder} answered by the ladder · ${custodial} answered by custody · `
+    + `${s.custody} in the cells (${s.lifeTerms} for life) · ${s.paroled} on parole · `
+    + `the Keep ${keepBuilt(world) ? 'stands' : 'is not built'}`);
   const clubs = Object.values(world.clubs ?? {}).filter((k) => k.members.length > 0);
   const members = clubs.reduce((n, k) => n + k.members.length, 0);
   const weddings = world.events.filter((e) => e.kind === 'wedding').length;

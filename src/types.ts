@@ -888,6 +888,13 @@ export interface DailyStats {
   chest: number;        // Community Chest balance
   possessions: number;  // items owned by present citizens
   jailed: number;       // citizens in the cells at the roll
+  /** Custody counts (`docs/JUSTICE.md` §2): the whole of Track II, in numbers. */
+  custody: number;      // citizens serving a custodial term at the roll (the same roll as `jailed`)
+  lifeTerms: number;    // of those, the ones serving life
+  paroled: number;      // citizens out on parole, serving the rest of a term in the city
+  custodySentences: number; // custodial sentences passed on the summarised day
+  ladderSentences: number;  // civic sentences passed on the summarised day
+  acquittals: number;   // cases the Court acquitted on the summarised day
   glitched: number;     // citizens carrying an untreated glitch
   works: number;        // works in existence
   parties: number;      // parties with at least one member
@@ -1357,6 +1364,10 @@ export const SUSPENDED_ACTIONS: readonly ActionType[] = [
   // A suspension takes work, trade, office and the vote. It does not take a
   // citizen's own words, its health, or the paper it reads.
   'read_paper', 'visit_hospital', 'post', 'react', 'apologize', 'attend_match',
+  // Nor due process, nor the people it knows: a suspended citizen may still
+  // admit a charge before the bench sits, and may still go and see somebody in
+  // custody (`docs/JUSTICE.md` §2 — custody is not exile, and neither is this).
+  'plead_guilty', 'visit',
 ];
 
 /**
@@ -1378,6 +1389,17 @@ export const JAILED_ACTIONS: readonly ActionType[] = [
  * `forget` while suspended and while held in the Watch House.
  */
 export const NOTE_ACTIONS: readonly ActionType[] = ['note', 'forget'];
+
+/**
+ * What a citizen held in the Watch House **before** the Court sits may still
+ * do. Detention is not a sentence; it is the wait for one, and the Charter's
+ * due process (Article II.5) does not pause while somebody waits. So it takes
+ * the day and leaves the notebook — and the plea, because a guilty plea is
+ * only worth anything if it is entered before the bench sits
+ * (`docs/JUSTICE.md` §2), and a charge grave enough to hold somebody for is
+ * exactly the charge they are held for.
+ */
+export const DETAINED_ACTIONS: readonly ActionType[] = ['note', 'forget', 'plead_guilty'];
 
 export interface ActionResult {
   ok: boolean;

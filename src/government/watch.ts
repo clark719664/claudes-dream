@@ -292,7 +292,8 @@ export function reportOffence(world: World, reporterId: CitizenId, accusedId: Ci
   adjustBond(world, reporterId, accusedId, -20);
   // A gang does not wait to hear whether the Watch believed it: one of its own
   // was named, so somebody leans on the citizen who named them. Intimidation is
-  // Harassment (L05), and it is charged like it (government/gangs.ts defend).
+  // Harassment — **P02**, an offence against a person, answered by custody —
+  // and it is charged like it (government/gangs.ts defend).
   defend(world, accusedId, reporterId);
 
   if (match) {

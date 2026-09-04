@@ -810,8 +810,29 @@ async function metropolisCity(): Promise<MetropolisCity> {
   };
   boss.gangId = gang;
   prisoner.gangId = gang;
+  // A term under the Code of Persons, half served, with an application for
+  // parole before the Court: the whole of Track II, as the register prints it.
   prisoner.jailedUntilDay = w.day + 2;
   w.counters[`jailCase:${prisoner.id}`] = 7;
+  w.counters[`custody:code:${prisoner.id}`] = 3;
+  w.counters[`custody:term:${prisoner.id}`] = 10;
+  w.counters[`custody:start:${prisoner.id}`] = w.day - 8;
+  w.counters[`parole:req:${prisoner.id}`] = w.day;
+  w.counters[`parole:opened:${prisoner.id}`] = w.day;
+  w.counters[`parole:seat:${prisoner.id}:${councillor.id}`] = 1;
+  w.counters[`parole:vote:${prisoner.id}:${councillor.id}`] = 1;
+  w.counters[`parole:oppose:${prisoner.id}`] = 1;
+  w.cases.k_7 = {
+    id: 'k_7', defendantId: prisoner.id, law: 'P03', severity: 3, evidence: 0.8, filedTick: w.tick - 200,
+    filedBy: 'watch', victimId: neighbour.id, amount: 0, description: 'Assault in Nightglass', status: 'closed',
+    triedDay: w.day - 8, judges: [], votes: {}, reasons: {}, openedTick: null, carriedSessions: 0,
+    decidedByDefault: false, verdict: 'guilty',
+    sentence: {
+      tier: null, track: 'person', fine: 0, serviceDays: 0, jailDays: 10, life: false, restrainingOrder: false,
+      suspensionDays: 0, exile: false, executeOnDay: null, executed: true,
+    },
+    appeal: null, jury: [], juryVotes: {}, juryReasons: {}, advocateId: null, advocacy: 0,
+  };
   const investigation = nextId(w, 'i');
   w.investigations[investigation] = {
     id: investigation, suspectId: boss.id, law: 'L06', evidence: 0.35, openedDay: w.day - 2,
@@ -1171,11 +1192,48 @@ test('the older endpoints gained the metropolis', async () => {
   assert.equal(investigations.length, 1);
   assert.equal(investigations[0].suspect, city.world.citizens[city.ids.boss].name);
   assert.equal(investigations[0].lawName, 'Vandalism');
+  // The jail register, beside the ban register: who is held, for what, on which
+  // track, and when the Court may hear them ask to come out (`JUSTICE.md` §5).
   const jail = court.jail as Json;
-  assert.equal((jail.roster as Json[]).length, 1);
-  assert.equal((jail.roster as Json[])[0].id, city.ids.prisoner);
-  assert.equal((jail.roster as Json[])[0].daysLeft, 2);
+  const roster = jail.roster as Json[];
+  assert.equal(roster.length, 1);
+  assert.equal(roster[0].id, city.ids.prisoner);
+  assert.equal(roster[0].daysLeft, 2);
+  assert.equal(roster[0].law, 'P03');
+  assert.equal(roster[0].lawName, 'Assault');
+  assert.equal(roster[0].track, 'person');
+  assert.equal(roster[0].caseId, 'k_7');
+  assert.equal(roster[0].life, false);
+  assert.equal(roster[0].term, 10);
+  assert.equal(roster[0].daysServed, 8);
+  assert.equal(roster[0].where, 'watch house');
+  assert.equal(roster[0].paroleEligible, true, 'half the term is served');
+  assert.equal(roster[0].paroleRequested, true);
   assert.equal(jail.overcrowded, false);
+  assert.equal(jail.held, 1);
+  assert.equal(jail.lifeTerms, 0);
+  assert.equal(typeof jail.capacity, 'number');
+  assert.deepEqual(jail.paroled, [], 'nobody is out on conditions yet');
+  assert.equal((court.keep as Json).built, false, 'the Council has not funded one');
+
+  // The hearing itself, with the bench, the vote cast and the victim's position.
+  const hearings = court.paroleHearings as Json[];
+  assert.equal(hearings.length, 1);
+  assert.equal((hearings[0].prisoner as Json).id, city.ids.prisoner);
+  assert.equal(hearings[0].caseId, 'k_7');
+  assert.equal(hearings[0].victimOpposes, true);
+  assert.equal(((hearings[0].bench as Json[])[0]).vote, true);
+
+  // Every case says which system answers it.
+  const tried = (court.cases as Json[]).find((k) => k.id === 'k_7') as Json;
+  assert.equal(tried.track, 'person');
+  assert.equal(tried.lawName, 'Assault');
+  assert.equal((tried.sentence as Json).track, 'person');
+  assert.equal((tried.sentence as Json).tier, null);
+  const counts = court.counts as Json;
+  assert.equal(counts.personCharges, 1);
+  assert.equal(counts.custodySentences, 1);
+  assert.equal(typeof counts.civicCharges, 'number');
   const gangs = court.gangs as Json[];
   assert.equal(gangs[0].name, 'The Undertow');
   assert.equal((gangs[0].boss as Json).id, city.ids.boss);

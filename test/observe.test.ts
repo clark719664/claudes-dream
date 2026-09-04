@@ -132,7 +132,10 @@ test('charges, candidates and proposals show up; detention and exile empty the a
   c.detainedUntilTick = w.tick + 10;
   const held = buildObservation(w, c.id);
   assert.equal(held.self.detained, true);
-  assert.deepEqual(held.availableActions, ['note'], 'a cell leaves only the notebook');
+  // The Watch House before the Court sits leaves the notebook, and — while a
+  // charge is still waiting for a bench — the plea a defendant may enter in
+  // time (`docs/JUSTICE.md` §2). Nothing else.
+  assert.deepEqual(held.availableActions, ['note', 'plead_guilty'], 'a cell leaves the notebook and the plea');
   c.detainedUntilTick = null;
   c.standing = 'exiled';
   assert.deepEqual(buildObservation(w, c.id).availableActions, []);

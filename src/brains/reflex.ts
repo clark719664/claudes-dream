@@ -30,7 +30,7 @@ import {
 } from './reflex-society.ts';
 import {
   tryCulture, tryDiary, tryFabric, tryGig, tryHealth, tryJail, tryPolitics, tryProperty, trySchoolAndPaper,
-  tryShares, trySport, tryStrike, trySunset, tryTrade, tryUnderworld, tryUnion, tryWeather,
+  tryShares, trySport, tryStrike, trySunset, tryTrade, tryUnderworld, tryUnion, tryVisit, tryWeather,
 } from './reflex-metro.ts';
 import { childDecide } from './child.ts';
 
@@ -272,9 +272,18 @@ function tryCrime(ctx: Ctx): Action | null {
     const officials = here.filter((o) => holdsOffice(world, o) && bondBetween(world, c.id, o.id) > -30).sort((a, b) => a.reputation - b.reputation);
     if (officials.length > 0) return { type: 'bribe', official: officials[0].id, amount: randInt(world, 30, 60) };
   }
+  // A grudge, in front of the person it is against. Everything above `insult`
+  // here is the **Code of Persons** — answered in days of custody, never by a
+  // fine and never by the Gate (`docs/JUSTICE.md` §2) — so the readings that
+  // reach for it are the lowest in the ladder and fall away fast as the city's
+  // reading of the citizen's honesty rises. Erasure is not on this list at
+  // all: it takes a tool, a night, an empty district and three unbroken hours,
+  // which is not a thing a reflex mind assembles by accident.
   const rival = here.find((o) => bondBetween(world, c.id, o.id) <= -30);
-  if (rival && c.mood < 45) {
+  if (rival && c.mood < 50) {
     if (p.honesty < 0.15 && chance(world, 0.02)) return { type: 'extort', target: rival.id, amount: randInt(world, 20, 80) };
+    if (p.honesty < 0.2 && chance(world, 0.02)) return { type: 'assault', target: rival.id };
+    if (p.honesty < 0.25 && chance(world, 0.03)) return { type: 'threaten', target: rival.id };
     if (p.honesty < 0.3 && chance(world, 0.05)) return { type: 'harass', target: rival.id };
     if (chance(world, 0.05)) return { type: 'insult', target: rival.id };
   }
@@ -356,11 +365,11 @@ function tryJobHunt(ctx: Ctx): Action | null {
 }
 
 const LADDER: readonly Step[] = [
-  tryAppeal, tryEat, tryDine, tryInbox, tryCharity, tryHealth, tryRest, tryHousing, tryWeather,
+  tryAppeal, tryPlea, tryEat, tryDine, tryInbox, tryCharity, tryHealth, tryRest, tryHousing, tryWeather,
   tryHappening, tryClubMeeting,
   tryStrike, tryJobHunt, tryWorkday, tryGig, tryHunger, tryCraft, tryCivic, tryBusiness,
   tryTrade, tryProperty, tryShares,
-  tryRomance, trySocial, tryComfort, tryWants, tryPurpose,
+  tryRomance, trySocial, tryVisit, tryComfort, tryWants, tryPurpose,
   tryReport, tryCrime, tryUnderworld, tryPerform, tryCulture, trySport, tryPolitics, tryUnion,
   tryClubLife, tryBirthdayGift, tryDonate, tryFabric, trySchoolAndPaper, tryUseItem, tryGift,
   // Last of all, before the hour is let go: the day, written up.
@@ -372,6 +381,24 @@ const RESTRICTED_LADDER: readonly Step[] = [
   tryAppeal, tryEat, tryDine, tryInbox, tryHealth, tryHunger, tryRest, tryHappening,
   trySocial, tryComfort, tryPlay, tryFabric, trySchoolAndPaper, tryUseItem, tryDiary,
 ];
+
+/**
+ * The plea a citizen at liberty may still enter before the bench sits. It is
+ * on the ladder's record either way and worth a fifth off a custodial term
+ * (`docs/JUSTICE.md` §2), so a scripted defendant the Watch caught in the act
+ * sometimes takes it rather than argue with an officer's own eyes.
+ */
+function tryPlea(ctx: Ctx): Action | null {
+  const { world, c, obs } = ctx;
+  if (!ctx.can.has('plead_guilty')) return null;
+  const k = obs.government.myLatestCase;
+  if (!k || k.status !== 'pending' || !k.canPleadGuilty) return null;
+  const key = `pleaDecided:${c.id}:${k.id}`;
+  if (world.counters[key]) return null;
+  world.counters[key] = 1;
+  // An honest citizen admits what it did more readily than a practised one.
+  return chance(world, 0.15 + c.personality.honesty * 0.35) ? { type: 'plead_guilty', caseId: k.id } : null;
+}
 
 function decideSuspended(ctx: Ctx): Action {
   for (const step of RESTRICTED_LADDER) {

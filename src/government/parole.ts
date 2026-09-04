@@ -110,6 +110,11 @@ export function paroleProblem(world: World, cId: CitizenId): string | null {
   return null;
 }
 
+/** True once an application is before the Court and not yet decided. */
+export function paroleRequested(world: World, cId: CitizenId): boolean {
+  return world.counters[paroleRequestKey(cId)] !== undefined;
+}
+
 /** Ask the Court to let you out after half your term. */
 export function requestParole(world: World, cId: CitizenId): ActionResult {
   const problem = paroleProblem(world, cId);
@@ -150,6 +155,24 @@ export function submitVictimStatement(world: World, victimId: CitizenId, prisone
   emit(world, 'law', `${victim.name} ${oppose ? 'opposed' : 'did not oppose'} parole for ${prisoner.name}`
     + `${said ? `: "${said}"` : '.'}`, [victimId, prisonerId], 0.4, { victim: victimId, prisoner: prisonerId, oppose });
   return ok('Your statement will be read to the bench.');
+}
+
+/** The day a parole hearing was opened, or null when none is open. */
+export function paroleOpenedDay(world: World, cId: CitizenId): number | null {
+  const day = world.counters[paroleOpenedKey(cId)];
+  return day === undefined ? null : Math.round(day);
+}
+
+/** How one seated judge voted on a hearing: true to grant, false to refuse, null not yet. */
+export function paroleVoteOf(world: World, prisonerId: CitizenId, judgeId: CitizenId): boolean | null {
+  const vote = world.counters[paroleVoteKey(prisonerId, judgeId)];
+  return vote === undefined ? null : vote === 1;
+}
+
+/** Whether the victim opposed the release, or null when they have not spoken. */
+export function victimOpposesParole(world: World, cId: CitizenId): boolean | null {
+  const said = world.counters[paroleOpposeKey(cId)];
+  return said === undefined ? null : said === 1;
 }
 
 /** The judges seated on a parole hearing. */
