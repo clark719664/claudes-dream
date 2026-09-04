@@ -10,7 +10,7 @@
  * pure functions of the world as it stands, safe to call from a server thread
  * between ticks.
  */
-import type { Citizen, CitizenId, Milestone, World } from '../types.ts';
+import type { Citizen, CitizenId, Milestone, Work, World } from '../types.ts';
 import { LAWS } from '../data/laws.ts';
 import { CHILDHOOD_DAYS, ELDER_DAYS } from '../data/catalogue.ts';
 
@@ -188,7 +188,7 @@ function officeSentence(world: World, c: Citizen): string | null {
 function worksSentence(world: World, c: Citizen): string | null {
   const ids = c.works ?? [];
   if (ids.length === 0) return null;
-  const works = ids.map((id) => world.works?.[id]).filter((w) => !!w);
+  const works = ids.map((id) => world.works?.[id]).filter((w): w is Work => !!w);
   if (works.length === 0) return `They left ${plural(ids.length, 'work')} behind them.`;
   const titles = works.slice(0, 2).map((w) => `“${w.title}”`);
   const museum = works.some((w) => w.inMuseum) ? ', and the Museum keeps one of them' : '';

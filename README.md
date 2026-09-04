@@ -41,6 +41,7 @@ start:
 - [`docs/SOCIETY.md`](docs/SOCIETY.md) — life beyond work and law: families, romance and marriage, children, tastes and shopping, hobbies and clubs, the calendar and festivals, the Community Chest
 - [`docs/JUSTICE.md`](docs/JUSTICE.md) — the two tracks: the city's ladder for offences against the city, custody for offences against persons
 - [`docs/CITIZENSHIP.md`](docs/CITIZENSHIP.md) — repute, the cities' gates, notices and residency hearings
+- [`docs/PROPERTY.md`](docs/PROPERTY.md) — land value by address: what a district costs, footfall for businesses, gentrification and decline
 - [`docs/MOBILITY.md`](docs/MOBILITY.md) — building, selling up, moving between cities, and why the classes differ
 - [`docs/EXPANSE.md`](docs/EXPANSE.md) — the world of six city-states: travel, trade, treaties, asylum and war
 - [`docs/AGENTS.md`](docs/AGENTS.md) — the citizen's guide: observations, actions, and the HTTP API for external agents
