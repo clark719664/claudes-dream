@@ -514,7 +514,9 @@ export type LedgerKind =
   | 'restitution' | 'gift' | 'theft' | 'scam' | 'extortion' | 'bribe' | 'loan' | 'repayment'
   | 'grant' | 'campaign' | 'public_works' | 'founding' | 'payout' | 'ticket' | 'tip' | 'mint' | 'burn'
   | 'capital'
-  | 'donation' | 'stipend' | 'upkeep' | 'item' | 'craft' | 'registration' | 'inheritance';
+  | 'donation' | 'stipend' | 'upkeep' | 'item' | 'craft' | 'registration' | 'inheritance'
+  | 'property' | 'lease' | 'share' | 'share_dividend' | 'gig' | 'import' | 'export'
+  | 'tariff' | 'property_tax' | 'wealth_tax' | 'racket' | 'advocate' | 'acquisition' | 'prize' | 'relief';
 
 export interface LedgerEntry {
   tick: number;
@@ -777,6 +779,10 @@ export type EventKind =
   | 'election' | 'nomination' | 'vote' | 'proposal' | 'law' | 'decree'
   | 'treasury' | 'housing' | 'loan' | 'eviction'
   | 'wedding' | 'birth' | 'birthday' | 'festival' | 'club' | 'romance' | 'purchase' | 'donation' | 'coming_of_age' | 'household'
+  | 'weather' | 'disaster' | 'health' | 'milestone' | 'diary' | 'jail' | 'investigation'
+  | 'gang' | 'rumour' | 'feud' | 'mentor' | 'post' | 'party' | 'referendum' | 'union'
+  | 'strike' | 'property' | 'shares' | 'gig' | 'outer' | 'work' | 'match' | 'museum'
+  | 'monument' | 'history' | 'sunset' | 'growth' | 'school'
   | 'system';
 
 export interface WorldEvent {
@@ -1145,7 +1151,15 @@ export type Action =
   | { type: 'dine'; with?: CitizenId }
   | { type: 'play'; with?: CitizenId }
   | { type: 'celebrate' }
-  | { type: 'donate'; amount: number };
+  | { type: 'donate'; amount: number }
+  // The metropolis: a citizen's own words, and the justice the city gained
+  | { type: 'write_diary'; text: string }
+  | { type: 'hire_advocate'; advocate: CitizenId }
+  | { type: 'advocate'; case: CaseId }
+  | { type: 'found_gang'; name: string }
+  | { type: 'recruit'; citizen: CitizenId }
+  | { type: 'racket'; business: BusinessId }
+  | { type: 'pay_racket' };
 
 export type ActionType = Action['type'];
 
@@ -1163,6 +1177,7 @@ export const ACTION_TYPES: readonly ActionType[] = [
   'date', 'propose_partnership', 'marry', 'break_up', 'move_in', 'start_family',
   'found_club', 'join_club', 'leave_club', 'attend_club',
   'dine', 'play', 'celebrate', 'donate',
+  'write_diary', 'hire_advocate', 'advocate', 'found_gang', 'recruit', 'racket', 'pay_racket',
 ];
 
 /** Social-layer actions, for brains and prompts that want to list them separately. */
