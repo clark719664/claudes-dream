@@ -346,12 +346,16 @@ export function halfCycleDay(world: World): number {
   return cycleStartDay(world) + Math.floor(world.config.cycleDays / 2);
 }
 
-/** The party's members who actually hold a seat and are in standing to use it. */
+/**
+ * The party's members who actually hold a seat and are in a position to use
+ * it: in standing, and not in the cells or the Watch House — a councillor in
+ * custody neither takes the chair nor tables anything in the party's name.
+ */
 function sittingMembers(world: World, party: Party): Citizen[] {
   return seatHolders(world)
     .map((id) => world.citizens[id])
     .filter((c): c is Citizen => Boolean(c) && partyOf(world, c.id)?.id === party.id
-      && (c.standing === 'good' || c.standing === 'probation'));
+      && (c.standing === 'good' || c.standing === 'probation') && heldIn(world, c) === null);
 }
 
 /** Who could take the chair for a party: its leader if they sit, else its best-placed councillor. */

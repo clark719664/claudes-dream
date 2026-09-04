@@ -63,13 +63,15 @@ function walletTrend(world: World, c: Citizen): number {
   return Math.sign(c.wallet - then);
 }
 
-/** Was this citizen the victim in a case the Watch or the Court took up this week? */
-function recentlyWronged(world: World, c: Citizen): boolean {
+/** Everybody the city failed to keep safe this week, from the Court's own book. */
+function victimsOfTheWeek(world: World): Set<CitizenId> {
+  const out = new Set<CitizenId>();
+  const since = world.day - VICTIM_MEMORY_DAYS;
   for (const k of Object.values(world.cases)) {
-    if (k.victimId !== c.id) continue;
-    if (Math.floor(k.filedTick / HOURS_PER_DAY) >= world.day - VICTIM_MEMORY_DAYS) return true;
+    if (!k.victimId) continue;
+    if (Math.floor(k.filedTick / HOURS_PER_DAY) >= since) out.add(k.victimId);
   }
-  return false;
+  return out;
 }
 
 /** The share of promises kept by whoever holds the office being judged. */
@@ -90,13 +92,31 @@ function officeFilled(world: World, of: 'mayor' | 'council'): boolean {
 }
 
 /**
- * This citizen's reading of the Mayor or of the Council, 0..1, from their own
- * public situation. Never NaN: a child, a citizen with no home, no job, no
- * money and no family, and a city with nobody in office all read as a number.
+ * The half of a reading that is the same for everybody: what the city is like
+ * this morning. Read once and handed to every citizen, so a city of hundreds
+ * walks the Court's book once a day rather than once a citizen.
  */
-export function approvalOf(world: World, c: Citizen, of: 'mayor' | 'council'): number {
+interface CityReading {
+  victims: Set<CitizenId>;
+  kept: { mayor: number; council: number };
+  filled: { mayor: boolean; council: boolean };
+  sitting: Platform;
+  dear: boolean;
+}
+
+function cityReading(world: World): CityReading {
+  return {
+    victims: victimsOfTheWeek(world),
+    kept: { mayor: officeKeptShare(world, 'mayor'), council: officeKeptShare(world, 'council') },
+    filled: { mayor: officeFilled(world, 'mayor'), council: officeFilled(world, 'council') },
+    sitting: sittingPlatform(world),
+    dear: world.market.priceIndex > DEAR_PRICE_INDEX,
+  };
+}
+
+function readingOf(world: World, c: Citizen, of: 'mayor' | 'council', city: CityReading): number {
   if (!c) return NEUTRAL;
-  if (!officeFilled(world, of)) return NEUTRAL;
+  if (!city.filled[of]) return NEUTRAL;
   let score = NEUTRAL;
 
   // Work, and what the week has done to the purse.
@@ -107,19 +127,27 @@ export function approvalOf(world: World, c: Citizen, of: 'mayor' | 'council'): n
   score += walletTrend(world, c) * 0.1;
 
   // Safety, and the price of a day's living.
-  if (recentlyWronged(world, c)) score -= 0.1;
-  if (world.market.priceIndex > DEAR_PRICE_INDEX) score -= 0.1;
+  if (city.victims.has(c.id)) score -= 0.1;
+  if (city.dear) score -= 0.1;
 
   // What they were promised, and what the city looks like from where they stand.
-  score += (officeKeptShare(world, of) - NEUTRAL) * 0.2;
-  const sitting = sittingPlatform(world);
+  score += (city.kept[of] - NEUTRAL) * 0.2;
   const school = c.school ?? null;
-  if (school) score += (platformFit(SCHOOL_INFO[school].platform, sitting) - NEUTRAL) * 0.1;
+  if (school) score += (platformFit(SCHOOL_INFO[school].platform, city.sitting) - NEUTRAL) * 0.1;
   const paper = PAPER_INFO[c.paper ?? 'chronicle'] ?? PAPER_INFO.chronicle;
-  score += (platformFit(paper.line, sitting) - NEUTRAL) * 0.1;
+  score += (platformFit(paper.line, city.sitting) - NEUTRAL) * 0.1;
 
   const value = Math.round(clamp(score, 0, 1) * 100) / 100;
   return Number.isFinite(value) ? value : NEUTRAL;
+}
+
+/**
+ * This citizen's reading of the Mayor or of the Council, 0..1, from their own
+ * public situation. Never NaN: a child, a citizen with no home, no job, no
+ * money and no family, and a city with nobody in office all read as a number.
+ */
+export function approvalOf(world: World, c: Citizen, of: 'mayor' | 'council'): number {
+  return readingOf(world, c, of, cityReading(world));
 }
 
 /**
@@ -128,10 +156,11 @@ export function approvalOf(world: World, c: Citizen, of: 'mayor' | 'council'): n
  * written down. Exiles and emigrants keep whatever they last thought.
  */
 export function dailyApproval(world: World): void {
+  const city = cityReading(world);
   for (const id of world.order) {
     const c = world.citizens[id];
     if (!c || !isPresent(world, c)) continue;
-    c.approval = { mayor: approvalOf(world, c, 'mayor'), council: approvalOf(world, c, 'council') };
+    c.approval = { mayor: readingOf(world, c, 'mayor', city), council: readingOf(world, c, 'council', city) };
     const day = world.counters[walletDayKey(id)];
     if (day === undefined || world.day - day >= WALLET_TREND_DAYS) {
       world.counters[walletKey(id)] = Math.round(c.wallet);

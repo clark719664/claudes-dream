@@ -226,3 +226,26 @@ test('a purse that is not a number is no reading at all', () => {
   assert.ok(Number.isFinite(cityApproval(w).mayor));
   assert.ok(Number.isFinite(broken.approval.mayor));
 });
+
+test('the daily pass reads the city once and answers as if asked one by one', () => {
+  const w = makeWorld();
+  const { mayor } = government(w);
+  const worker = makeCitizen(w, { name: 'Wren', school: 'commons' });
+  employ(w, worker);
+  const idler = makeCitizen(w, { name: 'Fen', paper: 'ledger', wallet: 0 });
+  const victim = makeCitizen(w, { name: 'Bram' });
+  wrong(w, victim);
+  const child = makeCitizen(w, { lifeStage: 'child' });
+  w.government.incomeTax = 0.4;
+  w.counters[`wallet3:${worker.id}`] = 10;
+  w.counters[`wallet3Day:${worker.id}`] = w.day - 1;
+
+  const one = new Map(Object.values(w.citizens).map((c) => [c.id, {
+    mayor: approvalOf(w, c, 'mayor'), council: approvalOf(w, c, 'council'),
+  }]));
+  dailyApproval(w);
+  for (const c of [mayor, worker, idler, victim, child]) {
+    assert.deepEqual(c.approval, one.get(c.id), `${c.name} reads the city the same way either way`);
+  }
+  assert.ok(victim.approval.council < worker.approval.council);
+});

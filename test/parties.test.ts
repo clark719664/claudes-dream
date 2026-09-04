@@ -425,6 +425,30 @@ test('a party publishes what it stands for, in words the city can read', () => {
   assert.equal(manifestos(makeWorld()).length, 0, 'a city with no parties publishes nothing');
 });
 
+test('a councillor in the cells neither takes the chair nor speaks for the party', () => {
+  const w = makeWorld();
+  const leader = makeCitizen(w, { name: 'Ondine', wallet: 300 });
+  const second = makeCitizen(w, { name: 'Bram' });
+  const third = makeCitizen(w, { name: 'Wren' });
+  foundParty(w, leader.id, 'The Commons', HIGH_TAX);
+  const id = leader.partyId as string;
+  joinParty(w, second.id, id);
+  joinParty(w, third.id, id);
+  seat(w, [leader, second, third]);
+  w.government.dividend = 5;
+  leader.jailedUntilDay = w.day + 3;
+  second.jailedUntilDay = w.day + 3;
+  third.jailedUntilDay = w.day + 3;
+
+  dailyParties(w);
+  assert.equal(w.government.proposals.length, 0, 'a party whose seats are all in custody tables nothing');
+
+  third.jailedUntilDay = null;
+  dailyParties(w);
+  assert.equal(w.government.proposals.length, 1, 'the member who is free speaks for it');
+  assert.equal(w.government.proposals[0].proposerId, third.id);
+});
+
 // -------------------------------------------------------------- observation
 
 test('the observation of the parties says who leads, how many are in and how many sit', () => {

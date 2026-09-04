@@ -71,8 +71,11 @@ export function activeDecrees(world: World, day: number = world.day): Decree[] {
  * of that kind does.
  */
 export function decreeInForce(world: World, kind: Decree['kind'], district?: DistrictId): Decree | null {
-  for (const d of activeDecrees(world)) {
+  // Read straight off the book rather than through activeDecrees: this is
+  // asked of every action of every citizen in every hour of the city.
+  for (const d of decreeList(world)) {
     if (d.kind !== kind) continue;
+    if (d.untilDay < world.day || d.day > world.day) continue;
     if (district !== undefined && d.district !== null && d.district !== district) continue;
     return d;
   }

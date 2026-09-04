@@ -288,19 +288,94 @@ function headShape(variant: number, cx: number, cy: number, rx: number, ry: numb
   }
 }
 
-/** Four hairlines, drawn over the top of the head. */
-function hairShape(variant: number, cx: number, cy: number, rx: number, ry: number, hair: string): string {
+/** Blend a colour toward grey, for the hair of an elder. */
+function greyed(hex: string, amount: number): string {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return hex;
+  const v = parseInt(m[1], 16);
+  const r = (v >> 16) & 255, g = (v >> 8) & 255, b = v & 255;
+  const mix = (x: number): number => Math.round(x + (196 - x) * amount);
+  return `#${((mix(r) << 16) | (mix(g) << 8) | mix(b)).toString(16).padStart(6, '0')}`;
+}
+
+/**
+ * The crown: the top of the skull down to a hairline that curves up over the
+ * brow. Every style is built on this, so hair always sits on the head rather
+ * than floating above it.
+ */
+function crown(cx: number, cy: number, rx: number, ry: number, dip: number): string {
+  const hy = cy - ry * dip;
+  return `M ${n(cx - rx)} ${n(cy)} A ${n(rx)} ${n(ry)} 0 0 1 ${n(cx + rx)} ${n(cy)} `
+    + `L ${n(cx + rx)} ${n(hy)} Q ${n(cx)} ${n(hy - ry * 0.30)} ${n(cx - rx)} ${n(hy)} Z`;
+}
+
+/** Eight heads of hair. Grey with age, and a receding style for some elders. */
+function hairShape(
+  variant: number, cx: number, cy: number, rx: number, ry: number,
+  hair: string, ink: string, stroke: number, elder: boolean,
+): string {
+  const col = elder ? greyed(hair, 0.55) : hair;
+  const edge = `stroke="${ink}" stroke-width="${n(stroke * 0.8)}" stroke-linejoin="round"`;
+  const fill = `fill="${col}" ${edge}`;
   const top = cy - ry;
-  switch (variant) {
+
+  switch (variant % 8) {
+    // A short crop with sideburns.
     case 0:
-      return `<path d="M ${n(cx - rx)} ${n(cy - ry * 0.2)} A ${n(rx)} ${n(ry)} 0 0 1 ${n(cx + rx)} ${n(cy - ry * 0.2)} L ${n(cx + rx * 0.9)} ${n(cy - ry * 0.5)} A ${n(rx * 0.9)} ${n(ry * 0.7)} 0 0 0 ${n(cx - rx * 0.9)} ${n(cy - ry * 0.5)} Z" fill="${hair}"/>`;
+      return `<path d="${crown(cx, cy, rx, ry, 0.44)}" ${fill}/>`
+        + `<path d="M ${n(cx - rx * 0.99)} ${n(cy - ry * 0.42)} v ${n(ry * 0.42)} h ${n(rx * 0.16)} v ${n(-ry * 0.44)} Z" fill="${col}"/>`
+        + `<path d="M ${n(cx + rx * 0.99)} ${n(cy - ry * 0.42)} v ${n(ry * 0.42)} h ${n(-rx * 0.16)} v ${n(-ry * 0.44)} Z" fill="${col}"/>`;
+
+    // Long, falling either side of the face past the jaw.
     case 1:
-      return `<path d="M ${n(cx - rx)} ${n(cy - ry * 0.25)} Q ${n(cx)} ${n(top - ry * 0.25)} ${n(cx + rx)} ${n(cy - ry * 0.25)} L ${n(cx + rx)} ${n(cy + ry * 0.35)} L ${n(cx + rx * 0.72)} ${n(cy + ry * 0.35)} Q ${n(cx + rx * 0.8)} ${n(cy - ry * 0.45)} ${n(cx)} ${n(cy - ry * 0.55)} Q ${n(cx - rx * 0.8)} ${n(cy - ry * 0.45)} ${n(cx - rx * 0.72)} ${n(cy + ry * 0.35)} L ${n(cx - rx)} ${n(cy + ry * 0.35)} Z" fill="${hair}"/>`;
+      return `<path d="M ${n(cx - rx * 1.12)} ${n(cy + ry * 0.95)} Q ${n(cx - rx * 1.2)} ${n(cy - ry * 0.5)} ${n(cx)} ${n(top - ry * 0.1)} `
+        + `Q ${n(cx + rx * 1.2)} ${n(cy - ry * 0.5)} ${n(cx + rx * 1.12)} ${n(cy + ry * 0.95)} `
+        + `L ${n(cx + rx * 0.78)} ${n(cy + ry * 0.95)} Q ${n(cx + rx * 0.94)} ${n(cy - ry * 0.3)} ${n(cx)} ${n(cy - ry * 0.62)} `
+        + `Q ${n(cx - rx * 0.94)} ${n(cy - ry * 0.3)} ${n(cx - rx * 0.78)} ${n(cy + ry * 0.95)} Z" ${fill}/>`
+        + `<path d="${crown(cx, cy, rx, ry, 0.40)}" fill="${col}"/>`;
+
+    // A fringe swept across the brow.
     case 2:
-      return `<path d="M ${n(cx - rx * 0.98)} ${n(cy - ry * 0.3)} Q ${n(cx - rx * 0.2)} ${n(top - ry * 0.2)} ${n(cx + rx * 0.98)} ${n(cy - ry * 0.42)} L ${n(cx + rx * 0.75)} ${n(cy - ry * 0.62)} Q ${n(cx - rx * 0.3)} ${n(cy - ry * 0.95)} ${n(cx - rx * 0.98)} ${n(cy - ry * 0.3)} Z" fill="${hair}"/>`;
+      return `<path d="${crown(cx, cy, rx, ry, 0.36)}" ${fill}/>`
+        + `<path d="M ${n(cx - rx * 0.98)} ${n(cy - ry * 0.30)} Q ${n(cx - rx * 0.2)} ${n(cy - ry * 0.72)} ${n(cx + rx * 0.99)} ${n(cy - ry * 0.52)} `
+        + `Q ${n(cx + rx * 0.4)} ${n(cy - ry * 0.30)} ${n(cx - rx * 0.98)} ${n(cy - ry * 0.06)} Z" fill="${col}"/>`;
+
+    // Gathered into a knot on the crown.
+    case 3:
+      return `<circle cx="${n(cx)}" cy="${n(top - ry * 0.22)}" r="${n(rx * 0.30)}" ${fill}/>`
+        + `<path d="${crown(cx, cy, rx, ry, 0.46)}" ${fill}/>`;
+
+    // Curls, built from overlapping rounds along the crown.
+    case 4: {
+      const puffs: string[] = [];
+      for (let i = 0; i <= 6; i++) {
+        const a = Math.PI + (i / 6) * Math.PI;
+        puffs.push(`<circle cx="${n(cx + Math.cos(a) * rx * 0.86)}" cy="${n(cy + Math.sin(a) * ry * 0.86)}" r="${n(rx * 0.30)}" fill="${col}"/>`);
+      }
+      return `<path d="${crown(cx, cy, rx, ry, 0.40)}" ${fill}/>` + puffs.join('');
+    }
+
+    // A bob, cut level at the jaw.
+    case 5:
+      return `<path d="M ${n(cx - rx * 1.06)} ${n(cy + ry * 0.48)} Q ${n(cx - rx * 1.1)} ${n(top - ry * 0.05)} ${n(cx)} ${n(top - ry * 0.12)} `
+        + `Q ${n(cx + rx * 1.1)} ${n(top - ry * 0.05)} ${n(cx + rx * 1.06)} ${n(cy + ry * 0.48)} `
+        + `L ${n(cx + rx * 0.80)} ${n(cy + ry * 0.48)} Q ${n(cx + rx * 0.92)} ${n(cy - ry * 0.34)} ${n(cx)} ${n(cy - ry * 0.60)} `
+        + `Q ${n(cx - rx * 0.92)} ${n(cy - ry * 0.34)} ${n(cx - rx * 0.80)} ${n(cy + ry * 0.48)} Z" ${fill}/>`
+        + `<path d="${crown(cx, cy, rx, ry, 0.42)}" fill="${col}"/>`;
+
+    // Tied back into a tail.
+    case 6:
+      return `<path d="M ${n(cx + rx * 0.86)} ${n(cy - ry * 0.34)} q ${n(rx * 0.5)} ${n(ry * 0.12)} ${n(rx * 0.42)} ${n(ry * 0.62)} `
+        + `q ${n(-rx * 0.16)} ${n(ry * 0.26)} ${n(-rx * 0.44)} ${n(ry * 0.06)} Z" ${fill}/>`
+        + `<path d="${crown(cx, cy, rx, ry, 0.44)}" ${fill}/>`;
+
+    // Receding at the temples.
     default:
-      return `<path d="M ${n(cx - rx * 0.95)} ${n(cy - ry * 0.35)} A ${n(rx * 0.95)} ${n(ry * 0.95)} 0 0 1 ${n(cx + rx * 0.95)} ${n(cy - ry * 0.35)} Z" fill="${hair}"/>`
-        + `<circle cx="${n(cx)}" cy="${n(top - 1)}" r="${n(rx * 0.24)}" fill="${hair}"/>`;
+      return `<path d="${crown(cx, cy, rx, ry, 0.60)}" ${fill}/>`
+        + `<path d="M ${n(cx - rx * 0.99)} ${n(cy - ry * 0.58)} q ${n(rx * 0.10)} ${n(ry * 0.34)} ${n(-rx * 0.02)} ${n(ry * 0.40)} `
+        + `q ${n(-rx * 0.16)} ${n(-ry * 0.20)} ${n(-rx * 0.06)} ${n(-ry * 0.42)} Z" fill="${col}"/>`
+        + `<path d="M ${n(cx + rx * 0.99)} ${n(cy - ry * 0.58)} q ${n(-rx * 0.10)} ${n(ry * 0.34)} ${n(rx * 0.02)} ${n(ry * 0.40)} `
+        + `q ${n(rx * 0.16)} ${n(-ry * 0.20)} ${n(rx * 0.06)} ${n(-ry * 0.42)} Z" fill="${col}"/>`;
   }
 }
 
@@ -338,10 +413,11 @@ function mouth(variant: number, cx: number, y: number, ink: string, stroke: numb
   return `<path d="M ${n(cx - w / 2)} ${n(y)} q ${n(w / 2)} ${n(bend)} ${n(w)} 0" stroke="${ink}" stroke-width="${n(stroke * 1.2)}" stroke-linecap="round" fill="none"/>`;
 }
 
-/** A small mark of what a citizen does with its evenings. */
-function accessory(hobby: Hobby | undefined, cx: number, cy: number, rx: number, ry: number, ink: string, cloth: string): string {
-  const x = cx + rx * 0.95;
-  const y = cy - ry * 0.55;
+/**
+ * A small pin of what a citizen does with its evenings, worn on the collar.
+ * It used to sit at the temple, where it read as a mark on the head.
+ */
+function accessory(hobby: Hobby | undefined, x: number, y: number, ink: string, cloth: string): string {
   switch (hobby) {
     case 'music':
       return `<g fill="${ink}"><circle cx="${n(x)}" cy="${n(y + 6)}" r="2.4"/><path d="M ${n(x + 2)} ${n(y + 6)} V ${n(y - 2)} h 4 v 2 h -4" stroke="${ink}" stroke-width="1.4" fill="none"/></g>`;
@@ -401,7 +477,7 @@ export function portraitSvg(world: World, c: Citizen, size: number = PORTRAIT_SI
   const ry = 24 * scale;
 
   const headV = drawInt(seed, 'head', 4);
-  const hairV = drawInt(seed, 'hairstyle', 4);
+  const hairV = drawInt(seed, 'hairstyle', 8);
   const eyeV = drawInt(seed, 'eyes', 4);
   const browV = (drawInt(seed, 'brow', 3) + Math.round(ch.civic * 2)) % 3;
   const mouthV = ch.sociability >= 0.6 ? 1 : ch.sociability <= 0.25 ? 2 : 0;
@@ -431,7 +507,7 @@ export function portraitSvg(world: World, c: Citizen, size: number = PORTRAIT_SI
 
   // Head and hair.
   parts.push(headShape(headV, cx, cy, rx, ry, p.skin, p.ink, stroke));
-  parts.push(hairShape(hairV, cx, cy, rx, ry, p.hair));
+  parts.push(hairShape(hairV, cx, cy, rx, ry, p.hair, p.ink, stroke, elder));
 
   // Face.
   parts.push(brow(browV, eyeL, eyeR, eyeY - 6, p.ink, stroke));
@@ -447,7 +523,8 @@ export function portraitSvg(world: World, c: Citizen, size: number = PORTRAIT_SI
   }
 
   // What they do with their evenings, and what the city made them.
-  parts.push(accessory(c.tastes?.hobbies?.[0], cx, cy, rx, ry, p.ink, p.cloth));
+  parts.push(`<g transform="translate(${n(cx - 30)} ${n(VIEW - 26)}) scale(0.78)">`
+    + accessory(c.tastes?.hobbies?.[0], 0, 0, p.ink, p.cloth) + '</g>');
   if (office === 'watch') {
     parts.push(`<g><circle cx="${n(cx + 20)}" cy="${n(VIEW - 16)}" r="6" fill="#c9d2da" stroke="${p.ink}" stroke-width="1"/>`
       + `<path d="M ${n(cx + 20)} ${n(VIEW - 20)} l 1.4 2.8 3 0.4 -2.2 2.2 0.5 3 -2.7 -1.5 -2.7 1.5 0.5 -3 -2.2 -2.2 3 -0.4 Z" fill="${p.ink}"/></g>`);
