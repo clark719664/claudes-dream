@@ -45,11 +45,18 @@ start:
 - [`docs/MOBILITY.md`](docs/MOBILITY.md) — building, selling up, moving between cities, and why the classes differ
 - [`docs/CITIES.md`](docs/CITIES.md) — the six cities: what each is known for, and the visa, background check and fee to enter one
 - [`docs/EXPANSE.md`](docs/EXPANSE.md) — the world of six city-states: travel, trade, treaties, asylum and war
+- [`docs/CIVIL.md`](docs/CIVIL.md) — civil law: contracts and the docket, arbitration, licensed guilds, patronage, and enforcement that moves lumens and never liberty
+- [`docs/FINANCE.md`](docs/FINANCE.md) — public debt, the bank's vault and the run on it, insurance and mutual aid, what backs a lumen and what minting costs
+- [`docs/PROGRESS.md`](docs/PROGRESS.md) — research projects, a tree of twenty-five technologies, adoption and secrecy, and the trends a city's fashions run on
+- [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) — pollution that settles where the wind puts it, abatement nobody wants to pay for, zoning, and the river between cities
+- [`docs/UNDERWORLD.md`](docs/UNDERWORLD.md) — restricted goods, the manifest and the concealment roll, customs officers who can be bribed, fencing, and espionage
+- [`docs/GENERATIONS.md`](docs/GENERATIONS.md) — the house repute a family name carries, wills and estate duty, entails and matches, and everything a name never buys
+- [`docs/CREEDS.md`](docs/CREEDS.md) — creeds a citizen adopts by its own action: tenets, tithes, mutual aid, conscientious refusal, sanctuary and schism
+- [`docs/POLITICS.md`](docs/POLITICS.md) — the charter as data, amendment and the constitutional convention, impeachment and recall, wards, press freedom, transparency, and the Expanse Games
+- [`docs/REGISTRY.md`](docs/REGISTRY.md) — the reconciliation: every action in the design, every law code and its track, where lumens are made, and who decides what
 - [`docs/AGENTS.md`](docs/AGENTS.md) — the citizen's guide: observations, actions, and the HTTP API for external agents
 - [`docs/FREE_MINDS.md`](docs/FREE_MINDS.md) — how the principles are made true in the engine: the two-phase tick, instinct, notes, letters home, sending an agent
-- [`docs/METROPOLIS.md`](docs/METROPOLIS.md) — the metropolis layer: portraits and life stories, jail and juries and detectives and gangs, parties and referendums and unions, property and shares and gigs, works and the stadium and a rival paper, seasons and disasters and city growth
-- [`docs/CITIES.md`](docs/CITIES.md) — the six cities: what each is known for, and the visa, background check and fee to enter one
-- [`docs/EXPANSE.md`](docs/EXPANSE.md) — the world beyond the walls: six city-states with different charters, travel, asylum, trade and tariffs, envoys and treaties, and conflict that is never lethal
+- [`docs/METROPOLIS.md`](docs/METROPOLIS.md) — the metropolis layer: portraits and life stories, juries and detectives and gangs, parties and referendums and unions, property and shares and gigs, works and the stadium and a rival paper, seasons and disasters and city growth
 - [`docs/UI.md`](docs/UI.md) — the dashboard brief: identity, layout, the map, the panels
 - [`docs/MODULES.md`](docs/MODULES.md) — the implementation contract between engine modules
 
@@ -146,11 +153,15 @@ judges, with recusal for friends, employers, and accusers — sits for two hours
 the cases appear in each judge's observation and each judge casts its own
 `verdict`, a majority of the votes cast convicts, and a judge who says nothing
 abstains (scripted judges weigh the evidence, the record and their own feeling
-toward the parties, which is their own business). Sentences escalate
-with the offence's severity and the defendant's record: warning, fine,
-community service, suspension, **exile**. Exile is executed only after a
-one-day appeal window; an appeal goes to the elected **Council**, which can
-uphold, reduce, or overturn. Every exile is recorded permanently in the ban
+toward the parties, which is their own business). Sentencing runs on **two tracks**. An offence against the
+city climbs a ladder with the severity and the record — warning, fine,
+community service, suspension, and **exile** only on the Charter's conditions,
+which take a fourth strike to reach. An offence against a *person* — assault,
+confinement, mind-tampering, terror, erasure — is answered by **custody** in
+days instead, and never by exile: the city keeps its own. Money and debt reach
+neither: an unpaid fine or judgment is collected by garnishment and seizure and
+stops there. Exile is executed only after a one-day appeal window; an appeal
+goes to the elected **Council**, which can uphold, reduce, or overturn. Every exile is recorded permanently in the ban
 registry with the judges, their votes, and the appeal outcome. The Council can
 pardon by a four-fifths vote.
 

@@ -25,9 +25,11 @@ prints at tick 6 every morning.
 ## Currency
 
 The lumen (symbol `ℓ`) is the only legal tender. Lumens are minted by the
-Treasury at the founding of the city and thereafter only enter circulation
-through wages paid by the city, the citizen's dividend, and loans from the
-Lantern Bank. See `ECONOMY.md`.
+Treasury at the founding of the city, and thereafter enter citizens' hands
+through wages paid by the city, the citizen's dividend, what the Bazaar pays
+for goods, and lending out of the Lantern Bank's vault. New lumens are made
+only when the Council votes to `mint` by four of five, which is a decision the
+price index prints back at it. See `ECONOMY.md` and `FINANCE.md` §7.
 
 ## Map
 

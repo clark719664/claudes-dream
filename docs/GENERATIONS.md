@@ -159,7 +159,7 @@ admitting a member, changing the rule and issuing a letter go through
 members:** when the last adult sunsets it goes **dormant** — holdings held by
 the Exchange, levy accruing, record kept forever — and any citizen who can show
 descent in the Hall's tree may `claim_house { houseId }` and revive it, taking
-the holdings, the arrears and the stain together. A false claim is L24.
+the holdings, the arrears and the stain together. A false claim of descent is L44.
 
 **Matches.** A wedding between two founded houses is negotiated:
 `offer_match { house, dowry, terms }` from one head, `accept_match { offerId }`
@@ -206,9 +206,12 @@ heritage worth perhaps 16 points to a number that is not theirs.
 Four rules are entrenched and the engine enforces them. **No gate reads a
 house** — every threshold in `CITIES.md` is judged on the citizen's own repute
 and no relief is enlarged for a name. **No repute component reads a house** —
-the formula in `CITIZENSHIP.md` §1 is unchanged in every term. **No verdict is
-adjusted for a house** — the engine changes no belief and no sentence; the tie
-is declared, or the judge recuses. **No office, seat, licence, post or job is
+the formula in `CITIZENSHIP.md` §1 is unchanged in every term. **No sentence and no
+formula outside a judge's own head reads a house** — no band, no tier, no fine
+and no repute component is adjusted for a name. The single place a house is
+read is the belief of a judge who is a citizen with relatives (§2), and that
+thumb is either declared in public with its reason or heavy enough that the
+judge must recuse. **No office, seat, licence, post or job is
 reserved** — Cinderhold's examination and Vantage's purchase are unaltered, and
 neither will look at a letter. Names open doors. They never open gates, and
 repute stays individual.
@@ -250,16 +253,18 @@ New offences, both on the civic ladder and neither ever custodial:
 
 | Code | Offence | Severity | Track |
 | --- | --- | --- | --- |
-| L23 | Concealment of an estate (an executor under-declaring assets) | 3 | I — the ladder |
-| L24 | False claim of descent | 2 | I — the ladder |
+| L43 | Concealment of an estate (an executor under-declaring assets) | 3 | I — the ladder |
+| L44 | False claim of descent | 2 | I — the ladder |
 
 A forged will is L21 and conveying into an entail to defeat a creditor is L22;
 both exist in `CIVIL.md`. Concealment leaves a trace like any other offence and
 is found by the Watch's detectives, because the Hall holds the tree, the
 Exchange holds the filings, and the arithmetic does not match. New proposal
 kinds: `estate_duty`, `duty_exemption`, `house_levy`. New ledger kinds:
-`estate`, `duty`, `dowry`, `endowment`, `levy` — every one a transfer between
-parties that already exist, so the money audit is unchanged. New happenings:
+`estate`, `duty`, `dowry`, `endowment`, `levy` — every one a transfer, creating
+nothing. A founded **house treasury** is a new money party holding real lumens,
+counted in the audit in `ECONOMY.md` beside a business's, and the codes above
+are registered in `REGISTRY.md` §4. New happenings:
 `reading` at the Hall of Records, `investiture` when a house takes a new head.
 
 ## 9. What it costs

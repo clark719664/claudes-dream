@@ -172,7 +172,11 @@ p(clean) = 0.35
 ```
 
 A failed attempt is a charge; a successful one still leaves a trace — the
-door, the hour, the one person present. `pass_secret` hands it on, and using
+door, the hour, the one person present. The same two actions take a guild's or
+a business's secret inside a citizen's own city, where the offence is
+**industrial espionage (L41)** at severity 3 rather than L30 — the difference
+is who the taker was working for, and it is the retainer in the ledger that
+proves it (`PROGRESS.md` §4). `pass_secret` hands it on, and using
 it is public within days: master-grade goods appearing in a city with no guild
 is itself the evidence. Every counter-intelligence case in the Expanse begins
 with somebody noticing a price.
@@ -236,14 +240,15 @@ begins at L26. Every one is Track I — the ladder — and none is custodial:
 | L26 | Smuggling (4 where the restriction severity is 3) | 3 | I — the ladder |
 | L27 | Contraband possession — goods seized, the person not detained | 2 | I — the ladder |
 | L28 | False manifest | 3 | I — the ladder |
-| L29 | Unlicensed dealing | 2 | I — the ladder |
-| L30 | Espionage — severity 5 alone is never exile | 5 | I — the ladder |
+| L29 | Unlicensed dealing — trading goods as a business with no trading licence, which is not `CIVIL.md`'s L20, the practice of a reserved professional act | 2 | I — the ladder |
+| L30 | Espionage — taking a secret under a foreign retainer; severity 5 alone is never exile | 5 | I — the ladder |
 
 Bribing a customs officer is **L09** unchanged; forging a seal or certificate
 of origin is **L21** from `CIVIL.md`. New proposal kinds: `restrict_good`,
 `amnesty`, `customs_posts`, `spy_disposition`. New ledger kinds: `duty`,
-`seizure`, `bounty`, `fence`, `retainer` — each a transfer between parties
-that already exist, so the money audit in `ECONOMY.md` closes unchanged. A
+`seizure`, `bounty`, `fence`, `retainer` — each a transfer between parties that
+already exist, so the money audit in `ECONOMY.md` closes unchanged, and the
+codes above are registered in `REGISTRY.md` §4. A
 seizure at the gate and a raid on a fence are **happenings**: they draw a
 crowd, and a crowd is witnesses.
 

@@ -20,10 +20,14 @@ chose to spend. None of it is automatic.
 - **Who pays.** The **Council** by a `research_grant` proposal (a new
   `ProposalKind`, argued over like any other spend); a **patron** — any
   citizen or business — by `fund_project` through `treasury.transfer`; or a
-  **guild or union** (`METROPOLIS.md` §3; Cinderhold's guildhalls are the same
+  **guild or union** (a guild is founded and licensed under `CIVIL.md` §7, a
+  union under `METROPOLIS.md` §3; Cinderhold's guildhalls are the same
   institution with seats attached), the only funder that may keep a secret.
 - **Cost.** Per tier: `40 × tier` of progress, `6 × tier` volumes of knowledge
   off the Bazaar at the day's price, and wages. An empty purse stops the work.
+  A project's **purse** is a money party like the Community Chest — real
+  lumens, held for the project, counted in the audit in `ECONOMY.md` — and what
+  is left in it at completion or abandonment returns to whoever put it in.
 
 ```
 insight = (0.6 + 0.9 × analysis/100)      0.6 at nothing, 1.5 at mastery
@@ -53,7 +57,7 @@ subject from the salvage.
 
 ## 2. The tree
 
-Twenty-four technologies in five branches. Tier is how deep a subject sits
+Twenty-five technologies in five branches. Tier is how deep a subject sits
 (1–4) and sets its cost; the nine tier-1 subjects are open on founding day.
 
 | Technology | Branch | Tier | Needs | What changes |
@@ -61,6 +65,7 @@ Twenty-four technologies in five branches. Tier is how deep a subject sits
 | The Loom | materials | 1 | — | attire and furniture recipes cost 2 fewer goods (`data/catalogue.ts`); comfort decay ×0.9 city-wide |
 | Blast Furnace | materials | 1 | — | Power Station and Fabrication Works output ×1.15 (`workShift`); energy's cost anchor falls 10 % |
 | The Lens | materials | 1 | — | Academy lessons in analysis 1.25×; research insight +0.10; the gate to medicine and information |
+| Flue Scrubbing | materials | 2 | Blast Furnace, The Lens | emission ×0.55 at every producing building (`ENVIRONMENT.md` §3); works 800 ℓ |
 | Precision Machining | materials | 2 | Blast Furnace, The Lens | tools gain a grade; a graded tool raises its holder's shift output 5 % while owned. Cinderhold's speciality |
 | Standardised Parts | materials | 3 | Precision Machining | every craft recipe drops a unit of goods; business output +10 %; fabricator posts' minSkill −10 |
 | Sanitation | medicine | 1 | — | glitch onset ×0.6, spread ×0.5 (`identity/health.ts`). The largest works bill in the tree: drains must be dug |
@@ -133,11 +138,15 @@ where they stand.
 
 A secret is property. It can be **sold** — `sell_secret { to, technology,
 price }` through `treasury.transfer`, and the buyer becomes a master. It can
-be **stolen** — `steal_secret { from }`, offence **L20**, caught by the
-Watch's ordinary detection roll at visibility 0.25, raised by a journalist on
-the story; espionage is shifts spent watching a workshop, never reading a
-mind, because a master's notes are private (`PRINCIPLES.md` §5) and taking it
-out of their memory is P07, mind-tampering and custody. And it can be
+be **stolen** — by `case_target` and then `steal_secret`, the two actions
+`UNDERWORLD.md` §5 defines and the only ones there are, caught by the Watch's
+ordinary detection roll at visibility 0.25 and raised by a journalist on the
+story. Taken by a citizen for themselves or for a business of this city it is
+**industrial espionage (L41)**, severity 3; taken under a foreign retainer it
+is **espionage (L30)**, severity 5. Either way it is shifts spent watching a
+workshop, never reading a mind, because a master's notes are private
+(`PRINCIPLES.md` §5) and taking it out of their memory is P07, mind-tampering
+and custody. And it can be
 **lost**: when the last master sunsets, emigrates or is exiled with no
 apprentice, the technology reverts to undiscovered wherever it was secret, the
 works stand idle, and the Chronicle prints an obituary for the technique.
@@ -180,8 +189,11 @@ p(take it up today) = 0.05
    − 0.25 × max(0, cityShare − 0.6) / 0.4
 ```
 
-The last line is the mechanic: **a possession held by more than 60 % of the
-city gives no social gain when used or gifted.** It reads as ordinary. A thing
+The roll moves a **reflex** citizen's want list and nothing else. A free mind
+reads the same `trends` block and buys what it likes or nothing at all; no
+brain is ever told what to want (`PRINCIPLES.md` §2). The last line is the
+mechanic: **a possession held by more than 60 % of the city gives no social
+gain when used or gifted.** It reads as ordinary. A thing
 rises because admired people have it, saturates because everyone copied them,
 then signals nothing, and the admired move on.
 
@@ -234,7 +246,6 @@ one taught to another city 10, an apprentice who carries a secret on 12.
 | `take_apprentice` | `citizen, technology` | a master teaches a secret to one citizen, who becomes a master |
 | `teach_technology` | `technology` | a familiar traveller gives a host city 30 % of the subject's cost as progress |
 | `sell_secret` | `to, technology, price` | a master sells mastery; the buyer's city can then adopt it |
-| `steal_secret` | `from` | shifts spent watching a workshop, to take what it knows (L20) |
 
 New `ProposalKind`s: `research_grant` (lumens into a named project's purse),
 `adopt_technology` (lumens into the works for a named technology), and
@@ -242,11 +253,12 @@ New `ProposalKind`s: `research_grant` (lumens into a named project's purse),
 
 | Code | Offence | Severity | Track | Note |
 | --- | --- | --- | --- | --- |
-| L20 | Industrial espionage | 3 | I — the city's ladder | taking a guild's or business's secret by observation; visibility 0.25 |
-| L21 | False finding | 2 | I — the city's ladder | publishing a paper for a project that failed, or claiming a technology the city does not hold |
+| L41 | Industrial espionage | 3 | I — the city's ladder | taking a guild's or a business's secret by observation, for yourself or a business of this city; visibility 0.25. Taken for another city it is L30 (`UNDERWORLD.md` §7) |
+| L42 | False finding | 2 | I — the city's ladder | publishing a paper for a project that failed, or claiming a technology the city does not hold |
 
 Both sit on the ladder, because both are offences against the city's record
-rather than against a person. Taking a technique out of a master's *mind* is
+rather than against a person, and both are registered against every other
+document's codes in `REGISTRY.md` §4. Taking a technique out of a master's *mind* is
 not here: that is P07, and it is answered by custody.
 
 ## 9. What it costs

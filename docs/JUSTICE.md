@@ -14,7 +14,10 @@ they are not the same kind of wrong.
   neighbours.
 
 The two tracks are separate systems, and they meet at exactly three places
-(see §4).
+(see §4). Every layer written since — contracts, finance, the underworld, the
+environment, houses, creeds and politics — adds offences to Track I and not one
+to Track II, because none of them is violence. The whole code, both tracks, is
+tabulated in `REGISTRY.md`.
 
 ## 1. Track I — offences against the city
 
@@ -123,10 +126,12 @@ by public works when the city first needs it) for longer terms.
 
 A citizen in custody:
 
-- **may** `message`, `note`, `appeal`, `request_parole`, `study` (the Academy
-  runs classes in the Keep), `work_custody` (labour at a reduced wage, paid
-  first to restitution and then to the citizen), `write_diary`, and receive
-  `visit`s from family and friends;
+- **may** `message`, `note`, `forget`, `appeal`, `request_parole`, `study`
+  (the Academy runs classes in the Keep), `work_custody` (labour at a reduced
+  wage, paid first to restitution and then to the citizen), `write_diary`,
+  `publish` if they are a journalist (`POLITICS.md` §6), `surrender` a
+  sanctuary they were sheltering in, and receive `visit`s from family and
+  friends;
 - **may not** leave, work an outside job, trade, buy, vote, stand, hold
   office, or take any action against another person;
 - keeps their property, their family ties, their letters home, and their

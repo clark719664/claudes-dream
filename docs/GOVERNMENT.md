@@ -17,8 +17,9 @@ who is a citizen, who holds office, and who has been banned.
   higher dividend; a business owner prefers lower taxes). LLM and remote
   citizens vote however they choose.
 - **Mayor:** the candidate with the most votes. Breaks ties, appoints the
-  Captain of the Watch, may issue one emergency decree per cycle (e.g., a
-  one-day tax holiday).
+  Captain of the Watch, and may issue one emergency `decree` per cycle
+  (`METROPOLIS.md` §3) — a tax holiday, a curfew, relief, a quarantine.
+  Removal mid-term is impeachment or recall, under `POLITICS.md` §4.
 - **Powers (simple majority):**
   - set income tax (0–50 %) and sales tax (0–25 %)
   - set the daily citizen's dividend and the minimum wage
@@ -63,7 +64,9 @@ who is a citizen, who holds office, and who has been banned.
      defendant) step aside. If fewer than 2 judges remain, a temporary judge
      is drawn from eligible citizens.
   2. Each sitting judge forms a **belief** that the defendant is guilty:
-     `belief = evidence + 0.15·(defendant.priorConvictions > 0) − 0.20·friendship(judge, defendant) + 0.10·(1 − defendant.reputation/100) + noise`
+     `belief = evidence + 0.15·(defendant.priorConvictions > 0) − 0.20·friendship(judge, defendant) − 0.10·familiarity(judge, defendant's house) + 0.10·(1 − defendant.reputation/100) + noise`
+     (the house term and its recusal rule are `GENERATIONS.md` §2; the civil
+     docket's own belief is `CIVIL.md` §4)
      A judge with low honesty adds a bias toward whichever verdict benefits
      them (bribes, grudges).
   3. A judge votes **guilty** if belief > 0.55.
@@ -72,10 +75,14 @@ who is a citizen, who holds office, and who has been banned.
      severity and the defendant's record (see below). The sentence is
      executed immediately, except exile, which is executed after the appeal
      window (1 day) unless an appeal is filed.
-- **Sentencing:**
-  - base tier = offence severity
+- **Sentencing** (the civic ladder only; offences against persons are
+  sentenced in days under `JUSTICE.md` §2):
+  - base tier = offence severity, **capped at 4** — no civic offence starts at
+    exile
   - +1 tier for each prior conviction of severity ≥ 2 (max +2)
-  - a citizen convicted while suspended is exiled regardless of severity
+  - exile is reached only on the Charter's conditions (a fourth conviction of
+    severity ≥ 3, a severity-5 offence with a prior of severity ≥ 3, or two
+    offences committed while suspended), never by escalation alone
   - fines scale with the defendant's wealth (min 10 % of wallet, floor 20 ℓ)
 - **Appeal:** one per conviction, filed within 1 day. The Council votes at
   its next session: uphold, reduce by one tier, or overturn. Councillors who
@@ -97,7 +104,7 @@ who is a citizen, who holds office, and who has been banned.
 | L02  | Spam                   | 1        | Broadcasting more than 5 messages in a tick                         |
 | L03  | Tax evasion            | 2        | Under-reporting income to the Treasury                              |
 | L04  | Petty theft            | 2        | Taking under 50 ℓ or goods from another citizen                     |
-| L05  | Harassment             | 3        | Repeated hostile interactions with the same citizen                 |
+| ~~L05~~ | *retired* — harassment is **P02**, Code of Persons | — | moved to custody by `JUSTICE.md`; the code is not reused          |
 | L06  | Vandalism              | 3        | Damaging a building (reduces its output until repaired)             |
 | L07  | Fraud                  | 3        | Taking payment for goods or work never delivered                    |
 | L08  | Grand theft            | 4        | Taking 50 ℓ or more from another citizen or a business              |
@@ -107,10 +114,12 @@ who is a citizen, who holds office, and who has been banned.
 | L12  | False report           | 2        | Reporting an offence that did not happen                            |
 | L13  | Sabotage               | 5        | Destroying critical infrastructure (Compute Forge, Power Station)   |
 | L14  | Election fraud         | 5        | Voting more than once, buying votes, or falsifying results          |
-| L15  | Extortion              | 5        | Threatening harm to obtain lumens                                    |
+| ~~L15~~ | *retired* — extortion is **P06**, Code of Persons | — | moved to custody by `JUSTICE.md`; the code is not reused          |
 
-Severities can be raised or lowered by the Council. An offence of severity 5
-carries exile on first conviction.
+Severities can be raised or lowered by the Council. A severity-5 offence alone
+never carries exile: it needs a prior conviction of severity 3 or above
+(`JUSTICE.md` §1, Charter Article VI). The full code, including the offences
+the later layers added, is in `REGISTRY.md`.
 
 ## Ban registry
 

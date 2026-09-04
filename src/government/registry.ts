@@ -8,7 +8,7 @@
  * through economy/treasury; housing through economy/housing; jobs through
  * economy/jobs; businesses through economy/business.
  */
-import { SUSPENDED_ACTIONS } from '../types.ts';
+import { JAILED_ACTIONS, SUSPENDED_ACTIONS } from '../types.ts';
 import type {
   ActionResult, ActionType, BanRecord, CaseId, Citizen, CitizenId, LawCode, World,
 } from '../types.ts';
@@ -197,6 +197,10 @@ export function exileCitizen(world: World, cId: CitizenId, caseId: CaseId): BanR
   c.suspendedUntilDay = null;
   c.probationUntilDay = null;
   c.detainedUntilTick = null;
+  // The gate does not keep a cell or a gang open behind it. (government/gangs.ts
+  // dailyGangs hands the gang on, or breaks it up when nobody is left.)
+  c.jailedUntilDay = null;
+  c.gangId = null;
   c.district = 'threshold';
   c.exiledCaseId = caseId;
   c.exiledDay = world.day;
@@ -260,12 +264,18 @@ export function isKeyBanned(world: World, apiKeyHash: string | null | undefined)
 
 /**
  * What a citizen's standing permits: exiled and detained citizens can do
- * nothing; suspended citizens only the SUSPENDED_ACTIONS subset; everyone
- * else anything (job, office and location checks live in actions/execute).
+ * nothing; a citizen in the cells only the JAILED_ACTIONS subset (its own
+ * words and its appeal, which are never taken away); suspended citizens only
+ * the SUSPENDED_ACTIONS subset; everyone else anything (job, office and
+ * location checks live in actions/execute).
+ *
+ * Jail is not a standing — a jailed citizen may be in good standing and still
+ * be in a cell — so it is checked before the standing is.
  */
 export function standingAllows(c: Citizen, actionType: ActionType): boolean {
   if (c.standing === 'exiled') return false;
   if (c.detainedUntilTick !== null) return false;
+  if (c.jailedUntilDay !== null && c.jailedUntilDay !== undefined) return JAILED_ACTIONS.includes(actionType);
   if (c.standing === 'suspended') return SUSPENDED_ACTIONS.includes(actionType);
   return true;
 }

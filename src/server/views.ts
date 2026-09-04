@@ -160,12 +160,17 @@ export function mapView(world: World): Record<string, unknown> {
   for (const j of Object.values(world.jobs)) {
     if (j.holderId) workers[j.buildingId] = (workers[j.buildingId] ?? 0) + 1;
   }
+  // The map is of the city as it stands. A district the population has not
+  // reached yet — the Heights, the Undercroft — is not drawn until it opens
+  // (world/growth.ts), and neither is anything in it.
+  const open = world.openDistricts ?? Object.keys(world.districts);
+  const isOpen = (d: string): boolean => open.includes(d as (typeof open)[number]);
   return {
     width: MAP_WIDTH, height: MAP_HEIGHT,
-    districts: Object.values(world.districts).map((d) => ({
+    districts: Object.values(world.districts).filter((d) => isOpen(d.id)).map((d) => ({
       id: d.id, name: d.name, x: d.x, y: d.y, w: d.w, h: d.h, adjacent: d.adjacent, population: perDistrict[d.id] ?? 0,
     })),
-    buildings: Object.values(world.buildings).map((b) => ({
+    buildings: Object.values(world.buildings).filter((b) => isOpen(b.district)).map((b) => ({
       id: b.id, name: b.name, district: b.district, kind: b.kind, critical: b.critical, damage: round2(b.damage), x: b.x, y: b.y,
       workers: workers[b.id] ?? 0,
     })),
@@ -266,9 +271,12 @@ export function citizenView(world: World, id: CitizenId): Record<string, unknown
   // its key, its notebook, its letters home and where its agent listens.
   // Its rolled traits are not public either — nobody in Reverie is given a
   // personality to live up to, and what the city can see of a citizen is the
-  // `character` read off its record (docs/PRINCIPLES.md §2).
-  const { apiKeyHash, callbackUrl, notes, letters, personality, ...rest } = c;
+  // `character` read off its record (docs/PRINCIPLES.md §2). `birthTraits` is
+  // the same secret at an earlier date: drift is measured from it, and it is
+  // shown to nobody.
+  const { apiKeyHash, callbackUrl, notes, letters, personality, birthTraits, ...rest } = c;
   void personality;
+  void birthTraits;
   const job = jobOf(world, c);
   const biz = businessOf(world, c);
   const loan = c.loanId ? world.loans[c.loanId] ?? null : null;

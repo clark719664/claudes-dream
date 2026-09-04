@@ -1,24 +1,32 @@
 /**
- * The Court's sitting, which runs on the judges' own decisions.
+ * The Court's sitting, which runs on the judges' — and the jurors' — own
+ * decisions.
  *
  * A sitting lasts two hours. At `courtHour` every pending case is put before a
- * bench (bench.ts chooses who may sit) and each sitting judge's observation
- * gains it; judges vote with the `verdict` action during that hour and the
- * next. At the end of `courtHour + 1` the votes are counted: a majority of the
- * votes cast convicts, a judge who did not vote abstains, and a case with
+ * bench (bench.ts chooses who may sit); a charge of severity >= JURY_SEVERITY
+ * also has five jurors drawn by lot (jury.ts), and a defendant facing one with
+ * nobody to speak for them is given a Public Defender (advocates.ts). Everyone
+ * seated votes with the `verdict` action during that hour and the next.
+ *
+ * At the end of `courtHour + 1` the votes are counted **together**: a juror's
+ * vote weighs exactly what a judge's does, a majority of the votes cast
+ * convicts, ties acquit, anyone who did not vote abstains, and a case with
  * fewer than two votes is held over to the next sitting. A case held over
  * three times is decided by its bench on the evidence alone, and the Chronicle
  * says that the Court failed to sit.
  *
- * Scripted judges vote through the same `castVerdict` as everyone else, so the
- * record of a reflex bench and a bench of agents is the same record.
+ * Scripted judges and jurors vote through the same `castVerdict` as everyone
+ * else, so the record of a reflex bench and a bench of agents is the same
+ * record.
  */
 import type { ActionResult, Case, CitizenId, ObservedBenchCase, Verdict, World } from '../types.ts';
 import { LAWS } from '../data/laws.ts';
 import { emit, remember } from '../sim/events.ts';
 import { adjustReputation } from '../citizens/citizen.ts';
+import { assignDefender } from './advocates.ts';
 import { GUILT_THRESHOLD, judgeBelief, selectBench } from './bench.ts';
 import { byFiling, canSit, courtTallyHour, isPresent, nameOf } from './cases.ts';
+import { castJuryVote, describeJury, fillJuryVotes, juryOf, juryTally, needsJury, seatJury, seatedJurors } from './jury.ts';
 import { computeSentence, describeSentence, executeSentence } from './sentencing.ts';
 import { APPEAL_WINDOW_DAYS } from './appeals.ts';
 
@@ -41,9 +49,26 @@ function votesCast(k: Case): CitizenId[] {
   return k.judges.filter((id) => k.votes[id] !== undefined);
 }
 
-/** "Ada guilty, Bram acquitted, Cyd abstained" — how the bench divided, by name. */
+/** Everyone seated on a case, judges and jurors alike. */
+export function seatedOn(world: World, k: Case): CitizenId[] {
+  return [...k.judges, ...seatedJurors(world, k)];
+}
+
+/** How many of the votes cast — bench and box together — were for guilt, out of how many. */
+export function fullTally(world: World, k: Case): { guilty: number; total: number } {
+  const bench = votesCast(k);
+  const box = juryTally(world, k);
+  return {
+    guilty: bench.filter((id) => k.votes[id] === 'guilty').length + box.guilty,
+    total: bench.length + box.total,
+  };
+}
+
+/** "Ada guilty, Bram acquitted, Cyd abstained" — how the bench and the box divided, by name. */
 export function describeVotes(world: World, k: Case): string {
-  return k.judges.map((id) => `${nameOf(world, id)} ${k.votes[id] ?? 'abstained'}`).join(', ');
+  const bench = k.judges.map((id) => `${nameOf(world, id)} ${k.votes[id] ?? 'abstained'}`).join(', ');
+  const box = juryOf(k).length > 0 ? describeJury(world, k) : '';
+  return box ? `${bench}; jury: ${box}` : bench;
 }
 
 /** A closed door: the defendant has left Reverie, so there is nothing to try. */
@@ -70,6 +95,10 @@ function reflexReason(k: Case, guilty: boolean): string {
 export function castVerdict(world: World, judgeId: CitizenId, caseId: string, guilty: boolean, reason?: string): ActionResult {
   const k = world.cases[caseId];
   if (!k) return fail('There is no such case.');
+  // A citizen drawn into the box votes as a juror, through the same action.
+  if (!k.judges.includes(judgeId) && juryOf(k).includes(judgeId)) {
+    return castJuryVote(world, judgeId, caseId, guilty, reason);
+  }
   if (k.status !== 'in_session') {
     return fail(k.status === 'pending' ? `Case ${k.id} is not before the Court until its next sitting.` : `Case ${k.id} has already been decided.`);
   }
@@ -109,6 +138,13 @@ function openCase(world: World, k: Case): void {
   k.judges = bench;
   k.status = 'in_session';
   k.openedTick = world.tick;
+  // A grave charge is heard in a full room: five citizens drawn by lot sit
+  // with the bench, and nobody faces it without somebody to speak for them.
+  if (needsJury(world, k)) {
+    // The defender is found first: an advocate is never also drawn into the box.
+    assignDefender(world, k);
+    seatJury(world, k);
+  }
 
   const offence = LAWS[k.law].name.toLowerCase();
   const names = bench.map((id) => nameOf(world, id)).join(', ');
@@ -162,25 +198,30 @@ function carryOrForce(world: World, k: Case, cast: CitizenId[]): boolean {
 function decideCase(world: World, k: Case): void {
   const d = world.citizens[k.defendantId];
   if (!d || !isPresent(world, d)) { closeAbsent(world, k); return; }
-  let cast = votesCast(k);
-  if (cast.length < MIN_VOTES) {
-    if (!carryOrForce(world, k, cast)) return;
-    cast = votesCast(k);
+  let count = fullTally(world, k);
+  if (count.total < MIN_VOTES) {
+    if (!carryOrForce(world, k, votesCast(k))) return;
+    count = fullTally(world, k);
   }
-  const guilty = cast.filter((id) => k.votes[id] === 'guilty').length;
-  const verdict: Verdict = guilty * 2 > cast.length ? 'guilty' : 'acquitted';
+  const { guilty, total } = count;
+  // A juror's vote weighs exactly what a judge's does, and a tie acquits.
+  const verdict: Verdict = guilty * 2 > total ? 'guilty' : 'acquitted';
   k.verdict = verdict;
   k.triedDay = world.day;
   k.status = 'tried';
   k.openedTick = null;
   d.detainedUntilTick = null;
-  for (const id of cast) {
+  for (const id of votesCast(k)) {
     const judge = world.citizens[id];
     if (judge) adjustReputation(world, judge, 1);
   }
+  for (const id of seatedJurors(world, k)) {
+    const juror = world.citizens[id];
+    if (juror && k.juryVotes?.[id] !== undefined) adjustReputation(world, juror, 1);
+  }
 
   const offence = LAWS[k.law].name.toLowerCase();
-  const tally = `${guilty}–${cast.length - guilty}`;
+  const tally = `${guilty}–${total - guilty}`;
   const how = `${tally}: ${describeVotes(world, k)}`;
   if (verdict === 'guilty') {
     const s = computeSentence(world, k);
@@ -209,10 +250,18 @@ function decideCase(world: World, k: Case): void {
     remember(world, id, 'verdict', `You sat in judgement on ${d.name} (${offence}) and ${k.votes[id] ? `voted ${k.votes[id]}` : 'did not vote'}; `
       + `the Court ${verdict === 'guilty' ? 'convicted' : 'acquitted'} them (${how}).`);
   }
+  for (const id of juryOf(k)) {
+    remember(world, id, 'verdict', `You sat as a juror on ${d.name} (${offence}) and ${k.juryVotes?.[id] ? `voted ${k.juryVotes[id]}` : 'did not vote'}; `
+      + `the Court ${verdict === 'guilty' ? 'convicted' : 'acquitted'} them (${how}).`);
+  }
 }
 
-/** Close the sitting: every bench's votes counted, oldest case first. */
+/**
+ * Close the sitting: scripted jurors weigh what is before them, then every
+ * bench's votes are counted with its box, oldest case first.
+ */
 export function tallyVerdicts(world: World): void {
+  fillJuryVotes(world);
   for (const k of sittingCases(world)) decideCase(world, k);
 }
 
@@ -251,6 +300,9 @@ export function benchFor(world: World, judgeId: CitizenId): ObservedBenchCase[] 
       priorConvictions: d ? d.record.convictions.filter((x) => x.caseId !== k.id).length : 0,
       bench: [...k.judges], votes: { ...k.votes },
       youVoted: k.votes[judgeId] ?? null, carriedSessions: k.carriedSessions,
+      jury: juryOf(k), advocate: k.advocateId ?? null,
+      advocateName: k.advocateId ? nameOf(world, k.advocateId) : null,
+      asJuror: false,
     });
   }
   return out;

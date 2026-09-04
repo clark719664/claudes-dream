@@ -7,7 +7,7 @@
  * and time of day, so that brains — reflex, Claude or remote — need not
  * guess. Shape validation of raw input lives in validate.ts (re-exported).
  */
-import { ACTION_TYPES, GOODS, NOTE_ACTIONS, SUSPENDED_ACTIONS } from '../types.ts';
+import { ACTION_TYPES, GOODS, JAILED_ACTIONS, NOTE_ACTIONS, SUSPENDED_ACTIONS } from '../types.ts';
 import type { Action, ActionResult, ActionType, Citizen, CitizenId, Job, World } from '../types.ts';
 import { ACADEMY_TUITION, BUSINESS_FOUNDING_COST, CLINIC_FEE, SHOW_TICKET } from '../data/jobs.ts';
 import { isAdjacent } from '../data/city.ts';
@@ -21,8 +21,12 @@ import { forget, note } from '../citizens/notes.ts';
 import { journalistStory } from '../sim/chronicle.ts';
 import { applyToWatch, reportOffence } from '../government/watch.ts';
 import { dropReport, fileReport, reportsFor } from '../government/reports.ts';
-import { appealsFor, benchFor, canAppeal, castAppealVote, castVerdict, fileAppeal } from '../government/court.ts';
+import { appealsFor, benchFor, canAppeal, castAppealVote, castVerdict, fileAppeal, pendingCasesFor } from '../government/court.ts';
 import { standingAllows } from '../government/registry.ts';
+import { hireAdvocate, mayAdvocate, publicDefenders, speak } from '../government/advocates.ts';
+import { foundGang, gangOf, gangOfTurf, mayFoundGang, payRacket, racket, recruit } from '../government/gangs.ts';
+import { isJailed } from '../government/jail.ts';
+import { writeDiary } from '../identity/diary.ts';
 import {
   JUDGE_SEATS, appointJudgeByMayor, campaign, castBallot, isCouncillor, isElectionDay, isJudgeEligible, nominate,
   nominationsOpen, tableProposal, voteOnProposal,
@@ -69,6 +73,7 @@ export const CHILD_FORBIDDEN: readonly ActionType[] = [
   'report', 'appeal', 'verdict', 'vote_appeal', 'file_charge', 'drop_report', 'appoint_judge', 'bribe', 'evade_tax', 'insult',
   'craft', 'set_price', 'date', 'propose_partnership', 'marry', 'break_up', 'move_in', 'start_family',
   'found_club', 'join_club', 'leave_club', 'attend_club', 'donate',
+  'hire_advocate', 'advocate', 'found_gang', 'recruit', 'racket', 'pay_racket',
 ];
 
 /**
@@ -182,12 +187,45 @@ function societyActions(world: World, c: Citizen, set: Set<ActionType>, here: Ci
  * subset. Everything else is filtered by where they are, what they hold and
  * what time it is, so the list is a fair guide rather than a guarantee.
  */
+/**
+ * What the city's newer institutions put in front of this citizen: an
+ * advocate to retain or a speech to make, and — for those the city reads as
+ * being of that sort — a gang to found, run with, or pay off.
+ */
+function justiceActions(world: World, c: Citizen, set: Set<ActionType>, here: Citizen[], biz: ReturnType<typeof ownedBusiness>): void {
+  const charged = pendingCasesFor(world, c.id);
+  if (charged.length > 0 && !charged[0].advocateId
+    && (here.some((o) => mayAdvocate(world, o, charged[0])) || publicDefenders(world).length > 0)) {
+    set.add('hire_advocate');
+  }
+  if (c.district === 'commons'
+    && Object.values(world.cases).some((k) => k.advocateId === c.id && k.status === 'in_session' && !(k.advocacy ?? 0))) {
+    set.add('advocate');
+  }
+
+  const gang = gangOf(world, c.id);
+  if (!gang && mayFoundGang(world, c)) set.add('found_gang');
+  if (gang && c.district === gang.turf) {
+    if (here.some((o) => !o.gangId && o.lifeStage !== 'child' && bondBetween(world, c.id, o.id) >= 40)) set.add('recruit');
+  }
+  if (gang && Object.values(world.businesses).some((b) => b.dissolvedDay === null && b.district === c.district
+    && b.ownerId !== c.id && world.counters[`racket:${b.id}`] !== Math.floor(world.day / Math.max(1, world.config.cycleDays)))) {
+    set.add('racket');
+  }
+  if (biz && gangOfTurf(world, biz.district) && biz.treasury > 0) set.add('pay_racket');
+}
+
 export function availableActions(world: World, c: Citizen): ActionType[] {
   if (c.standing === 'exiled' || !isPresent(world, c)) return [];
   // Held in the Watch House: the hours are the citizen's own and so is the
   // notebook, and that is all.
   if (isDetained(world, c)) return notebookActions(c);
-  const set = new Set<ActionType>(['idle', 'move', 'eat', 'buy', 'broadcast', ...notebookActions(c)]);
+  // Serving a sentence in the cells: its own words, a letter, and the appeal.
+  if (isJailed(c)) {
+    const notebook = notebookActions(c);
+    return JAILED_ACTIONS.filter((a) => !NOTE_ACTIONS.includes(a) || notebook.includes(a));
+  }
+  const set = new Set<ActionType>(['idle', 'move', 'eat', 'buy', 'broadcast', 'write_diary', ...notebookActions(c)]);
   const here = citizensIn(world, c.district, c.id);
   const others = anyoneElse(world, c);
   const job = heldJob(world, c);
@@ -253,6 +291,7 @@ export function availableActions(world: World, c: Citizen): ActionType[] {
   if (intact.some((b) => b.critical)) set.add('sabotage');
 
   societyActions(world, c, set, here, biz);
+  justiceActions(world, c, set, here, biz);
 
   const suspended = c.standing === 'suspended';
   const child = c.lifeStage === 'child';
@@ -369,6 +408,14 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     case 'play': return doPlay(world, c, action.with);
     case 'celebrate': return celebrate(world, c.id);
     case 'donate': return donate(world, c.id, action.amount);
+    // The metropolis: a citizen's own words, advocates, and the underworld.
+    case 'write_diary': return writeDiary(world, c.id, action.text);
+    case 'hire_advocate': return hireAdvocate(world, c.id, action.advocate);
+    case 'advocate': return speak(world, c.id, action.case);
+    case 'found_gang': return foundGang(world, c.id, action.name);
+    case 'recruit': return recruit(world, c.id, action.citizen);
+    case 'racket': return racket(world, c.id, action.business);
+    case 'pay_racket': return payRacket(world, c.id);
     default: {
       const never: never = action;
       return fail(`Unknown action ${String((never as Action).type)}.`);

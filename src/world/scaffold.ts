@@ -2,10 +2,13 @@
  * Builds an empty World: geography, market, housing, treasury and government
  * scaffolding, but no citizens. world.ts populates it; tests use it directly.
  */
-import { DEFAULT_CONFIG, GOODS } from '../types.ts';
-import type { Good, Housing, Market, MarketGood, Treasury, World, WorldConfig, Government } from '../types.ts';
+import { DEFAULT_CONFIG, FOUNDING_DISTRICT_IDS, GOODS } from '../types.ts';
+import type {
+  DistrictId, Good, Housing, Market, MarketGood, OuterMarket, Team, Treasury, World, WorldConfig, Government,
+} from '../types.ts';
 import { BUILDINGS, DISTRICTS } from '../data/city.ts';
 import { defaultSeverities } from '../data/laws.ts';
+import { JAIL_CELLS, TEAM_NAMES } from '../data/metropolis.ts';
 import { seedState } from '../util/rng.ts';
 import { initEmporium } from '../society/shops.ts';
 
@@ -57,6 +60,23 @@ export function createGovernment(config: WorldConfig): Government {
   };
 }
 
+/** The Outer Cities start a tenth dearer than home, and drift on their own. */
+export function createOuterMarket(): OuterMarket {
+  const prices = {} as Record<Good, number>;
+  for (const g of GOODS) prices[g] = Math.round(FOUNDING_PRICES[g] * 1.1);
+  return { prices, tariff: 0, touristsToday: 0 };
+}
+
+/** Every district open at the founding fields a team from its first day. */
+export function createTeams(): Partial<Record<DistrictId, Team>> {
+  const teams: Partial<Record<DistrictId, Team>> = {};
+  for (const d of FOUNDING_DISTRICT_IDS) {
+    const team: Team = { district: d, name: TEAM_NAMES[d] ?? `${d} XI`, players: [], wins: 0, losses: 0, draws: 0 };
+    teams[d] = team;
+  }
+  return teams;
+}
+
 export function emptyWorld(overrides: Partial<WorldConfig> = {}): World {
   const config: WorldConfig = { ...DEFAULT_CONFIG, ...overrides };
   const buildings = structuredClone(BUILDINGS);
@@ -77,6 +97,18 @@ export function emptyWorld(overrides: Partial<WorldConfig> = {}): World {
     cases: {}, reports: {}, bans: [],
     households: {}, clubs: {}, emporium: {}, happenings: [],
     events: [], tickEvents: [], chronicle: [], stats: [],
+
+    // --- Metropolis ---
+    season: 'bloom', weather: 'clear', year: 0,
+    works: {}, parties: {}, referendums: [], unions: {}, decrees: [],
+    property: {}, shares: {}, gigs: {}, outer: createOuterMarket(),
+    teams: createTeams(), matches: [],
+    investigations: {}, gangs: {},
+    rumours: [], feuds: [], feed: [],
+    eras: [], records: [], monuments: [], memorials: [], disasters: [],
+    openDistricts: [...FOUNDING_DISTRICT_IDS], trams: [], museum: [],
+    jailCells: JAIL_CELLS,
+
     counters: {},
   };
   initEmporium(world);

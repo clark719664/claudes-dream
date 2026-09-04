@@ -26,7 +26,10 @@ export const CRITICAL_NEED = 20;
 /**
  * An empty Chest with claimants waiting is news the first morning it happens;
  * after that it is a standing condition, and the Chronicle is only reminded
- * of it this often (the morning edition has a city to report on).
+ * of it this often (the morning edition has a city to report on). A day on
+ * which the Chest happened to cover everyone does not make the next dry
+ * morning fresh news: an empty purse every other day is the same poverty, not
+ * a new one, and the edition has a city to report on.
  */
 export const EMPTY_NOTICE_DAYS = 7;
 
@@ -134,8 +137,6 @@ export function dailyChest(world: World): void {
       emit(world, 'system', `The Community Chest is empty: ${unpaid} citizen${unpaid === 1 ? '' : 's'} in hardship went without a stipend today.`,
         list.slice(count).map((r) => r.citizen.id), 0.5, { unpaid, chest: chestBalance(world) });
     }
-  } else if (world.counters.chestEmptyNoticeDay !== undefined) {
-    delete world.counters.chestEmptyNoticeDay;   // the Chest paid everyone: the next dry morning is news again
   }
 }
 

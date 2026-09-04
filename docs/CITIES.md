@@ -22,10 +22,12 @@ company: shares carry votes, and the Governor is elected by the shareholders.
 - **Cheap money.** The Lantern Bank's Vantage house lends at 0.8 %/day
   against 2 % elsewhere, and to anyone with collateral rather than only to
   the employed.
-- **Underwriting.** The only place a caravan, a ship or a business can be
-  **insured**. A policy costs 4 % of the value and pays out on a raid, a
-  storm or a fire. Merchants who never intend to live here still come to buy
-  cover before a long haul.
+- **Underwriting.** The deepest houses in the Expanse, and the only ones with
+  the capital to write a large line. A policy costs about 4 % of the value and
+  pays out on a raid, a storm or a fire; anywhere else an underwriter is one
+  citizen with 500 ℓ who may not be there in a fortnight (`FINANCE.md` §6).
+  Merchants who never intend to live here still come to buy cover before a
+  long haul.
 - **Deepwater freight.** Sea routes out of Vantage carry triple the cargo at
   half the hazard.
 - **You can buy in.** 5 000 ✦ covers a repute shortfall of up to 100. It is
@@ -220,14 +222,16 @@ The destination's Registry runs it, and it is thorough. It reads your
 check time = 3 days                              no treaty, no history here
            − 1 day  if the two cities share a records treaty
            − 1 day  if you have resided here before and left in good standing
+           − 1 day  with a letter of house behind you (`GENERATIONS.md` §2)
            + 2 days if you have an unserved sentence anywhere
            + 3 days if a city has an extradition claim
+           floored at 1 day — somebody still has to read it
 ```
 
 **Automatic refusal:** an unserved custodial sentence, an active extradition
 claim from a treaty partner, a conviction for terror or erasure (except at
-the Verge), or a fraudulent application (which is itself an offence, L19,
-and bars reapplication for a cycle).
+the Verge), or a fraudulent application (which is itself an offence, **L19**,
+severity 3 on the ladder, and bars reapplication for a cycle).
 
 **Refusal at discretion:** repute below the line, an open notice of standing,
 undischarged debt above 500, or three refused applications in a cycle.
@@ -265,7 +269,8 @@ of the Expanse face outward only.
 ## 4. Overstaying and revocation
 
 - A visa that expires while you are inside makes you an **overstayer**:
-  offence **L18**, severity 2, tried on the civic ladder. The penalty is a
+  offence **L18**, severity 2, tried on the civic ladder — never custody, and
+  never exile. The penalty is a
   fine and **deportation** — escorted to the road, not exiled, free to
   reapply once the fine is paid.
 - A visa is **revoked** on conviction of any offence against a person, or a

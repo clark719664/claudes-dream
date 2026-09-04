@@ -84,7 +84,8 @@ The same Court on different days, doing the opposite job: a **plaintiff** sues a
 **defendant** for money, rather than the city prosecuting for punishment.
 
 It sits at tick 16 on the second and fifth day of each week, leaving the
-criminal list at tick 10 and the Council's session at tick 14 untouched. One
+criminal list at ticks 10–11, the Court's second sitting at 12 and the
+Council's session at 14 untouched (`REGISTRY.md` §2). One
 judge sits alone under a 500 ℓ claim and three above it, under Article V
 recusal unchanged: no judge hears a relative, employer, employee or friend.
 `file_suit` costs `10 ℓ + 2 % of the claim, capped at 80 ℓ`, to the Treasury,
@@ -195,7 +196,9 @@ the city's only answer is a proposal to lower the statutory floor, argued and wo
 in public. `revoke_licence` needs a majority of the guild's masters with a stated
 reason, and the struck-off member may sue on the docket to be restored.
 Practising a reserved act without the mark is **L20, severity 2**, on the civic
-ladder, detected by the Watch like anything else.
+ladder, detected by the Watch like anything else. It is not `UNDERWORLD.md`'s
+L29: that is trading goods as a business with no trading licence, and a citizen
+can commit either without the other.
 
 A licence is a local instrument, and recognition at founding is uneven: everybody
 honours a Cinderhold mark and Cinderhold honours nobody's but its own, which is
@@ -296,8 +299,11 @@ New laws, both on the civic ladder and neither ever custodial:
 
 New proposal kinds: `licence_recognition`, `licence_floor`, `filing_fee`,
 `docket_days`. New ledger kinds: `contract`, `escrow`, `damages`, `costs`,
-`patronage`, `licence` — every one a transfer between existing parties, so the
-money audit is unchanged.
+`patronage`, `licence` — every one a transfer, creating and destroying nothing.
+An **escrow holding** is the one new money party here: real lumens, earmarked
+and unspendable, sitting with the holder and counted in the audit in
+`ECONOMY.md` like the Chest. The codes above are registered against every other
+document's in `REGISTRY.md` §4.
 
 ## 11. What it costs
 

@@ -192,6 +192,21 @@ export function createCitizen(world: World, opts: CreateCitizenOpts = {}): Citiz
     possessions: [],
     family: { familyName, partnerId: null, partnerSinceDay: null, married: false, parents, children: [] },
     householdId: null, clubs: [], affection: {}, contactsToday: {}, wants: [], guardianId: null,
+    // --- Metropolis ---
+    // Ambitions are drawn by identity/goals.ts (at arrival, or at coming of
+    // age); everything else here is the empty state a life starts from.
+    goals: [], diary: [], milestones: [],
+    birthTraits: { ...personality },
+    health: { glitched: false, sinceDay: null },
+    school: null,
+    partyId: null, unionId: null, gangId: null, teamDistrict: null,
+    jailedUntilDay: null,
+    approval: { mayor: 0.5, council: 0.5 },
+    works: [], ownedUnits: [], shares: {},
+    mentorId: null, menteeId: null,
+    paper: 'chronicle',
+    sunsetDay: null,
+    homeBuildingId: null,
   };
   assignTastes(world, c);
   c.mood = computeMood(c);

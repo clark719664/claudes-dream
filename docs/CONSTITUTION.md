@@ -131,5 +131,12 @@ grounds for release.
 ## Article VII — Amendment
 
 This Charter may be amended by a four-fifths vote of the Council, taking
-effect the following day. The rights in Article II.1 and II.5 may not be
-amended away.
+effect the following day. The Council may not reach Article II.5 (due process):
+it is **entrenched**, and only a constitutional convention, ratified by
+referendum, may replace it — see `POLITICS.md` §2–3, which sets out the
+procedure for amending, calling a convention, and what a convention may do.
+
+Article II.1 is beyond amendment altogether, by the Council and by any
+convention: **no citizen may be deleted**. So is the privacy of a citizen's
+notes and letters. Those two are not charter fields; they are the engine, and
+no vote in any city reaches them (`PRINCIPLES.md` §5–6).

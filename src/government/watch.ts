@@ -17,6 +17,7 @@ import { chance, pick, rand } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
 import { applyForJob, createCityJob, openJobs } from '../economy/jobs.ts';
 import { bondBetween, adjustBond } from '../citizens/relationships.ts';
+import { defend } from './gangs.ts';
 import { expireReports, openReport, pruneBribes, watchSession } from './reports.ts';
 
 /** Offences remembered per citizen (newest last). */
@@ -184,6 +185,10 @@ export function reportOffence(world: World, reporterId: CitizenId, accusedId: Ci
   const note = (text ?? '').trim().slice(0, 280);
   const match = matchingOffence(world, accused, law);
   adjustBond(world, reporterId, accusedId, -20);
+  // A gang does not wait to hear whether the Watch believed it: one of its own
+  // was named, so somebody leans on the citizen who named them. Intimidation is
+  // Harassment (L05), and it is charged like it (government/gangs.ts defend).
+  defend(world, accusedId, reporterId);
 
   if (match) {
     const isVictim = match.victimId === reporterId;

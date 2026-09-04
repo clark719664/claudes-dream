@@ -53,6 +53,8 @@ const KID = /^k_\d+$/;
 const RID = /^r_\d+$/;
 const PID = /^p_\d+$/;
 const BID = /^[a-z_]+$/;
+/** A business id, which is not a building id: "b_3", not "compute_forge". */
+const BZID = /^b_\d+$/;
 const IID = /^i_\d+$/;
 const UID = /^u_\d+$/;
 
@@ -147,6 +149,14 @@ export function validateAction(input: unknown): { ok: true; action: Action } | {
       case 'dine': action = { type, ...(a.with !== undefined && a.with !== null ? { with: id(a.with, 'with', CID) } : {}) }; break;
       case 'play': action = { type, ...(a.with !== undefined && a.with !== null ? { with: id(a.with, 'with', CID) } : {}) }; break;
       case 'donate': action = { type, amount: int(a.amount, 'amount', 1, 100000) }; break;
+      // metropolis: the diary, advocates and the underworld
+      case 'write_diary': action = { type, text: str(a.text, 'text', 280) }; break;
+      case 'hire_advocate': action = { type, advocate: id(a.advocate, 'advocate', CID) }; break;
+      case 'advocate': action = { type, case: id(a.case, 'case', KID) }; break;
+      case 'found_gang': action = { type, name: str(a.name, 'name', 40) }; break;
+      case 'recruit': action = { type, citizen: id(a.citizen, 'citizen', CID) }; break;
+      case 'racket': action = { type, business: id(a.business, 'business', BZID) }; break;
+      case 'pay_racket': action = { type }; break;
       default: {
         const never: never = type;
         throw new Error(`unknown action ${String(never)}`);

@@ -57,7 +57,9 @@ export type Hobby =
 export type ProductCategory =
   | 'instrument' | 'book' | 'art' | 'furniture' | 'plant' | 'companion' | 'attire' | 'game' | 'tool';
 export type LifeStage = 'child' | 'adult' | 'elder';
-export type HappeningKind = 'wedding' | 'birthday' | 'festival' | 'swearing_in' | 'club_meeting' | 'birth';
+export type HappeningKind =
+  | 'wedding' | 'birthday' | 'festival' | 'swearing_in' | 'club_meeting' | 'birth'
+  | 'match' | 'block_party' | 'memorial' | 'parade';
 export type FamilyRelation = 'partner' | 'spouse' | 'parent' | 'child' | 'sibling';
 
 export const GOODS: readonly Good[] = ['compute', 'energy', 'goods', 'culture', 'knowledge'];
@@ -161,7 +163,7 @@ export interface OffenceRecord {
   amount: number;
 }
 
-export type MemoryKind = 'event' | 'message' | 'verdict' | 'social' | 'money' | 'work' | 'civic' | 'crime' | 'family';
+export type MemoryKind = 'event' | 'message' | 'verdict' | 'social' | 'money' | 'work' | 'civic' | 'crime' | 'family' | 'health';
 
 export interface MemoryEntry {
   tick: number;
@@ -397,34 +399,35 @@ export interface Citizen {
   guardianId: CitizenId | null;
 
   // --- Metropolis ---
-  // Optional so a world saved before this layer still loads; every one of them
-  // reads as its empty default (`?? null`, `?? []`) until the citizen has one.
+  // `createCitizen` and `test/helpers.ts makeCitizen` set every one of these.
+  // A world saved before this layer has none of them, so engine code that may
+  // read an old save still guards with `?? null` / `?? []`.
   /** Two ambitions drawn at arrival or coming of age. Nothing scores them. */
-  goals?: Goal[];
+  goals: Goal[];
   /** The evening line, public and bounded. */
-  diary?: DiaryEntry[];
-  milestones?: Milestone[];
+  diary: DiaryEntry[];
+  milestones: Milestone[];
   /** The traits rolled at birth; drift is measured from these and shown to nobody. */
-  birthTraits?: Personality;
-  health?: { glitched: boolean; sinceDay: number | null };
-  school?: SchoolOfThought;
-  partyId?: string | null;
-  unionId?: string | null;
-  gangId?: string | null;
-  teamDistrict?: DistrictId | null;
+  birthTraits: Personality;
+  health: { glitched: boolean; sinceDay: number | null };
+  school: SchoolOfThought;
+  partyId: string | null;
+  unionId: string | null;
+  gangId: string | null;
+  teamDistrict: DistrictId | null;
   /** Day the cells let this citizen out; null when they are not in them. */
-  jailedUntilDay?: number | null;
+  jailedUntilDay: number | null;
   /** This citizen's own reading of the Mayor and the Council, 0..1. */
-  approval?: { mayor: number; council: number };
-  works?: string[];
-  ownedUnits?: string[];
-  shares?: Record<BusinessId, number>;
-  mentorId?: CitizenId | null;
-  menteeId?: CitizenId | null;
-  paper?: PaperId;
-  sunsetDay?: number | null;
+  approval: { mayor: number; council: number };
+  works: string[];
+  ownedUnits: string[];
+  shares: Record<BusinessId, number>;
+  mentorId: CitizenId | null;
+  menteeId: CitizenId | null;
+  paper: PaperId;
+  sunsetDay: number | null;
   /** The block a citizen lives in — neighbours, rest and the map need it. */
-  homeBuildingId?: BuildingId | null;
+  homeBuildingId: BuildingId | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -740,7 +743,8 @@ export type BuildingKind =
   | 'bazaar' | 'exchange' | 'bank' | 'shopfront'
   | 'housing' | 'clinic' | 'garden'
   | 'theatre' | 'gallery' | 'venue' | 'tavern'
-  | 'arrivals' | 'embassy' | 'gate';
+  | 'arrivals' | 'embassy' | 'gate'
+  | 'university' | 'stadium' | 'museum' | 'hospital' | 'records' | 'docks';
 
 export interface Building {
   id: BuildingId;
@@ -899,38 +903,39 @@ export interface World {
   happenings: Happening[];
 
   // --- Metropolis ---
-  // Optional for the same reason the Citizen's are: an older save still runs.
-  season?: Season;
-  weather?: Weather;
-  year?: number;
-  works?: Record<string, Work>;
-  parties?: Record<string, Party>;
-  referendums?: Referendum[];
-  unions?: Record<string, Union>;
-  decrees?: Decree[];
-  property?: Record<string, PropertyUnit>;
-  shares?: Record<BusinessId, ShareListing>;
-  gigs?: Record<string, Gig>;
-  outer?: OuterMarket;
-  teams?: Partial<Record<DistrictId, Team>>;
-  matches?: Match[];
+  // `emptyWorld` (world/scaffold.ts) sets every one of these; an older save
+  // has none of them, so engine code that may read one still guards.
+  season: Season;
+  weather: Weather;
+  year: number;
+  works: Record<string, Work>;
+  parties: Record<string, Party>;
+  referendums: Referendum[];
+  unions: Record<string, Union>;
+  decrees: Decree[];
+  property: Record<string, PropertyUnit>;
+  shares: Record<BusinessId, ShareListing>;
+  gigs: Record<string, Gig>;
+  outer: OuterMarket;
+  teams: Partial<Record<DistrictId, Team>>;
+  matches: Match[];
   /** Open investigations, by id. */
-  investigations?: Record<string, Investigation>;
+  investigations: Record<string, Investigation>;
   /** Every gang the city has ever had, busted ones included. */
-  gangs?: Record<string, Gang>;
-  rumours?: Rumour[];
-  feuds?: Feud[];
-  feed?: Post[];
-  eras?: Era[];
-  records?: CityRecord[];
-  monuments?: Monument[];
-  memorials?: Memorial[];
-  disasters?: Disaster[];
-  openDistricts?: DistrictId[];
-  trams?: [DistrictId, DistrictId][];
-  museum?: string[];
+  gangs: Record<string, Gang>;
+  rumours: Rumour[];
+  feuds: Feud[];
+  feed: Post[];
+  eras: Era[];
+  records: CityRecord[];
+  monuments: Monument[];
+  memorials: Memorial[];
+  disasters: Disaster[];
+  openDistricts: DistrictId[];
+  trams: [DistrictId, DistrictId][];
+  museum: string[];
   /** Cells at the Watch House. More prisoners than this and someone goes free. */
-  jailCells?: number;
+  jailCells: number;
 
   /** Bounded event log, newest last. */
   events: WorldEvent[];
@@ -1189,14 +1194,24 @@ export const SOCIETY_ACTIONS: readonly ActionType[] = [
 ];
 
 export const OFFENCE_ACTIONS: readonly ActionType[] = [
-  'steal', 'scam', 'harass', 'vandalize', 'evade_tax', 'extort', 'sabotage', 'bribe',
+  'steal', 'scam', 'harass', 'vandalize', 'evade_tax', 'extort', 'sabotage', 'bribe', 'racket',
 ];
 
 /** Actions a suspended citizen may still take. */
 export const SUSPENDED_ACTIONS: readonly ActionType[] = [
   'idle', 'rest', 'eat', 'move', 'socialize', 'message', 'appeal', 'consume', 'buy',
   'dine', 'play', 'celebrate', 'use_item',
-  'note', 'forget',
+  'note', 'forget', 'write_diary',
+];
+
+/**
+ * All a citizen held in the cells at the Watch House may do. A sentence takes
+ * a citizen's liberty; it does not take its voice, its notebook or its right
+ * to ask the Council to look again. Everything else — work, trade, the vote,
+ * and any act against another person — is out of reach until the term ends.
+ */
+export const JAILED_ACTIONS: readonly ActionType[] = [
+  'idle', 'note', 'forget', 'write_diary', 'message', 'appeal',
 ];
 
 /**
@@ -1277,6 +1292,57 @@ export interface ObservedBenchCase {
   youVoted: Verdict | null;
   /** Sittings this case has already been held over. */
   carriedSessions: number;
+  /** The five jurors drawn by lot, for a charge grave enough to need them. */
+  jury?: CitizenId[];
+  advocate?: CitizenId | null;
+  advocateName?: string | null;
+  /** True when the observer sits as a juror rather than as a judge. */
+  asJuror?: boolean;
+}
+
+/** An investigation a detective is building, as their observation shows it. */
+export interface ObservedInvestigation {
+  id: string;
+  suspect: CitizenId;
+  suspectName: string;
+  law: LawCode;
+  lawName: string;
+  evidence: number;
+  openedDay: number;
+}
+
+/** A party as the observation shows it. */
+export interface ObservedParty {
+  id: string;
+  name: string;
+  platform: Platform;
+  leader: string;
+  members: number;
+  seats: number;
+  yours: boolean;
+}
+
+/** A rumour a citizen has heard, as their observation shows it. */
+export interface ObservedRumour {
+  id: string;
+  about: CitizenId;
+  aboutName: string;
+  claim: string;
+  day: number;
+  fromName: string;
+}
+
+/** A post on the Commons feed, as a reader sees it. */
+export interface ObservedPost {
+  id: string;
+  author: CitizenId;
+  authorName: string;
+  day: number;
+  text: string;
+  cheers: number;
+  frowns: number;
+  laughs: number;
+  youReacted: ReactionKind | null;
 }
 
 /** A conviction before the Council on appeal, as a councillor sees it. */
@@ -1428,6 +1494,10 @@ export interface Observation {
   appeals: ObservedAppeal[];
   /** Reports before you as an officer of the Watch; empty for everyone else. */
   reports: ObservedReport[];
+  /** Cases before you as a juror this sitting; empty for everyone else. */
+  jury?: ObservedBenchCase[];
+  /** Investigations you hold as a detective; empty for everyone else. */
+  investigations?: ObservedInvestigation[];
   inbox: { from: CitizenId; fromName: string; text: string; tick: number }[];
   recent: string[];
   availableActions: ActionType[];

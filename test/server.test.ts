@@ -151,7 +151,7 @@ test('every dashboard endpoint answers with the shape the app expects', async ()
   assert.equal(((eco.treasury as Json).audit as Json).ok, true);
 
   const gov = await json(await get('/api/government'));
-  assert.equal((gov.laws as unknown[]).length, 15);
+  assert.equal((gov.laws as unknown[]).length, 17, 'the Code gained defamation (L16) and insider trading (L17)');
   assert.equal(typeof (gov.election as Json).daysToElection, 'number');
   assert.ok(Array.isArray(gov.proposals));
 

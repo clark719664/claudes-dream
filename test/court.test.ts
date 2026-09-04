@@ -240,7 +240,7 @@ test('a severity-5 offence means exile, executed only after the appeal window', 
   assert.equal(k.verdict, 'guilty');
   assert.equal(k.status, 'tried');
   assert.ok(k.sentence?.exile);
-  assert.equal(k.sentence?.tier, 5);
+  assert.equal(k.sentence?.tier, 6, 'severity 5 is exile, the top of the six-tier ladder');
   assert.equal(k.sentence?.executeOnDay, 3);
   assert.equal(k.sentence?.executed, false);
   assert.equal(saboteur.standing, 'good', 'not yet: the appeal window is open');
@@ -305,7 +305,7 @@ test('an appeal can reduce an exile to a 15-day suspension', () => {
   assert.equal(k.appeal?.decidedDay, 3);
   assert.ok(council.every((m) => k.appeal?.votes[m.id] === 'reduced'));
   assert.equal(k.sentence?.exile, false);
-  assert.equal(k.sentence?.tier, 4);
+  assert.equal(k.sentence?.tier, 5, 'a reduced exile is a suspension, one rung down');
   assert.equal(k.sentence?.suspensionDays, 15);
   assert.equal(k.sentence?.executed, true);
   assert.equal(d.standing, 'suspended');
@@ -316,7 +316,7 @@ test('an appeal can reduce an exile to a 15-day suspension', () => {
   assert.equal(w.bans.length, 0, 'no ban record: the exile was cancelled');
   assert.ok(w.order.includes(d.id));
   assert.equal(d.record.convictions.length, 1);
-  assert.equal(d.record.convictions[0].tier, 4);
+  assert.equal(d.record.convictions[0].tier, 5);
   w.day = 4; w.hour = 0; w.tick = 96;
   dailyJustice(w);
   assert.equal(d.standing, 'suspended', 'the reduced sentence is what stands');
@@ -331,8 +331,10 @@ test('an overturned appeal refunds the fine and restores standing; an upheld one
   for (const m of council) m.bonds[d.id] = 80; // devoted friends overturn
   const k = fileCharge(w, { defendantId: d.id, law: 'L08', evidence: 1, filedBy: 'watch', description: 'grand theft' });
   holdCourt(w);
-  assert.equal(k.sentence?.tier, 4);
-  assert.equal(d.standing, 'suspended');
+  assert.equal(k.sentence?.tier, 4, 'grand theft with a clean record is jail, the new fourth rung');
+  assert.equal(k.sentence?.jailDays, 4);
+  assert.equal(d.standing, 'good', 'jail is not a standing: the cells take the days, not the citizenship');
+  assert.equal(d.jailedUntilDay, w.day + 4);
   const fine = k.sentence!.fine;
   assert.equal(d.wallet, 300 - fine);
   const before = totalMoney(w);
@@ -342,6 +344,7 @@ test('an overturned appeal refunds the fine and restores standing; an upheld one
   assert.equal(k.appeal?.result, 'overturned');
   assert.equal(d.wallet, 300, 'fine refunded');
   assert.equal(d.standing, 'good');
+  assert.equal(d.jailedUntilDay, null, 'an overturned conviction empties the cell at once');
   assert.equal(d.record.convictions.length, 0);
   assert.equal(d.reputation, 50, 'reputation restored');
   assert.equal(totalMoney(w), before);
@@ -399,7 +402,8 @@ test('computeSentence escalates with the record, suspension and strikes', () => 
   d.record.convictions.push({ caseId: 'k_c', law: 'L04', severity: 2, tier: 3, day: 1 });
   const s4 = computeSentence(w, k);
   assert.equal(s4.tier, 4, 'at most two steps of escalation');
-  assert.equal(s4.suspensionDays, 6);
+  assert.equal(s4.jailDays, 2, 'the fourth rung is the cells, for `severity` days');
+  assert.equal(s4.suspensionDays, 0);
   d.standing = 'suspended';
   assert.equal(computeSentence(w, k).exile, true, 'convicted while suspended');
   d.standing = 'good';

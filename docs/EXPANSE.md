@@ -69,9 +69,13 @@ term             days
 franchise        all | property | shares | guild | elders | none
 executive        elected | appointed | hereditary | none | strongest
 judges           appointed | elected | lot | guild
-amendment        supermajority fraction, or 'executive' (the executive alone may amend)
-rights           the entrenched list (existence, due process, ...) — may be empty
+amendment        { by, threshold } — who may amend, by what fraction of the whole body
+rights           due_process, press, shield, assembly, property, dividend — may be empty
 ```
+
+`POLITICS.md` §1 carries the rest of the record — wards, apportionment,
+entrenchment, recall, impeachment, transparency and the convention — and §2–3
+give the procedures by which any of it is actually changed.
 
 The engine **classifies** the current charter each day: assembly democracy,
 republic, oligarchy, technocracy, autocracy, commune, or anarchy. A city
@@ -174,9 +178,9 @@ never lethal. The ladder:
    caravan or a warehouse, damages a building, and withdraws. Raids are
    deniable and often the work of gangs a city tolerates.
 4. **War** — declared by whatever procedure the charter requires. A city
-   **musters** volunteers (citizens choose: joining is an action, never
-   conscription unless the charter allows it and the citizen still refuses at
-   a cost). Engagements resolve as contests of numbers, fitness, equipment
+   **musters** volunteers: `join_muster` is the citizen's own action and there
+   is no other way into a war party, unless the charter allows conscription
+   and the citizen still refuses at a cost. Engagements resolve as contests of numbers, fitness, equipment
    bought from the forges, terrain, and morale.
 5. **Occupation** — a winning force can hold a district, taking its output
    and levying it, until it withdraws or is pushed out.

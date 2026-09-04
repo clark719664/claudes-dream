@@ -9,6 +9,7 @@ import { normal, shuffle } from '../util/rng.ts';
 import { characterOf } from '../citizens/character.ts';
 import { areFriends, bondBetween } from '../citizens/relationships.ts';
 import { areFamily } from '../society/family.ts';
+import { advocacyDiscount } from './advocates.ts';
 import { canSit } from './cases.ts';
 
 /** A scripted judge votes guilty when its belief in guilt exceeds this. */
@@ -110,5 +111,7 @@ export function judgeBelief(world: World, judgeId: CitizenId, c: Case): number {
   // The thumb on the scale is weighed by the judge's public character — what
   // the city has watched them do — never by a hidden trait nobody can see.
   belief -= (1 - characterOf(judge).honesty) * 0.1 * Math.sign(bondD);
+  // Somebody spoke for the defendant, and speaking well is worth something.
+  belief -= advocacyDiscount(world, c);
   return belief;
 }

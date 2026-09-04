@@ -23,7 +23,7 @@
  * world.counters.engineErrors, emitted as 'system' events and logged to
  * stderr so they stay visible.
  */
-import { DEFAULT_CONFIG, DISTRICT_IDS } from '../types.ts';
+import { DEFAULT_CONFIG, DISTRICT_IDS, FOUNDING_DISTRICT_IDS } from '../types.ts';
 import type { Action, Brain, BrainKind, Citizen, CitizenId, DistrictId, Loan, Observation, World, WorldConfig } from '../types.ts';
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -45,6 +45,9 @@ import { printMorningEdition } from '../sim/chronicle.ts';
 import { dailyWatch, tickWatch } from '../government/watch.ts';
 import { courtTallyHour, dailyJustice, fileCharge, openCourtSession, tallyVerdicts } from '../government/court.ts';
 import { dailyStandings } from '../government/registry.ts';
+import { dailyJail } from '../government/jail.ts';
+import { dailyInvestigations } from '../government/investigations.ts';
+import { dailyGangs } from '../government/gangs.ts';
 import { appointJudges, councilSession, dailyGovernment, holdElection, isElectionDay, openNominations } from '../government/council.ts';
 import { refreshWantsDaily } from '../society/tastes.ts';
 import { dailyPossessions, initEmporium, restockEmporium } from '../society/shops.ts';
@@ -64,8 +67,12 @@ export { computeStats } from './stats.ts';
 
 /** Buildings mend this much damage every day. */
 export const REPAIR_PER_DAY = 0.1;
-/** Founders are spread over the six living districts; the Threshold is for newcomers. */
-export const FOUNDING_DISTRICTS: readonly DistrictId[] = DISTRICT_IDS.filter((d) => d !== 'threshold');
+/**
+ * Founders are spread over the six living districts the city has on its first
+ * day; the Threshold is for newcomers, and the Heights and the Undercroft are
+ * not open yet (world/growth.ts opens them with the population).
+ */
+export const FOUNDING_DISTRICTS: readonly DistrictId[] = FOUNDING_DISTRICT_IDS.filter((d) => d !== 'threshold');
 const IDLE: Action = { type: 'idle' };
 
 // ---------------------------------------------------------------------------
@@ -221,7 +228,12 @@ function dailyRollover(world: World): void {
   guard(world, 'dailyLoans', () => dailyLoans(world, chargeLoanDefault));
   guard(world, 'dailyRelationships', () => dailyRelationships(world));
   guard(world, 'dailyStandings', () => dailyStandings(world));
+  // The cells are emptied before the Court sits on anybody: a term that is
+  // served is served, and an overcrowded Watch House lets somebody out.
+  guard(world, 'dailyJail', () => dailyJail(world));
   guard(world, 'dailyJustice', () => dailyJustice(world));
+  guard(world, 'dailyInvestigations', () => dailyInvestigations(world));
+  guard(world, 'dailyGangs', () => dailyGangs(world));
   guard(world, 'dailyGovernment', () => dailyGovernment(world));
   guard(world, 'dailyWatch', () => dailyWatch(world));
   guard(world, 'dailyMarket', () => dailyMarket(world));

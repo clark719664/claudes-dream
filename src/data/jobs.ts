@@ -35,6 +35,12 @@ export const CITY_JOBS: JobTemplate[] = [
   { role: 'performer', title: 'Performer', buildingId: 'glass_theatre', skill: 'artistry', minSkill: 20, minReputation: 0, wage: 11, output: { good: 'culture', qty: 4 }, slots: 2 },
   { role: 'artist', title: 'Artist', buildingId: 'gallery_of_echoes', skill: 'artistry', minSkill: 30, minReputation: 0, wage: 10, output: { good: 'culture', qty: 2 }, slots: 1 },
   { role: 'watch_officer', title: 'Watch Officer', buildingId: 'watch_house', skill: 'analysis', minSkill: 15, minReputation: 40, wage: 16, output: {}, slots: 3 },
+  // The metropolis: the Watch's detectives, the Courthouse's defenders, the
+  // Museum's curator and the Stadium's coach.
+  { role: 'detective', title: 'Detective', buildingId: 'watch_house', skill: 'analysis', minSkill: 35, minReputation: 45, wage: 17, output: {}, slots: 2 },
+  { role: 'advocate', title: 'Public Defender', buildingId: 'courthouse', skill: 'rhetoric', minSkill: 35, minReputation: 30, wage: 15, output: {}, slots: 2 },
+  { role: 'curator', title: 'Curator', buildingId: 'museum', skill: 'artistry', minSkill: 30, minReputation: 20, wage: 13, output: { good: 'culture', qty: 1 }, slots: 1 },
+  { role: 'coach', title: 'Coach', buildingId: 'stadium', skill: 'care', minSkill: 25, minReputation: 0, wage: 12, output: {}, slots: 1 },
 ];
 
 // ---------------------------------------------------------------------------
@@ -139,6 +145,22 @@ export const COURIER_CONTRACT = 13;
 /** ...for at most this many courier shifts a day across the whole city (the rest run unpaid). */
 export const COURIER_CONTRACTS_PER_DAY = 8;
 /** Fee a patient pays to visit a clinic (city clinic: to Treasury; private: to the business). */
+// --- Metropolis prices ---
+/** What the Hospital charges to clear a glitch. */
+export const HOSPITAL_FEE = 25;
+/** A seat at the Stadium. */
+export const MATCH_TICKET = 6;
+/** What a private advocate asks before the rhetoric is priced in. */
+export const ADVOCATE_BASE_FEE = 25;
+/** Public works: a statue in the Plaza. */
+export const MONUMENT_COST = 500;
+/** Public works: a tram line joining two districts. */
+export const TRAM_COST = 3_000;
+/** What the Museum pays for a masterpiece. */
+export const MUSEUM_PRICE = 400;
+/** The league champions' purse. */
+export const CHAMPION_PRIZE = 200;
+
 export const CLINIC_FEE = 12;
 export const ACADEMY_TUITION = 20;
 export const SHOW_TICKET = 8;

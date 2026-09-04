@@ -29,9 +29,14 @@ landValue = raw / cityAverage(raw)          ← so 1.0 is always "average for th
 
 **Amenity** counts what stands in the district and what it does: the Bazaar,
 the Library, the Academy, the Restoration Ward, the Theatre, the Gallery, the
-Community Garden and monuments add; the Compute Forge, the Power Station, the
-Builders' Yard, the Watch House cells and the Exile Gate subtract. Living
-beside the forge is cheap for a reason.
+Community Garden, the drains and a tram stop and monuments add; the Watch
+House cells and the Exile Gate subtract. The Compute Forge, the Power Station
+and the Builders' Yard no longer subtract by assertion: they subtract
+`0.45 × air` for what their shifts actually emit, plus the zoning permit's
+premium, both from `ENVIRONMENT.md` §1–4. A scrubbed forge costs its
+neighbours less than a hard-run one, and an idle one costs them nothing.
+Living beside the forge is cheap for a reason, and the reason is now a
+number somebody can change.
 
 **Prestige** is the one citizens make deliberately: exhibit a masterpiece in
 the Gallery, win the league, raise a monument, and the whole district lifts.

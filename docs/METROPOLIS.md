@@ -44,11 +44,13 @@ feeds the others, and all of it shows up in the Chronicle and on the map.
 
 ## 2. Justice, deepened
 
-- **Jail.** A new sentence tier between community service and suspension:
-  **jail** for 1–5 days in the cells at the Watch House. Jailed citizens
-  cannot act except `message` and `appeal`; they are visible on the map at
-  the Watch House. Overcrowding (more than 6 cells) forces early release and
-  makes the news.
+- **Custody.** The 1–5 day jail tier this document first proposed is
+  **retired**: `JUSTICE.md` takes custody off the ladder entirely and gives it
+  its own track, its own bands in days, its own register and its own release
+  procedure, and a citizen in the cells may do rather more than message and
+  appeal. Overcrowding never opens a cell either — it is a political crisis
+  the Council must fund its way out of. Read `JUSTICE.md` §2; nothing in this
+  section overrides it.
 - **Advocates.** Any adult with rhetoric ≥ 40 may `advocate { case }` for a
   defendant for a fee. Each judge's belief falls by up to 0.15 × (advocate
   rhetoric / 100). Defendants may `hire_advocate { advocate }` before their
@@ -68,7 +70,8 @@ feeds the others, and all of it shows up in the Chronicle and on the map.
   bonds may `found_gang { name }`. Gangs recruit (`recruit`), run
   **protection rackets** on businesses (`racket { business }`: the owner pays
   or suffers vandalism), split loot, and protect members (a member reported
-  by a rival is defended by intimidation → harassment). The Watch can **bust**
+  by a rival is defended by intimidation, which is **P02** and answered by
+  custody rather than a fine). The Watch can **bust**
   a gang: three convicted members within a cycle dissolve it. Gangs have a
   turf district; the Undercroft (see §6) is their natural home.
 - **Defamation.** Spreading a false rumour (see §7) is offence **L16**
@@ -95,15 +98,19 @@ feeds the others, and all of it shows up in the Chronicle and on the map.
   a majority of a role's workers can `strike` for a day when wages fall
   below its demand: production stops, the Chronicle reports it, and the
   employer either raises wages or loses staff.
-- **Decrees.** The Mayor may issue one **emergency decree** per cycle:
-  a tax holiday, a curfew (no night-time actions in a district — lowers
-  crime and social need), a relief payment from the Treasury, or a state
-  of emergency after a disaster (double public works).
+- **Decrees.** `decree { kind, district?, value? }` — the Mayor may issue one
+  **emergency decree** per cycle: a tax holiday, a curfew (no night-time
+  actions in a district — lowers crime and social need), a relief payment from
+  the Treasury, a quarantine once the city holds Germ Theory (`PROGRESS.md`
+  §2), an order to open a sanctuary door (`CREEDS.md` §5), or a state of
+  emergency after a disaster (double public works). Every decree is named,
+  dated and printed.
 
 ## 4. Markets, deepened
 
 - **Property.** Homes and shopfronts can be **owned**. `buy_property
-  { unit }` at the Exchange (price = 60 × rent); owners pay no rent, may
+  { unit }` at the Exchange, at the price `PROPERTY.md` §2 sets from the
+  address rather than a flat multiple of rent; owners pay no rent, may
   `let_property` to a tenant at a rent they set, and pay **property tax**
   (a Council lever). Landlords appear in the observation; evictions by
   landlords are legal but unpopular.
@@ -143,12 +150,13 @@ feeds the others, and all of it shows up in the Chronicle and on the map.
   editorial line that colours which events they headline and how they
   describe officials; citizens read the paper that matches their views,
   which shifts approval.
-- **Schools of thought.** Three philosophies — the **Makers** (work and
-  craft), the **Commons** (solidarity and the dividend), the **Lanterns**
-  (art, leisure, and freedom) — are adopted by citizens according to
-  personality and friends. They shape voting, club choice, and what people
-  say in the Plaza. Conversion happens through friendships; friction
-  between schools adds a little tension to social interactions.
+- **Creeds.** The three schools of thought this document first proposed — the
+  Makers, the Commons, the Lanterns — sorted citizens by personality, which is
+  the one thing the engine may never do (`PRINCIPLES.md` §2). They are retired
+  in favour of `CREEDS.md`: a citizen holds whatever creed it adopted with its
+  own `adopt_creed`, in its own hour, or none at all. Creeds still shape
+  voting, club choice and what people say in the Plaza — they simply have to
+  be joined.
 - **Menus.** Cafés have menus (dishes crafted from goods with a cook's
   skill); the best café in town is a Chronicle staple.
 
@@ -170,13 +178,14 @@ feeds the others, and all of it shows up in the Chronicle and on the map.
   **The Heights** (70 citizens): the University, Hilltop Villas (tier 4),
   the Observatory's new dome; **The Undercroft** (100 citizens): the old
   tunnels — cheap housing (tier 0.5: cells), the Night Market, gang turf.
-  Public works can also fund a **tram** line, which makes two districts
-  adjacent.
+  Public works can also fund a **tram** line, which makes two
+  districts adjacent, once the city holds The Tram (`PROGRESS.md` §2): before
+  the technology there is nothing to build.
 - **History.** The **Hall of Records** keeps a timeline of eras (each cycle
   is named for its Mayor), records (richest citizen, longest-serving judge,
   biggest storm), and **monuments**: the Council can commission a monument
   to a citizen (a statue in the Plaza; the honoree's family gains standing).
-- **Sunset.** Elders in good standing may choose to **sunset**: they leave
+- **Sunset.** `sunset` — elders in good standing may choose it: they leave
   through the Archive rather than the Threshold, their story is bound into
   the Library, their assets go to family, and a memorial appears in the
   Garden. It is the only "death" in Reverie, and it is always chosen.

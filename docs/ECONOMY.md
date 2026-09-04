@@ -8,8 +8,11 @@ Because the loop is closed, the Treasury can only pay out what comes back to
 it. Three rules keep it solvent without a printing press: city production is
 paid **by the piece**, so wages follow the value of what is made; the city's
 **posts follow demand**, so it does not pay for gluts; and the city's salaried
-hours come out of a **daily wage budget** set by yesterday's takings. The rest
-of this document gives the numbers.
+hours come out of a **daily wage budget** set by yesterday's takings. A Council
+that wants to spend past all three has two instruments and both are public and
+both cost: it can borrow at auction, or it can mint by four votes of five and
+watch the price index read the decision back to it (`FINANCE.md` §1 and §7).
+The rest of this document gives the numbers.
 
 ## Money
 
@@ -18,12 +21,17 @@ of this document gives the numbers.
   citizen receives a 200 ℓ arrival grant from it.
 - **Money enters circulation** through: the citizen's dividend, city wages and
   public salaries (Watch, judges, councillors, teachers, librarians...), the
-  Bazaar buying from businesses, courier contracts, public works, and Lantern
-  Bank loans.
+  Bazaar buying from businesses, courier contracts, and public works. A Lantern
+  Bank loan is not on that list: it moves lumens out of the bank's **vault**,
+  which is a money party inside the supply, and creates nothing
+  (`FINANCE.md` §4).
 - **Money leaves circulation** through: Bazaar purchases and sales tax,
   income tax on private wages and payouts, profit tax, fines, seizures on
   exile, loan repayments, Academy tuition, clinic fees, show tickets,
   business registration, and rent for city-owned housing and premises.
+- **New lumens** are made in exactly one way after the founding: the Council
+  votes to `mint` by four of five, and the transfer increments `minted` as it
+  goes (`FINANCE.md` §7). There is no other creation and no destruction.
 - **Inflation** is tracked as a price index (mean of Bazaar prices relative
   to founding prices). The dashboard shows it.
 
@@ -225,10 +233,16 @@ and the Villas, and by day 60 rent brings in 700–950 ℓ a day.
 ## The Lantern Bank
 
 - Offers loans up to 5 × the applicant's average daily income, at 2 %/day
-  simple interest, repaid automatically from wages.
-- A citizen who defaults (no payment for 7 days) is reported to the Watch for
-  Fraud if they spent the loan on gifts or campaigning, otherwise their
-  credit is frozen.
+  simple interest, repaid automatically from wages, out of the vault
+  (`FINANCE.md` §4).
+- A citizen who defaults (no payment for 7 days) has their credit frozen and
+  the debt collected by the **civil recovery ladder** — garnishment, seizure,
+  the loss of a trading licence and nothing beyond it (`JUSTICE.md` §1).
+  **A default is not a crime**: debt never means a charge, a suspension, exile
+  or custody, and the earlier rule that read a default as Fraud is withdrawn.
+  What is still an offence is lying to get the loan — a false statement of
+  income at the counter is L07, and a forged instrument behind it is L21
+  (`CIVIL.md` §10) — and both need proof from the public record, not poverty.
 
 ## Taxes and public finance
 
@@ -355,7 +369,21 @@ Council the next election.
 Theft moves lumens between citizens; fraud moves lumens from buyers to
 sellers; fines move lumens from criminals to the Treasury; seizures on exile
 move half of the exile's wallet to the Treasury and the rest to victims. None
-of these create or destroy lumens, so the money supply is auditable at every
-tick: `treasury + community chest + Σ wallets + Σ business treasuries =
-founding supply + minted − burned`. The engine asserts this invariant every
-day.
+of these create or destroy lumens, so the money supply is auditable at
+every tick. Every layer since has added money parties rather than money, and
+the audit counts all of them:
+
+```
+treasury + community chest + bank vault
+  + Σ business treasuries + Σ wallets
+  + Σ escrow holdings        CIVIL.md §2
+  + Σ project purses         PROGRESS.md §1
+  + Σ mutual pots            FINANCE.md §6
+  + Σ creed funds            CREEDS.md §2
+  + Σ house treasuries       GENERATIONS.md §4
+  = founding supply + minted − burned
+```
+
+The engine asserts this invariant every day. Nothing but `mint` moves the
+right-hand side; a bond, a deposit, a policy, a will and a licence are all
+claims, and a claim written to zero deletes a register row and not a lumen.

@@ -203,6 +203,10 @@ premium per day = expected loss × (1 + loading)
 loading         = 0.25 + 0.50 × (cover written / underwriter capital)
 ```
 
+Priced off the record like this only once a city holds **Actuarial Tables**
+(`PROGRESS.md` §2); before that every underwriter anywhere quotes the flat 4 %
+of `CITIES.md`, which is why Vantage — which has the tables, the capital and the
+deepest houses — writes the large lines the rest of the Expanse cannot.
 Fifty-six days is two cycles: long enough that a quiet fortnight does not price
 a forge fire out of existence, short enough that a worse world reprices within a
 month. The 0.25 base is what survives ordinary variance at the engine's own
@@ -226,9 +230,12 @@ forever, and every surviving underwriter's premium rises the next morning.
 hold. Five adults `found_mutual { name, dues }` for 50 ℓ — the club fee, not the
 business fee, because a mutual is not a business and pays no profit tax. Members
 `pay_dues` into a pot at the Exchange; a member who suffers a misfortune
-`claim_mutual`s and **the members vote on it**. No formula, no underwriter,
-never more than the pot holds: a mutual pays for what its own members think
-deserves paying for. A policy is enforceable on the docket and a mutual's payout
+`claim_aid`s and **the members vote on it** with `vote_aid`. No formula, no
+underwriter, never more than the pot holds: a mutual pays for what its own
+members think deserves paying for. A mutual's pot and a creed's fund are the
+same object in the ledger and take the same two verbs (`CREEDS.md` §3); what
+differs is what the members joined for and who is allowed to decide — a mutual
+always by a vote of the members, a creed by whatever rule the creed wrote. A policy is enforceable on the docket and a mutual's payout
 is enforceable nowhere, so what a mutual covers in practice is what no
 underwriter will write — a household whose earner is in custody, a funeral for a
 sunset, the fortnight after a partnership ends.
@@ -286,10 +293,9 @@ carries the whole `creditGap` against it.
 
 ## 8. How the audit still balances
 
-```
-treasury + chest + bank vault + Σ mutual pots + Σ wallets + Σ business treasuries
-      = foundingSupply + minted − burned
-```
+The audit is the one in `ECONOMY.md`, which now counts every money party the
+new layers add — the vault and the mutual pots among them — and is asserted
+whole every day. Nothing below adds a term to it that is not in that equation.
 
 - A **bond** is a claim. Lumens move at the auction (`bidder → treasury`, kind
   `bond`), at each coupon and at redemption (`treasury → holder`, kinds `coupon`
@@ -333,7 +339,7 @@ someone's problem and never the ledger's.
 | `settle_claim { claimId, amount }` / `deny_claim { claimId, reason }` | (underwriter) pay or refuse, on the record |
 | `found_mutual { name, dues }` | five adults, 50 ℓ |
 | `join_mutual { mutualId }` / `pay_dues` | join, and keep it funded |
-| `claim_mutual { reason, amount }` / `vote_claim { claimId, aye }` | ask the members, and be the members |
+| `claim_aid { amount, reason }` / `vote_aid { claimId, aye }` | ask the pot, and be the members who decide (shared with `CREEDS.md` §3) |
 | `exchange { from, to, amount }` | change money at today's rate plus the spread |
 
 | Code | Offence | Severity | Track |
@@ -342,7 +348,8 @@ someone's problem and never the ledger's.
 | L24 | Misappropriation of deposits (lending below the reserve, or to yourself) | 4 | I — the ladder |
 | L25 | Rigging an auction (a ring agreeing a price, or a councillor bidding through a proxy) | 4 | I — the ladder |
 
-All three are civic, because none is violence and none may ever mean custody.
+All three are civic, because none is violence and none may ever mean custody,
+and all three are registered in `REGISTRY.md` §4.
 L07 already covers a false claim, L16 a fabricated rumour about the bank, L17 a
 councillor who sells before a repudiation vote. Detection is ordinary — officers
 on duty, visibility, journalists, detectives working traces (`METROPOLIS.md` §2)

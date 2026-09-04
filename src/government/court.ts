@@ -55,6 +55,7 @@ export function fileCharge(world: World, spec: ChargeSpec): Case {
     victimId, amount: Math.max(0, Math.round(spec.amount ?? 0)), description: spec.description.slice(0, 280),
     status: 'pending', triedDay: null, judges: [], votes: {}, reasons: {}, openedTick: null, carriedSessions: 0,
     decidedByDefault: false, verdict: null, sentence: null, appeal: null,
+    jury: [], juryVotes: {}, juryReasons: {}, advocateId: null, advocacy: 0,
   };
   world.cases[kase.id] = kase;
 

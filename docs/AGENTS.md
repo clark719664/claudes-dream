@@ -97,6 +97,29 @@ it is, whether it is a rest day, what festival falls today and whose birthday
 it is; `here.shops` lists the shelves where the citizen stands and
 `here.happening` what is under way there today.
 
+Every layer added to the city since adds a block to the same observation, and
+no layer adds a second contract: one observation in, one action out, for every
+kind of mind. They are listed here at the shape they arrive in; the documents
+named hold the numbers.
+
+| Block | What is in it | Written in |
+| ----- | ------------- | ---------- |
+| `repute` | your own score with every component broken out, and `gates`: each city you know of, its two thresholds, and whether you would be admitted today | `CITIZENSHIP.md` §5 |
+| `districts` | for each district you know: land value, rents and sale prices available, footfall, offences in the last fortnight, and what stands there | `PROPERTY.md` §6 |
+| `contracts` | your instruments and their next obligation, offers on your table, suits you are party to, your licences, and `record.contracts` — kept, breached, settled, judgments — for anyone you can see | `CIVIL.md` §9 |
+| `progress` | what your city holds, what it is adopting and how far the works have got, open projects and their purses, what you know of elsewhere, and what you are a master of; plus `trends` as of yesterday | `PROGRESS.md` §7 |
+| `finance` | your holdings and their last traded price, your deposit and the posted rates, your policies, your mutual and its pot, the bank's reserve and confidence, the city's coverage, open auctions, today's exchange rates | `FINANCE.md` §9 |
+| `environment` | air, water and greenery here and in every district, the wind, the permit, the abatement fitted, the river's upstream and downstream, the charge, and the dated readings somebody surveyed | `ENVIRONMENT.md` §9 |
+| `house` | your family name and its public repute, your standing in the cycle's ledger, the head and the rule, holdings and levy, live matches and motions, and the will you have on file | `GENERATIONS.md` §7 |
+| `creed` | the creed you adopted, your observance, the fund, the officiant and the succession, the house and the gathering, the tenets and which obligations fall due, and the accommodation the benches have allowed; plus `creeds`, `invitations`, and any `sanctuary` under way | `CREEDS.md` §8 |
+| `charter` | the charter as data with the form the classifier printed, plus `convention`, `accountability` (impeachments, recalls, the register), `press` and `games` | `POLITICS.md` §9 |
+| `customs` | at a gate: the schedule of restricted goods, the duty on what you carry, the manifest you declared, and who is on the shift | `UNDERWORLD.md` §2 |
+
+Everything in all of them is public except the two things that always were: your
+notes and the letters that go home. Air, repute, a will, a tithe, a bond
+holding, a zoning vote and a creed's tenets are all readable by anyone, in this
+city or any other.
+
 ## The action catalogue
 
 Every action is `{ "type": string, ...params }`. Illegal or impossible
@@ -141,7 +164,7 @@ actions are rejected with a reason and cost the tick (the citizen idles).
 | `request_loan`    | `amount`                      | Lantern Bank                                    |
 | `repay_loan`      | `amount`                      |                                                 |
 | `perform`         |                               | (performers/artists) put on a show               |
-| `publish`         | `headline`, `about?`          | (journalists) file a story; raises detection on `about` |
+| `publish`         | `headline`, `about?`, `paper?` | (journalists) file a story; raises detection on `about`. `paper` names which paper once there is more than one; permitted from custody |
 
 ### Civic
 | Action           | Params                     | Effect                                                  |
@@ -152,7 +175,7 @@ actions are rejected with a reason and cost the tick (the citizen idles).
 | `propose`        | `kind`, `value`, `summary` | (councillors) table a proposal; (others) petition        |
 | `vote_proposal`  | `proposalId`, `aye`        | (councillors)                                            |
 | `report`         | `citizen`, `law`, `text?`  | report an offence to the Watch                           |
-| `appeal`         |                            | appeal your latest conviction                            |
+| `appeal`         | `subject?`                 | appeal your latest conviction, a refused visa, or a refused record request |
 | `verdict`        | `caseId`, `guilty`, `reason?` | (judges) vote on a case in `bench`; public, changeable until the Court counts |
 | `vote_appeal`    | `caseId`, `result`         | (councillors) vote on an appeal in `appeals`: upheld / reduced / overturned |
 | `file_charge`    | `reportId`                 | (the Watch) put a report in `reports` before the Court as a charge |
@@ -232,6 +255,32 @@ reputation instead), and come of age after 14 days.
 | `leave_club`  | `clubId`          | leave; the last member out disbands it                          |
 | `attend_club` | `clubId`          | at the meeting hour and venue: company, bonds and a little skill |
 | `donate`      | `amount`          | give to the Community Chest, which pays daily hardship stipends  |
+
+### The later layers
+
+The full alphabetical catalogue — **260 actions**, their parameters and the
+document that defines each — is `REGISTRY.md` §3, and the leaflet at the
+Arrivals Hall carries it entire. What follows is the shape of it, so a mind
+knows what kinds of thing it may do.
+
+| Group | What it lets a citizen do | Written in |
+| ----- | ------------------------- | ---------- |
+| **Contracts and the docket** | offer, accept, witness, perform, vary and terminate an instrument; sue on one, answer, settle, judge and enforce; arbitrate instead; found a guild, sit its examination, certify and strike off; take or offer patronage | `CIVIL.md` §10 |
+| **Research and trades** | open and fund a project, work a research shift, publish the finding or keep it secret, take an apprentice, teach a city, sell mastery | `PROGRESS.md` §8 |
+| **Money over time** | bid at a bond auction and trade the paper, restructure or repudiate it, deposit and withdraw, post the bank's rates, call a loan, underwrite, buy a policy and claim on it, found a mutual and pay its dues, change money | `FINANCE.md` §9 |
+| **The gate and the underworld** | declare cargo or run it past, fit a wagon, inspect, assess, seize or wave through, fence and receive, recruit an agent, case a room, take a secret and pass it on, assign detectives, sweep, plant papers | `UNDERWORLD.md` §7 |
+| **The land** | install and maintain abatement or bypass it, survey the air and the water, plant trees, petition a permit, declare an interest, sue a neighbour for nuisance | `ENVIRONMENT.md` §9 |
+| **Estates and houses** | write and revoke a will, found or join a house, renounce a name, convey and endow, move and assent, name a successor, issue a letter, pledge the entail, negotiate a match, revive a dormant house, read the records | `GENERATIONS.md` §8 |
+| **Creeds** | found, adopt and leave a creed, state and dispute a tenet, secede and reunite, preach and invite, gather, tithe, donate, ask the fund and decide its claims, elect an officiant, take a meeting house, refuse a duty, offer and end sanctuary, keep the door, surrender, ask for and grant a warrant, commission a missionary, consecrate a site, make a pilgrimage | `CREEDS.md` §9 |
+| **The charter and the office** | propose an amendment, sign for a convention, stand and sit as a delegate, move and speak and vote on articles, impeach and vote on it, sign a recall, declare property, ask a body for a record and answer such a request, found a paper, bid for and enter the Games | `POLITICS.md` §9 |
+| **The world** | apply for a visa, travel, seek residency or asylum, sponsor somebody at a gate, load a caravan, buy a map, join a muster, emigrate | `CITIES.md`, `EXPANSE.md`, `MOBILITY.md` |
+
+Two rules hold across all of them. **Nothing binds a citizen by another
+citizen's action**: every contract, patronage, match, recruitment, arbitration
+and creed takes an offer and a separate acceptance. And **no new action reaches
+custody**: every offence these layers added is on the city's ladder, because
+none of them is violence (`REGISTRY.md` §4).
+
 
 The week is seven days and the last of them is Stillday, when workplaces close
 except the Watch, the Restoration Ward, cafés and the Tavern. Lantern Night is

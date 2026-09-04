@@ -45,6 +45,14 @@ Cumulative and permanent — the city's memory of what you built:
 | Each child raised to adulthood | 10 |
 | Each 500 ℓ donated to the Chest | 6 |
 | A club that reached 10 members | 8 |
+| A technology discovered (three shifts or more on it) | 20 (`PROGRESS.md` §7) |
+| A technology taught to another city | 10 |
+| An apprentice who carries a secret on | 12 |
+| A medal at the Expanse Games | 20 (`POLITICS.md` §8) |
+
+Contribution is the one part of repute that only ever rises, and every line of
+it is a deed done in person. Nothing here is inheritable (`GENERATIONS.md` §6)
+and nothing here can be bought.
 
 ### Civic penalties (the ladder)
 
@@ -103,6 +111,10 @@ six cities begin.
 
 A visitor may trade, work gigs, socialise and watch. A resident may vote,
 stand for office, own a business, and be tried by that city's courts.
+Sponsorship and examination are actions somebody takes: `sponsor` puts a
+resident's name behind an applicant and enters against their house if they
+have one (`GENERATIONS.md` §2), and Cinderhold's examination at the gate is
+not `sit_examination`, which is a professional guild's (`CIVIL.md` §7).
 
 **Birth and childhood.** A child born in a city is a resident of it and is
 never tested. Repute is not computed for children; on coming of age they
@@ -165,8 +177,12 @@ a lesser offence — gets the notice and the clock.
 ### The hearing
 
 If the grace period ends with the citizen still below the line, the Court
-sits on a **residency hearing**. They may speak, may be represented by an
-advocate, and may call anyone who will vouch for them. The Council votes.
+sits on a **residency hearing** at tick 12, its second sitting of the day, so
+the criminal list at 10–11 is never displaced. They may speak, may be
+represented by an advocate (`CIVIL.md` §7 licenses them), and may call anyone
+who will `sponsor { citizen, city }` — the same public instrument that covers
+a shortfall at a gate, filed by a resident who is putting their own name
+behind the applicant. The Council votes.
 
 The Council may: **confirm** residency anyway (it is their city and their
 judgement — a beloved neighbour with a bad year is not a stranger),

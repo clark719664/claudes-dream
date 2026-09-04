@@ -83,9 +83,33 @@ export function makeCitizen(world: World, overrides: CitizenOverrides = {}): Cit
     contactsToday: {},
     wants: [],
     guardianId: null,
+    // metropolis
+    goals: [],
+    diary: [],
+    milestones: [],
+    birthTraits: { curiosity: 0.5, diligence: 0.5, sociability: 0.5, honesty: 0.5, ambition: 0.5 },
+    health: { glitched: false, sinceDay: null },
+    school: null,
+    partyId: null,
+    unionId: null,
+    gangId: null,
+    teamDistrict: null,
+    jailedUntilDay: null,
+    approval: { mayor: 0.5, council: 0.5 },
+    works: [],
+    ownedUnits: [],
+    shares: {},
+    mentorId: null,
+    menteeId: null,
+    paper: 'chronicle',
+    sunsetDay: null,
+    homeBuildingId: null,
     ...overrides,
     ...(overrides.personality ? { personality: { ...overrides.personality } } : {}),
     ...(overrides.character ? { character: { ...overrides.character } } : {}),
+    ...(overrides.birthTraits
+      ? { birthTraits: { ...overrides.birthTraits } }
+      : overrides.personality ? { birthTraits: { ...overrides.personality } } : {}),
   };
   world.citizens[id] = c;
   world.order.push(id);

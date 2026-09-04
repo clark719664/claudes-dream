@@ -31,6 +31,10 @@ export const LAWS: Record<LawCode, Law> = {
     description: 'Voting more than once, buying votes, or falsifying results.' },
   L15: { code: 'L15', name: 'Extortion', severity: 5, visibility: 0.4,
     description: 'Threatening harm to obtain lumens.' },
+  L16: { code: 'L16', name: 'Defamation', severity: 2, visibility: 0.45,
+    description: 'Spreading a claim about a citizen that is not true.' },
+  L17: { code: 'L17', name: 'Insider trading', severity: 3, visibility: 0.25,
+    description: 'Trading shares on what an office told you before the city was told.' },
 };
 
 export const LAW_CODES: readonly LawCode[] = Object.keys(LAWS) as LawCode[];

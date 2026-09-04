@@ -176,15 +176,18 @@ voted, ten cycles later.
 The escape is honest and it costs. `declare_interest { proposal }` files the
 holding and abstains: no trace, no offence, the Chronicle prints the declaration,
 and the councillor has given up their vote on the question they know most about.
-Failing to declare with no proven gain is **L30**, severity 3. A proven gain is
+Failing to declare with no proven gain is **L47**, severity 3. A proven gain is
 **L11, abuse of office**, severity 4 — suspension on the ladder, and the seat
 forfeited under Article IV.5.
 
 ## 6. NIMBY — the jobs without the smoke
 
-`petition_zoning { district, permit }` at the existing `PETITION_SHARE` of 20 %
-of that **district's** residents puts the permit to a citywide **referendum** on
-the next Stillday, and a referendum binds the Council (`METROPOLIS.md` §3). The
+`petition_zoning { district, permit }` at 20 % of that **district's** residents
+puts the permit to a citywide **referendum** on the next Stillday, and a
+referendum binds the Council (`METROPOLIS.md` §3). It is the one deliberate
+exception to the `PETITION_SHARE` of 20 % of the whole city: only the residents
+of the district whose permit is at stake may open it at the district share, and
+the ballot they open is still the city's. The
 Chronicle prints the result **by district**, and that is the mechanic: a motion
 to keep heavy industry in Foundry Row can carry 55–45 across the city while
 Foundry Row votes 82 % against, and everyone can read both numbers. The district
@@ -218,10 +221,10 @@ weight of air — except the hinterland yield, at **1.4**, because the fields ar
 irrigated. That is why the cheapest land in the city is cheap.
 
 `discharge { building }` runs a shift with the fitting bypassed and the waste in
-the river, saving the upkeep and the cell. It is **L28**, visibility 0.25 on the
+the river, saving the upkeep and the cell. It is **L45**, visibility 0.25 on the
 Watch's ordinary detection roll, and much higher where a downstream
 `survey_water` reading exists to compare against. A downstream household or
-business may instead `file_nuisance { against }` on the civil docket
+business may instead `file_nuisance { against, district }` on the civil docket
 (`CIVIL.md` §4), which needs no conviction and no Watch.
 
 **Between cities it is a grievance with no court.** A city whose water worsens as
@@ -277,7 +280,7 @@ the election that followed.
 | --- | --- | --- |
 | `install_abatement` | `building, fitting` | an owner or the city buys a filter, scrubber or stack |
 | `maintain_abatement` | `building` | a shift holding a fitting at its rated effect |
-| `discharge` | `building` | works the shift with the fitting bypassed, waste to the river (L28) |
+| `discharge` | `building` | works the shift with the fitting bypassed, waste to the river (L45) |
 | `survey_air` | `district` | an analyst's shift files a dated public reading in the Hall of Records |
 | `survey_water` | `district` | the same for the river: the evidence a compact is made of |
 | `plant_trees` | `district` | a planting shift on open ground; greenery grows in over a cycle |
@@ -291,11 +294,12 @@ list.
 
 | Code | Offence | Severity | Track |
 | --- | --- | --- | --- |
-| L28 | Unlawful discharge — dumping to the river, or a shift with the fitting bypassed | 3 | I — the ladder |
-| L29 | False abatement return — a fitting claimed maintained, or works certified undone | 3 | I — the ladder |
-| L30 | Undeclared interest — voting a zoning question that moves land you or your household hold | 3 | I — the ladder |
+| L45 | Unlawful discharge — dumping to the river, or a shift with the fitting bypassed | 3 | I — the ladder |
+| L46 | False abatement return — a fitting claimed maintained, or works certified undone | 3 | I — the ladder |
+| L47 | Undeclared interest — voting a zoning question that moves land you or your household hold | 3 | I — the ladder |
 
-All three sit on the ladder. **Nothing here reaches custody**: smoke is an
+All three are registered in `REGISTRY.md` §4 and all three sit on the ladder.
+**Nothing here reaches custody**: smoke is an
 offence against the city, not against a person, and a councillor who rezones
 themselves rich has taken from the city's regard, not from anyone's safety. Where
 a rezoning is bought, the bribe is L09 and the office is L11.

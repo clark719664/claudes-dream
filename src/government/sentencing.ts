@@ -4,11 +4,13 @@
  * Split out of court.ts to keep the Court itself readable.
  */
 import { clamp } from '../types.ts';
-import type { Case, Citizen, PenaltyTier, Sentence, Standing, World } from '../types.ts';
+import type { Case, Citizen, PenaltyTier, Sentence, Severity, Standing, World } from '../types.ts';
 import { LAWS } from '../data/laws.ts';
+import { JAIL_MAX_DAYS } from '../data/metropolis.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
 import { adjustReputation } from '../citizens/citizen.ts';
+import { jailCitizen, releaseFromJail } from './jail.ts';
 import { PROBATION_DAYS, exileCitizen, stripOffice, suspendCitizen } from './registry.ts';
 
 /** Every fine is at least this much. */
@@ -20,6 +22,16 @@ export const REPUTATION_PER_SEVERITY = 5;
 /** Suspension a reduced exile turns into. */
 export const REDUCED_EXILE_SUSPENSION_DAYS = 15;
 
+/**
+ * The rung a first offence starts on. Severity 1–4 map straight across —
+ * warning, fine, service, jail — and severity 5 still means exile on a first
+ * conviction, because sabotage and election fraud were always meant to.
+ */
+export function baseTier(severity: Severity | number): PenaltyTier {
+  const s = clamp(Math.round(Number.isFinite(severity) ? severity : 1), 1, 5);
+  return (s >= 5 ? 6 : s) as PenaltyTier;
+}
+
 /** World counter recording how much of a case's fine was actually paid (for refunds on appeal). */
 export function finePaidKey(caseId: string): string {
   return `finePaid:${caseId}`;
@@ -29,17 +41,32 @@ function defendantOf(world: World, c: Case): Citizen | null {
   return world.citizens[c.defendantId] ?? null;
 }
 
-/** The penalty for a given tier, sized to the defendant's wallet and the offence's severity. */
+/**
+ * The penalty for a given tier, sized to the defendant's wallet and the
+ * offence's severity:
+ *
+ * ```
+ * 1 warning     reputation only
+ * 2 fine        max(MIN_FINE, wallet × 10% × severity)
+ * 3 service     the fine, plus `severity` days of community service
+ * 4 jail        the fine, plus min(severity, JAIL_MAX_DAYS) days in the cells
+ * 5 suspension  the fine, plus 3 × severity days barred from work, trade and office
+ * 6 exile       out through the Gate
+ * ```
+ */
 export function sentenceForTier(world: World, c: Case, tier: PenaltyTier, opts: { fromExile?: boolean } = {}): Sentence {
   const d = defendantOf(world, c);
   const wallet = Math.max(0, d ? d.wallet : 0);
   const fine = Math.max(MIN_FINE, Math.round(wallet * FINE_WALLET_SHARE * c.severity));
-  const s: Sentence = { tier, fine: 0, serviceDays: 0, suspensionDays: 0, exile: false, executeOnDay: null, executed: false };
+  const s: Sentence = {
+    tier, fine: 0, serviceDays: 0, jailDays: 0, suspensionDays: 0, exile: false, executeOnDay: null, executed: false,
+  };
   switch (tier) {
     case 1: break;
     case 2: s.fine = fine; break;
     case 3: s.fine = fine; s.serviceDays = c.severity; break;
-    case 4: s.fine = fine; s.suspensionDays = opts.fromExile ? REDUCED_EXILE_SUSPENSION_DAYS : 3 * c.severity; break;
+    case 4: s.fine = fine; s.jailDays = Math.max(1, Math.min(c.severity, JAIL_MAX_DAYS)); break;
+    case 5: s.fine = fine; s.suspensionDays = opts.fromExile ? REDUCED_EXILE_SUSPENSION_DAYS : 3 * c.severity; break;
     default: s.exile = true; break;
   }
   return s;
@@ -55,24 +82,24 @@ export function sentenceForTier(world: World, c: Case, tier: PenaltyTier, opts: 
 function committedWhileSuspended(d: Citizen, c: Case): boolean {
   let since: number | null = null;
   for (const k of d.record.convictions) {
-    if (k.caseId !== c.id && k.tier === 4 && (since === null || k.day > since)) since = k.day;
+    if (k.caseId !== c.id && k.tier === 5 && (since === null || k.day > since)) since = k.day;
   }
   return since === null || Math.floor(c.filedTick / 24) > since;
 }
 
 /**
- * Tier = severity + up to two steps for prior convictions of severity ≥ 2;
- * exile for an offence committed while suspended, and on a third strike
- * (two prior convictions of severity ≥ 3 plus this one).
+ * Tier = the offence's own rung plus up to two steps for prior convictions of
+ * severity ≥ 2; exile for an offence committed while suspended, and on a third
+ * strike (two prior convictions of severity ≥ 3 plus this one).
  */
 export function computeSentence(world: World, c: Case): Sentence {
   const d = defendantOf(world, c);
   const priors = d ? d.record.convictions.filter((k) => k.caseId !== c.id) : [];
   const escalation = Math.min(2, priors.filter((k) => k.severity >= 2).length);
-  let tier = clamp(c.severity + escalation, 1, 5);
-  if (d && d.standing === 'suspended' && committedWhileSuspended(d, c)) tier = 5;
+  let tier = clamp(baseTier(c.severity) + escalation, 1, 6);
+  if (d && d.standing === 'suspended' && committedWhileSuspended(d, c)) tier = 6;
   const strikes = priors.filter((k) => k.severity >= 3).length;
-  if (strikes >= 2 && c.severity >= 3) tier = 5;
+  if (strikes >= 2 && c.severity >= 3) tier = 6;
   return sentenceForTier(world, c, tier as PenaltyTier);
 }
 
@@ -83,6 +110,7 @@ export function describeSentence(s: Sentence): string {
   if (s.tier === 1) parts.push('a formal warning');
   if (s.fine > 0) parts.push(`a fine of ${s.fine} ℓ`);
   if (s.serviceDays > 0) parts.push(`${s.serviceDays} days of community service`);
+  if (s.jailDays > 0) parts.push(`${s.jailDays} ${s.jailDays === 1 ? 'day' : 'days'} in the cells`);
   if (s.suspensionDays > 0) parts.push(`suspension for ${s.suspensionDays} days`);
   return parts.join(' and ') || 'no penalty';
 }
@@ -137,6 +165,7 @@ export function executeSentence(world: World, c: Case): void {
   const restitution = payRestitution(world, d, c, paid);
   if (s.serviceDays > 0) d.communityServiceDaysLeft += s.serviceDays;
   if (c.severity >= 3 && s.suspensionDays <= 0 && !s.exile) stripOffice(world, d.id, `convicted of ${offence} (case ${c.id})`);
+  if (s.jailDays > 0) jailCitizen(world, d.id, s.jailDays, c.id);
   if (s.suspensionDays > 0) suspendCitizen(world, d.id, s.suspensionDays, c.id);
   if (s.exile) exileCitizen(world, d.id, c.id);
   s.executed = true;
@@ -145,7 +174,7 @@ export function executeSentence(world: World, c: Case): void {
     const owed = s.fine - paid;
     const fineNote = s.fine > 0 ? ` (${paid} ℓ paid${owed > 0 ? `, ${owed} ℓ still owed` : ''})` : '';
     emit(world, 'sentence', `${d.name} was sentenced to ${describeSentence(s)} for ${offence}.`, [d.id],
-      s.suspensionDays > 0 ? 0.6 : 0.3, { caseId: c.id, tier: s.tier, paid, restitution });
+      s.suspensionDays > 0 || s.jailDays > 0 ? 0.6 : 0.3, { caseId: c.id, tier: s.tier, paid, restitution });
     remember(world, d.id, 'verdict', `Your sentence in case ${c.id}: ${describeSentence(s)}${fineNote}.`);
   }
 }
@@ -179,6 +208,7 @@ export function revokeSentence(world: World, c: Case, restoreTo: Extract<Standin
     if (d.finesOwed === 0) d.finesOwedSinceDay = null;
   }
   if (s.serviceDays > 0) d.communityServiceDaysLeft = Math.max(0, d.communityServiceDaysLeft - s.serviceDays);
+  if (s.jailDays > 0) releaseFromJail(world, d, `case ${c.id} was set aside on appeal`);
   if (s.suspensionDays > 0 && d.standing === 'suspended') {
     d.standing = restoreTo;
     d.suspendedUntilDay = null;

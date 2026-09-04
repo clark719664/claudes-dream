@@ -109,6 +109,14 @@ export const ACTION_CATALOGUE: Partial<Record<ActionType, ActionSpec>> = {
   leave_club: { params: 'clubId', text: 'leave a club; the last member out disbands it.', group: CLUBS },
   attend_club: { params: 'clubId', text: 'attend your club at its meeting hour and venue; company, bonds and a little skill.', group: CLUBS },
   donate: { params: 'amount', text: 'give lumens to the Community Chest, which pays a daily stipend to citizens with no home or a critical need.', group: CLUBS },
+
+  write_diary: { params: 'text', text: 'write one line about your day. Unlike a note it is public: the city may read it, and the Chronicle may quote it.', group: NOTEBOOK },
+  hire_advocate: { params: 'advocate', text: 'retain an adult of rhetoric 40 or more to speak for you at a charge you face; a private advocate charges a fee, a Public Defender at the Courthouse charges nothing.', group: CIVIC },
+  advocate: { params: 'case', text: 'speak in the Courthouse for the defendant who retained you, while the case sits; every judge\'s belief in guilt falls by up to 0.15, scaled by your rhetoric, once per case.', group: CIVIC },
+  found_gang: { params: 'name', text: 'found a gang, with your district as its turf. It needs three friends the city reads as dishonest, and a reading of your own honesty below 0.3.', group: OFFENCES },
+  recruit: { params: 'citizen', text: 'ask an adult in your gang\'s turf to join it; it works on people who already know you well and whom the city does not read as honest. A refusal costs the bond.', group: OFFENCES },
+  racket: { params: 'business', text: 'demand protection money from a business in your district: it pays a share of its till to your boss, or its shopfront is wrecked. Either way it is extortion (L15).', group: OFFENCES },
+  pay_racket: { params: '', text: 'pay this cycle\'s protection for your own business before anybody comes to ask. Being leaned on is not an offence you commit.', group: WORK },
 };
 
 /** Groups in the order they are shown. */
