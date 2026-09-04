@@ -2,9 +2,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
 import {
-  addHousingProgress, comfortDecayMultiplier, dailyHousing, evict, moveHome, vacancies,
+  CELLS_RENT, addHousingProgress, addressName, cellsOpen, comfortDecayMultiplier, dailyHousing,
+  evict, inTheCells, moveHome, moveHomeTo, rentOf, takeBunk, vacancies,
 } from '../src/economy/housing.ts';
 import { createHousehold, householdOf, joinHousehold } from '../src/society/households.ts';
+import { openDistrict } from '../src/world/growth.ts';
+import { landValue } from '../src/economy/land.ts';
 
 test('vacancies reflect capacity minus occupancy', () => {
   const w = makeWorld();
@@ -21,7 +24,9 @@ test('moveHome moves in, between tiers and out, adjusting occupancy and arrears'
   assert.equal(res.ok, true, res.message);
   assert.equal(c.homeTier, 1);
   assert.equal(w.housing.occupied[1], 1);
-  assert.ok(c.memory.some((m) => m.text.includes('Lantern Lofts')));
+  // a home is an address, not a tier: the memory names the block they got
+  const address = addressName(w, c);
+  assert.ok(c.memory.some((m) => m.text.includes(address)), address);
 
   c.rentArrearsDays = 2;
   assert.equal(moveHome(w, c.id, 3).ok, true);
@@ -105,11 +110,16 @@ test('dailyHousing collects rent, tracks arrears, evicts after three days and co
   const before = totalMoney(w);
   const t0 = w.treasury.balance;
 
+  const rent2 = rentOf(w, payer);
+  const rent1 = rentOf(w, broke);
+  assert.ok(rent2 > rent1, 'a terrace costs more than a loft');
+  assert.ok(rent1 > 3, 'and more than the broke citizen has');
+
   dailyHousing(w);
-  assert.equal(payer.wallet, 80);
+  assert.equal(payer.wallet, 100 - rent2);
   assert.equal(payer.needs.comfort, 85);
-  assert.equal(w.treasury.balance, t0 + 20);
-  assert.equal(w.treasury.totals.rent, 20);
+  assert.equal(w.treasury.balance, t0 + rent2);
+  assert.equal(w.treasury.totals.rent, rent2);
   assert.equal(broke.wallet, 3);
   assert.equal(broke.rentArrearsDays, 1);
   assert.equal(homeless.wallet, 50);
@@ -131,10 +141,11 @@ test('dailyHousing collects rent, tracks arrears, evicts after three days and co
   moveHome(w, late.id, 1);
   dailyHousing(w);
   assert.equal(late.rentArrearsDays, 1);
-  late.wallet = 20;
+  late.wallet = 40;
+  const lateRent = rentOf(w, late);
   dailyHousing(w);
   assert.equal(late.rentArrearsDays, 0);
-  assert.equal(late.wallet, 12);
+  assert.equal(late.wallet, 40 - lateRent);
 });
 
 test('dailyHousing quietly frees the homes of emigrants without charging or evicting them', () => {
@@ -199,4 +210,147 @@ test('occupancy tracks roofs, not heads, however people move', () => {
   }
   const counted = w.housing.occupied[1] + w.housing.occupied[2] + w.housing.occupied[3];
   assert.equal(counted, roofs.size, 'the register counts exactly the roofs that are lived under');
+});
+
+// ---------------------------------------------------------------------------
+// Addresses: every district has a stock, and they do not cost the same
+// ---------------------------------------------------------------------------
+
+test('a home is an address: the same tier costs different rents in different districts', () => {
+  const w = makeWorld();
+  const cheap = makeCitizen(w, { homeTier: 1, homeBuildingId: 'forge_cottages' });
+  const dear = makeCitizen(w, { homeTier: 1, homeBuildingId: 'lantern_lofts' });
+  assert.ok(rentOf(w, cheap) < rentOf(w, dear), 'backing onto the Forge is cheaper than the Garden');
+  assert.ok(rentOf(w, cheap) > 0);
+
+  // and the rent follows the land: a district the city has ruined gets cheaper
+  const before = rentOf(w, dear);
+  for (const b of Object.values(w.buildings)) if (b.district === 'verdant_quarter') b.damage = 1;
+  w.day += 1;
+  assert.ok(rentOf(w, dear) <= before, 'a district in ruins does not let for more');
+});
+
+test('a citizen may name a district, and is housed there if anything in it is free', () => {
+  const w = makeWorld();
+  const c = makeCitizen(w);
+  const r = moveHomeTo(w, c.id, 1, 'foundry_row');
+  assert.equal(r.ok, true, r.message);
+  assert.equal(c.homeTier, 1);
+  assert.equal(w.buildings[c.homeBuildingId ?? '']?.district, 'foundry_row');
+
+  // asking for a district with nothing free in it still gets a roof somewhere
+  const other = makeCitizen(w);
+  assert.equal(moveHomeTo(w, other.id, 3, 'threshold').ok, true);
+  assert.equal(other.homeTier, 3);
+  assert.ok(other.homeBuildingId);
+});
+
+test('rent tracks the land: a monument in the Commons lifts the rent of Civic Chambers', () => {
+  const w = makeWorld();
+  const c = makeCitizen(w, { homeTier: 2, homeBuildingId: 'civic_chambers' });
+  const before = rentOf(w, c);
+  for (let i = 0; i < 6; i++) w.monuments.push({ id: `m_${i}`, honoreeId: c.id, inscription: 'For the city', day: 0 });
+  w.day += 1;
+  assert.ok(rentOf(w, c) > before, `${rentOf(w, c)} should beat ${before}`);
+});
+
+// ---------------------------------------------------------------------------
+// The Cells: the floor under the city
+// ---------------------------------------------------------------------------
+
+test('the Cells take anyone the city has no room for, and are never a vacancy', () => {
+  const w = makeWorld();
+  for (let i = 0; i < 3; i++) makeCitizen(w);
+  assert.equal(cellsOpen(w), false, 'until the Undercroft opens there is no floor');
+  openDistrict(w, 'undercroft');
+  assert.equal(cellsOpen(w), true);
+
+  // fill the city's own tier-1 rooms
+  w.housing.occupied[1] = w.housing.capacity[1];
+  assert.equal(vacancies(w)[1], 0);
+
+  const homeless = makeCitizen(w, { wallet: 10 });
+  const capacity = w.housing.capacity[1];
+  const r = moveHome(w, homeless.id, 1);
+  assert.equal(r.ok, true, r.message);
+  assert.equal(inTheCells(homeless), true, 'nobody is turned away');
+  assert.equal(homeless.homeTier, 1);
+  assert.equal(rentOf(w, homeless), CELLS_RENT);
+  assert.equal(w.housing.capacity[1], capacity + 1, 'a bunk is made up for them');
+  assert.equal(vacancies(w)[1], 0, 'and it is never a room somebody else could have had');
+  assert.ok(w.housing.occupied[1] <= w.housing.capacity[1]);
+
+  // and folded away again when they leave
+  assert.equal(moveHome(w, homeless.id, 0).ok, true);
+  assert.equal(w.housing.capacity[1], capacity);
+  assert.equal(vacancies(w)[1], 0);
+});
+
+test('a bunk costs three lumens a day and nobody is ever put out of one', () => {
+  const w = makeWorld();
+  for (let i = 0; i < 3; i++) makeCitizen(w);
+  openDistrict(w, 'undercroft');
+  const skint = makeCitizen(w, { wallet: CELLS_RENT });
+  assert.equal(takeBunk(w, skint.id).ok, true);
+  assert.equal(takeBunk(w, skint.id).ok, false, 'you cannot take two bunks');
+
+  const before = totalMoney(w);
+  dailyHousing(w);
+  assert.equal(skint.wallet, 0);
+  assert.equal(skint.rentArrearsDays, 0);
+  assert.equal(totalMoney(w), before);
+
+  for (let day = 0; day < 5; day++) { w.day += 1; dailyHousing(w); }
+  assert.equal(inTheCells(skint), true, 'five days in arrears and still under a roof');
+  assert.ok(skint.rentArrearsDays >= 3);
+  assert.equal(w.events.filter((e) => e.kind === 'eviction' && e.actors.includes(skint.id)).length, 0);
+  assert.equal(totalMoney(w), before, 'and not a lumen made or lost');
+});
+
+test('a bunk is worse than a room and better than the street', () => {
+  const w = makeWorld();
+  for (let i = 0; i < 3; i++) makeCitizen(w);
+  openDistrict(w, 'undercroft');
+  const c = makeCitizen(w);
+  takeBunk(w, c.id);
+  assert.equal(comfortDecayMultiplier(c.homeTier, 1.6), 1.6);
+  assert.ok(comfortDecayMultiplier(1, 1.6) < comfortDecayMultiplier(0), 'better than the street');
+  assert.ok(comfortDecayMultiplier(1, 1.6) > comfortDecayMultiplier(1), 'worse than a room of your own');
+
+  // a room of their own is an upgrade a citizen may take at any time
+  assert.equal(moveHome(w, c.id, 1).ok, true);
+  assert.equal(inTheCells(c), false);
+  assert.equal(c.homeTier, 1);
+  assert.equal(w.counters.cellBunks, 0);
+});
+
+test('the bunk count repairs itself however else the city moved somebody', () => {
+  const w = makeWorld();
+  for (let i = 0; i < 3; i++) makeCitizen(w);
+  openDistrict(w, 'undercroft');
+  const c = makeCitizen(w);
+  takeBunk(w, c.id);
+  const capacity = w.housing.capacity[1];
+  // something else in the city puts them on the street without telling housing
+  c.homeTier = 0;
+  c.homeBuildingId = null;
+  w.housing.occupied[1] = Math.max(0, w.housing.occupied[1] - 1);
+  dailyHousing(w);
+  assert.equal(w.counters.cellBunks, 0);
+  assert.equal(w.housing.capacity[1], capacity - 1, 'the bunk was folded away with them');
+  assert.ok(w.housing.occupied[1] <= w.housing.capacity[1]);
+});
+
+test('land value moves rents but never mints a lumen', () => {
+  const w = makeWorld();
+  const people = [0, 1, 2, 3, 4].map(() => makeCitizen(w, { wallet: 500 }));
+  for (const p of people) moveHome(w, p.id, 1);
+  const before = totalMoney(w);
+  for (let day = 0; day < 6; day++) {
+    w.day += 1;
+    if (day === 2) w.monuments.push({ id: 'm_1', honoreeId: people[0].id, inscription: 'For the city', day: w.day });
+    dailyHousing(w);
+    assert.equal(totalMoney(w), before, `day ${day}`);
+  }
+  assert.ok(landValue(w, 'commons') > 0);
 });

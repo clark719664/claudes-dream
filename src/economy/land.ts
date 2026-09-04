@@ -103,12 +103,14 @@ export const PRESTIGE_WEIGHT: Record<BusinessKind, number> = {
   studio: 0.8, cafe: 0.25, shop: 0.15, clinic: 0.1, workshop: 0.05, courier: 0,
 };
 
-/** The trade a business does, against the city's average, is held to this band. */
+/** Footfall, and the trade it brings, are both held to a band. */
+export const FOOTFALL_MIN = 0.4;
+export const FOOTFALL_MAX = 3.0;
 export const CUSTOM_MIN = 0.3;
 export const CUSTOM_MAX = 3.0;
 
 /** A move of this much in a day is worth a line in the Chronicle. */
-export const LAND_NEWS = 0.15;
+export const LAND_NEWS = 0.10;
 
 // ---------------------------------------------------------------------------
 // The reading
@@ -345,7 +347,7 @@ export function recomputeLand(world: World): LandReadings {
     r.normalised = meanRaw > 0 ? r.raw / meanRaw : 1;
     r.scarcity = 0.85 + 0.5 * clamp(occupancy, 0, 1);
     r.value = clamp(r.normalised * r.scarcity, LAND_MIN, LAND_MAX);
-    r.footfall = meanVisits > 0 ? 0.6 + 0.8 * (r.visits / meanVisits) : 1;
+    r.footfall = clamp(meanVisits > 0 ? 0.6 + 0.8 * (r.visits / meanVisits) : 1, FOOTFALL_MIN, FOOTFALL_MAX);
     readings[r.district] = r;
   }
   // Districts the city has not opened still need a number for anyone who asks.

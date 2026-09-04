@@ -13,11 +13,12 @@ import { makeCitizen, makeWorld, totalMoney } from './helpers.ts';
 import { openDistrict } from '../src/world/growth.ts';
 import { BUSINESS_RENT } from '../src/data/jobs.ts';
 import {
-  EVICTION_REPUTATION, LET_RENT_CAP, MIN_PRICE, PRICE_MULTIPLE, SELL_SHARE, SHOPFRONT_RENT,
-  allUnits, assignTenancy, buyProperty, dailyProperty, evictTenant, isOfferedToLet, landlordRent,
-  letProperty, propertyObservation, rentCap, sellProperty, syncProperty, tenancyOf, unitPrice,
-  unitsFor, unitsOnSale,
+  EVICTION_REPUTATION, LET_RENT_CAP, MANAGEMENT_CUT, MIN_PRICE, PRICE_MULTIPLE, SELL_SHARE,
+  allUnits, assignTenancy, businessRent, buyProperty, dailyProperty, evictTenant, isOfferedToLet,
+  landlordRent, letProperty, marketPrice, propertyObservation, rentCap, sellProperty, syncProperty,
+  tenancyOf, unitPrice, unitsFor, unitsOnSale,
 } from '../src/markets/property.ts';
+import { homeRent, landValue, premisesRent, priceMultiplier } from '../src/economy/land.ts';
 
 /** A citizen standing at the Exchange with money in their pocket. */
 function trader(world: World, wallet = 5_000, name = 'Ash'): Citizen {
@@ -45,15 +46,25 @@ function business(world: World, ownerId: string, treasury = 1_000): Business {
 // The register
 // ---------------------------------------------------------------------------
 
-test('syncProperty draws one deed per room the city counts, plus the open shopfronts', () => {
+test('syncProperty draws one deed per room the city counts, in every district that has one', () => {
   const world = makeWorld();
   syncProperty(world);
-  assert.equal(homesIn(world, 'lantern_lofts').length, 30);
-  assert.equal(homesIn(world, 'terraces').length, 15);
-  assert.equal(homesIn(world, 'skyline_villas').length, 5);
+  // Every district of the founding city has a stock (`PROPERTY.md` §3), and
+  // together the blocks hold exactly the rooms the ledger counts.
+  for (const tier of [1, 2, 3] as const) {
+    const drawn = allUnits(world).filter((u) => u.kind === 'home' && u.tier === tier).length;
+    assert.equal(drawn, world.housing.capacity[tier], `tier ${tier}`);
+  }
+  assert.equal(homesIn(world, 'lantern_lofts').length, 8);
+  assert.equal(homesIn(world, 'forge_cottages').length, 5);
+  assert.equal(homesIn(world, 'arrivals_lodgings').length, 2);
+  assert.equal(homesIn(world, 'plaza_apartments').length, 2);
+  const districts = new Set(allUnits(world).map((u) => world.buildings[u.buildingId].district));
+  assert.equal(districts.size, 7, 'nobody is left without an address to want');
   // the Heights and the Undercroft are shut at the founding, so their blocks have no deeds
   assert.equal(homesIn(world, 'hilltop_villas').length, 0);
   assert.equal(homesIn(world, 'the_tunnels').length, 0);
+  assert.equal(homesIn(world, 'the_cells').length, 0, 'a bunk is never a deed');
   assert.equal(allUnits(world).filter((u) => u.kind === 'shopfront').length, 2);
   assert.ok(allUnits(world).every((u) => u.ownerId === 'city'));
 });
@@ -68,8 +79,12 @@ test('syncProperty is idempotent, follows the builders, and refreshes the city\'
   world.housing.capacity[1] += 2;
   world.housing.rent[1] = 11;
   syncProperty(world);
-  assert.equal(homesIn(world, 'lantern_lofts').length, 32);
-  assert.ok(homesIn(world, 'lantern_lofts').every((u) => u.rent === 11));
+  assert.equal(allUnits(world).filter((u) => u.kind === 'home' && u.tier === 1).length, 32,
+    'what the builders finish is spread across the city');
+  const loft = homesIn(world, 'lantern_lofts')[0];
+  assert.equal(loft.rent, homeRent(world, 1, 'lantern_lofts'));
+  const cottage = homesIn(world, 'forge_cottages')[0];
+  assert.ok(cottage.rent < loft.rent, 'the same tier, and not the same rent');
 });
 
 test('a district that opens brings its own block of deeds at its own rent', () => {
@@ -80,18 +95,25 @@ test('a district that opens brings its own block of deeds at its own rent', () =
   syncProperty(world);
   const tunnels = homesIn(world, 'the_tunnels');
   assert.equal(tunnels.length, 24);
-  // the Tunnels let at 0.4 of the tier's rent — the cheapest roof in the city
-  assert.equal(tunnels[0].rent, Math.round(world.housing.rent[1] * 0.4));
-  assert.equal(homesIn(world, 'lantern_lofts').length, 30);
+  // the Tunnels let at 0.4 of the tier's rent against the Undercroft's own
+  // land — the cheapest room in the city
+  assert.equal(tunnels[0].rent, homeRent(world, 1, 'the_tunnels'));
+  assert.ok(tunnels[0].rent < homesIn(world, 'lantern_lofts')[0].rent);
+  assert.equal(homesIn(world, 'lantern_lofts').length, 8, 'and the Verdant Quarter keeps its own');
 });
 
-test("a unit's price is sixty days of its rent, with a floor under it", () => {
+test("a unit's price is sixty days of its rent at a premium to the land, with a floor under it", () => {
   const world = makeWorld();
   syncProperty(world);
   const loft = homesIn(world, 'lantern_lofts')[0];
-  assert.equal(unitPrice(world, loft), PRICE_MULTIPLE * loft.rent);
-  const villa = homesIn(world, 'skyline_villas')[0];
-  assert.equal(unitPrice(world, villa), PRICE_MULTIPLE * 50);
+  const premium = priceMultiplier(world, 'verdant_quarter');
+  assert.ok(Math.abs(premium - (0.8 + 0.4 * landValue(world, 'verdant_quarter'))) < 1e-9);
+  assert.equal(unitPrice(world, loft), Math.round(PRICE_MULTIPLE * loft.rent * premium));
+  // good land sells at a premium to its yield: the dearer district's price is
+  // more than the same rent would buy in the cheaper one
+  const cottage = homesIn(world, 'forge_cottages')[0];
+  assert.ok(priceMultiplier(world, 'foundry_row') < premium);
+  assert.ok(unitPrice(world, cottage) < unitPrice(world, loft));
   const cheap = { ...loft, rent: 0 };
   assert.equal(unitPrice(world, cheap), MIN_PRICE);
 });
@@ -221,11 +243,11 @@ test('an owner sets a rent, and the Charter caps it at four times the city\'s', 
   const unit = homesIn(world, 'lantern_lofts')[0];
   buyProperty(world, owner.id, unit.id);
   const cap = rentCap(world, unit);
-  assert.equal(cap, world.housing.rent[1] * LET_RENT_CAP);
+  assert.equal(cap, homeRent(world, 1, 'lantern_lofts') * LET_RENT_CAP);
 
   assert.equal(letProperty(world, owner.id, unit.id, cap + 1).ok, false);
   assert.equal(letProperty(world, owner.id, unit.id, 0).ok, false);
-  assert.equal(unit.rent, world.housing.rent[1]);
+  assert.equal(unit.rent, homeRent(world, 1, 'lantern_lofts'));
 
   assert.equal(letProperty(world, owner.id, unit.id, cap).ok, true);
   assert.equal(unit.rent, cap);
@@ -286,13 +308,42 @@ test("a tenant's rent reaches the landlord and the property tax reaches the Trea
   const before = totalMoney(world);
   const ownerBefore = owner.wallet;
   const treasuryBefore = world.treasury.balance;
+  // the landlord lives at the Exchange, not above the shop: the Exchange's
+  // agent manages the let and takes its cut (`MOBILITY.md` §2)
+  const cut = Math.round(20 * MANAGEMENT_CUT);
   const moved = landlordRent(world);
 
   assert.equal(moved, 20);
   assert.equal(tenant.wallet, 80);
-  assert.equal(owner.wallet, ownerBefore + 20 - 5);
-  assert.equal(world.treasury.balance, treasuryBefore + 5);
+  assert.equal(owner.wallet, ownerBefore + 20 - 5 - cut);
+  assert.equal(world.treasury.balance, treasuryBefore + 5 + cut);
   assert.equal(totalMoney(world), before);
+});
+
+test('a landlord who lives in the district collects the whole rent, and one who does not pays a manager', () => {
+  const world = makeWorld();
+  syncProperty(world);
+  const owner = trader(world);
+  const unit = homesIn(world, 'quayside_rooms')[0];   // in Harbor Market, where the owner is
+  buyProperty(world, owner.id, unit.id);
+  letProperty(world, owner.id, unit.id, 20);
+  const tenant = makeCitizen(world, { name: 'Tenant', wallet: 100, homeTier: 1 });
+  assignTenancy(world, tenant.id, 1);
+  assert.equal(unit.tenantId, tenant.id);
+
+  const before = totalMoney(world);
+  const wallet = owner.wallet;
+  landlordRent(world);
+  assert.equal(owner.wallet, wallet + 20, 'a landlord on the spot keeps all of it');
+  assert.equal(totalMoney(world), before);
+
+  // and the same landlord, managing a room across the city, does not
+  owner.homeBuildingId = 'lantern_lofts';
+  owner.homeTier = 1;
+  tenant.wallet = 100;
+  const second = owner.wallet;
+  landlordRent(world);
+  assert.equal(owner.wallet, second + 20 - Math.round(20 * MANAGEMENT_CUT));
 });
 
 test('an owner living in their own unit pays nobody', () => {
@@ -371,7 +422,8 @@ test('a privately held shopfront takes the premises rent that would have gone to
   const shopkeeper = makeCitizen(world, { name: 'Keeper' });
   const biz = business(world, shopkeeper.id, 500);
   const shopfront = allUnits(world).find((u) => u.buildingId === 'shopfronts_harbor')!;
-  assert.equal(shopfront.rent, SHOPFRONT_RENT);
+  const rent = premisesRent(world, 'shop', 'harbor_market', BUSINESS_RENT.shop);
+  assert.equal(shopfront.rent, rent);
   buyProperty(world, landlord.id, shopfront.id);
 
   const before = totalMoney(world);
@@ -379,14 +431,33 @@ test('a privately held shopfront takes the premises rent that would have gone to
   landlordRent(world);
   assert.equal(shopfront.tenantId, biz.id);
   assert.equal(biz.rentPerDay, 0, 'the business no longer pays the city for premises it rents from a citizen');
-  assert.equal(biz.treasury, 500 - SHOPFRONT_RENT);
-  assert.equal(landlord.wallet, wallet + SHOPFRONT_RENT);
+  assert.equal(biz.treasury, 500 - rent);
+  assert.equal(landlord.wallet, wallet + rent, 'and the landlord lives in the district, so takes all of it');
   assert.equal(totalMoney(world), before);
 
   // and when the deed goes back to the city, the city is paid again
   sellProperty(world, landlord.id, shopfront.id);
   landlordRent(world);
-  assert.equal(biz.rentPerDay, BUSINESS_RENT.shop);
+  assert.equal(biz.rentPerDay, businessRent(world, biz));
+});
+
+test('premises are priced by the land and the traffic, and the trade follows the traffic', () => {
+  const world = makeWorld();
+  syncProperty(world);
+  for (let i = 0; i < 8; i++) makeCitizen(world, { district: 'commons' });
+  const keeper = makeCitizen(world, { name: 'Keeper' });
+  const biz = business(world, keeper.id, 500);
+  biz.district = 'commons';
+  biz.buildingId = 'central_plaza';
+  const plaza = businessRent(world, biz);
+  biz.district = 'foundry_row';
+  const row = businessRent(world, biz);
+  assert.ok(plaza > row, `a shop on the Plaza (${plaza}) pays more than one in Foundry Row (${row})`);
+
+  biz.district = 'commons';
+  dailyProperty(world);
+  assert.equal(biz.rentPerDay, businessRent(world, biz));
+  assert.ok((world.counters[`custom:${biz.id}`] ?? 0) > 1, 'and takes more custom for it');
 });
 
 // ---------------------------------------------------------------------------
@@ -410,7 +481,7 @@ test("an exile's deeds go back to the city, and its tenancies with them", () => 
 
   assert.equal(unit.ownerId, 'city');
   assert.deepEqual(owner.ownedUnits, []);
-  assert.equal(unit.rent, world.housing.rent[1], 'the city asks its own rent again');
+  assert.equal(unit.rent, homeRent(world, 1, 'lantern_lofts'), 'the city asks its own rent again');
   assert.equal(isOfferedToLet(world, unit), false);
   assert.equal(totalMoney(world), before, 'an exile does not take the money supply with them');
 });
