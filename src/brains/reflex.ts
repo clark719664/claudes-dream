@@ -15,6 +15,7 @@ import { talentOf } from '../citizens/citizen.ts';
 import { bondBetween, friendsOf } from '../citizens/relationships.ts';
 import { characterCompatibility } from '../citizens/character.ts';
 import { pendingCasesFor } from '../government/court.ts';
+import { restrainedFrom } from '../government/jail.ts';
 import { medicOnStaff } from '../actions/daily.ts';
 import { holdsOffice, isPresent } from '../actions/common.ts';
 import {
@@ -48,6 +49,17 @@ export const BROKE = 30;
 export const MISERABLE = 30;
 /** Hours between pleas to a friend for food money. */
 export const PLEA_INTERVAL = 6;
+/**
+ * A bond at or below this is a grudge: not a stranger, somebody the citizen
+ * has a reason to dislike. The old reading was −30, which is the floor a feud
+ * presses a bond to and is reached almost nowhere else, so the Code of Persons
+ * was unreachable from a scripted mind and the cells stayed empty in every
+ * run. A scam costs the victim 30 points of bond, a theft 25 and an insult 15,
+ * and any of those is a grudge.
+ */
+export const GRUDGE_BOND = -20;
+/** Out of sorts enough to act on one. The city's median mood sits near 65. */
+export const SOUR_MOOD = 65;
 
 type Step = (ctx: Ctx) => Action | null;
 
@@ -279,13 +291,16 @@ function tryCrime(ctx: Ctx): Action | null {
   // reading of the citizen's honesty rises. Erasure is not on this list at
   // all: it takes a tool, a night, an empty district and three unbroken hours,
   // which is not a thing a reflex mind assembles by accident.
-  const rival = here.find((o) => bondBetween(world, c.id, o.id) <= -30);
-  if (rival && c.mood < 50) {
-    if (p.honesty < 0.15 && chance(world, 0.02)) return { type: 'extort', target: rival.id, amount: randInt(world, 20, 80) };
-    if (p.honesty < 0.2 && chance(world, 0.02)) return { type: 'assault', target: rival.id };
-    if (p.honesty < 0.25 && chance(world, 0.03)) return { type: 'threaten', target: rival.id };
-    if (p.honesty < 0.3 && chance(world, 0.05)) return { type: 'harass', target: rival.id };
-    if (chance(world, 0.05)) return { type: 'insult', target: rival.id };
+  // A restraining order is obeyed: a scripted mind does not walk back into the
+  // person the Court told it to keep away from, so a P01 or P02 conviction
+  // actually stops the harassment instead of filing the same charge weekly.
+  const rival = here.find((o) => bondBetween(world, c.id, o.id) <= GRUDGE_BOND && !restrainedFrom(world, c.id, o.id));
+  if (rival && c.mood < SOUR_MOOD) {
+    if (p.honesty < 0.15 && chance(world, 0.08)) return { type: 'extort', target: rival.id, amount: randInt(world, 20, 80) };
+    if (p.honesty < 0.2 && chance(world, 0.08)) return { type: 'assault', target: rival.id };
+    if (p.honesty < 0.25 && chance(world, 0.10)) return { type: 'threaten', target: rival.id };
+    if (p.honesty < 0.3 && chance(world, 0.15)) return { type: 'harass', target: rival.id };
+    if (chance(world, 0.15)) return { type: 'insult', target: rival.id };
   }
   if (p.honesty < 0.15 && c.mood < 25 && chance(world, 0.02)) {
     const critical = obs.here.buildings.find((b) => world.buildings[b.id]?.critical && b.damage < 1);

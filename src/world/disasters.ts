@@ -53,6 +53,11 @@ const NAMES: Record<Disaster['kind'], string> = {
   outbreak: 'outbreak',
 };
 
+/** "a storm", "an outbreak": the article the name of the trouble takes. */
+function article(name: string): string {
+  return /^[aeiou]/i.test(name) ? 'an' : 'a';
+}
+
 function districtName(world: World, d: DistrictId | null): string {
   return d ? world.districts[d]?.name ?? d : 'Reverie';
 }
@@ -102,9 +107,11 @@ export function openDisaster(world: World, kind: Disaster['kind'], district: Dis
   if (world.disasters.length > MAX_DISASTERS) world.disasters.splice(0, world.disasters.length - MAX_DISASTERS);
   const where = districtName(world, district);
   const affected = citizensIn(world, district);
-  emit(world, 'disaster', `A ${NAMES[kind]} has struck ${where}.`, affected.map((c) => c.id), 0.9,
+  const name = NAMES[kind];
+  const an = article(name);
+  emit(world, 'disaster', `${an === 'an' ? 'An' : 'A'} ${name} has struck ${where}.`, affected.map((c) => c.id), 0.9,
     { kind, district, severity: d.severity });
-  for (const c of affected) remember(world, c.id, 'event', `A ${NAMES[kind]} struck ${where} while you were there.`);
+  for (const c of affected) remember(world, c.id, 'event', `${an === 'an' ? 'An' : 'A'} ${name} struck ${where} while you were there.`);
   return d;
 }
 

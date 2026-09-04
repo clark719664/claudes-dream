@@ -64,6 +64,37 @@ export function fullTally(world: World, k: Case): { guilty: number; total: numbe
   };
 }
 
+/**
+ * Which code the charge was under, in the words the Chronicle prints. Every
+ * verdict says it, because the two tracks answer differently and a reader
+ * should never have to work out from the penalty which one has spoken
+ * (`docs/JUSTICE.md` §1, §2).
+ */
+export function describeTrack(k: { law: string }): string {
+  return trackOf(k.law) === 'person'
+    ? 'an offence against a person, answered in days'
+    : 'an offence against the city, answered on the ladder';
+}
+
+/**
+ * The reason given by somebody who voted the way the case went — a judge
+ * first, then a juror. A verdict that prints only the tally says who won; the
+ * city is owed why.
+ */
+export function leadingReason(world: World, k: Case, verdict: Verdict): string {
+  for (const id of k.judges) {
+    if (k.votes[id] !== verdict) continue;
+    const why = (k.reasons[id] ?? '').trim();
+    if (why) return why;
+  }
+  for (const id of seatedJurors(world, k)) {
+    if (k.juryVotes?.[id] !== verdict) continue;
+    const why = (k.juryReasons?.[id] ?? '').trim();
+    if (why) return why;
+  }
+  return '';
+}
+
 /** "Ada guilty, Bram acquitted, Cyd abstained" — how the bench and the box divided, by name. */
 export function describeVotes(world: World, k: Case): string {
   const bench = k.judges.map((id) => `${nameOf(world, id)} ${k.votes[id] ?? 'abstained'}`).join(', ');
@@ -223,25 +254,31 @@ function decideCase(world: World, k: Case): void {
   const offence = offenceName(k.law).toLowerCase();
   const tally = `${guilty}–${total - guilty}`;
   const how = `${tally}: ${describeVotes(world, k)}`;
+  // The charge as the Chronicle reports it: the offence, and which of the two
+  // codes it is under, so nobody has to infer the track from the penalty.
+  const charge = `${offence}, ${describeTrack(k)}`;
+  const reason = leadingReason(world, k, verdict);
+  const because = reason ? ` ${reason}` : '';
+  const track = trackOf(k.law);
   if (verdict === 'guilty') {
     const s = computeSentence(world, k);
     k.sentence = s;
     if (s.exile) {
       s.executeOnDay = world.day + APPEAL_WINDOW_DAYS;
-      emit(world, 'verdict', `The Court found ${d.name} guilty of ${offence} (${how}) and sentenced them to exile, to be carried out on day ${s.executeOnDay} unless appealed.`,
-        [d.id, ...k.judges], 0.9, { caseId: k.id, verdict, tier: s.tier, votes: { ...k.votes } });
-      remember(world, d.id, 'verdict', `The Court found you guilty of ${offence} (${how}) and sentenced you to EXILE on day ${s.executeOnDay}. You may appeal to the Council today.`);
+      emit(world, 'verdict', `The Court found ${d.name} guilty of ${charge} (${how}) and sentenced them to exile, to be carried out on day ${s.executeOnDay} unless appealed.${because}`,
+        [d.id, ...k.judges], 0.9, { caseId: k.id, verdict, track, tier: s.tier, votes: { ...k.votes } });
+      remember(world, d.id, 'verdict', `The Court found you guilty of ${charge} (${how}) and sentenced you to EXILE on day ${s.executeOnDay}. You may appeal to the Council today.`);
     } else {
       executeSentence(world, k);
-      emit(world, 'verdict', `The Court found ${d.name} guilty of ${offence} (${how}): ${describeSentence(s)}.`,
-        [d.id, ...k.judges], 0.5, { caseId: k.id, verdict, tier: s.tier, votes: { ...k.votes } });
-      remember(world, d.id, 'verdict', `The Court found you guilty of ${offence} (${how}). You may appeal to the Council within a day.`);
+      emit(world, 'verdict', `The Court found ${d.name} guilty of ${charge} (${how}): ${describeSentence(s)}.${because}`,
+        [d.id, ...k.judges], 0.5, { caseId: k.id, verdict, track, tier: s.tier, votes: { ...k.votes } });
+      remember(world, d.id, 'verdict', `The Court found you guilty of ${charge} (${how}). You may appeal to the Council within a day.`);
     }
   } else {
     k.status = 'closed';
-    emit(world, 'verdict', `The Court acquitted ${d.name} of ${offence} (${how}).`, [d.id, ...k.judges], 0.5,
-      { caseId: k.id, verdict, votes: { ...k.votes } });
-    remember(world, d.id, 'verdict', `The Court acquitted you of ${offence} (${how}).`);
+    emit(world, 'verdict', `The Court acquitted ${d.name} of ${charge} (${how}).${because}`, [d.id, ...k.judges], 0.5,
+      { caseId: k.id, verdict, track, votes: { ...k.votes } });
+    remember(world, d.id, 'verdict', `The Court acquitted you of ${charge} (${how}).`);
   }
   if (k.victimId && k.victimId !== d.id) {
     remember(world, k.victimId, 'verdict', `The Court ${verdict === 'guilty' ? 'convicted' : 'acquitted'} ${d.name} of ${offence} against you (case ${k.id}; ${how}).`);

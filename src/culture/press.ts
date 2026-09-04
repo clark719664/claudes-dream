@@ -190,15 +190,26 @@ export function printLedgerEdition(world: World, treasuryReport: string): PaperE
   });
   rows.sort((a, b) => b.score - a.score || b.ev.tick - a.ev.tick || b.i - a.i);
 
+  // Yesterday's own front page, so a standing notice — an empty shelf, a
+  // strike still on, a district still flooded — is not run again this morning
+  // under a new date. The Chronicle keeps the same rule; a paper that reprints
+  // itself daily tells the city nothing (`sim/chronicle.ts`).
+  const yesterday = frontPage(world, 'ledger');
+  const printedYesterday = new Set((yesterday?.day === world.day - 1 ? yesterday.headlines ?? [] : []).map(headlineShape));
   const headlines: string[] = [];
   const shapes = new Set<string>();
-  for (const row of rows) {
-    if (headlines.length >= HEADLINES_PER_EDITION) break;
-    const line = rewrite(world, 'ledger', row.ev);
-    const shape = headlineShape(line);
-    if (!line || shapes.has(shape)) continue;
-    shapes.add(shape);
-    headlines.push(line);
+  // Fresh news of its own shape first; only fall back to yesterday's shapes
+  // when the day had nothing else in it.
+  for (const pass of [0, 1]) {
+    for (const row of rows) {
+      if (headlines.length >= HEADLINES_PER_EDITION) break;
+      const line = rewrite(world, 'ledger', row.ev);
+      const shape = headlineShape(line);
+      if (!line || shapes.has(shape)) continue;
+      if (pass === 0 && printedYesterday.has(shape)) continue;
+      shapes.add(shape);
+      headlines.push(line);
+    }
   }
   if (headlines.length === 0) {
     headlines.push(`Quiet on the quay: nothing worth the ink on day ${reportedDay}.`);
