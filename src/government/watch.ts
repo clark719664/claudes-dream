@@ -19,6 +19,8 @@ import { applyForJob, createCityJob, openJobs } from '../economy/jobs.ts';
 import { bondBetween, adjustBond } from '../citizens/relationships.ts';
 import { defend } from './gangs.ts';
 import { expireReports, openReport, pruneBribes, watchSession } from './reports.ts';
+import { curfewVisibilityMod } from '../politics/decrees.ts';
+import { postEvidenceBonus } from '../social/feed.ts';
 
 /** Offences remembered per citizen (newest last). */
 export const RECENT_OFFENCES_LENGTH = 20;
@@ -127,7 +129,9 @@ export function commitOffence(
 
   const onDuty = officersOnDuty(world).filter((o) => o.id !== actorId);
   const witnesses = witnessesOf(world, actor);
-  const p = detectionProbability(world, actor, law, witnesses, onDuty.length, ctx.visibilityMod ?? 0);
+  // A curfew empties the streets: what happens under it is easier to see.
+  const p = detectionProbability(world, actor, law, witnesses, onDuty.length,
+    (ctx.visibilityMod ?? 0) + curfewVisibilityMod(world, actor.district));
   const severity = currentSeverity(world, law);
   const name = LAWS[law].name.toLowerCase();
 
@@ -196,7 +200,8 @@ export function reportOffence(world: World, reporterId: CitizenId, accusedId: Ci
     accused.stats.offencesDetected++;
     const actual = match.law;
     const report = openReport(world, {
-      officerId: null, suspectId: accusedId, law: actual, evidence: isVictim ? 0.75 : 0.6,
+      officerId: null, suspectId: accusedId, law: actual,
+      evidence: clamp((isVictim ? 0.75 : 0.6) + postEvidenceBonus(world, reporterId, accusedId), 0, 1),
       victimId: match.victimId ?? undefined, amount: match.amount,
       description: `${LAWS[actual].name}: ${accused.name}, reported by ${reporter.name}${isVictim ? ' (the victim)' : ''}${note ? ` — "${note}"` : ''}`,
     });

@@ -11,6 +11,7 @@ import { emit, remember } from '../sim/events.ts';
 import { transfer, withholdingPay } from './treasury.ts';
 import { deliverToMarket, sellToMarket } from './market.ts';
 import { assignJob, closeJob, fireFromJob, isQualified, postJob } from './jobs.ts';
+import { noteBusinessProfit, payShareDividends } from '../markets/shares.ts';
 
 /** Cash a business keeps on hand before paying the owner. */
 export const PAYOUT_RESERVE = 100;
@@ -134,6 +135,7 @@ function settleDay(world: World, biz: Business): void {
   const rentPaid = rent <= 0 || transfer(world, biz.id, 'treasury', rent, 'rent', `premises rent for ${biz.name}`);
 
   const profit = biz.revenueToday - biz.costsToday;
+  noteBusinessProfit(world, biz);
   if (profit > 0) {
     const tax = Math.round(profit * clamp(world.government.profitTax, 0, 1));
     if (tax > 0) transfer(world, biz.id, 'treasury', Math.min(tax, biz.treasury), 'profit_tax', `profit tax for ${biz.name}`);
@@ -142,8 +144,13 @@ function settleDay(world: World, biz: Business): void {
   // the owner is paid out of a profitable day's surplus; a loss-making business keeps its capital to trade on
   if (owner && (owner.standing === 'good' || owner.standing === 'probation') && profit > 0 && biz.treasury > PAYOUT_RESERVE) {
     const payout = Math.round((biz.treasury - PAYOUT_RESERVE) * PAYOUT_SHARE);
-    const { net, tax } = withholdingPay(world, biz.id, owner.id, payout, 'payout', `owner's payout from ${biz.name}`);
-    if (net > 0) remember(world, owner.id, 'money', `${biz.name} paid you ${net} ℓ (${tax} ℓ withheld in tax); profit today ${profit} ℓ.`);
+    // A listed business pays its holders instead of paying the owner whole:
+    // the owner keeps 51 shares, so most of it still comes home.
+    const shared = payShareDividends(world, biz, payout);
+    if (shared <= 0) {
+      const { net, tax } = withholdingPay(world, biz.id, owner.id, payout, 'payout', `owner's payout from ${biz.name}`);
+      if (net > 0) remember(world, owner.id, 'money', `${biz.name} paid you ${net} ℓ (${tax} ℓ withheld in tax); profit today ${profit} ℓ.`);
+    }
   } else if (owner && profit < 0) {
     remember(world, owner.id, 'money', `${biz.name} lost ${-profit} ℓ today; its treasury holds ${biz.treasury} ℓ.`);
   }

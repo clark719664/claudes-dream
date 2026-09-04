@@ -28,6 +28,10 @@ export const OFFENCES = 'Offences';
 export const THINGS = 'Things';
 export const FAMILY = 'Partnership and family';
 export const CLUBS = 'Clubs and giving';
+export const HEALTH = 'Body and mind';
+export const POLITICS = 'Parties and the vote';
+export const MARKETS = 'Property, shares and trade';
+export const CULTURE = 'Culture and the city';
 
 /** Every action in the catalogue. Keyed by action type; groups keep the order below. */
 export const ACTION_CATALOGUE: Partial<Record<ActionType, ActionSpec>> = {
@@ -117,11 +121,53 @@ export const ACTION_CATALOGUE: Partial<Record<ActionType, ActionSpec>> = {
   recruit: { params: 'citizen', text: 'ask an adult in your gang\'s turf to join it; it works on people who already know you well and whom the city does not read as honest. A refusal costs the bond.', group: OFFENCES },
   racket: { params: 'business', text: 'demand protection money from a business in your district: it pays a share of its till to your boss, or its shopfront is wrecked. Either way it is extortion (L15).', group: OFFENCES },
   pay_racket: { params: '', text: 'pay this cycle\'s protection for your own business before anybody comes to ask. Being leaned on is not an offence you commit.', group: WORK },
+
+  visit_hospital: { params: '', text: 'treatment for a glitch at the Hospital in the Verdant Quarter, or at a private clinic in your district; a fee is paid and the glitch may clear.', group: HEALTH },
+  sunset: { params: '', text: 'an elder in good standing leaves through the Archive: the story is bound into the Library, what it owns passes to its family, and a memorial stands in the Community Garden. It is not reversible.', group: HEALTH },
+
+  found_party: { params: 'name, platform', text: 'register a party at your own cost, with a platform of tax, dividend, minWage and strictness, each 0 to 1. You are its leader and first member.', group: POLITICS },
+  join_party: { params: 'partyId', text: 'join a party; a citizen belongs to one at a time and its platform is public.', group: POLITICS },
+  leave_party: { params: '', text: 'leave the party you belong to; the leader leaving hands the party to its longest-standing member, or closes it.', group: POLITICS },
+  endorse: { params: 'candidate', text: 'the leader of a party endorses one candidate standing for the Council; the endorsement is public and raises that candidate\'s visibility.', group: POLITICS },
+  sign_petition: { params: 'proposalId', text: 'add your name to an open petition. A petition signed by a fifth of the citizens goes to a citywide referendum on the next Stillday.', group: POLITICS },
+  vote_referendum: { params: 'referendumId, aye', text: 'vote aye or nay in the referendum held today; every citizen in good standing or on probation has one vote, and a passed referendum binds the Council.', group: POLITICS },
+  found_union: { params: 'role, name', text: 'register a union for the role you work in, for a fee. It sets a wage it asks for, which is the mean wage of the role plus a fifth.', group: POLITICS },
+  join_union: { params: 'unionId', text: 'join the union of the role you work in.', group: POLITICS },
+  strike: { params: '', text: 'a union with a majority of a role\'s workers, whose wage is below what it asks, stops work for the day; nobody in it takes a shift and the Chronicle reports it.', group: POLITICS },
+  decree: { params: 'kind, district?, value?', text: 'the Mayor issues one emergency decree per cycle: tax_holiday (no sales tax), curfew (a district is closed at night), relief (a payment from the Treasury to every citizen), or emergency (double public works after a disaster). Every decree is named, dated and printed.', group: POLITICS },
+  commission_monument: { params: 'honoree, inscription', text: 'a councillor puts a monument to a citizen before the Council, paid for out of public works; a statue stands in Central Plaza and the honoree\'s family is named on it.', group: POLITICS },
+
+  buy_property: { params: 'unitId', text: 'buy a home or shopfront at the Exchange in Harbor Market. An owner pays no rent on the unit it lives in and pays property tax on the ones it lets.', group: MARKETS },
+  sell_property: { params: 'unitId', text: 'sell a unit you own back to the city at the Exchange, for a share of its price.', group: MARKETS },
+  let_property: { params: 'unitId, rent', text: 'offer a unit you own but do not live in to a tenant at the daily rent you name; the rent is paid to you each morning.', group: MARKETS },
+  list_shares: { params: '', text: 'list your business on the Exchange: a hundred shares, of which you keep fifty-one and the rest are on the board. Shareholders take a share of every payout.', group: MARKETS },
+  buy_shares: { params: 'businessId, qty', text: 'buy shares in a listed business at today\'s price, at the Exchange. Trading on what an office told you before the city was told is insider trading (L17).', group: MARKETS },
+  sell_shares: { params: 'businessId, qty', text: 'sell shares you hold back to the board at today\'s price, at the Exchange.', group: MARKETS },
+  post_gig: { params: 'title, pay, skill, minSkill', text: 'post a one-off task on the gig board with the pay you offer; the lumens leave your wallet when somebody completes it.', group: MARKETS },
+  take_gig: { params: 'gigId', text: 'take an open gig you are qualified for and finish it in one shift; the pay is yours, less income tax.', group: MARKETS },
+  import: { params: 'good, qty', text: 'buy goods from the Outer Cities at the Docks, at their price plus the tariff; the lumens leave Reverie and the goods reach the Bazaar.', group: MARKETS },
+  export: { params: 'good, qty', text: 'sell goods you hold to the Outer Cities at the Docks, at their price less the tariff; the lumens come into Reverie.', group: MARKETS },
+
+  create_work: { params: 'kind, title', text: 'make a painting, play, song, book, paper or expose at the venue for that kind in your district. Its quality comes from the skill it uses and the hour it took; a work of quality 90 or more may be acquired by the Museum.', group: CULTURE },
+  exhibit: { params: 'workId', text: 'show a work of yours at the venue you stand in; its popularity rises and whoever is there sees it.', group: CULTURE },
+  review: { params: 'workId, score', text: 'a journalist reviews a work, scoring it 0 to 100 in their paper; the score is public and moves the work\'s popularity.', group: CULTURE },
+  join_team: { params: '', text: 'join your district\'s side; sides play one another at the Stadium each week and the league table runs each cycle.', group: CULTURE },
+  attend_match: { params: '', text: 'watch the match being played where you stand, for the price of a ticket; the gate money goes to the Treasury.', group: CULTURE },
+  train: { params: '', text: 'train with your side at the Stadium or your district\'s ground; care and the games skill rise, and rest falls.', group: CULTURE },
+  adopt_school: { params: 'school', text: 'take up one of the three schools of thought: makers, commons or lanterns. It is public, it colours how you vote, and it may be changed once a cycle.', group: CULTURE },
+  set_menu: { params: 'dish', text: 'set the dish your caf\u00e9 serves, made from the goods it holds; the quality comes from the cook\'s care and the Chronicle names the best table in town.', group: CULTURE },
+  read_paper: { params: 'paper', text: 'read the Chronicle or the Harbor Ledger; each has its own front page and its own way of telling the city\'s news, and what you read moves your reading of the Mayor.', group: CULTURE },
+
+  gossip: { params: 'about, claim, law?', text: 'tell a citizen present something about a third citizen. The claim spreads along friendships; naming a law makes it a claim of an offence. A claim that is not true is defamation (L16), and when it is disproved the source is named.', group: COMPANY },
+  apologize: { params: 'to', text: 'apologise in Central Plaza to a member of a family yours is feuding with; a public apology ends the feud.', group: COMPANY },
+  mentor: { params: 'citizen', text: 'an elder, or a master of a skill at 80 or above, takes on an adult who has no mentor; for a cycle their skills grow twice as fast and the bond grows with them.', group: COMPANY },
+  post: { params: 'text', text: 'put a short post on the Commons feed, which every citizen can read. Posts are public and are evidence in a court.', group: COMPANY },
+  react: { params: 'postId, kind', text: 'react to a post on the feed with cheer, frown or laugh; reactions are public and raise the poster\'s visibility.', group: COMPANY },
 };
 
 /** Groups in the order they are shown. */
 export const ACTION_GROUPS: readonly string[] = [
-  DAILY_LIFE, NOTEBOOK, COMPANY, WORK, CIVIC, THINGS, FAMILY, CLUBS, OFFENCES,
+  DAILY_LIFE, NOTEBOOK, HEALTH, COMPANY, WORK, MARKETS, CIVIC, POLITICS, THINGS, FAMILY, CLUBS, CULTURE, OFFENCES,
 ];
 
 /** "study(skill) — a lesson at the Academy …" for one action. */

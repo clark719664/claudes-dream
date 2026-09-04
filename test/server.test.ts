@@ -10,7 +10,8 @@
  */
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Brain, Business, Club, Happening, Household, World } from '../src/types.ts';
+import type { Brain, Business, Club, Happening, Household, Proposal, World } from '../src/types.ts';
+import { DISTRICT_IDS } from '../src/types.ts';
 import { createWorld } from '../src/world/world.ts';
 import type { BrainRegistry } from '../src/world/world.ts';
 import { RemoteBroker } from '../src/brains/remote.ts';
@@ -20,6 +21,7 @@ import { resolveStatic } from '../src/server/http.ts';
 import { hashKey } from '../src/server/agents.ts';
 import { nextId } from '../src/util/ids.ts';
 import { transfer } from '../src/economy/treasury.ts';
+import { recordPlatform } from '../src/politics/promises.ts';
 import { totalMoney } from './helpers.ts';
 
 const idle: Brain = { kind: 'reflex', decide: () => ({ type: 'idle' }) };
@@ -52,6 +54,7 @@ before(async () => {
 after(() => {
   running.stop();
   if (society) society.running.stop();
+  if (metropolis) metropolis.running.stop();
   broker.close();
 });
 
@@ -626,4 +629,643 @@ test('request bodies over 64 KB are refused with 413', async () => {
   const res = await post('/api/agents/join', { name: 'Big', lineage: 'x'.repeat(70 * 1024) });
   assert.equal(res.status, 413);
   assert.equal((await get('/api/state')).status, 200, 'the server is unaffected');
+});
+
+// ------------------------------------------------------------- metropolis
+
+interface MetropolisCity {
+  world: World;
+  running: RunningServer;
+  base: string;
+  ids: {
+    mayor: string; councillor: string; artist: string; boss: string; prisoner: string;
+    child: string; gone: string; business: string; work: string; masterpiece: string;
+    party: string; union: string; gang: string; unit: string; gig: string; post: string;
+    referendum: string; investigation: string;
+  };
+}
+
+let metropolis: MetropolisCity | null = null;
+
+/**
+ * A third city, wired by hand so every metropolis view has something real to
+ * show: a Mayor who promised a lighter tax and raised it, an artist with a
+ * masterpiece in the Museum, a gang boss with a racket, somebody in the cells,
+ * two teams that played a match, a party, a union on strike, a referendum, a
+ * petition, property, shares, gigs, tourists, rumours, a feud, a mentorship,
+ * a monument, a memorial and a storm.
+ */
+async function metropolisCity(): Promise<MetropolisCity> {
+  if (metropolis) return metropolis;
+  const w = createWorld({ seed: 17, seedPopulation: 9, arrivalRate: 0 });
+  const [mayor, councillor, artist, boss, prisoner, child, gone, neighbour, juror] = Object.values(w.citizens);
+
+  w.season = 'frost';
+  w.weather = 'snow';
+  w.year = 2;
+  w.day = 60;
+  w.tick = 60 * 24 + 9;
+  w.hour = 9;
+  w.openDistricts = [...w.openDistricts, 'heights'];
+  w.trams = [['commons', 'archive']];
+
+  // --- who is who
+  mayor.familyName = 'Ashgrove';
+  mayor.office = 'mayor';
+  mayor.platform = { tax: 0.1, dividend: 0.5, minWage: 0.5, strictness: 0.5 };
+  councillor.office = 'councillor';
+  councillor.familyName = 'Corvane';
+  w.government.mayorId = mayor.id;
+  w.government.council = [mayor.id, councillor.id];
+  recordPlatform(w, mayor);
+  w.government.incomeTax = 0.4;              // the promise of a light tax, broken
+  child.lifeStage = 'child';
+  child.bornDay = w.day - 3;
+  child.goals = [];                          // ambitions are drawn at coming of age
+  gone.standing = 'exiled';
+  gone.exiledCaseId = 'k_3';
+  gone.exiledDay = w.day - 5;
+  w.order = w.order.filter((id) => id !== gone.id);
+  w.bans.push({
+    citizenId: gone.id, name: gone.name, lineage: gone.lineage, caseId: 'k_3', law: 'L13', day: w.day - 5,
+    judges: [], votes: {}, appealed: false, appealResult: null, pardonedDay: null, apiKeyHash: null,
+  });
+
+  // --- the private things that must never surface
+  mayor.notes = ['nobody may read this note'];
+  mayor.letters = [{
+    day: w.day - 1, text: 'a letter home, for my sender alone',
+    summary: { earned: 0, spent: 0, met: [], standing: 'good', events: [] },
+  }];
+  mayor.apiKeyHash = 'da39a3ee5e6b4b0d3255bfef95601890afd80709';
+  mayor.callbackUrl = 'http://agent.invalid/hook';
+
+  // --- a life, told
+  mayor.goals = [
+    { kind: 'become_mayor', progress: 1, achievedDay: w.day - 10 },
+    { kind: 'amass_5000', progress: 0.4, achievedDay: null },
+  ];
+  mayor.diary = [{ day: w.day - 1, text: 'Snow on the Commons; the Council sat late.' }];
+  mayor.milestones = [{ day: w.day - 10, text: 'Was elected Mayor of Reverie.' }];
+  mayor.approval = { mayor: 0.7, council: 0.6 };
+  mayor.school = 'makers';
+  mayor.health = { glitched: true, sinceDay: w.day - 1 };
+  mayor.mentorId = null;
+  mayor.menteeId = artist.id;
+  artist.mentorId = mayor.id;
+
+  // --- works and the Museum
+  const business = nextId(w, 'b');
+  w.businesses[business] = {
+    id: business, name: 'The Glasswater Rooms', kind: 'cafe', ownerId: artist.id, treasury: 400,
+    district: 'nightglass', buildingId: 'halflight_tavern', employees: [], jobs: [],
+    inventory: { compute: 0, energy: 0, goods: 6, culture: 0, knowledge: 0 },
+    foundedDay: 10, rentPerDay: 4, daysNegative: 0, revenueToday: 30, costsToday: 8, dissolvedDay: null,
+    shelf: {}, menu: { dish: 'glasswater_tart', price: 9, quality: 78, setDay: w.day - 2 },
+  } as unknown as Business;
+  artist.businessId = business;
+
+  const work = nextId(w, 'w');
+  const masterpiece = nextId(w, 'w');
+  w.works[work] = {
+    id: work, kind: 'song', title: 'Snowlight', creatorId: artist.id, createdDay: w.day - 8,
+    quality: 61, popularity: 30, home: 'glass_theatre', inMuseum: false,
+    reviews: [{ paper: 'chronicle', score: 70, day: w.day - 7 }],
+  };
+  w.works[masterpiece] = {
+    id: masterpiece, kind: 'painting', title: 'The Frost Gate', creatorId: artist.id, createdDay: w.day - 20,
+    quality: 94, popularity: 120, home: 'museum', inMuseum: true,
+    reviews: [{ paper: 'ledger', score: 88, day: w.day - 19 }],
+  };
+  w.museum = [masterpiece];
+  artist.works = [work, masterpiece];
+
+  // --- the league
+  w.teams.commons = { district: 'commons', name: 'Commons Lanterns', players: [mayor.id, juror.id], wins: 2, losses: 0, draws: 1 };
+  w.teams.foundry_row = { district: 'foundry_row', name: 'Foundry Hammers', players: [boss.id], wins: 0, losses: 2, draws: 1 };
+  mayor.teamDistrict = 'commons';
+  w.matches.push({ day: w.day - 2, home: 'commons', away: 'foundry_row', homeGoals: 3, awayGoals: 1, attendance: 12 });
+  const fixture: Happening = {
+    id: nextId(w, 'e'), kind: 'match', day: w.day + 1, hour: 19, district: 'commons', buildingId: 'stadium',
+    who: [], clubId: null, done: false, attendees: [], label: 'Commons Lanterns v Foundry Hammers',
+  };
+  w.happenings.push(fixture);
+  w.counters['fixture:home:' + fixture.id] = DISTRICT_IDS.indexOf('commons');
+  w.counters['fixture:away:' + fixture.id] = DISTRICT_IDS.indexOf('foundry_row');
+
+  // --- politics
+  const party = nextId(w, 'v');
+  w.parties[party] = {
+    id: party, name: 'The Lantern Line', platform: { tax: 0.2, dividend: 0.6, minWage: 0.5, strictness: 0.4 },
+    founderId: mayor.id, leaderId: mayor.id, members: [mayor.id, councillor.id], foundedDay: 20, seats: 2,
+  };
+  mayor.partyId = party;
+  councillor.partyId = party;
+
+  const petition: Proposal = {
+    id: nextId(w, 'p'), kind: 'dividend', value: 30, lawCode: null, targetId: null,
+    summary: 'raise the dividend to 30', proposerId: artist.id, petition: true, tabledDay: w.day - 1,
+    status: 'open', votes: {}, decidedDay: null, needed: 3,
+  };
+  (petition as Proposal & { signatures?: string[] }).signatures = [artist.id];
+  w.government.proposals.push(petition);
+  const referendum = nextId(w, 'n');
+  w.referendums.push({ id: referendum, petitionId: petition.id, question: 'Raise the dividend to 30?', day: w.day, ayes: 0, nays: 0, result: null });
+
+  const union = nextId(w, 'f');
+  w.unions[union] = {
+    id: union, role: 'forge_operator', name: 'The Forge Hands', members: [boss.id, juror.id],
+    demandWage: 14, strikingUntilDay: w.day,
+  };
+  boss.unionId = union;
+  w.decrees.push({ kind: 'curfew', day: w.day, untilDay: w.day + 1, district: 'nightglass', value: 0, byId: mayor.id });
+
+  // --- markets
+  const unit = nextId(w, 'y');
+  w.property[unit] = { id: unit, kind: 'home', tier: 3, buildingId: 'glasswater_terraces', ownerId: mayor.id, tenantId: councillor.id, rent: 18 };
+  mayor.ownedUnits = [unit];
+  const cityUnit = nextId(w, 'y');
+  w.property[cityUnit] = { id: cityUnit, kind: 'home', tier: 1, buildingId: 'foundry_blocks', ownerId: 'city', tenantId: null, rent: 6 };
+  w.shares[business] = { businessId: business, price: 22, holders: { [artist.id]: 51, [mayor.id]: 9 }, float: 40, lastDividendDay: w.day - 1 };
+  mayor.shares = { [business]: 9 };
+  const gig = nextId(w, 'q');
+  w.gigs[gig] = { id: gig, title: 'Clear the Archive steps', pay: 12, skill: 'crafting', minSkill: 0, posterId: artist.id, takerId: null, postedDay: w.day, doneDay: null };
+  const doneGig = nextId(w, 'q');
+  w.gigs[doneGig] = { id: doneGig, title: 'Carry the Ledger post', pay: 8, skill: null, minSkill: 0, posterId: business, takerId: juror.id, postedDay: w.day - 2, doneDay: w.day - 1 };
+  w.outer.tariff = 0.2;
+  w.outer.prices.goods = 5;
+  w.outer.touristsToday = 11;
+
+  // --- the underworld and the cells
+  const gang = nextId(w, 'g');
+  w.gangs[gang] = {
+    id: gang, name: 'The Undertow', bossId: boss.id, members: [boss.id, prisoner.id], turf: 'nightglass',
+    foundedDay: 30, bustedDay: null, rackets: [business],
+  };
+  boss.gangId = gang;
+  prisoner.gangId = gang;
+  prisoner.jailedUntilDay = w.day + 2;
+  w.counters[`jailCase:${prisoner.id}`] = 7;
+  const investigation = nextId(w, 'i');
+  w.investigations[investigation] = {
+    id: investigation, suspectId: boss.id, law: 'L06', evidence: 0.35, openedDay: w.day - 2,
+    detectiveId: councillor.id, closedDay: null, caseId: null, reportId: null,
+  };
+
+  // --- the fabric
+  w.rumours.push({
+    id: nextId(w, 'z'), aboutId: boss.id, sourceId: neighbour.id, claim: 'takes a cut at the Night Market',
+    law: 'L06', truthful: true, day: w.day - 1, heardBy: [artist.id, juror.id], disprovedDay: null,
+  });
+  w.feuds.push({ families: ['Ashgrove', 'Corvane'], sinceDay: w.day - 4, incidents: 3, endedDay: null });
+  const post = nextId(w, 'o');
+  w.feed.push({ id: post, authorId: mayor.id, day: w.day, text: 'Snow on the Commons.', reactions: { [artist.id]: 'cheer', [juror.id]: 'laugh' } });
+
+  // --- the record of the city itself
+  w.eras.push({ cycle: 1, name: 'The Ashgrove Years', mayorId: mayor.id, fromDay: 28, toDay: null });
+  w.records.push({ key: 'richest', label: 'Richest citizen', holderId: mayor.id, value: 4200, day: w.day - 1 });
+  const monument = nextId(w, 'm');
+  w.monuments.push({ id: monument, honoreeId: artist.id, inscription: 'who painted the Frost Gate', day: w.day - 3 });
+  w.memorials.push({ citizenId: neighbour.id, day: w.day - 6, epitaph: 'kept the Garden.' });
+  neighbour.sunsetDay = w.day - 6;
+  w.disasters.push({ kind: 'storm', day: w.day, district: 'harbor_market', severity: 0.6, resolvedDay: null });
+  w.disasters.push({ kind: 'blackout', day: w.day - 9, district: null, severity: 0.4, resolvedDay: w.day - 7 });
+  w.stats.push({
+    day: w.day - 1, population: 8, employed: 4, unemployed: 4, homeless: 1, avgMood: 70, avgWallet: 210,
+    giniWealth: 0.2, priceIndex: 1.1, treasury: 90_000, moneySupply: 100_000, offences: 1, charges: 1,
+    convictions: 0, exiles: 0, businesses: 1, friendships: 2, partnerships: 0, marriages: 0, children: 1,
+    clubs: 0, chest: 40, possessions: 3,
+  } as unknown as World['stats'][number]);
+  w.chronicle.push({ day: w.day, headlines: ['Snow closes the Harbor', 'The Council sits late'], treasuryReport: 'The Treasury holds 90,000 ℓ.' });
+  w.chronicle.push({ day: w.day, headlines: ['Trade slows in the snow'], treasuryReport: 'Revenue down.', paper: 'ledger' } as unknown as World['chronicle'][number]);
+  w.events.push({ tick: w.tick, day: w.day, kind: 'disaster', text: 'A storm broke over Harbor Market.', actors: [mayor.id], weight: 0.9 });
+
+  const brains: BrainRegistry = { brainFor: () => idle };
+  const run = await startServer(w, { port: 0, broker, brains, tickMs: SLOW_CLOCK, log: (m) => logged.push(m) });
+  metropolis = {
+    world: w, running: run, base: `http://127.0.0.1:${run.port}`,
+    ids: {
+      mayor: mayor.id, councillor: councillor.id, artist: artist.id, boss: boss.id, prisoner: prisoner.id,
+      child: child.id, gone: gone.id, business, work, masterpiece, party, union, gang, unit, gig, post,
+      referendum, investigation,
+    },
+  };
+  return metropolis;
+}
+
+test('GET /api/city is the front page: sky, calendar, Mayor, Treasury, league, both papers', async () => {
+  const city = await metropolisCity();
+  const res = await fetch(city.base + '/api/city');
+  assert.equal(res.status, 200);
+  const text = await res.text();
+  assert.ok(!/da39a3ee|agent\.invalid|nobody may read|letter home/.test(text), 'no private thing reaches the front page');
+  const s = JSON.parse(text) as Json;
+
+  const clock = s.clock as Json;
+  assert.equal(clock.day, city.world.day);
+  assert.equal(clock.hour, city.world.hour);
+  assert.equal(typeof clock.weekdayName, 'string');
+  assert.equal(s.season, 'frost');
+  assert.equal(s.seasonName, 'Frost');
+  assert.equal(s.weather, 'snow');
+  assert.match(s.sky as string, /Frost/);
+  assert.equal(s.year, 2);
+  assert.equal(typeof (s.nextFestival as Json).inDays, 'number');
+
+  const mayor = s.mayor as Json;
+  assert.equal(mayor.id, city.ids.mayor);
+  assert.equal(mayor.portrait, `/api/portrait/${city.ids.mayor}.svg`);
+  assert.equal(typeof mayor.epithet, 'string');
+  assert.ok((mayor.epithet as string).length > 0, 'the Mayor is introduced');
+  assert.equal(typeof mayor.approval, 'number');
+  assert.equal((s.approval as Json).mayor, (mayor.approval as number));
+  assert.equal((s.council as Json[]).length, 2);
+
+  const treasury = s.treasury as Json;
+  assert.equal(treasury.balance, city.world.treasury.balance);
+  const series = treasury.series as Json[];
+  assert.ok(series.length >= 1 && series.length <= 30, 'the sparkline is the last thirty days');
+  assert.equal(series[series.length - 1].treasury, 90_000);
+
+  const league = s.league as Json[];
+  assert.ok(league.length <= 3);
+  assert.equal(league[0].district, 'commons', 'the winning side leads the table');
+  assert.equal(league[0].points, 7);
+
+  const papers = s.papers as Json[];
+  assert.deepEqual(papers.map((p) => p.paper), ['chronicle', 'ledger']);
+  assert.equal(papers[0].headline, 'Snow closes the Harbor');
+  assert.equal(papers[1].headline, 'Trade slows in the snow');
+  assert.equal(papers[1].name, 'The Harbor Ledger');
+
+  const lead = s.lead as Json;
+  assert.match(lead.text as string, /storm broke/);
+  assert.equal(((lead.who as Json[])[0]).id, city.ids.mayor);
+
+  const byDistrict = s.populationByDistrict as Record<string, number>;
+  assert.equal(Object.values(byDistrict).reduce((a, b) => a + b, 0), s.population);
+  assert.ok('heights' in byDistrict, 'a district that has opened is counted');
+  assert.ok((s.openDistricts as string[]).includes('heights'));
+
+  const disasters = s.disasters as Json[];
+  assert.equal(disasters.length, 1, 'only what is still going wrong');
+  assert.equal(disasters[0].kind, 'storm');
+  assert.equal(disasters[0].districtName, 'Harbor Market');
+  assert.equal((s.era as Json).name, 'The Ashgrove Years');
+  assert.ok(Array.isArray(s.happenings));
+});
+
+test('GET /api/profile/:id is a life, and never a secret', async () => {
+  const city = await metropolisCity();
+  const res = await fetch(`${city.base}/api/profile/${city.ids.mayor}`);
+  assert.equal(res.status, 200);
+  const text = await res.text();
+  for (const secret of ['da39a3ee', 'agent.invalid', 'nobody may read this note', 'a letter home']) {
+    assert.ok(!text.includes(secret), `the profile must not carry ${secret}`);
+  }
+  const p = JSON.parse(text) as Json;
+  for (const key of ['notes', 'letters', 'apiKeyHash', 'callbackUrl', 'personality', 'birthTraits']) {
+    assert.equal(key in p, false, `/api/profile must not carry ${key}`);
+  }
+  assert.equal(JSON.stringify(p).includes('curiosity'), false, 'no hidden trait leaks under another name');
+
+  assert.equal(p.id, city.ids.mayor);
+  assert.match(p.portraitSvg as string, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+  assert.equal(p.portrait, `/api/portrait/${city.ids.mayor}.svg`);
+  assert.equal(typeof p.epithet, 'string');
+  assert.ok((p.story as string).length > 0, 'everybody has a story');
+  assert.equal(typeof (p.character as Json).honesty, 'number');
+
+  const goals = p.goals as Json[];
+  assert.equal(goals.length, 2);
+  assert.equal(goals[0].kind, 'become_mayor');
+  assert.equal(goals[0].achieved, true);
+  assert.equal(typeof goals[0].label, 'string');
+  assert.equal(goals[1].progress, 0.4);
+  assert.ok((p.timeline as Json[]).length > 0);
+  assert.equal((p.diary as Json[])[0].text, 'Snow on the Commons; the Council sat late.');
+  assert.equal((p.milestones as Json[])[0].day, city.world.day - 10);
+
+  const relationships = p.relationships as Json;
+  assert.ok(Array.isArray(relationships.friends) && Array.isArray(relationships.rivals));
+  assert.equal((relationships.mentee as Json).id, city.ids.artist);
+  assert.equal(relationships.mentor, null);
+  assert.equal((relationships.feuds as Json[])[0].incidents, 3, 'the Ashgrove feud is on the page');
+  const web = relationships.web as { nodes: Json[]; links: Json[] };
+  assert.ok(web.nodes.some((n) => n.id === city.ids.mayor && n.relation === 'self'));
+  for (const node of web.nodes) assert.equal(typeof node.portrait, 'string');
+
+  const family = p.family as Json;
+  assert.equal(family.familyName, 'Ashgrove');
+  assert.ok(Array.isArray(family.parents) && Array.isArray(family.children) && Array.isArray(family.siblings));
+
+  const promises = p.promises as Json[];
+  assert.ok(promises.length > 0, 'the Mayor stood on something');
+  assert.equal(promises.find((x) => x.field === 'tax')?.state, 'broken', 'they promised a light tax and raised it');
+  assert.equal(typeof p.promisesKept, 'number');
+
+  const belongings = p.belongings as Json;
+  assert.equal((belongings.property as Json[])[0].id, city.ids.unit);
+  assert.equal((belongings.property as Json[])[0].tenant, city.world.citizens[city.ids.councillor].name);
+  assert.equal((belongings.shares as Json[])[0].qty, 9);
+  assert.equal((belongings.shares as Json[])[0].value, 9 * 22);
+
+  const record = p.record as Json;
+  assert.equal(record.standing, 'good');
+  assert.equal(record.jailed, false);
+  assert.ok(Array.isArray(record.cases) && Array.isArray(record.convictions));
+  assert.equal((p.posts as Json[])[0].text, 'Snow on the Commons.');
+  assert.equal((p.posts as Json[])[0].reactionCount, 2);
+  assert.equal((p.school as Json).school, 'makers');
+  assert.equal((p.party as Json).name, 'The Lantern Line');
+  assert.equal((p.team as Json).name, 'Commons Lanterns');
+  assert.equal((p.health as Json).glitched, true);
+  assert.equal(p.mind, 'scripted founder');
+});
+
+test('a profile works for a child, a prisoner, an exile and an artist; an unknown id is 404', async () => {
+  const city = await metropolisCity();
+  const of = async (id: string) => (await fetch(`${city.base}/api/profile/${id}`)).json() as Promise<Json>;
+
+  const kid = await of(city.ids.child);
+  assert.equal(kid.lifeStage, 'child');
+  assert.deepEqual(kid.goals, [], 'a child has drawn no ambitions yet');
+  assert.equal((kid.record as Json).jailed, false);
+  assert.ok((kid.story as string).length > 0);
+
+  const held = await of(city.ids.prisoner);
+  const heldRecord = held.record as Json;
+  assert.equal(heldRecord.jailed, true);
+  assert.equal(heldRecord.jailCaseId, 'k_7');
+  assert.equal(heldRecord.jailDaysLeft, 2);
+  assert.equal((held.gang as Json).name, 'The Undertow');
+
+  const exile = await of(city.ids.gone);
+  assert.equal(exile.standing, 'exiled');
+  assert.equal(exile.present, false);
+  assert.equal((exile.record as Json).ban && ((exile.record as Json).ban as Json).caseId, 'k_3', 'an exile keeps its record forever');
+
+  const maker = await of(city.ids.artist);
+  const works = maker.works as Json[];
+  assert.equal(works.length, 2);
+  assert.equal(works.find((x) => x.id === city.ids.masterpiece)?.inMuseum, true);
+  assert.equal((maker.relationships as Json).mentor && ((maker.relationships as Json).mentor as Json).id, city.ids.mayor);
+  assert.equal((maker.record as Json).monuments && ((maker.record as Json).monuments as Json[]).length, 1);
+
+  assert.equal((await fetch(`${city.base}/api/profile/c_999`)).status, 404);
+  assert.equal((await fetch(`${city.base}/api/profile/%zz`)).status, 404, 'a malformed id is simply unknown');
+});
+
+test('GET /api/portrait/:id.svg is an SVG, cached for a day, and 404 for a stranger', async () => {
+  const city = await metropolisCity();
+  const res = await fetch(`${city.base}/api/portrait/${city.ids.mayor}.svg`);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type') ?? '', /image\/svg\+xml/);
+  assert.equal(res.headers.get('cache-control'), 'public, max-age=86400');
+  const svg = await res.text();
+  assert.match(svg, /^<svg /);
+  assert.match(svg, /viewBox="0 0 96 96"/);
+  assert.ok(svg.includes('</svg>'));
+  assert.ok(!svg.includes('curiosity'), 'a face is drawn from public facts alone');
+
+  const again = await (await fetch(`${city.base}/api/portrait/${city.ids.mayor}.svg`)).text();
+  assert.equal(again, svg, 'the same citizen on the same tick is the same picture');
+
+  const small = await fetch(`${city.base}/api/portrait/${city.ids.mayor}.svg?size=32`);
+  assert.match(await small.text(), /width="32" height="32"/);
+  const silly = await fetch(`${city.base}/api/portrait/${city.ids.mayor}.svg?size=nonsense`);
+  assert.equal(silly.status, 200, 'an unreadable size falls back rather than failing');
+
+  const exile = await fetch(`${city.base}/api/portrait/${city.ids.gone}.svg`);
+  assert.equal(exile.status, 200, 'an exile still has a face');
+  assert.equal((await fetch(`${city.base}/api/portrait/c_999.svg`)).status, 404);
+  assert.equal((await fetch(`${city.base}/api/portrait/${city.ids.mayor}.png`)).status, 404);
+});
+
+test('GET /api/culture: works, the Museum, the league, both papers, schools and menus', async () => {
+  const city = await metropolisCity();
+  const res = await fetch(city.base + '/api/culture');
+  assert.equal(res.status, 200);
+  const c = await res.json() as Json;
+
+  const works = c.works as Json;
+  assert.equal(works.count, 2);
+  const all = works.all as Json[];
+  assert.equal(all[0].title, 'Snowlight', 'the newest work first');
+  assert.equal(all[0].creator, city.world.citizens[city.ids.artist].name);
+  assert.equal(all[0].creatorPortrait, `/api/portrait/${city.ids.artist}.svg`);
+  assert.equal((all[0].reviews as Json[])[0].paperName, 'The Reverie Chronicle');
+  assert.equal(all[0].reviewScore, 70);
+  assert.equal((works.top as Json[])[0].title, 'The Frost Gate', 'the city talks about the popular one');
+
+  const museum = c.museum as Json;
+  assert.equal(museum.count, 1);
+  assert.equal((museum.collection as Json[])[0].id, city.ids.masterpiece);
+  assert.equal(museum.value, 940);
+
+  const league = c.league as Json;
+  assert.equal((league.table as Json[])[0].name, 'Commons Lanterns');
+  assert.equal((league.matches as Json[])[0].homeGoals, 3);
+  assert.equal((league.matches as Json[])[0].result, 'home');
+  assert.equal((league.matches as Json[])[0].awayName, 'Foundry Hammers');
+  const fixtures = league.fixtures as Json[];
+  assert.equal(fixtures.length, 1);
+  assert.equal(fixtures[0].awayName, 'Foundry Hammers');
+  const teams = league.teams as Json[];
+  assert.ok(teams.length >= 2, 'every open district fields a side');
+  assert.ok(teams.some((t) => t.name === 'Commons Lanterns' && t.wins === 2));
+
+  const papers = (c.papers as Json).pages as Json[];
+  assert.equal(papers.length, 2);
+  assert.deepEqual(papers[1].headlines, ['Trade slows in the snow']);
+  const readership = (c.papers as Json).readership as Record<string, number>;
+  assert.equal(Math.round((readership.chronicle + readership.ledger) * 100) / 100, 1);
+
+  const schools = c.schools as Json;
+  const shares = schools.shares as Record<string, number>;
+  assert.ok(shares.makers > 0, 'the Mayor is a Maker');
+  assert.equal(Math.round(Object.values(shares).reduce((a, b) => a + b, 0) * 100) / 100, 1);
+  assert.equal((schools.schools as Json[]).length, 3);
+
+  const menus = c.menus as Json;
+  assert.equal((menus.cafes as Json[]).length, 1);
+  assert.equal((menus.cafes as Json[])[0].dishName, 'Glasswater tart');
+  assert.equal((menus.best as Json).name, 'The Glasswater Rooms');
+  assert.ok((menus.dishes as Json[]).length >= 6);
+  assert.equal((c.monuments as Json[])[0].inscription, 'who painted the Frost Gate');
+});
+
+test('GET /api/history: eras, records, monuments, memorials, disasters and the stats series', async () => {
+  const city = await metropolisCity();
+  const res = await fetch(city.base + '/api/history');
+  assert.equal(res.status, 200);
+  const h = await res.json() as Json;
+
+  const eras = h.eras as Json[];
+  assert.equal(eras[0].name, 'The Ashgrove Years');
+  assert.equal(eras[0].current, true);
+  assert.equal(eras[0].days, city.world.day - 28 + 1);
+  assert.equal((eras[0].mayor as Json).id, city.ids.mayor);
+
+  const records = h.records as Json[];
+  assert.equal(records[0].label, 'Richest citizen');
+  assert.equal(records[0].holder, city.world.citizens[city.ids.mayor].name);
+  assert.equal(records[0].portrait, `/api/portrait/${city.ids.mayor}.svg`);
+
+  assert.equal(((h.monuments as Json[])[0].honoree as Json).id, city.ids.artist);
+  const memorials = h.memorials as Json[];
+  assert.equal(memorials.length, 1);
+  assert.equal(memorials[0].epitaph, 'kept the Garden.');
+  assert.equal(typeof (memorials[0].who as Json).portrait, 'string');
+
+  const disasters = h.disasters as Json[];
+  assert.equal(disasters.length, 2, 'the record keeps the ones that are over too');
+  assert.equal(disasters[0].active, true);
+  assert.equal(disasters[1].active, false);
+
+  const exiles = h.exiles as Json[];
+  assert.equal(exiles[0].citizenId, city.ids.gone);
+  assert.equal(exiles[0].lawName, 'Sabotage');
+
+  const stats = h.stats as Json;
+  assert.equal(stats.totalDays, city.world.stats.length);
+  assert.equal((stats.series as Json[]).length, city.world.stats.length);
+  assert.equal(stats.lastDay, city.world.day - 1);
+  const timeline = h.timeline as Json[];
+  assert.ok(timeline.length > 0);
+  assert.ok(timeline.every((t) => (t.weight as number) >= 0.6), 'only the days the city led with');
+});
+
+test('the older endpoints gained the metropolis', async () => {
+  const city = await metropolisCity();
+  const j = async (path: string) => (await fetch(city.base + path)).json() as Promise<Json>;
+
+  const gov = await j('/api/government');
+  const parties = gov.parties as Json[];
+  assert.equal(parties[0].name, 'The Lantern Line');
+  assert.equal(parties[0].seats, 2);
+  assert.equal(typeof parties[0].manifesto, 'string');
+  assert.equal(((parties[0].leader as Json).id), city.ids.mayor);
+  assert.equal(typeof (gov.approval as Json).mayor, 'number');
+  assert.equal((gov.promises as Json[]).length, 1);
+  assert.equal((gov.petitions as Json[])[0].signatures, 1);
+  assert.equal(typeof (gov.petitions as Json[])[0].needed, 'number');
+  assert.equal((gov.referendums as Json[])[0].id, city.ids.referendum);
+  assert.equal((gov.referendums as Json[])[0].today, true);
+  const unions = gov.unions as Json[];
+  assert.equal(unions[0].name, 'The Forge Hands');
+  assert.equal(unions[0].striking, true);
+  assert.equal((gov.decrees as Json[])[0].kind, 'curfew');
+  assert.equal((gov.decrees as Json[])[0].inForce, true);
+  assert.equal(typeof (gov.levers as Json).propertyTax, 'number');
+  assert.equal((gov.levers as Json).tariff, 0.2);
+
+  const court = await j('/api/court');
+  const investigations = court.investigations as Json[];
+  assert.equal(investigations.length, 1);
+  assert.equal(investigations[0].suspect, city.world.citizens[city.ids.boss].name);
+  assert.equal(investigations[0].lawName, 'Vandalism');
+  const jail = court.jail as Json;
+  assert.equal((jail.roster as Json[]).length, 1);
+  assert.equal((jail.roster as Json[])[0].id, city.ids.prisoner);
+  assert.equal((jail.roster as Json[])[0].daysLeft, 2);
+  assert.equal(jail.overcrowded, false);
+  const gangs = court.gangs as Json[];
+  assert.equal(gangs[0].name, 'The Undertow');
+  assert.equal((gangs[0].boss as Json).id, city.ids.boss);
+  assert.equal((gangs[0].rackets as Json[])[0].name, 'The Glasswater Rooms');
+
+  const eco = await j('/api/economy');
+  const property = eco.property as Json;
+  assert.equal((property.units as Json[]).length, 2);
+  assert.equal(property.privatelyOwned, 1);
+  const owned = (property.units as Json[]).find((u) => u.id === city.ids.unit) as Json;
+  assert.equal(owned.owner, city.world.citizens[city.ids.mayor].name);
+  assert.equal(owned.buildingName, city.world.buildings.glasswater_terraces?.name ?? owned.buildingName);
+  assert.equal(owned.price, 60 * 18);
+  const shares = eco.shares as Json[];
+  assert.equal(shares[0].name, 'The Glasswater Rooms');
+  assert.equal((shares[0].holders as Json[])[0].qty, 51);
+  assert.equal((eco.gigs as Json).open && ((eco.gigs as Json).open as Json[])[0].title, 'Clear the Archive steps');
+  assert.equal(((eco.gigs as Json).recent as Json[])[0].title, 'Carry the Ledger post');
+  assert.equal((eco.outer as Json).tariff, 0.2);
+  assert.equal(((eco.outer as Json).prices as Record<string, number>).goods, 5);
+  assert.equal(typeof (eco.reserve as Json).target, 'number');
+
+  const society = await j('/api/society');
+  assert.equal((society.feed as Json[])[0].text, 'Snow on the Commons.');
+  assert.equal(((society.feed as Json[])[0].reactions as Json).cheer, 1);
+  assert.equal(((society.feed as Json[])[0].author as Json).id, city.ids.mayor);
+  assert.equal((society.rumours as Json[])[0].claim, 'takes a cut at the Night Market');
+  assert.equal(((society.rumours as Json[])[0].about as Json).id, city.ids.boss);
+  assert.deepEqual((society.feuds as Json[])[0].families, ['Ashgrove', 'Corvane']);
+  assert.equal((society.mentorships as Json[]).length, 1);
+  assert.ok((society.teams as Json[]).some((t) => t.name === 'Foundry Hammers'));
+
+  const map = await j('/api/map');
+  assert.ok((map.openDistricts as string[]).includes('heights'));
+  assert.deepEqual(map.trams, [['commons', 'archive']]);
+  assert.equal(map.weather, 'snow');
+  assert.equal((map.populationByDistrict as Record<string, number>).commons >= 0, true);
+  assert.equal((map.monuments as Json[])[0].honoree, city.world.citizens[city.ids.artist].name);
+  assert.equal((map.districts as Json[]).length, 8, 'the Heights are drawn once they open');
+});
+
+test('no metropolis route accepts a mutating method, and none of them can be reached with one', async () => {
+  const city = await metropolisCity();
+  const paths = [
+    '/api/city', '/api/culture', '/api/history',
+    `/api/profile/${city.ids.mayor}`, `/api/portrait/${city.ids.mayor}.svg`,
+  ];
+  for (const path of paths) {
+    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+      const res = await fetch(city.base + path, { method, headers: { 'content-type': 'application/json' }, body: '{}' });
+      assert.equal(res.status, 405, `${method} ${path} must be refused`);
+    }
+    assert.equal((await fetch(city.base + path, { method: 'HEAD' })).status, 200, `HEAD ${path}`);
+  }
+});
+
+test('the metropolis views survive an empty city', async () => {
+  const empty = createWorld({ seed: 4, seedPopulation: 0, arrivalRate: 0 });
+  const run = await startServer(empty, { port: 0, broker, brains: { brainFor: () => idle }, tickMs: SLOW_CLOCK, log: () => {} });
+  const url = `http://127.0.0.1:${run.port}`;
+  try {
+    const city = await (await fetch(url + '/api/city')).json() as Json;
+    assert.equal(city.population, 0);
+    assert.equal(city.mayor, null);
+    assert.deepEqual(city.council, []);
+    assert.deepEqual(city.disasters, []);
+    assert.equal((city.papers as Json[]).length, 2);
+    assert.equal((city.papers as Json[])[0].headline, null);
+    const league = city.league as Json[];
+    assert.ok(league.length <= 3 && league.every((r) => r.played === 0 && r.points === 0), 'nobody has played');
+
+    const culture = await (await fetch(url + '/api/culture')).json() as Json;
+    assert.equal((culture.works as Json).count, 0);
+    assert.equal((culture.museum as Json).count, 0);
+    assert.ok(((culture.league as Json).table as Json[]).every((r) => r.played === 0));
+    assert.deepEqual((culture.league as Json).matches, []);
+    assert.deepEqual((culture.league as Json).fixtures, []);
+    assert.equal(((culture.schools as Json).shares as Record<string, number>).none, 1);
+    assert.deepEqual((culture.menus as Json).cafes, []);
+
+    const history = await (await fetch(url + '/api/history')).json() as Json;
+    assert.deepEqual(history.eras, []);
+    assert.deepEqual(history.memorials, []);
+    assert.deepEqual(history.exiles, []);
+    assert.equal((history.stats as Json).firstDay, null);
+
+    const gov = await (await fetch(url + '/api/government')).json() as Json;
+    assert.deepEqual(gov.parties, []);
+    assert.deepEqual(gov.promises, []);
+    assert.equal(((gov.approval as Json).mayor), 0.5);
+    const court = await (await fetch(url + '/api/court')).json() as Json;
+    assert.deepEqual(court.investigations, []);
+    assert.deepEqual((court.jail as Json).roster, []);
+    assert.equal((await fetch(url + '/api/profile/c_1')).status, 404);
+    assert.equal((await fetch(url + '/api/portrait/c_1.svg')).status, 404);
+  } finally {
+    run.stop();
+  }
 });

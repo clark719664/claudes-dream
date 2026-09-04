@@ -9,6 +9,7 @@ import type {
   Citizen, CitizenId, DistrictId, Good, Job, Observation, ObservedCitizen, ObservedClub, ObservedFamilyMember,
   ObservedHappening, ObservedJob, ObservedProposal, ObservedShop, World,
 } from '../types.ts';
+import { MAX_DIARY_SHOWN } from '../data/metropolis.ts';
 import { districtDistance } from '../data/city.ts';
 import { CLUB_MEETING_HOUR, PRODUCTS } from '../data/catalogue.ts';
 import { employerName, isQualified, openJobs } from '../economy/jobs.ts';
@@ -25,6 +26,27 @@ import { shopsIn } from '../society/shops.ts';
 import { ageOf, familyOf } from '../society/family.ts';
 import { householdOf, rentShareOf } from '../society/households.ts';
 import { calendarObservation, happeningsToday } from '../society/calendar.ts';
+import { goalsObservation, milestonesOf } from '../identity/goals.ts';
+import { recentDiary } from '../identity/diary.ts';
+import { healthOf } from '../identity/health.ts';
+import { juryFor } from '../government/jury.ts';
+import { investigationsFor } from '../government/investigations.ts';
+import { gangOf } from '../government/gangs.ts';
+import { partiesObservation, partyObservation } from '../politics/parties.ts';
+import { cityApproval } from '../politics/approval.ts';
+import { petitionsObservation, referendumObservation } from '../politics/referendums.ts';
+import { unionObservation } from '../politics/unions.ts';
+import { decreesObservation } from '../politics/decrees.ts';
+import { leversObservation } from '../markets/levers.ts';
+import { propertyObservation } from '../markets/property.ts';
+import { sharesObservation } from '../markets/shares.ts';
+import { gigsObservation } from '../markets/gigs.ts';
+import { outerObservation } from '../markets/outer.ts';
+import { worksObservation } from '../culture/works.ts';
+import { leagueObservation, teamObservation, teamOf } from '../culture/stadium.ts';
+import { frontPages } from '../culture/press.ts';
+import { feedFor } from '../social/feed.ts';
+import { rumoursHeardBy } from '../social/rumours.ts';
 import { availableActions, heldJob } from '../actions/execute.ts';
 import { ownedBusiness } from '../actions/enterprise.ts';
 import { citizensIn, districtName } from '../actions/common.ts';
@@ -156,6 +178,22 @@ function observedAffection(world: World, c: Citizen): { id: CitizenId; name: str
     .map(([id, value]) => ({ id, name: world.citizens[id].name, affection: Math.round(value) }));
 }
 
+/** The gang a citizen runs with, as their own observation shows it; null for everybody else. */
+function observedGang(world: World, c: Citizen): { id: string; name: string; turf: DistrictId; members: number; boss: string } | null {
+  const g = gangOf(world, c.id);
+  if (!g) return null;
+  return {
+    id: g.id, name: g.name, turf: g.turf, members: g.members.length,
+    boss: world.citizens[g.bossId]?.name ?? g.bossId,
+  };
+}
+
+/** A mentor or a mentee, when the pairing still stands on both sides. */
+function observedPair(world: World, id: CitizenId | null | undefined): { id: CitizenId; name: string } | null {
+  const other = id ? world.citizens[id] : undefined;
+  return other ? { id: other.id, name: other.name } : null;
+}
+
 /** Build the observation for a citizen. Unknown ids are a programmer error. */
 export function buildObservation(world: World, cId: CitizenId): Observation {
   const c = world.citizens[cId];
@@ -180,6 +218,10 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
 
   const partner = c.family.partnerId ? world.citizens[c.family.partnerId] : undefined;
   const household = householdOf(world, cId);
+  // The metropolis, gathered once: each block is the pack module's own view.
+  const property = propertyObservation(world, c);
+  const works = worksObservation(world, c);
+  const levers = leversObservation(world);
 
   return {
     tick: world.tick, day: world.day, hour: world.hour,
@@ -215,6 +257,24 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
         }
         : null,
       clubs: observedClubs(world, c),
+      // The metropolis: what this citizen is, holds and belongs to.
+      goals: goalsObservation(world, c),
+      diary: recentDiary(world, cId).slice(-MAX_DIARY_SHOWN),
+      milestones: milestonesOf(world, cId, 3).map((m) => m.text),
+      health: { ...healthOf(c) },
+      jailedUntilDay: c.jailedUntilDay ?? null,
+      approval: { mayor: c.approval?.mayor ?? 0.5, council: c.approval?.council ?? 0.5 },
+      school: c.school ?? null,
+      paper: c.paper ?? 'chronicle',
+      party: partyObservation(world, c),
+      union: unionObservation(world, c),
+      gang: observedGang(world, c),
+      team: teamObservation(world, teamOf(world, cId)),
+      mentor: observedPair(world, c.mentorId),
+      mentee: observedPair(world, c.menteeId),
+      property: property.self,
+      shares: sharesObservation(world, c),
+      works: works.self,
     },
     here: {
       district: c.district, districtName: districtName(world, c.district),
@@ -223,6 +283,9 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
       citizens: citizensIn(world, c.district, c.id).map((o) => observeCitizen(world, c, o)),
       shops: observedShops(world, c.district),
       happening: observedHappenings(world, c.district),
+      units: property.here,
+      gigs: gigsObservation(world, c),
+      works: works.here,
     },
     friends: relations(world, c, friendsOf(world, cId)),
     rivals: relations(world, c, rivalsOf(world, cId)),
@@ -249,12 +312,27 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
         id: latest.id, law: latest.law, status: latest.status, verdict: latest.verdict,
         tier: latest.sentence?.tier ?? null, canAppeal: canAppeal(world, cId),
       } : null,
+      parties: partiesObservation(world, c),
+      approval: cityApproval(world),
+      petitions: petitionsObservation(world, c),
+      referendum: referendumObservation(world, c),
+      decrees: decreesObservation(world),
+      propertyTax: levers.propertyTax,
+      wealthTax: levers.wealthTax,
+      tariff: levers.tariff,
+      reserveTarget: levers.reserveTarget,
     },
+    outer: outerObservation(world),
+    culture: { league: leagueObservation(world), topWorks: works.top, papers: frontPages(world) },
+    feed: feedFor(world, c),
+    rumours: rumoursHeardBy(world, cId),
     // What the citizen's office puts before them today. Empty for everyone
     // who holds none, and the same shape for every kind of mind.
     bench: benchFor(world, cId),
     appeals: appealsFor(world, cId),
     reports: observedReportsFor(world, cId),
+    jury: juryFor(world, cId),
+    investigations: investigationsFor(world, cId),
     inbox,
     recent: c.memory.slice(-RECENT_MEMORIES).map((m) => m.text),
     availableActions: availableActions(world, c),

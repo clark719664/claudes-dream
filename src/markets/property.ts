@@ -2,15 +2,12 @@
  * Property — the deeds under the city.
  *
  * Every room the city built and every shopfront on the row is a **unit** with
- * an address, a rent and an owner. At the founding the owner is the city and
- * the rent is the tier's rent; after that a citizen standing at the Exchange
- * may buy one, live in it rent-free, let it to somebody else at a rent they
- * name, and pay the Council's property tax on what they collect. They may also
- * put a tenant out, which is legal, and which the block remembers.
- *
- * Nothing here decides anything for anybody. The Exchange keeps a board and a
- * price; who buys, who lets, who evicts and who stays put is the citizens'
- * business.
+ * an address, a rent and an owner. At the founding the owner is the city; after
+ * that a citizen standing at the Exchange may buy one, live in it rent-free,
+ * let it at a rent they name, and pay the Council's property tax on what they
+ * collect. They may also put a tenant out, which is legal, and which the block
+ * remembers. Nothing here decides anything for anybody: the Exchange keeps a
+ * board and a price, and who buys, lets, evicts or stays put is theirs.
  *
  * **Two rules of the board.** A unit somebody lives in is never on sale over
  * their head; a unit nobody lives in and nobody has offered to let is idle
@@ -132,9 +129,9 @@ function cityRent(world: World, block: HousingBlock | null): number {
 }
 
 /**
- * How the city's capacity for a tier is spread across the blocks of that tier.
- * Blocks that came with a district take their own number of rooms; whatever the
- * builders have added on top belongs to the tier's founding block.
+ * How a tier's capacity is spread across its blocks: a block that came with a
+ * district takes its own rooms, and whatever the builders added on top belongs
+ * to the tier's founding block.
  */
 function allocation(world: World, tier: 1 | 2 | 3): { block: HousingBlock; units: number }[] {
   const open = HOUSING_BLOCKS.filter((b) => b.tier === tier && isOpen(world, BUILDINGS[b.buildingId].district));
@@ -163,10 +160,10 @@ function createUnit(world: World, spec: Omit<PropertyUnit, 'id'>): PropertyUnit 
 }
 
 /**
- * Draw up the deeds the city implies: one for every room its housing ledger
- * counts, and one for each row of shopfronts that has opened. Idempotent — it
- * refreshes what the city still owns when the Council moves rents, adds what
- * the builders finished, and never touches a unit somebody bought.
+ * Draw up the deeds the city implies: one per room in its housing ledger, one
+ * per opened row of shopfronts. Idempotent — it refreshes the rents of what the
+ * city still owns, adds what the builders finished, and never touches a deed
+ * somebody bought.
  */
 export function syncProperty(world: World): void {
   for (const tier of [1, 2, 3] as const) {
@@ -210,11 +207,7 @@ export function syncProperty(world: World): void {
 // Prices and the board
 // ---------------------------------------------------------------------------
 
-/**
- * What a unit fetches: sixty days of its rent, never less than the floor. Good
- * land will sell at a premium to its yield once `docs/PROPERTY.md` §2's land
- * value lands; until then the address is in the rent and nowhere else.
- */
+/** Sixty days of rent, never less than the floor. (`docs/PROPERTY.md` §2's land premium slots in here.) */
 export function unitPrice(world: World, u: PropertyUnit): number {
   const rent = Math.max(0, Math.round(u.rent));
   return Math.max(MIN_PRICE, Math.round(PRICE_MULTIPLE * rent));
@@ -224,20 +217,28 @@ export function unitsFor(world: World, ownerId: CitizenId | 'city'): PropertyUni
   return allUnits(world).filter((u) => u.ownerId === ownerId);
 }
 
+/** The business trading out of a shopfront, longest-standing first. */
+export function occupantOf(world: World, u: PropertyUnit): Business | null {
+  if (u.kind !== 'shopfront') return null;
+  return Object.values(world.businesses)
+    .filter((b) => b.dissolvedDay === null && b.buildingId === u.buildingId)
+    .sort((a, b) => a.foundedDay - b.foundedDay || a.id.localeCompare(b.id, 'en'))[0] ?? null;
+}
+
+/** Somebody is in it: a tenant on the register, or a business trading out of the row. */
+function occupied(world: World, u: PropertyUnit): boolean {
+  return u.tenantId !== null || occupantOf(world, u) !== null;
+}
+
 /** A unit is on the board when the city holds it, or when its owner holds it idle. */
 export function onSale(world: World, u: PropertyUnit): boolean {
   if (!isOpen(world, districtOf(world, u))) return false;
   if (u.ownerId === 'city') return true;
-  return u.tenantId === null && !isOfferedToLet(world, u);
+  return !occupied(world, u) && !isOfferedToLet(world, u);
 }
 
 export function unitsOnSale(world: World): PropertyUnit[] {
   return allUnits(world).filter((u) => onSale(world, u));
-}
-
-/** Units a citizen may let: the ones they own. */
-export function unitsToLet(world: World): PropertyUnit[] {
-  return allUnits(world).filter((u) => u.ownerId !== 'city' && u.tenantId === null && isOfferedToLet(world, u));
 }
 
 // ---------------------------------------------------------------------------
@@ -374,10 +375,9 @@ function releaseTenancy(world: World, cId: CitizenId): void {
 }
 
 /**
- * Give a citizen an address for the tier they have just moved into: their own
- * unit first, then the cheapest one a landlord has offered, then a room the
- * city still holds. Called by `economy/housing.ts moveHome`; tier 0 gives the
- * address up.
+ * An address for the tier a citizen has just moved into: their own unit first,
+ * then the cheapest a landlord has offered, then a room the city still holds.
+ * Called by `economy/housing.ts moveHome`; tier 0 gives the address up.
  */
 export function assignTenancy(world: World, cId: CitizenId, tier: HousingTier): PropertyUnit | null {
   const c = world.citizens[cId];
@@ -406,19 +406,10 @@ export function assignTenancy(world: World, cId: CitizenId, tier: HousingTier): 
 // The landlord's day
 // ---------------------------------------------------------------------------
 
-/** The business trading out of a shopfront, longest-standing first. */
-function occupantOf(world: World, u: PropertyUnit): Business | null {
-  if (u.kind !== 'shopfront') return null;
-  const here = Object.values(world.businesses)
-    .filter((b) => b.dissolvedDay === null && b.buildingId === u.buildingId)
-    .sort((a, b) => a.foundedDay - b.foundedDay || a.id.localeCompare(b.id, 'en'));
-  return here[0] ?? null;
-}
-
 /**
  * A shopfront in private hands takes the premises rent that would have gone to
  * the Treasury: the business pays its landlord instead, and pays it once. The
- * rate is put back the moment the deed returns to the city.
+ * rate goes back the moment the deed returns to the city.
  */
 function setPremisesRent(world: World, biz: Business, leased: boolean): void {
   const key = `leased:${biz.id}`;
@@ -439,11 +430,11 @@ function collectTax(world: World, u: PropertyUnit, rent: number): number {
 }
 
 /**
- * Daily, after the city has taken its own rents: every unit a citizen owns and
- * has let collects its rent from the tenant, and the owner pays the Council's
+ * Daily, after the city has taken its own rents: every let unit with a citizen
+ * owner collects its rent from the tenant, and the owner pays the Council's
  * property tax on it. A tenant who cannot pay falls into arrears exactly as
- * they would with the city, and is put out on the third day. Returns the total
- * rent moved.
+ * they would with the city, and is put out on the third day. Returns the rent
+ * moved.
  */
 export function landlordRent(world: World): number {
   let moved = 0;
@@ -508,31 +499,21 @@ export function evictTenant(world: World, ownerId: CitizenId, unitId: string): A
   const u = register(world)[unitId];
   if (!u) return fail('There is no such unit.');
   if (u.ownerId !== ownerId) return fail('That deed is not yours.');
+  if (u.kind === 'shopfront') return fail("A row's tenant is whoever trades there; you cannot put a business off the street.");
   if (!u.tenantId) return fail('Nobody is living there.');
   if (u.tenantId === ownerId) return fail('You cannot evict yourself.');
+  const tenant = world.citizens[u.tenantId] ?? null;
+  if (!tenant) { u.tenantId = null; return fail('Nobody is living there.'); }
 
-  const tenantId = u.tenantId;
-  const tenant = world.citizens[tenantId] ?? null;
-  const biz = tenant ? null : world.businesses[tenantId] ?? null;
   u.tenantId = null;
   setOfferedToLet(world, u, false);
   adjustReputation(world, owner, -EVICTION_REPUTATION, 'you put a tenant out');
-
-  if (tenant) {
-    tellNeighbours(world, tenant.id, `${owner.name} put ${tenant.name} out of ${describe(world, u)}.`);
-    evict(world, tenant.id, `${owner.name} ended the tenancy`);
-    tenant.homeBuildingId = null;
-    remember(world, tenant.id, 'event', `${owner.name} put you out of ${describe(world, u)}.`);
-    remember(world, ownerId, 'event', `You put ${tenant.name} out of ${describe(world, u)}.`);
-    return ok(`You put ${tenant.name} out of ${describe(world, u)}.`);
-  }
-  if (biz) {
-    setPremisesRent(world, biz, false);
-    emit(world, 'eviction', `${owner.name} turned ${biz.name} out of ${describe(world, u)}.`, [ownerId], 0.6, { unitId: u.id });
-    remember(world, ownerId, 'event', `You turned ${biz.name} out of ${describe(world, u)}.`);
-    return ok(`You turned ${biz.name} out of ${describe(world, u)}.`);
-  }
-  return ok('The tenancy is ended.');
+  tellNeighbours(world, tenant.id, `${owner.name} put ${tenant.name} out of ${describe(world, u)}.`);
+  evict(world, tenant.id, `${owner.name} ended the tenancy`);
+  tenant.homeBuildingId = null;
+  remember(world, tenant.id, 'event', `${owner.name} put you out of ${describe(world, u)}.`);
+  remember(world, ownerId, 'event', `You put ${tenant.name} out of ${describe(world, u)}.`);
+  return ok(`You put ${tenant.name} out of ${describe(world, u)}.`);
 }
 
 // ---------------------------------------------------------------------------

@@ -9,6 +9,7 @@
  */
 import { TRAITS, clamp } from '../types.ts';
 import type { Citizen, CitizenId, World } from '../types.ts';
+import { noteHostility } from '../social/feuds.ts';
 
 /** Bond at or above which two citizens count as friends. */
 export const FRIEND_THRESHOLD = 40;
@@ -108,6 +109,8 @@ export function recordHostility(world: World, actorId: CitizenId, targetId: Citi
   const recent = (target.hostilityFrom[actorId] ?? []).filter((t) => t >= cutoff);
   recent.push(world.tick);
   target.hostilityFrom[actorId] = recent;
+  // Two families whose people keep coming to blows end up in a feud.
+  noteHostility(world, actorId, targetId);
   return recent.length;
 }
 

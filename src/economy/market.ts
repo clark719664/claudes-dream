@@ -12,6 +12,7 @@ import type { ActionResult, BusinessId, Citizen, CitizenId, Good, Inventory, Wor
 import { CITY_JOBS, PIECE_RATE_ROLES, PIECE_RATE_SHARE, POSTED_RATE_PRODUCTIVITY } from '../data/jobs.ts';
 import { emit, remember } from '../sim/events.ts';
 import { balanceOf, transfer } from './treasury.ts';
+import { salesTaxToday } from '../politics/decrees.ts';
 
 /** Proportional price step per tick when demand and supply diverge. */
 export const PRICE_STEP = 0.05;
@@ -215,7 +216,7 @@ export function buyFromMarket(world: World, buyer: CitizenId | BusinessId, good:
       : `The Bazaar only has ${mg.stock} ${good} in stock.`);
   }
   const base = Math.round(mg.price * q);
-  const cost = Math.round(mg.price * q * (1 + clamp(world.government.salesTax, 0, 1)));
+  const cost = Math.round(mg.price * q * (1 + clamp(salesTaxToday(world), 0, 1)));
   const tax = Math.max(0, cost - base);
   if (balanceOf(world, buyer) < cost) return fail(`You cannot afford ${q} ${good} (${cost} ℓ).`);
 
@@ -247,7 +248,7 @@ export function sellToMarket(world: World, seller: CitizenId | BusinessId, good:
   }
 
   const gross = Math.round(mg.price * q);
-  const proceeds = Math.round(mg.price * q * (1 - clamp(world.government.salesTax, 0, 1)));
+  const proceeds = Math.round(mg.price * q * (1 - clamp(salesTaxToday(world), 0, 1)));
   const tax = Math.max(0, gross - proceeds);
   if (world.treasury.balance < proceeds) return fail("The Bazaar's till is empty; try again later.");
   if (proceeds > 0 && !transfer(world, 'treasury', seller, proceeds, 'sale', `${q} ${good} sold at the Bazaar`)) {

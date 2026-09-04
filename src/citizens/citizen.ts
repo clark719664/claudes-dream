@@ -15,12 +15,14 @@ import { pick, poisson, rand, randInt } from '../util/rng.ts';
 import { nextId } from '../util/ids.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
-import { comfortDecayMultiplier, moveHome } from '../economy/housing.ts';
+import { comfortDecayMultiplier, comfortFactorOf, moveHome } from '../economy/housing.ts';
 import { joblessShare } from '../economy/planning.ts';
 import { friendsOf } from './relationships.ts';
 import { departCity } from './departure.ts';
 import { giveOrientation } from './orientation.ts';
 import { assignTastes } from '../society/tastes.ts';
+import { drawGoals } from '../identity/goals.ts';
+import { curfewSocialRelief } from '../politics/decrees.ts';
 
 /** The Threshold stops admitting newcomers at this population. */
 export const MAX_POPULATION = 200;
@@ -221,6 +223,10 @@ export function createCitizen(world: World, opts: CreateCitizenOpts = {}): Citiz
     return c;
   }
 
+  // Two ambitions are drawn at the Threshold. Nothing in the engine scores a
+  // citizen against them; they are a fact about it, like its tastes.
+  drawGoals(world, c);
+
   const grant = Math.max(0, Math.round(world.config.arrivalGrant));
   const granted = grant > 0 && transfer(world, 'treasury', id, grant, 'grant', `arrival grant for ${name}`);
   const housed = moveHome(world, id, 1).ok;
@@ -266,11 +272,11 @@ export function tickNeeds(world: World, c: Citizen): void {
   const n = c.needs;
   n.energy = clamp(n.energy - NEED_DECAY.energy, 0, 100);
   n.rest = clamp(n.rest - NEED_DECAY.rest, 0, 100);
-  n.social = clamp(n.social - NEED_DECAY.social, 0, 100);
-  n.comfort = clamp(n.comfort - NEED_DECAY.comfort * comfortDecayMultiplier(c.homeTier), 0, 100);
+  // A curfew keeps people in; the hours pass more kindly with the household.
+  n.social = clamp(n.social - NEED_DECAY.social * curfewSocialRelief(world, c), 0, 100);
+  n.comfort = clamp(n.comfort - NEED_DECAY.comfort * comfortDecayMultiplier(c.homeTier, comfortFactorOf(c)), 0, 100);
   n.purpose = clamp(n.purpose - NEED_DECAY.purpose * (occupied ? 1 : 1.5), 0, 100);
   c.mood = computeMood(c);
-  void world;
 }
 
 export function hasCriticalNeed(c: Citizen): boolean {

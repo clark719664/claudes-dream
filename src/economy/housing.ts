@@ -4,9 +4,12 @@
  * Builders add capacity through housing progress.
  */
 import { clamp } from '../types.ts';
-import type { ActionResult, CitizenId, HousingTier, World } from '../types.ts';
+import type { ActionResult, BuildingId, Citizen, CitizenId, HousingTier, PropertyUnit, World } from '../types.ts';
+import { BUILDINGS, blockOf, blocksForTier } from '../data/city.ts';
 import { emit, remember } from '../sim/events.ts';
 import { householdRent } from '../society/households.ts';
+import { assignTenancy } from '../markets/property.ts';
+import { tellNeighbours } from '../social/neighbours.ts';
 import { residentIds, transfer } from './treasury.ts';
 
 type PaidTier = 1 | 2 | 3;
@@ -37,14 +40,47 @@ export function vacancies(world: World): Record<1 | 2 | 3, number> {
   };
 }
 
-/** Comfort decays this much faster (or slower) depending on where you sleep. */
-export function comfortDecayMultiplier(tier: HousingTier): number {
-  switch (tier) {
-    case 1: return 1.0;
-    case 2: return 0.7;
-    case 3: return 0.4;
-    default: return 2.0;
+/**
+ * Comfort decays this much faster (or slower) depending on where you sleep.
+ * A block has its own character on top of its tier: the Hilltop Villas are
+ * kinder than the Skyline (0.6), the Tunnels harsher than the Lofts (1.6).
+ */
+export function comfortDecayMultiplier(tier: HousingTier, comfortFactor = 1): number {
+  const base = tier === 1 ? 1.0 : tier === 2 ? 0.7 : tier === 3 ? 0.4 : 2.0;
+  return base * (Number.isFinite(comfortFactor) && comfortFactor > 0 ? comfortFactor : 1);
+}
+
+/** The block a citizen sleeps in, when the register knows the address. */
+export function comfortFactorOf(c: Citizen): number {
+  return blockOf(c.homeBuildingId ?? '')?.comfortFactor ?? 1;
+}
+
+/** The unit whose keys this citizen holds, if the register has drawn one up. */
+export function unitOf(world: World, cId: CitizenId): PropertyUnit | null {
+  for (const u of Object.values(world.property ?? {})) if (u.tenantId === cId) return u;
+  return null;
+}
+
+/** The cheapest block of a tier the city has actually opened. */
+function pickBlock(world: World, tier: 1 | 2 | 3): BuildingId | null {
+  const open = world.openDistricts ?? [];
+  for (const block of blocksForTier(tier)) {
+    const building = world.buildings[block.buildingId] ?? BUILDINGS[block.buildingId];
+    if (building && open.includes(building.district)) return block.buildingId;
   }
+  return null;
+}
+
+/**
+ * What this citizen pays for its own room. A room the city still owns is
+ * priced by the register; otherwise the tier's rent at the block's rate.
+ */
+export function rentOf(world: World, c: Citizen): number {
+  if (!isPaidTier(c.homeTier)) return 0;
+  const unit = unitOf(world, c.id);
+  if (unit && unit.ownerId === 'city') return Math.max(0, Math.round(unit.rent));
+  const factor = blockOf(c.homeBuildingId ?? '')?.rentFactor ?? 1;
+  return Math.max(0, Math.round(world.housing.rent[c.homeTier] * factor));
 }
 
 /** Give up the current unit (no events). */
@@ -54,6 +90,8 @@ function vacate(world: World, cId: CitizenId): void {
   world.housing.occupied[c.homeTier] = Math.max(0, world.housing.occupied[c.homeTier] - 1);
   c.homeTier = 0;
   c.rentArrearsDays = 0;
+  assignTenancy(world, cId, 0);
+  c.homeBuildingId = null;
 }
 
 /** Move into a tier (0 = move out). Requires a vacancy; arrears reset on any move. */
@@ -79,7 +117,11 @@ export function moveHome(world: World, cId: CitizenId, tier: HousingTier): Actio
   world.housing.occupied[tier] += 1;
   c.homeTier = tier;
   c.rentArrearsDays = 0;
-  const rent = world.housing.rent[tier];
+  // An address, so the citizen has neighbours and the map has somewhere to
+  // put them: their own deed first, then a landlord's, then the city's.
+  const unit = assignTenancy(world, cId, tier);
+  c.homeBuildingId = unit?.buildingId ?? pickBlock(world, tier);
+  const rent = rentOf(world, c);
   const text = from === 0
     ? `${c.name} moved into ${TIER_NAMES[tier]}.`
     : `${c.name} moved from ${TIER_NAMES[from]} to ${TIER_NAMES[tier]}.`;
@@ -93,6 +135,8 @@ export function evict(world: World, cId: CitizenId, reason: string): void {
   const c = world.citizens[cId];
   if (!c || !isPaidTier(c.homeTier)) return;
   const from = c.homeTier;
+  // The stairwell hears it before the Chronicle does.
+  tellNeighbours(world, cId, `${c.name} was put out of ${TIER_NAMES[from]}: ${reason}.`);
   vacate(world, cId);
   c.needs.comfort = clamp(c.needs.comfort - 10, 0, 100);
   emit(world, 'eviction', `${c.name} was evicted from ${TIER_NAMES[from]}: ${reason}.`, [cId], 0.5, { tier: from, reason });
@@ -136,7 +180,15 @@ export function dailyHousing(world: World): void {
     // exiles and emigrants have left: their unit is quietly freed
     if (!residents.has(c.id)) { vacate(world, c.id); continue; }
     const tier = c.homeTier;
-    const rent = Math.round(world.housing.rent[tier]);
+    // A room in private hands is the landlord's to collect on
+    // (markets/property.ts landlordRent); the city never charges twice.
+    const unit = unitOf(world, c.id);
+    if (unit && unit.ownerId !== 'city') {
+      if (unit.ownerId === c.id) c.rentArrearsDays = 0;
+      c.needs.comfort = clamp(c.needs.comfort + DAILY_COMFORT[tier], 0, 100);
+      continue;
+    }
+    const rent = rentOf(world, c);
     const paid = rent <= 0 || transfer(world, c.id, 'treasury', rent, 'rent', `rent at ${TIER_NAMES[tier]}`);
     if (paid) {
       if (c.rentArrearsDays > 0) remember(world, c.id, 'money', `You paid ${rent} ℓ rent and cleared your arrears.`);

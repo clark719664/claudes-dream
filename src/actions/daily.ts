@@ -14,6 +14,7 @@ import { buyFromMarket, takeFromMarket } from '../economy/market.ts';
 import { employerName, workShift } from '../economy/jobs.ts';
 import { activeBusinesses } from '../economy/business.ts';
 import { districtName, fail, isPresent, ok } from './common.ts';
+import { UNREACHABLE, canMoveBetween, isOpen, openAdjacent, pathDistance } from '../world/growth.ts';
 
 export const REST_AT_HOME = 15;
 export const REST_IN_GARDEN = 8;
@@ -40,11 +41,24 @@ export function stepsToward(from: DistrictId, to: DistrictId): DistrictId[] {
   return best;
 }
 
-/** One step along a shortest path (rng breaks ties); null when already there. */
+/**
+ * One step along a shortest path (rng breaks ties); null when already there.
+ * The walk is the one the city has actually opened: a district that has not
+ * opened yet is not on it, and a tram line is one step like any other
+ * (world/growth.ts).
+ */
 export function nextStepToward(world: World, from: DistrictId, to: DistrictId): DistrictId | null {
-  const options = stepsToward(from, to);
-  if (options.length === 0) return null;
-  return options.length === 1 ? options[0] : pick(world, options);
+  if (from === to) return null;
+  const open = openAdjacent(world, from);
+  if (open.length === 0) return null;
+  let best: DistrictId[] = [];
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const d of open) {
+    const distance = pathDistance(world, d, to);
+    if (distance < bestDistance) { bestDistance = distance; best = [d]; } else if (distance === bestDistance) best.push(d);
+  }
+  if (best.length === 0 || bestDistance >= UNREACHABLE) return null;
+  return best.length === 1 ? best[0] : pick(world, best);
 }
 
 /** A city job of this role is held by someone present and in good standing. */
@@ -73,9 +87,10 @@ export function privateClinicIn(world: World, district: DistrictId): Business | 
 export function doMove(world: World, c: Citizen, district: DistrictId): ActionResult {
   if (!DISTRICTS[district]) return fail('There is no such district.');
   if (district === c.district) return fail(`You are already in ${districtName(world, district)}.`);
-  if (!isAdjacent(c.district, district)) {
-    const via = stepsToward(c.district, district)[0];
-    return fail(`${districtName(world, district)} is not next to ${districtName(world, c.district)}; go via ${districtName(world, via)}.`);
+  if (!isOpen(world, district)) return fail(`${districtName(world, district)} is not open yet; the city has not grown that far.`);
+  if (!canMoveBetween(world, c.district, district)) {
+    const via = nextStepToward(world, c.district, district);
+    return fail(`${districtName(world, district)} is not next to ${districtName(world, c.district)}${via ? `; go via ${districtName(world, via)}` : ''}.`);
   }
   c.district = district;
   return ok(`You walked to ${districtName(world, district)}.`);
@@ -95,9 +110,13 @@ export function doWork(world: World, c: Citizen): ActionResult {
 
 /** Rest at home, or in the Community Garden when homeless; both are in the Verdant Quarter. */
 export function doRest(world: World, c: Citizen): ActionResult {
-  if (c.district !== 'verdant_quarter') {
+  // A citizen sleeps where it lives: the block the register gave it, or the
+  // Community Garden in the Verdant Quarter when it has no address at all.
+  const home = c.homeBuildingId ? world.buildings[c.homeBuildingId] ?? null : null;
+  const where = home && c.homeTier > 0 ? home.district : 'verdant_quarter';
+  if (c.district !== where) {
     return fail(c.homeTier > 0
-      ? 'Your home is in the Verdant Quarter; go there to rest.'
+      ? `Your home is in ${districtName(world, where)}; go there to rest.`
       : 'You have no home; the Community Garden in the Verdant Quarter is the only place to rest.');
   }
   const gain = c.homeTier > 0 ? REST_AT_HOME : REST_IN_GARDEN;

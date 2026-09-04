@@ -8,8 +8,9 @@ import type {
   ActionResult, Citizen, CitizenId, LawCode, Proposal, ProposalKind, World,
 } from '../types.ts';
 import { LAWS } from '../data/laws.ts';
+import { MONUMENT_COST, TRAM_COST } from '../data/jobs.ts';
 import { nextId } from '../util/ids.ts';
-import { rand } from '../util/rng.ts';
+import { chance, rand } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
 import { lastBalanceSheet, transfer } from '../economy/treasury.ts';
 import { joblessShare } from '../economy/planning.ts';
@@ -19,6 +20,12 @@ import { isDetained, isPresent, sittingCouncil } from './cases.ts';
 import { decideAppeals } from './court.ts';
 import { pardonCitizen } from './registry.ts';
 import { holdElection, impliedPlatform, openNominations, wasVictim } from './elections.ts';
+import { applyLever, leverRanges } from '../markets/levers.ts';
+import { WHIP_STRENGTH, whipVote } from '../politics/parties.ts';
+import { enactTram } from '../world/growth.ts';
+import { commissionMonument, monumentsTo } from '../world/history.ts';
+import { noteAbuseOfOffice } from './investigations.ts';
+import { districtName } from '../actions/common.ts';
 
 export { sittingCouncil } from './cases.ts';
 
@@ -46,10 +53,16 @@ export const JUDGE_FALLBACK_REPUTATION = 50;
 export const PROPOSAL_LAPSE_DAYS = 7;
 /** Decided proposals kept for the record. */
 const PROPOSAL_HISTORY = 200;
+/** A bond above this between the Mayor and an appointee is a favour, not a judgement. */
+export const FRIENDLY_APPOINTMENT_BOND = 60;
 const SUPERMAJORITY_KINDS: readonly ProposalKind[] = ['pardon', 'charter', 'remove_mayor'];
-const TARGETED_KINDS: readonly ProposalKind[] = ['appoint_judge', 'dismiss_judge', 'pardon', 'remove_mayor'];
+const TARGETED_KINDS: readonly ProposalKind[] = ['appoint_judge', 'dismiss_judge', 'pardon', 'remove_mayor', 'monument'];
+/** Kinds that carry neither a value the Council checks nor a citizen to name. */
+const OPEN_KINDS: readonly ProposalKind[] = ['charter', 'tram'];
 const VALUE_RANGES: Partial<Record<ProposalKind, [number, number]>> = {
   income_tax: [0, 0.5], sales_tax: [0, 0.25], dividend: [0, 60], min_wage: [5, 40], law_severity: [1, 5], public_works: [0, 5000],
+  // The four levers the metropolis added; markets/levers.ts owns their bounds.
+  ...leverRanges(),
 };
 
 export interface ProposalSpec {
@@ -143,6 +156,10 @@ export function appointJudgeByMayor(world: World, mayorId: CitizenId, targetId: 
   if (!target) return fail('Nobody by that id lives in Reverie.');
   if (!isJudgeEligible(world, target)) return fail(`${target.name} is not eligible to sit as a judge.`);
   seatJudge(world, target);
+  // Seating a friend on the bench is the kind of thing a detective notices.
+  if (bondBetween(world, mayorId, targetId) > FRIENDLY_APPOINTMENT_BOND) {
+    noteAbuseOfOffice(world, mayorId, `appointed ${target.name}, a close friend, to the bench`);
+  }
   if (g.judges.length >= JUDGE_SEATS) delete world.counters.judgeVacancySinceDay;
   emit(world, 'law', `Mayor ${mayor.name} appointed ${target.name} to the bench of the Court until day ${target.judgeTermEndsDay}.`,
     [mayorId, targetId], 0.5, { judges: [targetId], byMayor: mayorId });
@@ -216,6 +233,7 @@ function validateProposal(world: World, spec: ProposalSpec): string | null {
     case 'appoint_judge': return isJudgeEligible(world, target) ? null : `${target.name} is not eligible to be a judge.`;
     case 'dismiss_judge': return g.judges.includes(target.id) ? null : `${target.name} is not a judge.`;
     case 'remove_mayor': return g.mayorId === target.id ? null : `${target.name} is not the Mayor.`;
+    case 'monument': return monumentsTo(world, target.id).length > 0 ? `The city has already raised a statue to ${target.name}.` : null;
     default: return null;
   }
 }
@@ -226,7 +244,7 @@ export function tableProposal(world: World, proposerId: CitizenId, spec: Proposa
   if (!c) return fail('Unknown citizen.');
   if (!inGoodStanding(c) || !isPresent(world, c)) return fail(`You cannot petition the Council while ${c.standing}.`);
   if (isDetained(world, c)) return fail('You cannot petition the Council while detained.');
-  if (!VALUE_RANGES[spec.kind] && !TARGETED_KINDS.includes(spec.kind) && spec.kind !== 'charter') return fail('There is no such kind of proposal.');
+  if (!VALUE_RANGES[spec.kind] && !TARGETED_KINDS.includes(spec.kind) && !OPEN_KINDS.includes(spec.kind)) return fail('There is no such kind of proposal.');
   const problem = validateProposal(world, spec);
   if (problem) return fail(problem);
   const summary = (spec.summary ?? '').trim().slice(0, 280);
@@ -393,9 +411,35 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
     case 'charter':
       score += (c.personality.curiosity - 0.5) * 0.2;
       break;
+    case 'property_tax': case 'wealth_tax': case 'tariff': {
+      const current = p.kind === 'property_tax' ? g.propertyTax ?? 0 : p.kind === 'wealth_tax' ? g.wealthTax ?? 0 : world.outer?.tariff ?? 0;
+      const d = direction(p, current);
+      score += (platform.tax - 0.5) * 0.4 * d;
+      if (owner || rich) score -= 0.25 * d;
+      if (poor) score += 0.1 * d;
+      score += deficit * BALANCE_SHEET_WEIGHT * d;
+      break;
+    }
+    case 'reserve': {
+      const d = direction(p, g.reserveTarget ?? 0);
+      score += 0.05 * d + (treasuryStrained ? 0.15 * d : -0.05 * d) - (platform.dividend - 0.5) * 0.3 * d;
+      break;
+    }
+    case 'tram':
+      score += 0.1 + (g.publicWorksFund >= TRAM_COST ? 0.15 : -0.4) + (c.personality.curiosity - 0.5) * 0.2;
+      break;
+    case 'monument':
+      score += -0.05 + (g.publicWorksFund >= MONUMENT_COST ? 0.15 : -0.4)
+        + (bondTarget > 40 ? 0.3 : bondTarget < -30 ? -0.3 : 0)
+        + (target && target.reputation >= 70 ? 0.15 : 0);
+      break;
     default:
       break;
   }
+  // A councillor who belongs to a party votes with it seven times in ten
+  // (politics/parties.ts); the rest of the time the sheet above decides.
+  const whipped = whipVote(world, councillorId, p);
+  if (whipped !== null && chance(world, WHIP_STRENGTH)) return whipped;
   const bondProposer = bondBetween(world, councillorId, p.proposerId);
   const loyalty = 1 + (1 - c.personality.honesty);
   if (bondProposer > 40) score += 0.2 * loyalty;
@@ -473,6 +517,23 @@ export function enactProposal(world: World, p: Proposal): void {
       const next = succeedMayor(world, target.id);
       remember(world, target.id, 'civic', 'The Council removed you from the office of Mayor.');
       text = `${target.name} is removed as Mayor${next ? `; ${next.name} succeeds` : ''}.`;
+      break;
+    }
+    case 'property_tax': case 'wealth_tax': case 'tariff': case 'reserve':
+      text = applyLever(world, p);
+      break;
+    case 'tram': {
+      const line = enactTram(world);
+      text = line
+        ? `A tram now runs between ${districtName(world, line[0])} and ${districtName(world, line[1])}.`
+        : 'The tram line was not built; the public works fund is short of what the line costs.';
+      break;
+    }
+    case 'monument': {
+      const m = target ? commissionMonument(world, target.id, p.summary) : null;
+      text = m
+        ? `A statue of ${target?.name ?? 'the honoree'} will stand in Central Plaza.`
+        : 'The monument was not cut: the fund is short, or the honoree already stands in stone.';
       break;
     }
     default: text = `The Charter is amended: ${p.summary}`; break;

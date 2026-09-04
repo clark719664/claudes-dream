@@ -201,6 +201,15 @@ export function exileCitizen(world: World, cId: CitizenId, caseId: CaseId): BanR
   // dailyGangs hands the gang on, or breaks it up when nobody is left.)
   c.jailedUntilDay = null;
   c.gangId = null;
+  // Nor a party, a union, a side, a teacher or a deed: an exile keeps its
+  // record and its name, and nothing else the city gave it.
+  c.partyId = null;
+  c.unionId = null;
+  c.teamDistrict = null;
+  c.mentorId = null;
+  c.menteeId = null;
+  // The deeds go back to the city at the next morning's sweep
+  // (markets/property.ts), which is also what frees the rooms.
   c.district = 'threshold';
   c.exiledCaseId = caseId;
   c.exiledDay = world.day;

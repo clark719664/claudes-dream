@@ -29,33 +29,22 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { emptyWorld } from './scaffold.ts';
 import { FAMILY_NAMES } from '../data/catalogue.ts';
+import { REFERENDUM_HOUR, REFERENDUM_WEEKDAY } from '../data/metropolis.ts';
 import { assignTastes } from '../society/tastes.ts';
 import { emit, remember } from '../sim/events.ts';
-import { auditMoneySupply, dailyTreasuryRollover, formatLumens, payDividend, paySalaries } from '../economy/treasury.ts';
-import { dailyMarket, tickMarket } from '../economy/market.ts';
-import { createCityJobs, dailyJobs } from '../economy/jobs.ts';
-import { dailyBusinesses, hourlyBusinesses } from '../economy/business.ts';
-import { dailyLoans } from '../economy/bank.ts';
-import { dailyHousing } from '../economy/housing.ts';
-import { activeCitizens, canAct, createCitizen, dailyCitizens, tickNeeds } from '../citizens/citizen.ts';
-import { dailyCharacter } from '../citizens/character.ts';
-import { dailyLetters } from '../citizens/letters.ts';
-import { dailyRelationships } from '../citizens/relationships.ts';
-import { printMorningEdition } from '../sim/chronicle.ts';
-import { dailyWatch, tickWatch } from '../government/watch.ts';
-import { courtTallyHour, dailyJustice, fileCharge, openCourtSession, tallyVerdicts } from '../government/court.ts';
-import { dailyStandings } from '../government/registry.ts';
-import { dailyJail } from '../government/jail.ts';
-import { dailyInvestigations } from '../government/investigations.ts';
-import { dailyGangs } from '../government/gangs.ts';
-import { appointJudges, councilSession, dailyGovernment, holdElection, isElectionDay, openNominations } from '../government/council.ts';
-import { refreshWantsDaily } from '../society/tastes.ts';
-import { dailyPossessions, initEmporium, restockEmporium } from '../society/shops.ts';
-import { dailyAffection } from '../society/romance.ts';
-import { dailyBirthdays, dailyLifeStages, dailyUpkeep, familyBondFloor } from '../society/family.ts';
-import { dailyClubs, scheduleMeetings } from '../society/clubs.ts';
-import { scheduleFestivals, tickHappenings } from '../society/calendar.ts';
-import { dailyChest } from '../society/chest.ts';
+import { formatLumens } from '../economy/treasury.ts';
+import { tickMarket } from '../economy/market.ts';
+import { createCityJobs } from '../economy/jobs.ts';
+import { hourlyBusinesses } from '../economy/business.ts';
+import { activeCitizens, canAct, createCitizen, tickNeeds } from '../citizens/citizen.ts';
+import { tickWatch } from '../government/watch.ts';
+import { courtTallyHour, openCourtSession, tallyVerdicts } from '../government/court.ts';
+import { appointJudges, councilSession, holdElection, isElectionDay, openNominations } from '../government/council.ts';
+import { initEmporium } from '../society/shops.ts';
+import { tickHappenings, weekday } from '../society/calendar.ts';
+import { holdReferendum } from '../politics/referendums.ts';
+import { fillMetropolisDefaults } from './scaffold.ts';
+import { dailyRollover } from './daily.ts';
 import { executeAction } from '../actions/execute.ts';
 import { buildObservation } from '../brains/observe.ts';
 import { reflexBrain } from '../brains/reflex.ts';
@@ -65,8 +54,6 @@ import { computeStats } from './stats.ts';
 
 export { computeStats } from './stats.ts';
 
-/** Buildings mend this much damage every day. */
-export const REPAIR_PER_DAY = 0.1;
 /**
  * Founders are spread over the six living districts the city has on its first
  * day; the Threshold is for newcomers, and the Heights and the Undercroft are
@@ -169,86 +156,11 @@ function guard<T>(world: World, where: string, fn: () => T): T | undefined {
 }
 
 // ---------------------------------------------------------------------------
-// The day
-// ---------------------------------------------------------------------------
-
-/** A defaulted loan is fraud in the eyes of the Watch. */
-function chargeLoanDefault(world: World, borrowerId: CitizenId, loan: Loan): void {
-  const name = world.citizens[borrowerId]?.name ?? borrowerId;
-  fileCharge(world, {
-    defendantId: borrowerId, law: 'L07', evidence: 0.5, filedBy: 'watch', amount: loan.outstanding,
-    description: `Fraud: ${name} defaulted on a Lantern Bank loan with ${loan.outstanding} ℓ outstanding`,
-  });
-}
-
-/** Buildings mend a little every day; a full repair is news. */
-function repairBuildings(world: World): void {
-  for (const b of Object.values(world.buildings)) {
-    if (b.damage <= 0) continue;
-    b.damage = Math.max(0, Math.round((b.damage - REPAIR_PER_DAY) * 100) / 100);
-    if (b.damage === 0) emit(world, 'system', `${b.name} has been fully repaired and is back in service.`, [], 0.3, { buildingId: b.id });
-  }
-}
-
-/**
- * The social layer's morning: what people want and what the shops hold, the
- * night's affections, growing up and growing old, the keep of children, the
- * bonds of family, the clubs and their meetings, the festivals of the day,
- * and the Community Chest's stipends.
- */
-function dailySociety(world: World): void {
-  guard(world, 'refreshWantsDaily', () => refreshWantsDaily(world));
-  guard(world, 'restockEmporium', () => restockEmporium(world));
-  guard(world, 'dailyPossessions', () => dailyPossessions(world));
-  guard(world, 'dailyAffection', () => dailyAffection(world));
-  guard(world, 'dailyLifeStages', () => dailyLifeStages(world));
-  guard(world, 'dailyUpkeep', () => dailyUpkeep(world));
-  guard(world, 'dailyBirthdays', () => dailyBirthdays(world));
-  guard(world, 'familyBondFloor', () => familyBondFloor(world));
-  guard(world, 'dailyClubs', () => dailyClubs(world));
-  guard(world, 'scheduleMeetings', () => scheduleMeetings(world));
-  guard(world, 'scheduleFestivals', () => scheduleFestivals(world));
-  guard(world, 'dailyChest', () => dailyChest(world));
-}
-
-/** Hour 0: the daily passes in contract order, the Treasury's report, the morning edition, the audit and the statistics. */
-function dailyRollover(world: World): void {
-  // The day that has just ended is written up for whoever sent each agent,
-  // before anything below can overwrite the record it is drawn from.
-  guard(world, 'dailyLetters', () => dailyLetters(world));
-  // The city reads everyone's character off yesterday's record before the day
-  // begins; newcomers admitted below start neutral until their first full day.
-  guard(world, 'dailyCharacter', () => dailyCharacter(world));
-  guard(world, 'dailyCitizens', () => dailyCitizens(world));
-  guard(world, 'dailyHousing', () => dailyHousing(world));
-  guard(world, 'payDividend', () => payDividend(world));
-  guard(world, 'paySalaries', () => paySalaries(world));
-  guard(world, 'dailyJobs', () => dailyJobs(world));
-  guard(world, 'dailyBusinesses', () => dailyBusinesses(world));
-  guard(world, 'dailyLoans', () => dailyLoans(world, chargeLoanDefault));
-  guard(world, 'dailyRelationships', () => dailyRelationships(world));
-  guard(world, 'dailyStandings', () => dailyStandings(world));
-  // The cells are emptied before the Court sits on anybody: a term that is
-  // served is served, and an overcrowded Watch House lets somebody out.
-  guard(world, 'dailyJail', () => dailyJail(world));
-  guard(world, 'dailyJustice', () => dailyJustice(world));
-  guard(world, 'dailyInvestigations', () => dailyInvestigations(world));
-  guard(world, 'dailyGangs', () => dailyGangs(world));
-  guard(world, 'dailyGovernment', () => dailyGovernment(world));
-  guard(world, 'dailyWatch', () => dailyWatch(world));
-  guard(world, 'dailyMarket', () => dailyMarket(world));
-  dailySociety(world);
-  guard(world, 'repairBuildings', () => repairBuildings(world));
-  const report = guard(world, 'dailyTreasuryRollover', () => dailyTreasuryRollover(world)) ?? 'Treasury: no report today.';
-  guard(world, 'printMorningEdition', () => printMorningEdition(world, report));
-  guard(world, 'auditMoneySupply', () => auditMoneySupply(world));
-  guard(world, 'computeStats', () => world.stats.push(computeStats(world)));
-  autosave(world);
-}
-
-// ---------------------------------------------------------------------------
 // The tick
 // ---------------------------------------------------------------------------
+
+/** The morning, run with this file's error book and this file's autosave. */
+const DAILY_HOOKS = { guard, autosave };
 
 function describeAction(a: Action): string {
   return a.type.replace(/_/g, ' ');
@@ -364,7 +276,7 @@ export async function stepTick(world: World, brains: BrainRegistry): Promise<voi
   world.hour = world.tick % 24;
   world.tickEvents = [];
 
-  if (world.hour === 0) dailyRollover(world);
+  if (world.hour === 0) dailyRollover(world, DAILY_HOOKS);
 
   // The Court opens before the hour is decided, so that a judge sitting today
   // sees the cases before it in the observation it acts on.
@@ -377,6 +289,11 @@ export async function stepTick(world: World, brains: BrainRegistry): Promise<voi
   if (world.hour === courtTallyHour(world)) guard(world, 'tallyVerdicts', () => tallyVerdicts(world));
   if (world.hour === world.config.councilHour) guard(world, 'councilSession', () => councilSession(world));
   if (world.hour === 20 && isElectionDay(world)) guard(world, 'holdElection', () => holdElection(world));
+  // The city votes on its own questions on Stillday evening, after the polls
+  // of the Council have closed and before the night.
+  if (weekday(world) === REFERENDUM_WEEKDAY && world.hour === REFERENDUM_HOUR) {
+    guard(world, 'holdReferendum', () => holdReferendum(world));
+  }
 
   guard(world, 'tickNeeds', () => { for (const c of activeCitizens(world)) tickNeeds(world, c); });
   guard(world, 'tickMarket', () => tickMarket(world));
@@ -493,5 +410,6 @@ export function loadWorld(path: string): World {
   world.counters ??= {};
   fillJusticeDefaults(world);
   fillSocietyDefaults(world);
+  fillMetropolisDefaults(world);
   return world;
 }

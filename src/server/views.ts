@@ -59,6 +59,47 @@ export function clockText(world: World): string {
   return `Day ${world.day}, ${String(world.hour).padStart(2, '0')}:00`;
 }
 
+/** Where a citizen's portrait is served. A file, not a data URI: the browser caches it. */
+export function portraitPath(id: CitizenId): string {
+  return `/api/portrait/${encodeURIComponent(id)}.svg`;
+}
+
+/** A name with a face: what every view uses wherever a citizen is mentioned. */
+export interface PersonCard {
+  id: CitizenId;
+  name: string;
+  familyName: string;
+  lifeStage: string;
+  standing: string;
+  office: string | null;
+  district: string;
+  present: boolean;
+  portrait: string;
+}
+
+export function personCard(world: World, id: CitizenId | null | undefined, present?: Set<CitizenId>): PersonCard | null {
+  if (!id) return null;
+  const c = world.citizens[id];
+  if (!c) return null;
+  return {
+    id: c.id, name: c.name, familyName: c.familyName, lifeStage: c.lifeStage, standing: c.standing,
+    office: c.office, district: c.district,
+    present: isPresentIn(world, c, present ?? presentSet(world)),
+    portrait: portraitPath(c.id),
+  };
+}
+
+/** The cards for a list of ids, skipping anyone the registry does not know. */
+export function personCards(world: World, ids: readonly CitizenId[], present: Set<CitizenId>, max = 50): PersonCard[] {
+  const out: PersonCard[] = [];
+  for (const id of ids) {
+    const card = personCard(world, id, present);
+    if (card) out.push(card);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
 /** FNV-1a, for stable per-citizen jitter on the map. */
 function hash32(s: string): number {
   let h = 0x811c9dc5;

@@ -17,6 +17,13 @@ import { buyFromMarket, deliverToMarket, takeFromMarket, wholeUnits } from './ma
 import { addHousingProgress } from './housing.ts';
 import { isPieceRateJob, pieceRate, planCityPosts, postToClose, postedPieceRate, refreshCityWages } from './planning.ts';
 import { cityCanPay, dailyBudget, isBudgetedJob, noteCitySpend, notePieceWage } from './budget.ts';
+import { GLITCH_PRODUCTIVITY, isGlitched } from '../identity/health.ts';
+import { disasterProductionFactor } from '../world/disasters.ts';
+import { weatherEnergyFactor } from '../world/seasons.ts';
+import { mentorshipMultiplier } from '../social/mentorship.ts';
+import { isJailed } from '../government/jail.ts';
+import { isOnStrike } from '../politics/unions.ts';
+import { pursue } from '../government/investigations.ts';
 
 export const CITY_EMPLOYER_NAME = 'City of Reverie';
 /** Skill gained per shift in the job's skill (×1.5 while holding knowledge). */
@@ -192,7 +199,7 @@ function hasCriticalNeed(c: Citizen): boolean {
  * (1 when fully supplied, 0.5 when none was available).
  */
 function supplyEnergy(world: World, job: Job, biz: Business | null): number {
-  const cost = Math.round(job.output.energyCost ?? 0);
+  const cost = Math.round((job.output.energyCost ?? 0) * weatherEnergyFactor(world));
   if (cost <= 0) return 1;
   let got = 0;
   if (biz) {
@@ -221,7 +228,7 @@ function supplyEnergy(world: World, job: Job, biz: Business | null): number {
 /** Skill growth for a shift; knowledge speeds it up and is slowly consumed. */
 function growSkill(world: World, c: Citizen, job: Job): void {
   if (!job.skill) return;
-  let gain = SKILL_PER_SHIFT;
+  let gain = SKILL_PER_SHIFT * mentorshipMultiplier(world, c);
   if (c.inventory.knowledge > 0) {
     gain *= 1.5;
     const key = `kshift:${c.id}`;
@@ -271,6 +278,21 @@ function applyRoleSpecials(world: World, c: Citizen, job: Job, biz: Business | n
     case 'merchant':
       world.counters.merchantOnShiftTick = world.tick;
       break;
+    // The metropolis: a detective's shift is spent on the traces the city
+    // left behind; a defender, a curator and a coach are simply on duty, and
+    // the modules that need to know look for them.
+    case 'detective':
+      pursue(world, c);
+      break;
+    case 'advocate':
+      world.counters.defendersOnShiftTick = world.tick;
+      break;
+    case 'curator':
+      world.counters.curatorOnShiftTick = world.tick;
+      break;
+    case 'coach':
+      world.counters.coachOnShiftTick = world.tick;
+      break;
     default:
       break;
   }
@@ -285,6 +307,8 @@ export function workShift(world: World, cId: CitizenId): ActionResult {
   if (!job || job.holderId !== cId) { c.jobId = null; return fail('Your job no longer exists.'); }
   if (c.standing !== 'good' && c.standing !== 'probation') return fail(`You cannot work while ${c.standing}.`);
   if (isDetained(world, c)) return fail('You cannot work while detained.');
+  if (isJailed(c)) return fail('You are serving a term in the cells; no shift is worked from there.');
+  if (isOnStrike(world, c)) return fail('Your union is on strike today; nobody of your trade is working.');
   const employer = employerName(world, job);
   if (c.district !== job.district) return fail(`You must be in ${DISTRICTS[job.district].name} to work at ${employer}.`);
   const [start, end] = world.config.workHours;
@@ -307,7 +331,8 @@ export function workShift(world: World, cId: CitizenId): ActionResult {
   }
 
   const skillValue = job.skill ? c.skills[job.skill] : meanSkill(c);
-  const productivity = (0.5 + skillValue / 200) * (1 - damage) * (hasCriticalNeed(c) ? 0.5 : 1);
+  const productivity = (0.5 + skillValue / 200) * (1 - damage) * (hasCriticalNeed(c) ? 0.5 : 1)
+    * (isGlitched(c) ? GLITCH_PRODUCTIVITY : 1) * disasterProductionFactor(world, job);
   const effective = productivity * supplyEnergy(world, job, biz);
 
   const out = job.output;

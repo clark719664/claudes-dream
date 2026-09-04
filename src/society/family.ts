@@ -26,6 +26,7 @@ import { BIRTH_HOUR, BIRTH_VENUE } from './birth.ts';
 import { chooseConvenor, removeMember, theClub } from './clubs.ts';
 import { TIER_NAMES, householdCapacity, householdOf, joinHousehold, leaveHousehold, relationBetween } from './households.ts';
 import { recordContact, separatePartners } from './romance.ts';
+import { drawGoals } from '../identity/goals.ts';
 
 export {
   BIRTH_BOND, BIRTH_HOUR, BIRTH_PURPOSE, BIRTH_VENUE, CHILD_DISTRICT, PERSONALITY_NOISE, SIBLING_BOND, birthChild,
@@ -223,6 +224,8 @@ export function dailyLifeStages(world: World): void {
     const age = ageOf(world, c);
     if (c.lifeStage === 'child' && age >= CHILDHOOD_DAYS) {
       c.lifeStage = 'adult';
+      // Two ambitions are drawn the day a ward becomes a citizen in full.
+      drawGoals(world, c);
       const guardian = c.guardianId ? world.citizens[c.guardianId] : null;
       c.guardianId = null;
       emit(world, 'coming_of_age', `${c.name} ${c.familyName} came of age today.`, [c.id], 0.6, { age });

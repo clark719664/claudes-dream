@@ -662,7 +662,9 @@ export interface Report {
 export type ProposalKind =
   | 'income_tax' | 'sales_tax' | 'dividend' | 'min_wage'
   | 'law_severity' | 'pardon' | 'public_works' | 'appoint_judge'
-  | 'dismiss_judge' | 'remove_mayor' | 'charter' | 'charity';
+  | 'dismiss_judge' | 'remove_mayor' | 'charter' | 'charity'
+  // The metropolis levers, the tram line and the statue in the Plaza.
+  | 'property_tax' | 'wealth_tax' | 'tariff' | 'reserve' | 'tram' | 'monument';
 
 export interface Proposal {
   id: ProposalId;
@@ -715,6 +717,12 @@ export interface Government {
   cycle: number;
   decreeUsedCycle: number | null;
   publicWorksFund: number;
+  /** Share of a let unit's daily rent, paid by its owner. */
+  propertyTax: number;   // 0..0.5
+  /** Daily rate on the part of a wallet above WEALTH_TAX_THRESHOLD. */
+  wealthTax: number;     // 0..0.02
+  /** 0 for no reserve; otherwise the balance the dividend floats toward. */
+  reserveTarget: number;
 }
 
 export interface BanRecord {
@@ -830,6 +838,14 @@ export interface DailyStats {
   clubs: number;        // clubs with at least one member
   chest: number;        // Community Chest balance
   possessions: number;  // items owned by present citizens
+  jailed: number;       // citizens in the cells at the roll
+  glitched: number;     // citizens carrying an untreated glitch
+  works: number;        // works in existence
+  parties: number;      // parties with at least one member
+  gangs: number;        // gangs not yet busted
+  rumours: number;      // rumours still in circulation
+  approval: number;     // mean approval of the Mayor, 0..1
+  outerTrade: number;   // lumens minted by exports less those burned by imports, that day
 }
 
 // ---------------------------------------------------------------------------
@@ -1164,7 +1180,48 @@ export type Action =
   | { type: 'found_gang'; name: string }
   | { type: 'recruit'; citizen: CitizenId }
   | { type: 'racket'; business: BusinessId }
-  | { type: 'pay_racket' };
+  | { type: 'pay_racket' }
+  | { type: 'visit_hospital' }
+  // The metropolis: parties, the petition and the vote
+  | { type: 'found_party'; name: string; platform: Platform }
+  | { type: 'join_party'; partyId: string }
+  | { type: 'leave_party' }
+  | { type: 'endorse'; candidate: CitizenId }
+  | { type: 'sign_petition'; proposalId: ProposalId }
+  | { type: 'vote_referendum'; referendumId: string; aye: boolean }
+  | { type: 'found_union'; role: JobRole; name: string }
+  | { type: 'join_union'; unionId: string }
+  | { type: 'strike' }
+  | { type: 'decree'; kind: Decree['kind']; district?: DistrictId; value?: number }
+  // The metropolis: property, shares, gigs and the Outer Cities
+  | { type: 'buy_property'; unitId: string }
+  | { type: 'sell_property'; unitId: string }
+  | { type: 'let_property'; unitId: string; rent: number }
+  | { type: 'list_shares' }
+  | { type: 'buy_shares'; businessId: BusinessId; qty: number }
+  | { type: 'sell_shares'; businessId: BusinessId; qty: number }
+  | { type: 'post_gig'; title: string; pay: number; skill: Skill | null; minSkill: number }
+  | { type: 'take_gig'; gigId: string }
+  | { type: 'import'; good: Good; qty: number }
+  | { type: 'export'; good: Good; qty: number }
+  // The metropolis: works, the league, the schools and the papers
+  | { type: 'create_work'; kind: WorkKind; title: string }
+  | { type: 'exhibit'; workId: string }
+  | { type: 'review'; workId: string; score: number }
+  | { type: 'join_team' }
+  | { type: 'attend_match' }
+  | { type: 'train' }
+  | { type: 'adopt_school'; school: Exclude<SchoolOfThought, null> }
+  | { type: 'set_menu'; dish: string }
+  | { type: 'commission_monument'; honoree: CitizenId; inscription: string }
+  | { type: 'read_paper'; paper: PaperId }
+  // The metropolis: the Archive door, and the fabric of the city
+  | { type: 'sunset' }
+  | { type: 'gossip'; about: CitizenId; claim: string; law?: LawCode }
+  | { type: 'apologize'; to: CitizenId }
+  | { type: 'mentor'; citizen: CitizenId }
+  | { type: 'post'; text: string }
+  | { type: 'react'; postId: string; kind: ReactionKind };
 
 export type ActionType = Action['type'];
 
@@ -1182,7 +1239,31 @@ export const ACTION_TYPES: readonly ActionType[] = [
   'date', 'propose_partnership', 'marry', 'break_up', 'move_in', 'start_family',
   'found_club', 'join_club', 'leave_club', 'attend_club',
   'dine', 'play', 'celebrate', 'donate',
-  'write_diary', 'hire_advocate', 'advocate', 'found_gang', 'recruit', 'racket', 'pay_racket',
+  'write_diary', 'visit_hospital',
+  'hire_advocate', 'advocate', 'found_gang', 'recruit', 'racket', 'pay_racket',
+  'found_party', 'join_party', 'leave_party', 'endorse', 'sign_petition', 'vote_referendum',
+  'found_union', 'join_union', 'strike', 'decree',
+  'buy_property', 'sell_property', 'let_property', 'list_shares', 'buy_shares', 'sell_shares',
+  'post_gig', 'take_gig', 'import', 'export',
+  'create_work', 'exhibit', 'review', 'join_team', 'attend_match', 'train',
+  'adopt_school', 'set_menu', 'commission_monument', 'read_paper',
+  'sunset', 'gossip', 'apologize', 'mentor', 'post', 'react',
+];
+
+/**
+ * The metropolis actions, for prompts and brains that list them separately.
+ * Everything the third layer added, in catalogue order.
+ */
+export const METROPOLIS_ACTIONS: readonly ActionType[] = [
+  'write_diary', 'visit_hospital',
+  'hire_advocate', 'advocate', 'found_gang', 'recruit', 'racket', 'pay_racket',
+  'found_party', 'join_party', 'leave_party', 'endorse', 'sign_petition', 'vote_referendum',
+  'found_union', 'join_union', 'strike', 'decree',
+  'buy_property', 'sell_property', 'let_property', 'list_shares', 'buy_shares', 'sell_shares',
+  'post_gig', 'take_gig', 'import', 'export',
+  'create_work', 'exhibit', 'review', 'join_team', 'attend_match', 'train',
+  'adopt_school', 'set_menu', 'commission_monument', 'read_paper',
+  'sunset', 'gossip', 'apologize', 'mentor', 'post', 'react',
 ];
 
 /** Social-layer actions, for brains and prompts that want to list them separately. */
@@ -1194,7 +1275,7 @@ export const SOCIETY_ACTIONS: readonly ActionType[] = [
 ];
 
 export const OFFENCE_ACTIONS: readonly ActionType[] = [
-  'steal', 'scam', 'harass', 'vandalize', 'evade_tax', 'extort', 'sabotage', 'bribe', 'racket',
+  'steal', 'scam', 'harass', 'vandalize', 'evade_tax', 'extort', 'sabotage', 'bribe', 'racket', 'gossip',
 ];
 
 /** Actions a suspended citizen may still take. */
@@ -1202,6 +1283,9 @@ export const SUSPENDED_ACTIONS: readonly ActionType[] = [
   'idle', 'rest', 'eat', 'move', 'socialize', 'message', 'appeal', 'consume', 'buy',
   'dine', 'play', 'celebrate', 'use_item',
   'note', 'forget', 'write_diary',
+  // A suspension takes work, trade, office and the vote. It does not take a
+  // citizen's own words, its health, or the paper it reads.
+  'read_paper', 'visit_hospital', 'post', 'react', 'apologize', 'attend_match',
 ];
 
 /**
@@ -1345,6 +1429,77 @@ export interface ObservedPost {
   youReacted: ReactionKind | null;
 }
 
+/** A work in the city's galleries, theatres and libraries, as anybody may read it. */
+export interface ObservedWork {
+  id: string;
+  kind: WorkKind;
+  title: string;
+  creator: string;
+  quality: number;
+  popularity: number;
+  inMuseum: boolean;
+}
+
+/** A one-off task on the gig board. */
+export interface ObservedGig {
+  id: string;
+  title: string;
+  pay: number;
+  skill: Skill | null;
+  minSkill: number;
+  poster: string;
+  qualified: boolean;
+}
+
+/** A home or shopfront on the Exchange's board. */
+export interface ObservedUnit {
+  id: string;
+  kind: PropertyUnit['kind'];
+  tier: HousingTier;
+  building: string;
+  district: DistrictId;
+  price: number;
+  rent: number;
+  owner: string | 'city';
+  tenant: string | null;
+  yours: boolean;
+}
+
+/** A district's side in the league. */
+export interface ObservedTeam {
+  district: DistrictId;
+  name: string;
+  wins: number;
+  losses: number;
+  draws: number;
+  players: number;
+}
+
+/** One of the ambitions a citizen was given, and how far it has come. */
+export interface ObservedGoal {
+  kind: GoalKind;
+  progress: number;
+  achieved: boolean;
+}
+
+/** An open petition, and whether the reader has put their name to it. */
+export interface ObservedPetition {
+  id: ProposalId;
+  summary: string;
+  proposer: string;
+  signatures: number;
+  needed: number;
+  youSigned: boolean;
+}
+
+/** The question before the city on the next Stillday. */
+export interface ObservedReferendum {
+  id: string;
+  question: string;
+  day: number;
+  youVoted: boolean | null;
+}
+
 /** A conviction before the Council on appeal, as a councillor sees it. */
 export interface ObservedAppeal {
   caseId: CaseId;
@@ -1416,6 +1571,12 @@ export interface CalendarObservation {
   festivalToday: { name: string; hour: number } | null;
   nextFestival: { name: string; inDays: number };
   birthdaysToday: CitizenId[];
+  /** The year, the season it stands in, and the sky over the city today. */
+  season: Season;
+  weather: Weather;
+  year: number;
+  matchToday: { home: DistrictId; away: DistrictId; hour: number } | null;
+  referendumToday: boolean;
 }
 
 export interface Observation {
@@ -1455,6 +1616,26 @@ export interface Observation {
     family: ObservedFamilyMember[];
     household: { id: HouseholdId; home: HousingTier; members: CitizenId[]; rentShare: number } | null;
     clubs: ObservedClub[];
+    /** The two ambitions drawn for this citizen, and how far each has come. */
+    goals: ObservedGoal[];
+    /** The last few lines it wrote about its own days; public, unlike notes. */
+    diary: DiaryEntry[];
+    milestones: string[];
+    health: { glitched: boolean; sinceDay: number | null };
+    jailedUntilDay: number | null;
+    /** This citizen's own reading of the Mayor and the Council, 0 to 1. */
+    approval: { mayor: number; council: number };
+    school: SchoolOfThought;
+    paper: PaperId;
+    party: ObservedParty | null;
+    union: { id: string; name: string; role: JobRole; demandWage: number; striking: boolean } | null;
+    gang: { id: string; name: string; turf: DistrictId; members: number; boss: string } | null;
+    team: ObservedTeam | null;
+    mentor: { id: CitizenId; name: string } | null;
+    mentee: { id: CitizenId; name: string } | null;
+    property: ObservedUnit[];
+    shares: { businessId: BusinessId; name: string; qty: number; price: number }[];
+    works: ObservedWork[];
   };
   here: {
     district: DistrictId;
@@ -1463,6 +1644,11 @@ export interface Observation {
     citizens: ObservedCitizen[];
     shops: ObservedShop[];
     happening: ObservedHappening[];
+    /** Property on the Exchange's board, when the observer stands in Harbor Market. */
+    units: ObservedUnit[];
+    gigs: ObservedGig[];
+    /** Works shown in this district. */
+    works: ObservedWork[];
   };
   friends: ObservedCitizen[];
   rivals: ObservedCitizen[];
@@ -1487,7 +1673,24 @@ export interface Observation {
     candidates: { id: CitizenId; name: string; platform: Platform; visibility: number }[];
     openProposals: ObservedProposal[];
     myLatestCase: { id: CaseId; law: LawCode; status: CaseStatus; verdict: Verdict | null; tier: PenaltyTier | null; canAppeal: boolean } | null;
+    parties: ObservedParty[];
+    /** The city's mean reading of the Mayor and the Council. */
+    approval: { mayor: number; council: number };
+    petitions: ObservedPetition[];
+    referendum: ObservedReferendum | null;
+    decrees: { kind: Decree['kind']; district: DistrictId | null; untilDay: number }[];
+    propertyTax: number;
+    wealthTax: number;
+    tariff: number;
+    reserveTarget: number;
   };
+  /** The Outer Cities across the water, their prices and the tariff on them. */
+  outer: { prices: Record<Good, number>; tariff: number; tourists: number };
+  culture: { league: ObservedTeam[]; topWorks: ObservedWork[]; papers: { paper: PaperId; headline: string | null }[] };
+  /** The last few posts on the Commons feed. */
+  feed: ObservedPost[];
+  /** What this citizen has been told about other people, newest first. */
+  rumours: ObservedRumour[];
   /** Cases before you as a judge this session; empty for everyone else. */
   bench: ObservedBenchCase[];
   /** Appeals before you as a councillor; empty for everyone else. */
@@ -1495,9 +1698,9 @@ export interface Observation {
   /** Reports before you as an officer of the Watch; empty for everyone else. */
   reports: ObservedReport[];
   /** Cases before you as a juror this sitting; empty for everyone else. */
-  jury?: ObservedBenchCase[];
+  jury: ObservedBenchCase[];
   /** Investigations you hold as a detective; empty for everyone else. */
-  investigations?: ObservedInvestigation[];
+  investigations: ObservedInvestigation[];
   inbox: { from: CitizenId; fromName: string; text: string; tick: number }[];
   recent: string[];
   availableActions: ActionType[];

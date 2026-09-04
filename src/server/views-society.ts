@@ -6,9 +6,10 @@
  * emits events or touches the rng.
  */
 import type {
-  Citizen, CitizenId, Club, DistrictId, Happening, Household, ItemId, LedgerEntry, World,
+  Citizen, CitizenId, Club, DistrictId, Happening, Household, ItemId, LedgerEntry, Post, World,
 } from '../types.ts';
 import { DISTRICT_IDS } from '../types.ts';
+import { LAWS } from '../data/laws.ts';
 import { HOBBY_INFO, CLUB_MEETING_HOUR, PRODUCTS } from '../data/catalogue.ts';
 import { chestBalance } from '../society/chest.ts';
 import { clubVenue, nextMeetingDay } from '../society/clubs.ts';
@@ -21,7 +22,9 @@ import {
 } from '../society/households.ts';
 import { EMPORIUM_ID, EMPORIUM_NAME, shopsIn } from '../society/shops.ts';
 import type { Shop } from '../society/shops.ts';
-import { isPresentIn, nameOf, partyName, presentSet } from './views.ts';
+import { liveRumours } from '../social/rumours.ts';
+import { familyMembers, liveFeuds } from '../social/feuds.ts';
+import { isPresentIn, nameOf, partyName, personCard, personCards, presentSet } from './views.ts';
 
 /** Chest movements shown on the Society tab. */
 export const CHEST_LEDGER_LENGTH = 12;
@@ -29,6 +32,10 @@ export const CHEST_LEDGER_LENGTH = 12;
 export const CEREMONY_VIEW_LENGTH = 8;
 /** Names listed for one ceremony; a wedding may have the whole district as guests. */
 export const CEREMONY_NAMES = 6;
+/** Posts kept on the Commons feed view, newest first. */
+export const FEED_VIEW_LENGTH = 60;
+/** Rumours still in circulation shown on the Society tab. */
+export const RUMOUR_VIEW_LENGTH = 40;
 
 // ---------------------------------------------------------------- helpers
 
@@ -340,5 +347,59 @@ export function societyView(world: World): Record<string, unknown> {
     recentBirths: ceremonies(world, 'birth', present),
     emporium,
     shops,
+    ...societyExtras(world),
+  };
+}
+
+// ------------------------------------------- rumours, feuds, mentors and the feed
+
+/** Rumours in circulation, feuds, mentorships and the Commons feed. */
+export function societyExtras(world: World): Record<string, unknown> {
+  const present = presentSet(world);
+  const mentorships: Record<string, unknown>[] = [];
+  for (const id of world.order) {
+    const c = world.citizens[id];
+    if (!c || !c.menteeId) continue;
+    const mentee = world.citizens[c.menteeId];
+    if (!mentee) continue;
+    mentorships.push({ mentor: personCard(world, c.id, present), mentee: personCard(world, mentee.id, present) });
+  }
+  return {
+    feed: [...(world.feed ?? [])]
+      .sort((a, b) => b.day - a.day || b.id.localeCompare(a.id))
+      .slice(0, FEED_VIEW_LENGTH)
+      .map((p) => postView(world, p, present)),
+    rumours: liveRumours(world)
+      .sort((a, b) => b.day - a.day || a.id.localeCompare(b.id))
+      .slice(0, RUMOUR_VIEW_LENGTH)
+      .map((r) => ({
+        id: r.id, about: personCard(world, r.aboutId, present), source: personCard(world, r.sourceId, present),
+        claim: r.claim, law: r.law, lawName: r.law ? LAWS[r.law]?.name ?? r.law : null,
+        day: r.day, heard: r.heardBy.length, disprovedDay: r.disprovedDay,
+      })),
+    feuds: liveFeuds(world).map((f) => ({
+      families: f.families, sinceDay: f.sinceDay, incidents: f.incidents, endedDay: f.endedDay,
+      sizes: f.families.map((name) => familyMembers(world, name).length),
+    })),
+    mentorships,
+    teams: Object.values(world.teams ?? {})
+      .filter((t): t is NonNullable<typeof t> => !!t)
+      .map((t) => ({
+        district: t.district, name: t.name, wins: t.wins, losses: t.losses, draws: t.draws,
+        players: personCards(world, t.players, present, 24),
+      })),
+  };
+}
+
+/** One post on the Commons feed: what was said, and who cheered it. */
+export function postView(world: World, p: Post, present: Set<CitizenId>): Record<string, unknown> {
+  const reactions = { cheer: 0, frown: 0, laugh: 0 };
+  for (const kind of Object.values(p.reactions ?? {})) {
+    if (kind === 'cheer' || kind === 'frown' || kind === 'laugh') reactions[kind]++;
+  }
+  return {
+    id: p.id, day: p.day, text: p.text,
+    author: personCard(world, p.authorId, present),
+    reactions, reactionCount: Object.keys(p.reactions ?? {}).length,
   };
 }

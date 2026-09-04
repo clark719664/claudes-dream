@@ -12,6 +12,8 @@ import { daysToElection, isElectionDay, nominationsOpen } from '../government/co
 import { officersOnDuty } from '../government/watch.ts';
 import { LAWS, LAW_CODES } from '../data/laws.ts';
 import { isPresentIn, nameOf, partyName, presentSet } from './views.ts';
+import { caseExtras, courtExtras, governmentExtras } from './views-metropolis.ts';
+import { economyExtras } from './views-markets.ts';
 
 /** Per-good price samples kept by the server, one per tick. */
 export interface PriceHistory {
@@ -85,6 +87,7 @@ export function economyView(world: World, history: PriceHistory): Record<string,
       defaulted: loans.filter((l) => l.defaulted).length,
     },
     stats: world.stats.slice(-STATS_VIEW_LENGTH),
+    ...economyExtras(world),
   };
 }
 
@@ -144,6 +147,7 @@ export function governmentView(world: World): Record<string, unknown> {
     proposals: [...g.proposals]
       .sort((a, b) => b.tabledDay - a.tabledDay || idNumber(b.id) - idNumber(a.id))
       .map((p) => proposalView(world, p)),
+    ...governmentExtras(world),
   };
 }
 
@@ -165,6 +169,7 @@ function caseView(world: World, k: Case): Record<string, unknown> {
       filedDay: k.appeal.filedDay, decidedDay: k.appeal.decidedDay, result: k.appeal.result,
       votes: Object.entries(k.appeal.votes).map(([id, vote]) => ({ id, name: nameOf(world, id), vote })),
     } : null,
+    ...caseExtras(world, k),
   };
 }
 
@@ -199,6 +204,7 @@ export function courtView(world: World): Record<string, unknown> {
         amount: r.amount, description: r.description, status: r.status,
         filedCaseId: r.filedCaseId, droppedReason: r.droppedReason,
       })),
+    ...courtExtras(world),
   };
 }
 

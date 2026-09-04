@@ -23,6 +23,7 @@ import { emit, remember } from '../sim/events.ts';
 import { fileCharge } from './court.ts';
 import { nameOf } from './cases.ts';
 import { officersOnDuty } from './watch.ts';
+import { noteAbuseOfOffice } from './investigations.ts';
 
 /** An unfiled report lapses this many ticks after it was made. */
 export const REPORT_EXPIRY_TICKS = 24;
@@ -156,6 +157,11 @@ export function dropReport(world: World, officerId: CitizenId, reportId: ReportI
   found.status = 'dropped';
   found.officerId = officerId;
   found.droppedReason = words;
+  // A report dropped by an officer in somebody's pocket leaves a trace of its
+  // own; a detective may find it later (government/investigations.ts).
+  if (isBribedBy(world, officerId, found.suspectId)) {
+    noteAbuseOfOffice(world, officerId, `dropped report ${found.id} against ${nameOf(world, found.suspectId)} after a bribe`);
+  }
   const suspect = nameOf(world, found.suspectId);
   emit(world, 'law', `Officer ${officer?.name ?? officerId} dropped the report of ${LAWS[found.law].name.toLowerCase()} against ${suspect} (${found.id}): "${words}".`,
     [officerId, found.suspectId], 0.3, { reportId: found.id, law: found.law, officer: officerId });

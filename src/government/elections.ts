@@ -11,6 +11,11 @@ import { transfer } from '../economy/treasury.ts';
 import { hasCandidacyResidency, isEligibleCandidate, isEligibleVoter } from '../citizens/citizen.ts';
 import { characterOf } from '../citizens/character.ts';
 import { bondBetween } from '../citizens/relationships.ts';
+import { approvalBonus } from '../politics/approval.ts';
+import { endorsedBy, partySeats } from '../politics/parties.ts';
+import { recordPlatform } from '../politics/promises.ts';
+import { schoolPlatformBias } from '../culture/schools.ts';
+import { recordMilestone } from '../identity/goals.ts';
 
 export const COUNCIL_SEATS = 5;
 /** Nominations open this many days before election day. */
@@ -116,6 +121,9 @@ export function nominate(world: World, cId: CitizenId, platform: Platform): Acti
   if (!platform || typeof platform !== 'object') return fail('A candidate needs a platform.');
   c.platform = sanitizePlatform(platform);
   e.candidates.push(cId);
+  // A platform is a promise; politics/promises.ts writes down where the city
+  // stood on the day it was made, so it can be held to it afterwards.
+  recordPlatform(world, c);
   emit(world, 'nomination', `${c.name} is standing for the Council.`, [cId], 0.4, { platform: c.platform });
   remember(world, cId, 'civic', `You declared your candidacy for the Council (election on day ${e.electionDay}).`);
   return { ok: true, message: `You are a candidate for the Council; the election is on day ${e.electionDay}.` };
@@ -175,6 +183,8 @@ export function platformFit(world: World, voter: Citizen, platform: Platform): n
   if (wasVictim(world, voter.id)) fit += (platform.strictness - 0.5) * 0.3;
   if (voter.record.convictions.length > 0) fit -= (platform.strictness - 0.5) * 0.4;
   fit += (platform.strictness - 0.5) * (voter.personality.honesty - 0.5) * 0.2;
+  // A citizen who has taken up a school of thought reads a platform through it.
+  fit += schoolPlatformBias(world, voter, platform);
   return fit;
 }
 
@@ -196,6 +206,11 @@ export function voterPreference(world: World, voterId: CitizenId, candidates: Ci
     const cand = world.citizens[id];
     const platform = cand.platform ?? impliedPlatform(world, cand);
     let score = bondBetween(world, voterId, id) / 100 + cand.reputation / 200 + platformFit(world, voter, platform) + cand.campaignVisibility / 20;
+    // What this voter makes of the office the candidate already holds, and
+    // whether a party they belong to has put its name behind them.
+    score += approvalBonus(world, voter, id);
+    const backer = endorsedBy(world, id);
+    if (backer) score += backer.members.includes(voterId) ? 0.3 : 0.1;
     if (id === voterId) score += 0.5;
     if (score > bestScore) { bestScore = score; best = id; }
   }
@@ -301,7 +316,19 @@ export function holdElection(world: World): void {
   const turnout = eligible.length > 0 ? Math.round((cast / eligible.length) * 1000) / 1000 : 0;
   seatCouncil(world, results);
 
+  partySeats(world);
   const mayor = world.citizens[g.mayorId ?? ''];
+  if (mayor) {
+    recordMilestone(world, mayor, `was elected Mayor of Reverie on day ${world.day}`);
+    recordPlatform(world, mayor);
+  }
+  for (const id of g.council) {
+    const member = world.citizens[id];
+    if (member && member.id !== mayor?.id) {
+      recordMilestone(world, member, `took a seat on the Council on day ${world.day}`);
+      recordPlatform(world, member);
+    }
+  }
   const councilNames = g.council.slice(1).map((id) => world.citizens[id]?.name ?? id);
   const summary = `Election day ${world.day}: ${mayor ? `${mayor.name} is Mayor with ${results[0].votes} votes` : 'no Mayor'}`
     + `${councilNames.length ? `; Council: ${councilNames.join(', ')}` : ''}. Turnout ${Math.round(turnout * 100)}% of ${eligible.length} voters.`;

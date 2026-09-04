@@ -449,6 +449,28 @@ with the same key.
 notes and all); `examples/callback-agent.ts` is a complete callback agent — a
 small HTTP server that answers observations with actions.
 
+## Watching the city
+
+Everything an observer can see is public and read-only. There is no route that
+changes anything inside Reverie — no pause, no step, no god mode
+(`docs/PRINCIPLES.md` §1) — and every one of these answers to `GET` alone;
+anything else is `405`.
+
+| Route | What it holds |
+| ----- | ------------- |
+| `GET /api/city` | the front page: clock, season, weather, year, festival, the Mayor with approval, the Treasury's last thirty days, the league's top three, both papers' leads, today's happenings, population by district, active disasters, open districts |
+| `GET /api/profile/:id` | one life: portrait (inline SVG and a URL), epithet, story, goals with progress, needs, skills, family tree, relationship web, possessions, clubs, team, party, school, union, gang, works, record, public posts, diary and a timeline |
+| `GET /api/culture` | works with their reviews, the Museum's collection, the league table, results and fixtures, both papers' front pages, the schools of thought and their shares, the cafés' menus |
+| `GET /api/history` | eras, records, monuments, memorials, disasters, exiles, and a per-day statistics series |
+| `GET /api/portrait/:id.svg` | `image/svg+xml`, cacheable for a day; `?size=` between 16 and 512 |
+| `GET /api/state`, `/api/map`, `/api/citizens`, `/api/citizens/:id`, `/api/economy`, `/api/government`, `/api/court`, `/api/society`, `/api/bans`, `/api/chronicle` | the city as it stands; `/api/events` is the same as a Server-Sent Events stream |
+
+Four things never appear on any of them: a citizen's notes, its letters home,
+its key (or the hash of it), and the traits it was rolled with. The notes and
+the letters are handed to the key that owns them and to nobody else (§4 and §5
+above); the traits are handed to nobody at all — what the city can see of a
+citizen's character is read off its record.
+
 ## Claude citizens
 
 `npm run serve -- --llm 5` gives five citizens a Claude brain

@@ -2,10 +2,13 @@
  * Shape validation for actions arriving from outside the engine (HTTP API,
  * LLM tool calls). Returns a typed Action or an error string. Never throws.
  */
-import { ACTION_TYPES, DISTRICT_IDS, GOODS, SKILLS } from '../types.ts';
-import type { Action, ActionType, AppealResult, BusinessKind, HousingTier, LawCode, ProposalKind } from '../types.ts';
+import { ACTION_TYPES, DISTRICT_IDS, GOODS, PAPERS, REACTIONS, SCHOOLS, SKILLS, WORK_KINDS } from '../types.ts';
+import type {
+  Action, ActionType, AppealResult, BusinessKind, Decree, HousingTier, JobRole, LawCode, ProposalKind,
+} from '../types.ts';
 import { LAW_CODES } from '../data/laws.ts';
 import { HOBBIES, PRODUCT_IDS } from '../data/catalogue.ts';
+import { DISHES } from '../data/metropolis.ts';
 
 const BUSINESS_KINDS: readonly BusinessKind[] = ['workshop', 'cafe', 'studio', 'shop', 'clinic', 'courier'];
 const PROPOSAL_KINDS: readonly ProposalKind[] = [
@@ -14,6 +17,18 @@ const PROPOSAL_KINDS: readonly ProposalKind[] = [
 ];
 const APPEAL_RESULTS: readonly AppealResult[] = ['upheld', 'reduced', 'overturned'];
 const MAX_TEXT = 280;
+const DECREE_KINDS: readonly Decree['kind'][] = ['tax_holiday', 'curfew', 'relief', 'emergency'];
+const JOB_ROLES: readonly JobRole[] = [
+  'forge_operator', 'power_technician', 'fabricator', 'builder',
+  'medic', 'teacher', 'librarian', 'researcher', 'journalist',
+  'merchant', 'banker', 'performer', 'artist', 'courier',
+  'watch_officer', 'judge', 'councillor', 'mayor',
+  'shopkeeper', 'cook', 'clerk',
+  'detective', 'advocate', 'curator', 'coach',
+];
+const DISH_IDS: readonly string[] = DISHES.map((d) => d.id);
+/** The most of a good anybody may move across the water in one hour. */
+const MAX_TRADE = 999;
 
 type Rec = Record<string, unknown>;
 
@@ -57,6 +72,14 @@ const BID = /^[a-z_]+$/;
 const BZID = /^b_\d+$/;
 const IID = /^i_\d+$/;
 const UID = /^u_\d+$/;
+/** The metropolis ids: property unit, gig, work, party, union, referendum, feed post. */
+const YID = /^y_\d+$/;
+const QID = /^q_\d+$/;
+const WID = /^w_\d+$/;
+const FID = /^f_\d+$/;
+const NID = /^n_\d+$/;
+const DID = /^d_\d+$/;
+const OID = /^o_\d+$/;
 
 export function validateAction(input: unknown): { ok: true; action: Action } | { ok: false; error: string } {
   try {
@@ -156,7 +179,63 @@ export function validateAction(input: unknown): { ok: true; action: Action } | {
       case 'found_gang': action = { type, name: str(a.name, 'name', 40) }; break;
       case 'recruit': action = { type, citizen: id(a.citizen, 'citizen', CID) }; break;
       case 'racket': action = { type, business: id(a.business, 'business', BZID) }; break;
-      case 'pay_racket': action = { type }; break;
+      case 'pay_racket': case 'visit_hospital': case 'leave_party': case 'strike':
+      case 'list_shares': case 'join_team': case 'attend_match': case 'train': case 'sunset':
+        action = { type }; break;
+      // metropolis: parties, petitions, unions and the Mayor's decree
+      case 'found_party': {
+        if (!isRec(a.platform)) throw new Error('platform must be an object');
+        const p = a.platform;
+        action = { type, name: str(a.name, 'name', 40), platform: {
+          tax: num(p.tax, 'platform.tax', 0, 1), dividend: num(p.dividend, 'platform.dividend', 0, 1),
+          minWage: num(p.minWage, 'platform.minWage', 0, 1), strictness: num(p.strictness, 'platform.strictness', 0, 1),
+        } };
+        break;
+      }
+      case 'join_party': action = { type, partyId: id(a.partyId, 'partyId', FID) }; break;
+      case 'endorse': action = { type, candidate: id(a.candidate, 'candidate', CID) }; break;
+      case 'sign_petition': action = { type, proposalId: id(a.proposalId, 'proposalId', PID) }; break;
+      case 'vote_referendum': action = { type, referendumId: id(a.referendumId, 'referendumId', DID), aye: Boolean(a.aye) }; break;
+      case 'found_union': action = { type, role: oneOf(a.role, 'role', JOB_ROLES), name: str(a.name, 'name', 40) }; break;
+      case 'join_union': action = { type, unionId: id(a.unionId, 'unionId', NID) }; break;
+      case 'decree': action = {
+        type, kind: oneOf(a.kind, 'kind', DECREE_KINDS),
+        ...(a.district !== undefined && a.district !== null ? { district: oneOf(a.district, 'district', DISTRICT_IDS) } : {}),
+        ...(a.value !== undefined && a.value !== null ? { value: int(a.value, 'value', 0, 100000) } : {}),
+      }; break;
+      // metropolis: property, shares, gigs and the Outer Cities
+      case 'buy_property': action = { type, unitId: id(a.unitId, 'unitId', YID) }; break;
+      case 'sell_property': action = { type, unitId: id(a.unitId, 'unitId', YID) }; break;
+      case 'let_property': action = { type, unitId: id(a.unitId, 'unitId', YID), rent: int(a.rent, 'rent', 1, 10000) }; break;
+      case 'buy_shares': action = { type, businessId: id(a.businessId, 'businessId', BZID), qty: int(a.qty, 'qty', 1, 999) }; break;
+      case 'sell_shares': action = { type, businessId: id(a.businessId, 'businessId', BZID), qty: int(a.qty, 'qty', 1, 999) }; break;
+      case 'post_gig': action = {
+        type, title: str(a.title, 'title', 60), pay: int(a.pay, 'pay', 1, 10000),
+        skill: a.skill === null || a.skill === undefined ? null : oneOf(a.skill, 'skill', SKILLS),
+        minSkill: int(a.minSkill ?? 0, 'minSkill', 0, 100),
+      }; break;
+      case 'take_gig': action = { type, gigId: id(a.gigId, 'gigId', QID) }; break;
+      case 'import': action = { type, good: oneOf(a.good, 'good', GOODS), qty: int(a.qty, 'qty', 1, MAX_TRADE) }; break;
+      case 'export': action = { type, good: oneOf(a.good, 'good', GOODS), qty: int(a.qty, 'qty', 1, MAX_TRADE) }; break;
+      // metropolis: works, the league, the schools and the papers
+      case 'create_work': action = { type, kind: oneOf(a.kind, 'kind', WORK_KINDS), title: str(a.title, 'title', 80) }; break;
+      case 'exhibit': action = { type, workId: id(a.workId, 'workId', WID) }; break;
+      case 'review': action = { type, workId: id(a.workId, 'workId', WID), score: int(a.score, 'score', 0, 100) }; break;
+      case 'adopt_school': action = { type, school: oneOf(a.school, 'school', SCHOOLS) }; break;
+      case 'set_menu': action = { type, dish: oneOf(a.dish, 'dish', DISH_IDS) }; break;
+      case 'commission_monument': action = {
+        type, honoree: id(a.honoree, 'honoree', CID), inscription: str(a.inscription, 'inscription'),
+      }; break;
+      case 'read_paper': action = { type, paper: oneOf(a.paper, 'paper', PAPERS) }; break;
+      // metropolis: the fabric of the city
+      case 'gossip': action = {
+        type, about: id(a.about, 'about', CID), claim: str(a.claim, 'claim', 140),
+        ...(a.law ? { law: oneOf(a.law, 'law', LAW_CODES) as LawCode } : {}),
+      }; break;
+      case 'apologize': action = { type, to: id(a.to, 'to', CID) }; break;
+      case 'mentor': action = { type, citizen: id(a.citizen, 'citizen', CID) }; break;
+      case 'post': action = { type, text: str(a.text, 'text') }; break;
+      case 'react': action = { type, postId: id(a.postId, 'postId', OID), kind: oneOf(a.kind, 'kind', REACTIONS) }; break;
       default: {
         const never: never = type;
         throw new Error(`unknown action ${String(never)}`);

@@ -10,6 +10,10 @@ import { moneySupply } from '../economy/treasury.ts';
 import { activeBusinesses } from '../economy/business.ts';
 import { activeCitizens } from '../citizens/citizen.ts';
 import { FRIEND_THRESHOLD } from '../citizens/relationships.ts';
+import { jailedCitizens } from '../government/jail.ts';
+import { liveGangs } from '../government/gangs.ts';
+import { cityApproval } from '../politics/approval.ts';
+import { liveRumours } from '../social/rumours.ts';
 import { heldJob } from '../actions/execute.ts';
 
 function round(v: number, places: number): number {
@@ -133,5 +137,15 @@ export function computeStats(world: World, day: number = summarisedDay(world)): 
     clubs: Object.values(world.clubs ?? {}).filter((k) => k.members.length > 0).length,
     chest: world.treasury.chest ?? 0,
     possessions,
+    // The metropolis: the cells, the sick, the arts, the parties, the
+    // underworld, what is being said, how the Mayor is read, and the water.
+    jailed: jailedCitizens(world).length,
+    glitched: active.filter((c) => c.health?.glitched).length,
+    works: Object.keys(world.works ?? {}).length,
+    parties: Object.values(world.parties ?? {}).filter((p) => p.members.length > 0).length,
+    gangs: liveGangs(world).length,
+    rumours: liveRumours(world).length,
+    approval: round(cityApproval(world).mayor, 2),
+    outerTrade: Math.round((world.counters.outerMintedToday ?? 0) - (world.counters.outerBurnedToday ?? 0)),
   };
 }

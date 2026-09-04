@@ -19,6 +19,8 @@ import { adjustBond } from '../citizens/relationships.ts';
 import { recordContact } from '../society/romance.ts';
 import { doAttendShow } from './daily.ts';
 import { citizensIn, districtName, fail, ok, targetOf } from './common.ts';
+import { dishEffect } from '../culture/menus.ts';
+import { visitMuseum } from '../culture/museum.ts';
 
 export const TAVERN: BuildingId = 'halflight_tavern';
 export const GARDEN: BuildingId = 'community_garden';
@@ -146,9 +148,12 @@ export function doDine(world: World, c: Citizen, withId?: CitizenId): ActionResu
     meals.push(meal);
   }
 
+  // What the kitchen is actually serving today (culture/menus.ts); a café with
+  // nothing written up serves the plain meal.
+  const dish = dishEffect(world, venue.business ?? null);
   for (const meal of meals) {
-    meal.diner.needs.energy = clamp(meal.diner.needs.energy + (meal.fed ? DINE_ENERGY : Math.round(DINE_ENERGY / 2)), 0, 100);
-    addSocial(meal.diner, DINE_SOCIAL);
+    meal.diner.needs.energy = clamp(meal.diner.needs.energy + (meal.fed ? dish.energy : Math.round(dish.energy / 2)), 0, 100);
+    addSocial(meal.diner, dish.social);
   }
   const thin = meals.some((m) => !m.fed) ? ' The kitchen was short of compute and the plates came thin.' : '';
   if (guest && !isResult(guest)) {
@@ -209,6 +214,9 @@ export function doPlay(world: World, c: Citizen, withId?: CitizenId): ActionResu
  * spent together for romance.dailyAffection.
  */
 export function doShow(world: World, c: Citizen): ActionResult {
+  // The Archive's own show is the city's collection, and it costs nothing.
+  const museum = world.buildings.museum;
+  if (museum && c.district === museum.district && museum.damage < 1) return visitMuseum(world, c.id);
   const r = doAttendShow(world, c);
   if (!r.ok) return r;
   const key = `show:${c.id}`;

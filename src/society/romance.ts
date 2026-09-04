@@ -29,6 +29,7 @@ import { FRIEND_THRESHOLD, adjustBond, bondBetween } from '../citizens/relations
 import { addAffection, affectionBetween, isAdult, recordContact } from './affection.ts';
 import { TIER_NAMES, householdOf, leaveHousehold, relationBetween } from './households.ts';
 import { preferenceScore } from './tastes.ts';
+import { reconcileByMarriage } from '../social/feuds.ts';
 
 export {
   AFFECTION_BASE, AFFECTION_BOND_DIVISOR, AFFECTION_COMPATIBILITY, AFFECTION_DAILY_CAP, AFFECTION_DECAY, COLLAPSED_BOND,
@@ -372,6 +373,8 @@ export function holdWedding(world: World, h: Happening): void {
 
   a.family.married = true;
   b.family.married = true;
+  // A marriage across a feud is how a feud ends (social/feuds.ts).
+  reconcileByMarriage(world, a.id, b.id);
   const shared = mergeFamilyNames(a, b);
   adjustBond(world, a.id, b.id, COUPLE_BOND);
   addAffection(a, b.id, COUPLE_AFFECTION);

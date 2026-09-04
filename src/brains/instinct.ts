@@ -52,11 +52,16 @@ export function bazaarHere(world: World, c: Citizen): boolean {
 export function instinct(world: World, c: Citizen, obs: Observation): Action {
   const needs = needsOf(c, obs);
   if (!c || !needs || c.standing === 'exiled') return IDLE;
+  // A citizen in the cells can neither eat nor sleep where it is, and
+  // instinct pursues nothing: the hour simply passes.
+  if (c.jailedUntilDay !== null && c.jailedUntilDay !== undefined && c.jailedUntilDay > (world?.day ?? 0)) return IDLE;
   if (needs.energy < STARVING) {
     if ((c.inventory?.[FOOD] ?? 0) > 0) return { type: 'consume', good: FOOD };
     if (c.wallet >= computePrice(world) && bazaarHere(world, c)) return { type: 'buy', good: FOOD, qty: 1 };
   }
-  if (needs.rest < EXHAUSTED && c.district === HOME_DISTRICT) return { type: 'rest' };
+  const home = c.homeBuildingId ? world?.buildings?.[c.homeBuildingId] ?? null : null;
+  const where = home && c.homeTier > 0 ? home.district : HOME_DISTRICT;
+  if (needs.rest < EXHAUSTED && c.district === where) return { type: 'rest' };
   return IDLE;
 }
 

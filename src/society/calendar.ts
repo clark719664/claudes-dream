@@ -25,6 +25,11 @@ import { FRIEND_THRESHOLD, adjustBond, bondBetween } from '../citizens/relations
 import { sittingCouncil } from '../government/cases.ts';
 import { holdWedding } from './romance.ts';
 import { birthChild, holdBirthday } from './family.ts';
+import { festivalScale, seasonOf, yearOf } from '../world/seasons.ts';
+import { fixtureOf, holdParade, playMatch } from '../culture/stadium.ts';
+import { holdBlockParty } from '../social/neighbours.ts';
+import { holdMemorial } from '../world/sunset.ts';
+import { referendumToday } from '../politics/referendums.ts';
 
 /** Names of the seven days; the last is Stillday, the rest day. */
 export const WEEKDAY_NAMES: readonly string[] = ['Kindleday', 'Forgeday', 'Tideday', 'Quillday', 'Lanternday', 'Marketday', 'Stillday'];
@@ -35,7 +40,14 @@ export const SWEARING_IN_HOUR = 12;
 export const FESTIVAL_VENUE: BuildingId = 'sound_garden';
 export const SWEARING_IN_VENUE: BuildingId = 'central_plaza';
 /** Happenings a passer-by may join with `celebrate`. */
-export const CELEBRATABLE: readonly HappeningKind[] = ['wedding', 'birthday', 'festival', 'swearing_in'];
+export const CELEBRATABLE: readonly HappeningKind[] = [
+  'wedding', 'birthday', 'festival', 'swearing_in',
+  // The metropolis: the match, the block party, the memorial and the parade.
+  'match', 'block_party', 'memorial', 'parade',
+];
+/** What a parade gives the crowd that walks in it, and the champions in front of it. */
+export const PARADE_SOCIAL = 20;
+export const PARADE_REPUTATION = 1;
 /** Lantern Night: everyone present is cheered, the arts are in demand, lanterns are shared. */
 export const FESTIVAL_SOCIAL = 20;
 export const FESTIVAL_PURPOSE = 5;
@@ -295,9 +307,11 @@ function holdFestival(world: World, h: Happening): void {
     return;
   }
   const culture = takeFromMarket(world, 'culture', Math.max(1, Math.ceil(crowd.length / FESTIVAL_CULTURE_PER)));
+  // Rain and snow keep people at home; a storm all but empties the Garden.
+  const scale = festivalScale(world);
   for (const c of crowd) {
-    addNeed(c, 'social', FESTIVAL_SOCIAL);
-    if (culture > 0) addNeed(c, 'purpose', FESTIVAL_PURPOSE);
+    addNeed(c, 'social', FESTIVAL_SOCIAL * scale);
+    if (culture > 0) addNeed(c, 'purpose', FESTIVAL_PURPOSE * scale);
   }
   const attendees = crowd.filter((c) => h.attendees.includes(c.id));
   for (let i = 0; i < attendees.length; i++) {
@@ -409,7 +423,30 @@ function holdHappening(world: World, h: Happening): void {
     case 'festival': holdFestival(world, h); return;
     case 'swearing_in': holdSwearingIn(world, h); return;
     case 'club_meeting': closeMeeting(world, h); return;
+    // The metropolis: the Stadium, the stairwell, the Garden and the Plaza.
+    case 'match': playMatch(world, h); return;
+    case 'block_party': holdBlockParty(world, h); return;
+    case 'memorial': holdMemorial(world, h); return;
+    case 'parade': holdParadeHere(world, h); return;
     default: return;
+  }
+}
+
+/**
+ * The champions' parade. `culture/stadium.ts` names the side and prints the
+ * day; here the crowd that turned out shares the walk.
+ */
+function holdParadeHere(world: World, h: Happening): void {
+  holdParade(world, h);
+  const crowd = participants(world, h);
+  for (const c of crowd) addNeed(c, 'social', PARADE_SOCIAL);
+  for (const id of h.who) {
+    const champion = presentCitizen(world, id);
+    if (champion) champion.reputation = clamp(champion.reputation + PARADE_REPUTATION, 0, 100);
+  }
+  if (crowd.length > 0) {
+    emit(world, 'match', `${crowd.length} came out to the parade at ${buildingName(world, h.buildingId)}.`,
+      crowd.map((c) => c.id), 0.7, { happeningId: h.id, crowd: crowd.length });
   }
 }
 
@@ -457,6 +494,16 @@ function birthdaysToday(world: World, self: Citizen): CitizenId[] {
   return rows.slice(0, MAX_BIRTHDAYS_SHOWN).map((r) => r.id);
 }
 
+/** The fixture at the Stadium today, if the league has one. */
+function matchToday(world: World): { home: DistrictId; away: DistrictId; hour: number } | null {
+  for (const h of world.happenings ?? []) {
+    if (h.kind !== 'match' || h.day !== world.day) continue;
+    const fixture = fixtureOf(world, h);
+    if (fixture) return { home: fixture.home, away: fixture.away, hour: h.hour };
+  }
+  return null;
+}
+
 /** The calendar block of an observation. */
 export function calendarObservation(world: World, c: Citizen): CalendarObservation {
   return {
@@ -465,5 +512,10 @@ export function calendarObservation(world: World, c: Citizen): CalendarObservati
     festivalToday: isFestivalToday(world),
     nextFestival: nextFestival(world),
     birthdaysToday: birthdaysToday(world, c),
+    season: world.season ?? seasonOf(world),
+    weather: world.weather ?? 'clear',
+    year: world.year ?? yearOf(world),
+    matchToday: matchToday(world),
+    referendumToday: referendumToday(world) !== null,
   };
 }

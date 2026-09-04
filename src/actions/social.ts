@@ -12,6 +12,7 @@ import {
 } from '../citizens/relationships.ts';
 import { commitOffence } from '../government/watch.ts';
 import { citizensIn, districtName, fail, isPresent, nameTag, ok, targetOf } from './common.ts';
+import { frictionBetween } from '../culture/schools.ts';
 
 export const SOCIAL_BOND = 5;
 export const SOCIAL_NEED = 10;
@@ -36,6 +37,8 @@ export function doSocialize(world: World, c: Citizen, withId: CitizenId, text?: 
   let delta = SOCIAL_BOND;
   if (socialCompatibility(world, c.id, t.id) > 0.6) delta += 3;
   if (areRivals(world, c.id, t.id)) delta -= 2;
+  // Two citizens who do not see the city the same way get on less easily.
+  delta += frictionBetween(c, t);
   adjustBond(world, c.id, t.id, delta);
   c.needs.social = clamp(c.needs.social + SOCIAL_NEED, 0, 100);
   t.needs.social = clamp(t.needs.social + SOCIAL_NEED, 0, 100);

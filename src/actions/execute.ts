@@ -23,10 +23,11 @@ import { applyToWatch, reportOffence } from '../government/watch.ts';
 import { dropReport, fileReport, reportsFor } from '../government/reports.ts';
 import { appealsFor, benchFor, canAppeal, castAppealVote, castVerdict, fileAppeal, pendingCasesFor } from '../government/court.ts';
 import { standingAllows } from '../government/registry.ts';
-import { hireAdvocate, mayAdvocate, publicDefenders, speak } from '../government/advocates.ts';
-import { foundGang, gangOf, gangOfTurf, mayFoundGang, payRacket, racket, recruit } from '../government/gangs.ts';
+import { mayAdvocate, publicDefenders } from '../government/advocates.ts';
+import { gangOf, gangOfTurf, mayFoundGang } from '../government/gangs.ts';
 import { isJailed } from '../government/jail.ts';
-import { writeDiary } from '../identity/diary.ts';
+import { curfewBlocks } from '../politics/decrees.ts';
+import { dispatchMetropolis, metropolisActions } from './execute-metro.ts';
 import {
   JUDGE_SEATS, appointJudgeByMayor, campaign, castBallot, isCouncillor, isElectionDay, isJudgeEligible, nominate,
   nominationsOpen, tableProposal, voteOnProposal,
@@ -51,7 +52,7 @@ import { MAX_CLUBS_PER_CITIZEN, attendClub, foundClub, joinClub, leaveClub, meet
 import { CELEBRATABLE, celebrate, happeningsAt } from '../society/calendar.ts';
 import { donate } from '../society/chest.ts';
 import { bondBetween } from '../citizens/relationships.ts';
-import { citizensIn, fail, holdsOffice, isPresent, ok } from './common.ts';
+import { citizensIn, districtName, fail, holdsOffice, isPresent, ok } from './common.ts';
 
 export { validateAction } from './validate.ts';
 
@@ -74,6 +75,15 @@ export const CHILD_FORBIDDEN: readonly ActionType[] = [
   'craft', 'set_price', 'date', 'propose_partnership', 'marry', 'break_up', 'move_in', 'start_family',
   'found_club', 'join_club', 'leave_club', 'attend_club', 'donate',
   'hire_advocate', 'advocate', 'found_gang', 'recruit', 'racket', 'pay_racket',
+  // The metropolis. A child may write its diary, read the paper, be treated,
+  // post, react, apologise and go to a match; the rest of the city waits.
+  'found_party', 'join_party', 'leave_party', 'endorse', 'sign_petition', 'vote_referendum',
+  'found_union', 'join_union', 'strike', 'decree',
+  'buy_property', 'sell_property', 'let_property', 'list_shares', 'buy_shares', 'sell_shares',
+  'post_gig', 'take_gig', 'import', 'export',
+  'create_work', 'exhibit', 'review', 'join_team', 'train',
+  'adopt_school', 'set_menu', 'commission_monument',
+  'sunset', 'gossip', 'mentor',
 ];
 
 /**
@@ -292,6 +302,7 @@ export function availableActions(world: World, c: Citizen): ActionType[] {
 
   societyActions(world, c, set, here, biz);
   justiceActions(world, c, set, here, biz);
+  metropolisActions(world, c, set, here);
 
   const suspended = c.standing === 'suspended';
   const child = c.lifeStage === 'child';
@@ -318,6 +329,11 @@ export function executeAction(world: World, cId: CitizenId, action: Action): Act
   if (!standingAllows(view, action.type)) return fail(`You cannot ${action.type.replace(/_/g, ' ')} while ${c.standing}.`);
   if (c.lifeStage === 'child' && CHILD_FORBIDDEN.includes(action.type)) {
     return fail(`You are a child; ${action.type.replace(/_/g, ' ')} is for grown citizens of Reverie.`);
+  }
+  // A curfew is the Mayor's, not the Watch's: it closes a district's night to
+  // everything but rest, the notebook and a word to a friend.
+  if (curfewBlocks(world, c, action.type)) {
+    return fail(`A curfew is in force in ${districtName(world, c.district)}; you cannot ${action.type.replace(/_/g, ' ')} at this hour.`);
   }
 
   c.recentActions.push(action.type);
@@ -408,14 +424,19 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     case 'play': return doPlay(world, c, action.with);
     case 'celebrate': return celebrate(world, c.id);
     case 'donate': return donate(world, c.id, action.amount);
-    // The metropolis: a citizen's own words, advocates, and the underworld.
-    case 'write_diary': return writeDiary(world, c.id, action.text);
-    case 'hire_advocate': return hireAdvocate(world, c.id, action.advocate);
-    case 'advocate': return speak(world, c.id, action.case);
-    case 'found_gang': return foundGang(world, c.id, action.name);
-    case 'recruit': return recruit(world, c.id, action.citizen);
-    case 'racket': return racket(world, c.id, action.business);
-    case 'pay_racket': return payRacket(world, c.id);
+    // --- The metropolis ---
+    // Every action the third layer added is carried out by the module that
+    // owns it; actions/execute-metro.ts holds the table.
+    case 'write_diary': case 'visit_hospital':
+    case 'hire_advocate': case 'advocate': case 'found_gang': case 'recruit': case 'racket': case 'pay_racket':
+    case 'found_party': case 'join_party': case 'leave_party': case 'endorse': case 'sign_petition':
+    case 'vote_referendum': case 'found_union': case 'join_union': case 'strike': case 'decree':
+    case 'buy_property': case 'sell_property': case 'let_property': case 'list_shares': case 'buy_shares':
+    case 'sell_shares': case 'post_gig': case 'take_gig': case 'import': case 'export':
+    case 'create_work': case 'exhibit': case 'review': case 'join_team': case 'attend_match': case 'train':
+    case 'adopt_school': case 'set_menu': case 'commission_monument': case 'read_paper':
+    case 'sunset': case 'gossip': case 'apologize': case 'mentor': case 'post': case 'react':
+      return dispatchMetropolis(world, c, action) ?? fail(`The city has no ${action.type.replace(/_/g, ' ')} to offer.`);
     default: {
       const never: never = action;
       return fail(`Unknown action ${String((never as Action).type)}.`);

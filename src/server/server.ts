@@ -26,6 +26,11 @@ import { citizenView, citizensView, mapView, stateView } from './views.ts';
 import { bansView, chronicleView, courtView, economyView, governmentView } from './views-city.ts';
 import { societyView } from './views-society.ts';
 import type { PriceHistory } from './views-city.ts';
+import { cityView, mapExtras } from './views-metropolis.ts';
+import { cultureView } from './views-culture.ts';
+import { historyApiView } from './views-history.ts';
+import { profileView } from './views-profile.ts';
+import { newPortraitCache, portraitFor, portraitSize, sendSvg } from './portraits.ts';
 import { handleAct, handleJoin, handleLeave, handleObserve } from './agents.ts';
 import type { AgentContext } from './agents.ts';
 import { handleClaim, handleJournal, handleLetters, registryView } from './owners.ts';
@@ -194,11 +199,21 @@ export function publicState(world: World, sim: Simulation): Record<string, unkno
 
 const DEFAULT_WEB_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'web');
 
+/** A path segment as an id. A malformed escape is simply not an id anyone has. */
+function safeDecode(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
 export async function startServer(world: World, opts: ServerOptions): Promise<RunningServer> {
   const log = opts.log ?? ((m: string) => console.log(m));
   const webRoot = opts.webRoot ?? DEFAULT_WEB_ROOT;
   const { broker } = opts;
   const sim = new Simulation(world, opts.brains, opts.tickMs, log);
+  const portraits = newPortraitCache();
   const clients = new Set<http.ServerResponse>();
   const state = () => publicState(world, sim);
   const ctx: AgentContext = {
@@ -244,12 +259,15 @@ export async function startServer(world: World, opts: ServerOptions): Promise<Ru
     let m: RegExpExecArray | null;
     switch (pathname) {
       case '/api/state': only(get); sendJson(res, 200, state()); return;
-      case '/api/map': only(get); sendJson(res, 200, mapView(world)); return;
+      case '/api/city': only(get); sendJson(res, 200, cityView(world)); return;
+      case '/api/map': only(get); sendJson(res, 200, { ...mapView(world), ...mapExtras(world) }); return;
       case '/api/citizens': only(get); sendJson(res, 200, citizensView(world, url.searchParams)); return;
       case '/api/economy': only(get); sendJson(res, 200, economyView(world, sim.history)); return;
       case '/api/government': only(get); sendJson(res, 200, governmentView(world)); return;
       case '/api/court': only(get); sendJson(res, 200, courtView(world)); return;
       case '/api/society': only(get); sendJson(res, 200, societyView(world)); return;
+      case '/api/culture': only(get); sendJson(res, 200, cultureView(world)); return;
+      case '/api/history': only(get); sendJson(res, 200, historyApiView(world)); return;
       case '/api/bans': only(get); sendJson(res, 200, bansView(world)); return;
       case '/api/chronicle': only(get); sendJson(res, 200, chronicleView(world)); return;
       case '/api/events': only(get); openStream(req, res); return;
@@ -257,9 +275,23 @@ export async function startServer(world: World, opts: ServerOptions): Promise<Ru
       case '/api/agents/join': only(method === 'POST'); await handleJoin(ctx, req, res); return;
       default: break;
     }
+    if ((m = /^\/api\/portrait\/([^/]+)\.svg$/.exec(pathname))) {
+      only(get);
+      const svg = portraitFor(world, portraits, safeDecode(m[1]), portraitSize(url.searchParams.get('size')));
+      if (svg === null) throw new HttpError(404, 'unknown citizen');
+      sendSvg(res, svg, method === 'HEAD');
+      return;
+    }
+    if ((m = /^\/api\/profile\/([^/]+)$/.exec(pathname))) {
+      only(get);
+      const view = profileView(world, safeDecode(m[1]));
+      if (!view) throw new HttpError(404, 'unknown citizen');
+      sendJson(res, 200, view);
+      return;
+    }
     if ((m = /^\/api\/citizens\/([^/]+)$/.exec(pathname))) {
       only(get);
-      const view = citizenView(world, decodeURIComponent(m[1]));
+      const view = citizenView(world, safeDecode(m[1]));
       if (!view) throw new HttpError(404, 'unknown citizen');
       sendJson(res, 200, view);
       return;
