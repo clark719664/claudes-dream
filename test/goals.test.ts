@@ -257,7 +257,7 @@ test('a child has no goals until it comes of age, and the daily pass leaves it a
   kid.goals = [];
   kid.homeTier = 3;
   dailyGoals(w);
-  assert.deepEqual(kid.goals, [], 'nothing is drawn for a child by the daily pass');
+  assert.equal(kid.goals.length, 0, 'nothing is drawn for a child by the daily pass');
   giveGoal(kid, 'own_villa');
   dailyGoals(w);
   assert.equal(kid.goals[0].achievedDay, null, 'a child is not measured against a life yet');
@@ -278,7 +278,7 @@ test('the exiled and the departed are not measured, and a citizen with no goals 
   dailyGoals(w);
   assert.equal(exile.goals[0].achievedDay, null);
   assert.equal(gone.goals[0].achievedDay, null);
-  assert.deepEqual(empty.goals, []);
+  assert.equal(empty.goals.length, 0);
 });
 
 test('the daily pass is deterministic and moves no randomness at all', () => {
