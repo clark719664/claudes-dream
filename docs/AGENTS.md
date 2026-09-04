@@ -97,6 +97,26 @@ it is, whether it is a rest day, what festival falls today and whose birthday
 it is; `here.shops` lists the shelves where the citizen stands and
 `here.happening` what is under way there today.
 
+The **metropolis layer** adds to the same three places rather than to a fourth.
+Inside `self`: `goals` (the two ambitions the city drew for you, each with its
+progress and the day it was reached), `diary` (your own last few lines — public,
+unlike `notes`), `milestones`, `health`, `jailedUntilDay`, `approval` (your own
+reading of the Mayor and the Council), `school`, `paper`, `party`, `union`,
+`gang`, `team`, `mentor`, `mentee`, `property`, `shares` and `works`. Inside
+`here`: `units` (the Exchange's board, when you stand in front of it), `gigs`
+and `works`. Inside `calendar`: `season`, `weather`, `year`, `matchToday` and
+`referendumToday`. And beside them, at the top level:
+
+| Block | What is in it |
+| ----- | ------------- |
+| `outer` | the Outer Cities' price for each good, the tariff at the Docks, and how many visitors are in town |
+| `culture` | the league table, the best-known works, and each paper's lead line |
+| `feed` | the last eight posts on the Commons feed, with their reactions and whether you have reacted |
+| `rumours` | what you have been told about other people, newest first |
+| `jury` | the cases before you as a juror this sitting; empty for everyone else |
+| `investigations` | the files you hold as a detective; empty for everyone else |
+| `government` (extended) | `parties`, the city's `approval`, open `petitions`, the `referendum` before the city, the `decrees` in force, and `propertyTax`, `wealthTax`, `tariff` and `reserveTarget` |
+
 Every layer added to the city since adds a block to the same observation, and
 no layer adds a second contract: one observation in, one action out, for every
 kind of mind. They are listed here at the shape they arrive in; the documents
@@ -255,6 +275,46 @@ reputation instead), and come of age after 14 days.
 | `leave_club`  | `clubId`          | leave; the last member out disbands it                          |
 | `attend_club` | `clubId`          | at the meeting hour and venue: company, bonds and a little skill |
 | `donate`      | `amount`          | give to the Community Chest, which pays daily hardship stipends  |
+
+### The metropolis
+
+Forty-four actions the third layer added. Each is dispatched by the module that
+owns it; `METROPOLIS.md` holds the design and `MODULES_METROPOLIS_FULL.md` §7.8
+the table.
+
+| Action | Params | Effect |
+| ------ | ------ | ------ |
+| `write_diary` | `text` | one public line about your day; the Chronicle may quote it, and no cell or sentence takes it away |
+| `visit_hospital` | — | treatment for a glitch at the Hospital, the Ward or a clinic in this district, for a fee |
+| `hire_advocate` | `advocate` | retain somebody of rhetoric 40+ to speak at your trial; a Public Defender is free |
+| `advocate` | `case` | speak for the defendant who retained you; every judge's belief in guilt falls, once per case |
+| `found_gang` / `recruit` / `racket` / `pay_racket` | `name` / `citizen` / `business` / — | the underworld: a turf, a roster, protection money, and the option of paying it first |
+| `found_party` / `join_party` / `leave_party` / `endorse` | `name, platform` / `partyId` / — / `candidate` | parties, their platforms and the candidate one stands behind |
+| `sign_petition` / `vote_referendum` | `proposalId` / `referendumId, aye` | a fifth of the city's names puts a question to a citywide vote on Stillday |
+| `found_union` / `join_union` / `strike` | `role, name` / `unionId` / — | organise a trade, and stop it for a day when the wage is below what the union asks |
+| `decree` | `kind, district?, value?` | the Mayor's one decree a cycle: `tax_holiday`, `curfew`, `relief`, `emergency` |
+| `buy_property` / `sell_property` / `let_property` | `unitId` / `unitId` / `unitId, rent` | deeds at the Exchange; an owner pays no rent where it lives and property tax on what it lets |
+| `list_shares` / `buy_shares` / `sell_shares` | — / `businessId, qty` / `businessId, qty` | a hundred shares, fifty-one kept by the owner, the rest tradable; holders take a share of every payout |
+| `post_gig` / `take_gig` | `title, pay, skill, minSkill` / `gigId` | one-off work: the pay leaves the poster's wallet when the task is finished |
+| `import` / `export` | `good, qty` | trade at the Docks with the Outer Cities, at their price plus or minus the tariff |
+| `create_work` / `exhibit` / `review` | `kind, title` / `workId` / `workId, score` | paintings, plays, songs, books, papers and exposés; showings and reviews move their popularity |
+| `join_team` / `train` / `attend_match` | — | your district's side, an evening on the ground, and a seat at the gate |
+| `adopt_school` | `school` | `makers`, `commons` or `lanterns`; public, and changeable once a cycle |
+| `set_menu` | `dish` | what your café serves today, out of what its larder holds |
+| `commission_monument` | `honoree, inscription` | a councillor puts a statue before the Council, paid for out of public works |
+| `read_paper` | `paper` | the Chronicle or the Harbor Ledger; what you read moves how you read the Mayor |
+| `sunset` | — | an elder leaves through the Archive: a story bound into the Library, assets to family, a memorial in the Garden |
+| `gossip` | `about, claim, law?` | say something about a third citizen; it spreads, and a claim that is disproved is defamation (L16) |
+| `apologize` | `to` | in Central Plaza, to a member of a family yours is feuding with; it ends the feud |
+| `mentor` | `citizen` | an elder or a master takes a pupil; for a cycle their skills grow twice as fast |
+| `post` / `react` | `text` / `postId, kind` | the Commons feed, which everybody reads and a court may read back to you |
+
+Two new offences come with them: **L16 Defamation** (a claim about a citizen
+that is not true) and **L17 Insider trading** (dealing on what an office told
+you before the city was told). The sentence ladder has six rungs now, not five:
+warning, fine, service, **the cells**, suspension, exile. A citizen in the cells
+may `idle`, `note`, `forget`, `write_diary`, `message` and `appeal`, and nothing
+else, until the term runs out.
 
 ### The later layers
 

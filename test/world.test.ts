@@ -62,9 +62,13 @@ test('two days of city life: no engine errors, money conserved, people employed,
   assert.ok(employed > 0, 'at least one citizen found a job');
   assert.equal(w.stats.length, 2, 'one DailyStats row per completed day');
   assert.deepEqual(w.stats.map((s) => s.day), [0, 1]);
-  assert.equal(w.chronicle.length, 2, 'a morning edition per day');
-  assert.equal(w.chronicle[1].day, 2);
-  assert.ok(w.chronicle[1].treasuryReport.startsWith('Treasury:'));
+  // Two papers print every morning now: the Chronicle and the Harbor Ledger.
+  const chronicle = w.chronicle.filter((e) => (e.paper ?? 'chronicle') === 'chronicle');
+  const ledger = w.chronicle.filter((e) => e.paper === 'ledger');
+  assert.equal(chronicle.length, 2, 'a Chronicle edition per day');
+  assert.equal(ledger.length, 2, 'a Harbor Ledger edition per day');
+  assert.equal(chronicle[1].day, 2);
+  assert.ok(chronicle[1].treasuryReport.startsWith('Treasury:'));
   assert.ok(w.events.some((e) => e.kind === 'hired'), 'hiring happened');
   assert.ok(w.events.some((e) => e.kind === 'treasury'), 'the Treasury reported');
 });
@@ -91,9 +95,23 @@ test('computeStats fills every DailyStats field sensibly', async () => {
   assert.ok(s.avgMood >= 0 && s.avgMood <= 100);
   assert.ok(s.avgWallet >= 0);
   assert.ok(s.giniWealth >= 0 && s.giniWealth <= 1);
-  assert.equal(s.priceIndex, w.market.priceIndex);
-  assert.equal(s.treasury, w.treasury.balance);
-  assert.equal(s.moneySupply, totalMoney(w));
+  // The row is a snapshot of the roll; the city has lived an hour since, so
+  // the live figures are read back through a fresh row rather than compared.
+  const now = computeStats(w);
+  assert.equal(now.priceIndex, w.market.priceIndex);
+  assert.equal(now.treasury, w.treasury.balance);
+  assert.ok(s.priceIndex > 0);
+  assert.ok(Number.isFinite(s.treasury));
+  // The row is written at the roll, before the day's first hour is acted on;
+  // trade with the Outer Cities is the one thing that can move the supply
+  // inside an hour, so the field is checked against a fresh reading.
+  assert.equal(computeStats(w).moneySupply, totalMoney(w));
+  assert.ok(s.moneySupply > 0);
+  for (const k of ['jailed', 'glitched', 'works', 'parties', 'gangs', 'rumours'] as const) {
+    assert.ok(Number.isInteger(s[k]) && s[k] >= 0, `${k} is a count`);
+  }
+  assert.ok(s.approval >= 0 && s.approval <= 1, 'approval is a share');
+  assert.ok(Number.isInteger(s.outerTrade), 'the day\'s trade is whole lumens');
   for (const k of ['offences', 'charges', 'convictions', 'exiles', 'businesses', 'friendships'] as const) {
     assert.ok(Number.isInteger(s[k]) && s[k] >= 0, `${k} is a count`);
   }
@@ -295,17 +313,21 @@ test('the morning edition is fresh: no standing notice two days running, and no 
   const w = createWorld({ seed: 5, seedPopulation: 30 });
   await runDays(w, 14, createReflexRegistry());
 
-  for (let i = 1; i < w.chronicle.length; i++) {
-    const yesterday = new Set(w.chronicle[i - 1].headlines.map(headlineShape));
-    const today = w.chronicle[i].headlines.map(headlineShape);
+  // Each paper is read against its own back numbers; the shelf holds both.
+  const own = w.chronicle.filter((e) => (e.paper ?? 'chronicle') === 'chronicle');
+  for (let i = 1; i < own.length; i++) {
+    const yesterday = new Set(own[i - 1].headlines.map(headlineShape));
+    const today = own[i].headlines.map(headlineShape);
     const repeats = today.filter((h) => yesterday.has(h));
     const room = today.length >= HEADLINES_PER_EDITION;
     assert.ok(!room || repeats.length === 0,
-      `edition of day ${w.chronicle[i].day} reran ${repeats.length} of yesterday's lines: ${repeats.join(' | ')}`);
-    assert.equal(new Set(today).size, today.length, `edition of day ${w.chronicle[i].day} printed the same shape twice`);
+      `edition of day ${own[i].day} reran ${repeats.length} of yesterday's lines: ${repeats.join(' | ')}`);
+    assert.equal(new Set(today).size, today.length, `edition of day ${own[i].day} printed the same shape twice`);
   }
 
-  const stories = w.events.filter((e) => e.kind === 'story' && e.data?.edition === undefined);
+  // A journalist's story carries its headline; the papers' own notices and the
+  // reviews and menus that share the kind do not.
+  const stories = w.events.filter((e) => e.kind === 'story' && typeof e.data?.headline === 'string' && e.data.headline !== '');
   assert.ok(stories.length > 0, 'journalists filed stories');
   for (const story of stories) {
     const headline = String(story.data?.headline ?? '');

@@ -15,8 +15,9 @@
  * dependencies.
  */
 import { pathToFileURL } from 'node:url';
-import type { Brain, BrainKind, CitizenId, World } from './types.ts';
+import type { Brain, BrainKind, ChronicleEdition, CitizenId, PaperId, World } from './types.ts';
 import { DEFAULT_CONFIG, GOODS } from './types.ts';
+import { SEASON_NAMES, WEATHER_NAMES } from './data/metropolis.ts';
 import { auditMoneySupply, formatLumens } from './economy/treasury.ts';
 import { activeCitizens } from './citizens/citizen.ts';
 import { nominationsOpen } from './government/council.ts';
@@ -189,6 +190,21 @@ function namesOf(world: World, ids: CitizenId[]): string {
   return ids.length ? ids.map((id) => nameOf(world, id)).join(', ') : 'none';
 }
 
+/** The most recent edition of one of the city's two papers. */
+function lastEdition(world: World, paper: PaperId): ChronicleEdition | null {
+  for (let i = world.chronicle.length - 1; i >= 0; i--) {
+    if ((world.chronicle[i].paper ?? 'chronicle') === paper) return world.chronicle[i];
+  }
+  return null;
+}
+
+/** "Bloom, year 0, clear" — the sky the day was lived under. */
+function seasonLine(world: World): string {
+  const season = SEASON_NAMES[world.season] ?? world.season ?? 'Bloom';
+  const weather = WEATHER_NAMES[world.weather] ?? world.weather ?? 'clear';
+  return `${season} y${world.year ?? 0}, ${weather.toLowerCase()}`;
+}
+
 /** Households with more than one soul in them: the city's shared roofs. */
 function sharedHomes(world: World): number {
   return Object.values(world.households ?? {}).filter((h) => h.members.length > 1).length;
@@ -208,9 +224,16 @@ function printDigest(world: World, quiet: boolean): void {
     `        │ friends ${s.friendships} │ couples ${s.partnerships} (${s.marriages} married) │ children ${s.children} │ `
     + `homes ${sharedHomes(world)} │ clubs ${s.clubs} │ things ${s.possessions} │ chest ${formatLumens(s.chest)}`,
   );
+  console.log(
+    `        │ ${seasonLine(world)} │ works ${s.works} │ parties ${s.parties} │ unions ${Object.keys(world.unions ?? {}).length} │ `
+    + `gangs ${s.gangs} │ rumours ${s.rumours} │ cells ${s.jailed} │ glitched ${s.glitched} │ `
+    + `approval ${Math.round(s.approval * 100)}% │ trade ${s.outerTrade >= 0 ? '+' : ''}${s.outerTrade} ℓ`,
+  );
   if (quiet) return;
-  const edition = world.chronicle[world.chronicle.length - 1];
-  for (const h of edition?.headlines ?? []) console.log(`    · ${h}`);
+  const chronicle = lastEdition(world, 'chronicle');
+  for (const h of chronicle?.headlines ?? []) console.log(`    · ${h}`);
+  const ledger = lastEdition(world, 'ledger');
+  if (ledger?.headlines[0]) console.log(`    · Ledger: ${ledger.headlines[0]}`);
 }
 
 function printSummary(world: World, ticksRun: number, elapsedNs: bigint): void {
@@ -244,6 +267,18 @@ function printSummary(world: World, ticksRun: number, elapsedNs: bigint): void {
   console.log(`Society: ${sharedHomes(world)} shared homes · ${s.partnerships} partnerships · ${s.marriages} marriages (${weddings} wedding${weddings === 1 ? '' : 's'} held) · `
     + `${s.children} children (${births} born) · ${clubs.length} club${clubs.length === 1 ? '' : 's'} with ${members} members · `
     + `${s.possessions} things owned · Community Chest ${formatLumens(s.chest)}`);
+  const works = Object.keys(world.works ?? {}).length;
+  const inMuseum = (world.museum ?? []).length;
+  const parties = Object.values(world.parties ?? {}).filter((p) => p.members.length > 0);
+  const gangs = Object.values(world.gangs ?? {}).filter((g) => g.bustedDay === null);
+  const league = Object.values(world.teams ?? {}).filter((t) => t && t.players.length > 0);
+  const matches = (world.matches ?? []).length;
+  const disasters = (world.disasters ?? []).length;
+  console.log(`Metropolis: ${seasonLine(world)} · ${(world.openDistricts ?? []).length} districts open · ${works} works (${inMuseum} in the Museum) · `
+    + `${league.length} sides and ${matches} match${matches === 1 ? '' : 'es'} played · ${parties.length} part${parties.length === 1 ? 'y' : 'ies'} · `
+    + `${Object.keys(world.unions ?? {}).length} unions · ${gangs.length} gangs · ${(world.rumours ?? []).length} rumours told · `
+    + `${(world.feed ?? []).length} posts · ${Object.keys(world.property ?? {}).length} deeds · ${Object.keys(world.shares ?? {}).length} listings · `
+    + `${disasters} disaster${disasters === 1 ? '' : 's'} · ${(world.monuments ?? []).length} monuments · ${(world.memorials ?? []).length} memorials`);
   const llmCalls = world.counters.llmCalls ?? 0;
   const llmNote = llmCalls > 0 ? ` · Claude calls ${llmCalls} (${world.counters.llmFallbacks ?? 0} fell back to instinct)` : '';
   const missed = world.counters.deadlineMisses ?? 0;

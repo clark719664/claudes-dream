@@ -190,8 +190,7 @@ function marketActions(world: World, c: Citizen, set: Set<ActionType>): void {
 }
 
 /** The galleries, the Stadium, the schools of thought and the papers. */
-function cultureActions(world: World, c: Citizen, set: Set<ActionType>, here: Citizen[]): void {
-  void here;
+function cultureActions(world: World, c: Citizen, set: Set<ActionType>): void {
   const adult = c.lifeStage !== 'child';
   if (adult) {
     for (const kind of WORK_KINDS) {
@@ -240,6 +239,6 @@ export function metropolisActions(world: World, c: Citizen, set: Set<ActionType>
   healthActions(world, c, set);
   politicsActions(world, c, set);
   marketActions(world, c, set);
-  cultureActions(world, c, set, here);
+  cultureActions(world, c, set);
   fabricActions(world, c, set, here);
 }

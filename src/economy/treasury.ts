@@ -171,7 +171,9 @@ export function transfer(
  */
 export function withholdingPay(
   world: World, payer: MoneyParty, payee: CitizenId, gross: number,
-  kind: 'wage' | 'salary' | 'payout', memo: string, opts?: { taxRate?: number },
+  // The metropolis pays for a gig and for a share of a payout through the same
+  // funnel; nothing else about the money changes.
+  kind: 'wage' | 'salary' | 'payout' | 'gig' | 'share_dividend', memo: string, opts?: { taxRate?: number },
 ): { net: number; tax: number } {
   const none = { net: 0, tax: 0 };
   const c = world.citizens[payee];

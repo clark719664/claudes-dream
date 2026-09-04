@@ -30,6 +30,10 @@ function sampleObservation(world: World, c: Citizen): Observation {
       notes: [...c.notes],
       office: null, record: { convictions: 0, strikes: 0, pendingCharges: 0, finesOwed: 0, serviceDaysLeft: 0 }, detained: false,
       tastes: { ...c.tastes, wants: [] }, possessions: [], partner: null, family: [], household: null, clubs: [],
+      goals: [], diary: [], milestones: [], health: { glitched: false, sinceDay: null }, jailedUntilDay: null,
+      approval: { mayor: 0.5, council: 0.5 }, school: null, paper: 'chronicle',
+      party: null, union: null, gang: null, team: null, mentor: null, mentee: null,
+      property: [], shares: [], works: [],
     },
     here: {
       district: c.district, districtName: 'The Commons',
@@ -38,11 +42,14 @@ function sampleObservation(world: World, c: Citizen): Observation {
         id: 'c_99', name: 'Bram', bond: 45, job: 'Merchant', office: null, reputation: 60, standing: 'good',
         character: { honesty: 0.9, diligence: 0.4, sociability: 0.6, generosity: 0.2, civic: 0.3 },
       }],
-      shops: [], happening: [],
+      shops: [], happening: [], units: [], gigs: [], works: [],
     },
     friends: [], rivals: [],
     affection: [],
-    calendar: { weekday: 0, restDay: false, festivalToday: null, nextFestival: { name: 'Lantern Night', inDays: 14 }, birthdaysToday: [] },
+    calendar: {
+      weekday: 0, restDay: false, festivalToday: null, nextFestival: { name: 'Lantern Night', inDays: 14 },
+      birthdaysToday: [], season: 'bloom', weather: 'clear', year: 0, matchToday: null, referendumToday: false,
+    },
     market: {
       compute: { price: 6, stock: 400 }, energy: { price: 3, stock: 400 }, goods: { price: 12, stock: 120 },
       culture: { price: 8, stock: 60 }, knowledge: { price: 15, stock: 20 },
@@ -52,8 +59,15 @@ function sampleObservation(world: World, c: Citizen): Observation {
     government: {
       mayor: null, council: [], judges: [], watchOfficers: 3, incomeTax: 0.15, salesTax: 0.05, dividend: 15, minWage: 9,
       daysToElection: 6, nominationsOpen: false, electionToday: false, candidates: [], openProposals: [], myLatestCase: null,
+      parties: [], approval: { mayor: 0.5, council: 0.5 }, petitions: [], referendum: null, decrees: [],
+      propertyTax: 0, wealthTax: 0, tariff: 0, reserveTarget: 0,
     },
-    bench: [], appeals: [], reports: [],
+    outer: {
+      prices: { compute: 7, energy: 3, goods: 13, culture: 9, knowledge: 17 }, tariff: 0, tourists: 0,
+    },
+    culture: { league: [], topWorks: [], papers: [{ paper: 'chronicle', headline: null }, { paper: 'ledger', headline: null }] },
+    feed: [], rumours: [],
+    bench: [], appeals: [], reports: [], jury: [], investigations: [],
     inbox: [{ from: 'c_99', fromName: 'Bram', text: 'drink at the Halflight?', tick: world.tick }],
     recent: ['You were paid 15 lumens for a shift.'],
     availableActions: ['idle', 'move', 'work', 'rest', 'eat', 'socialize', 'message'],
@@ -109,7 +123,9 @@ test('system prompt is stable, self-contained and within budget', () => {
   // It is sent with cache_control on every request, so the ceiling guards
   // against runaway growth rather than against cost.
   const words = a.split(/\s+/).length;
-  assert.ok(words > 600 && words < 4000, `unexpected size: ${words} words`);
+  // The metropolis roughly doubled the catalogue and added nine sections of
+  // city to describe; the ceiling still guards against runaway growth.
+  assert.ok(words > 600 && words < 8000, `unexpected size: ${words} words`);
   for (const needle of ['Reverie', '`act`', 'exile', 'L13', 'Council', 'Watch', 'appeal', 'suspension', '280', 'character', 'notes']) {
     assert.ok(a.includes(needle), `system prompt is missing ${needle}`);
   }

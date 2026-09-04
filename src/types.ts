@@ -810,6 +810,8 @@ export interface WorldEvent {
 
 export interface ChronicleEdition {
   day: number;
+  /** Which paper printed it; an edition from before the Ledger existed is the Chronicle's. */
+  paper?: PaperId;
   headlines: string[];
   treasuryReport: string;
 }

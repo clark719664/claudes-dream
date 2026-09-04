@@ -23,8 +23,8 @@
  * world.counters.engineErrors, emitted as 'system' events and logged to
  * stderr so they stay visible.
  */
-import { DEFAULT_CONFIG, DISTRICT_IDS, FOUNDING_DISTRICT_IDS } from '../types.ts';
-import type { Action, Brain, BrainKind, Citizen, CitizenId, DistrictId, Loan, Observation, World, WorldConfig } from '../types.ts';
+import { DEFAULT_CONFIG, FOUNDING_DISTRICT_IDS } from '../types.ts';
+import type { Action, Brain, BrainKind, Citizen, DistrictId, Observation, World, WorldConfig } from '../types.ts';
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { emptyWorld } from './scaffold.ts';

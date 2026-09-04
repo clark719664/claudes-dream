@@ -7,7 +7,7 @@ import { clamp } from '../types.ts';
 import type { ActionResult, BuildingId, Citizen, CitizenId, HousingTier, PropertyUnit, World } from '../types.ts';
 import { BUILDINGS, blockOf, blocksForTier } from '../data/city.ts';
 import { emit, remember } from '../sim/events.ts';
-import { householdRent } from '../society/households.ts';
+import { householdOf, householdRent, leaveHousehold } from '../society/households.ts';
 import { assignTenancy } from '../markets/property.ts';
 import { tellNeighbours } from '../social/neighbours.ts';
 import { residentIds, transfer } from './treasury.ts';
@@ -83,13 +83,22 @@ export function rentOf(world: World, c: Citizen): number {
   return Math.max(0, Math.round(world.housing.rent[c.homeTier] * factor));
 }
 
-/** Give up the current unit (no events). */
+/**
+ * Give up the current home (no events). A unit belongs to the household that
+ * holds it, not to each of its members: somebody walking out of a shared roof
+ * leaves through `leaveHousehold`, which frees the unit only when the last of
+ * them has gone. Anyone living alone frees their own.
+ */
 function vacate(world: World, cId: CitizenId): void {
   const c = world.citizens[cId];
   if (!c || !isPaidTier(c.homeTier)) return;
-  world.housing.occupied[c.homeTier] = Math.max(0, world.housing.occupied[c.homeTier] - 1);
-  c.homeTier = 0;
-  c.rentArrearsDays = 0;
+  if (householdOf(world, cId)) {
+    leaveHousehold(world, cId);
+  } else {
+    world.housing.occupied[c.homeTier] = Math.max(0, world.housing.occupied[c.homeTier] - 1);
+    c.homeTier = 0;
+    c.rentArrearsDays = 0;
+  }
   assignTenancy(world, cId, 0);
   c.homeBuildingId = null;
 }

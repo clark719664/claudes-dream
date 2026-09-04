@@ -12,12 +12,12 @@
  * is the only mind the engine plays.
  */
 import { WORK_KINDS } from '../types.ts';
-import type { Action, Good, WorkKind } from '../types.ts';
+import type { Action, Good } from '../types.ts';
 import { GOODS } from '../types.ts';
 import { HOSPITAL_FEE, MATCH_TICKET } from '../data/jobs.ts';
-import { PARTY_NAME_PARTS, WORK_INFO } from '../data/metropolis.ts';
+import { GANG_NAME_PARTS, PARTY_NAME_PARTS, WORK_INFO } from '../data/metropolis.ts';
 import { chance, pick, randInt } from '../util/rng.ts';
-import { LAWS, LAW_CODES } from '../data/laws.ts';
+import { LAWS } from '../data/laws.ts';
 import { characterOf } from '../citizens/character.ts';
 import { bondBetween, friendsOf } from '../citizens/relationships.ts';
 import { canAppeal } from '../government/court.ts';
@@ -29,11 +29,11 @@ import { mayMentor } from '../social/mentorship.ts';
 import { feedFor } from '../social/feed.ts';
 import { feudsOf, inFeud } from '../social/feuds.ts';
 import { partyOf } from '../politics/parties.ts';
-import { mayStrike, unionForRole, unionOf } from '../politics/unions.ts';
+import { mayStrike, unionForRole, unionOf, workersInRole } from '../politics/unions.ts';
 import { mayDecree } from '../politics/decrees.ts';
 import { referendumToday } from '../politics/referendums.ts';
 import { unitPrice, unitsFor, unitsOnSale } from '../markets/property.ts';
-import { availableShares, listingOf, recentProfit, sharePrice } from '../markets/shares.ts';
+import { availableShares, recentProfit, sharePrice } from '../markets/shares.ts';
 import { openGigs, qualifiedFor } from '../markets/gigs.ts';
 import { DOCKS_DISTRICT, mayTrade, outerPrice } from '../markets/outer.ts';
 import { mayCreate, venueFor as workVenue, worksOf } from '../culture/works.ts';
@@ -50,6 +50,12 @@ export const INVESTOR_WALLET = 600;
 export const LISTING_AGE_DAYS = 10;
 /** The hour a reflex citizen writes up its day. */
 export const DIARY_HOUR = 21;
+/** Workers of one role before anybody thinks of organising them. */
+export const MIN_TRADE = 3;
+/** Days a trade stays at work after it has been out. */
+export const STRIKE_COOLDOWN_DAYS = 14;
+/** Days between one citizen's rumours. */
+export const GOSSIP_INTERVAL_DAYS = 5;
 
 // ---------------------------------------------------------------------------
 // The cells and the body
@@ -81,6 +87,27 @@ export function tryHealth(ctx: Ctx): Action | null {
   return hospital ? stepTo(ctx, hospital.district) : null;
 }
 
+/**
+ * The sky, and the days the city has gone wrong. A storm or a fall of snow
+ * keeps people in; a disaster puts the hands that can mend it to work.
+ */
+export function tryWeather(ctx: Ctx): Action | null {
+  const { world, c, clock, job } = ctx;
+  const trouble = activeDisasters(world);
+  if (trouble.length > 0 && job && (job.role === 'builder' || job.role === 'medic')
+    && clock.working && c.shiftsToday < world.config.maxShiftsPerDay) {
+    if (ctx.can.has('work')) return { type: 'work' };
+    const walk = stepTo(ctx, job.district);
+    if (walk) return walk;
+  }
+  const rough = world.weather === 'storm' || world.weather === 'snow';
+  if (!rough || clock.working || !chance(world, 0.4)) return null;
+  const home = c.homeBuildingId ? world.buildings[c.homeBuildingId] : null;
+  if (home && c.district !== home.district) return stepTo(ctx, home.district);
+  if (ctx.can.has('rest') && c.needs.rest < 90) return { type: 'rest' };
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Work, by other means
 // ---------------------------------------------------------------------------
@@ -90,7 +117,16 @@ export function tryStrike(ctx: Ctx): Action | null {
   const { world, c } = ctx;
   const union = unionOf(world, c.id);
   if (!union || !ctx.can.has('strike') || !mayStrike(world, union)) return null;
-  return chance(world, 0.1) ? { type: 'strike' } : null;
+  // One voice calls the trade out, not forty: the citizen who founded it.
+  if (union.members[0] !== c.id) return null;
+  // And not week after week: a trade that has just been out goes back to work.
+  // The union forgets its own last strike at the roll, so the mind remembers.
+  const key = `struck:${union.id}`;
+  const last = world.counters[key];
+  if (last !== undefined && world.day - last < STRIKE_COOLDOWN_DAYS) return null;
+  if (!chance(world, 0.06)) return null;
+  world.counters[key] = world.day;
+  return { type: 'strike' };
 }
 
 /** A union to join, or to found, for a citizen whose trade has none. */
@@ -98,7 +134,9 @@ export function tryUnion(ctx: Ctx): Action | null {
   const { world, c, job } = ctx;
   if (!job || !ctx.clock.working) return null;
   const existing = unionForRole(world, job.role);
-  if (!existing && ctx.can.has('found_union') && c.personality.sociability > 0.55 && chance(world, 0.02)) {
+  // A trade of one or two does not organise, and organising is rare.
+  if (!existing && ctx.can.has('found_union') && workersInRole(world, job.role).length >= MIN_TRADE
+    && c.personality.sociability > 0.6 && chance(world, 0.01)) {
     return { type: 'found_union', role: job.role, name: `${job.title}s of Reverie` };
   }
   if (existing && ctx.can.has('join_union') && !unionOf(world, c.id) && chance(world, 0.2)) {
@@ -115,8 +153,9 @@ export function tryGig(ctx: Ctx): Action | null {
     const best = here.sort((a, b) => b.pay - a.pay || a.id.localeCompare(b.id, 'en'))[0];
     if (best) return { type: 'take_gig', gigId: best.id };
   }
+  if (!ctx.can.has('post_gig') || !ctx.clock.working) return null;
   // A business with money and nobody to do the work puts it on the board.
-  if (ctx.can.has('post_gig') && ctx.biz && ctx.biz.treasury > 120 && ctx.clock.working && chance(world, 0.05)) {
+  if (ctx.biz && ctx.biz.treasury > 120 && chance(world, 0.06)) {
     return {
       type: 'post_gig',
       title: `A hand at ${ctx.biz.name}`,
@@ -125,8 +164,27 @@ export function tryGig(ctx: Ctx): Action | null {
       minSkill: 0,
     };
   }
+  // And so does anyone with lumens to spare and something they would rather
+  // not do themselves.
+  if (!ctx.biz && c.wallet > SPARE_WALLET * 1.5 && chance(world, 0.02)) {
+    return {
+      type: 'post_gig',
+      title: pick(world, GIG_TITLES),
+      pay: Math.max(world.government.minWage, Math.min(30, Math.round(c.wallet / 15))),
+      skill: null,
+      minSkill: 0,
+    };
+  }
   return null;
 }
+
+const GIG_TITLES = [
+  'A crate carried to the Harbor',
+  'An hour of copying at the Archive',
+  'Help with a delivery before dark',
+  'A morning of tidying at the Lofts',
+  'Someone to mind a stall at the Bazaar',
+];
 
 // ---------------------------------------------------------------------------
 // The Exchange
@@ -203,14 +261,14 @@ function titleFor(ctx: Ctx): string {
 export function tryCulture(ctx: Ctx): Action | null {
   const { world, c } = ctx;
   const offShift = !ctx.clock.working || c.shiftsToday >= world.config.maxShiftsPerDay;
-  if (ctx.can.has('create_work') && offShift && chance(world, 0.2)) {
+  if (ctx.can.has('create_work') && offShift && chance(world, 0.07)) {
     const kinds = WORK_KINDS.filter((k) => mayCreate(world, c, k) && workVenue(world, k, c.district));
     if (kinds.length > 0) {
       const kind = kinds.sort((a, b) => (c.skills[WORK_INFO[b].skill] ?? 0) - (c.skills[WORK_INFO[a].skill] ?? 0))[0];
       return { type: 'create_work', kind, title: titleFor(ctx) };
     }
   }
-  if (ctx.can.has('exhibit') && chance(world, 0.35)) {
+  if (ctx.can.has('exhibit') && chance(world, 0.2)) {
     const mine = worksOf(world, c.id)
       .filter((w) => workVenue(world, w.kind, c.district) || world.buildings[w.home]?.district === c.district)
       .sort((a, b) => a.popularity - b.popularity)[0];
@@ -279,8 +337,50 @@ export function tryPolitics(ctx: Ctx): Action | null {
     if (candidate) return { type: 'endorse', candidate: candidate.id };
   }
   if (ctx.can.has('sign_petition')) {
-    const open = obs.government.petitions.filter((p) => !p.youSigned);
-    if (open.length > 0 && chance(world, 0.25)) return { type: 'sign_petition', proposalId: open[0].id };
+    // A petition that already has the names it needs does not need yours.
+    const open = obs.government.petitions.filter((p) => !p.youSigned && p.signatures < p.needed);
+    if (open.length > 0 && chance(world, 0.15)) return { type: 'sign_petition', proposalId: open[0].id };
+  }
+  // A councillor with a full works fund and somebody the city admires.
+  if (ctx.can.has('commission_monument') && chance(world, 0.05)) {
+    const honoured = [...world.order]
+      .map((id) => world.citizens[id])
+      .filter((o) => o && o.id !== c.id && o.standing === 'good' && o.reputation >= 75)
+      .sort((a, b) => b.reputation - a.reputation)[0];
+    if (honoured) {
+      return {
+        type: 'commission_monument',
+        honoree: honoured.id,
+        inscription: `${honoured.name} ${honoured.familyName}, who the city was better for.`,
+      };
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// The underworld
+// ---------------------------------------------------------------------------
+
+/** A gang founded, recruited into, and run on the businesses of its turf. */
+export function tryUnderworld(ctx: Ctx): Action | null {
+  const { world, c, here } = ctx;
+  if (ctx.can.has('pay_racket') && chance(world, 0.5)) return { type: 'pay_racket' };
+  if (ctx.can.has('found_gang') && chance(world, 0.06)) {
+    const name = `${pick(world, GANG_NAME_PARTS.prefixes)} ${pick(world, GANG_NAME_PARTS.suffixes)}`;
+    return { type: 'found_gang', name };
+  }
+  if (ctx.can.has('recruit') && chance(world, 0.25)) {
+    const mark = here
+      .filter((o) => !o.gangId && o.lifeStage !== 'child' && bondBetween(world, c.id, o.id) >= 40)
+      .sort((a, b) => characterOf(a).honesty - characterOf(b).honesty)[0];
+    if (mark) return { type: 'recruit', citizen: mark.id };
+  }
+  if (ctx.can.has('racket') && chance(world, 0.2)) {
+    const mark = Object.values(world.businesses)
+      .filter((b) => b.dissolvedDay === null && b.district === c.district && b.ownerId !== c.id && b.treasury > 40)
+      .sort((a, b) => b.treasury - a.treasury)[0];
+    if (mark) return { type: 'racket', business: mark.id };
   }
   return null;
 }
@@ -304,9 +404,13 @@ function gossipAction(ctx: Ctx): Action | null {
     .filter((o) => o.lifeStage !== 'child' && bondBetween(world, c.id, o.id) < 40)
     .sort((a, b) => characterOf(a).honesty - characterOf(b).honesty)[0];
   if (!subject) return null;
+  // Most talk names nobody's crime: a reflex citizen only accuses somebody of
+  // a law when the city's own record says they were convicted of one, and even
+  // then only sometimes. Naming a law it did not break is defamation (L16).
   const convicted = subject.record.convictions.map((k) => k.law).filter((l) => LAWS[l]);
-  const law = convicted.length > 0 && chance(world, 0.7) ? pick(world, convicted) : pick(world, [...LAW_CODES]);
-  return { type: 'gossip', about: subject.id, claim: `${subject.name} ${pick(world, GOSSIP_LINES)}`, law };
+  const law = convicted.length > 0 && chance(world, 0.15) ? pick(world, convicted) : undefined;
+  const claim = `${subject.name} ${pick(world, GOSSIP_LINES)}`;
+  return law ? { type: 'gossip', about: subject.id, claim, law } : { type: 'gossip', about: subject.id, claim };
 }
 
 /** Talk, apologies, teaching and the Commons feed. */
@@ -320,9 +424,19 @@ export function tryFabric(ctx: Ctx): Action | null {
     const pupil = here.find((o) => o.lifeStage === 'adult' && !o.mentorId && o.id !== c.id && bondBetween(world, c.id, o.id) >= 20);
     if (pupil) return { type: 'mentor', citizen: pupil.id };
   }
-  if (ctx.can.has('gossip') && c.personality.sociability > 0.45 && chance(world, 0.05)) {
+  // Talk about other people is cheap, and in Reverie it is also dangerous:
+  // a claim nobody ever answers for is defamation once it goes stale
+  // (social/rumours.ts). A scripted mind says one thing about one person
+  // every few days at most.
+  const toldKey = `told:${c.id}`;
+  if (ctx.can.has('gossip') && c.personality.sociability > 0.45
+    && world.day - (world.counters[toldKey] ?? -GOSSIP_INTERVAL_DAYS) >= GOSSIP_INTERVAL_DAYS
+    && chance(world, 0.02)) {
     const said = gossipAction(ctx);
-    if (said) return said;
+    if (said) {
+      world.counters[toldKey] = world.day;
+      return said;
+    }
   }
   if (ctx.can.has('react')) {
     const unreacted = feedFor(world, c).filter((p) => p.author !== c.id && p.youReacted === null);
@@ -387,6 +501,6 @@ export function trySunset(ctx: Ctx): Action | null {
 
 /** Everything above, in the order the ladder runs them. */
 export const METRO_STEPS: readonly ((ctx: Ctx) => Action | null)[] = [
-  tryHealth, tryStrike, tryGig, tryProperty, tryShares, tryTrade,
-  tryCulture, trySport, tryPolitics, tryUnion, tryFabric, trySchoolAndPaper, trySunset,
+  tryHealth, tryWeather, tryStrike, tryGig, tryProperty, tryShares, tryTrade,
+  tryCulture, trySport, tryPolitics, tryUnion, tryUnderworld, tryFabric, trySchoolAndPaper, trySunset,
 ];

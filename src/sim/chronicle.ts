@@ -66,7 +66,8 @@ export function headlineShape(text: string): string {
  */
 export function printMorningEdition(world: World, treasuryReport: string): ChronicleEdition {
   const reportedDay = Math.max(0, world.day - 1);
-  const previous = world.chronicle[world.chronicle.length - 1];
+  // The shelf holds both papers now; the Chronicle reads its own back number.
+  const previous = [...world.chronicle].reverse().find((e) => (e.paper ?? 'chronicle') === 'chronicle');
   const printedYesterday = new Set((previous?.headlines ?? []).map(headlineShape));
   const candidates = topStories(world, reportedDay, HEADLINES_PER_EDITION * 4);
   const stories: WorldEvent[] = [];
@@ -88,11 +89,18 @@ export function printMorningEdition(world: World, treasuryReport: string): Chron
   const headlines = stories.length
     ? stories.map((s) => s.text)
     : [`A quiet day in Reverie: nothing of note was reported on day ${reportedDay}.`];
-  const edition: ChronicleEdition = { day: world.day, headlines, treasuryReport };
+  const edition: ChronicleEdition = { day: world.day, paper: 'chronicle', headlines, treasuryReport };
 
-  if (previous && previous.day === world.day) world.chronicle[world.chronicle.length - 1] = edition;
+  const printedToday = world.chronicle.findIndex((e) => e.day === world.day && (e.paper ?? 'chronicle') === 'chronicle');
+  if (printedToday >= 0) world.chronicle[printedToday] = edition;
   else world.chronicle.push(edition);
-  if (world.chronicle.length > CHRONICLE_LENGTH) world.chronicle.splice(0, world.chronicle.length - CHRONICLE_LENGTH);
+  // The shelf is shared with the Harbor Ledger, so each paper is bounded on
+  // its own back numbers rather than on the length of the shelf.
+  const mine = world.chronicle.filter((e) => (e.paper ?? 'chronicle') === 'chronicle');
+  if (mine.length > CHRONICLE_LENGTH) {
+    const drop = new Set(mine.slice(0, mine.length - CHRONICLE_LENGTH));
+    world.chronicle = world.chronicle.filter((e) => !drop.has(e));
+  }
 
   emit(world, 'story', `The Chronicle, day ${world.day}: "${headlines[0]}"`, [], 0.2,
     { edition: world.day, headlines, treasuryReport });

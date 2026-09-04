@@ -113,8 +113,17 @@ export function ensureTeams(world: World): void {
   }
 }
 
-/** The district a citizen plays for: where they live, or where they stand. */
+/**
+ * The district a citizen plays for. Reverie sleeps in one quarter — every
+ * block of homes but the Hilltop and the Tunnels stands in the Verdant
+ * Quarter — so a side picked by bedroom would be one side and no league. A
+ * citizen turns out for the district they spend their days in: the one they
+ * work in, else the one they sleep in, else the one they are standing in.
+ * Nobody chooses it, and nobody can buy their way onto a better side.
+ */
 export function homeDistrictOf(world: World, c: Citizen): DistrictId {
+  const job = c.jobId ? world.jobs[c.jobId] : null;
+  if (job && job.holderId === c.id && world.districts[job.district]) return job.district;
   const home = c.homeBuildingId ? world.buildings[c.homeBuildingId] : null;
   return home?.district ?? c.district;
 }

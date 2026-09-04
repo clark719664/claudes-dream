@@ -269,8 +269,11 @@ test('a citizen joins what is happening in the district and walks to it when it 
   });
   assert.deepEqual(decide(w, c), { type: 'celebrate' });
 
+  // An hour earlier, one district away: the walk is how you are there for it.
+  at(w, 4, 19);
   const far = settled(w, { district: 'verdant_quarter', wallet: 200 });
   far.personality.sociability = 0.9;
+  far.needs.social = 30;
   assert.deepEqual(decide(w, far), { type: 'move', district: 'nightglass' }, 'one district away, one hour before');
 });
 

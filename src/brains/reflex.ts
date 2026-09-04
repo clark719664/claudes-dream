@@ -29,7 +29,7 @@ import {
 } from './reflex-society.ts';
 import {
   tryCulture, tryDiary, tryFabric, tryGig, tryHealth, tryJail, tryPolitics, tryProperty, trySchoolAndPaper,
-  tryShares, trySport, tryStrike, trySunset, tryTrade, tryUnion,
+  tryShares, trySport, tryStrike, trySunset, tryTrade, tryUnderworld, tryUnion, tryWeather,
 } from './reflex-metro.ts';
 import { childDecide } from './child.ts';
 
@@ -336,19 +336,21 @@ function tryJobHunt(ctx: Ctx): Action | null {
 }
 
 const LADDER: readonly Step[] = [
-  tryAppeal, tryEat, tryDine, tryInbox, tryCharity, tryHealth, tryRest, tryHousing, tryDiary,
+  tryAppeal, tryEat, tryDine, tryInbox, tryCharity, tryHealth, tryRest, tryHousing, tryWeather,
   tryHappening, tryClubMeeting,
   tryStrike, tryJobHunt, tryWorkday, tryGig, tryCraft, tryCivic, tryBusiness,
   tryTrade, tryProperty, tryShares,
   tryRomance, trySocial, tryComfort, tryWants, tryPurpose,
-  tryReport, tryCrime, tryPerform, tryCulture, trySport, tryPolitics, tryUnion,
-  tryClubLife, tryBirthdayGift, tryDonate, tryFabric, trySchoolAndPaper, tryUseItem, tryGift, trySunset,
+  tryReport, tryCrime, tryUnderworld, tryPerform, tryCulture, trySport, tryPolitics, tryUnion,
+  tryClubLife, tryBirthdayGift, tryDonate, tryFabric, trySchoolAndPaper, tryUseItem, tryGift,
+  // Last of all, before the hour is let go: the day, written up.
+  tryDiary, trySunset,
 ];
 
 /** Only what a suspended citizen may still do: appeal, eat, rest, keep company, write. */
 const RESTRICTED_LADDER: readonly Step[] = [
-  tryAppeal, tryEat, tryDine, tryInbox, tryHealth, tryRest, tryDiary, tryHappening,
-  trySocial, tryComfort, tryPlay, tryFabric, trySchoolAndPaper, tryUseItem,
+  tryAppeal, tryEat, tryDine, tryInbox, tryHealth, tryRest, tryHappening,
+  trySocial, tryComfort, tryPlay, tryFabric, trySchoolAndPaper, tryUseItem, tryDiary,
 ];
 
 function decideSuspended(ctx: Ctx): Action {

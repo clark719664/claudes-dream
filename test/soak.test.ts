@@ -245,7 +245,13 @@ function checkInvariants(w: World): void {
   }
   assert.ok(w.treasury.ledger.length <= w.config.ledgerLength, `${at}: ledger unbounded`);
   assert.ok(w.events.length <= w.config.eventLogLength, `${at}: events unbounded`);
-  assert.ok(w.chronicle.length <= 60, `${at}: chronicle unbounded`);
+  // Two papers share the shelf, so each is bounded on its own back numbers.
+  const perPaper = new Map<string, number>();
+  for (const e of w.chronicle) {
+    const paper = e.paper ?? 'chronicle';
+    perPaper.set(paper, (perPaper.get(paper) ?? 0) + 1);
+  }
+  for (const [paper, n] of perPaper) assert.ok(n <= 60, `${at}: ${paper} unbounded (${n})`);
   const orderSet = new Set(w.order);
   assert.equal(orderSet.size, w.order.length, `${at}: duplicate ids in order`);
   const g = w.government;

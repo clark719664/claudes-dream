@@ -54,8 +54,11 @@ export function tryAppeal(ctx: Ctx): Action | null {
   const key = `appealDecided:${c.id}:${k.id}`;
   if (world.counters[key]) return null;
   world.counters[key] = 1;
+  // The ladder has six rungs since the metropolis: 4 is a few days in the
+  // cells, 5 a suspension, 6 the Gate. What is worth going back to the Council
+  // over rises with what the sentence actually takes away.
   const tier = k.tier ?? 1;
-  const base = tier >= 5 ? 0.95 : tier === 4 ? 0.7 : tier === 3 ? 0.45 : tier === 2 ? 0.2 : 0.05;
+  const base = tier >= 6 ? 0.95 : tier === 5 ? 0.8 : tier === 4 ? 0.5 : tier === 3 ? 0.35 : tier === 2 ? 0.15 : 0.05;
   const p = base + (c.personality.ambition - 0.5) * 0.3 + (c.personality.honesty - 0.5) * 0.2;
   return chance(world, p) ? { type: 'appeal' } : null;
 }
