@@ -181,12 +181,24 @@ function employersOf(world: World, role: JobRole): { businesses: Business[]; cit
   return { businesses: businesses.sort((a, b) => a.id.localeCompare(b.id)), city };
 }
 
-/** Any member may call it, and it lasts a day. */
+/**
+ * Any member who is actually at the work may call it, and it lasts a day. A
+ * strike is the withholding of labour: somebody in the cells, out of standing
+ * to work, or no longer of the trade has no labour to withhold and cannot
+ * call the rest of it out.
+ */
 export function strike(world: World, cId: CitizenId): ActionResult {
   const c = world.citizens[cId];
   if (!c || !isPresent(world, c)) return fail('Unknown or absent citizen.');
   const u = unionOf(world, cId);
   if (!u) return fail('You do not belong to a union.');
+  if (isJailed(world, c)) return fail('You cannot call a strike from the cells.');
+  if (c.detainedUntilTick !== null && c.detainedUntilTick > world.tick) return fail('You cannot call a strike from the Watch House.');
+  if (c.standing !== 'good' && c.standing !== 'probation') return fail(`You cannot call a strike while ${c.standing}.`);
+  const own = heldJob(world, c);
+  if (!own || own.role !== u.role) {
+    return fail(`Only somebody doing the work may call it out, and you hold no post as a ${String(u.role).replace(/_/g, ' ')}.`);
+  }
   if (u.strikingUntilDay !== null && u.strikingUntilDay > world.day) return fail(`${u.name} is already out.`);
   if (!hasMajority(world, u)) return fail(`${u.name} speaks for fewer than half the ${String(u.role).replace(/_/g, ' ')}s; it cannot call a strike.`);
   if (meanWage(world, u.role) >= u.demandWage) return fail(`The trade is already paid ${u.demandWage} ℓ a shift or better.`);

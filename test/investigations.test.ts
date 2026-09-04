@@ -6,7 +6,7 @@ import { nextId } from '../src/util/ids.ts';
 import {
   CHARGE_EVIDENCE, EVIDENCE_PER_SHIFT, OPENING_EVIDENCE, STALE_DAYS, TRACE_WINDOW_TICKS, abuseTraceCount,
   dailyInvestigations, detectivesOnDuty, findTrace, investigationsFor, noteAbuseOfOffice, openInvestigation,
-  openInvestigations, pursue, traces, underInvestigation,
+  openInvestigations, pursue, stillADetective, traces, underInvestigation,
 } from '../src/government/investigations.ts';
 import { commitOffence } from '../src/government/watch.ts';
 
@@ -229,4 +229,45 @@ test('scrutiny on a suspect makes a detective faster, and detection still needs 
   commitOffence(w, seen.id, 'L13', {});
   const stillOpen = traces(w).filter((t) => t.suspectId === seen.id);
   assert.equal(stillOpen.length, seen.recentOffences.filter((o) => !o.detected).length);
+});
+
+test('a detective off duty for a day keeps their files; one off the force loses them', () => {
+  const w = makeWorld();
+  w.day = 3; w.tick = 72;
+  const detective = makeDetective(w);
+  const suspect = makeCitizen(w, { name: 'Suspect' });
+  undetected(suspect, 'L06', w.tick - 1);
+  const v = openInvestigation(w, detective.id, suspect.id, 'L06');
+  assert.ok(v);
+  const opening = v.evidence;
+
+  // Three days in the cells: nobody works the file, and nobody takes it away.
+  detective.jailedUntilDay = w.day + 3;
+  assert.deepEqual(detectivesOnDuty(w), [], 'a detective in the cells is not on duty');
+  w.day = 4; w.tick = 96;
+  dailyInvestigations(w);
+  assert.equal(v.closedDay, null, 'a file is not lost because its detective was held for a day');
+  assert.equal(v.evidence, opening, 'and it makes no progress while nobody is working it');
+
+  // Back on duty, and the file moves again.
+  detective.jailedUntilDay = null;
+  w.day = 5; w.tick = 120;
+  dailyInvestigations(w);
+  assert.ok(v.evidence > opening, 'the detective picks it up where they left it');
+
+  // The Watch holding them for the evening is the same kind of interruption.
+  detective.detainedUntilTick = w.tick + 6;
+  assert.deepEqual(detectivesOnDuty(w), []);
+  assert.equal(stillADetective(w, detective.id), true, 'held is not the same as off the force');
+
+  // Losing the post is not: then the file closes, because nobody inherits a hunch.
+  detective.detainedUntilTick = null;
+  const job = w.jobs[detective.jobId!];
+  job.holderId = null;
+  detective.jobId = null;
+  assert.equal(stillADetective(w, detective.id), false);
+  w.day = 6; w.tick = 144;
+  dailyInvestigations(w);
+  assert.equal(v.closedDay, 6);
+  assert.ok(w.events.some((e) => e.text.includes('no detective is on it')));
 });

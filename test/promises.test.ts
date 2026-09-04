@@ -10,8 +10,8 @@ import assert from 'node:assert/strict';
 import type { Citizen, Platform, World } from '../src/types.ts';
 import { makeCitizen, makeWorld } from './helpers.ts';
 import {
-  PLATFORM_FIELDS, PROMISE_MARGIN, dailyPromises, keptShare, positionOf, promiseState, promisesOf, recordPlatform,
-  settingFor,
+  PLATFORM_FIELDS, PROMISE_MARGIN, dailyPromises, keptShare, platformInWords, positionOf, promiseState, promisesOf,
+  recordPlatform, settingFor,
 } from '../src/politics/promises.ts';
 
 /** A platform that asks for the city exactly as it is, but for the fields named. */
@@ -192,4 +192,14 @@ test('a government with nobody in it, and a citizen who no longer exists, are no
   w.government.mayorId = 'c_ghost';
   dailyPromises(w);
   assert.equal(keptShare(w, 'c_ghost'), 0.5);
+});
+
+test('a platform reads back in words, and nonsense reads as the middle of the road', () => {
+  assert.equal(platformInWords({ tax: 0.1, dividend: 0.1, minWage: 0.9, strictness: 0.9 }),
+    'a light tax, a lean dividend, a high wage floor and a strict law');
+  assert.equal(platformInWords({ tax: 0.5, dividend: 0.5, minWage: 0.5, strictness: 0.5 }),
+    'the tax the city has, the dividend the city has, the wage floor the city has and the law as it stands');
+  assert.equal(platformInWords(null), platformInWords({ tax: 0.5, dividend: 0.5, minWage: 0.5, strictness: 0.5 }));
+  assert.equal(platformInWords({ tax: Number.NaN, dividend: 4, minWage: -2, strictness: 0.5 }),
+    'the tax the city has, a generous dividend, a low wage floor and the law as it stands');
 });

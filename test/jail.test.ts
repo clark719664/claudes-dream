@@ -196,3 +196,60 @@ test('a heavier record climbs to the cells from a lesser offence, and money is c
   assert.ok(isJailed(d));
   assert.equal(totalMoney(w), before);
 });
+
+test('a second term lengthens the stay, a nonsense term is still a day, and the overflow goes to the Undercroft', () => {
+  const w = makeWorld();
+  w.day = 5;
+
+  // Two sentences in one sitting: the later release date is the one that holds.
+  const twice = makeCitizen(w, { name: 'Twice' });
+  jailCitizen(w, twice.id, 4, 'k_201');
+  jailCitizen(w, twice.id, 2, 'k_202');
+  assert.equal(twice.jailedUntilDay, w.day + 4, 'a lighter second term never shortens the first');
+  jailCitizen(w, twice.id, 5, 'k_203');
+  assert.equal(twice.jailedUntilDay, w.day + 5, 'a heavier one does lengthen it');
+
+  // Nothing the Court can hand down puts somebody in for less than a day or
+  // for longer than the cells are meant to hold anybody.
+  const odd = makeCitizen(w, { name: 'Odd' });
+  jailCitizen(w, odd.id, 0, 'k_204');
+  assert.equal(daysLeft(w, odd), 1);
+  const long = makeCitizen(w, { name: 'Long' });
+  jailCitizen(w, long.id, 99, 'k_205');
+  assert.equal(daysLeft(w, long), JAIL_MAX_DAYS);
+
+  // The Watch House fills, and the Cells annex takes the rest once it is open.
+  const w2 = makeWorld();
+  w2.jailCells = 2;
+  w2.openDistricts = [...w2.openDistricts, 'undercroft'];
+  const cells: Citizen[] = [];
+  for (let i = 0; i < 4; i++) {
+    const c = makeCitizen(w2, { name: `Cell${i}`, district: 'nightglass' });
+    jailCitizen(w2, c.id, 3, `k_${300 + i}`);
+    cells.push(c);
+  }
+  assert.deepEqual(cells.slice(0, 3).map((c) => c.district), ['commons', 'commons', 'commons']);
+  assert.equal(cells[3].district, 'undercroft', 'the Watch House was full, so the annex took them');
+  assert.ok(overcrowded(w2), 'an annex is not more cells: the crowding is still a crisis');
+
+  // And the crisis is answered by release, not by more cells appearing.
+  dailyJail(w2);
+  assert.equal(jailedCitizens(w2).length, 2);
+});
+
+test('a world saved before the cells were built still counts them', () => {
+  const w = makeWorld();
+  // An old save, or a hand-made world: the default stands rather than crashing.
+  (w as unknown as { jailCells: unknown }).jailCells = undefined;
+  assert.equal(jailCells(w), JAIL_CELLS);
+  (w as unknown as { jailCells: unknown }).jailCells = Number.NaN;
+  assert.equal(jailCells(w), JAIL_CELLS);
+  w.jailCells = 0;
+  assert.equal(jailCells(w), 0, 'a city may decide it has no cells at all');
+  const c = makeCitizen(w, { name: 'Nobody' });
+  jailCitizen(w, c.id, 2, 'k_400');
+  assert.ok(overcrowded(w));
+  dailyJail(w);
+  assert.equal(isJailed(c), false, 'with no cells to hold anybody, nobody is held');
+  assert.deepEqual(jailRoster(w), []);
+});

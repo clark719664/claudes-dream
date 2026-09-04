@@ -11,8 +11,9 @@ import { PETITION_SHARE, REFERENDUM_WEEKDAY } from '../src/data/metropolis.ts';
 import { makeCitizen, makeWorld } from './helpers.ts';
 import { tableProposal } from '../src/government/council.ts';
 import {
-  dailyReferendums, holdReferendum, isVoter, nextReferendumDay, openReferendum, pendingReferendum,
-  referendumFor, referendumObservation, signPetition, signaturesNeeded, voteReferendum,
+  dailyReferendums, holdReferendum, isVoter, liveSignatures, nextReferendumDay, openReferendum, pendingReferendum,
+  petitionStanding, petitionsObservation, referendumFor, referendumObservation, referendumToday,
+  signPetition, signaturesNeeded, voteReferendum,
 } from '../src/politics/referendums.ts';
 
 /** A city of `n` citizens who make up their own minds (so nothing votes for them). */
@@ -264,4 +265,68 @@ test('a world with no referendums, no proposals and no citizens is not an error'
   assert.equal(pendingReferendum(w), null);
   assert.equal(referendumObservation(w, makeCitizen(w)), null);
   assert.equal(voteReferendum(w, 'c_nobody', 'd_1', true).ok, false);
+});
+
+test('the names of citizens the city has lost do not carry a petition', () => {
+  const w = makeWorld();
+  const people = citizens(w, 10);
+  const p = petition(w, people[0].id);
+  assert.equal(signaturesNeeded(w), 2);
+  signAll(w, people.slice(0, 2), p);
+  assert.equal(liveSignatures(w, p).length, 2);
+  assert.equal(petitionStanding(w, p.id, people[0].id)?.crossed, true);
+
+  people[0].standing = 'exiled';                                  // through the Gate
+  w.order.splice(w.order.indexOf(people[1].id), 1);               // through the Threshold
+  assert.equal(liveSignatures(w, p).length, 0, 'their names stay on the paper and out of the count');
+  assert.deepEqual((p as typeof p & { signatures?: string[] }).signatures, [people[0].id, people[1].id],
+    'the record of who signed is not rewritten');
+
+  dailyReferendums(w);
+  assert.equal(pendingReferendum(w), null, 'a petition nobody in the city is behind goes nowhere');
+
+  signAll(w, people.slice(2, 4), p);
+  dailyReferendums(w);
+  assert.ok(pendingReferendum(w), 'and two citizens who are still here put it to the vote');
+});
+
+test('what a citizen sees of the petitions before the city', () => {
+  const w = makeWorld();
+  const people = citizens(w, 10);
+  assert.deepEqual(petitionsObservation(w, people[0]), []);
+  const small = petition(w, people[0].id, 0.2);
+  const big = petition(w, people[1].id, 0.4);
+  signAll(w, people.slice(0, 3), big);
+  signPetition(w, people[4].id, small.id);
+
+  const seen = petitionsObservation(w, people[0]);
+  assert.equal(seen.length, 2);
+  assert.equal(seen[0].id, big.id, 'the best-supported comes first');
+  assert.equal(seen[0].signatures, 3);
+  assert.equal(seen[0].needed, signaturesNeeded(w));
+  assert.equal(seen[0].proposer, 'Voter1');
+  assert.equal(seen[0].youSigned, true);
+  assert.equal(seen[1].youSigned, false, 'a petition this citizen did not sign says so');
+  assert.equal(petitionStanding(w, 'p_nothing'), null);
+
+  dailyReferendums(w);
+  const asked = petitionsObservation(w, people[0]).map((row) => row.id);
+  assert.equal(asked.includes(big.id), false, 'a petition already before the city is no longer signed');
+  assert.equal(asked.includes(small.id), true);
+});
+
+test('the poll the city goes to today is the one that closes today', () => {
+  const w = makeWorld();
+  const people = citizens(w, 5);
+  const p = petition(w, people[0].id);
+  signAll(w, people.slice(0, 1), p);
+  dailyReferendums(w);
+  const r = pendingReferendum(w);
+  assert.ok(r);
+  assert.equal(referendumToday(w), null, 'not today');
+  w.day = r.day;
+  assert.equal(referendumToday(w)?.id, r.id);
+  holdReferendum(w);
+  assert.notEqual(r.result, null);
+  assert.equal(referendumToday(w), null, 'and an answered question is not put twice');
 });

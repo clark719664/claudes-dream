@@ -213,3 +213,32 @@ test('an advocate who cannot be found leaves the case as it was, and the trial s
   const settled = makeCitizen(w, { wallet: 100 });
   assert.equal(hireAdvocate(w, settled.id, d.id).ok, false, 'no charge, nobody to answer');
 });
+
+test('somebody the Watch is holding, or has in the cells, speaks for nobody', () => {
+  const w = courtWorld();
+  const d = makeCitizen(w, { name: 'Accused', wallet: 500 });
+  charge(w, d.id, 'L04');   // a light charge: no Public Defender is assigned to it
+
+  const held = addSpeaker(w, 70);
+  held.detainedUntilTick = w.tick + 4;
+  assert.equal(mayAdvocate(w, held), false, 'a citizen the Watch is holding cannot stand up in the Courthouse');
+  const refused = hireAdvocate(w, d.id, held.id);
+  assert.equal(refused.ok, false);
+  assert.equal(d.wallet, 500, 'a refused retainer costs nothing');
+
+  const jailed = addSpeaker(w, 70);
+  jailed.jailedUntilDay = w.day + 3;
+  assert.equal(mayAdvocate(w, jailed), false);
+  assert.equal(hireAdvocate(w, d.id, jailed.id).ok, false);
+
+  // A Public Defender in the cells is off the Courthouse roll, so a grave
+  // charge finds nobody rather than being defended by a prisoner.
+  const w2 = courtWorld();
+  const defender = makeDefender(w2, 60);
+  defender.detainedUntilTick = w2.tick + 4;
+  assert.deepEqual(publicDefenders(w2), []);
+  assert.equal(isPublicDefender(w2, defender), false);
+  const grave = charge(w2, makeCitizen(w2, { name: 'Grave' }).id, 'L08');
+  assignDefender(w2, grave);
+  assert.equal(grave.advocateId, null, 'the city does not assign a defender it is holding');
+});

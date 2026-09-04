@@ -50,6 +50,19 @@ function signaturesOf(p: Proposal): CitizenId[] {
   return q.signatures;
 }
 
+/**
+ * The names that still count: a petition is the city asking for something, so
+ * a signature from somebody the Gate or the Threshold has since taken away is
+ * kept in the record and left out of the count. The list itself is never
+ * rewritten — what a citizen signed, they signed.
+ */
+export function liveSignatures(world: World, p: Proposal): CitizenId[] {
+  return signaturesOf(p).filter((id) => {
+    const c = world.citizens[id];
+    return Boolean(c && isPresent(world, c));
+  });
+}
+
 function voteKey(referendumId: string, cId: CitizenId): string { return `ref:${referendumId}:${cId}`; }
 
 function isJailed(world: World, c: Citizen): boolean {
@@ -76,6 +89,21 @@ export function signaturesNeeded(world: World): number {
   return Math.max(1, Math.ceil(PETITION_SHARE * voters(world).length));
 }
 
+/** Where a petition stands: the names still in the city, and what it needs. */
+export function petitionStanding(
+  world: World, proposalId: ProposalId, cId?: CitizenId,
+): { signatures: number; needed: number; youSigned: boolean; crossed: boolean } | null {
+  const p = world.government.proposals.find((x) => x.id === proposalId);
+  if (!p || !p.petition) return null;
+  const signatures = liveSignatures(world, p).length;
+  const needed = signaturesNeeded(world);
+  return {
+    signatures, needed,
+    youSigned: cId !== undefined && signaturesOf(p).includes(cId),
+    crossed: signatures >= needed,
+  };
+}
+
 /** The referendum already called on a petition, if there is one. */
 export function referendumFor(world: World, proposalId: ProposalId): Referendum | null {
   return referendumList(world).find((r) => r.petitionId === proposalId) ?? null;
@@ -84,6 +112,11 @@ export function referendumFor(world: World, proposalId: ProposalId): Referendum 
 /** The question waiting to be put, if any. */
 export function pendingReferendum(world: World): Referendum | null {
   return referendumList(world).find((r) => r.result === null && r.day >= world.day) ?? null;
+}
+
+/** The poll the city goes to today, if it goes to one. */
+export function referendumToday(world: World): Referendum | null {
+  return referendumList(world).find((r) => r.result === null && r.day === world.day) ?? null;
 }
 
 /** Whether a petition can still be signed: before the Council decides it, or shortly after it says no. */
@@ -113,16 +146,17 @@ export function signPetition(world: World, cId: CitizenId, proposalId: ProposalI
   const names = signaturesOf(p);
   if (names.includes(cId)) return fail('You have already signed that petition.');
   names.push(cId);
+  const standing = liveSignatures(world, p).length;
   const needed = signaturesNeeded(world);
-  const crossed = names.length >= needed;
-  emit(world, 'referendum', `${c.name} signed ${world.citizens[p.proposerId]?.name ?? p.proposerId}'s petition (${names.length}/${needed}): ${p.summary}`,
-    [cId], crossed ? 0.6 : 0.2, { proposalId: p.id, signatures: names.length, needed });
-  remember(world, cId, 'civic', `You signed petition ${p.id} (${p.summary}) — ${names.length} of the ${needed} names it needs.`);
+  const crossed = standing >= needed;
+  emit(world, 'referendum', `${c.name} signed ${world.citizens[p.proposerId]?.name ?? p.proposerId}'s petition (${standing}/${needed}): ${p.summary}`,
+    [cId], crossed ? 0.6 : 0.2, { proposalId: p.id, signatures: standing, needed });
+  remember(world, cId, 'civic', `You signed petition ${p.id} (${p.summary}) — ${standing} of the ${needed} names it needs.`);
   return {
     ok: true,
     message: crossed
-      ? `Your name is the ${names.length}th on petition ${p.id}: it has the names it needs and goes to the city.`
-      : `You signed petition ${p.id} (${names.length}/${needed} names).`,
+      ? `Your name is the ${standing}th on petition ${p.id}: it has the names it needs and goes to the city.`
+      : `You signed petition ${p.id} (${standing}/${needed} names).`,
   };
 }
 
@@ -185,7 +219,7 @@ export function voteReferendum(world: World, cId: CitizenId, referendumId: strin
  * abstain, and their silence is counted as nothing at all.
  */
 export function holdReferendum(world: World): void {
-  const r = referendumList(world).find((x) => x.result === null && x.day === world.day);
+  const r = referendumToday(world);
   if (r) closePoll(world, r);
 }
 
@@ -241,8 +275,9 @@ export function dailyReferendums(world: World): void {
     const needed = signaturesNeeded(world);
     const ready = world.government.proposals
       .filter((p) => p.petition && p.status !== 'passed' && !referendumFor(world, p.id)
-        && signable(world, p) && signaturesOf(p).length >= needed)
-      .sort((a, b) => signaturesOf(b).length - signaturesOf(a).length || a.tabledDay - b.tabledDay || a.id.localeCompare(b.id));
+        && signable(world, p) && liveSignatures(world, p).length >= needed)
+      .sort((a, b) => liveSignatures(world, b).length - liveSignatures(world, a).length
+        || a.tabledDay - b.tabledDay || a.id.localeCompare(b.id));
     if (ready.length > 0) openReferendum(world, ready[0]);
   }
   const keep = list.filter((r) => r.result === null || world.day - r.day < world.config.cycleDays);
@@ -255,6 +290,36 @@ export function dailyReferendums(world: World): void {
     }
     (world as { referendums?: Referendum[] }).referendums = keep;
   }
+}
+
+/** An open petition as a citizen sees it: whose it is, how far it has got, and whether they signed. */
+export interface ObservedPetition {
+  id: ProposalId;
+  summary: string;
+  proposer: string;
+  signatures: number;
+  needed: number;
+  youSigned: boolean;
+}
+
+/**
+ * Every petition still open to signature, best-supported first. A citizen
+ * deciding whether to put their name to one can see how many names it has and
+ * how many the city asks for; what they do about it is their own business.
+ */
+export function petitionsObservation(world: World, c: Citizen): ObservedPetition[] {
+  const needed = signaturesNeeded(world);
+  return world.government.proposals
+    .filter((p) => p.petition && signable(world, p) && !referendumFor(world, p.id))
+    .map((p) => ({
+      id: p.id,
+      summary: p.summary,
+      proposer: world.citizens[p.proposerId]?.name ?? p.proposerId,
+      signatures: liveSignatures(world, p).length,
+      needed,
+      youSigned: Boolean(c) && signaturesOf(p).includes(c.id),
+    }))
+    .sort((a, b) => b.signatures - a.signatures || a.id.localeCompare(b.id));
 }
 
 /** The question before the city, as this citizen sees it. */

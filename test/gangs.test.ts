@@ -328,3 +328,38 @@ test('a racket needs a real business in your own district, and a gang behind you
   assert.ok(racketDemand(w, 'b_nope') === 0);
   assert.ok(racketDemand(w, ownBiz.id) >= RACKET_MIN);
 });
+
+test('a refusal may go to the Watch, and what is reported is the act already done, not a new one', () => {
+  const w = makeWorld();
+  w.day = 4; w.tick = 4 * 24;
+  const { boss } = gangFounder(w);
+  foundGang(w, boss.id, 'The Ash Hands');
+
+  // Something the boss got away with, and a neighbour close enough to be asked.
+  boss.recentOffences.push({ tick: w.tick - 2, law: 'L04', detected: false, victimId: null, amount: 30 });
+  const committed = boss.stats.offencesCommitted;
+  const wary = addCrook(w, 'Wary', 0.45);
+  wary.bonds[boss.id] = 45; boss.bonds[wary.id] = 45;
+
+  let refusals = 0;
+  for (let i = 0; i < 12 && !wary.gangId; i++) {
+    const r = recruit(w, boss.id, wary.id);
+    if (r.ok && /refused/.test(r.message)) refusals++;
+  }
+  assert.ok(refusals > 0, 'somebody the city half-trusts says no at least once');
+
+  // The one theft stays one theft: a report is not a second offence.
+  assert.equal(boss.recentOffences.filter((o) => o.law === 'L04').length, 1);
+  assert.equal(boss.stats.offencesCommitted, committed, 'being reported is not committing anything');
+
+  const reported = boss.recentOffences[0].detected;
+  const report = Object.values(w.reports).find((r) => r.suspectId === boss.id && r.law === 'L04');
+  if (reported) {
+    assert.ok(report, 'what the refuser knew reached the Watch as a report');
+    assert.ok(report.evidence >= 0.6, 'a witness who was there is worth more than a rumour');
+    assert.ok(wary.memory.some((m) => m.text.includes('told the Watch')));
+    assert.equal(boss.stats.offencesDetected, 1);
+  } else {
+    assert.equal(report, undefined);
+  }
+});

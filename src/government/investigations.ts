@@ -28,7 +28,7 @@ import { LAWS } from '../data/laws.ts';
 import { chance, rand } from '../util/rng.ts';
 import { nextId } from '../util/ids.ts';
 import { emit, remember } from '../sim/events.ts';
-import { isPresent, nameOf } from './cases.ts';
+import { isDetained, isPresent, nameOf } from './cases.ts';
 import { isJailed } from './jail.ts';
 import { openReport } from './reports.ts';
 
@@ -67,16 +67,27 @@ function severityOf(world: World, law: LawCode): number {
   return world.government.lawSeverity[law] ?? LAWS[law]?.severity ?? 1;
 }
 
-/** Detectives able to work today: the post, good standing, here and not in the cells. */
+/**
+ * Still a detective at all: the Watch House post is theirs and they are still
+ * in Reverie. Being *off duty* for a day — held, jailed, suspended — is a
+ * different thing from being off the force, and the two are not confused: an
+ * officer who is back tomorrow keeps their files.
+ */
+export function stillADetective(world: World, cId: CitizenId): boolean {
+  const c = world.citizens[cId];
+  if (!c || !c.jobId || !isPresent(world, c)) return false;
+  const job = world.jobs[c.jobId];
+  return !!job && job.role === 'detective' && job.holderId === c.id;
+}
+
+/** Detectives able to work today: the post, good standing, here, free and not in the cells. */
 export function detectivesOnDuty(world: World): Citizen[] {
   const out: Citizen[] = [];
   for (const id of world.order) {
     const c = world.citizens[id];
-    if (!c || !c.jobId) continue;
-    const job = world.jobs[c.jobId];
-    if (!job || job.role !== 'detective' || job.holderId !== c.id) continue;
+    if (!c || !stillADetective(world, id)) continue;
     if (c.standing !== 'good' && c.standing !== 'probation') continue;
-    if (isJailed(c) || !isPresent(world, c)) continue;
+    if (isJailed(c) || isDetained(world, c)) continue;
     out.push(c);
   }
   return out;
@@ -249,10 +260,13 @@ function pruneInvestigations(world: World): void {
  */
 export function dailyInvestigations(world: World): void {
   const duty = detectivesOnDuty(world);
-  const onDuty = new Set(duty.map((c) => c.id));
 
+  // A file belongs to the detective who opened it. When they leave the force
+  // or leave Reverie it is closed — nobody inherits somebody else's hunch —
+  // but a detective who is merely off duty today keeps theirs, and the file
+  // simply makes no progress until they are back (or goes cold below).
   for (const v of openInvestigations(world)) {
-    if (onDuty.has(v.detectiveId)) continue;
+    if (stillADetective(world, v.detectiveId)) continue;
     closeInvestigation(world, v, `The investigation into ${nameOf(world, v.suspectId)} was closed: no detective is on it.`, 0.2);
   }
 

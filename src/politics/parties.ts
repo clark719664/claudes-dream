@@ -28,7 +28,7 @@ import { transfer } from '../economy/treasury.ts';
 import { isPresent } from '../citizens/citizen.ts';
 import { tableProposal } from '../government/council.ts';
 import { isElectionDay, nominationsOpen } from '../government/elections.ts';
-import { PLATFORM_FIELDS, PROMISE_WORDS, positionOf, settingFor } from './promises.ts';
+import { PLATFORM_FIELDS, PROMISE_WORDS, platformInWords, positionOf, settingFor } from './promises.ts';
 
 /** What the Registry charges to enter a party in the roll. */
 export const PARTY_FOUNDING_FEE = 100;
@@ -55,9 +55,11 @@ function allParties(world: World): Party[] {
   );
 }
 
-function isHeld(world: World, c: Citizen): boolean {
-  const jailed = c.jailedUntilDay !== null && c.jailedUntilDay !== undefined && c.jailedUntilDay > world.day;
-  return jailed || (c.detainedUntilTick !== null && c.detainedUntilTick > world.tick);
+/** Where a citizen is being held, or null if they are at liberty. */
+function heldIn(world: World, c: Citizen): string | null {
+  if (c.jailedUntilDay !== null && c.jailedUntilDay !== undefined && c.jailedUntilDay > world.day) return 'the cells';
+  if (c.detainedUntilTick !== null && c.detainedUntilTick > world.tick) return 'the Watch House';
+  return null;
 }
 
 /** The party a citizen belongs to, or null. A stale id (the party dissolved) is no party. */
@@ -76,6 +78,16 @@ function sanitizePlatform(platform: Platform | undefined | null): Platform {
   return { tax: v(p.tax), dividend: v(p.dividend), minWage: v(p.minWage), strictness: v(p.strictness) };
 }
 
+/** What a party stands for, in a sentence the Chronicle can print. */
+export function manifestoOf(party: Party): string {
+  return `The manifesto of ${party.name}: ${platformInWords(sanitizePlatform(party.platform))}.`;
+}
+
+/** Every party's manifesto, biggest first: what the press prints on the eve of an election. */
+export function manifestos(world: World): { id: string; name: string; manifesto: string }[] {
+  return allParties(world).map((p) => ({ id: p.id, name: p.name, manifesto: manifestoOf(p) }));
+}
+
 // ---------------------------------------------------------------------------
 // Founding, joining and leaving
 // ---------------------------------------------------------------------------
@@ -86,7 +98,8 @@ export function foundParty(world: World, cId: CitizenId, name: string, platform:
   if (!c || !isPresent(world, c)) return fail('Unknown or absent citizen.');
   if (c.lifeStage === 'child') return fail('You must be grown to found a party.');
   if (c.standing !== 'good') return fail(`You cannot found a party while ${c.standing}.`);
-  if (isHeld(world, c)) return fail('You cannot found a party from the Watch House.');
+  const held = heldIn(world, c);
+  if (held) return fail(`You cannot found a party from ${held}.`);
   const mine = partyOf(world, cId);
   if (mine) return fail(`You already belong to ${mine.name}; leave it before founding another.`);
   const clean = (name ?? '').trim().replace(/\s+/g, ' ').slice(0, MAX_PARTY_NAME);
@@ -106,9 +119,11 @@ export function foundParty(world: World, cId: CitizenId, name: string, platform:
   book[party.id] = party;
   c.partyId = party.id;
   partySeats(world);
-  emit(world, 'party', `${c.name} founded ${party.name}.`, [cId], 0.6,
-    { partyId: party.id, name: party.name, platform: party.platform });
-  remember(world, cId, 'civic', `You founded ${party.name} and paid the ${PARTY_FOUNDING_FEE} ℓ registration.`);
+  const stands = platformInWords(party.platform);
+  emit(world, 'party', `${c.name} founded ${party.name}, standing for ${stands}.`, [cId], 0.6,
+    { partyId: party.id, name: party.name, platform: party.platform, manifesto: manifestoOf(party) });
+  remember(world, cId, 'civic',
+    `You founded ${party.name} and paid the ${PARTY_FOUNDING_FEE} ℓ registration; it stands for ${stands}.`);
   return { ok: true, message: `${party.name} is on the Registry's roll; you lead it.` };
 }
 
@@ -117,7 +132,8 @@ export function joinParty(world: World, cId: CitizenId, partyId: string): Action
   if (!c || !isPresent(world, c)) return fail('Unknown or absent citizen.');
   if (c.lifeStage === 'child') return fail('You must be grown to join a party.');
   if (c.standing === 'suspended' || c.standing === 'exiled') return fail(`You cannot join a party while ${c.standing}.`);
-  if (isHeld(world, c)) return fail('You cannot join a party from the Watch House.');
+  const held = heldIn(world, c);
+  if (held) return fail(`You cannot join a party from ${held}.`);
   const mine = partyOf(world, cId);
   if (mine) return fail(mine.id === partyId ? `You are already a member of ${mine.name}.` : `You already belong to ${mine.name}.`);
   const party = partyBook(world)[partyId];
@@ -127,7 +143,7 @@ export function joinParty(world: World, cId: CitizenId, partyId: string): Action
   partySeats(world);
   emit(world, 'party', `${c.name} joined ${party.name} (${party.members.length} members).`, [cId], 0.3,
     { partyId: party.id, members: party.members.length });
-  remember(world, cId, 'civic', `You joined ${party.name}.`);
+  remember(world, cId, 'civic', `You joined ${party.name}, which stands for ${platformInWords(party.platform)}.`);
   return { ok: true, message: `You are a member of ${party.name}.` };
 }
 
@@ -151,9 +167,14 @@ export function leaveParty(world: World, cId: CitizenId): ActionResult {
   return { ok: true, message: `You have left ${party.name}.` };
 }
 
-/** The oldest remaining membership takes the party over. */
+/**
+ * The oldest remaining membership takes the party over: the first member still
+ * in the city, and failing that the first member on the roll — a party is
+ * never left in the name of somebody who has walked out of it.
+ */
 function handOver(world: World, party: Party, reason: string): void {
-  const next = party.members.map((id) => world.citizens[id]).find((m) => m && isPresent(world, m));
+  const members = party.members.map((id) => world.citizens[id]).filter((m): m is Citizen => Boolean(m));
+  const next = members.find((m) => isPresent(world, m)) ?? members[0];
   if (!next) return;
   party.leaderId = next.id;
   emit(world, 'party', `${next.name} leads ${party.name}: ${reason}.`, [next.id], 0.4, { partyId: party.id, leader: next.id });
@@ -187,6 +208,8 @@ export function endorse(world: World, cId: CitizenId, candidateId: CitizenId): A
   if (!party) return fail('You do not belong to a party.');
   if (party.leaderId !== cId) return fail(`Only ${world.citizens[party.leaderId]?.name ?? 'the leader'} endorses for ${party.name}.`);
   if (c.standing === 'suspended' || c.standing === 'exiled') return fail(`You cannot endorse while ${c.standing}.`);
+  const held = heldIn(world, c);
+  if (held) return fail(`You cannot endorse a candidate from ${held}.`);
   const e = world.government.election;
   if (!nominationsOpen(world) && !isElectionDay(world)) return fail('There is no election to endorse in.');
   const candidate = world.citizens[candidateId];
@@ -199,7 +222,8 @@ export function endorse(world: World, cId: CitizenId, candidateId: CitizenId): A
   emit(world, 'party', `${party.name} endorsed ${candidate.name} for the Council.`, [cId, candidateId], 0.5,
     { partyId: party.id, candidate: candidateId });
   remember(world, cId, 'civic', `You endorsed ${candidate.name} for the Council in ${party.name}'s name.`);
-  remember(world, candidateId, 'civic', `${party.name} endorsed your candidacy.`);
+  remember(world, candidateId, 'civic',
+    `${party.name} endorsed your candidacy; it stands for ${platformInWords(party.platform)}.`);
   return { ok: true, message: `${party.name} stands behind ${candidate.name}.` };
 }
 
@@ -344,6 +368,11 @@ function chairFor(world: World, party: Party): Citizen | null {
  * Half-way through a cycle a hung Council's chair passes to the other half of
  * the coalition — once a cycle, and only while the Council is still hung: a
  * defection that gives somebody a majority ends the arrangement of itself.
+ *
+ * The chair goes to the larger of the two, unless the Mayor already sits for
+ * it: a Mayor who belongs to neither party (or to some third one) is not part
+ * of the arrangement, and the coalition takes the chair beginning with the
+ * party the city gave the most seats.
  */
 function coalitionSwap(world: World): void {
   const g = world.government;
@@ -354,7 +383,7 @@ function coalitionSwap(world: World): void {
   if (!pair) return;
   const [first, second] = pair;
   const held = g.mayorId ? partyOf(world, g.mayorId) : null;
-  const to = held && held.id === second.id ? first : second;
+  const to = held && held.id === first.id ? second : first;
   const next = chairFor(world, to);
   if (!next || next.id === g.mayorId) return;
   world.counters[key] = world.day;

@@ -21,7 +21,7 @@ import { JURY_SEVERITY, MAX_ADVOCACY } from '../data/metropolis.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
 import { adjustReputation } from '../citizens/citizen.ts';
-import { isPresent, nameOf } from './cases.ts';
+import { isDetained, isPresent, nameOf } from './cases.ts';
 import { isJailed } from './jail.ts';
 
 /** Rhetoric below which the Court will not hear you speak for somebody else. */
@@ -44,7 +44,7 @@ export function publicDefenders(world: World): Citizen[] {
     const job = world.jobs[c.jobId];
     if (!job || job.role !== 'advocate' || job.holderId !== c.id) continue;
     if (c.standing !== 'good' && c.standing !== 'probation') continue;
-    if (isJailed(c) || !isPresent(world, c)) continue;
+    if (isJailed(c) || isDetained(world, c) || !isPresent(world, c)) continue;
     out.push(c);
   }
   return out;
@@ -69,7 +69,9 @@ export function mayAdvocate(world: World, c: Citizen | null | undefined, k?: Cas
   if (!c || !isPresent(world, c)) return false;
   if (c.lifeStage === 'child') return false;
   if (c.standing !== 'good' && c.standing !== 'probation') return false;
-  if (isJailed(c)) return false;
+  // Somebody the Watch is holding cannot stand up in the Courthouse for
+  // anybody else, and neither can somebody in the cells.
+  if (isJailed(c) || isDetained(world, c)) return false;
   if (c.skills.rhetoric < ADVOCATE_MIN_RHETORIC) return false;
   if (!k) return true;
   if (c.id === k.defendantId || c.id === k.victimId || c.id === k.filedBy) return false;

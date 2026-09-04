@@ -214,3 +214,15 @@ test('the office a citizen holds is read by the city, not by them', () => {
   assert.equal(approvalOfOffice(w, plain.id), NEUTRAL);
   assert.equal(approvalOfOffice(w, 'c_nobody'), NEUTRAL);
 });
+
+test('a purse that is not a number is no reading at all', () => {
+  const w = makeWorld();
+  government(w);
+  const broken = makeCitizen(w, { wallet: Number.NaN });
+  w.counters[`wallet3:${broken.id}`] = 10;
+  w.counters[`wallet3Day:${broken.id}`] = w.day - 1;
+  assert.equal(approvalOf(w, broken, 'mayor'), NEUTRAL, 'a nonsense situation reads as no opinion, never as NaN');
+  dailyApproval(w);
+  assert.ok(Number.isFinite(cityApproval(w).mayor));
+  assert.ok(Number.isFinite(broken.approval.mayor));
+});

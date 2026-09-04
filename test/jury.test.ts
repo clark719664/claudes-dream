@@ -201,3 +201,38 @@ test('a juror who leaves the city before the tally is dropped from the count', (
   assert.equal(juryTally(w, k).guilty, JURY_SIZE - 1);
   assert.equal(castJuryVote(w, gone.id, k.id, false).ok, false);
 });
+
+test('a juror taken into the cells or held by the Watch before the tally is not in the room', () => {
+  const { w } = juryWorld(12);
+  const d = makeCitizen(w, { name: 'Accused', familyName: 'Alone', brain: 'llm' });
+  const k = charge(w, d.id, 'L08');
+  openCourtSession(w);
+  const jury = juryOf(k);
+  assert.equal(jury.length, JURY_SIZE);
+
+  // Every juror votes, and then two of them are taken out of circulation.
+  for (const id of jury) assert.equal(castJuryVote(w, id, k.id, true).ok, true);
+  assert.equal(juryTally(w, k).total, JURY_SIZE);
+
+  const jailed = w.citizens[jury[0]];
+  jailed.jailedUntilDay = w.day + 2;
+  const held = w.citizens[jury[1]];
+  held.detainedUntilTick = w.tick + 6;
+
+  const seated = seatedJurors(w, k);
+  assert.ok(!seated.includes(jailed.id), 'a juror in the cells is not sitting in the box');
+  assert.ok(!seated.includes(held.id), 'a juror the Watch is holding is not sitting in the box');
+  const tally = juryTally(w, k);
+  assert.equal(tally.total, JURY_SIZE - 2, 'the majority is of the people actually there');
+  assert.equal(tally.guilty, JURY_SIZE - 2);
+
+  // And nobody votes on their behalf at the tally either.
+  const suspended = w.citizens[jury[2]];
+  suspended.standing = 'suspended';
+  suspended.suspendedUntilDay = w.day + 5;
+  suspended.brain = 'reflex';
+  delete k.juryVotes?.[suspended.id];
+  fillJuryVotes(w);
+  assert.equal(k.juryVotes?.[suspended.id], undefined, 'a suspended juror is not voted for');
+  assert.equal(juryTally(w, k).total, JURY_SIZE - 3);
+});

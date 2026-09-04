@@ -171,11 +171,16 @@ export function castJuryVote(world: World, jurorId: CitizenId, caseId: CaseId, g
   return { ok: true, message: `${changed ? 'You changed your vote to' : 'You voted'} ${verdict} in case ${k.id}.` };
 }
 
-/** Jurors still able to have their vote counted: here, and not exiled since the draw. */
+/**
+ * Jurors still able to have their vote counted. A juror who has left the city,
+ * been suspended, been taken in by the Watch or put in the cells between the
+ * draw and the count is not in the room, so they are neither counted for nor
+ * voted for: the majority is of the people who are actually sitting there.
+ */
 export function seatedJurors(world: World, k: Case): CitizenId[] {
   return juryOf(k).filter((id) => {
     const c = world.citizens[id];
-    return !!c && isPresent(world, c);
+    return !!c && isPresent(world, c) && canSit(world, c) && !isJailed(c);
   });
 }
 

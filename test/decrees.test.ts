@@ -234,3 +234,50 @@ test('a world with no decrees, no disasters and no citizens is not an error', ()
   assert.equal(decreeInForce(w, 'curfew', 'commons'), null);
   assert.equal(mayDecree(w, makeCitizen(w)), false);
 });
+
+test('a curfew names a district the city has opened', () => {
+  const w = makeWorld();
+  const m = mayor(w);
+  const closed = decree(w, m.id, 'curfew', 'undercroft');
+  assert.equal(closed.ok, false, 'the tunnels are not open yet');
+  assert.match(closed.message, /not open/);
+  assert.equal(w.government.decreeUsedCycle, null, 'and a refusal spends nothing');
+  assert.equal(decree(w, m.id, 'curfew', 'nowhere' as never).ok, false);
+
+  w.openDistricts.push('undercroft');
+  const opened = decree(w, m.id, 'curfew', 'undercroft');
+  assert.equal(opened.ok, true, opened.message);
+  assert.equal(decreeInForce(w, 'curfew', 'undercroft')?.district, 'undercroft');
+});
+
+test('relief that names no sum gives what the Charter allows', () => {
+  const w = makeWorld();
+  w.treasury.balance = 10_000;
+  const m = mayor(w);
+  const poor = makeCitizen(w, { name: 'Wren', wallet: 0, homeTier: 0 });
+  const before = totalMoney(w);
+
+  assert.equal(decree(w, m.id, 'relief').ok, true);
+  assert.equal(poor.wallet, RELIEF_MAX, 'no sum named is the most the Charter allows, not a single lumen');
+  assert.equal(totalMoney(w), before);
+
+  const w2 = makeWorld();
+  w2.treasury.balance = 10_000;
+  const m2 = mayor(w2);
+  const poor2 = makeCitizen(w2, { name: 'Fen', wallet: 0, homeTier: 0 });
+  assert.equal(decree(w2, m2.id, 'relief', undefined, 0).ok, true);
+  assert.equal(poor2.wallet, RELIEF_MAX, 'and neither is a sum of nothing');
+  void m2;
+});
+
+test('a payment made does not lapse', () => {
+  const w = makeWorld();
+  w.treasury.balance = 1_000;
+  const m = mayor(w);
+  makeCitizen(w, { wallet: 0, homeTier: 0 });
+  assert.equal(decree(w, m.id, 'relief', undefined, 10).ok, true);
+  w.day += 2;
+  dailyDecrees(w);
+  assert.equal(w.events.filter((e) => e.kind === 'decree' && e.data?.lapsed === true).length, 0,
+    'relief is a payment, not a state of affairs');
+});

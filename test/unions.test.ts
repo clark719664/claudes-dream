@@ -307,3 +307,38 @@ test('the observation of a union says what it asks and whether it is out', () =>
   strike(w, workers[0].id);
   assert.equal(unionObservation(w, workers[0])?.striking, true);
 });
+
+test('only somebody at the work may call the trade out', () => {
+  const w = makeWorld();
+  const workers = trade(w, 3, 10);
+  foundUnion(w, workers[0].id, 'fabricator', 'The Hall');
+  const u = unionOf(w, workers[0].id) as NonNullable<ReturnType<typeof unionOf>>;
+  joinUnion(w, workers[1].id, u.id);
+  assert.equal(hasMajority(w, u), true);
+
+  workers[0].jailedUntilDay = w.day + 2;
+  assert.match(strike(w, workers[0].id).message, /cells/);
+  workers[0].jailedUntilDay = null;
+  workers[0].detainedUntilTick = w.tick + 2;
+  assert.match(strike(w, workers[0].id).message, /Watch House/);
+  workers[0].detainedUntilTick = null;
+  workers[0].standing = 'suspended';
+  workers[0].suspendedUntilDay = w.day + 3;
+  assert.match(strike(w, workers[0].id).message, /suspended/);
+  workers[0].standing = 'good';
+  workers[0].suspendedUntilDay = null;
+
+  const quitter = workers[1];
+  const post = quitter.jobId;
+  quitter.jobId = null;
+  const refused = strike(w, quitter.id);
+  assert.equal(refused.ok, false);
+  assert.match(refused.message, /doing the work/);
+  assert.equal(u.strikingUntilDay, null, 'and the trade is still at its benches');
+  assert.equal(isOnStrike(w, workers[2]), false);
+  quitter.jobId = post;
+
+  const called = strike(w, workers[0].id);
+  assert.equal(called.ok, true, called.message);
+  assert.equal(isOnStrike(w, workers[0]), true);
+});

@@ -133,7 +133,10 @@ export function decree(
   if (g.decreeUsedCycle === g.cycle) return fail('You have already issued this cycle\'s decree.');
   if (!DECREE_KINDS.includes(kind)) return fail('There is no such decree.');
 
-  const want = Number.isFinite(value) ? Math.max(0, Math.round(value as number)) : RELIEF_MAX;
+  // A decree that names no sum (or a nonsensical one) asks for as much as the
+  // Charter allows; the Treasury decides what it can actually bear.
+  const named = Number.isFinite(value) ? Math.round(value as number) : 0;
+  const want = named > 0 ? named : RELIEF_MAX;
   let untilDay = world.day;
   let where: DistrictId | null = null;
   let amount = 0;
@@ -145,6 +148,10 @@ export function decree(
       break;
     case 'curfew': {
       if (!district || !world.districts[district]) return fail('A curfew must name a district of the city.');
+      const open = (world as { openDistricts?: DistrictId[] }).openDistricts;
+      if (open && open.length > 0 && !open.includes(district)) {
+        return fail(`${world.districts[district].name} is not open to the city yet.`);
+      }
       where = district;
       untilDay = world.day + 1;
       text = `Mayor ${c.name} put ${world.districts[district].name} under curfew from ${CURFEW_HOURS[0]}:00 until day ${untilDay}.`;
@@ -228,10 +235,15 @@ export function decreesObservation(world: World): { kind: Decree['kind']; distri
 // The daily pass
 // ---------------------------------------------------------------------------
 
-/** Morning: a decree whose last day was yesterday has lapsed, and the city is told. */
+/**
+ * Morning: a decree whose last day was yesterday has lapsed, and the city is
+ * told. Relief is the exception — it is a payment made, not a state of
+ * affairs, and nothing about it lapses.
+ */
 export function dailyDecrees(world: World): void {
   const list = decreeList(world);
   for (const d of list) {
+    if (d.kind === 'relief') continue;
     if (d.untilDay !== world.day - 1) continue;
     const who = world.citizens[d.byId]?.name ?? 'The Mayor';
     const where = d.district ? ` in ${world.districts[d.district]?.name ?? d.district}` : '';

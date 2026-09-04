@@ -12,7 +12,8 @@ import { makeCitizen, makeWorld, totalMoney } from './helpers.ts';
 import {
   ENDORSEMENT_VISIBILITY, PARTY_FOUNDING_FEE, WHIP_STRENGTH,
   coalition, dailyParties, enactPlatform, endorse, endorsedBy, foundParty, halfCycleDay, joinParty, leaveParty,
-  majorityParty, partiesObservation, partyObservation, partyOf, partySeats, whipVote, whippedVote,
+  majorityParty, manifestoOf, manifestos, partiesObservation, partyObservation, partyOf, partySeats,
+  whipVote, whippedVote,
 } from '../src/politics/parties.ts';
 
 const LOW_TAX: Platform = { tax: 0.1, dividend: 0.2, minWage: 0.3, strictness: 0.6 };
@@ -328,6 +329,100 @@ test('a party of minds that think for themselves is never spoken for', () => {
 
   dailyParties(w);
   assert.equal(w.government.proposals.length, 0, 'they table their platform themselves, or not at all');
+});
+
+test('a citizen held anywhere founds, joins and endorses nothing', () => {
+  const w = makeWorld();
+  const leader = makeCitizen(w, { name: 'Ondine', wallet: 300 });
+  const candidate = makeCitizen(w, { name: 'Bram' });
+  foundParty(w, leader.id, 'The Makers', LOW_TAX);
+  w.government.election.nominationsOpenDay = w.day;
+  w.government.election.electionDay = w.day + 5;
+  w.government.election.candidates = [candidate.id];
+
+  leader.jailedUntilDay = w.day + 2;
+  const fromCells = endorse(w, leader.id, candidate.id);
+  assert.equal(fromCells.ok, false);
+  assert.match(fromCells.message, /cells/);
+  leader.jailedUntilDay = null;
+  leader.detainedUntilTick = w.tick + 3;
+  assert.match(endorse(w, leader.id, candidate.id).message, /Watch House/);
+  assert.equal(candidate.campaignVisibility, 0, 'a party held in the cells campaigns for nobody');
+
+  const held = makeCitizen(w, { wallet: 300, jailedUntilDay: w.day + 1 });
+  assert.match(foundParty(w, held.id, 'The Cells Party', LOW_TAX).message, /cells/);
+  assert.match(joinParty(w, held.id, leader.partyId as string).message, /cells/);
+  assert.equal(held.wallet, 300, 'and pays no fee for the refusal');
+
+  leader.detainedUntilTick = null;
+  const free = endorse(w, leader.id, candidate.id);
+  assert.equal(free.ok, true, free.message);
+  assert.equal(candidate.campaignVisibility, ENDORSEMENT_VISIBILITY);
+});
+
+test('a party is never left in the name of somebody who walked out of it', () => {
+  const w = makeWorld();
+  const leader = makeCitizen(w, { name: 'Ondine', wallet: 300 });
+  const other = makeCitizen(w, { name: 'Bram' });
+  foundParty(w, leader.id, 'The Makers', LOW_TAX);
+  const id = leader.partyId as string;
+  joinParty(w, other.id, id);
+  other.standing = 'exiled';
+
+  assert.equal(leaveParty(w, leader.id).ok, true);
+  const party = w.parties?.[id];
+  assert.ok(party, 'somebody is still on its roll, so it stands');
+  assert.equal(party.leaderId, other.id, 'the leader is one of its members, not the citizen who left');
+  assert.equal(party.members.includes(leader.id), false);
+
+  dailyParties(w);
+  assert.equal(w.parties?.[id], undefined, 'and the morning strikes off a party with nobody left in the city');
+});
+
+test('a hung Council whose Mayor belongs to neither party gives the chair to the largest', () => {
+  const w = makeWorld();
+  const independent = makeCitizen(w, { name: 'Fen' });
+  const bigLeader = makeCitizen(w, { name: 'Ondine', wallet: 300 });
+  const bigMember = makeCitizen(w, { name: 'Bram' });
+  const smallLeader = makeCitizen(w, { name: 'Sable', wallet: 300 });
+  foundParty(w, bigLeader.id, 'The Makers', LOW_TAX);
+  foundParty(w, smallLeader.id, 'The Commons', HIGH_TAX);
+  joinParty(w, bigMember.id, bigLeader.partyId as string);
+  seat(w, [independent, bigLeader, bigMember, smallLeader]);
+  partySeats(w);
+
+  assert.equal(majorityParty(w), null);
+  const pair = coalition(w);
+  assert.equal(pair?.[0].name, 'The Makers', 'the two seats come first');
+
+  w.day = halfCycleDay(w);
+  dailyParties(w);
+  assert.equal(w.government.mayorId, bigLeader.id, 'the chair passes to the larger half of the coalition');
+  assert.equal(independent.office, 'councillor', 'and the Mayor who stepped aside keeps their seat');
+  assert.equal(bigLeader.office, 'mayor');
+});
+
+test('a party publishes what it stands for, in words the city can read', () => {
+  const w = makeWorld();
+  const maker = makeCitizen(w, { name: 'Ondine', wallet: 300 });
+  const commoner = makeCitizen(w, { name: 'Sable', wallet: 300 });
+  foundParty(w, maker.id, 'The Makers', LOW_TAX);
+  foundParty(w, commoner.id, 'The Commons', HIGH_TAX);
+  const makers = partyOf(w, maker.id) as NonNullable<ReturnType<typeof partyOf>>;
+
+  assert.equal(manifestoOf(makers),
+    'The manifesto of The Makers: a light tax, a lean dividend, a low wage floor and the law as it stands.');
+  assert.match(manifestoOf(partyOf(w, commoner.id) as NonNullable<ReturnType<typeof partyOf>>),
+    /a heavy tax, a generous dividend, a high wage floor and the law as it stands/);
+  assert.ok(w.events.some((e) => e.kind === 'party' && e.text.includes('standing for a light tax')),
+    'the founding is printed with what the party stands for');
+  assert.equal(w.events.find((e) => e.data?.partyId === makers.id)?.data?.manifesto, manifestoOf(makers));
+  assert.ok(maker.memory.some((m) => m.text.includes('it stands for')));
+
+  const published = manifestos(w);
+  assert.equal(published.length, 2);
+  assert.deepEqual(published.map((row) => row.name).sort(), ['The Commons', 'The Makers']);
+  assert.equal(manifestos(makeWorld()).length, 0, 'a city with no parties publishes nothing');
 });
 
 // -------------------------------------------------------------- observation

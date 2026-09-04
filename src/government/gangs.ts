@@ -28,7 +28,7 @@ import { characterOf } from '../citizens/character.ts';
 import { adjustBond, bondBetween, friendsOf, recordHostility } from '../citizens/relationships.ts';
 import { isPresent, nameOf } from './cases.ts';
 import { isJailed } from './jail.ts';
-import { REPORT_WINDOW_TICKS, commitOffence } from './watch.ts';
+import { REPORT_WINDOW_TICKS, commitOffence, reportOffence } from './watch.ts';
 
 /** The reading of honesty below which a citizen may found a gang. */
 export const GANG_MAX_HONESTY = 0.3;
@@ -193,13 +193,15 @@ export function recruit(world: World, cId: CitizenId, targetId: CitizenId): Acti
   adjustBond(world, cId, targetId, -RECRUIT_REFUSAL_BOND);
   remember(world, targetId, 'social', `${c.name} asked you to join ${g.name}. You said no.`);
   remember(world, cId, 'social', `You asked ${t.name} to join ${g.name}. They said no.`);
-  // A refusal is not a crime, but a refuser who knows something may use it.
+  // A refusal is not a crime. But somebody who has just been asked to join
+  // knows what they were being asked for, and may take it to the Watch. That
+  // is a *report* of something already done — never a second offence added to
+  // the recruiter's record for the same act — and the gang answers it the way
+  // it answers any report of one of its own (reportOffence calls `defend`).
   const known = c.recentOffences.find((o) => !o.detected && world.tick - o.tick <= REPORT_WINDOW_TICKS);
   if (known && chance(world, 0.5)) {
-    const told = commitOffence(world, cId, known.law, { visibilityMod: 0.25 });
-    if (told.detected) {
-      remember(world, targetId, 'civic', `You told the Watch what you knew about ${c.name} after they asked you to join ${g.name}.`);
-    }
+    remember(world, targetId, 'civic', `You told the Watch what you knew about ${c.name} after they asked you to join ${g.name}.`);
+    reportOffence(world, targetId, cId, known.law, `${c.name} asked me to join ${g.name}.`);
   }
   return ok(`${t.name} refused you.`);
 }

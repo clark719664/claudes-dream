@@ -118,7 +118,8 @@ export function approvalOf(world: World, c: Citizen, of: 'mayor' | 'council'): n
   const paper = PAPER_INFO[c.paper ?? 'chronicle'] ?? PAPER_INFO.chronicle;
   score += (platformFit(paper.line, sitting) - NEUTRAL) * 0.1;
 
-  return Math.round(clamp(score, 0, 1) * 100) / 100;
+  const value = Math.round(clamp(score, 0, 1) * 100) / 100;
+  return Number.isFinite(value) ? value : NEUTRAL;
 }
 
 /**

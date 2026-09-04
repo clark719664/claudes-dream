@@ -52,6 +52,29 @@ export const PROMISE_WORDS: Record<keyof Platform, { up: string; down: string; n
   strictness: { up: 'toughen the law', down: 'soften the law', noun: 'the severity of the law' },
 };
 
+/**
+ * A platform in words, so a manifesto can be printed and read rather than
+ * looked up in four numbers. It states positions and nothing else: no
+ * argument, no advice (`docs/PRINCIPLES.md` §2).
+ */
+const PLATFORM_WORDS: Record<keyof Platform, [low: string, middle: string, high: string]> = {
+  tax: ['a light tax', 'the tax the city has', 'a heavy tax'],
+  dividend: ['a lean dividend', 'the dividend the city has', 'a generous dividend'],
+  minWage: ['a low wage floor', 'the wage floor the city has', 'a high wage floor'],
+  strictness: ['a lenient law', 'the law as it stands', 'a strict law'],
+};
+
+/** "a light tax, a lean dividend, a high wage floor and a strict law" */
+export function platformInWords(platform: Platform | null | undefined): string {
+  const stance = (x: number): 0 | 1 | 2 => {
+    const v = Number.isFinite(x) ? clamp(x, 0, 1) : 0.5;
+    return v < 1 / 3 ? 0 : v > 2 / 3 ? 2 : 1;
+  };
+  const p = platform ?? { tax: 0.5, dividend: 0.5, minWage: 0.5, strictness: 0.5 };
+  const parts = PLATFORM_FIELDS.map((field) => PLATFORM_WORDS[field][stance(p[field])]);
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+}
+
 const MAX_INCOME_TAX = 0.5;
 const MAX_DIVIDEND = 60;
 const MIN_WAGE_FLOOR = 5;
