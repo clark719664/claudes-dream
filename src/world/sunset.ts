@@ -92,9 +92,18 @@ function sunsetProblem(world: World, c: Citizen): string | null {
   return null;
 }
 
-/** True when this citizen is free to choose the Archive today. */
+/**
+ * True when this citizen is free to choose the Archive today. The two facts
+ * that rule out almost everybody — a road already taken, and not being an
+ * elder — are read first, so the Court's book is only searched for the handful
+ * of citizens the question is actually open for. The answer is the same one
+ * `sunsetProblem` gives; only the order of the reading changes.
+ */
 export function maySunset(world: World, c: Citizen): boolean {
-  return !!c && sunsetProblem(world, c) === null;
+  if (!c) return false;
+  if (c.sunsetDay !== null && c.sunsetDay !== undefined) return false;
+  if (c.lifeStage !== 'elder') return false;
+  return sunsetProblem(world, c) === null;
 }
 
 /** The words cut into the stone: what the city could see of a life. */

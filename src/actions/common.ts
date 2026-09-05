@@ -3,7 +3,7 @@
  * checks, and the memory format victims use to name who wronged them (the id
  * is included so a victim — reflex or Claude — can file a report).
  */
-import type { ActionResult, Citizen, CitizenId, DistrictId, OffenceCode, World } from '../types.ts';
+import type { ActionResult, Building, Citizen, CitizenId, DistrictId, OffenceCode, World } from '../types.ts';
 import { isFrozen, memo } from '../util/memo.ts';
 import { presentIds } from '../citizens/relationships.ts';
 
@@ -54,6 +54,47 @@ export function targetOf(world: World, id: CitizenId): Citizen | null {
 export function holdsOffice(world: World, c: Citizen): boolean {
   const g = world.government;
   return c.office !== null || g.mayorId === c.id || g.council.includes(c.id) || g.judges.includes(c.id) || g.watch.includes(c.id);
+}
+
+/**
+ * Everyone in the city who holds an office right now. Every citizen asks the
+ * same question of the same roll (is there anybody to bribe?), so during a
+ * reading round the roll is taken once for the whole city (`util/memo.ts`).
+ */
+export function officeHoldersPresent(world: World): Set<CitizenId> {
+  return memo(world, 'office:present', () => {
+    const out = new Set<CitizenId>();
+    for (const c of Object.values(world.citizens)) {
+      if (isPresent(world, c) && holdsOffice(world, c)) out.add(c.id);
+    }
+    return out;
+  });
+}
+
+/** Somebody other than this citizen holds an office in the city. */
+export function anotherHoldsOffice(world: World, c: Citizen): boolean {
+  const held = officeHoldersPresent(world);
+  return held.size > (held.has(c.id) ? 1 : 0);
+}
+
+/** Somebody other than this citizen still lives in the city. */
+export function anyoneElsePresent(world: World, c: Citizen): boolean {
+  const present = presentIds(world);
+  return present.size > (present.has(c.id) ? 1 : 0);
+}
+
+/**
+ * The buildings that stand in a district. Every citizen in a district reads
+ * the same list — what is here, what can be broken, what can be sabotaged —
+ * so it is gathered once per district for a whole reading round.
+ */
+export function buildingsIn(world: World, district: DistrictId): Building[] {
+  return memo(world, `buildings:in:${district}`, () => Object.values(world.buildings).filter((b) => b.district === district));
+}
+
+/** Those of them still whole enough to be damaged further. */
+export function intactBuildingsIn(world: World, district: DistrictId): Building[] {
+  return memo(world, `buildings:intact:${district}`, () => buildingsIn(world, district).filter((b) => b.damage < 1));
 }
 
 /** "Bram (c_3)": how a victim remembers who wronged them. */

@@ -61,7 +61,9 @@ import { MAX_CLUBS_PER_CITIZEN, attendClub, foundClub, joinClub, leaveClub, meet
 import { CELEBRATABLE, celebrate, happeningsAt } from '../society/calendar.ts';
 import { donate } from '../society/chest.ts';
 import { bondBetween } from '../citizens/relationships.ts';
-import { citizensIn, districtName, fail, holdsOffice, isPresent, ok } from './common.ts';
+import {
+  anotherHoldsOffice, anyoneElsePresent, citizensIn, districtName, fail, intactBuildingsIn, isPresent, ok,
+} from './common.ts';
 
 export { validateAction } from './validate.ts';
 
@@ -132,9 +134,9 @@ function canHold(c: Citizen): boolean {
   return c.standing === 'good' || c.standing === 'probation';
 }
 
-/** Someone other than `c` still lives in the city. */
+/** Someone other than `c` still lives in the city (off the roll taken once an hour). */
 function anyoneElse(world: World, c: Citizen): boolean {
-  return world.order.some((id) => id !== c.id && world.citizens[id] !== undefined && world.citizens[id].standing !== 'exiled');
+  return anyoneElsePresent(world, c);
 }
 
 /** Everyone this citizen might reasonably ask for a place: family, and friends they are close to. */
@@ -352,9 +354,9 @@ export function availableActions(world: World, c: Citizen): ActionType[] {
   if (reportsFor(world, c.id).length > 0) { set.add('file_charge'); set.add('drop_report'); }
   if (g.mayorId === c.id && canHold(c) && g.judges.length < JUDGE_SEATS
     && Object.values(world.citizens).some((o) => isJudgeEligible(world, o))) set.add('appoint_judge');
-  if (c.wallet > 0 && Object.values(world.citizens).some((o) => o.id !== c.id && isPresent(world, o) && holdsOffice(world, o))) set.add('bribe');
+  if (c.wallet > 0 && anotherHoldsOffice(world, c)) set.add('bribe');
 
-  const intact = Object.values(world.buildings).filter((b) => b.district === c.district && b.damage < 1);
+  const intact = intactBuildingsIn(world, c.district);
   if (intact.length > 0) set.add('vandalize');
   if (intact.some((b) => b.critical)) set.add('sabotage');
 

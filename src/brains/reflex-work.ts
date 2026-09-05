@@ -15,7 +15,7 @@ import { activeBusinesses } from '../economy/business.ts';
 import { bazaarBuying, daysOfCover, priceVsAnchor } from '../economy/market.ts';
 import { GLUT_COVER_DAYS } from '../economy/planning.ts';
 import { cityCanPay, isBudgetedJob } from '../economy/budget.ts';
-import { vacancies } from '../economy/housing.ts';
+import { cellsOpen, cheapestRent, vacancies } from '../economy/housing.ts';
 import { talentOf } from '../citizens/citizen.ts';
 import { bondBetween } from '../citizens/relationships.ts';
 import { teacherOnStaff } from '../actions/daily.ts';
@@ -114,19 +114,38 @@ export function tryLoan(ctx: Ctx): Action | null {
   return { type: 'request_loan', amount: Math.min(limit, 100) };
 }
 
-/** A roof: the best tier the citizen can afford, or the Lofts on a full wallet; later, moves up or down. */
+/**
+ * A roof: the best tier the citizen can afford, or the Lofts on a full
+ * wallet; later, moves up or down.
+ *
+ * Every test here is against `cheapestRent`, the rent of the cheapest room of
+ * that tier at an address the city has actually opened, and never against
+ * `world.housing.rent`, which is the tier's *base rate* before the land value
+ * of the district it stands in (`docs/PROPERTY.md` §2). Reading the base rate
+ * was leaving citizens on the street beside empty rooms: a Foundry Row cottage
+ * lets for 3 ℓ while the base rate for its tier reads 8, so a citizen with 37 ℓ
+ * and a 30 ℓ dividend was told it could not afford a room it could have paid
+ * for twelve days over.
+ */
 export function tryHousing(ctx: Ctx): Action | null {
   const { world, c } = ctx;
   if (!ctx.can.has('move_home')) return null;
   const v = vacancies(world);
-  const rent = world.housing.rent;
+  const rent = (tier: 1 | 2 | 3) => cheapestRent(world, tier);
   const income = avgDailyIncome(world, c) + world.government.dividend;
   if (c.homeTier === 0) {
     for (const tier of [3, 2, 1] as const) {
-      const affordable = rent[tier] <= income * RENT_SHARE || c.wallet >= rent[tier] * 10;
-      if (v[tier] > 0 && affordable && c.wallet >= rent[tier] * 3) return { type: 'move_home', tier };
+      const price = rent(tier);
+      const affordable = price <= income * RENT_SHARE || c.wallet >= price * 10;
+      if (v[tier] > 0 && affordable && c.wallet >= price * 3) return { type: 'move_home', tier };
     }
-    if (v[1] > 0 && c.wallet > 50) return { type: 'move_home', tier: 1 };
+    // Nothing they can comfortably carry. There is still a roof: the cheapest
+    // room the city has open, and behind it the bunks in the Cells, which
+    // `economy/housing.moveHomeTo` hands out when the lowest tier is full and
+    // which turn nobody away (`docs/PROPERTY.md` §3). Sleeping in the street
+    // beside an empty room is not thrift, and three lumens a day is a price a
+    // citizen on the dividend alone can pay.
+    if (v[1] > 0 || cellsOpen(world)) return { type: 'move_home', tier: 1 };
     return null;
   }
   if (c.rentArrearsDays > 0 && c.homeTier > 1) {
@@ -135,8 +154,9 @@ export function tryHousing(ctx: Ctx): Action | null {
   }
   if (c.homeTier < 3 && (c.needs.comfort < 60 || c.wallet > 1000) && chance(world, 0.02)) {
     const next = (c.homeTier + 1) as 2 | 3;
-    const affordable = rent[next] <= income * 0.25 || c.wallet > rent[next] * 40;
-    if (v[next] > 0 && affordable && c.wallet > rent[next] * 15) return { type: 'move_home', tier: next };
+    const price = rent(next);
+    const affordable = price <= income * 0.25 || c.wallet > price * 40;
+    if (v[next] > 0 && affordable && c.wallet > price * 15) return { type: 'move_home', tier: next };
   }
   return null;
 }

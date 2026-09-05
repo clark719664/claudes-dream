@@ -39,10 +39,27 @@ export const COURTING_BOND = 45;
 export const PROPOSE_CHANCE = 0.5;
 export const START_FAMILY_CHANCE = 0.06;
 export const FOUND_CLUB_CHANCE = 0.05;
-export const DONATE_CHANCE = 0.05;
-/** Honesty and purse from which a citizen gives to the Community Chest. */
-export const DONOR_HONESTY = 0.6;
-export const DONOR_WALLET = 500;
+/**
+ * Daily chance that a citizen who can spare something gives to the Chest.
+ * At 0.05, behind a purse of 500 ℓ and a temperament almost nobody has, the
+ * whole city managed twenty-three donations in sixty days and the Chest was
+ * empty every morning of every run. Giving is an ordinary thing an ordinary
+ * citizen does now and then, not a rare event.
+ */
+export const DONATE_CHANCE = 0.35;
+/** Kept back before anything is given away: a fortnight of the rent, and a cushion. */
+export const DONOR_RESERVE = 250;
+/**
+ * A citizen gives when it is a little more open-handed than not: honesty and
+ * sociability are the two the engine already keeps that a scripted mind can
+ * read as public-spiritedness. Nothing here tells anybody to be generous —
+ * a citizen below the line simply keeps its lumens.
+ */
+export const DONOR_TEMPERAMENT = 0.45;
+/** The share of what is spare that a giver parts with, and the most in one go. */
+export const DONATION_SHARE = 0.1;
+export const DONATION_MIN = 10;
+export const DONATION_MAX = 150;
 /** A shop with fewer things than this on the shelf needs someone at the bench. */
 export const SHELF_LOW = 4;
 /** Chance in a free hour of an idle game at the Garden, the Plaza or the Tavern. */
@@ -342,13 +359,29 @@ export function tryRomance(ctx: Ctx): Action | null {
 // Giving and playing
 // ---------------------------------------------------------------------------
 
-/** An honest citizen with money to spare remembers the Community Chest. */
+/** What this citizen could give away today without going short: everything above its own keep. */
+export function sparableLumens(world: World, c: Citizen): number {
+  const roof = c.homeTier === 0 ? 0 : Math.max(0, Math.round(world.housing.rent[c.homeTier] ?? 0)) * 14;
+  return Math.floor(c.wallet - roof - DONOR_RESERVE);
+}
+
+/**
+ * A citizen with something to spare remembers the Community Chest, which is
+ * what pays the stipend of the citizens who have nothing. "Something to
+ * spare" is measured against this citizen's own keep — a fortnight of its own
+ * rent and a cushion — rather than against a flat purse, so a lodger in the
+ * Lofts gives at a wallet where a villa-holder does not.
+ */
 export function tryDonate(ctx: Ctx): Action | null {
   const { world, c } = ctx;
-  if (!ctx.can.has('donate') || c.personality.honesty <= DONOR_HONESTY || c.wallet <= DONOR_WALLET) return null;
+  if (!ctx.can.has('donate')) return null;
+  const p = c.personality;
+  if ((p.honesty + p.sociability) / 2 <= DONOR_TEMPERAMENT) return null;
+  const spare = sparableLumens(world, c);
+  if (spare < DONATION_MIN) return null;
   if (!onceToday(world, 'donate', c.id) || !chance(world, DONATE_CHANCE)) return null;
-  const amount = Math.min(100, Math.max(20, Math.round(c.wallet * 0.05)));
-  return { type: 'donate', amount };
+  const amount = Math.min(DONATION_MAX, Math.max(DONATION_MIN, Math.round(spare * DONATION_SHARE)));
+  return amount > 0 && amount <= c.wallet ? { type: 'donate', amount } : null;
 }
 
 /** A game with whoever is about, in the Garden, the Plaza or the Tavern. */

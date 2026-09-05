@@ -192,6 +192,21 @@ function postsByAuthor(world: World): Map<CitizenId, Post[]> {
   });
 }
 
+/**
+ * Where each post stands on the wall, indexed once for a whole reading round.
+ * A reader wants its handful of posts newest first; without this the only way
+ * to find them was to walk the whole wall backwards, once per citizen per
+ * hour, which is most of what reading the wall used to cost.
+ */
+function postPositions(world: World): Map<string, number> {
+  return memo(world, 'feed:positions', () => {
+    const at = new Map<string, number>();
+    const feed = world.feed ?? [];
+    for (let i = 0; i < feed.length; i++) at.set(feed[i].id, i);
+    return at;
+  });
+}
+
 function loudPosts(world: World): { loud: Post[]; tallies: Map<string, PostTally> } {
   return memo(world, `feed:loud:${world.day}`, () => {
     const cutoff = world.day - POPULAR_POST_DAYS;
@@ -232,10 +247,24 @@ export function feedFor(world: World, c: Citizen, limit = MAX_FEED_SHOWN): Obser
       taken++;
     }
 
+    // The newest `limit` of them, newest first. Only that many places are ever
+    // held, so the wall is never walked from end to end to find eight posts —
+    // which is what every citizen used to do, every hour.
+    const at = postPositions(world);
+    const places: number[] = [];
+    for (const id of wanted) {
+      const i = at.get(id);
+      if (i === undefined) continue;
+      if (places.length === limit && i < places[limit - 1]) continue;
+      let k = places.length;
+      while (k > 0 && places[k - 1] < i) k--;
+      places.splice(k, 0, i);
+      if (places.length > limit) places.pop();
+    }
     const out: ObservedPost[] = [];
-    for (let i = feed.length - 1; i >= 0 && out.length < limit; i--) {
+    for (const i of places) {
       const p = feed[i];
-      if (wanted.has(p.id)) out.push(observed(world, p, c.id, tallies.get(p.id)));
+      out.push(observed(world, p, c.id, tallies.get(p.id)));
     }
     return out;
   });

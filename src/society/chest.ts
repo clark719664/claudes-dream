@@ -11,8 +11,16 @@ import type { ActionResult, Citizen, CitizenId, World } from '../types.ts';
 import { emit, remember } from '../sim/events.ts';
 import { balanceOf, formatLumens, residentIds, transfer } from '../economy/treasury.ts';
 
-/** The daily hardship stipend. */
+/** The daily hardship stipend: a bunk in the Cells and a meal on top of it. */
 export const STIPEND = 10;
+/**
+ * The Chest is a charity, not an endowment. While it holds more than this
+ * many days of what today's claims cost, it pays a fuller stipend rather than
+ * sitting on the money: lumens in the Chest are lumens out of the city.
+ */
+export const FLUSH_DAYS = 30;
+/** The most one claimant is paid in a day, however full the Chest is. */
+export const STIPEND_MAX = 30;
 /** One point of reputation per this many lumens given. */
 export const REPUTATION_PER = 20;
 /** Donors with less than this in the wallet earn double the respect. */
@@ -23,6 +31,16 @@ export const BIG_DONATION = 100;
 export const DONOR_PURPOSE = 5;
 /** A need below this is critical (mirrors citizens/citizen.ts CRITICAL_NEED). */
 export const CRITICAL_NEED = 20;
+/**
+ * A purse this thin cannot mend a critical need on its own: about four days
+ * of the cheapest roof in the city and a meal on top of it. Above it a low
+ * need is a bad evening, not hardship — a citizen with a thousand lumens and
+ * nobody to talk to does not need the Chest's ten, and while the line was
+ * drawn at need alone it was those citizens who emptied it. On a 60-day run
+ * of seed 7 the Chest had 77 claimants of whom 68 were solvent, some of them
+ * holding more than 1,500 ℓ.
+ */
+export const HARDSHIP_WALLET = 40;
 /**
  * An empty Chest with claimants waiting is news the first morning it happens;
  * after that it is a standing condition, and the Chronicle is only reminded
@@ -91,11 +109,15 @@ export function isWard(world: World, c: Citizen): boolean {
   return !c.family.parents.some((p) => presentCitizen(world, p));
 }
 
-/** Why a citizen qualifies for the stipend today, or null. */
+/**
+ * Why a citizen qualifies for the stipend today, or null. A ward is a ward
+ * whatever it holds; anybody else has to be past helping themselves — on the
+ * street, or with a need at its floor and nothing in the purse to fix it.
+ */
 export function hardshipOf(world: World, c: Citizen): Hardship | null {
   if (isWard(world, c)) return 'ward';
-  if (c.homeTier === 0) return 'homeless';
-  if (NEEDS.some((n) => c.needs[n] < CRITICAL_NEED)) return 'critical need';
+  if (c.homeTier === 0 && c.wallet <= HARDSHIP_WALLET) return 'homeless';
+  if (c.wallet <= HARDSHIP_WALLET && NEEDS.some((n) => c.needs[n] < CRITICAL_NEED)) return 'critical need';
   return null;
 }
 
@@ -111,14 +133,26 @@ export function claimants(world: World): { citizen: Citizen; hardship: Hardship 
   return rows.sort((a, b) => rank(a.hardship) - rank(b.hardship) || a.citizen.wallet - b.citizen.wallet || a.citizen.id.localeCompare(b.citizen.id));
 }
 
+/**
+ * Today's stipend a head: the base, raised toward STIPEND_MAX while the Chest
+ * holds far more than the hardship line costs it, so a well-funded Chest
+ * actually relieves hardship instead of accumulating.
+ */
+export function stipendToday(world: World, claims: number): number {
+  if (claims <= 0) return 0;
+  const spare = Math.floor(chestBalance(world) / (claims * FLUSH_DAYS));
+  return Math.max(STIPEND, Math.min(STIPEND_MAX, spare));
+}
+
 /** Morning: a stipend to each claimant while the Chest lasts; an empty Chest with claimants waiting is news. */
 export function dailyChest(world: World): void {
   const list = claimants(world);
   if (list.length === 0) return;
+  const stipend = stipendToday(world, list.length);
   let paid = 0;
   let count = 0;
   for (const { citizen, hardship } of list) {
-    const amt = Math.min(STIPEND, chestBalance(world));
+    const amt = Math.min(stipend, chestBalance(world));
     if (amt <= 0) break;
     if (!transfer(world, 'chest', citizen.id, amt, 'stipend', `hardship stipend (${hardship})`)) break;
     paid += amt;

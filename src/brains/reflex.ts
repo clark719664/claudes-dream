@@ -382,11 +382,11 @@ function tryJobHunt(ctx: Ctx): Action | null {
 const LADDER: readonly Step[] = [
   tryAppeal, tryPlea, tryEat, tryDine, tryInbox, tryCharity, tryHealth, tryRest, tryHousing, tryWeather,
   tryHappening, tryClubMeeting,
-  tryStrike, tryJobHunt, tryWorkday, tryGig, tryHunger, tryCraft, tryCivic, tryBusiness,
+  tryStrike, tryJobHunt, tryWorkday, tryGig, tryHunger, tryCraft, tryCivic, tryDonate, tryBusiness,
   tryTrade, tryProperty, tryShares,
   tryRomance, trySocial, tryVisit, tryComfort, tryWants, tryPurpose,
   tryReport, tryCrime, tryUnderworld, tryPerform, tryCulture, trySport, tryPolitics, tryUnion,
-  tryClubLife, tryBirthdayGift, tryDonate, tryFabric, trySchoolAndPaper, tryUseItem, tryGift,
+  tryClubLife, tryBirthdayGift, tryFabric, trySchoolAndPaper, tryUseItem, tryGift,
   // Last of all, before the hour is let go: the day, written up.
   tryDiary, trySunset,
 ];

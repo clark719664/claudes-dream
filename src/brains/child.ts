@@ -15,6 +15,7 @@ import { bondBetween } from '../citizens/relationships.ts';
 import { teacherOnStaff } from '../actions/daily.ts';
 import { costOf, homeDistrictOf, inStock, makeCtx, stepTo } from './reflex-util.ts';
 import type { Ctx } from './reflex-util.ts';
+import { reflexDecide } from './reflex.ts';
 
 /** Everything a child may do; anything else the policy might produce is turned into idling. */
 export const CHILD_ACTIONS: readonly ActionType[] = [
@@ -175,9 +176,21 @@ function play(ctx: Ctx): Action {
   return stepTo(ctx, haunt) ?? { type: 'play' };
 }
 
-/** Decide one action for a child. */
+/**
+ * Decide one action for a child.
+ *
+ * A citizen who has come of age is not one, whatever the registry still calls
+ * it. `society/family.dailyLifeStages` moves a ward to `lifeStage: 'adult'`
+ * but leaves `brain: 'child'` on the record, so a citizen born in Reverie
+ * would otherwise keep the child policy for the whole of its adult life:
+ * school, the Garden, the Plaza, and never a room, a shift or a rent paid. A
+ * quarter of the city was living that way by day 60. The hour goes back to
+ * the adult ladder the day they grow up; reflex.ts delegates here only while
+ * `lifeStage` is 'child', so the two never call each other in a circle.
+ */
 export function childDecide(world: World, c: Citizen, obs: Observation): Action {
   if (c.standing === 'exiled' || obs.self?.detained) return IDLE;
+  if (c.lifeStage !== 'child') return reflexDecide(world, c, obs);
   const ctx = makeCtx(world, c, obs);
   const steps: ((ctx: Ctx) => Action | null)[] = [tryEat, tryClinic, trySleep, tryCelebrate, trySchool];
   let action: Action | null = null;

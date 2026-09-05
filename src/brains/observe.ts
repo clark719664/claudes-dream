@@ -57,7 +57,7 @@ import { rumoursHeardBy } from '../social/rumours.ts';
 import { gateObservation, reputeObservation } from '../standing/observe.ts';
 import { availableActions, heldJob } from '../actions/execute.ts';
 import { ownedBusiness } from '../actions/enterprise.ts';
-import { citizensIn, districtName } from '../actions/common.ts';
+import { buildingsIn, citizensIn, districtName } from '../actions/common.ts';
 
 /** Memory entries surfaced as `recent`. */
 export const RECENT_MEMORIES = 8;
@@ -346,8 +346,7 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
     },
     here: {
       district: c.district, districtName: districtName(world, c.district),
-      buildings: Object.values(world.buildings).filter((b) => b.district === c.district)
-        .map((b) => ({ id: b.id, name: b.name, kind: b.kind, damage: b.damage })),
+      buildings: buildingsIn(world, c.district).map((b) => ({ id: b.id, name: b.name, kind: b.kind, damage: b.damage })),
       citizens: citizensIn(world, c.district, c.id).map((o) => observeCitizen(world, c, o)),
       shops: observedShops(world, c.district),
       happening: observedHappenings(world, c.district),
