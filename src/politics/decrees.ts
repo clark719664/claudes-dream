@@ -19,6 +19,7 @@ import { emit, remember } from '../sim/events.ts';
 import { balanceOf, transfer } from '../economy/treasury.ts';
 import { isPresent } from '../citizens/citizen.ts';
 import { claimants } from '../society/chest.ts';
+import { memo } from '../util/memo.ts';
 
 /** From dusk to dawn: a curfew covers the hours at or after the first and before the second. */
 export const CURFEW_HOURS: [number, number] = [20, 6];
@@ -231,7 +232,8 @@ export function emergencyWorksMultiplier(world: World): number {
 
 /** The decrees a citizen sees standing over the city. */
 export function decreesObservation(world: World): { kind: Decree['kind']; district: DistrictId | null; untilDay: number }[] {
-  return activeDecrees(world).map((d) => ({ kind: d.kind, district: d.district, untilDay: d.untilDay }));
+  return memo(world, 'decrees:observation',
+    () => activeDecrees(world).map((d) => ({ kind: d.kind, district: d.district, untilDay: d.untilDay })));
 }
 
 // ---------------------------------------------------------------------------

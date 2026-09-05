@@ -26,7 +26,7 @@ import { standingAllows } from '../government/registry.ts';
 import { mayAdvocate, publicDefenders } from '../government/advocates.ts';
 import { gangOf, gangOfTurf, mayFoundGang } from '../government/gangs.ts';
 import { isJailed, visitPrisoner, visitablePrisoners, workInCustody } from '../government/jail.ts';
-import { erasureConditions } from '../government/persons.ts';
+import { couldEraseAnyone } from '../government/persons.ts';
 import { requestParole } from '../government/parole.ts';
 import { admissibleCharges, custodyActionsFor, doPleadGuilty } from './custody.ts';
 import { curfewBlocks } from '../politics/decrees.ts';
@@ -146,7 +146,7 @@ function movingInCandidates(world: World, c: Citizen): Set<CitizenId> {
     for (const sibling of world.citizens[id]?.family.children ?? []) out.add(sibling);
   }
   for (const id of c.family.children) out.add(id);
-  for (const [id, bond] of Object.entries(c.bonds)) if (bond >= MOVE_IN_BOND) out.add(id);
+  for (const id in c.bonds) if (c.bonds[id] >= MOVE_IN_BOND) out.add(id);
   out.delete(c.id);
   return out;
 }
@@ -309,7 +309,7 @@ export function availableActions(world: World, c: Citizen): ActionType[] {
   // (`government/persons.ts erasureConditions`). Every one of those is a fact
   // the citizen can read off its own observation, which is why the city can
   // also see it coming.
-  if (here.some((o) => erasureConditions(world, c.id, o.id).ok)) set.add('erase');
+  if (couldEraseAnyone(world, c, here)) set.add('erase');
   if (others) {
     set.add('message');
     set.add('report');

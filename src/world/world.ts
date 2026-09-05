@@ -51,6 +51,7 @@ import { reflexBrain } from '../brains/reflex.ts';
 import { childDecide } from '../brains/child.ts';
 import { instinctBrain, instinctOrIdle } from '../brains/instinct.ts';
 import { computeStats } from './stats.ts';
+import { frozenRound } from '../util/memo.ts';
 
 export { computeStats } from './stats.ts';
 
@@ -235,18 +236,24 @@ function askBrain(world: World, brains: BrainRegistry, c: Citizen, obs: Observat
  */
 async function collectTurns(world: World, brains: BrainRegistry): Promise<Turn[]> {
   const turns: Turn[] = [];
-  for (const id of [...world.order]) {
-    const c = world.citizens[id];
-    if (!c || !canAct(world, c)) continue;
-    let obs: Observation;
-    try {
-      obs = buildObservation(world, c.id);
-    } catch (err) {
-      recordEngineError(world, `observation for ${c.name}`, err);
-      continue;
+  // Nothing changes while the city is being looked at, so the public facts
+  // every observation shares — the job board, the deeds, the wall — are read
+  // once for the whole round rather than once per citizen (`util/memo.ts`).
+  // The round is opened and closed synchronously, before anybody acts.
+  frozenRound(world, () => {
+    for (const id of [...world.order]) {
+      const c = world.citizens[id];
+      if (!c || !canAct(world, c)) continue;
+      let obs: Observation;
+      try {
+        obs = buildObservation(world, c.id);
+      } catch (err) {
+        recordEngineError(world, `observation for ${c.name}`, err);
+        continue;
+      }
+      turns.push({ c, obs, answer: IDLE });
     }
-    turns.push({ c, obs, answer: IDLE });
-  }
+  });
   for (const turn of turns) turn.answer = askBrain(world, brains, turn.c, turn.obs);
   const answers = await Promise.all(turns.map((t) => t.answer));
   answers.forEach((action, i) => { turns[i].answer = action; });

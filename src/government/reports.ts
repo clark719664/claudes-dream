@@ -24,6 +24,7 @@ import { fileCharge } from './court.ts';
 import { nameOf } from './cases.ts';
 import { officersOnDuty } from './watch.ts';
 import { noteAbuseOfOffice } from './investigations.ts';
+import { memo } from '../util/memo.ts';
 
 /** An unfiled report lapses this many ticks after it was made. */
 export const REPORT_EXPIRY_TICKS = 24;
@@ -82,9 +83,9 @@ function reportNumber(id: ReportId): number {
 
 /** Every report still waiting on an officer, oldest first. */
 export function openReports(world: World): Report[] {
-  return Object.values(reportsBook(world))
+  return memo(world, 'reports:open', () => Object.values(reportsBook(world))
     .filter((r) => r.status === 'open')
-    .sort((a, b) => a.tick - b.tick || reportNumber(a.id) - reportNumber(b.id));
+    .sort((a, b) => a.tick - b.tick || reportNumber(a.id) - reportNumber(b.id)));
 }
 
 /** True while this citizen may act on the Watch's reports. */

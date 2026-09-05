@@ -21,6 +21,7 @@ import { emit, remember } from '../sim/events.ts';
 import { isEligibleVoter, isPresent } from '../citizens/citizen.ts';
 import { councillorDisposition, enactProposal } from '../government/council.ts';
 import { weekday } from '../society/calendar.ts';
+import { memo } from '../util/memo.ts';
 
 /** How long a petition the Council has rejected may still be taken up by the city. */
 export const PETITION_REVIVAL_DAYS = 7;
@@ -76,6 +77,10 @@ export function isVoter(world: World, c: Citizen): boolean {
 }
 
 function voters(world: World): Citizen[] {
+  return memo(world, 'referendum:voters', () => votersNow(world));
+}
+
+function votersNow(world: World): Citizen[] {
   const out: Citizen[] = [];
   for (const id of world.order) {
     const c = world.citizens[id];
@@ -308,6 +313,10 @@ export interface ObservedPetition {
  * how many the city asks for; what they do about it is their own business.
  */
 export function petitionsObservation(world: World, c: Citizen): ObservedPetition[] {
+  return memo(world, `referendum:petitions:${c?.id ?? ''}`, () => petitionBoard(world, c));
+}
+
+function petitionBoard(world: World, c: Citizen): ObservedPetition[] {
   const needed = signaturesNeeded(world);
   return world.government.proposals
     .filter((p) => p.petition && signable(world, p) && !referendumFor(world, p.id))

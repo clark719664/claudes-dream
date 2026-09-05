@@ -12,6 +12,7 @@ import { transfer, withholdingPay } from './treasury.ts';
 import { deliverToMarket, sellToMarket } from './market.ts';
 import { assignJob, closeJob, fireFromJob, isQualified, postJob } from './jobs.ts';
 import { noteBusinessProfit, payShareDividends } from '../markets/shares.ts';
+import { memo } from '../util/memo.ts';
 
 /** Cash a business keeps on hand before paying the owner. */
 export const PAYOUT_RESERVE = 100;
@@ -27,7 +28,7 @@ function ok(message: string): ActionResult { return { ok: true, message }; }
 
 /** Every business still trading. */
 export function activeBusinesses(world: World): Business[] {
-  return Object.values(world.businesses).filter((b) => b.dissolvedDay === null);
+  return memo(world, 'business:active', () => Object.values(world.businesses).filter((b) => b.dissolvedDay === null));
 }
 
 function premisesFor(kind: BusinessKind): { district: DistrictId; buildingId: string } {

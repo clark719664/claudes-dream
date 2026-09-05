@@ -29,6 +29,7 @@ import { isPresent } from '../citizens/citizen.ts';
 import { tableProposal } from '../government/council.ts';
 import { isElectionDay, nominationsOpen } from '../government/elections.ts';
 import { PLATFORM_FIELDS, PROMISE_WORDS, platformInWords, positionOf, settingFor } from './promises.ts';
+import { memo } from '../util/memo.ts';
 
 /** What the Registry charges to enter a party in the roll. */
 export const PARTY_FOUNDING_FEE = 100;
@@ -50,9 +51,9 @@ function partyBook(world: World): Record<string, Party> {
 
 /** Parties in a stable order: biggest in the Council first, then the largest. */
 function allParties(world: World): Party[] {
-  return Object.values(partyBook(world)).sort(
+  return memo(world, 'parties:all', () => Object.values(partyBook(world)).sort(
     (a, b) => b.seats - a.seats || b.members.length - a.members.length || a.foundedDay - b.foundedDay || a.id.localeCompare(b.id),
-  );
+  ));
 }
 
 /** Where a citizen is being held, or null if they are at liberty. */

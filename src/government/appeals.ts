@@ -22,6 +22,7 @@ import { emit, remember } from '../sim/events.ts';
 import { areFriends, areRivals, bondBetween } from '../citizens/relationships.ts';
 import { byFiling, isPresent, latestConviction, nameOf, sittingCouncil } from './cases.ts';
 import { TIER_WARNING, describeSentence, executeSentence, revokeSentence, sentenceForTier } from './sentencing.ts';
+import { memo } from '../util/memo.ts';
 
 /** Days after the verdict during which an appeal may be filed. */
 export const APPEAL_WINDOW_DAYS = 1;
@@ -80,7 +81,8 @@ export function appealOutcome(votes: Record<CitizenId, AppealResult>): AppealRes
 
 /** Appeals waiting on the Council, oldest first. */
 export function pendingAppeals(world: World): Case[] {
-  return Object.values(world.cases).filter((k) => k.status === 'appealed' && k.appeal && k.sentence).sort(byFiling);
+  return memo(world, 'appeals:pending',
+    () => Object.values(world.cases).filter((k) => k.status === 'appealed' && k.appeal && k.sentence).sort(byFiling));
 }
 
 /**

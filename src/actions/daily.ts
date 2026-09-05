@@ -15,6 +15,7 @@ import { employerName, workShift } from '../economy/jobs.ts';
 import { activeBusinesses } from '../economy/business.ts';
 import { districtName, fail, isPresent, ok } from './common.ts';
 import { UNREACHABLE, canMoveBetween, isOpen, openAdjacent, pathDistance } from '../world/growth.ts';
+import { memo } from '../util/memo.ts';
 
 export const REST_AT_HOME = 15;
 export const REST_IN_GARDEN = 8;
@@ -63,6 +64,10 @@ export function nextStepToward(world: World, from: DistrictId, to: DistrictId): 
 
 /** A city job of this role is held by someone present and in good standing. */
 function cityRoleStaffed(world: World, role: 'teacher' | 'medic'): boolean {
+  return memo(world, `staff:${role}`, () => cityRoleHeld(world, role));
+}
+
+function cityRoleHeld(world: World, role: 'teacher' | 'medic'): boolean {
   for (const job of Object.values(world.jobs)) {
     if (job.role !== role || job.employer !== 'city' || !job.holderId) continue;
     const holder = world.citizens[job.holderId];
@@ -81,7 +86,8 @@ export function medicOnStaff(world: World): boolean {
 
 /** A private clinic with staff in the district, if any. */
 export function privateClinicIn(world: World, district: DistrictId): Business | null {
-  return activeBusinesses(world).find((b) => b.kind === 'clinic' && b.district === district && b.employees.length > 0) ?? null;
+  return memo(world, `clinic:${district}`,
+    () => activeBusinesses(world).find((b) => b.kind === 'clinic' && b.district === district && b.employees.length > 0) ?? null);
 }
 
 export function doMove(world: World, c: Citizen, district: DistrictId): ActionResult {

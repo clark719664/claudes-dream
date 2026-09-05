@@ -4,6 +4,8 @@
  * is included so a victim — reflex or Claude — can file a report).
  */
 import type { ActionResult, Citizen, CitizenId, DistrictId, OffenceCode, World } from '../types.ts';
+import { isFrozen, memo } from '../util/memo.ts';
+import { presentIds } from '../citizens/relationships.ts';
 
 export function fail(message: string, extra: Partial<ActionResult> = {}): ActionResult {
   return { ok: false, message, ...extra };
@@ -20,7 +22,8 @@ export function isDetained(world: World, c: Citizen): boolean {
 
 /** Living in the city: not exiled and still in the turn order. */
 export function isPresent(world: World, c: Citizen): boolean {
-  return c.standing !== 'exiled' && world.order.includes(c.id);
+  if (c.standing === 'exiled') return false;
+  return isFrozen(world) ? presentIds(world).has(c.id) : world.order.includes(c.id);
 }
 
 /** Present and free to be met: not exiled, not emigrated, not locked up. */
@@ -30,13 +33,15 @@ export function isAround(world: World, c: Citizen): boolean {
 
 /** Citizens who can be met in a district (excluding `except`), in turn order. */
 export function citizensIn(world: World, district: DistrictId, except?: CitizenId): Citizen[] {
-  const out: Citizen[] = [];
-  for (const id of world.order) {
-    if (id === except) continue;
-    const c = world.citizens[id];
-    if (c && c.district === district && isAround(world, c)) out.push(c);
-  }
-  return out;
+  const all = memo(world, `district:in:${district}`, () => {
+    const out: Citizen[] = [];
+    for (const id of world.order) {
+      const c = world.citizens[id];
+      if (c && c.district === district && isAround(world, c)) out.push(c);
+    }
+    return out;
+  });
+  return except === undefined ? all : all.filter((c) => c.id !== except);
 }
 
 /** A citizen who can be the object of an action: exists and is around. */

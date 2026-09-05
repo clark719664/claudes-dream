@@ -209,7 +209,7 @@ test('liquidate sells deeds, the concern, the stock and the shelf at once, and c
   const biz = business(world, seller.id, 800);
   seller.inventory.goods = 4;
   const productId = Object.keys(PRODUCTS)[0];
-  seller.possessions.push({ id: 'i_1', productId, acquiredDay: 0, condition: 1 });
+  seller.possessions.push({ id: 'i_1', productId, acquiredDay: 0 });
 
   const share = fireSaleShare(seller);
   const expectedUnits = unitsFor(world, seller.id).reduce((sum, u) => sum + Math.round(marketPrice(world, u) * share), 0);

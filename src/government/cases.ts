@@ -4,6 +4,35 @@
  */
 import type { Case, CaseId, Citizen, CitizenId, Conviction, Track, World } from '../types.ts';
 import { trackOf } from '../data/laws.ts';
+import { memo } from '../util/memo.ts';
+
+/**
+ * Every charge the city has laid, in the book's own order. The case book is
+ * read by half a dozen questions in every citizen's observation, so during a
+ * reading round it is listed once for the whole city (`util/memo.ts`).
+ */
+export function allCases(world: World): Case[] {
+  return memo(world, 'cases:all', () => Object.values(world.cases));
+}
+
+/** The charges against each citizen, indexed once for a whole reading round. */
+export function casesAgainst(world: World, cId: CitizenId): Case[] {
+  const index = memo(world, 'cases:byDefendant', () => {
+    const by = new Map<CitizenId, Case[]>();
+    for (const k of Object.values(world.cases)) {
+      const list = by.get(k.defendantId);
+      if (list) list.push(k);
+      else by.set(k.defendantId, [k]);
+    }
+    return by;
+  });
+  return index.get(cId) ?? [];
+}
+
+/** The charges before a bench or a jury this sitting. */
+export function casesInSession(world: World): Case[] {
+  return memo(world, 'cases:inSession', () => Object.values(world.cases).filter((k) => k.status === 'in_session'));
+}
 
 export function caseNumber(id: CaseId): number {
   return Number(id.slice(2)) || 0;
@@ -90,6 +119,10 @@ export function nextCourtTick(world: World): number {
 
 /** Councillors and the Mayor able to sit today (Mayor first, no duplicates). */
 export function sittingCouncil(world: World): Citizen[] {
+  return memo(world, 'council:sitting', () => sittingCouncilNow(world));
+}
+
+function sittingCouncilNow(world: World): Citizen[] {
   const g = world.government;
   const ids = g.mayorId ? [g.mayorId, ...g.council] : [...g.council];
   const out: Citizen[] = [];
@@ -103,8 +136,8 @@ export function sittingCouncil(world: World): Citizen[] {
 /** The most recent conviction of a citizen (any status): latest trial day, then case number. */
 export function latestConviction(world: World, cId: CitizenId): Case | null {
   let best: Case | null = null;
-  for (const k of Object.values(world.cases)) {
-    if (k.defendantId !== cId || k.verdict !== 'guilty' || !k.sentence) continue;
+  for (const k of casesAgainst(world, cId)) {
+    if (k.verdict !== 'guilty' || !k.sentence) continue;
     const day = k.triedDay ?? 0;
     const bestDay = best ? best.triedDay ?? 0 : -1;
     if (!best || day > bestDay || (day === bestDay && caseNumber(k.id) > caseNumber(best.id))) best = k;

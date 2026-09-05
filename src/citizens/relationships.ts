@@ -10,6 +10,7 @@
 import { TRAITS, clamp } from '../types.ts';
 import type { Citizen, CitizenId, World } from '../types.ts';
 import { noteHostility } from '../social/feuds.ts';
+import { memo } from '../util/memo.ts';
 
 /** Bond at or above which two citizens count as friends. */
 export const FRIEND_THRESHOLD = 40;
@@ -43,36 +44,64 @@ export function adjustBond(world: World, a: CitizenId, b: CitizenId, delta: numb
   if (mutual) setBond(cb, a, (cb.bonds[a] ?? 0) + delta);
 }
 
-/** Ids of citizens currently living in the city: in the turn order and not exiled. */
-function presentSet(world: World): Set<CitizenId> {
-  const present = new Set<CitizenId>();
-  for (const id of world.order) {
-    const c = world.citizens[id];
-    if (c && c.standing !== 'exiled') present.add(id);
-  }
-  return present;
+/**
+ * Ids of citizens currently living in the city: in the turn order and not
+ * exiled. Everyone's friends and rivals are read off the same roll, so during
+ * a reading round it is taken once for the whole city (`util/memo.ts`).
+ */
+export function presentIds(world: World): Set<CitizenId> {
+  return memo(world, 'relationships:present', () => {
+    const present = new Set<CitizenId>();
+    for (const id of world.order) {
+      const c = world.citizens[id];
+      if (c && c.standing !== 'exiled') present.add(id);
+    }
+    return present;
+  });
 }
 
 /** Present citizens `cId` is bonded to at or above `threshold`, strongest first. */
 export function friendsOf(world: World, cId: CitizenId, threshold = FRIEND_THRESHOLD): CitizenId[] {
   const c = world.citizens[cId];
   if (!c) return [];
-  const present = presentSet(world);
-  return Object.entries(c.bonds)
-    .filter(([id, v]) => id !== cId && v >= threshold && present.has(id))
-    .sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0]))
-    .map(([id]) => id);
+  return memo(world, `relationships:friends:${cId}:${threshold}`, () => friendList(world, c, threshold));
+}
+
+function friendList(world: World, c: Citizen, threshold: number): CitizenId[] {
+  return bondList(world, c, (v) => v >= threshold, (x, y) => y[1] - x[1] || x[0].localeCompare(y[0]));
 }
 
 /** Present citizens `cId` is bonded to at or below `threshold`, most hostile first. */
 export function rivalsOf(world: World, cId: CitizenId, threshold = RIVAL_THRESHOLD): CitizenId[] {
   const c = world.citizens[cId];
   if (!c) return [];
-  const present = presentSet(world);
-  return Object.entries(c.bonds)
-    .filter(([id, v]) => id !== cId && v <= threshold && present.has(id))
-    .sort((x, y) => x[1] - y[1] || x[0].localeCompare(y[0]))
-    .map(([id]) => id);
+  return memo(world, `relationships:rivals:${cId}:${threshold}`, () => rivalList(world, c, threshold));
+}
+
+function rivalList(world: World, c: Citizen, threshold: number): CitizenId[] {
+  return bondList(world, c, (v) => v <= threshold, (x, y) => x[1] - y[1] || x[0].localeCompare(y[0]));
+}
+
+/**
+ * The people a citizen's bonds pick out, in the given order. A citizen knows
+ * far more people than it counts as friends or rivals, so the bonds are walked
+ * once and only the matches are gathered — the whole book used to be copied
+ * into pairs and sorted before anything was thrown away.
+ */
+function bondList(
+  world: World, c: Citizen,
+  keep: (bond: number) => boolean,
+  order: (x: [CitizenId, number], y: [CitizenId, number]) => number,
+): CitizenId[] {
+  const present = presentIds(world);
+  const matches: [CitizenId, number][] = [];
+  for (const id in c.bonds) {
+    const v = c.bonds[id];
+    if (id === c.id || !keep(v) || !present.has(id)) continue;
+    matches.push([id, v]);
+  }
+  matches.sort(order);
+  return matches.map(([id]) => id);
 }
 
 /** True when either citizen holds a friendship-level bond toward the other. */

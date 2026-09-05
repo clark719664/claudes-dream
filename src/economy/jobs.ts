@@ -24,6 +24,7 @@ import { mentorshipMultiplier } from '../social/mentorship.ts';
 import { isJailed } from '../government/jail.ts';
 import { isOnStrike } from '../politics/unions.ts';
 import { pursue } from '../government/investigations.ts';
+import { memo } from '../util/memo.ts';
 
 export const CITY_EMPLOYER_NAME = 'City of Reverie';
 /** Skill gained per shift in the job's skill (×1.5 while holding knowledge). */
@@ -76,8 +77,13 @@ export function createCityJobs(world: World): void {
   }
 }
 
+/**
+ * The job board. Every citizen reads it every hour — on the board in its
+ * observation and again in what it may do — so during a reading round it is
+ * gathered once for the whole city (`util/memo.ts`).
+ */
 export function openJobs(world: World): Job[] {
-  return Object.values(world.jobs).filter((j) => j.holderId === null);
+  return memo(world, 'jobs:open', () => Object.values(world.jobs).filter((j) => j.holderId === null));
 }
 
 export function employerBusiness(world: World, job: Job): Business | null {

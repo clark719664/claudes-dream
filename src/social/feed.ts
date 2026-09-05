@@ -24,6 +24,7 @@ import { nextId } from '../util/ids.ts';
 import { emit, remember } from '../sim/events.ts';
 import { isPresent } from '../citizens/citizen.ts';
 import { adjustBond, friendsOf } from '../citizens/relationships.ts';
+import { memo } from '../util/memo.ts';
 
 /** Longest post the wall will carry. */
 export const MAX_POST_TEXT = 280;
@@ -171,37 +172,73 @@ function observed(world: World, p: Post, readerId: CitizenId, tally = tallyOf(p)
  * What a citizen sees of the wall, newest first: its own posts, its friends',
  * and whatever the last two days have been loudest about.
  */
+/**
+ * The last two days of the wall, loudest first, with every post tallied once.
+ * It is the same list for everybody who reads the wall this hour, so during a
+ * reading round it is built once for the whole city rather than once per
+ * citizen (`util/memo.ts`) — the wall was the most expensive thing in Reverie
+ * for exactly that reason.
+ */
+/** The wall by whose it is, indexed once for a whole reading round. */
+function postsByAuthor(world: World): Map<CitizenId, Post[]> {
+  return memo(world, 'feed:byAuthor', () => {
+    const by = new Map<CitizenId, Post[]>();
+    for (const p of world.feed ?? []) {
+      const list = by.get(p.authorId);
+      if (list) list.push(p);
+      else by.set(p.authorId, [p]);
+    }
+    return by;
+  });
+}
+
+function loudPosts(world: World): { loud: Post[]; tallies: Map<string, PostTally> } {
+  return memo(world, `feed:loud:${world.day}`, () => {
+    const cutoff = world.day - POPULAR_POST_DAYS;
+    const tallies = new Map<string, PostTally>();
+    const loud: Post[] = [];
+    for (const p of world.feed ?? []) {
+      if (p.day < cutoff) continue;
+      const tally = tallyOf(p);
+      if (tally.total === 0) continue;
+      tallies.set(p.id, tally);
+      loud.push(p);
+    }
+    loud.sort((a, b) => (tallies.get(b.id)!.total - tallies.get(a.id)!.total)
+      || b.day - a.day || a.id.localeCompare(b.id));
+    return { loud, tallies };
+  });
+}
+
 export function feedFor(world: World, c: Citizen, limit = MAX_FEED_SHOWN): ObservedPost[] {
   const feed = world.feed ?? [];
   if (!c || feed.length === 0 || limit <= 0) return [];
-  const friends = new Set(friendsOf(world, c.id));
-  const wanted = new Set<string>();
-  for (const p of feed) {
-    if (p.authorId === c.id || friends.has(p.authorId)) wanted.add(p.id);
-  }
-  // Each candidate is tallied once, not once per comparison: the sort below
-  // used to recount every reaction on every post it looked at, which is most
-  // of what reading the wall cost the engine.
-  const cutoff = world.day - POPULAR_POST_DAYS;
-  const tallies = new Map<string, PostTally>();
-  const loud: Post[] = [];
-  for (const p of feed) {
-    if (p.day < cutoff || wanted.has(p.id)) continue;
-    const tally = tallyOf(p);
-    if (tally.total === 0) continue;
-    tallies.set(p.id, tally);
-    loud.push(p);
-  }
-  loud.sort((a, b) => (tallies.get(b.id)!.total - tallies.get(a.id)!.total)
-    || b.day - a.day || a.id.localeCompare(b.id));
-  for (const p of loud.slice(0, limit)) wanted.add(p.id);
+  return memo(world, `feed:for:${c.id}:${limit}`, () => {
+    const byAuthor = postsByAuthor(world);
+    const wanted = new Set<string>();
+    for (const p of byAuthor.get(c.id) ?? []) wanted.add(p.id);
+    for (const friend of friendsOf(world, c.id)) {
+      for (const p of byAuthor.get(friend) ?? []) wanted.add(p.id);
+    }
+    // Each candidate is tallied once, not once per comparison: the sort below
+    // used to recount every reaction on every post it looked at, which is most
+    // of what reading the wall cost the engine.
+    const { loud, tallies } = loudPosts(world);
+    let taken = 0;
+    for (const p of loud) {
+      if (taken >= limit) break;
+      if (wanted.has(p.id)) continue;
+      wanted.add(p.id);
+      taken++;
+    }
 
-  const out: ObservedPost[] = [];
-  for (let i = feed.length - 1; i >= 0 && out.length < limit; i--) {
-    const p = feed[i];
-    if (wanted.has(p.id)) out.push(observed(world, p, c.id, tallies.get(p.id)));
-  }
-  return out;
+    const out: ObservedPost[] = [];
+    for (let i = feed.length - 1; i >= 0 && out.length < limit; i--) {
+      const p = feed[i];
+      if (wanted.has(p.id)) out.push(observed(world, p, c.id, tallies.get(p.id)));
+    }
+    return out;
+  });
 }
 
 /**

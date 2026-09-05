@@ -48,6 +48,7 @@ import type { CustodyFactors, CustodyTerm } from './custody.ts';
 import type { Harm, PersonCode } from './persons.ts';
 import { LIFE_TERM_DAYS, PERSON_CODES, dailyErasure, isPersonCode, personLaw } from './persons.ts';
 import { clearParoleState, dailyParole, paroleCaseOf } from './parole.ts';
+import { memo } from '../util/memo.ts';
 
 /** Where the cells are: the Watch House, in the Commons. */
 export const JAIL_DISTRICT: DistrictId = 'commons';
@@ -161,6 +162,10 @@ export function inCustody(c: Citizen | null | undefined): boolean {
 
 /** Everyone in custody, in the city's turn order so the roll is stable. */
 export function jailedCitizens(world: World): Citizen[] {
+  return memo(world, 'jail:prisoners', () => jailedCitizensNow(world));
+}
+
+function jailedCitizensNow(world: World): Citizen[] {
   const out: Citizen[] = [];
   for (const id of world.order) {
     const c = world.citizens[id];

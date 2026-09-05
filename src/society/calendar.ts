@@ -30,6 +30,7 @@ import { fixtureOf, holdParade, playMatch } from '../culture/stadium.ts';
 import { holdBlockParty } from '../social/neighbours.ts';
 import { holdMemorial } from '../world/sunset.ts';
 import { referendumToday } from '../politics/referendums.ts';
+import { memo } from '../util/memo.ts';
 
 /** Names of the seven days; the last is Stillday, the rest day. */
 export const WEEKDAY_NAMES: readonly string[] = ['Kindleday', 'Forgeday', 'Tideday', 'Quillday', 'Lanternday', 'Marketday', 'Stillday'];
@@ -208,7 +209,8 @@ export function addHappening(world: World, spec: HappeningSpec): Happening {
 
 /** Happenings not yet held in a district at a given day and hour (now by default). */
 export function happeningsAt(world: World, district: DistrictId, day: number = world.day, hour: number = world.hour): Happening[] {
-  return (world.happenings ?? []).filter((h) => !h.done && h.district === district && h.day === day && h.hour === hour);
+  return memo(world, `happenings:${district}:${day}:${hour}`,
+    () => (world.happenings ?? []).filter((h) => !h.done && h.district === district && h.day === day && h.hour === hour));
 }
 
 /** Today's happenings still to come (or under way), optionally in one district, earliest first. */

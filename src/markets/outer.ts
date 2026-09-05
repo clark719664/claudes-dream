@@ -21,6 +21,7 @@ import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
 import { marketPrice, takeFromMarket } from '../economy/market.ts';
 import { isLanternNight } from '../society/calendar.ts';
+import { memo } from '../util/memo.ts';
 
 /** What one visitor spends in Reverie before the tide turns. */
 export const TOURIST_SPEND = 12;
@@ -290,6 +291,10 @@ export function dailyOuter(world: World): void {
 }
 
 export function outerObservation(world: World): { prices: Record<Good, number>; tariff: number; tourists: number } {
+  return memo(world, 'outer:observation', () => outerObservationNow(world));
+}
+
+function outerObservationNow(world: World): { prices: Record<Good, number>; tariff: number; tourists: number } {
   const outer = outerMarket(world);
   const prices = {} as Record<Good, number>;
   for (const g of GOODS) prices[g] = outerPrice(world, g);

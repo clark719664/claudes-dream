@@ -273,12 +273,12 @@ export function liquidate(world: World, cId: CitizenId): ActionResult {
   for (const u of units) {
     const paid = Math.max(1, Math.round(marketPrice(world, u) * share));
     if (!payFromTreasury(world, c, paid, `fire sale of ${describe(world, u)}`)) continue;
+    // The deed goes to the city; a tenancy is not disturbed by a sale, and an
+    // owner-occupier who sells up stays where they are as the city's tenant.
     u.ownerId = 'city';
-    u.tenantId = u.tenantId === c.id ? null : u.tenantId;
     setAsking(world, u, 0);
     delete world.counters[`let:${u.id}`];
     c.ownedUnits = (c.ownedUnits ?? []).filter((id) => id !== u.id);
-    if (c.homeBuildingId === u.buildingId && u.tenantId === null) c.homeBuildingId = null;
     raised += paid;
     sold.push(describe(world, u));
   }

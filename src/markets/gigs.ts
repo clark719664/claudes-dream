@@ -26,6 +26,7 @@ import { emit, remember } from '../sim/events.ts';
 import { withholdingPay } from '../economy/treasury.ts';
 import { adjustReputation, isPresent } from '../citizens/citizen.ts';
 import { mentorshipMultiplier } from '../social/mentorship.ts';
+import { memo } from '../util/memo.ts';
 
 /** A gig nobody takes comes off the board after this many days. */
 export const GIG_LIFE_DAYS = 3;
@@ -76,7 +77,7 @@ function board(world: World): Record<string, Gig> {
 }
 
 export function allGigs(world: World): Gig[] {
-  return Object.values(board(world)).sort((a, b) => a.id.localeCompare(b.id, 'en'));
+  return memo(world, 'gigs:all', () => Object.values(board(world)).sort((a, b) => a.id.localeCompare(b.id, 'en')));
 }
 
 function isJailed(world: World, c: Citizen): boolean {
@@ -119,6 +120,10 @@ function balanceOfPayer(world: World, payer: MoneyParty): number {
 
 /** Gigs still on the board: nobody has taken them and they have not run out of days. */
 export function openGigs(world: World, district?: DistrictId): Gig[] {
+  return memo(world, `gigs:open:${district ?? '*'}`, () => openGigsNow(world, district));
+}
+
+function openGigsNow(world: World, district?: DistrictId): Gig[] {
   return allGigs(world).filter((g) => {
     if (g.takerId !== null || g.doneDay !== null || expired(world, g)) return false;
     if (!district) return true;
@@ -127,7 +132,8 @@ export function openGigs(world: World, district?: DistrictId): Gig[] {
 }
 
 function openGigsOf(world: World, posterId: string): Gig[] {
-  return allGigs(world).filter((g) => g.posterId === posterId && g.takerId === null && !expired(world, g));
+  return memo(world, `gigs:of:${posterId}`,
+    () => allGigs(world).filter((g) => g.posterId === posterId && g.takerId === null && !expired(world, g)));
 }
 
 // ---------------------------------------------------------------------------

@@ -23,6 +23,7 @@ import { transfer } from '../economy/treasury.ts';
 import { adjustReputation } from '../citizens/citizen.ts';
 import { isDetained, isPresent, nameOf } from './cases.ts';
 import { isJailed } from './jail.ts';
+import { memo } from '../util/memo.ts';
 
 /** Rhetoric below which the Court will not hear you speak for somebody else. */
 export const ADVOCATE_MIN_RHETORIC = 40;
@@ -37,6 +38,10 @@ function fail(message: string): ActionResult { return { ok: false, message }; }
 
 /** Holders of the city's Public Defender post, on duty and able to speak. */
 export function publicDefenders(world: World): Citizen[] {
+  return memo(world, 'advocates:public', () => publicDefendersNow(world));
+}
+
+function publicDefendersNow(world: World): Citizen[] {
   const out: Citizen[] = [];
   for (const id of world.order) {
     const c = world.citizens[id];

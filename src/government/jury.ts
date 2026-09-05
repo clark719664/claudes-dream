@@ -27,7 +27,7 @@ import { areFriends, areRivals, bondBetween } from '../citizens/relationships.ts
 import { areFamily } from '../society/family.ts';
 import { publicDefenders } from './advocates.ts';
 import { GUILT_THRESHOLD, judgeBelief } from './bench.ts';
-import { byFiling, canSit, isDetained, isPresent, nameOf, priorsOf } from './cases.ts';
+import { byFiling, canSit, casesInSession, isDetained, isPresent, nameOf, priorsOf } from './cases.ts';
 import { isJailed } from './jail.ts';
 
 /** How much more a juror's reading wanders than a judge's. */
@@ -233,8 +233,8 @@ export function describeJury(world: World, k: Case): string {
 /** The cases before a citizen as a juror this sitting, as their observation shows them. */
 export function juryFor(world: World, cId: CitizenId): ObservedBenchCase[] {
   const mine: Case[] = [];
-  for (const k of Object.values(world.cases)) {
-    if (k.status === 'in_session' && juryOf(k).includes(cId)) mine.push(k);
+  for (const k of casesInSession(world)) {
+    if (juryOf(k).includes(cId)) mine.push(k);
   }
   if (mine.length === 0) return [];
   mine.sort(byFiling);

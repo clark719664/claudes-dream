@@ -76,8 +76,12 @@ function crime(w: World, c: Citizen): void {
   // into P02 and then, for the few who go that far, into an assault.
   const grudge = others.find((o) => hostilityCount(w, c.id, o.id) > 0);
   const victim = grudge ?? pick(w, others);
+  // Four in ten of these hours are theft and four are hostility: the soak's
+  // whole purpose is to run every invariant of both tracks for ninety days,
+  // and a script that reaches the Code of Persons once in a season proves
+  // nothing about it.
   const roll = randInt(w, 0, 9);
-  if (roll < 6) {
+  if (roll < 4) {
     const amount = Math.min(victim.wallet, randInt(w, 10, 80));
     if (amount > 0) transfer(w, victim.id, c.id, amount, 'theft', 'stole');
     commitOffence(w, c.id, amount >= 50 ? 'L08' : 'L04', { victimId: victim.id, amount });

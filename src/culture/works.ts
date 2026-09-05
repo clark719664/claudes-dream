@@ -28,6 +28,7 @@ import { adjustReputation, isPresent } from '../citizens/citizen.ts';
 import { recordMilestone } from '../identity/goals.ts';
 import { acquire } from './museum.ts';
 import { paperOfJob } from './press.ts';
+import { memo } from '../util/memo.ts';
 
 /** What making a work teaches its maker. */
 export const WORK_HOURS_SKILL = 0.5;
@@ -95,9 +96,9 @@ function workBook(world: World): Record<string, Work> {
 
 /** Every work, oldest first, in a stable order. */
 export function allWorks(world: World): Work[] {
-  return Object.values(workBook(world)).sort(
+  return memo(world, 'works:all', () => Object.values(workBook(world)).sort(
     (a, b) => a.createdDay - b.createdDay || a.id.localeCompare(b.id),
-  );
+  ));
 }
 
 export function workById(world: World, id: string): Work | null {
@@ -306,20 +307,20 @@ export function bindStory(world: World, c: Citizen, text: string): Work {
 // ---------------------------------------------------------------------------
 
 export function worksOf(world: World, cId: CitizenId): Work[] {
-  return allWorks(world).filter((w) => w.creatorId === cId);
+  return memo(world, `works:of:${cId}`, () => allWorks(world).filter((w) => w.creatorId === cId));
 }
 
 /** Works that hang in a district: by the building they call home. */
 export function worksIn(world: World, d: DistrictId): Work[] {
-  return allWorks(world).filter((w) => world.buildings[w.home]?.district === d);
+  return memo(world, `works:in:${d}`, () => allWorks(world).filter((w) => world.buildings[w.home]?.district === d));
 }
 
 /** What the city is talking about: popularity, then quality, then the older work. */
 export function topWorks(world: World, limit = 5): Work[] {
   const n = Number.isFinite(limit) ? Math.max(0, Math.round(limit)) : 5;
-  return allWorks(world)
+  return memo(world, `works:top:${n}`, () => [...allWorks(world)]
     .sort((a, b) => b.popularity - a.popularity || b.quality - a.quality || a.id.localeCompare(b.id))
-    .slice(0, n);
+    .slice(0, n));
 }
 
 /** The mean of a work's reviews, or null when nobody has said anything. */

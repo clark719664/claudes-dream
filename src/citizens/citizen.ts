@@ -13,11 +13,12 @@ import { FIRST_NAMES, LINEAGES } from '../data/names.ts';
 import { FAMILY_NAMES } from '../data/catalogue.ts';
 import { pick, poisson, rand, randInt } from '../util/rng.ts';
 import { nextId } from '../util/ids.ts';
+import { isFrozen } from '../util/memo.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
 import { comfortDecayMultiplier, comfortFactorOf, moveHome } from '../economy/housing.ts';
 import { joblessShare } from '../economy/planning.ts';
-import { friendsOf } from './relationships.ts';
+import { friendsOf, presentIds } from './relationships.ts';
 import { departCity } from './departure.ts';
 import { giveOrientation } from './orientation.ts';
 import { assignTastes } from '../society/tastes.ts';
@@ -303,9 +304,14 @@ export function isDetained(world: World, c: Citizen): boolean {
   return c.detainedUntilTick !== null && c.detainedUntilTick > world.tick;
 }
 
-/** Living in the city: in the turn order (not exiled, not emigrated). */
+/**
+ * Living in the city: in the turn order (not exiled, not emigrated). Asked of
+ * everybody many times an hour, so while the city is being read it is answered
+ * off the round's own roll instead of walking the turn order every time.
+ */
 export function isPresent(world: World, c: Citizen): boolean {
-  return c.standing !== 'exiled' && world.order.includes(c.id);
+  if (c.standing === 'exiled') return false;
+  return isFrozen(world) ? presentIds(world).has(c.id) : world.order.includes(c.id);
 }
 
 /** Not exiled and not detained. */
@@ -317,7 +323,7 @@ export function canAct(world: World, c: Citizen): boolean {
 export function isEligibleVoter(world: World, c: Citizen): boolean {
   if (c.standing !== 'good' && c.standing !== 'probation') return false;
   if (isDetained(world, c)) return false;
-  return world.order.includes(c.id);
+  return isFrozen(world) ? presentIds(world).has(c.id) : world.order.includes(c.id);
 }
 
 /** First day of the current council cycle (the previous election day, or founding). */

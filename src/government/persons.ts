@@ -245,6 +245,25 @@ export function othersPresent(world: World, district: DistrictId, except: Citize
   return out;
 }
 
+/**
+ * Could this citizen erase any one of the people standing here?
+ *
+ * Exactly `candidates.some((o) => erasureConditions(world, c.id, o.id).ok)`,
+ * and it is asked of every citizen every hour by
+ * `actions/execute.ts availableActions`. The three conditions that do not
+ * depend on which of them it would be — the tool carried, the night, the
+ * officer in the street — are tested once and first, so the ordinary hour of
+ * an ordinary citizen costs one look in its own pockets instead of a walk
+ * through the whole district for every neighbour it can see.
+ */
+export function couldEraseAnyone(world: World, c: Citizen, candidates: Citizen[]): boolean {
+  if (candidates.length === 0) return false;
+  if (!carriesFoundryTool(c)) return false;
+  if (!isNight(world)) return false;
+  if (officerPresent(world, c.district)) return false;
+  return candidates.some((o) => erasureConditions(world, c.id, o.id).ok);
+}
+
 export interface ErasureCheck {
   /** A tool from the Foundry, carried. */
   means: boolean;

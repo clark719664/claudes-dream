@@ -22,6 +22,7 @@ import { emit, remember } from '../sim/events.ts';
 import { isPresent } from '../citizens/citizen.ts';
 import { CHRONICLE_LENGTH, HEADLINES_PER_EDITION, headlineShape } from '../sim/chronicle.ts';
 import { PLATFORM_FIELDS, positionOf } from '../politics/promises.ts';
+import { memo } from '../util/memo.ts';
 
 /** How far a morning's reading moves a reader's opinion of the Government. */
 export const APPROVAL_PAPER_SHIFT = 0.05;
@@ -335,5 +336,5 @@ export function readershipShare(world: World): Record<PaperId, number> {
 
 /** Both papers' leads, for the observation and the dashboard. */
 export function frontPages(world: World): { paper: PaperId; headline: string | null }[] {
-  return PAPERS.map((p) => ({ paper: p, headline: frontPage(world, p)?.headlines?.[0] ?? null }));
+  return memo(world, 'press:fronts', () => PAPERS.map((p) => ({ paper: p, headline: frontPage(world, p)?.headlines?.[0] ?? null })));
 }

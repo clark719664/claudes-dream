@@ -25,7 +25,7 @@ import { emit, remember } from '../sim/events.ts';
 import { adjustReputation } from '../citizens/citizen.ts';
 import { assignDefender } from './advocates.ts';
 import { GUILT_THRESHOLD, judgeBelief, selectBench } from './bench.ts';
-import { byFiling, canSit, courtTallyHour, isPresent, nameOf, priorsOf } from './cases.ts';
+import { byFiling, canSit, casesInSession, courtTallyHour, isPresent, nameOf, priorsOf } from './cases.ts';
 import { castJuryVote, describeJury, fillJuryVotes, juryOf, juryTally, needsJury, seatJury, seatedJurors } from './jury.ts';
 import { computeSentence, describeSentence, executeSentence } from './sentencing.ts';
 import { APPEAL_WINDOW_DAYS } from './appeals.ts';
@@ -320,8 +320,8 @@ export function holdCourt(world: World): void {
  */
 export function benchFor(world: World, judgeId: CitizenId): ObservedBenchCase[] {
   const mine: Case[] = [];
-  for (const k of Object.values(world.cases)) {
-    if (k.status === 'in_session' && k.judges.includes(judgeId)) mine.push(k);
+  for (const k of casesInSession(world)) {
+    if (k.judges.includes(judgeId)) mine.push(k);
   }
   if (mine.length === 0) return [];
   mine.sort(byFiling);

@@ -21,6 +21,7 @@ import { resolveStatic } from '../src/server/http.ts';
 import { hashKey } from '../src/server/agents.ts';
 import { nextId } from '../src/util/ids.ts';
 import { transfer } from '../src/economy/treasury.ts';
+import { priceMultiplier } from '../src/economy/land.ts';
 import { recordPlatform } from '../src/politics/promises.ts';
 import { totalMoney } from './helpers.ts';
 
@@ -1246,7 +1247,8 @@ test('the older endpoints gained the metropolis', async () => {
   const owned = (property.units as Json[]).find((u) => u.id === city.ids.unit) as Json;
   assert.equal(owned.owner, city.world.citizens[city.ids.mayor].name);
   assert.equal(owned.buildingName, city.world.buildings.glasswater_terraces?.name ?? owned.buildingName);
-  assert.equal(owned.price, 60 * 18);
+  // sixty days of rent, at a premium to the land it stands on (`PROPERTY.md` §2)
+  assert.equal(owned.price, Math.round(60 * 18 * priceMultiplier(city.world, 'harbor_market')));
   const shares = eco.shares as Json[];
   assert.equal(shares[0].name, 'The Glasswater Rooms');
   assert.equal((shares[0].holders as Json[])[0].qty, 51);

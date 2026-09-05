@@ -19,6 +19,7 @@ import { transfer } from '../economy/treasury.ts';
 import { buyFromMarket } from '../economy/market.ts';
 import { adjustBond } from '../citizens/relationships.ts';
 import { householdMembers, preferenceScore } from './tastes.ts';
+import { memo } from '../util/memo.ts';
 
 export const EMPORIUM_ID = 'emporium' as const;
 export const EMPORIUM_NAME = 'The Emporium';
@@ -146,6 +147,10 @@ function stocked(shelf: Record<string, ShelfEntry> | undefined): boolean {
 
 /** Shops with something on the shelf in a district; the Emporium is listed last, in Harbor Market. */
 export function shopsIn(world: World, district: DistrictId): Shop[] {
+  return memo(world, `shops:${district}`, () => openShopsIn(world, district));
+}
+
+function openShopsIn(world: World, district: DistrictId): Shop[] {
   const out: Shop[] = [];
   for (const b of Object.values(world.businesses)) {
     if (b.dissolvedDay !== null || b.district !== district || !stocked(b.shelf)) continue;

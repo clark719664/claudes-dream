@@ -20,6 +20,7 @@ import type { Citizen, CitizenId, Platform, World } from '../types.ts';
 import { isPresent } from '../citizens/citizen.ts';
 import { SCHOOL_INFO, PAPER_INFO } from '../data/metropolis.ts';
 import { PLATFORM_FIELDS, keptShare, positionOf } from './promises.ts';
+import { memo } from '../util/memo.ts';
 
 /** Days between the readings of a citizen's purse that make a trend. */
 export const WALLET_TREND_DAYS = 3;
@@ -178,6 +179,10 @@ export function dailyApproval(world: World): void {
 
 /** The city's own reading: the mean of what its citizens think, rounded to 2. */
 export function cityApproval(world: World): { mayor: number; council: number } {
+  return memo(world, 'approval:city', () => cityApprovalNow(world));
+}
+
+function cityApprovalNow(world: World): { mayor: number; council: number } {
   let mayor = 0;
   let council = 0;
   let n = 0;

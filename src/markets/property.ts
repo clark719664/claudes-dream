@@ -35,6 +35,7 @@ import { adjustReputation, isPresent } from '../citizens/citizen.ts';
 import { tellNeighbours } from '../social/neighbours.ts';
 import { isOpen } from '../world/growth.ts';
 import { propertyTaxRate } from './levers.ts';
+import { memo } from '../util/memo.ts';
 
 /** A unit's price is this many days of its rent. */
 export const PRICE_MULTIPLE = 60;
@@ -85,7 +86,7 @@ function register(world: World): Record<string, PropertyUnit> {
 
 /** Every unit, in a stable order (the id counter is monotonic). */
 export function allUnits(world: World): PropertyUnit[] {
-  return Object.values(register(world)).sort((a, b) => a.id.localeCompare(b.id, 'en'));
+  return memo(world, 'property:all', () => Object.values(register(world)).sort((a, b) => a.id.localeCompare(b.id, 'en')));
 }
 
 function isJailed(world: World, c: Citizen): boolean {
@@ -264,7 +265,7 @@ export function unitPrice(world: World, u: PropertyUnit): number {
 }
 
 export function unitsFor(world: World, ownerId: CitizenId | 'city'): PropertyUnit[] {
-  return allUnits(world).filter((u) => u.ownerId === ownerId);
+  return memo(world, `property:for:${ownerId}`, () => allUnits(world).filter((u) => u.ownerId === ownerId));
 }
 
 /** The business trading out of a shopfront, longest-standing first. */
@@ -294,7 +295,7 @@ export function onSale(world: World, u: PropertyUnit): boolean {
 }
 
 export function unitsOnSale(world: World): PropertyUnit[] {
-  return allUnits(world).filter((u) => onSale(world, u));
+  return memo(world, 'property:onSale', () => allUnits(world).filter((u) => onSale(world, u)));
 }
 
 // ---------------------------------------------------------------------------

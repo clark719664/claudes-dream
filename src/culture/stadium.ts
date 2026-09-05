@@ -26,6 +26,7 @@ import { adjustReputation, isPresent } from '../citizens/citizen.ts';
 import { adjustBond, bondBetween } from '../citizens/relationships.ts';
 import { recordMilestone } from '../identity/goals.ts';
 import { addHappening, happeningsAt } from '../society/calendar.ts';
+import { memo } from '../util/memo.ts';
 
 export const STADIUM: BuildingId = 'stadium';
 export const PARADE_VENUE: BuildingId = 'central_plaza';
@@ -440,6 +441,10 @@ function goalDifference(world: World, d: DistrictId): number {
 
 /** Three for a win, one for a draw; ties by goal difference, then by district. */
 export function leagueTable(world: World): { district: DistrictId; name: string; played: number; points: number }[] {
+  return memo(world, 'stadium:table', () => leagueTableNow(world));
+}
+
+function leagueTableNow(world: World): { district: DistrictId; name: string; played: number; points: number }[] {
   const book = teamBook(world);
   const rows: { district: DistrictId; name: string; played: number; points: number; gd: number }[] = [];
   for (const d of openDistricts(world)) {
@@ -541,6 +546,10 @@ export function teamObservation(world: World, t: Team | null): ObservedTeam | nu
 
 /** The league as the city reads it, in table order. */
 export function leagueObservation(world: World): ObservedTeam[] {
+  return memo(world, 'stadium:league', () => leagueObservationNow(world));
+}
+
+function leagueObservationNow(world: World): ObservedTeam[] {
   const book = teamBook(world);
   const out: ObservedTeam[] = [];
   for (const row of leagueTable(world)) {

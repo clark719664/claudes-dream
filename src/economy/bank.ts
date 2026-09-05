@@ -8,6 +8,7 @@ import type { ActionResult, Citizen, CitizenId, Loan, World } from '../types.ts'
 import { emit, remember } from '../sim/events.ts';
 import { nextId } from '../util/ids.ts';
 import { residentIds, transfer } from './treasury.ts';
+import { memo } from '../util/memo.ts';
 
 export const LOAN_RATE_PER_DAY = 0.02;
 /** Loans are capped at this many days of the borrower's average income. */
@@ -23,6 +24,10 @@ function fail(message: string): ActionResult { return { ok: false, message }; }
 
 /** The bank opens when a banker is at their desk (job held by an active citizen, bank standing). */
 export function bankOpen(world: World): boolean {
+  return memo(world, 'bank:open', () => bankerAtTheDesk(world));
+}
+
+function bankerAtTheDesk(world: World): boolean {
   const bank = world.buildings.lantern_bank;
   if (bank && bank.damage >= 1) return false;
   for (const job of Object.values(world.jobs)) {

@@ -17,6 +17,7 @@ import { WEALTH_TAX_THRESHOLD } from '../data/metropolis.ts';
 import { emit, remember } from '../sim/events.ts';
 import { residentIds, transfer } from '../economy/treasury.ts';
 import { setTariff, tariff } from './outer.ts';
+import { memo } from '../util/memo.ts';
 
 /** The most of a wallet's excess the city may take in a day. */
 export const WEALTH_TAX_MAX = 0.02;
@@ -199,10 +200,10 @@ export function dailyLevers(world: World): void {
 export function leversObservation(world: World): {
   propertyTax: number; wealthTax: number; tariff: number; reserveTarget: number;
 } {
-  return {
+  return memo(world, 'levers:observation', () => ({
     propertyTax: propertyTaxRate(world),
     wealthTax: wealthTaxRate(world),
     tariff: tariffRate(world),
     reserveTarget: reserveTarget(world),
-  };
+  }));
 }

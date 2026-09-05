@@ -256,7 +256,10 @@ test('every verdict names its track and carries its reasoning', { timeout: 900_0
       `a verdict did not say which code it was under: ${e.text}`);
       // The tally, and a reason from somebody who voted the way it went.
       assert.match(e.text, /\d+–\d+: /, `a verdict did not say how the bench divided: ${e.text}`);
-      assert.match(e.text, /The evidence stands at \d+ of 100/, `a verdict gave no reasoning: ${e.text}`);
+      // A judge weighs it ("The evidence stands at 62 of 100…") and a juror
+      // weighs it in their own voice ("As a juror I find the evidence at…");
+      // either is a reason from somebody who voted the way it went.
+      assert.match(e.text, /evidence (?:stands )?at \d+ of 100/, `a verdict gave no reasoning: ${e.text}`);
     }
   }
   assert.ok(verdicts > 0, 'the cities decided no cases at all');

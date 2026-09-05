@@ -12,7 +12,7 @@ import { nextId } from '../util/ids.ts';
 import { emit, remember } from '../sim/events.ts';
 import { transfer } from '../economy/treasury.ts';
 import { detain } from './watch.ts';
-import { byFiling, caseNumber, isDetained, latestConviction, nextCourtTick } from './cases.ts';
+import { byFiling, caseNumber, casesAgainst, isDetained, latestConviction, nextCourtTick } from './cases.ts';
 import { executeSentence } from './sentencing.ts';
 import { dailyRecovery } from './recovery.ts';
 import { APPEAL_WINDOW_DAYS } from './appeals.ts';
@@ -49,6 +49,7 @@ export {
   CONTEMPT_AFTER_DAYS, GARNISHMENT_SHARE, ableToPay, dailyRecovery, debtOf, payRestitution, recoveryStep,
   strikeOffRestitution,
 } from './recovery.ts';
+import { memo } from '../util/memo.ts';
 
 export interface ChargeSpec {
   defendantId: CitizenId;
@@ -184,16 +185,15 @@ export function dailyJustice(world: World): void {
 
 /** Charges still awaiting a verdict against a citizen — waiting or before a bench — oldest first. */
 export function pendingCasesFor(world: World, cId: CitizenId): Case[] {
-  return Object.values(world.cases)
-    .filter((k) => k.defendantId === cId && (k.status === 'pending' || k.status === 'in_session'))
+  return casesAgainst(world, cId)
+    .filter((k) => k.status === 'pending' || k.status === 'in_session')
     .sort(byFiling);
 }
 
 /** The most recently filed case against a citizen, whatever its status. */
 export function latestCaseFor(world: World, cId: CitizenId): Case | null {
   let best: Case | null = null;
-  for (const k of Object.values(world.cases)) {
-    if (k.defendantId !== cId) continue;
+  for (const k of casesAgainst(world, cId)) {
     if (!best || k.filedTick > best.filedTick || (k.filedTick === best.filedTick && caseNumber(k.id) > caseNumber(best.id))) best = k;
   }
   return best;

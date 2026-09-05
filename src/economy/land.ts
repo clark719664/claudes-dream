@@ -103,6 +103,15 @@ export const PRESTIGE_WEIGHT: Record<BusinessKind, number> = {
   studio: 0.8, cafe: 0.25, shop: 0.15, clinic: 0.1, workshop: 0.05, courier: 0,
 };
 
+/**
+ * Reverie's own class multiplier (`MOBILITY.md` §4): rent ×1.0, price ×1.0.
+ * Vantage would charge 2.5 and 3.0 of these, the Verge 0.25 and 0.2. Every
+ * price in this file goes through them, so a second city needs its numbers
+ * here and nothing else.
+ */
+export const CITY_RENT_CLASS = 1.0;
+export const CITY_PRICE_CLASS = 1.0;
+
 /** Footfall, and the trade it brings, are both held to a band. */
 export const FOOTFALL_MIN = 0.4;
 export const FOOTFALL_MAX = 3.0;
@@ -408,7 +417,7 @@ export function footfallFor(world: World, kind: BusinessKind, d: DistrictId): nu
  * café in Foundry Row — and serves several times the customers.
  */
 export function premisesRent(world: World, kind: BusinessKind, d: DistrictId, base: number): number {
-  const rent = base * landValue(world, d) * footfallFor(world, kind, d);
+  const rent = base * landValue(world, d) * footfallFor(world, kind, d) * CITY_RENT_CLASS;
   return Math.max(1, Math.round(rent));
 }
 
@@ -430,7 +439,7 @@ export function homeRent(world: World, tier: 1 | 2 | 3, buildingId: string | nul
   const base = world.housing?.rent?.[tier] ?? 0;
   const d = districtOfBuilding(world, buildingId);
   const land = d ? landValue(world, d) : 1;
-  return Math.max(1, Math.round(base * (block?.rentFactor ?? 1) * land));
+  return Math.max(1, Math.round(base * (block?.rentFactor ?? 1) * land * CITY_RENT_CLASS));
 }
 
 /**
@@ -438,7 +447,7 @@ export function homeRent(world: World, tier: 1 | 2 | 3, buildingId: string | nul
  * premium to its yield (`PROPERTY.md` §2).
  */
 export function priceMultiplier(world: World, d: DistrictId): number {
-  return 0.8 + 0.4 * landValue(world, d);
+  return (0.8 + 0.4 * landValue(world, d)) * CITY_PRICE_CLASS;
 }
 
 // ---------------------------------------------------------------------------
