@@ -126,11 +126,16 @@ test('travel is one step along a shortest path, and the night is for sleeping at
   assert.deepEqual(decide(w, sleepy), { type: 'rest' });
 });
 
-test('a homeless citizen with money moves into the Lofts', () => {
+test('a homeless citizen with money moves into the best tier it can afford', () => {
+  // Rent now varies by address (docs/PROPERTY.md §2), so the best-affordable
+  // tier for a given wallet is not fixed: on seed 42 the cheapest Terraces
+  // room (tier 2) lets for 10, comfortably inside a 150-lumen wallet, and
+  // tryHousing tries the highest tier down, so it lands there rather than
+  // the Lofts.
   const w = makeWorld();
   at(w, 1, 12);
   const c = makeCitizen(w, { homeTier: 0, wallet: 150 });
-  assert.deepEqual(decide(w, c), { type: 'move_home', tier: 1 });
+  assert.deepEqual(decide(w, c), { type: 'move_home', tier: 2 });
 });
 
 test('broke, dishonest and miserable with a target present: theft (deterministic per seed)', () => {

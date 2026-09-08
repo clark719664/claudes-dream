@@ -370,8 +370,44 @@ export function recomputeLand(world: World): LandReadings {
   }
 
   CACHE.set(world, { day: world.day, readings });
+  world.counters['land:asOfDay'] = world.day;
   for (const d of DISTRICT_IDS) {
     world.counters[`land:${d}`] = Math.round(readings[d].value * 1000) / 1000;
+    world.counters[`land:${d}:footfall`] = Math.round(readings[d].footfall * 1000) / 1000;
+    world.counters[`land:${d}:prestige`] = Math.round(readings[d].prestige * 1000) / 1000;
+  }
+  return readings;
+}
+
+/**
+ * Rebuild the day's reading from its mirror in `world.counters` rather than
+ * recomputing it from whatever the city looks like right now.
+ *
+ * `CACHE` is a `WeakMap` keyed by the live `World` object, so it holds
+ * nothing for a world that was just loaded from a save — even one saved
+ * an hour into a day whose reading had already been struck. Without this,
+ * the first citizen to ask `landReadings` after a load forced a *fresh*
+ * `recomputeLand`, pinning the day's number to whatever the city looked
+ * like at that later moment instead of the morning snapshot every other
+ * reader that day had already agreed on. A save is not a lull in the
+ * city's day, so the two ought never to disagree — and every other field
+ * of `LandReading` beyond `value`, `footfall` and `prestige` is read only
+ * from inside this module's own same-tick computation, never cached and
+ * reused, so the placeholders below cost nothing real.
+ */
+function mirroredReadings(world: World): LandReadings | null {
+  if (world.counters['land:asOfDay'] !== world.day) return null;
+  const readings = {} as LandReadings;
+  for (const d of DISTRICT_IDS) {
+    const value = world.counters[`land:${d}`];
+    if (typeof value !== 'number') return null;
+    const footfall = world.counters[`land:${d}:footfall`] ?? 1;
+    const prestige = world.counters[`land:${d}:prestige`] ?? 0;
+    readings[d] = {
+      district: d, amenity: 0, safety: 1, prestige, access: 0, condition: 1, raw: 0,
+      normalised: 1, scarcity: 0.85, value, visits: 0, footfall,
+      units: 0, occupied: 0, residents: 0, offences: 0,
+    };
   }
   return readings;
 }
@@ -380,6 +416,11 @@ export function recomputeLand(world: World): LandReadings {
 export function landReadings(world: World): LandReadings {
   const held = CACHE.get(world);
   if (held && held.day === world.day) return held.readings;
+  const mirrored = mirroredReadings(world);
+  if (mirrored) {
+    CACHE.set(world, { day: world.day, readings: mirrored });
+    return mirrored;
+  }
   return recomputeLand(world);
 }
 
