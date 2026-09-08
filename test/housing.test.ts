@@ -5,6 +5,8 @@ import {
   CELLS_RENT, addHousingProgress, addressName, cellsOpen, comfortDecayMultiplier, dailyHousing,
   evict, inTheCells, moveHome, moveHomeTo, rentOf, takeBunk, vacancies,
 } from '../src/economy/housing.ts';
+import { SUSPENDED_ACTIONS } from '../src/types.ts';
+import { availableActions, executeAction } from '../src/actions/execute.ts';
 import { createHousehold, householdOf, joinHousehold } from '../src/society/households.ts';
 import { openDistrict } from '../src/world/growth.ts';
 import { landValue } from '../src/economy/land.ts';
@@ -284,6 +286,34 @@ test('the Cells take anyone the city has no room for, and are never a vacancy', 
   assert.equal(moveHome(w, homeless.id, 0).ok, true);
   assert.equal(w.housing.capacity[1], capacity);
   assert.equal(vacancies(w)[1], 0);
+});
+
+test('a suspension takes a citizen\'s work and trade, not the roof over its head', () => {
+  const w = makeWorld();
+  for (let i = 0; i < 3; i++) makeCitizen(w);
+  const banned = makeCitizen(w, { wallet: 60 });
+  banned.standing = 'suspended';
+  banned.suspendedUntilDay = w.day + 10;
+
+  // The Charter takes work, trade, the vote and office (`CONSTITUTION.md` §92).
+  assert.ok(!SUSPENDED_ACTIONS.includes('work'));
+  assert.ok(!SUSPENDED_ACTIONS.includes('buy_property'));
+  // It does not take a room: a citizen who may buy its dinner may rent the
+  // place it eats it in, and the Cells turn nobody away (`PROPERTY.md` §3).
+  assert.ok(SUSPENDED_ACTIONS.includes('move_home'));
+  assert.ok(availableActions(w, banned).includes('move_home'), 'a suspended citizen was offered no roof');
+
+  const took = executeAction(w, banned.id, { type: 'move_home', tier: 1 });
+  assert.equal(took.ok, true, took.message);
+  assert.equal(banned.homeTier, 1);
+
+  // And when the city's own rooms are full, the floor under it still holds.
+  assert.equal(executeAction(w, banned.id, { type: 'move_home', tier: 0 }).ok, true);
+  openDistrict(w, 'undercroft');
+  w.housing.occupied[1] = w.housing.capacity[1];
+  const bunked = executeAction(w, banned.id, { type: 'move_home', tier: 1 });
+  assert.equal(bunked.ok, true, bunked.message);
+  assert.equal(inTheCells(banned), true, 'a suspension is not a sentence of sleeping in the street');
 });
 
 test('a bunk costs three lumens a day and nobody is ever put out of one', () => {

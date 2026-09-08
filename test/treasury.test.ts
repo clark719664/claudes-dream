@@ -4,7 +4,7 @@ import { makeWorld, makeCitizen, totalMoney } from './helpers.ts';
 import type { Business, World } from '../src/types.ts';
 import {
   auditMoneySupply, balanceOf, dailyTreasuryRollover, formatLumens, lastBalanceSheet, moneySupply, payDividend, paySalaries,
-  transfer, treasuryFlowThisTick, withholdingPay,
+  transfer, treasuryFlowThisTick, treasuryTotals, withholdingPay,
 } from '../src/economy/treasury.ts';
 
 function makeBusiness(world: World, ownerId: string, treasury = 100): Business {
@@ -338,4 +338,13 @@ test("the Treasury keeps this tick's flows apart and publishes yesterday's balan
   assert.equal(w.treasury.revenueToday, 0);
   transfer(w, c.id, 'treasury', 3, 'fee', 'the new day');
   assert.deepEqual(lastBalanceSheet(w), { revenue: 107, spend: 40 }, 'and it stands until the next close');
+
+  // The running totals have no seam: they count every lumen that ever crossed
+  // the Treasury, including the ones the rollover paid after it closed the
+  // day's books. Anything measuring one day's flows has to read them, not the
+  // daily counters, or it loses the whole of the morning.
+  assert.deepEqual(treasuryTotals(w), { revenue: 110, spend: 40 });
+  transfer(w, 'treasury', c.id, 6, 'grant', 'after the books closed, and still counted');
+  assert.deepEqual(treasuryTotals(w), { revenue: 110, spend: 46 });
+  assert.equal(lastBalanceSheet(w).spend, 40, 'which is more than the closed day will ever say');
 });

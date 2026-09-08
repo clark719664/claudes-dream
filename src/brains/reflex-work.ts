@@ -4,18 +4,21 @@
  * running a business once rich and ambitious enough.
  */
 import { clamp } from '../types.ts';
-import type { Action, Citizen, HousingTier, Job, Skill, World } from '../types.ts';
+import type { Action, Citizen, DistrictId, HousingTier, Job, Skill, World } from '../types.ts';
 import type { BusinessKind } from '../types.ts';
 import { BUSINESS_JOBS, CITY_SHIFTS_PER_DAY, COURIER_CONTRACTS_PER_DAY } from '../data/jobs.ts';
 import { districtDistance } from '../data/city.ts';
 import { chance, rand } from '../util/rng.ts';
 import { bankOpen, creditLimit, avgDailyIncome } from '../economy/bank.ts';
 import { isQualified, openJobs } from '../economy/jobs.ts';
-import { activeBusinesses } from '../economy/business.ts';
+import { BANKRUPTCY_DAYS, activeBusinesses } from '../economy/business.ts';
 import { bazaarBuying, daysOfCover, priceVsAnchor } from '../economy/market.ts';
 import { GLUT_COVER_DAYS } from '../economy/planning.ts';
 import { cityCanPay, isBudgetedJob } from '../economy/budget.ts';
 import { cellsOpen, cheapestRent, vacancies } from '../economy/housing.ts';
+import { allUnits } from '../markets/property.ts';
+import { businessAsk, businessValue, businessesForSale } from '../markets/selling.ts';
+import { isOpen } from '../world/growth.ts';
 import { talentOf } from '../citizens/citizen.ts';
 import { bondBetween } from '../citizens/relationships.ts';
 import { teacherOnStaff } from '../actions/daily.ts';
@@ -41,6 +44,17 @@ export const GLUT_STOCK = 150;
 export const GLUT_SHIFTS = 4;
 /** An owner whose business has been in the red this many days trims staff. */
 export const TRIM_STAFF_AFTER_DAYS = 2;
+/**
+ * And this many days in the red before offering the whole concern instead: the
+ * last day before the doors shut, whatever the Council has set bankruptcy at.
+ * A business that is failing is worth more to somebody who can run it than it
+ * is wound up — the buyer takes the till, the stock and the staff contracts
+ * intact and the staff keep their jobs (`docs/MOBILITY.md` §2) — and an owner
+ * who waits for the third day has nothing left to offer anybody.
+ */
+export const OFFER_CONCERN_AFTER_DAYS = Math.max(1, BANKRUPTCY_DAYS - 1);
+/** Chance per free hour that a citizen well past what its tier costs looks upward. */
+export const MOVE_UP_CHANCE = 0.02;
 /** One business of a producing kind per this many citizens is as much as the Bazaar will absorb. */
 export const CITIZENS_PER_BUSINESS = 20;
 /** Shifts a day one courier can be expected to work, for sizing the contract pool. */
@@ -152,13 +166,50 @@ export function tryHousing(ctx: Ctx): Action | null {
     const lower = (c.homeTier - 1) as HousingTier;
     if (lower > 0 && v[lower as 1 | 2] > 0) return { type: 'move_home', tier: lower };
   }
-  if (c.homeTier < 3 && (c.needs.comfort < 60 || c.wallet > 1000) && chance(world, 0.02)) {
+  // Built up well past what this tier costs, with room above it somewhere in
+  // the city: the citizen moves up, to an address of its own choosing. Nothing
+  // pushes it — `docs/MOBILITY.md` is explicit that staying put is one of the
+  // answers, so this is a small chance on a comfortable wallet and no ladder.
+  if (c.homeTier < 3 && (c.needs.comfort < 60 || c.wallet > 1000) && chance(world, MOVE_UP_CHANCE)) {
     const next = (c.homeTier + 1) as 2 | 3;
     const price = rent(next);
     const affordable = price <= income * 0.25 || c.wallet > price * 40;
-    if (v[next] > 0 && affordable && c.wallet > price * 15) return { type: 'move_home', tier: next };
+    // The vacancy count is the mover's own gate (`economy/housing.moveHomeTo`),
+    // so it is this one's too: a register with a free room the ledger has not
+    // counted would only spend the hour on a move the city refuses.
+    if (v[next] > 0 && affordable && c.wallet > price * 15) {
+      const room = betterAddress(ctx, next, income);
+      return room ? { type: 'move_home', tier: next, district: room.district } : { type: 'move_home', tier: next };
+    }
   }
   return null;
+}
+
+/** A room of this tier nobody is living in, and the district it stands in. */
+export function freeAddresses(world: World, tier: 1 | 2 | 3): { district: DistrictId; rent: number }[] {
+  const out: { district: DistrictId; rent: number }[] = [];
+  for (const u of allUnits(world)) {
+    if (u.kind !== 'home' || u.tier !== tier || u.tenantId !== null) continue;
+    const district = world.buildings[u.buildingId]?.district ?? null;
+    if (!district || !isOpen(world, district)) continue;
+    out.push({ district, rent: Math.max(1, Math.round(u.rent)) });
+  }
+  return out.sort((a, b) => a.rent - b.rent || a.district.localeCompare(b.district, 'en'));
+}
+
+/**
+ * Which address, of the free rooms of a tier this citizen could carry. A home
+ * is an address rather than a tier (`docs/PROPERTY.md` §6) and the choice is a
+ * question of temperament, not of arithmetic: an ambitious citizen takes the
+ * dearest room it can carry, and everybody else the cheapest of the better
+ * tier and keeps the difference. Both are reasonable and the engine says so.
+ */
+export function betterAddress(ctx: Ctx, tier: 1 | 2 | 3, income: number): { district: DistrictId; rent: number } | null {
+  const { world, c } = ctx;
+  const carried = freeAddresses(world, tier)
+    .filter((a) => (a.rent <= income * 0.25 || c.wallet > a.rent * 40) && c.wallet > a.rent * 15);
+  if (carried.length === 0) return null;
+  return c.personality.ambition > 0.6 ? carried[carried.length - 1] : carried[0];
 }
 
 /** How attractive a job is to this citizen: pay, commute, talent, temperament. */
@@ -249,6 +300,16 @@ export function tryWork(ctx: Ctx): Action | null {
 export function tryBusiness(ctx: Ctx): Action | null {
   const { world, c, biz, here } = ctx;
   if (!biz) {
+    // A concern on the board at the Exchange is a business somebody else has
+    // already built, with its till, its stock and its staff (`docs/MOBILITY.md`
+    // §2). A citizen with the price of it and no business of its own weighs
+    // that against founding one from nothing.
+    if (ctx.can.has('buy_business') && c.personality.ambition > FOUNDING_AMBITION) {
+      const offer = businessesForSale(world)
+        .find((o) => o.business.ownerId !== c.id && c.wallet >= o.price + FOUNDING_WALLET
+          && businessValue(world, o.business) >= o.price);
+      if (offer && chance(world, 0.5)) return { type: 'buy_business', businessId: offer.business.id };
+    }
     if (!ctx.can.has('found_business') || c.wallet <= FOUNDING_WALLET || c.personality.ambition <= FOUNDING_AMBITION) return null;
     if (ctx.clock.night || !chance(world, 0.25)) return null;
     const kind = kindForFounder(world, c);
@@ -268,6 +329,18 @@ export function tryBusiness(ctx: Ctx): Action | null {
       if (skill < weakestSkill) { weakestSkill = skill; weakest = o; }
     }
     if (weakest) return { type: 'fire', citizen: weakest.id };
+  }
+  // Days in the red with the staff already trimmed: the owner offers the whole
+  // concern at what the Exchange values it at, rather than watching it fail.
+  const asked = businessAsk(world, biz.id);
+  if (ctx.can.has('sell_business')) {
+    if (asked === null && biz.daysNegative >= OFFER_CONCERN_AFTER_DAYS && chance(world, 0.25)) {
+      return { type: 'sell_business', price: businessValue(world, biz) };
+    }
+    // Trading again: it comes off the board.
+    if (asked !== null && biz.daysNegative === 0 && biz.treasury > 0 && chance(world, 0.1)) {
+      return { type: 'sell_business', price: 0 };
+    }
   }
   if (open.length > 0 && biz.treasury >= effectiveWage(world, open[0])) {
     const acquaintances = [...here].sort((a, b) => bondBetween(world, c.id, b.id) - bondBetween(world, c.id, a.id));

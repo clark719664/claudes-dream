@@ -15,6 +15,7 @@ import { activeBusinesses } from '../economy/business.ts';
 import { talentOf } from '../citizens/citizen.ts';
 import { areRivals, bondBetween } from '../citizens/relationships.ts';
 import { characterCompatibility } from '../citizens/character.ts';
+import { restrainedFrom } from '../government/jail.ts';
 import { medicOnStaff, nextStepToward } from '../actions/daily.ts';
 import { citizensIn, districtName } from '../actions/common.ts';
 import { heldJob } from '../actions/execute.ts';
@@ -137,13 +138,23 @@ export function pickCompanion(ctx: Ctx): Citizen | null {
   return best;
 }
 
-/** A mark for theft or a scam: present, no friend, no officer, and carrying something. */
+/**
+ * A mark for theft or a scam: present, no friend, no officer, and carrying
+ * something — and never somebody the Court has ordered this citizen to keep
+ * away from. `reflex.ts tryCrime` already obeyed a restraining order when it
+ * reached for a grudge, but the order is an order whatever the motive: without
+ * this line a defendant walked out of the Courthouse on the day of the order
+ * and picked the protected citizen's pocket the next morning, which is what
+ * `test/article-six.test.ts` means by "a restraining order actually keeps a
+ * scripted mind away".
+ */
 export function pickMark(ctx: Ctx): Citizen | null {
   const { world, c, here } = ctx;
   let best: Citizen | null = null;
   let bestScore = -Infinity;
   for (const o of here) {
     if (o.wallet < 15 || isOfficer(world, o.id)) continue;
+    if (restrainedFrom(world, c.id, o.id)) continue;
     if (bondBetween(world, c.id, o.id) >= 40) continue;
     let score = Math.min(o.wallet, 300) / 300 - o.skills.analysis / 200 + rand(world) * 0.2;
     if (o.office !== null) score -= 0.3;

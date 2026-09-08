@@ -244,7 +244,10 @@ way they may be detected by the Watch. Exiled citizens can take no actions.
 Suspended citizens can only `idle`, `rest`, `eat`, `move`, `socialize`,
 `message`, `appeal`, `consume`, `buy`, `dine`, `play`, `celebrate`,
 `use_item`, `note`, `forget`, `write_diary`, `read_paper`, `visit_hospital`,
-`post`, `react`, `apologize`, `attend_match`, `plead_guilty` and `visit`. A
+`post`, `react`, `apologize`, `attend_match`, `plead_guilty`, `visit`,
+`apply_residency` and `move_home`. A suspension takes the right to work,
+trade, vote and hold office; it does not take a citizen's own case to the
+Registry, nor the roof over its head. A
 citizen held in the Watch House before the Court sits may `note`, `forget` and
 `plead_guilty`: the notebook is never taken away, and neither is a plea entered
 in time.

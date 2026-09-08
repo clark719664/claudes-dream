@@ -12,7 +12,7 @@
  * is the only mind the engine plays.
  */
 import { WORK_KINDS } from '../types.ts';
-import type { Action, Good, LawCode } from '../types.ts';
+import type { Action, CitizenId, Good, LawCode, World } from '../types.ts';
 import { GOODS } from '../types.ts';
 import { HOSPITAL_FEE, MATCH_TICKET } from '../data/jobs.ts';
 import { GANG_NAME_PARTS, PARTY_NAME_PARTS, WORK_INFO } from '../data/metropolis.ts';
@@ -33,10 +33,14 @@ import { partyOf } from '../politics/parties.ts';
 import { mayStrike, unionForRole, unionOf, workersInRole } from '../politics/unions.ts';
 import { mayDecree } from '../politics/decrees.ts';
 import { referendumToday } from '../politics/referendums.ts';
-import { unitPrice, unitsFor, unitsOnSale } from '../markets/property.ts';
+import {
+  EXCHANGE_DISTRICT, askingPrice, isOfferedToLet, marketPrice, unitPrice, unitsFor, unitsOnSale,
+} from '../markets/property.ts';
+import { businessAsk, businessValue, liquidValue } from '../markets/selling.ts';
 import { availableShares, recentProfit, sharePrice } from '../markets/shares.ts';
 import { openGigs, qualifiedFor } from '../markets/gigs.ts';
 import { DOCKS_DISTRICT, mayTrade, outerPrice } from '../markets/outer.ts';
+import { leaveByDay, underNoticeToLeave } from '../standing/hearings.ts';
 import { mayCreate, venueFor as workVenue, worksOf } from '../culture/works.ts';
 import { groundFor, teamOf } from '../culture/stadium.ts';
 import { adoptedThisCycle, friendsSchool } from '../culture/schools.ts';
@@ -228,13 +232,62 @@ const GIG_TITLES = [
 // The Exchange
 // ---------------------------------------------------------------------------
 
-/** A deed of one's own, and a room let to somebody else. */
+/** Days left of the fourteen at which patience stops being worth money. */
+export const FIRE_SALE_DAYS = 4;
+/** Chance per free hour that an owner puts a room nobody has taken on the board. */
+export const LIST_SPARE_CHANCE = 0.15;
+
+/**
+ * Selling up, because the Council ended the residency and there are fourteen
+ * days to sell property, settle debts and take the road (`docs/CITIZENSHIP.md`
+ * §3, `docs/MOBILITY.md` §2). Patience is worth real money, so the deeds go on
+ * the board at what the address is worth and the concern is offered whole
+ * first; the fire sale is what is left when the days run out.
+ */
+export function trySellingUp(ctx: Ctx): Action | null {
+  const { world, c } = ctx;
+  if (!underNoticeToLeave(world, c.id) || liquidValue(world, c) <= 0) return null;
+  const hurrying = leaveDaysLeft(world, c.id) <= FIRE_SALE_DAYS;
+  if (hurrying && ctx.can.has('liquidate')) return { type: 'liquidate' };
+  if (ctx.can.has('sell_business') && ctx.biz && businessAsk(world, ctx.biz.id) === null) {
+    return { type: 'sell_business', price: businessValue(world, ctx.biz) };
+  }
+  if (ctx.can.has('list_property')) {
+    const unlisted = unitsFor(world, c.id).find((u) => askingPrice(world, u) === null);
+    if (unlisted) return { type: 'list_property', unitId: unlisted.id, price: marketPrice(world, unlisted) };
+  }
+  return hurrying && c.district !== EXCHANGE_DISTRICT ? stepTo(ctx, EXCHANGE_DISTRICT) : null;
+}
+
+/** Days left of the fourteen the Council allows, read off the citizen's own hearing. */
+function leaveDaysLeft(world: World, cId: CitizenId): number {
+  const day = leaveByDay(world, cId);
+  return day === null ? Infinity : day - world.day;
+}
+
+/** A deed of one's own, a room let to somebody else, and a room let go of. */
 export function tryProperty(ctx: Ctx): Action | null {
   const { world, c } = ctx;
+  const leaving = trySellingUp(ctx);
+  if (leaving) return leaving;
   if (ctx.can.has('let_property')) {
-    const spare = unitsFor(world, c.id).find((u) => u.tenantId === null && u.buildingId !== c.homeBuildingId);
+    const spare = unitsFor(world, c.id)
+      .find((u) => u.tenantId === null && u.buildingId !== c.homeBuildingId && !isOfferedToLet(world, u));
     if (spare && chance(world, 0.4)) {
       return { type: 'let_property', unitId: spare.id, rent: Math.max(1, Math.round(spare.rent * 1.1)) };
+    }
+  }
+  // A room offered to let that nobody has taken is a room this citizen no
+  // longer needs. `docs/MOBILITY.md` §2 leaves the answer to the owner: hold
+  // it, let it, or put it on the board at a price of its own — and a seller
+  // who knows the trade asks a premium of what the address is worth, up to the
+  // point where the Exchange calls it dear and it sits there for weeks.
+  if (ctx.can.has('list_property')) {
+    const idle = unitsFor(world, c.id).find((u) => u.tenantId === null && u.buildingId !== c.homeBuildingId
+      && isOfferedToLet(world, u) && askingPrice(world, u) === null);
+    if (idle && chance(world, LIST_SPARE_CHANCE)) {
+      const premium = 1 + 0.15 * (c.skills.commerce / 100);
+      return { type: 'list_property', unitId: idle.id, price: Math.round(marketPrice(world, idle) * premium) };
     }
   }
   if (!ctx.can.has('buy_property') || c.personality.ambition < 0.6) return null;

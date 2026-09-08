@@ -259,36 +259,53 @@ and the Villas, and by day 60 rent brings in 700–950 ℓ a day.
 
 ### The wage budget
 
-Each morning, after the dividend, stipends and arrival grants have gone out,
-the Treasury sets what it may spend on **salaried** city posts and
-contracts that day (`src/economy/budget.ts`):
+Each morning the Treasury sets what it may spend on **salaried** city posts
+and contracts that day (`src/economy/budget.ts`):
 
 ```
-budget = yesterday's revenue − yesterday's piece wages
-       − what the Bazaar paid private sellers yesterday
-       + 0.6 % of the balance − today's fixed spend
+budget = what the city took yesterday
+       − everything else it paid yesterday
+       + the drawdown
 ```
 
-floored at 1 % of the balance (at least 200 ℓ) so the city never shuts
-down while it has money. Shifts at salaried posts draw on the budget first
-come, first served; when it is spent the day's remaining shifts are refused
-("The city's wage budget for today is spent") and, if the cut is deep, the
-Chronicle prints an austerity story. Piece-rate posts are outside the budget
-because the Bazaar sells what they make at price plus tax — the forges pay
-for themselves — but what they were paid yesterday is deducted, and so is
-what the Bazaar itself paid citizens and businesses for their goods: that
-comes out of the same purse and only returns when somebody buys those goods
-again. With all three deducted, the whole of public spending stays inside
-revenue plus the drawdown.
+"Everything else" is measured rather than listed: yesterday's whole spend less
+the part that came out of yesterday's wage budget. The dividend, the stipends,
+the arrival grants, the piece rates, what the Bazaar paid private sellers, the
+Museum's acquisitions, the champions' purse, the public works bonus — all of
+it, named or not. Rearranged, the rule says **today's public spending is
+yesterday's revenue plus the drawdown**, and that is the invariant. A rule that
+lists what it deducts leaks every time the city grows a new way to spend
+money: the list version missed 432 ℓ a day on seed 7 (the Museum 245, arrival
+grants 163, the rest in ones and twos), which was the second largest reason
+the Treasury halved over 120 days.
 
-The Treasury's books for a day do not close until the end of the morning
-rollover, while the dividend, the stipends and the arrival grants are paid
-inside it, so the rule reads the day's flows by the tick they landed on:
-everything before this morning is "yesterday's revenue", everything paid this
-morning is "today's fixed spend" (`treasuryFlowThisTick` in
-`economy/treasury.ts`). The Treasury's drawdown is therefore bounded by
-design: with nothing else going wrong the balance falls no faster than 0.6 %
-a day and levels off as revenue grows.
+The day is measured between two mornings, from one budget to the next, off
+running totals of everything the Treasury has ever taken in and paid out
+(`treasuryTotals` in `economy/treasury.ts`). `revenueToday` and `spendToday`
+cannot do that job: they are cleared at the *end* of the rollover, so the
+rollover's own payments — most of the city's spending — fall into a day that
+has closed before anything can read it.
+
+The budget is floored at 1 % of the Treasury's savings (at least 200 ℓ) so the
+city never shuts down while it has money. Shifts at salaried posts draw on it
+first come, first served; when it is spent the day's remaining shifts are
+refused ("The city's wage budget for today is spent") and, if the cut is deep,
+the Chronicle prints an austerity story. Piece-rate posts are outside the
+budget because the Bazaar sells what they make at price plus tax — the forges
+pay for themselves — but what they were paid yesterday is counted against
+today's budget like everything else. The wage line is the residual that makes
+the arithmetic true, which is why a Council that raises the dividend cuts the
+hours the city can pay for.
+
+**The drawdown is a drawdown of savings**: 0.6 % a day of what the Treasury
+holds *above the reserve the Council asked it to keep*, and nothing at all
+while the Treasury is thinning (`treasuryStrained`). A share of the whole
+balance — which is what this was — is not a drawdown but a decay: it spends
+0.6 % of the Treasury every day for ever and halves it in 115 days, because
+the thing it is a share of is the thing it is emptying. With no reserve set,
+the city has said it holds nothing back and the whole balance is savings; the
+answer to that is for the Council to draw a line, which is a vote somebody has
+to win.
 
 ### What a healthy budget looks like
 
@@ -320,7 +337,16 @@ price index sits between 0.85 and 1.4.
 - **Dividend** (0–60 ℓ): the largest single line. Every 5 ℓ is 250 ℓ a day
   for 50 citizens, taken straight out of the wage budget: a 40 ℓ dividend
   (2 400 ℓ a day) exceeds the whole of a healthy revenue and drains the
-  Treasury at over 1 000 ℓ a day however the city is run.
+  Treasury at over 1 000 ℓ a day however the city is run. The Charter's
+  ceiling is therefore well above what any city can pay, and a party platform
+  reads as a position between 0 and it — so the bill is capped at **two fifths
+  of yesterday's takings** and paid pro rata above that, with the shortfall
+  printed (`DIVIDEND_REVENUE_SHARE`). The rate the Council voted stands and the
+  Treasury goes on losing money at the reduced rate; what the cap stops is the
+  unpayable dividend emptying the Treasury in a fortnight before anything can
+  react. With a reserve set, the dividend also drifts a lumen a day — up while
+  the city is above its line and gaining, down while it is below the line and
+  losing, and never below the price of a bunk in the Cells.
 - **Minimum wage** (5–40 ℓ): floors every piece rate and lifts every flat
   wage above it, and passes through to prices via the anchor, which is where
   the index would settle if every shelf were in balance: 1.4 at 15 ℓ, 1.9 at

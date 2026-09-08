@@ -89,6 +89,8 @@ const FLOW_REVENUE_KEY = 'treasuryRevenueTick';
 const FLOW_SPEND_KEY = 'treasurySpendTick';
 const REVENUE_YESTERDAY_KEY = 'treasuryRevenueYesterday';
 const SPEND_YESTERDAY_KEY = 'treasurySpendYesterday';
+const REVENUE_TOTAL_KEY = 'treasuryRevenueTotal';
+const SPEND_TOTAL_KEY = 'treasurySpendTotal';
 
 /**
  * The Treasury's own flows within the current tick. The morning rollover pays
@@ -104,14 +106,39 @@ function noteTreasuryFlow(world: World, revenue: number, spend: number): void {
     world.counters[FLOW_REVENUE_KEY] = 0;
     world.counters[FLOW_SPEND_KEY] = 0;
   }
-  if (revenue > 0) world.counters[FLOW_REVENUE_KEY] = (world.counters[FLOW_REVENUE_KEY] ?? 0) + revenue;
-  if (spend > 0) world.counters[FLOW_SPEND_KEY] = (world.counters[FLOW_SPEND_KEY] ?? 0) + spend;
+  if (revenue > 0) {
+    world.counters[FLOW_REVENUE_KEY] = (world.counters[FLOW_REVENUE_KEY] ?? 0) + revenue;
+    world.counters[REVENUE_TOTAL_KEY] = (world.counters[REVENUE_TOTAL_KEY] ?? 0) + revenue;
+  }
+  if (spend > 0) {
+    world.counters[FLOW_SPEND_KEY] = (world.counters[FLOW_SPEND_KEY] ?? 0) + spend;
+    world.counters[SPEND_TOTAL_KEY] = (world.counters[SPEND_TOTAL_KEY] ?? 0) + spend;
+  }
 }
 
 /** What the Treasury has taken in and paid out so far this tick. */
 export function treasuryFlowThisTick(world: World): { revenue: number; spend: number } {
   if (world.counters[FLOW_TICK_KEY] !== world.tick) return { revenue: 0, spend: 0 };
   return { revenue: world.counters[FLOW_REVENUE_KEY] ?? 0, spend: world.counters[FLOW_SPEND_KEY] ?? 0 };
+}
+
+/**
+ * Every lumen the Treasury has taken in and paid out since the city was
+ * founded, never reset. The daily counters (`revenueToday`, `spendToday`) are
+ * cleared at the *end* of the morning rollover, which means the rollover's own
+ * payments — the dividend and the stipends before the wage budget is set, and
+ * the Museum's acquisitions, the arrival grants, the champions' purse and the
+ * public works bonus after it — belong to a day that has already closed by the
+ * time anything reads them. Anything measuring a day's flows off those
+ * counters therefore misses the whole of the morning, which is where most of
+ * the city's spending happens: on seed 7 that was 447 ℓ a day the wage budget
+ * never saw. Running totals have no seam to fall through — the difference
+ * between two marks is exactly what moved between them, whatever hour it moved
+ * in. A world saved before these existed reads as a fresh mark and loses one
+ * day's reading, not the count.
+ */
+export function treasuryTotals(world: World): { revenue: number; spend: number } {
+  return { revenue: world.counters[REVENUE_TOTAL_KEY] ?? 0, spend: world.counters[SPEND_TOTAL_KEY] ?? 0 };
 }
 
 /**
@@ -224,9 +251,38 @@ function receivesPublicMoney(world: World, id: CitizenId, residents: Set<Citizen
 }
 
 /**
+ * The most of yesterday's takings the citizen's dividend may share out. The
+ * dividend is a share of what the city takes, not a draw on what it holds:
+ * above this the bill is met pro rata and the shortfall is printed.
+ *
+ * Two fifths is a wide line. The reference budget in `docs/ECONOMY.md` shares
+ * out a third of the city's takings and never comes near it, and no dividend
+ * the city can actually pay is refused by it. What it stops is the *unpayable*
+ * one. The Council votes a rate per head while the Treasury's capacity is a
+ * total, and the two part company twice over — the rate is set once and the
+ * population doubles under it, and a party platform reads as a position
+ * between 0 and the Charter's 60 ℓ, so a middling platform means 30 ℓ a head
+ * a day against takings of about 45 ℓ a head. On seed 7 a single platform
+ * motion took the dividend from 3 ℓ to 30 ℓ on day 94 and the city lost 39,000
+ * ℓ — two thirds of its Treasury — in the seventeen days it took the reserve's
+ * float and the Council between them to unwind it.
+ *
+ * This does not overrule the vote and does not decide what the dividend should
+ * be: the rate the Council set stands, the shortfall is public, the Treasury
+ * goes on losing money at the reduced rate (so the reserve is still breached
+ * and the float still trims, which is what actually brings the rate back
+ * down), and a Council that wants to spend two fifths of the city's
+ * takings on the dividend still can. It is the same arithmetic that already paid the dividend
+ * pro rata out of an empty Treasury, moved off the edge of the cliff.
+ */
+export const DIVIDEND_REVENUE_SHARE = 0.4;
+
+/**
  * Daily citizen's dividend to everyone in good standing or on probation. When
- * the Treasury cannot cover the full bill the dividend is paid pro rata; when
- * it is empty the dividend is suspended and the Chronicle hears about it.
+ * the Treasury cannot cover the full bill — or the bill is more of yesterday's
+ * takings than the city shares out — the dividend is paid pro rata; when there
+ * is nothing to share the dividend is suspended and the Chronicle hears about
+ * it.
  */
 export function payDividend(world: World): void {
   const dividend = Math.round(world.government.dividend);
@@ -236,8 +292,12 @@ export function payDividend(world: World): void {
   if (eligible.length === 0) return;
 
   const total = dividend * eligible.length;
-  const balance = world.treasury.balance;
-  const share = balance >= total ? dividend : Math.floor(balance / eligible.length);
+  // What the city took yesterday, as the Chronicle printed it this morning.
+  // Before the first balance sheet there is no reading, and the founding city
+  // pays what the Council set.
+  const takings = lastBalanceSheet(world).revenue;
+  const purse = Math.min(world.treasury.balance, takings > 0 ? Math.floor(takings * DIVIDEND_REVENUE_SHARE) : total);
+  const share = purse >= total ? dividend : Math.floor(Math.max(0, purse) / eligible.length);
   if (share <= 0) {
     emit(world, 'treasury', "The Treasury is empty: the citizen's dividend is suspended today.", [], 0.7);
     return;
@@ -249,7 +309,9 @@ export function payDividend(world: World): void {
     remember(world, c.id, 'money', `You received the citizen's dividend of ${share} ℓ.`);
   }
   if (share < dividend) {
-    emit(world, 'treasury', `Treasury shortfall: the dividend was paid pro rata at ${share} ℓ instead of ${dividend} ℓ.`, [], 0.6);
+    emit(world, 'treasury',
+      `Treasury shortfall: the dividend of ${dividend} ℓ would take ${formatLumens(total)} and the city took ${formatLumens(takings)} yesterday, `
+      + `so it was paid pro rata at ${share} ℓ.`, [], 0.6, { dividend, share, total, takings });
   } else {
     emit(world, 'paid', `Dividend of ${dividend} ℓ paid to ${count} citizens (${formatLumens(share * count)}).`, [], 0.1);
   }

@@ -13,6 +13,7 @@ import { nextId } from '../util/ids.ts';
 import { chance, rand } from '../util/rng.ts';
 import { emit, remember } from '../sim/events.ts';
 import { lastBalanceSheet, transfer } from '../economy/treasury.ts';
+import { fiscalPressure, treasuryDrainPerDay } from '../economy/budget.ts';
 import { joblessShare } from '../economy/planning.ts';
 import { addHousingProgress } from '../economy/housing.ts';
 import { bondBetween } from '../citizens/relationships.ts';
@@ -308,6 +309,27 @@ export const BALANCE_SHEET_WEIGHT = 0.6;
 export const BALANCE_SHEET_DIVIDEND_WEIGHT = 0.1;
 
 /**
+ * How heavily the state of the city's finances — `budget.fiscalPressure`, read
+ * off the reserve and the runway rather than off yesterday — weighs on each
+ * kind of vote that moves money. A tax and a dividend are the two levers a
+ * Council reaches for first, so they carry most of it; the wage floor and the
+ * works fund carry less, because neither is mainly a fiscal question.
+ *
+ * None of these is large enough to decide a vote on its own: a platform is
+ * worth ±0.2, a friendship ±0.4, the party whip carries seven votes in ten,
+ * and there is ±0.1 of noise on every one. A Council can spend its way into
+ * the ground with its eyes open. What it can no longer do is spend its way
+ * into the ground while its own instruments tell it everything is fine.
+ */
+export const FISCAL_WEIGHT = 0.4;
+export const FISCAL_DIVIDEND_WEIGHT = 0.35;
+export const FISCAL_WAGE_WEIGHT = 0.25;
+export const FISCAL_RESERVE_WEIGHT = 0.3;
+export const FISCAL_WORKS_WEIGHT = 0.4;
+/** Below this share of the reserve, the reserve is a line the city cannot reach. */
+export const RESERVE_UNREACHABLE_SHARE = 0.6;
+
+/**
  * How far the city's spending ran beyond its takings yesterday, as a share of
  * those takings, from the balance sheet the Chronicle printed this morning
  * ("Treasury: 63,325 ℓ (+3,894 revenue, −5,271 spend)" reads 0.35). Zero when
@@ -340,10 +362,18 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
   const poor = c.wallet < 50 || (!employed && !owner);
   const target = p.targetId ? world.citizens[p.targetId] ?? null : null;
   const bondTarget = target ? bondBetween(world, councillorId, target.id) : 0;
-  const population = Math.max(1, world.order.length);
-  const treasuryStrained = world.treasury.balance < g.dividend * population * 5;
-  // Every citizen reads the Treasury's balance sheet in the morning Chronicle.
+  // Every citizen reads the Treasury's balance sheet in the morning Chronicle:
+  // yesterday's day in `deficit`, and the months behind and ahead of it in
+  // `pressure` (economy/budget.ts). One day's takings against one day's
+  // spending swings between nothing and everything with the Bazaar's churn, so
+  // it is an argument about whether to bother voting at all; which way to move
+  // a lever is a question about the trend and the reserve.
   const deficit = treasuryDeficitShare(world);
+  const pressure = fiscalPressure(world);
+  // A comfortable Treasury is a reason to hand money back and a reason to
+  // build; it is nobody's argument for a higher wage floor, which is a floor
+  // under private wages before it is a cost to the city.
+  const strain = Math.max(0, pressure);
   let score = 0;
 
   switch (p.kind) {
@@ -352,7 +382,7 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
       score += (platform.tax - 0.5) * 0.4 * d;
       if (owner || rich) score -= 0.2 * d;
       if (poor) score += 0.1 * d;
-      if (treasuryStrained) score += 0.15 * d;
+      score += pressure * FISCAL_WEIGHT * d;
       score += deficit * BALANCE_SHEET_WEIGHT * d;
       break;
     }
@@ -361,7 +391,11 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
       score += (platform.dividend - 0.5) * 0.4 * d;
       if (poor) score += 0.2 * d;
       if (owner || rich) score -= 0.1 * d;
-      if (treasuryStrained) score -= 0.25 * d;
+      // The dividend is the largest thing the city pays and the last thing a
+      // Council likes to be seen cutting, so the books weigh on it harder than
+      // yesterday's balance sheet alone ever did — and, when they are healthy,
+      // weigh for it just as hard.
+      score -= pressure * FISCAL_DIVIDEND_WEIGHT * d;
       score -= deficit * BALANCE_SHEET_DIVIDEND_WEIGHT * d;
       break;
     }
@@ -381,6 +415,10 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
       // A city with idle hands hears the argument that the floor is what keeps
       // the forges and the workshops from taking anybody on.
       score -= clamp((joblessShare(world) - JOBLESS_TOLERANCE) * JOBLESS_WEIGHT, 0, JOBLESS_WEIGHT_CAP) * d;
+      // The floor is also the floor under every city post and every piece
+      // rate, so a city that is running out of money hears a rise as a bill it
+      // has to find. A city that is comfortable hears nothing either way.
+      score -= strain * FISCAL_WAGE_WEIGHT * d;
       break;
     }
     case 'law_severity': {
@@ -394,6 +432,9 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
     case 'public_works':
       score += 0.1 + (world.treasury.balance > p.value * 3 ? 0.1 : -0.3);
       if (world.housing.occupied[1] >= world.housing.capacity[1]) score += 0.15;
+      // Committing money the city is running out of is a vote nobody wants
+      // read back to them at the next election.
+      score -= strain * FISCAL_WORKS_WEIGHT;
       break;
     case 'appoint_judge':
       score += 0.05 + (target && target.reputation >= 70 ? 0.1 : 0) + (bondTarget > 40 ? 0.3 : bondTarget < -30 ? -0.3 : 0);
@@ -418,12 +459,27 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
       score += (platform.tax - 0.5) * 0.4 * d;
       if (owner || rich) score -= 0.25 * d;
       if (poor) score += 0.1 * d;
+      score += pressure * FISCAL_WEIGHT * d;
       score += deficit * BALANCE_SHEET_WEIGHT * d;
       break;
     }
     case 'reserve': {
-      const d = direction(p, g.reserveTarget ?? 0);
-      score += 0.05 * d + (treasuryStrained ? 0.15 * d : -0.05 * d) - (platform.dividend - 0.5) * 0.3 * d;
+      const current = g.reserveTarget ?? 0;
+      const d = direction(p, current);
+      // A councillor who has watched the balance slide wants a line drawn and
+      // held; one who has watched the city taxed to the ceiling to defend a
+      // line it has never once reached wants the line moved to where the city
+      // actually stands. Both are the same councillor in different years.
+      //
+      // "Never reached" has to mean losing ground, not merely being behind. A
+      // city that is far below its reserve and climbing back toward it is a
+      // city whose reserve is working; lowering the line then is how a reserve
+      // ratchets downward for ever, one bad fortnight at a time — on seed 7 a
+      // 37,000 ℓ line became 1,000 ℓ in eleven days that way, and the city
+      // settled at a twentieth of what it had meant to hold.
+      const unreachable = current > 0 && world.treasury.balance < current * RESERVE_UNREACHABLE_SHARE
+        && treasuryDrainPerDay(world) > 0;
+      score += 0.05 * d + (unreachable ? -1 : pressure) * FISCAL_RESERVE_WEIGHT * d - (platform.dividend - 0.5) * 0.3 * d;
       break;
     }
     case 'tram':

@@ -19,6 +19,12 @@ import { councillorDisposition, impliedPlatform, isCouncillor, treasuryDeficitSh
 import { MIN_WAGE_CEILING, MIN_WAGE_FLOOR } from '../politics/promises.ts';
 import { districtName, isPresent, parseGrievance } from '../actions/common.ts';
 import type { Grievance } from '../actions/common.ts';
+import { admitsResidency, sponsorshipsFor } from '../standing/gates.ts';
+import { judgedLine } from '../standing/notices.ts';
+import { reputeOf } from '../standing/repute.ts';
+import { noticeOf } from '../standing/state.ts';
+import type { StandingNotice } from '../standing/state.ts';
+import { underNoticeToLeave } from '../standing/hearings.ts';
 import { inGoodStanding, stepTo } from './reflex-util.ts';
 import type { Ctx } from './reflex-util.ts';
 
@@ -305,11 +311,122 @@ function proposeAction(spec: ReflexProposal): Action {
   return { type: 'propose', kind: spec.kind, value: spec.value, summary: spec.summary, lawCode: spec.lawCode, targetId: spec.targetId };
 }
 
+// ---------------------------------------------------------------------------
+// Standing: the two instruments of the gate (`docs/CITIZENSHIP.md` §2-3)
+// ---------------------------------------------------------------------------
+
+/** A bond below this is an acquaintance; a name is not put behind an acquaintance. */
+export const VOUCH_BOND = 40;
+/**
+ * Repute above their own residency line before a citizen spends their name on
+ * somebody else's. A sponsorship is filed under the sponsor's own name and is
+ * read out at the hearing, so a citizen who is themselves near the line has
+ * nothing to spare: the weighting falls to nothing as their own margin does.
+ */
+export const VOUCH_MARGIN = 100;
+/** Days between one citizen's applications to the Registry while no Court is near. */
+export const APPLY_INTERVAL_DAYS = 3;
+/** Days before the grace ends at which a citizen puts its own case. */
+export const HEARING_NEAR_DAYS = 3;
+
+/**
+ * How likely a citizen is to put its name behind another today: what the bond
+ * is worth, what the sponsor's own standing can carry, and whether the two are
+ * family. Never certain and never nothing — a name is given, not owed.
+ */
+export function vouchChance(bond: number, margin: number, kin: boolean): number {
+  const weight = clamp((bond - VOUCH_BOND) / 60, 0, 1);
+  const room = clamp(margin / VOUCH_MARGIN, 0, 1);
+  return clamp((0.08 + 0.32 * weight + (kin ? 0.2 : 0)) * room, 0, 0.6);
+}
+
+/** Partner, parents, children: the bonds a citizen did not choose. */
+function kinOf(c: Citizen): Set<CitizenId> {
+  const out = new Set<CitizenId>(c.family.parents);
+  for (const id of c.family.children) out.add(id);
+  if (c.family.partnerId) out.add(c.family.partnerId);
+  return out;
+}
+
+/** True while this citizen is answering to the Registry for their own standing. */
+function inQuestion(world: World, cId: CitizenId): boolean {
+  return noticeOf(world, cId) !== null || underNoticeToLeave(world, cId);
+}
+
+/**
+ * Somebody the citizen knows is about to lose their home. Vouching is public,
+ * it is filed under the sponsor's own name, and nobody can be made to give it
+ * — so it is weighed once a day per applicant and given at the rate the bond
+ * and the sponsor's own standing argue for.
+ */
+export function tryVouch(ctx: Ctx): Action | null {
+  const { world, c } = ctx;
+  if (!ctx.can.has('sponsor') || !inGoodStanding(c)) return null;
+  const margin = reputeOf(world, c.id) - judgedLine(world, c.id);
+  if (margin <= 0) return null;
+  const kin = kinOf(c);
+  const known = new Set<CitizenId>([...kin, ...Object.keys(c.bonds)]);
+  for (const id of known) {
+    if (id === c.id) continue;
+    const other = world.citizens[id];
+    if (!other || other.lifeStage === 'child' || !isPresent(world, other)) continue;
+    if (!inQuestion(world, id)) continue;
+    const bond = bondBetween(world, c.id, id);
+    if (bond < VOUCH_BOND && !kin.has(id)) continue;
+    if (sponsorshipsFor(world, id).some((k) => k.sponsorId === c.id)) continue;
+    const key = `vouchWeighed:${c.id}:${id}`;
+    if (world.counters[key] === world.day) continue;
+    world.counters[key] = world.day;
+    if (chance(world, vouchChance(bond, margin, kin.has(id)))) return { type: 'sponsor', citizen: id };
+  }
+  return null;
+}
+
+/**
+ * Whether putting your own case is worth the hour, on two public readings.
+ * The gate would actually open today — the shortfall is inside what the city's
+ * own relief covers, which is what a name behind you is for — so applying ends
+ * the notice there and then. Or the Court is about to sit, and speaking is the
+ * one thing a citizen can do about that: `docs/CITIZENSHIP.md` §3 says they
+ * may speak, and the hearing records whether they did. Silence is what a
+ * scripted mind did before, and it is not an answer.
+ */
+export function worthArguing(world: World, c: Citizen, notice: StandingNotice | null): boolean {
+  if (admitsResidency(world, c.id)) return true;
+  if (!notice || notice.applied) return false;
+  return notice.immediate || notice.graceEndsDay - world.day <= HEARING_NEAR_DAYS;
+}
+
+/** A citizen under notice puts its own case rather than letting the hour pass. */
+export function tryOwnStanding(ctx: Ctx): Action | null {
+  const { world, c } = ctx;
+  if (!ctx.can.has('apply_residency')) return null;
+  const notice = noticeOf(world, c.id);
+  if (!notice && !underNoticeToLeave(world, c.id)) return null;
+  const key = `applyWeighed:${c.id}`;
+  const last = world.counters[key];
+  if (typeof last === 'number' && world.day - last < APPLY_INTERVAL_DAYS) return null;
+  if (!worthArguing(world, c, notice)) return null;
+  world.counters[key] = world.day;
+  return { type: 'apply_residency' };
+}
+
+/** Your own standing first, then anybody's you would put your name behind. */
+export function tryStanding(ctx: Ctx): Action | null {
+  return tryOwnStanding(ctx) ?? tryVouch(ctx);
+}
+
 /** Vote, stand, campaign, sit on the Council, petition. */
 export function tryCivic(ctx: Ctx): Action | null {
   const { world, c, clock, can } = ctx;
   const g = world.government;
   const e = g.election;
+
+  // Standing comes first of the civic hours: a notice is answered while there
+  // is still a Court to answer it to, and a neighbour under one is vouched for
+  // while their hearing is still ahead of them.
+  const standing = tryStanding(ctx);
+  if (standing) return standing;
 
   if (can.has('vote')) {
     const key = `abstain:${c.id}:${e.electionDay}`;

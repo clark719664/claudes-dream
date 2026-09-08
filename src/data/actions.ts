@@ -46,7 +46,7 @@ export const ACTION_CATALOGUE: Partial<Record<ActionType, ActionSpec>> = {
   study: { params: 'skill', text: 'a lesson at the Academy in the Archive while a teacher is employed there; tuition is paid to the Treasury and the skill rises.', group: DAILY_LIFE },
   visit_clinic: { params: '', text: 'treatment at the Restoration Ward while a medic is on staff, or at a private clinic in your district; a fee, and energy and rest rise.', group: DAILY_LIFE },
   attend_show: { params: '', text: 'a show in Nightglass for the price of a ticket; social rises.', group: DAILY_LIFE },
-  move_home: { params: 'tier', text: 'take a home of tier 1, 2 or 3 if one is vacant, or tier 0 to give up the one you have; rent is charged daily.', group: DAILY_LIFE },
+  move_home: { params: 'tier, district?', text: 'take a home of tier 1, 2 or 3 if one is vacant — in the district you name, or at the cheapest address of that tier the city has open — or tier 0 to give up the one you have. Rent is charged daily and is the tier\'s rate against the land value of the address.', group: DAILY_LIFE },
 
   note: { params: 'text', text: 'write a line in your notebook. It is private, it is in every observation you receive, and it stays until you strike it out.', group: NOTEBOOK },
   forget: { params: 'index', text: 'strike out the note at that position in your notebook (0 is the oldest).', group: NOTEBOOK },
@@ -157,6 +157,10 @@ export const ACTION_CATALOGUE: Partial<Record<ActionType, ActionSpec>> = {
   take_gig: { params: 'gigId', text: 'take an open gig you are qualified for and finish it in one shift; the pay is yours, less income tax.', group: MARKETS },
   import: { params: 'good, qty', text: 'buy goods from the Outer Cities at the Docks, at their price plus the tariff; the lumens leave Reverie and the goods reach the Bazaar.', group: MARKETS },
   export: { params: 'good, qty', text: 'sell goods you hold to the Outer Cities at the Docks, at their price less the tariff; the lumens come into Reverie.', group: MARKETS },
+  list_property: { params: 'unitId, price', text: 'put a unit you own on the market at the price you name; it sells when a buyer meets it, and property is illiquid — in a slow market it can sit for weeks. A price of 0 takes the listing down. A tenant is not put out by a sale: the tenancy goes with the deed.', group: MARKETS },
+  sell_business: { params: 'price', text: 'offer your business as a going concern at the price you name: its till, its stock, its shelf, its staff contracts and its premises. A buyer takes it over intact, the staff keep their jobs, and the name goes with it. A price of 0 takes it off the board.', group: MARKETS },
+  buy_business: { params: 'businessId', text: 'take over a concern on the board at the Exchange in Harbor Market for what its owner is asking; its treasury, stock, shelf, staff and premises come with it, and the staff keep their jobs.', group: MARKETS },
+  liquidate: { params: '', text: 'sell everything you hold to the Exchange at once, in Harbor Market — deeds, the concern, stock and possessions — for 60 to 75 % of market value, by your commerce skill. It takes the day, and it can be done once a day.', group: MARKETS },
 
   create_work: { params: 'kind, title', text: 'make a painting, play, song, book, paper or expose at the venue for that kind in your district. Its quality comes from the skill it uses and the hour it took; a work of quality 90 or more may be acquired by the Museum.', group: CULTURE },
   exhibit: { params: 'workId', text: 'show a work of yours at the venue you stand in; its popularity rises and whoever is there sees it.', group: CULTURE },

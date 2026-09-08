@@ -24,7 +24,7 @@ import {
 } from './reflex-util.ts';
 import type { Ctx } from './reflex-util.ts';
 import { closestQualification, shiftsWanted, tryBusiness, tryHousing, tryJobSearch, tryLoan, tryStudy, tryWork } from './reflex-work.ts';
-import { tryAppeal, tryCivic, tryReport } from './reflex-civic.ts';
+import { tryAppeal, tryCivic, tryReport, tryStanding } from './reflex-civic.ts';
 import {
   restDayOff, tryBirthdayGift, tryClubLife, tryClubMeeting, tryCraft, tryDine, tryDonate, tryHappening, tryPlay,
   tryRomance, tryUseItem, tryWants,
@@ -391,10 +391,26 @@ const LADDER: readonly Step[] = [
   tryDiary, trySunset,
 ];
 
-/** Only what a suspended citizen may still do: appeal, eat, rest, keep company, write. */
+/**
+ * Only what a suspended citizen may still do: appeal, eat, find a roof, rest,
+ * keep company, write — and put its own case to the Registry, because a
+ * suspension does not take a citizen's standing away from it
+ * (`docs/CITIZENSHIP.md` §3, and `apply_residency` is on `SUSPENDED_ACTIONS`
+ * for exactly that reason). A suspension costs 80 of repute, so the citizens
+ * under notice are very often the citizens serving one: leaving them out of
+ * this list was leaving the people most likely to face a hearing with no way
+ * to speak at it.
+ *
+ * `tryHousing` sits where it does on the full ladder, straight after rest: a
+ * suspension takes a citizen's work and its trade, not the room it sleeps in
+ * (`docs/PROPERTY.md` §3), and a suspended citizen that never looked for one
+ * slept in the street for the whole of its term beside empty rooms it could
+ * afford. Nothing here is a new strategy — it is the same step, in the same
+ * place, for a citizen the city has not stopped housing.
+ */
 const RESTRICTED_LADDER: readonly Step[] = [
-  tryAppeal, tryEat, tryDine, tryInbox, tryHealth, tryHunger, tryRest, tryHappening,
-  trySocial, tryComfort, tryPlay, tryFabric, trySchoolAndPaper, tryUseItem, tryDiary,
+  tryAppeal, tryStanding, tryEat, tryDine, tryInbox, tryHealth, tryHunger, tryRest, tryHousing,
+  tryHappening, trySocial, tryComfort, tryPlay, tryFabric, trySchoolAndPaper, tryUseItem, tryDiary,
 ];
 
 /**

@@ -298,7 +298,15 @@ export function liquidate(world: World, cId: CitizenId): ActionResult {
   for (const good of GOODS) {
     const qty = Math.floor(c.inventory[good] ?? 0);
     if (qty <= 0) continue;
-    if (sellToMarket(world, c.id, good, qty).ok) sold.push(`${qty} ${good}`);
+    // The Bazaar pays for goods itself, at its own price less the sales tax,
+    // so what it paid is read off the purse rather than worked out again here.
+    // It still belongs in the total: a fire sale that raised "0 ℓ" while the
+    // Bazaar was paying for the stock told the city something untrue.
+    const before = balanceOf(world, c.id);
+    if (sellToMarket(world, c.id, good, qty).ok) {
+      raised += Math.max(0, balanceOf(world, c.id) - before);
+      sold.push(`${qty} ${good}`);
+    }
   }
 
   for (const item of things) {

@@ -15,7 +15,7 @@ import { buyFromMarket, sellToMarket } from '../economy/market.ts';
 import { applyForJob, isQualified, openJobs, quitJob } from '../economy/jobs.ts';
 import { activeBusinesses, foundBusiness } from '../economy/business.ts';
 import { bankOpen, loanOf, repayLoan, requestLoan } from '../economy/bank.ts';
-import { moveHome, vacancies } from '../economy/housing.ts';
+import { moveHomeTo, vacancies } from '../economy/housing.ts';
 import { canAct, isDetained, isEligibleCandidate, isEligibleVoter } from '../citizens/citizen.ts';
 import { forget, note } from '../citizens/notes.ts';
 import { journalistStory } from '../sim/chronicle.ts';
@@ -35,6 +35,8 @@ import { admitsResidency, maySponsorAnyone, sponsor as fileSponsorship } from '.
 import { applyResidency } from '../standing/notices.ts';
 import { noticeOf } from '../standing/state.ts';
 import { underNoticeToLeave } from '../standing/hearings.ts';
+import { EXCHANGE_DISTRICT, unitsFor } from '../markets/property.ts';
+import { businessesForSale, buyBusiness, liquidValue, liquidate, listProperty, sellBusiness } from '../markets/selling.ts';
 import { dispatchMetropolis, metropolisActions } from './execute-metro.ts';
 import {
   JUDGE_SEATS, appointJudgeByMayor, campaign, castBallot, isCouncillor, isElectionDay, isJudgeEligible, nominate,
@@ -104,6 +106,9 @@ export const CHILD_FORBIDDEN: readonly ActionType[] = [
   'found_union', 'join_union', 'strike', 'decree',
   'buy_property', 'sell_property', 'let_property', 'list_shares', 'buy_shares', 'sell_shares',
   'post_gig', 'take_gig', 'import', 'export',
+  // Selling up is holding: a child holds no deed and no concern, so none of
+  // the four ways out of one are a child's (`docs/MOBILITY.md` §2).
+  'list_property', 'sell_business', 'buy_business', 'liquidate',
   'create_work', 'exhibit', 'review', 'join_team', 'train',
   'adopt_school', 'set_menu', 'commission_monument',
   'sunset', 'gossip', 'mentor',
@@ -265,6 +270,25 @@ function standingActions(world: World, c: Citizen, set: Set<ActionType>, others:
   }
 }
 
+/**
+ * Selling up (`docs/MOBILITY.md` §2). A deed goes on the board from wherever
+ * its owner is standing; a concern is offered from anywhere and taken over at
+ * the Exchange, where the fire sale is also held. Each handler checks its own
+ * conditions again — this is the guide, not the promise.
+ */
+function mobilityActions(world: World, c: Citizen, set: Set<ActionType>): void {
+  if (c.lifeStage === 'child' || !canHold(c)) return;
+  const biz = c.businessId ? world.businesses[c.businessId] ?? null : null;
+  const trading = !!biz && biz.dissolvedDay === null;
+  if (unitsFor(world, c.id).length > 0) set.add('list_property');
+  if (trading) set.add('sell_business');
+  if (c.district !== EXCHANGE_DISTRICT) return;
+  if (c.standing === 'good' && !trading && businessesForSale(world).some((o) => o.business.ownerId !== c.id && c.wallet >= o.price)) {
+    set.add('buy_business');
+  }
+  if (world.counters[`liquidated:${c.id}`] !== world.day && liquidValue(world, c) > 0) set.add('liquidate');
+}
+
 export function availableActions(world: World, c: Citizen): ActionType[] {
   if (c.standing === 'exiled' || !isPresent(world, c)) return [];
   // Held in the Watch House until the Court sits: the hours are the citizen's
@@ -365,6 +389,7 @@ export function availableActions(world: World, c: Citizen): ActionType[] {
   justiceActions(world, c, set, here, biz);
   metropolisActions(world, c, set, here);
   standingActions(world, c, set, others);
+  mobilityActions(world, c, set);
 
   const suspended = c.standing === 'suspended';
   const child = c.lifeStage === 'child';
@@ -417,7 +442,7 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     case 'study': return doStudy(world, c, action.skill);
     case 'visit_clinic': return doVisitClinic(world, c);
     case 'attend_show': return doShow(world, c);
-    case 'move_home': return moveHome(world, c.id, action.tier);
+    case 'move_home': return moveHomeTo(world, c.id, action.tier, action.district ?? null);
     case 'note': return note(world, c.id, action.text);
     case 'forget': return forget(world, c.id, action.index);
     case 'socialize': {
@@ -515,6 +540,11 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     // --- Standing: the gate, and who will put their name behind you ---
     case 'sponsor': return fileSponsorship(world, c.id, action.citizen, action.city);
     case 'apply_residency': return applyResidency(world, c.id, action.city);
+    // --- Mobility: build up, sell, and move on, or stay (`docs/MOBILITY.md`) ---
+    case 'list_property': return listProperty(world, c.id, action.unitId, action.price);
+    case 'sell_business': return sellBusiness(world, c.id, action.price);
+    case 'buy_business': return buyBusiness(world, c.id, action.businessId);
+    case 'liquidate': return liquidate(world, c.id);
     default: {
       const never: never = action;
       return fail(`Unknown action ${String((never as Action).type)}.`);

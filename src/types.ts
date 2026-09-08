@@ -1187,7 +1187,7 @@ export type Action =
   | { type: 'study'; skill: Skill }
   | { type: 'visit_clinic' }
   | { type: 'attend_show' }
-  | { type: 'move_home'; tier: HousingTier }
+  | { type: 'move_home'; tier: HousingTier; district?: DistrictId }
   | { type: 'note'; text: string }
   | { type: 'forget'; index: number }
   | { type: 'socialize'; with: CitizenId; text?: string }
@@ -1285,6 +1285,13 @@ export type Action =
   | { type: 'list_shares' }
   | { type: 'buy_shares'; businessId: BusinessId; qty: number }
   | { type: 'sell_shares'; businessId: BusinessId; qty: number }
+  // Mobility: selling up (`docs/MOBILITY.md` §2). A deed on the board at your
+  // own price, a concern sold whole, a concern taken over whole, and the fire
+  // sale that gets a citizen out in a day at 60-75 % of what it all was worth.
+  | { type: 'list_property'; unitId: string; price: number }
+  | { type: 'sell_business'; price: number }
+  | { type: 'buy_business'; businessId: BusinessId }
+  | { type: 'liquidate' }
   | { type: 'post_gig'; title: string; pay: number; skill: Skill | null; minSkill: number }
   | { type: 'take_gig'; gigId: string }
   | { type: 'import'; good: Good; qty: number }
@@ -1339,6 +1346,7 @@ export const ACTION_TYPES: readonly ActionType[] = [
   'adopt_school', 'set_menu', 'commission_monument', 'read_paper',
   'sunset', 'gossip', 'apologize', 'mentor', 'post', 'react',
   'sponsor', 'apply_residency',
+  'list_property', 'sell_business', 'buy_business', 'liquidate',
 ];
 
 /**
@@ -1394,6 +1402,13 @@ export const SUSPENDED_ACTIONS: readonly ActionType[] = [
   // Nor its standing: a citizen under a notice may put its own case to the
   // city whatever else it has lost (`docs/CITIZENSHIP.md` §3).
   'apply_residency',
+  // Nor a roof. A suspension takes the right to work, trade, vote and hold
+  // office (`docs/CONSTITUTION.md` §92); it is not a sentence of sleeping in
+  // the street, and the Cells turn nobody away (`docs/PROPERTY.md` §3). A
+  // citizen who may already `buy` its dinner and `dine` out may rent the room
+  // it eats in: without this a suspension evicted people by arithmetic and
+  // held them outside for its whole term, beside rooms standing empty.
+  'move_home',
 ];
 
 /**

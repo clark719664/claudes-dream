@@ -14,8 +14,10 @@
 import { clamp } from '../types.ts';
 import type { Government, Proposal, World } from '../types.ts';
 import { WEALTH_TAX_THRESHOLD } from '../data/metropolis.ts';
+import { CELLS_BLOCK } from '../data/city.ts';
 import { emit, remember } from '../sim/events.ts';
 import { residentIds, transfer } from '../economy/treasury.ts';
+import { treasuryDrainPerDay } from '../economy/budget.ts';
 import { setTariff, tariff } from './outer.ts';
 import { memo } from '../util/memo.ts';
 
@@ -114,19 +116,61 @@ export function collectWealthTax(world: World): number {
 // ---------------------------------------------------------------------------
 
 /**
- * With a reserve target set, the dividend drifts a lumen a day: up while the
- * Treasury holds more than a tenth above the target, down while it holds less
- * than a tenth below. It never leaves the bounds the Charter gives it, and
- * with no target it does not move at all.
+ * With a reserve target set, the dividend drifts a lumen a day, and the rule
+ * has a level and a flow in it:
+ *
+ *     up   while the Treasury is a tenth above the line and gaining
+ *     down while it is a tenth below the line and losing
+ *
+ * It never leaves the bounds the Charter gives it, and with no target it does
+ * not move at all.
+ *
+ * The flow is the whole of the difference between a reserve and a ratchet.
+ * Reading the balance alone makes this an integrator with no brake in either
+ * direction. Upward: any balance above the line raised the dividend a lumen
+ * every morning and went on raising it all the way down, because the rise was
+ * what was emptying the Treasury and the test could not see it — on seed 7 the
+ * Council drew its line at 37,000 ℓ with 72,000 ℓ in hand and losing 1,500 ℓ a
+ * day, and over sixteen mornings the dividend went from 30 ℓ to 47 ℓ and the
+ * city spent 31,000 ℓ reaching a line it was already heading for. Downward: a
+ * city sitting below a line it cannot quite reach, with its books balanced,
+ * had its dividend trimmed every morning until it was nothing at all and left
+ * there — the Treasury safe and the citizens with no dividend, for ever, over
+ * a target nobody could reach.
+ *
+ * A dividend rise is a permanent claim on the city's income and savings are a
+ * stock you can only spend once, so a city hands out what it is *making* above
+ * its reserve; and a city whose books balance is not in the wrong, wherever
+ * its balance happens to stand, so it stops cutting. The line is still the
+ * Council's to draw, and moving it either way is still a vote somebody has to
+ * win.
+ *
+ * **The drift stops at the price of a bunk.** However far below its line the
+ * city stands, this will not carry the dividend under the cheapest roof in
+ * Reverie — the Cells at `CELLS_RENT` a day, where nobody is turned away. A
+ * drift that ran to zero left the citizens with no work and no dividend
+ * unable to pay for anywhere at all: on seed 7 the Treasury steadied at
+ * 33,000 ℓ and the city, for the first time in its life, had people sleeping
+ * outside. Nothing here is worth that, and a defence of the reserve that ends
+ * in it has defended the wrong thing. A Council that means to pay no dividend
+ * at all can still vote for it, in the open, and answer for it at the polls.
  */
 export function floatDividend(world: World): void {
   const target = reserveTarget(world);
   if (target <= 0) return;
   const balance = world.treasury.balance;
+  const losing = treasuryDrainPerDay(world) > 0;
+  const floor = Math.max(DIVIDEND_MIN, Math.round(CELLS_BLOCK.flatRent ?? DIVIDEND_MIN));
   const before = Math.round(world.government.dividend);
   let after = before;
-  if (balance > target * RESERVE_UPPER) after = Math.min(DIVIDEND_MAX, before + RESERVE_STEP);
-  else if (balance < target * RESERVE_LOWER) after = Math.max(DIVIDEND_MIN, before - RESERVE_STEP);
+  if (balance > target * RESERVE_UPPER && !losing) {
+    after = Math.min(DIVIDEND_MAX, before + RESERVE_STEP);
+  } else if (balance < target * RESERVE_LOWER && losing) {
+    // The floor stops a cut; it never makes one into a rise, so a dividend a
+    // Council has deliberately set below it stays where the Council put it.
+    const next = before - RESERVE_STEP;
+    after = next < floor ? Math.min(before, floor) : next;
+  }
   if (after === before) return;
   world.government.dividend = after;
   const way = after > before ? 'rose' : 'fell';

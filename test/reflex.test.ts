@@ -210,6 +210,26 @@ test('detained citizens idle; suspended citizens stay within SUSPENDED_ACTIONS',
   }
 });
 
+test('a suspended citizen with nowhere to sleep still looks for a roof', () => {
+  const w = makeWorld();
+  at(w, 1, 20);
+  const banned = settled(w, { standing: 'suspended', district: 'commons', wallet: 200 });
+  banned.homeTier = 0;
+  banned.homeBuildingId = null;
+  // A suspension takes work, trade, the vote and office; it does not evict
+  // anybody (`docs/PROPERTY.md` §3), so the restricted ladder still reaches
+  // for a room while there is one standing empty.
+  let sought: Action | null = null;
+  for (let i = 0; i < 20 && !sought; i++) {
+    const a = decide(w, banned);
+    if (a.type === 'move_home') sought = a;
+    else executeAction(w, banned.id, a);
+  }
+  assert.ok(sought, 'a suspended citizen slept in the street beside an empty room');
+  assert.equal(executeAction(w, banned.id, sought as Action).ok, true);
+  assert.ok(banned.homeTier > 0);
+});
+
 test('a lonely citizen seeks company, and the same seed replays the same choices', () => {
   const w = makeWorld();
   at(w, 1, 19);

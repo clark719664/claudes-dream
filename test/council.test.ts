@@ -549,3 +549,78 @@ test('the morning balance sheet: a deficit argues for taxes and against the divi
   w.counters.treasurySpendYesterday = 2000;
   assert.equal(treasuryDeficitShare(w), 0, 'a surplus is no argument at all');
 });
+
+// ---------------------------------------------------------------------------
+// What a councillor weighs: the months, and the line the city drew for itself
+// ---------------------------------------------------------------------------
+
+/** A Treasury of `balance` losing `perDay` over the trend the runway is read over. */
+function books(w: World, balance: number, perDay: number): void {
+  w.treasury.balance = balance;
+  w.stats = [
+    { day: 1, treasury: balance + perDay * 14 } as never,
+    { day: 15, treasury: balance } as never,
+  ];
+}
+
+test('the Council reads the runway, not the dividend: an alarm denominated in a lever goes quiet when the lever moves', () => {
+  const w = makeWorld();
+  const council = makeCouncil(w, 5);
+  for (const m of council) { m.platform = { ...NEUTRAL }; addJob(w, m.id); }
+  const taxRise = proposalOf(w, council[0].id, 'income_tax', w.government.incomeTax + 0.05);
+  const dividendRise = proposalOf(w, council[0].id, 'dividend', w.government.dividend + 5);
+
+  books(w, 90_000, -200);                       // comfortable, and gaining
+  const easyTax = ayes(w, council, taxRise);
+  const easyDividend = ayes(w, council, dividendRise);
+
+  // The same city three months later: it has already cut the dividend to
+  // nothing and is still losing 800 ℓ a day with 20,000 ℓ left. The measure
+  // this replaced — balance < dividend × population × 5 — reads 20,000 < 0,
+  // which is false, so the Council used to see no difficulty at all here.
+  books(w, 20_000, 800);
+  w.government.dividend = 0;
+  assert.ok(w.treasury.balance >= w.government.dividend * w.order.length * 5, 'the old alarm would be silent');
+  assert.ok(ayes(w, council, taxRise) > easyTax, 'a Council with 25 days in hand reaches for the tax');
+  w.government.dividend = 15;
+  assert.ok(ayes(w, council, dividendRise) < easyDividend, 'and does not vote itself a bigger dividend');
+});
+
+test('a Council draws a line when it is pressed, and holds it while the city is climbing back', () => {
+  const w = makeWorld();
+  const council = makeCouncil(w, 5);
+  for (const m of council) m.platform = { ...NEUTRAL };
+  const draw = proposalOf(w, council[0].id, 'reserve', 30_000);
+
+  books(w, 60_000, -500);
+  const comfortable = ayes(w, council, draw);
+  books(w, 60_000, 900);                        // 66 days in hand and falling
+  assert.ok(ayes(w, council, draw) > comfortable, 'a sliding balance is what makes a councillor want a reserve');
+
+  // With the line drawn well above where the city stands, a Council still
+  // losing ground moves it down to something reachable...
+  w.government.reserveTarget = 60_000;
+  const lower = proposalOf(w, council[0].id, 'reserve', 20_000);
+  books(w, 20_000, 400);
+  const losing = ayes(w, council, lower);
+  // ...but the same Council, climbing back toward the same line, holds it.
+  books(w, 20_000, -400);
+  assert.ok(ayes(w, council, lower) < losing,
+    'a reserve that ratchets down every bad fortnight is no reserve at all');
+});
+
+test('a thin Treasury argues against a wage floor it has to pay, and a comfortable one says nothing either way', () => {
+  const w = makeWorld();
+  const council = makeCouncil(w, 5);
+  for (const m of council) { m.platform = { ...NEUTRAL }; addJob(w, m.id, { wage: w.government.minWage }); }
+  const outsider = makeCitizen(w);
+  addJob(w, outsider.id);
+  w.market.priceIndex = 1;
+  const rise = proposalOf(w, outsider.id, 'min_wage', w.government.minWage + 2);
+
+  books(w, 90_000, -200);
+  const comfortable = ayes(w, council, rise);
+  books(w, 9_000, 900);                         // ten days left at this rate
+  assert.ok(ayes(w, council, rise) < comfortable, 'the city\'s own wage bill is what a thin Treasury hears');
+  assert.equal(comfortable, 1, 'and a city with money in hand weighs the floor on its merits');
+});

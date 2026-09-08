@@ -12,6 +12,7 @@ import type { Proposal, ProposalKind, World } from '../src/types.ts';
 import { makeCitizen, makeWorld, totalMoney } from './helpers.ts';
 import { WEALTH_TAX_THRESHOLD } from '../src/data/metropolis.ts';
 import { tariff } from '../src/markets/outer.ts';
+import { CELLS_BLOCK } from '../src/data/city.ts';
 import {
   DIVIDEND_MAX, DIVIDEND_MIN, PROPERTY_TAX_MAX, RESERVE_LOWER, RESERVE_MAX, RESERVE_STEP,
   RESERVE_UPPER, TARIFF_MAX, WEALTH_TAX_MAX,
@@ -169,27 +170,68 @@ test('with no reserve target the dividend does not float at all', () => {
   assert.equal(world.government.dividend, dividend);
 });
 
-test('a Treasury above its reserve raises the dividend a lumen a day, and below lowers it', () => {
+/** The city's books as the Chronicle printed them this morning. */
+function balanceSheet(world: World, revenue: number, spend: number): void {
+  world.counters.treasuryRevenueYesterday = revenue;
+  world.counters.treasurySpendYesterday = spend;
+  world.stats = [];
+}
+
+test('the dividend floats up when the city is above its reserve and gaining, down when below it and losing', () => {
   const world = makeWorld();
   (world.government as unknown as Levers).reserveTarget = 10_000;
   world.government.dividend = 15;
 
   world.treasury.balance = Math.ceil(10_000 * RESERVE_UPPER) + 1;
+  balanceSheet(world, 3000, 2800);            // gaining
   floatDividend(world);
   assert.equal(world.government.dividend, 15 + RESERVE_STEP);
   floatDividend(world);
   assert.equal(world.government.dividend, 15 + 2 * RESERVE_STEP);
 
+  // ...but a city that is above its line and losing money does not hand out
+  // more of it: a rise is a claim on income, and savings are spent once.
+  balanceSheet(world, 2800, 3000);
+  const held = world.government.dividend;
+  floatDividend(world);
+  assert.equal(world.government.dividend, held);
+
   world.treasury.balance = Math.floor(10_000 * RESERVE_LOWER) - 1;
   floatDividend(world);
-  assert.equal(world.government.dividend, 15 + RESERVE_STEP);
+  assert.equal(world.government.dividend, held - RESERVE_STEP);
+
+  // ...and a city below its line whose books balance stops cutting, rather
+  // than trimming the dividend away over a target it cannot reach.
+  balanceSheet(world, 3000, 3000);
+  const steadyBelow = world.government.dividend;
+  floatDividend(world);
+  assert.equal(world.government.dividend, steadyBelow);
 
   // inside the band nothing moves
   world.treasury.balance = 10_000;
+  balanceSheet(world, 2800, 3000);
   const steady = world.government.dividend;
   floatDividend(world);
   assert.equal(world.government.dividend, steady);
   assert.ok(world.events.some((e) => e.kind === 'treasury' && e.text.includes('reserve')));
+});
+
+test('the drift never cuts the dividend below the price of the cheapest roof in the city', () => {
+  const world = makeWorld();
+  (world.government as unknown as Levers).reserveTarget = 10_000;
+  world.treasury.balance = 1;
+  balanceSheet(world, 1000, 3000);
+  world.government.dividend = 20;
+  for (let d = 0; d < 60; d++) floatDividend(world);
+  const bunk = Math.round(CELLS_BLOCK.flatRent ?? 0);
+  assert.ok(bunk > 0, 'the Cells have a rate');
+  assert.equal(world.government.dividend, bunk, 'a citizen with no work can still pay for a bunk');
+
+  // A Council that voted for less than that keeps what it voted for: the
+  // floor stops the drift, it does not overrule anybody.
+  world.government.dividend = 1;
+  floatDividend(world);
+  assert.equal(world.government.dividend, 1);
 });
 
 test('the floating dividend never leaves the bounds the Charter gives it', () => {
@@ -202,6 +244,8 @@ test('the floating dividend never leaves the bounds the Charter gives it', () =>
 
   world.government.dividend = DIVIDEND_MIN;
   world.treasury.balance = 0;
+  world.counters.treasuryRevenueYesterday = 100;
+  world.counters.treasurySpendYesterday = 900;
   for (let d = 0; d < 20; d++) floatDividend(world);
   assert.equal(world.government.dividend, DIVIDEND_MIN);
 });

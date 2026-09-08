@@ -30,6 +30,8 @@ const JOB_ROLES: readonly JobRole[] = [
 const DISH_IDS: readonly string[] = DISHES.map((d) => d.id);
 /** The most of a good anybody may move across the water in one hour. */
 const MAX_TRADE = 999;
+/** The dearest anything on the Exchange's boards may be asked for. */
+const MAX_PRICE = 1_000_000;
 /** Every city the Registry keeps a gate for; one of them, until the Expanse. */
 const CITIES: readonly string[] = Object.keys(GATES);
 
@@ -100,7 +102,12 @@ export function validateAction(input: unknown): { ok: true; action: Action } | {
       case 'sell': action = { type, good: oneOf(a.good, 'good', GOODS), qty: int(a.qty, 'qty', 1, 1000) }; break;
       case 'consume': action = { type, good: oneOf(a.good, 'good', GOODS) }; break;
       case 'study': action = { type, skill: oneOf(a.skill, 'skill', SKILLS) }; break;
-      case 'move_home': action = { type, tier: int(a.tier, 'tier', 0, 3) as HousingTier }; break;
+      // A home is an address, not a tier (`docs/PROPERTY.md` §6): the district is
+      // named when the citizen has one in mind and left out when it has not.
+      case 'move_home': action = {
+        type, tier: int(a.tier, 'tier', 0, 3) as HousingTier,
+        ...(a.district !== undefined && a.district !== null ? { district: oneOf(a.district, 'district', DISTRICT_IDS) } : {}),
+      }; break;
       case 'note': action = { type, text: str(a.text, 'text') }; break;
       case 'forget': action = { type, index: int(a.index, 'index', 0, 1000) }; break;
       case 'socialize': action = { type, with: id(a.with, 'with', CID), ...(optStr(a.text, 'text') !== undefined ? { text: optStr(a.text, 'text') } : {}) }; break;
@@ -195,6 +202,7 @@ export function validateAction(input: unknown): { ok: true; action: Action } | {
       case 'racket': action = { type, business: id(a.business, 'business', BZID) }; break;
       case 'pay_racket': case 'visit_hospital': case 'leave_party': case 'strike':
       case 'list_shares': case 'join_team': case 'attend_match': case 'train': case 'sunset':
+      case 'liquidate':
         action = { type }; break;
       // metropolis: parties, petitions, unions and the Mayor's decree
       case 'found_party': {
@@ -229,6 +237,13 @@ export function validateAction(input: unknown): { ok: true; action: Action } | {
         minSkill: int(a.minSkill ?? 0, 'minSkill', 0, 100),
       }; break;
       case 'take_gig': action = { type, gigId: id(a.gigId, 'gigId', QID) }; break;
+      // Selling up (`docs/MOBILITY.md` §2). A price of 0 is a listing taken
+      // down again, so both of these start at nothing rather than at one.
+      case 'list_property': action = {
+        type, unitId: id(a.unitId, 'unitId', YID), price: int(a.price, 'price', 0, MAX_PRICE),
+      }; break;
+      case 'sell_business': action = { type, price: int(a.price, 'price', 0, MAX_PRICE) }; break;
+      case 'buy_business': action = { type, businessId: id(a.businessId, 'businessId', BZID) }; break;
       case 'import': action = { type, good: oneOf(a.good, 'good', GOODS), qty: int(a.qty, 'qty', 1, MAX_TRADE) }; break;
       case 'export': action = { type, good: oneOf(a.good, 'good', GOODS), qty: int(a.qty, 'qty', 1, MAX_TRADE) }; break;
       // metropolis: works, the league, the schools and the papers
