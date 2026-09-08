@@ -24,7 +24,7 @@ import { nextId } from '../util/ids.ts';
 import { emit, remember } from '../sim/events.ts';
 import { isPresent } from '../citizens/citizen.ts';
 import { adjustBond, friendsOf } from '../citizens/relationships.ts';
-import { memo } from '../util/memo.ts';
+import { memo, memoBy } from '../util/memo.ts';
 
 /** Longest post the wall will carry. */
 export const MAX_POST_TEXT = 280;
@@ -208,7 +208,7 @@ function postPositions(world: World): Map<string, number> {
 }
 
 function loudPosts(world: World): { loud: Post[]; tallies: Map<string, PostTally> } {
-  return memo(world, `feed:loud:${world.day}`, () => {
+  return memo(world, 'feed:loud', () => {
     const cutoff = world.day - POPULAR_POST_DAYS;
     const tallies = new Map<string, PostTally>();
     const loud: Post[] = [];
@@ -228,7 +228,7 @@ function loudPosts(world: World): { loud: Post[]; tallies: Map<string, PostTally
 export function feedFor(world: World, c: Citizen, limit = MAX_FEED_SHOWN): ObservedPost[] {
   const feed = world.feed ?? [];
   if (!c || feed.length === 0 || limit <= 0) return [];
-  return memo(world, `feed:for:${c.id}:${limit}`, () => {
+  return memoBy(world, `feed:for:${limit}`, c.id, () => {
     const byAuthor = postsByAuthor(world);
     const wanted = new Set<string>();
     for (const p of byAuthor.get(c.id) ?? []) wanted.add(p.id);

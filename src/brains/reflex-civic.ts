@@ -8,6 +8,10 @@ import type { Action, Citizen, CitizenId, EventKind, LawCode, OffenceCode, Platf
 import { LAWS, offenceName } from '../data/laws.ts';
 import { chance, pick, rand } from '../util/rng.ts';
 import { vacancies } from '../economy/housing.ts';
+import { treasuryFailing, treasuryFlush, treasuryStrained as treasuryThin } from '../economy/budget.ts';
+import {
+  PROPERTY_TAX_MAX, RESERVE_MAX, WEALTH_TAX_MAX, propertyTaxRate, reserveTarget, wealthTaxRate,
+} from '../markets/levers.ts';
 import { bondBetween, friendsOf } from '../citizens/relationships.ts';
 import { hasUndetectedRecentOffence, topStories } from '../sim/chronicle.ts';
 import { REPORT_WINDOW_TICKS } from '../government/watch.ts';
@@ -104,10 +108,29 @@ function wantsToStand(world: World, c: Citizen): boolean {
   return c.reputation > 50 && (c.personality.ambition > 0.6 || (incumbent && c.personality.ambition > 0.4));
 }
 
-/** Fewer than twenty days of dividend left in the Treasury: time for the Council to act. */
+/**
+ * The Treasury is running out: at the rate it has been losing money it has
+ * fewer than `CRISIS_RUNWAY_DAYS` left (`economy/budget.ts`).
+ *
+ * This used to read `balance < dividend × population × 20`, which is a test
+ * denominated in the very lever it exists to move. On seed 7 the Council duly
+ * trimmed the dividend — and the alarm went silent, because with a dividend of
+ * 0 the test is `balance < 0`. From day 90 the city was losing 600 ℓ a day with
+ * 33,000 left and read, by its own instruments, as being in no difficulty at
+ * all: it voted the dividend back up, topped the works fund up again, and lost
+ * another 18,000 by day 120. What a city has left is measured in days, not in
+ * dividends.
+ */
 export function treasuryStrained(world: World): boolean {
-  const population = Math.max(1, world.order.length);
-  return world.treasury.balance < world.government.dividend * population * 20;
+  return treasuryFailing(world);
+}
+
+/**
+ * Comfortable: the Treasury is gaining, or has years of its present losses in
+ * hand. What a councillor asks before proposing something that costs money.
+ */
+export function treasuryHealthy(world: World): boolean {
+  return treasuryFlush(world);
 }
 
 /**
@@ -120,9 +143,27 @@ export const PUBLIC_WORKS_TOPUP = 1200;
 /** A gap this wide between spending and takings is one a councillor would table a motion about. */
 export const NOTICEABLE_DEFICIT = 0.1;
 
-/** The Treasury needs steadying: little left, or yesterday's spending well beyond its takings. */
+/** A Treasury too thin for a reserve target to mean anything. */
+export const RESERVE_FLOOR = 2_000;
+/**
+ * The line a councillor draws when the balance is sliding: not less than this
+ * share of what the city holds today. A reserve set at the whole of the
+ * current balance is a bar the city can never clear — it reads as strained for
+ * ever, taxes stay at their ceiling, and the citizens are squeezed dry to
+ * defend a number nobody can reach. Half is a line with room under it.
+ */
+export const RESERVE_SHARE = 0.5;
+/** The Treasury has to be this far above its reserve before anyone proposes raising it. */
+export const RESERVE_RAISE_AT = 2;
+/** Below this share of its reserve, a failing city's reserve is one nobody can reach. */
+export const RESERVE_UNREACHABLE = 0.6;
+/** How far a motion moves the wealth tax and the tax on let property. */
+export const WEALTH_TAX_STEP = 0.005;
+export const PROPERTY_TAX_STEP = 0.05;
+
+/** The Treasury needs steadying: thinning, or yesterday's spending well beyond its takings. */
 export function treasuryNeedsSteadying(world: World): boolean {
-  return treasuryStrained(world) || treasuryDeficitShare(world) >= NOTICEABLE_DEFICIT;
+  return treasuryThin(world) || treasuryDeficitShare(world) >= NOTICEABLE_DEFICIT;
 }
 
 /** A proposal (or petition) drawn from the citizen's platform, their friendships and the state of the city. */
@@ -130,11 +171,20 @@ export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
   const { world, c } = ctx;
   const g = world.government;
   const platform = c.platform ?? impliedPlatform(world, c);
-  const population = Math.max(1, world.order.length);
-  const healthy = world.treasury.balance > g.dividend * population * 10;
-  const strained = treasuryNeedsSteadying(world);
+  // Which way the city's finances point, read off the runway and nothing else.
+  // `treasuryNeedsSteadying` mixes in yesterday's balance sheet, which is the
+  // right thing for deciding whether to bother tabling a motion at all — but
+  // the ratio of one day's spend to one day's takings swings between 0.00 and
+  // 1.00 with the Bazaar's churn, so a lever hung on it only ever ratchets one
+  // way: on seed 7 the income tax climbed to its 50 % ceiling and stayed there
+  // while the Treasury was gaining money. Which way to move a lever is a
+  // question about the months, not about yesterday.
+  const healthy = treasuryHealthy(world);
+  const strained = treasuryThin(world);
   const pct = (x: number) => `${Math.round(x * 100)}%`;
+  const fine = (x: number) => `${Math.round(x * 1000) / 10}%`;
   const r2 = (x: number) => Math.round(x * 100) / 100;
+  const r3 = (x: number) => Math.round(x * 1000) / 1000;
   const options: ReflexProposal[] = [];
 
   if (platform.tax > 0.6 && g.incomeTax <= 0.45) options.push({ kind: 'income_tax', value: r2(g.incomeTax + 0.05), summary: `Raise income tax to ${pct(g.incomeTax + 0.05)} to fund the city` });
@@ -155,6 +205,12 @@ export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
   }
   if (platform.minWage > 0.6 && g.minWage <= MIN_WAGE_CEILING - 1) options.push({ kind: 'min_wage', value: g.minWage + 1, summary: `Raise the minimum wage to ${g.minWage + 1} ℓ a shift` });
   if (platform.minWage < 0.4 && g.minWage >= MIN_WAGE_FLOOR + 1) options.push({ kind: 'min_wage', value: g.minWage - 1, summary: `Lower the minimum wage to ${g.minWage - 1} ℓ so businesses can hire` });
+  // The wage floor is also the floor under every city post and every piece
+  // rate, so it is the largest single thing the Treasury pays. A councillor
+  // watching the balance fall reaches for it like any other lever.
+  if (strained && g.minWage >= MIN_WAGE_FLOOR + 1) {
+    options.push({ kind: 'min_wage', value: g.minWage - 1, summary: `Lower the minimum wage to ${g.minWage - 1} ℓ; the city's own wage bill is what is emptying the Treasury` });
+  }
   if (platform.strictness > 0.65) {
     const laws = STRICTER_LAWS.filter((l) => g.lawSeverity[l] < 5);
     if (laws.length) {
@@ -177,6 +233,65 @@ export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
   if (healthy && g.publicWorksFund < PUBLIC_WORKS_TOPUP) {
     options.push({ kind: 'public_works', value: PUBLIC_WORKS_TOPUP, summary: `Commit ${PUBLIC_WORKS_TOPUP} ℓ to the public works fund; the city has building to do` });
   }
+  // The three levers the metropolis added and nothing in a scripted city ever
+  // reached for. `markets/levers.ts` has held them since the metropolis layer
+  // was built and `government/council.ts` already knows how a councillor votes
+  // on each — but the only thing that tables a motion in a reflex city is this
+  // function, and it could produce nothing but income tax, sales tax, the
+  // dividend, the minimum wage, law severity, public works, a pardon and a
+  // motion against the Mayor. So `reserveTarget` stood at 0 for every day of
+  // every run, `floatDividend` never moved a lumen, and the wealth tax and the
+  // property tax were dead letters while the Treasury fell from 100,000 ℓ to
+  // 15,796 ℓ over 120 days on seed 7.
+  //
+  // The reserve is the important one: it is the only lever that keeps working
+  // after it is pulled. A target says what balance the city means to hold;
+  // from then on `markets/levers.floatDividend` moves the dividend a lumen a
+  // day to defend it and `economy/budget.dailyBudget` stops drawing the
+  // Treasury down while it is short — a slow, public, automatic correction
+  // that no councillor has to remember. A councillor who has watched the
+  // balance slide proposes holding the line where it stands today.
+  const reserve = reserveTarget(world);
+  const balance = Math.max(0, Math.round(world.treasury.balance));
+  const line = (share: number) => Math.min(RESERVE_MAX, Math.max(1000, Math.round(balance * share / 1000) * 1000));
+  if (reserve === 0 && !healthy && balance >= RESERVE_FLOOR) {
+    const value = line(RESERVE_SHARE);
+    options.push({ kind: 'reserve', value, summary: `Have the Treasury hold a reserve of ${value} ℓ, and let the dividend float to defend it` });
+  }
+  if (reserve > 0 && healthy && balance > reserve * RESERVE_RAISE_AT && reserve < RESERVE_MAX) {
+    const value = line(RESERVE_SHARE);
+    if (value > reserve) options.push({ kind: 'reserve', value, summary: `Raise the Treasury's reserve to ${value} ℓ; the city has grown` });
+  }
+  // A reserve the city cannot reach is a reserve that keeps every tax at its
+  // ceiling for ever. A councillor watching that happen moves the line down to
+  // where the city actually stands.
+  if (reserve > 0 && balance < reserve * RESERVE_UNREACHABLE && treasuryStrained(world)) {
+    const value = line(RESERVE_SHARE);
+    if (value < reserve) options.push({ kind: 'reserve', value, summary: `Lower the Treasury's reserve to ${value} ℓ; the city cannot hold ${reserve} ℓ and is being taxed to try` });
+  }
+  // The wealth tax and the property tax reach the lumens that have already
+  // left the Treasury. In a closed money supply that is where the Treasury's
+  // balance has gone: by day 120 the citizens held 62,855 ℓ between them and
+  // the city held 15,796 ℓ.
+  const wealth = wealthTaxRate(world);
+  if (strained && wealth < WEALTH_TAX_MAX) {
+    const value = r3(Math.min(WEALTH_TAX_MAX, wealth + WEALTH_TAX_STEP));
+    options.push({ kind: 'wealth_tax', value, summary: `Set the wealth tax at ${fine(value)} a day on wallets above the threshold, to steady the Treasury` });
+  }
+  if (healthy && wealth > 0) {
+    const value = r3(Math.max(0, wealth - WEALTH_TAX_STEP));
+    options.push({ kind: 'wealth_tax', value, summary: value > 0 ? `Ease the wealth tax to ${fine(value)} a day` : 'Lift the wealth tax; the city can afford to' });
+  }
+  const property = propertyTaxRate(world);
+  if (strained && property < PROPERTY_TAX_MAX) {
+    const value = r2(Math.min(PROPERTY_TAX_MAX, property + PROPERTY_TAX_STEP));
+    options.push({ kind: 'property_tax', value, summary: `Take ${pct(value)} of the rent on let property for the city` });
+  }
+  if (healthy && property > 0) {
+    const value = r2(Math.max(0, property - PROPERTY_TAX_STEP));
+    options.push({ kind: 'property_tax', value, summary: value > 0 ? `Ease the tax on let property to ${pct(value)} of the rent` : 'Lift the tax on let property' });
+  }
+
   const exiledFriend = Object.values(world.citizens).find((o) => o.standing === 'exiled' && bondBetween(world, c.id, o.id) > 50);
   if (exiledFriend) options.push({ kind: 'pardon', value: 0, targetId: exiledFriend.id, summary: `Pardon ${exiledFriend.name} and let them come home` });
   const mayor = g.mayorId ? world.citizens[g.mayorId] : null;

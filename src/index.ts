@@ -22,6 +22,7 @@ import { auditMoneySupply, formatLumens } from './economy/treasury.ts';
 import { activeCitizens } from './citizens/citizen.ts';
 import { nominationsOpen } from './government/council.ts';
 import { keepBuilt } from './government/jail.ts';
+import { weddingsHeld } from './society/romance.ts';
 import { reflexBrain } from './brains/reflex.ts';
 import { instinctBrain } from './brains/instinct.ts';
 import { createLlmBrain } from './brains/llm.ts';
@@ -278,7 +279,8 @@ function printSummary(world: World, ticksRun: number, elapsedNs: bigint): void {
     + `the Keep ${keepBuilt(world) ? 'stands' : 'is not built'}`);
   const clubs = Object.values(world.clubs ?? {}).filter((k) => k.members.length > 0);
   const members = clubs.reduce((n, k) => n + k.members.length, 0);
-  const weddings = world.events.filter((e) => e.kind === 'wedding').length;
+  // The city's own tally, not a scan of the rolling event log (society/romance.ts WEDDINGS_HELD).
+  const weddings = weddingsHeld(world);
   const births = Object.values(world.citizens).filter((c) => (c.family?.parents.length ?? 0) > 0).length;
   console.log(`Society: ${sharedHomes(world)} shared homes · ${s.partnerships} partnerships · ${s.marriages} marriages (${weddings} wedding${weddings === 1 ? '' : 's'} held) · `
     + `${s.children} children (${births} born) · ${clubs.length} club${clubs.length === 1 ? '' : 's'} with ${members} members · `

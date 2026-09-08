@@ -10,7 +10,7 @@
 import { TRAITS, clamp } from '../types.ts';
 import type { Citizen, CitizenId, World } from '../types.ts';
 import { noteHostility } from '../social/feuds.ts';
-import { memo } from '../util/memo.ts';
+import { memo, memoBy } from '../util/memo.ts';
 
 /** Bond at or above which two citizens count as friends. */
 export const FRIEND_THRESHOLD = 40;
@@ -64,44 +64,65 @@ export function presentIds(world: World): Set<CitizenId> {
 export function friendsOf(world: World, cId: CitizenId, threshold = FRIEND_THRESHOLD): CitizenId[] {
   const c = world.citizens[cId];
   if (!c) return [];
-  return memo(world, `relationships:friends:${cId}:${threshold}`, () => friendList(world, c, threshold));
-}
-
-function friendList(world: World, c: Citizen, threshold: number): CitizenId[] {
-  return bondList(world, c, (v) => v >= threshold, (x, y) => y[1] - x[1] || x[0].localeCompare(y[0]));
+  if (threshold !== FRIEND_THRESHOLD) return bondList(world, c, threshold, 1);
+  return bothLists(world, c).friends;
 }
 
 /** Present citizens `cId` is bonded to at or below `threshold`, most hostile first. */
 export function rivalsOf(world: World, cId: CitizenId, threshold = RIVAL_THRESHOLD): CitizenId[] {
   const c = world.citizens[cId];
   if (!c) return [];
-  return memo(world, `relationships:rivals:${cId}:${threshold}`, () => rivalList(world, c, threshold));
-}
-
-function rivalList(world: World, c: Citizen, threshold: number): CitizenId[] {
-  return bondList(world, c, (v) => v <= threshold, (x, y) => x[1] - y[1] || x[0].localeCompare(y[0]));
+  if (threshold !== RIVAL_THRESHOLD) return bondList(world, c, threshold, -1);
+  return bothLists(world, c).rivals;
 }
 
 /**
- * The people a citizen's bonds pick out, in the given order. A citizen knows
- * far more people than it counts as friends or rivals, so the bonds are walked
- * once and only the matches are gathered — the whole book used to be copied
- * into pairs and sorted before anything was thrown away.
+ * Friends and rivals at the city's own two thresholds, read off a citizen's
+ * book of bonds in a single walk and kept for the round. Almost every asking
+ * wants both — an observation asks for each, every hour — and a book of bonds
+ * is as long as the city is wide, so walking it twice per citizen per hour was
+ * the largest quadratic left in the engine.
  */
-function bondList(
-  world: World, c: Citizen,
-  keep: (bond: number) => boolean,
-  order: (x: [CitizenId, number], y: [CitizenId, number]) => number,
-): CitizenId[] {
+function bothLists(world: World, c: Citizen): { friends: CitizenId[]; rivals: CitizenId[] } {
+  return memoBy(world, 'relationships:bonds', c.id, () => {
+    const present = presentIds(world);
+    const bonds = c.bonds;
+    const friends: CitizenId[] = [];
+    const rivals: CitizenId[] = [];
+    for (const id in bonds) {
+      if (id === c.id || !present.has(id)) continue;
+      const v = bonds[id];
+      if (v >= FRIEND_THRESHOLD) friends.push(id);
+      else if (v <= RIVAL_THRESHOLD) rivals.push(id);
+    }
+    friends.sort((x, y) => bonds[y] - bonds[x] || x.localeCompare(y));
+    rivals.sort((x, y) => bonds[x] - bonds[y] || x.localeCompare(y));
+    return { friends, rivals };
+  });
+}
+
+/**
+ * The people a citizen's bonds pick out, strongest feeling first: `side` 1
+ * keeps bonds at or above the threshold (friends), −1 those at or below it
+ * (rivals). A citizen knows far more people than it counts as either, so the
+ * book is walked once and only the ids of the matches are kept — the pairs it
+ * used to build, and the closures it used to call for each of them, were
+ * built once per citizen per hour and thrown away again.
+ */
+function bondList(world: World, c: Citizen, threshold: number, side: 1 | -1): CitizenId[] {
   const present = presentIds(world);
-  const matches: [CitizenId, number][] = [];
-  for (const id in c.bonds) {
-    const v = c.bonds[id];
-    if (id === c.id || !keep(v) || !present.has(id)) continue;
-    matches.push([id, v]);
+  const bonds = c.bonds;
+  const matches: CitizenId[] = [];
+  for (const id in bonds) {
+    if (id === c.id || !present.has(id)) continue;
+    const v = bonds[id];
+    if (side === 1 ? v < threshold : v > threshold) continue;
+    matches.push(id);
   }
-  matches.sort(order);
-  return matches.map(([id]) => id);
+  matches.sort(side === 1
+    ? (x, y) => bonds[y] - bonds[x] || x.localeCompare(y)
+    : (x, y) => bonds[x] - bonds[y] || x.localeCompare(y));
+  return matches;
 }
 
 /** True when either citizen holds a friendship-level bond toward the other. */

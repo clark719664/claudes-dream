@@ -83,7 +83,14 @@ export function createCityJobs(world: World): void {
  * gathered once for the whole city (`util/memo.ts`).
  */
 export function openJobs(world: World): Job[] {
-  return memo(world, 'jobs:open', () => Object.values(world.jobs).filter((j) => j.holderId === null));
+  return memo(world, 'jobs:open', () => {
+    const out: Job[] = [];
+    for (const id in world.jobs) {
+      const j = world.jobs[id];
+      if (j.holderId === null) out.push(j);
+    }
+    return out;
+  });
 }
 
 export function employerBusiness(world: World, job: Job): Business | null {

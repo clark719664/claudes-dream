@@ -479,7 +479,10 @@ export function tryFabric(ctx: Ctx): Action | null {
     }
   }
   if (ctx.can.has('react')) {
-    const unreacted = feedFor(world, c).filter((p) => p.author !== c.id && p.youReacted === null);
+    // The wall as this citizen was shown it a moment ago: nothing has touched
+    // the feed since, and rebuilding it here read every post in the city again
+    // for every citizen, every hour.
+    const unreacted = ctx.obs.feed.filter((p) => p.author !== c.id && p.youReacted === null);
     const friendly = unreacted.find((p) => bondBetween(world, c.id, p.author) >= 40) ?? unreacted[0];
     if (friendly && chance(world, 0.25)) {
       const bond = bondBetween(world, c.id, friendly.author);

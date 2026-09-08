@@ -26,7 +26,8 @@ import {
 import { availableShares, buyShares, listingOf, listShares, sellShares, sharePrice } from '../markets/shares.ts';
 import { MAX_OPEN_GIGS_PER_POSTER, allGigs, openGigs, postGig, qualifiedFor, takeGig } from '../markets/gigs.ts';
 import { DOCKS_DISTRICT, exportGoods, importGoods, mayTrade } from '../markets/outer.ts';
-import { createWork, exhibit, mayCreate, review, venueFor as workVenue, worksOf } from '../culture/works.ts';
+import { allWorks, createWork, exhibit, mayCreate, review, venueFor as workVenue, worksOf } from '../culture/works.ts';
+import { memo } from '../util/memo.ts';
 import { attendMatch, groundFor, joinTeam, train } from '../culture/stadium.ts';
 import { adoptSchool, adoptedThisCycle } from '../culture/schools.ts';
 import { cafeFor, setMenu } from '../culture/menus.ts';
@@ -178,8 +179,9 @@ function marketActions(world: World, c: Citizen, set: Set<ActionType>): void {
   if (owned.some((u) => u.tenantId === null && u.buildingId !== c.homeBuildingId)) set.add('let_property');
 
   if (adult && inGoodStanding(c)) {
-    const mine = allGigs(world).filter((g) => g.posterId === c.id && g.takerId === null && g.doneDay === null);
-    if (c.wallet >= world.government.minWage && mine.length < MAX_OPEN_GIGS_PER_POSTER) set.add('post_gig');
+    let mine = 0;
+    for (const g of allGigs(world)) if (g.posterId === c.id && g.takerId === null && g.doneDay === null) mine++;
+    if (c.wallet >= world.government.minWage && mine < MAX_OPEN_GIGS_PER_POSTER) set.add('post_gig');
     if (c.shiftsToday < world.config.maxShiftsPerDay
       && openGigs(world, c.district).some((g) => g.posterId !== c.id && qualifiedFor(c, g))) set.add('take_gig');
   }
@@ -200,10 +202,10 @@ function cultureActions(world: World, c: Citizen, set: Set<ActionType>): void {
     if (mine.some((w) => workVenue(world, w.kind, c.district) || world.buildings[w.home]?.district === c.district)) set.add('exhibit');
     const job = c.jobId ? world.jobs[c.jobId] : null;
     if (job && job.holderId === c.id && job.role === 'journalist'
-      && Object.values(world.works ?? {}).some((w) => w.creatorId !== c.id && !w.reviews.some((r) => r.day === world.day))) {
+      && allWorks(world).some((w) => w.creatorId !== c.id && !w.reviews.some((r) => r.day === world.day))) {
       set.add('review');
     }
-    if (!c.teamDistrict && Object.keys(world.teams ?? {}).length > 0) set.add('join_team');
+    if (!c.teamDistrict && anyTeam(world)) set.add('join_team');
     if (c.teamDistrict && groundFor(world, c)) set.add('train');
     if (!adoptedThisCycle(world, c.id)) set.add('adopt_school');
     if (cafeFor(world, c.id)) set.add('set_menu');
@@ -221,12 +223,29 @@ function apologyDistrict(world: World): DistrictId {
 function fabricActions(world: World, c: Citizen, set: Set<ActionType>, here: Citizen[]): void {
   const adult = c.lifeStage !== 'child';
   const grown = grownHere(here);
-  if (adult && grown.length > 0 && Object.keys(world.citizens).length > 2) set.add('gossip');
+  if (adult && grown.length > 0 && citizenCount(world) > 2) set.add('gossip');
   if (adult && c.district === apologyDistrict(world) && feudsOf(world, c).length > 0
     && grown.some((o) => inFeud(world, c.id, o.id))) set.add('apologize');
   if (adult && mayMentor(world, c) && grown.some((o) => !o.mentorId && o.id !== c.id && !o.menteeId)) set.add('mentor');
   set.add('post');
   if (feedFor(world, c).some((p) => p.author !== c.id && p.youReacted === null)) set.add('react');
+}
+
+/**
+ * How many minds the city has ever registered, and whether it has any teams:
+ * both are asked once per citizen per hour, and listing a whole register to
+ * count it is how a question with a one-word answer came to cost the city more
+ * every day it grew.
+ */
+function citizenCount(world: World): number {
+  return memo(world, 'citizens:count', () => Object.keys(world.citizens).length);
+}
+
+function anyTeam(world: World): boolean {
+  const teams = world.teams;
+  if (!teams) return false;
+  for (const _id in teams) return true;
+  return false;
 }
 
 /**

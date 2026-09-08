@@ -29,6 +29,7 @@ import { recordMilestone } from '../identity/goals.ts';
 import { acquire } from './museum.ts';
 import { paperOfJob } from './press.ts';
 import { memo } from '../util/memo.ts';
+import { buildingOfKind } from '../world/buildings.ts';
 
 /** What making a work teaches its maker. */
 export const WORK_HOURS_SKILL = 0.5;
@@ -119,12 +120,9 @@ function roleOf(world: World, c: Citizen): string | null {
 
 /** A venue in this district where a work of the kind belongs, undamaged. */
 export function venueFor(world: World, kind: WorkKind, district: DistrictId): Building | null {
-  const kinds = WORK_INFO[kind]?.venueKinds ?? [];
-  for (const b of Object.values(world.buildings)) {
-    if (b.district !== district || b.damage >= 1) continue;
-    if (kinds.includes(b.kind)) return b;
-  }
-  return null;
+  // Asked once per work kind for every citizen every hour: it reads the
+  // district's own shelf of the register rather than listing the whole city.
+  return buildingOfKind(world, district, WORK_INFO[kind]?.venueKinds ?? []);
 }
 
 /** Any venue here that shows works at all: where a maker (or a curator) may exhibit. */

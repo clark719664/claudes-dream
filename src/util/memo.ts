@@ -68,3 +68,18 @@ export function memo<T>(world: World, key: string, compute: () => T): T {
   cache.set(key, value);
   return value;
 }
+
+/**
+ * The value of `compute()` for one subject, computed once a round. The same
+ * question asked about a hundred citizens is one table with a hundred rows
+ * rather than a hundred keys built out of string pieces: building the key was
+ * itself among the costlier things the engine did every hour.
+ */
+export function memoBy<T>(world: World, table: string, subject: string, compute: () => T): T {
+  const rows = memo(world, table, () => new Map<string, T>());
+  const found = rows.get(subject);
+  if (found !== undefined || rows.has(subject)) return found as T;
+  const value = compute();
+  rows.set(subject, value);
+  return value;
+}

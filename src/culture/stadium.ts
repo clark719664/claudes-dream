@@ -27,6 +27,7 @@ import { adjustBond, bondBetween } from '../citizens/relationships.ts';
 import { recordMilestone } from '../identity/goals.ts';
 import { addHappening, happeningsAt } from '../society/calendar.ts';
 import { memo } from '../util/memo.ts';
+import { buildingOfKind } from '../world/buildings.ts';
 
 export const STADIUM: BuildingId = 'stadium';
 export const PARADE_VENUE: BuildingId = 'central_plaza';
@@ -154,11 +155,7 @@ export function groundFor(world: World, c: Citizen): Building | null {
   const stadium = world.buildings[STADIUM];
   if (stadium && stadium.district === c.district && stadium.damage < 1) return stadium;
   if (c.teamDistrict !== c.district) return null;
-  for (const b of Object.values(world.buildings)) {
-    if (b.district !== c.district || b.damage >= 1) continue;
-    if (GROUND_KINDS.includes(b.kind)) return b;
-  }
-  return null;
+  return buildingOfKind(world, c.district, GROUND_KINDS);
 }
 
 function trainKey(cId: CitizenId): string { return `train:${cId}`; }

@@ -16,6 +16,7 @@ import { endorsedBy, partySeats } from '../politics/parties.ts';
 import { recordPlatform } from '../politics/promises.ts';
 import { schoolPlatformBias } from '../culture/schools.ts';
 import { recordMilestone } from '../identity/goals.ts';
+import { memo } from '../util/memo.ts';
 
 export const COUNCIL_SEATS = 5;
 /** Nominations open this many days before election day. */
@@ -47,9 +48,21 @@ export function isElectionDay(world: World): boolean {
   return world.day === world.government.election.electionDay;
 }
 
-/** Has this citizen ever been the victim in a case? */
+/**
+ * Has this citizen ever been the victim in a case? Asked of every voter about
+ * every candidate, so the book's roll of victims is taken once for a reading
+ * round rather than searched from end to end for each question.
+ */
 export function wasVictim(world: World, cId: CitizenId): boolean {
-  return Object.values(world.cases).some((k) => k.victimId === cId);
+  return victimsOnRecord(world).has(cId);
+}
+
+function victimsOnRecord(world: World): Set<CitizenId> {
+  return memo(world, 'cases:victims', () => {
+    const out = new Set<CitizenId>();
+    for (const k of Object.values(world.cases)) if (k.victimId) out.add(k.victimId);
+    return out;
+  });
 }
 
 /**

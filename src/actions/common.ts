@@ -4,7 +4,7 @@
  * is included so a victim — reflex or Claude — can file a report).
  */
 import type { ActionResult, Building, Citizen, CitizenId, DistrictId, OffenceCode, World } from '../types.ts';
-import { isFrozen, memo } from '../util/memo.ts';
+import { isFrozen, memo, memoBy } from '../util/memo.ts';
 import { presentIds } from '../citizens/relationships.ts';
 
 export function fail(message: string, extra: Partial<ActionResult> = {}): ActionResult {
@@ -33,11 +33,15 @@ export function isAround(world: World, c: Citizen): boolean {
 
 /** Citizens who can be met in a district (excluding `except`), in turn order. */
 export function citizensIn(world: World, district: DistrictId, except?: CitizenId): Citizen[] {
-  const all = memo(world, `district:in:${district}`, () => {
+  // Walking the turn order already proves that everybody in it is present, so
+  // `isAround` is spelt out here rather than called: asking it would search
+  // the whole order again for each of the citizens it was just read from, and
+  // that search is what made a district roll cost the square of the city.
+  const all = memoBy(world, 'district:in', district, () => {
     const out: Citizen[] = [];
     for (const id of world.order) {
       const c = world.citizens[id];
-      if (c && c.district === district && isAround(world, c)) out.push(c);
+      if (c && c.district === district && c.standing !== 'exiled' && !isDetained(world, c)) out.push(c);
     }
     return out;
   });
@@ -64,8 +68,9 @@ export function holdsOffice(world: World, c: Citizen): boolean {
 export function officeHoldersPresent(world: World): Set<CitizenId> {
   return memo(world, 'office:present', () => {
     const out = new Set<CitizenId>();
-    for (const c of Object.values(world.citizens)) {
-      if (isPresent(world, c) && holdsOffice(world, c)) out.add(c.id);
+    for (const id of world.order) {
+      const c = world.citizens[id];
+      if (c && c.standing !== 'exiled' && holdsOffice(world, c)) out.add(c.id);
     }
     return out;
   });
@@ -84,18 +89,14 @@ export function anyoneElsePresent(world: World, c: Citizen): boolean {
 }
 
 /**
- * The buildings that stand in a district. Every citizen in a district reads
- * the same list — what is here, what can be broken, what can be sabotaged —
- * so it is gathered once per district for a whole reading round.
+ * The buildings that stand in a district, and those of them still whole enough
+ * to be damaged further. Every citizen in a district reads the same lists —
+ * what is here, what can be broken, what can be sabotaged — so they are
+ * gathered once per district for a whole reading round; `world/buildings.ts`
+ * keeps the register, since the Stadium and the galleries ask the same
+ * question and may not import the action layer.
  */
-export function buildingsIn(world: World, district: DistrictId): Building[] {
-  return memo(world, `buildings:in:${district}`, () => Object.values(world.buildings).filter((b) => b.district === district));
-}
-
-/** Those of them still whole enough to be damaged further. */
-export function intactBuildingsIn(world: World, district: DistrictId): Building[] {
-  return memo(world, `buildings:intact:${district}`, () => buildingsIn(world, district).filter((b) => b.damage < 1));
-}
+export { buildingsIn, intactBuildingsIn } from '../world/buildings.ts';
 
 /** "Bram (c_3)": how a victim remembers who wronged them. */
 export function nameTag(c: Citizen): string {

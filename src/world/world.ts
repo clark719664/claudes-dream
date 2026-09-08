@@ -236,9 +236,14 @@ function askBrain(world: World, brains: BrainRegistry, c: Citizen, obs: Observat
  */
 async function collectTurns(world: World, brains: BrainRegistry): Promise<Turn[]> {
   const turns: Turn[] = [];
-  // Nothing changes while the city is being looked at, so the public facts
-  // every observation shares — the job board, the deeds, the wall — are read
-  // once for the whole round rather than once per citizen (`util/memo.ts`).
+  // Nothing the city can be asked about changes while it is being looked at,
+  // so the public facts every observation shares — the job board, the deeds,
+  // the wall, who is standing where — are read once for the whole round
+  // rather than once per citizen (`util/memo.ts`). Asking the minds happens
+  // inside the same round: a scripted mind puts the city the same questions
+  // its own observation just did, and between the observation and the answer
+  // the only things that move are the random stream and a mind's private
+  // "already done today" marks, which nothing the round remembers reads.
   // The round is opened and closed synchronously, before anybody acts.
   frozenRound(world, () => {
     for (const id of [...world.order]) {
@@ -253,8 +258,10 @@ async function collectTurns(world: World, brains: BrainRegistry): Promise<Turn[]
       }
       turns.push({ c, obs, answer: IDLE });
     }
+    for (const turn of turns) turn.answer = askBrain(world, brains, turn.c, turn.obs);
   });
-  for (const turn of turns) turn.answer = askBrain(world, brains, turn.c, turn.obs);
+  // A mind that takes real time answers after the round has closed, and what
+  // it (or instinct in its place) reads then is read fresh.
   const answers = await Promise.all(turns.map((t) => t.answer));
   answers.forEach((action, i) => { turns[i].answer = action; });
   return turns;

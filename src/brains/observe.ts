@@ -57,7 +57,8 @@ import { rumoursHeardBy } from '../social/rumours.ts';
 import { gateObservation, reputeObservation } from '../standing/observe.ts';
 import { availableActions, heldJob } from '../actions/execute.ts';
 import { ownedBusiness } from '../actions/enterprise.ts';
-import { buildingsIn, citizensIn, districtName } from '../actions/common.ts';
+import { buildingsIn, citizensIn, districtName, isPresent } from '../actions/common.ts';
+import { memo } from '../util/memo.ts';
 
 /** Memory entries surfaced as `recent`. */
 export const RECENT_MEMORIES = 8;
@@ -74,12 +75,36 @@ export const MAX_AFFECTION_SHOWN = 5;
  * record. Never their hidden traits, needs, wallet or notes.
  */
 export function observeCitizen(world: World, self: Citizen, other: Citizen): ObservedCitizen {
-  const job = heldJob(world, other);
+  const card = publicCard(world, other);
   return {
-    id: other.id, name: other.name, bond: bondBetween(world, self.id, other.id), job: job ? job.title : null,
+    id: card.id, name: card.name, bond: bondBetween(world, self.id, other.id), job: card.job,
+    office: card.office, reputation: card.reputation, standing: card.standing,
+    character: card.character,
+  };
+}
+
+/**
+ * Everything in an observed citizen that is the same whoever is looking: the
+ * name, the post, the office, the standing and the character the city reads
+ * off the record. Only the bond depends on who is asking, so the rest is read
+ * once per citizen for a whole reading round (`util/memo.ts`) rather than once
+ * for every neighbour who can see them — a district of thirty used to read the
+ * same thirty records thirty times over, every hour.
+ */
+type PublicCard = Omit<ObservedCitizen, 'bond'>;
+
+function publicCard(world: World, other: Citizen): PublicCard {
+  const cards = memo(world, 'observe:cards', () => new Map<CitizenId, PublicCard>());
+  const found = cards.get(other.id);
+  if (found) return found;
+  const job = heldJob(world, other);
+  const card: PublicCard = {
+    id: other.id, name: other.name, job: job ? job.title : null,
     office: other.office, reputation: Math.round(other.reputation), standing: other.standing,
     character: characterOf(other),
   };
+  cards.set(other.id, card);
+  return card;
 }
 
 function jobNumber(job: Job): number {
@@ -143,7 +168,9 @@ function observedFamily(world: World, c: Citizen): ObservedFamilyMember[] {
   const out: ObservedFamilyMember[] = [];
   for (const { id, relation } of familyOf(world, c.id)) {
     const other = world.citizens[id];
-    if (!other || other.standing === 'exiled' || !world.order.includes(id)) continue;
+    // `isPresent` reads the roll taken once for the round rather than walking
+    // the whole turn order for every relative of every citizen.
+    if (!other || !isPresent(world, other)) continue;
     out.push({ id, name: other.name, relation, lifeStage: other.lifeStage });
   }
   return out;
@@ -182,11 +209,23 @@ function observedHappenings(world: World, district: DistrictId): ObservedHappeni
 
 /** The citizens this one is drawn to, warmest first. */
 function observedAffection(world: World, c: Citizen): { id: CitizenId; name: string; affection: number }[] {
-  return Object.entries(c.affection ?? {})
-    .filter(([id, value]) => value > 0 && world.citizens[id] && world.citizens[id].standing !== 'exiled')
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    .slice(0, MAX_AFFECTION_SHOWN)
-    .map(([id, value]) => ({ id, name: world.citizens[id].name, affection: Math.round(value) }));
+  // Only the warmest few are ever shown, so the book is walked once and the
+  // short list kept in order as it goes: sorting a citizen's whole affection
+  // book to throw all but five of it away cost more every day the city grew.
+  const book = c.affection ?? {};
+  const top: { id: CitizenId; value: number }[] = [];
+  for (const id in book) {
+    const value = book[id];
+    if (!(value > 0)) continue;
+    const other = world.citizens[id];
+    if (!other || other.standing === 'exiled') continue;
+    let k = top.length;
+    while (k > 0 && (top[k - 1].value < value || (top[k - 1].value === value && top[k - 1].id.localeCompare(id) > 0))) k--;
+    if (k >= MAX_AFFECTION_SHOWN) continue;
+    top.splice(k, 0, { id, value });
+    if (top.length > MAX_AFFECTION_SHOWN) top.pop();
+  }
+  return top.map(({ id, value }) => ({ id, name: world.citizens[id].name, affection: Math.round(value) }));
 }
 
 /** The gang a citizen runs with, as their own observation shows it; null for everybody else. */

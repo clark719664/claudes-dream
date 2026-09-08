@@ -477,6 +477,22 @@ export function tickHappenings(world: World): void {
 // Observation
 // ---------------------------------------------------------------------------
 
+/**
+ * Everybody in the city with a birthday today, in turn order. The same handful
+ * of names is the answer for every citizen who asks, so the roll is taken once
+ * for a reading round rather than once per citizen.
+ */
+function havingBirthdays(world: World): Citizen[] {
+  return memo(world, 'calendar:birthdays', () => {
+    const out: Citizen[] = [];
+    for (const id of world.order) {
+      const o = world.citizens[id];
+      if (o && o.standing !== 'exiled' && hasBirthdayToday(world, o)) out.push(o);
+    }
+    return out;
+  });
+}
+
 /** Every BIRTHDAY_EVERY days after arrival or birth. */
 export function hasBirthdayToday(world: World, c: Citizen): boolean {
   return world.day > c.bornDay && (world.day - c.bornDay) % BIRTHDAY_EVERY === 0;
@@ -486,9 +502,8 @@ export function hasBirthdayToday(world: World, c: Citizen): boolean {
 function birthdaysToday(world: World, self: Citizen): CitizenId[] {
   const family = new Set<CitizenId>([...self.family.parents, ...self.family.children, ...(self.family.partnerId ? [self.family.partnerId] : [])]);
   const rows: { id: CitizenId; rank: number }[] = [];
-  for (const id of world.order) {
-    const o = world.citizens[id];
-    if (!o || o.standing === 'exiled' || !hasBirthdayToday(world, o)) continue;
+  for (const o of havingBirthdays(world)) {
+    const id = o.id;
     const rank = id === self.id ? 0 : family.has(id) ? 1 : bondBetween(world, self.id, id) >= FRIEND_THRESHOLD ? 2 : o.district === self.district ? 3 : -1;
     if (rank >= 0) rows.push({ id, rank });
   }

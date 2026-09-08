@@ -274,6 +274,22 @@ export function weddingFor(world: World, a: CitizenId, b: CitizenId): Happening 
 }
 
 /**
+ * The city's tally of ceremonies actually held. It is kept here rather than
+ * counted from `world.events`, which is a rolling log bounded by
+ * `config.eventLogLength` and holds only the last few days of a busy city: on
+ * seed 7 the log turned over roughly every three days, so counting `'wedding'`
+ * events reported three weddings against twenty-three marriages and read as if
+ * the ceremony were never held. Every marriage in the register has a ceremony
+ * behind it, and this is where the city keeps the count.
+ */
+export const WEDDINGS_HELD = 'weddingsHeld';
+
+/** How many weddings the city has held since it was founded. */
+export function weddingsHeld(world: World): number {
+  return world.counters[WEDDINGS_HELD] ?? 0;
+}
+
+/**
  * Arrange a wedding: partners of at least MARRIAGE_MIN_DAYS days whose bond
  * has passed MARRIAGE_MIN_BOND are married the next evening at the Sound
  * Garden. Nothing changes until the ceremony is held (calendar.tickHappenings
@@ -373,6 +389,7 @@ export function holdWedding(world: World, h: Happening): void {
 
   a.family.married = true;
   b.family.married = true;
+  world.counters[WEDDINGS_HELD] = weddingsHeld(world) + 1;
   // A marriage across a feud is how a feud ends (social/feuds.ts).
   reconcileByMarriage(world, a.id, b.id);
   const shared = mergeFamilyNames(a, b);

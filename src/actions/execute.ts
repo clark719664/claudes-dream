@@ -13,7 +13,7 @@ import { ACADEMY_TUITION, BUSINESS_FOUNDING_COST, CLINIC_FEE, SHOW_TICKET } from
 import { isAdjacent } from '../data/city.ts';
 import { buyFromMarket, sellToMarket } from '../economy/market.ts';
 import { applyForJob, isQualified, openJobs, quitJob } from '../economy/jobs.ts';
-import { foundBusiness } from '../economy/business.ts';
+import { activeBusinesses, foundBusiness } from '../economy/business.ts';
 import { bankOpen, loanOf, repayLoan, requestLoan } from '../economy/bank.ts';
 import { moveHome, vacancies } from '../economy/housing.ts';
 import { canAct, isDetained, isEligibleCandidate, isEligibleVoter } from '../citizens/citizen.ts';
@@ -22,6 +22,7 @@ import { journalistStory } from '../sim/chronicle.ts';
 import { applyToWatch, reportOffence } from '../government/watch.ts';
 import { dropReport, fileReport, reportsFor } from '../government/reports.ts';
 import { appealsFor, benchFor, canAppeal, castAppealVote, castVerdict, fileAppeal, pendingCasesFor } from '../government/court.ts';
+import { casesInSession } from '../government/cases.ts';
 import { standingAllows } from '../government/registry.ts';
 import { mayAdvocate, publicDefenders } from '../government/advocates.ts';
 import { gangOf, gangOfTurf, mayFoundGang } from '../government/gangs.ts';
@@ -157,7 +158,7 @@ function movingInCandidates(world: World, c: Citizen): Set<CitizenId> {
 function anyHomeToJoin(world: World, c: Citizen): boolean {
   for (const id of movingInCandidates(world, c)) {
     const o = world.citizens[id];
-    if (!o || o.standing === 'exiled' || o.homeTier === 0 || !world.order.includes(id)) continue;
+    if (!o || o.homeTier === 0 || !isPresent(world, o)) continue;
     const home = householdOf(world, o.id);
     if (home && (home.id === c.householdId || home.members.length >= householdCapacity(home))) continue;
     if (relationBetween(world, c.id, o.id) || bondBetween(world, o.id, c.id) >= MOVE_IN_BOND) return true;
@@ -234,7 +235,7 @@ function justiceActions(world: World, c: Citizen, set: Set<ActionType>, here: Ci
     set.add('hire_advocate');
   }
   if (c.district === 'commons'
-    && Object.values(world.cases).some((k) => k.advocateId === c.id && k.status === 'in_session' && !(k.advocacy ?? 0))) {
+    && casesInSession(world).some((k) => k.advocateId === c.id && !(k.advocacy ?? 0))) {
     set.add('advocate');
   }
 
@@ -243,7 +244,7 @@ function justiceActions(world: World, c: Citizen, set: Set<ActionType>, here: Ci
   if (gang && c.district === gang.turf) {
     if (here.some((o) => !o.gangId && o.lifeStage !== 'child' && bondBetween(world, c.id, o.id) >= 40)) set.add('recruit');
   }
-  if (gang && Object.values(world.businesses).some((b) => b.dissolvedDay === null && b.district === c.district
+  if (gang && activeBusinesses(world).some((b) => b.district === c.district
     && b.ownerId !== c.id && world.counters[`racket:${b.id}`] !== Math.floor(world.day / Math.max(1, world.config.cycleDays)))) {
     set.add('racket');
   }
