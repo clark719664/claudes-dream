@@ -31,7 +31,12 @@ import { leversObservation, reserveTarget } from '../markets/levers.ts';
 import { touristsToday } from '../markets/outer.ts';
 import { leagueTable } from '../culture/stadium.ts';
 import { frontPage } from '../culture/press.ts';
-import { advocateFor } from '../government/advocates.ts';
+import { advocacyDiscount, advocateFor } from '../government/advocates.ts';
+import {
+  BOND_DEFENDANT_WEIGHT, BOND_VICTIM_WEIGHT, GUILT_THRESHOLD, RECORD_WEIGHT, REPUTATION_WEIGHT,
+} from '../government/bench.ts';
+import { priorsOf } from '../government/cases.ts';
+import { bondBetween } from '../citizens/relationships.ts';
 import { juryTally, seatedJurors } from '../government/jury.ts';
 import { openInvestigations } from '../government/investigations.ts';
 import {
@@ -155,7 +160,20 @@ export function cityView(world: World): Record<string, unknown> {
   };
 }
 
-/** What `/api/map` gained: open districts, tram lines, the sky and who is where. */
+/** Events the map reads back through, looking for the buildings they name. */
+export const BUILDING_EVENT_SCAN = 150;
+/** Lines the map keeps against any one building. */
+export const BUILDING_EVENTS_KEPT = 2;
+/** A line on a building's popover is a line, not a paragraph. */
+export const BUILDING_EVENT_CHARS = 180;
+
+/**
+ * What `/api/map` gained: the open districts, the tram lines, the sky and the
+ * hour it is under, who is where, the monuments raised in the Plaza, and the
+ * trouble the map has to draw — a district under a disaster, the lights out at
+ * the Power Station, the gangs whose members wear a hatch, and the last thing
+ * that happened at each building.
+ */
 export function mapExtras(world: World): Record<string, unknown> {
   const present = presentSet(world);
   const byDistrict: Record<string, number> = {};
@@ -166,16 +184,57 @@ export function mapExtras(world: World): Record<string, unknown> {
   }
   const season = world.season ?? 'bloom';
   const weather = world.weather ?? 'clear';
+  // Trouble, by where it is: the glyph in a district's band, and the pulse on
+  // a Power Station that can no longer keep the grid up.
+  const troubles = activeDisasters(world);
+  const districtTrouble: Record<string, string> = {};
+  for (const d of troubles) if (d.district && !districtTrouble[d.district]) districtTrouble[d.district] = d.kind;
+  // Who runs with whom, so a dot can wear its gang's hatch, and whose turf a
+  // district is. A busted gang is history and marks nobody.
+  const gangMembers: Record<string, string> = {};
+  const gangTurf: Record<string, string> = {};
+  for (const g of gangsView(world)) {
+    if (g.bustedDay !== null) continue;
+    gangTurf[g.turf] = g.name;
+    for (const id of g.members) gangMembers[id] = g.name;
+  }
+  // The last thing the city noticed at each building, for the popover a reader
+  // gets by clicking its glyph. An event does not carry a building id, so the
+  // match is on the building's own name in the line — which is how the
+  // Chronicle writes about a place anyway ("The Compute Forge stood cold").
+  const named = Object.values(world.buildings).map((b) => [b.id, b.name] as const);
+  const buildingEvents: Record<string, Record<string, unknown>[]> = {};
+  const recent = world.events.slice(-BUILDING_EVENT_SCAN);
+  for (let i = recent.length - 1; i >= 0; i--) {
+    const e = recent[i];
+    for (const [id, name] of named) {
+      if (!e.text.includes(name)) continue;
+      const kept = (buildingEvents[id] ??= []);
+      if (kept.length >= BUILDING_EVENTS_KEPT) continue;
+      kept.push({ day: e.day, tick: e.tick, kind: e.kind, weight: e.weight, text: e.text.slice(0, BUILDING_EVENT_CHARS) });
+    }
+  }
   return {
     openDistricts: openDistricts(world),
     trams: (world.trams ?? []).map((t) => [t[0], t[1]]),
     weather, weatherName: WEATHER_NAMES[weather] ?? weather,
     season, seasonName: SEASON_NAMES[season] ?? season,
+    sky: describeSky(world),
     hour: world.hour,
     populationByDistrict: byDistrict,
     monuments: (world.monuments ?? []).map((m) => ({
       id: m.id, honoreeId: m.honoreeId, honoree: nameOf(world, m.honoreeId), inscription: m.inscription, day: m.day,
     })),
+    disasters: troubles.map((d) => ({
+      kind: d.kind, day: d.day, district: d.district,
+      districtName: d.district ? world.districts[d.district]?.name ?? d.district : null,
+      severity: d.severity,
+    })),
+    districtTrouble,
+    lightsOut: troubles.some((d) => d.kind === 'blackout'),
+    gangMembers,
+    gangTurf,
+    buildingEvents,
   };
 }
 
@@ -267,18 +326,62 @@ export function governmentExtras(world: World): Record<string, unknown> {
 
 // -------------------------------------------------------------------- court
 
-/** The jury box and the advocate's bench, for one case. */
+/**
+ * What one judge had in front of them, itemised — the belief bar of the
+ * courtroom view (`docs/UI.md` §6).
+ *
+ * `bench.ts judgeBelief` is the whole reading, but it draws a private margin
+ * from the world's RNG and a view may never turn that handle (determinism,
+ * `docs/MODULES.md`); nor is a judge's own margin recorded anywhere afterwards.
+ * So this is the part of the reading that is on the public record: the
+ * evidence, the defendant's record and the city's regard for them, this
+ * judge's ties to the two people in the room, and what the advocate's speech
+ * was worth — weighed with the bench's own published constants, against the
+ * standard of proof the Charter sets.
+ */
+function benchReading(world: World, k: Case, judgeId: CitizenId, priors: number, spoken: number): Record<string, unknown> {
+  const d = world.citizens[k.defendantId];
+  const bondD = d ? bondBetween(world, judgeId, d.id) : 0;
+  const bondV = k.victimId ? bondBetween(world, judgeId, k.victimId) : 0;
+  // Keys, not sentences: the docket carries two hundred cases and the panel
+  // knows how to name a part in the reader's language.
+  const parts = [
+    { key: 'evidence', amount: round2(k.evidence) },
+    { key: 'record', amount: priors > 0 ? RECORD_WEIGHT : 0 },
+    { key: 'reputation', amount: round2(REPUTATION_WEIGHT * (1 - (d?.reputation ?? 0) / 100)) },
+    { key: 'bondDefendant', amount: round2(-BOND_DEFENDANT_WEIGHT * (bondD / 100)) },
+    { key: 'bondVictim', amount: round2(BOND_VICTIM_WEIGHT * (bondV / 100)) },
+    { key: 'advocacy', amount: round2(-spoken) },
+  ].filter((p) => p.amount !== 0);
+  const belief = parts.reduce((sum, p) => sum + p.amount, 0);
+  return { id: judgeId, belief: round2(Math.min(1, Math.max(0, belief))), parts };
+}
+
+/** The courtroom, for one case: who stood where, and how the bench read it. */
 export function caseExtras(world: World, k: Case): Record<string, unknown> {
+  const present = presentSet(world);
   const jury = k.jury ?? [];
   const seated = new Set(seatedJurors(world, k));
   const advocate = advocateFor(world, k);
+  // Read once for the whole bench: they weigh the same record and the same speech.
+  const priors = priorsOf(world, k).length;
+  const spoken = advocacyDiscount(world, k);
   return {
+    // Everyone in the room, with a face: the brief asks for portraits of the
+    // defendant, the victim, the advocate, the bench and the box.
+    defendant: personCard(world, k.defendantId, present),
+    victim: personCard(world, k.victimId, present),
+    officer: k.filedBy === 'watch' ? null : personCard(world, k.filedBy, present),
+    // The reading only: name, vote and words are already on `judges`, and the
+    // face is drawn from the id, so nothing here is sent twice.
+    bench: k.judges.map((id) => benchReading(world, k, id, priors, spoken)),
+    standardOfProof: GUILT_THRESHOLD,
     jury: jury.map((id) => ({
       id, name: nameOf(world, id), portrait: portraitPath(id),
       verdict: k.juryVotes?.[id] ?? null, reason: k.juryReasons?.[id] ?? null, seated: seated.has(id),
     })),
     juryTally: jury.length > 0 ? juryTally(world, k) : null,
-    advocate: advocate ? { id: advocate.id, name: advocate.name, portrait: portraitPath(advocate.id) } : null,
+    advocate: advocate ? { ...personCard(world, advocate.id, present), id: advocate.id, name: advocate.name } : null,
     advocacy: round2(num(k.advocacy)),
   };
 }

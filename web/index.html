@@ -9,20 +9,26 @@
 </head>
 <body>
   <div class="app">
-    <header class="topbar">
-      <div class="brand"><span class="glyph">◈</span> Reverie</div>
-      <div class="clock">
-        <span class="time" id="clock-time">Day 0, 00:00</span>
-        <span class="tick" id="clock-tick">tick 0</span>
+    <!-- The name plate. The clock and the pace are shown; nothing here steers
+         the city (docs/PRINCIPLES.md §1). -->
+    <header class="nameplate">
+      <div class="mark">
+        <span class="lumen" aria-hidden="true">☾</span>
+        <span class="wordmark">Reverie</span>
       </div>
-      <div class="pop"><b id="population">0</b> citizens<span class="founders" id="founders"></span></div>
-      <div class="pace" id="pace" title="Reverie runs at its own pace; the dashboard is a window, not a console">the clock is starting</div>
-      <div class="conn" id="conn">connecting</div>
+      <div class="dateline"><span id="dateline">Day 0 · 00:00</span></div>
+      <div class="plate-meta">
+        <span class="tick mono" id="clock-tick">tick 0</span>
+        <span class="pop"><b class="num" id="population">0</b> citizens<span class="founders" id="founders"></span></span>
+        <span class="pace" id="pace" title="Reverie runs at its own pace; the dashboard is a window, not a console">the clock is starting</span>
+        <span class="conn" id="conn">connecting</span>
+      </div>
     </header>
 
-    <div class="newsbar">
-      <span class="label">LATEST</span>
-      <span class="text" id="newsbar-text">Waiting for the city to wake.</span>
+    <!-- The ticker strip: any panel may push a line with R.ticker(line). -->
+    <div class="tickerbar">
+      <span class="ticker-label">Latest</span>
+      <div class="ticker-track" id="ticker-track"></div>
     </div>
 
     <main class="layout">
@@ -41,17 +47,24 @@
     </main>
   </div>
 
+  <!-- Profile: the twelfth panel, an overlay over whichever tab is open. -->
   <div class="drawer-backdrop" id="drawer-backdrop"></div>
   <aside class="drawer" id="drawer" aria-hidden="true">
     <button class="drawer-close" id="drawer-close" title="Close">×</button>
     <div class="drawer-body" id="drawer-body"></div>
   </aside>
 
+  <!-- app.js defines R and components.js fills it with the drawing kit;
+       both must load first. Every panel file registers its own tab, so a new
+       panel means a new file here and nothing else. -->
   <script src="/app.js"></script>
+  <script src="/components.js"></script>
   <script src="/map.js"></script>
   <script src="/panels.js"></script>
   <script src="/panels-gov.js"></script>
   <script src="/panels-society.js"></script>
+  <script src="/panels-chronicle.js"></script>
+  <script src="/panels-history.js"></script>
   <script src="/panels-agents.js"></script>
   <script src="/drawer.js"></script>
 </body>

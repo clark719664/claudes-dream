@@ -1,11 +1,17 @@
 /*
- * Reverie dashboard — core.
+ * Reverie dashboard — the shell.
  *
  * DOM helpers (everything is built with textContent, so citizen-written text
- * can never become markup), the API client, header and simulation controls,
- * the tab framework, the SSE stream with a polling fallback, and the live
- * event ticker. The other scripts (map.js, panels*.js, drawer.js) register
- * themselves on the global `R` namespace defined here.
+ * can never become markup), formatting, the motion vocabulary, the API
+ * client, the name plate, the tab framework, the SSE stream with a polling
+ * fallback, and the ticker strip under the header. The drawing kit every
+ * panel uses — portraits, tags, bars, tables, the family tree, the web of
+ * ties — is components.js, loaded straight after this file onto the same `R`
+ * namespace. The other scripts (map.js, panels*.js, drawer.js) register
+ * themselves on `R` and should never need to invent a component of their own.
+ *
+ * There is nothing in this file that can change the city. Every call is a
+ * GET; the only key bound closes the drawer (docs/PRINCIPLES.md §1).
  */
 (function () {
   'use strict';
@@ -79,171 +85,75 @@
   R.dayText = (day) => (day === null || day === undefined ? '—' : `day ${day}`);
   R.titleCase = (s) => String(s ?? '').replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
   R.clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
-  R.districtName = (id) => (R.map && R.map.districtName(id)) || R.titleCase(id);
 
-  // ------------------------------------------------------------- components
-
-  R.pill = function pill(text, cls) {
-    return R.h('span', { class: `pill ${cls || text}` }, text);
+  /** The nine districts, in the order the map plats them. Hues live in style.css. */
+  R.DISTRICTS = {
+    commons: 'The Commons', foundry_row: 'Foundry Row', archive: 'The Archive',
+    harbor_market: 'Harbor Market', verdant_quarter: 'Verdant Quarter', nightglass: 'Nightglass',
+    threshold: 'The Threshold', heights: 'The Heights', undercroft: 'The Undercroft',
   };
+  R.DISTRICT_ORDER = Object.keys(R.DISTRICTS);
 
-  R.standingPill = (standing) => R.pill(standing, standing);
+  R.districtName = (id) =>
+    (R.map && R.map.districtName && R.map.districtName(id)) || R.DISTRICTS[id] || R.titleCase(id);
 
-  /** What kind of mind this is: Claude, an external agent, an unclaimed child, or a scripted founder. */
-  R.brainBadge = function brainBadge(brain) {
-    if (brain === 'llm') return R.h('span', { class: 'badge llm', title: 'Driven by Claude' }, 'Claude');
-    if (brain === 'remote') return R.h('span', { class: 'badge remote', title: 'External agent over HTTP' }, 'remote');
-    if (brain === 'child') return R.h('span', { class: 'badge child', title: 'Born here and unclaimed: it lives on the child instinct until someone claims it' }, 'unclaimed');
-    if (brain === 'reflex') return R.h('span', { class: 'badge founder', title: 'A scripted mind seeded to demonstrate the city' }, 'scripted founder');
-    return null;
-  };
-
-  R.brainName = function brainName(brain) {
-    if (brain === 'llm') return 'Claude';
-    if (brain === 'reflex') return 'scripted founder';
-    if (brain === 'child') return 'unclaimed child';
-    if (brain === 'remote') return 'agent';
-    return brain;
-  };
-
-  R.officeLabel = (office) => (office ? R.pill(R.titleCase(office), 'gold') : R.h('span', { class: 'dim' }, '—'));
-
-  R.bar = function bar(value, max, cls) {
-    const p = R.clamp((value / (max || 1)) * 100, 0, 100);
-    return R.h('div', { class: `bar ${cls || ''}` }, R.h('i', { style: `width:${p.toFixed(1)}%` }));
-  };
-
-  /** Need bar coloured by criticality (<20 critical, <40 warning). */
-  R.needBar = (value) => R.bar(value, 100, value < 20 ? 'crit' : value < 40 ? 'warn' : '');
-
-  R.barRow = function barRow(label, value, max, cls) {
-    return R.h('div', { class: 'bar-row' },
-      R.h('span', { class: 'muted' }, label),
-      R.bar(value, max, cls),
-      R.h('span', { class: 'num' }, Math.round(value)));
-  };
-
-  R.miniBar = function miniBar(value, max, cls) {
-    return R.h('span', { class: 'mini-bar' }, R.bar(value, max, cls), R.h('span', { class: 'num small' }, Math.round(value)));
-  };
-
-  /** Tiny inline SVG line chart. */
-  R.sparkline = function sparkline(values, w = 80, h = 22, color = 'var(--accent)') {
-    const el = R.svg('svg', { width: w, height: h, viewBox: `0 0 ${w} ${h}`, class: 'spark' });
-    const vals = (values || []).filter((v) => typeof v === 'number' && Number.isFinite(v));
-    if (vals.length < 2) {
-      el.appendChild(R.svg('line', { x1: 0, y1: h / 2, x2: w, y2: h / 2, stroke: 'var(--dim)', 'stroke-width': 1 }));
-      return el;
-    }
-    const lo = Math.min(...vals);
-    const hi = Math.max(...vals);
-    const span = hi - lo || 1;
-    const pts = vals.map((v, i) => {
-      const x = (i / (vals.length - 1)) * (w - 2) + 1;
-      const y = h - 2 - ((v - lo) / span) * (h - 4);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    });
-    el.appendChild(R.svg('polyline', { points: pts.join(' '), fill: 'none', stroke: color, 'stroke-width': 1.4, 'stroke-linejoin': 'round' }));
-    const last = pts[pts.length - 1].split(',');
-    el.appendChild(R.svg('circle', { cx: last[0], cy: last[1], r: 1.8, fill: color }));
-    return el;
-  };
-
-  /** Four thin bars for a candidate's platform (tax, dividend, min wage, strictness). */
-  R.platformBars = function platformBars(p) {
-    if (!p) return R.h('span', { class: 'dim' }, '—');
-    const keys = ['tax', 'dividend', 'minWage', 'strictness'];
-    const title = keys.map((k) => `${R.titleCase(k)} ${Math.round((p[k] || 0) * 100)}%`).join(' · ');
-    return R.h('span', { class: 'platform', title },
-      keys.map((k) => R.h('i', { class: k, style: `height:${Math.max(2, Math.round((p[k] || 0) * 14))}px` })));
-  };
-
-  /** "Ondine Ashgrove" for a married citizen, "Ondine" for everyone else. */
-  R.displayName = function displayName(c) {
-    if (!c) return '';
-    return c.married && c.familyName ? `${c.name} ${c.familyName}` : c.name;
-  };
-
-  /** A pill for the citizens who are not simply adults. */
-  R.stagePill = function stagePill(stage) {
-    if (stage === 'child') return R.pill('child', 'accent');
-    if (stage === 'elder') return R.pill('elder', 'gold');
-    return null;
-  };
-
-  R.nameLink = function nameLink(id, name) {
-    if (!id) return R.h('span', { class: 'dim' }, '—');
-    return R.h('a', {
-      class: 'name-link', href: '#', title: id,
-      onclick: (e) => { e.preventDefault(); e.stopPropagation(); R.openCitizen(id); },
-    }, name || id);
-  };
-
-  R.nameList = function nameList(items) {
-    if (!items || !items.length) return R.h('span', { class: 'dim' }, '—');
-    const out = [];
-    items.forEach((it, i) => {
-      if (i) out.push(', ');
-      out.push(R.nameLink(it.id, it.name));
-    });
-    return R.h('span', null, out);
-  };
-
-  R.card = function card(label, value, sub, extra) {
-    return R.h('div', { class: 'card' },
-      R.h('div', { class: 'label' }, label),
-      R.h('div', { class: 'value' }, value),
-      sub ? R.h('div', { class: `sub ${sub.cls || ''}` }, sub.text ?? sub) : null,
-      extra || null);
-  };
-
-  R.section = function section(title, meta, ...children) {
-    return R.h('div', { class: 'section' },
-      R.h('h3', { class: 'section-title' }, title, meta ? R.h('span', { class: 'meta' }, meta) : null),
-      children);
+  /** The district's own colour, as a CSS value usable anywhere (`var(--d-archive)`). */
+  R.districtHue = function districtHue(id) {
+    const key = String(id ?? '').toLowerCase();
+    return R.DISTRICTS[key] ? `var(--d-${key})` : 'var(--muted)';
   };
 
   /**
-   * Generic table. columns: [{ key, label, cls, render(row), sortable, sortValue(row) }]
-   * sort: { key, dir }; onSort(key, dir) re-renders; onRowClick(row).
+   * The row class that draws a district's hue down the left edge of a table
+   * row: `rowClass: (r) => R.districtClass(r.district)`.
    */
-  R.table = function table({ columns, rows, sort, onSort, rowClass, onRowClick, empty }) {
-    if (!rows || !rows.length) return R.h('div', { class: 'empty' }, empty || 'Nothing to show yet.');
-    const head = R.h('tr', null, columns.map((col) => {
-      const sortable = col.sortable && onSort;
-      const th = R.h('th', { class: [col.cls || '', sortable ? 'sortable' : ''].join(' ').trim() }, col.label);
-      if (sort && sort.key === col.key) th.appendChild(R.h('span', { class: 'arrow' }, sort.dir === 'asc' ? '▲' : '▼'));
-      if (sortable) th.addEventListener('click', () => onSort(col.key, sort && sort.key === col.key && sort.dir === 'asc' ? 'desc' : 'asc'));
-      return th;
-    }));
-    const body = R.h('tbody', null, rows.map((row) => {
-      const cls = [onRowClick ? 'clickable' : '', rowClass ? rowClass(row) || '' : ''].join(' ').trim();
-      const tr = R.h('tr', { class: cls || null }, columns.map((col) => {
-        const v = col.render ? col.render(row) : row[col.key];
-        return R.h('td', { class: col.cls || null }, v === null || v === undefined || v === '' ? R.h('span', { class: 'dim' }, '—') : v);
-      }));
-      if (onRowClick) tr.addEventListener('click', () => onRowClick(row));
-      return tr;
-    }));
-    return R.h('div', { class: 'table-wrap' }, R.h('table', null, R.h('thead', null, head), body));
+  R.districtClass = function districtClass(id) {
+    const key = R.districtId(id);
+    return key || '';
   };
 
-  /** Sort rows for R.table using the column definitions. */
-  R.sortRows = function sortRows(rows, columns, sort) {
-    if (!sort) return rows;
-    const col = columns.find((c) => c.key === sort.key);
-    if (!col) return rows;
-    const val = col.sortValue || ((r) => r[col.key]);
-    const dir = sort.dir === 'desc' ? -1 : 1;
-    return rows.slice().sort((a, b) => {
-      const x = val(a);
-      const y = val(b);
-      if (x === y) return 0;
-      if (x === null || x === undefined) return 1;
-      if (y === null || y === undefined) return -1;
-      if (typeof x === 'number' && typeof y === 'number') return (x - y) * dir;
-      return String(x).localeCompare(String(y)) * dir;
-    });
+  /** A district id from a name or an id; null when it is neither. */
+  R.districtId = function districtId(value) {
+    const raw = String(value ?? '').trim();
+    if (!raw) return null;
+    const key = raw.toLowerCase().replace(/^the\s+/, '').replace(/[\s-]+/g, '_');
+    if (R.DISTRICTS[key]) return key;
+    for (const id of R.DISTRICT_ORDER) if (R.DISTRICTS[id].toLowerCase() === raw.toLowerCase()) return id;
+    return null;
+  };
+
+  // ------------------------------------------------------------------ motion
+  //
+  // The motion vocabulary, so no panel has to hand-roll one: dots ease
+  // (map.js, .citizen), numbers tick when they change, new lines slide in.
+  // Both helpers are class flips over keyframes declared in style.css.
+
+  /** Play an animation class once, cleaning up after itself. */
+  R.animate = function animate(node, cls) {
+    if (!node || !node.classList) return node;
+    node.classList.remove(cls);
+    void node.offsetWidth; // restart the keyframes
+    node.classList.add(cls);
+    node.addEventListener('animationend', () => node.classList.remove(cls), { once: true });
+    return node;
+  };
+
+  /** New content arriving in a list or a panel. */
+  R.slideIn = (node) => R.animate(node, 'slide-in');
+
+  /** Write a number; it ticks (and colours by direction) only when it changed. */
+  R.tickValue = function tickValue(el, text) {
+    if (!el) return el;
+    const next = text === null || text === undefined ? '—' : String(text);
+    if (el.textContent === next) return el;
+    const before = Number(String(el.textContent).replace(/[^\d.-]/g, ''));
+    const after = Number(String(next).replace(/[^\d.-]/g, ''));
+    el.textContent = next;
+    el.classList.remove('tick-up', 'tick-down');
+    if (Number.isFinite(before) && Number.isFinite(after) && before !== after) {
+      el.classList.add(after > before ? 'tick-up' : 'tick-down');
+    }
+    return R.animate(el, 'ticked');
   };
 
   // ----------------------------------------------------------------- API
@@ -262,7 +172,10 @@
 
   // --------------------------------------------------------- state/header
 
-  R.state = { tickSeconds: null, tick: 0, day: 0, hour: 0, population: 0, founders: 0, tab: 'citizens' };
+  R.state = {
+    tickSeconds: null, tick: 0, day: 0, hour: 0, population: 0, founders: 0,
+    season: null, weather: null, dateLine: null, tab: 'city',
+  };
   R.ui = { sort: {}, filters: {} };
 
   /** "one hour every 20 s" — the pace, which nobody here can change. */
@@ -277,16 +190,28 @@
     Object.assign(R.state, {
       tickSeconds: s.tickSeconds ?? R.state.tickSeconds, tick: s.tick ?? 0, day: s.day ?? 0, hour: s.hour ?? 0,
       population: s.population ?? 0, founders: s.founders ?? 0,
+      season: s.season ?? R.state.season, weather: s.weather ?? R.state.weather,
+      dateLine: s.dateLine ?? R.state.dateLine,
     });
     R.lastState = s;
     renderHeader();
   };
 
+  function dateLine() {
+    const s = R.state;
+    if (s.dateLine) return s.dateLine;
+    const parts = [`Day ${s.day}`];
+    if (s.season) parts.push(R.titleCase(s.season));
+    parts.push(`${R.pad2(s.hour)}:00`);
+    if (s.weather) parts.push(s.weather);
+    return parts.join(' · ');
+  }
+
   function renderHeader() {
     const s = R.state;
-    $('#clock-time').textContent = R.clockText(s.day, s.hour);
-    $('#clock-tick').textContent = `tick ${R.fmt(s.tick)}`;
-    $('#population').textContent = R.fmt(s.population);
+    $('#dateline').textContent = dateLine();
+    R.tickValue($('#clock-tick'), `tick ${R.fmt(s.tick)}`);
+    R.tickValue($('#population'), R.fmt(s.population));
     $('#founders').textContent = s.founders ? ` · ${R.fmt(s.founders)} scripted` : '';
     $('#pace').textContent = paceLabel(s.tickSeconds);
     document.title = `Reverie — Day ${s.day}, ${R.pad2(s.hour)}:00`;
@@ -310,22 +235,69 @@
   }
 
   // ----------------------------------------------------------------- tabs
+  //
+  // The twelve panels of docs/UI.md. Eleven are tabs; the twelfth, Profile,
+  // is the drawer that opens over them whenever a name is clicked. A panel
+  // that has not registered yet still gets its place in the nav, so the shell
+  // is the same shape before and after its file lands.
 
-  const TAB_ORDER = ['citizens', 'society', 'economy', 'government', 'court', 'bans', 'chronicle', 'agents'];
+  const TABS = [
+    { name: 'city', label: 'City' },
+    { name: 'citizens', label: 'Citizens' },
+    { name: 'economy', label: 'Economy' },
+    { name: 'government', label: 'Government' },
+    { name: 'court', label: 'Court' },
+    { name: 'society', label: 'Society' },
+    { name: 'culture', label: 'Culture' },
+    { name: 'chronicle', label: 'Chronicle' },
+    { name: 'history', label: 'History' },
+    { name: 'bans', label: 'Bans' },
+    { name: 'agents', label: 'Send your agent' },
+  ];
+  const TAB_ORDER = TABS.map((t) => t.name);
+  R.TAB_ORDER = TAB_ORDER;
   R.tabs = {};
 
-  /** def: { label, load(): Promise<data>, mount(root) (once), update(data, root) } */
+  const tabKey = (name) => String(name || '').trim().toLowerCase().replace(/\s+/g, '_');
+  const tabLabel = (key) => (TABS.find((t) => t.name === key) || {}).label || R.titleCase(key);
+
+  /**
+   * def: { label, load(): Promise<data>, mount(root) (once), update(data, root) }
+   * The eleven panels of the brief keep the shell's name whatever the file
+   * calls them, so the nav always reads the same; anything else is free to
+   * name itself.
+   */
   R.registerTab = function registerTab(name, def) {
-    R.tabs[name] = Object.assign({ name, counts: null }, def);
+    const key = tabKey(name);
+    const named = TABS.some((t) => t.name === key);
+    R.tabs[key] = Object.assign({ counts: null }, def, {
+      name: key,
+      label: named ? tabLabel(key) : (def && def.label) || tabLabel(key),
+    });
+    return R.tabs[key];
   };
+
+  /** A panel whose file has not been written yet: a real tab, an honest body. */
+  function placeholderTab(key) {
+    return {
+      name: key, label: tabLabel(key), placeholder: true,
+      mount(root) {
+        root.appendChild(R.h('div', { class: 'panel-stub' },
+          R.h('h3', null, tabLabel(key)),
+          R.h('p', { class: 'muted' }, 'This panel has not been built yet.')));
+      },
+    };
+  }
 
   function buildTabs() {
     const nav = $('#tabs');
     const body = $('#tab-body');
     for (const name of TAB_ORDER) {
-      const t = R.tabs[name];
-      if (!t) continue;
-      t.button = R.h('button', { class: 'tab', dataset: { tab: name }, onclick: () => R.selectTab(name) }, t.label, R.h('span', { class: 'count' }));
+      const t = R.tabs[name] || (R.tabs[name] = placeholderTab(name));
+      t.button = R.h('button', {
+        class: `tab${t.placeholder ? ' pending' : ''}`, type: 'button',
+        dataset: { tab: name }, onclick: () => R.selectTab(name),
+      }, R.h('span', { class: 'tab-label' }, t.label), R.h('span', { class: 'count' }));
       nav.appendChild(t.button);
       t.root = R.h('div', { class: 'tab-root hidden', id: `tab-${name}` });
       body.appendChild(t.root);
@@ -334,26 +306,27 @@
   }
 
   R.setTabCount = function setTabCount(name, n) {
-    const t = R.tabs[name];
+    const t = R.tabs[tabKey(name)];
     if (!t || !t.button) return;
-    t.button.querySelector('.count').textContent = n === null || n === undefined || n === '' ? '' : String(n);
+    R.tickValue(t.button.querySelector('.count'), n === null || n === undefined || n === '' ? '' : String(n));
   };
 
   R.selectTab = function selectTab(name) {
-    if (!R.tabs[name]) name = TAB_ORDER.find((n) => R.tabs[n]);
-    R.state.tab = name;
+    let key = tabKey(name);
+    if (!R.tabs[key]) key = TAB_ORDER.find((n) => R.tabs[n]);
+    R.state.tab = key;
     for (const t of Object.values(R.tabs)) {
       if (!t.root) continue;
-      t.root.classList.toggle('hidden', t.name !== name);
-      t.button.classList.toggle('active', t.name === name);
+      t.root.classList.toggle('hidden', t.name !== key);
+      t.button.classList.toggle('active', t.name === key);
     }
-    try { localStorage.setItem('reverie.tab', name); } catch (e) { /* private mode */ }
-    if (location.hash !== `#${name}`) history.replaceState(null, '', `#${name}`);
+    try { localStorage.setItem('reverie.tab', key); } catch (e) { /* private mode */ }
+    if (location.hash !== `#${key}`) history.replaceState(null, '', `#${key}`);
     R.refresh();
   };
 
   window.addEventListener('hashchange', () => {
-    const name = location.hash.slice(1);
+    const name = tabKey(location.hash.slice(1));
     if (R.tabs[name] && R.state.tab !== name) R.selectTab(name);
   });
 
@@ -429,8 +402,53 @@
   }
 
   // --------------------------------------------------------------- ticker
+  //
+  // Two things wearing one name. `R.ticker.push/seed/onChange/events` is the
+  // buffer of the city's events (capped at 300, oldest dropped) that the
+  // Chronicle panel reads. Calling `R.ticker(line)` writes a line onto the
+  // strip under the header — a string, or { text, kind, tick, weight,
+  // actors, tone } — which is how any panel puts something in front of the
+  // reader without owning a pixel of the header.
 
-  R.ticker = {
+  const TICKER_LINES = 24;
+  let track = null;
+
+  function weightTone(w) {
+    return w >= 0.8 ? 'lead' : w >= 0.5 ? 'notable' : 'plain';
+  }
+
+  function lineNode(line) {
+    const l = typeof line === 'string' ? { text: line } : line || {};
+    if (!l.text) return null;
+    const node = R.h('span', { class: `ticker-line tone-${l.tone || weightTone(l.weight ?? 0)}` },
+      l.actors && l.actors.length ? R.portrait(l.actors[0], 18, { onClick: false }) : null,
+      l.tick === undefined || l.tick === null ? null : R.h('span', { class: 'when' }, R.whenText(l.tick)),
+      l.kind ? R.h('span', { class: 'kind' }, String(l.kind).replace(/_/g, ' ')) : null,
+      R.h('span', { class: 'text' }, l.text));
+    if (l.actors && l.actors.length) {
+      node.classList.add('clickable');
+      node.addEventListener('click', () => R.openCitizen(l.actors[0]));
+    }
+    return node;
+  }
+
+  function pushLine(line, animate = true) {
+    if (!track) return null;
+    const node = lineNode(line);
+    if (!node) return null;
+    track.insertBefore(node, track.firstChild);
+    if (animate) R.slideIn(node);
+    while (track.childNodes.length > TICKER_LINES) track.removeChild(track.lastChild);
+    return node;
+  }
+
+  /** R.ticker('The Forge is cold') — put a line on the strip under the header. */
+  R.ticker = function ticker(line) {
+    if (Array.isArray(line)) return line.map((l) => pushLine(l));
+    return pushLine(line);
+  };
+
+  Object.assign(R.ticker, {
     events: [],
     max: 300,
     listeners: [],
@@ -438,26 +456,25 @@
     seed(list) {
       this.events = (list || []).slice(0, this.max);
       this.listeners.forEach((fn) => fn([], true));
-      const top = this.events.find((e) => e.weight >= 0.5) || this.events[0];
-      if (top) showNews(top, false);
+      if (track) {
+        R.clear(track);
+        const notable = this.events.filter((e) => (e.weight ?? 0) >= 0.3);
+        for (const ev of (notable.length ? notable : this.events).slice(0, TICKER_LINES).reverse()) pushLine(ev, false);
+      }
     },
     /** Prepend a tick's events (given oldest first). */
     push(list) {
       for (const ev of list) this.events.unshift(ev);
       if (this.events.length > this.max) this.events.length = this.max;
+      // The strip carries the hour's news, not its every errand.
+      const notable = list.filter((e) => (e.weight ?? 0) >= 0.3);
+      for (const ev of (notable.length ? notable : list.slice(-1)).slice(-TICKER_LINES)) pushLine(ev);
       this.listeners.forEach((fn) => fn(list, false));
-      const notable = list.filter((e) => e.weight >= 0.5).sort((a, b) => b.weight - a.weight)[0];
-      if (notable) showNews(notable, true);
     },
     onChange(fn) { this.listeners.push(fn); },
-  };
-
-  function showNews(ev, flash) {
-    const el = $('#newsbar-text');
-    el.textContent = `${R.whenText(ev.tick)} · ${ev.text}`;
-    el.classList.remove('flash');
-    if (flash) { void el.offsetWidth; el.classList.add('flash'); }
-  }
+    /** Empty the strip (the buffer is the city's record and is not cleared). */
+    clear() { if (track) R.clear(track); },
+  });
 
   R.openCitizen = function openCitizen(id) {
     if (R.drawer) R.drawer.open(id);
@@ -466,6 +483,7 @@
   // ----------------------------------------------------------------- boot
 
   document.addEventListener('DOMContentLoaded', async () => {
+    track = $('#ticker-track');
     wireKeys();
     buildTabs();
     if (R.map) R.map.init($('#map'), $('#tooltip'), $('#legend'));
@@ -473,8 +491,10 @@
     await pollState();
     let saved = null;
     try { saved = localStorage.getItem('reverie.tab'); } catch (e) { saved = null; }
-    const fromHash = location.hash.slice(1);
-    R.selectTab(R.tabs[fromHash] ? fromHash : saved || 'citizens');
+    const fromHash = tabKey(location.hash.slice(1));
+    const wanted = [fromHash, saved && tabKey(saved), 'city', 'citizens'].find((n) => n && R.tabs[n] && !R.tabs[n].placeholder)
+      || fromHash || saved || 'city';
+    R.selectTab(wanted);
     try {
       const ch = await R.api('/api/chronicle');
       R.ticker.seed(ch.events || []);

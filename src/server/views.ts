@@ -12,6 +12,9 @@ import { daysToElection, isElectionDay, nominationsOpen } from '../government/co
 import { pendingCasesFor } from '../government/court.ts';
 import { ageOf } from '../society/family.ts';
 import { LAWS, offenceName, trackOf } from '../data/laws.ts';
+import { schoolName, schoolOf } from '../culture/schools.ts';
+import { gangOf } from '../government/gangs.ts';
+import { partyOf } from '../politics/parties.ts';
 import {
   affectionsView, citizenClubsView, citizenHouseholdView, familyView, partnerView, possessionsView, wantsView,
 } from './views-society.ts';
@@ -30,6 +33,8 @@ export interface SimStatus {
  */
 export const MAP_WIDTH = 72;
 export const MAP_HEIGHT = 40;
+/** Names the map lists on a building's popover before it says "and more". */
+export const MAP_STAFF_SHOWN = 8;
 
 // ---------------------------------------------------------------- helpers
 
@@ -105,14 +110,24 @@ export function personCards(world: World, ids: readonly CitizenId[], present: Se
   return out;
 }
 
-/** FNV-1a, for stable per-citizen jitter on the map. */
+/**
+ * FNV-1a with an avalanche on the end, for stable per-citizen jitter on the
+ * map. The tail is what matters here: ids are `c_1`…`c_400`, and plain FNV-1a
+ * leaves its low bits almost entirely decided by the last character, so a
+ * whole district's dots would stand in a handful of rows instead of being
+ * scattered across the ground the plat left for them.
+ */
 function hash32(s: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i);
     h = Math.imul(h, 0x01000193) >>> 0;
   }
-  return h >>> 0;
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x2c1b3c6d) >>> 0;
+  h ^= h >>> 12;
+  h = Math.imul(h, 0x297a2d39) >>> 0;
+  return (h ^ (h >>> 15)) >>> 0;
 }
 
 function jitter(id: string): [number, number] {
@@ -162,8 +177,15 @@ export function stateView(world: World, status: SimStatus): Record<string, unkno
   const grownUps = living.filter((c) => c.lifeStage !== 'child');
   const employed = grownUps.filter((c) => jobOf(world, c) !== null).length;
   const g = world.government;
+  // The date line under the name plate: "Day 41 · Bloom · 19:00 · clear".
+  // A world scaffolded before the seasons has neither, and simply reads clear.
+  const season = world.season ?? 'bloom';
+  const weather = world.weather ?? 'clear';
+  const hour = String(world.hour).padStart(2, '0');
   return {
     tick: world.tick, day: world.day, hour: world.hour, clock: clockText(world),
+    year: world.year ?? 0, season, weather,
+    dateLine: `Day ${world.day} · ${season.charAt(0).toUpperCase()}${season.slice(1)} · ${hour}:00 · ${weather}`,
     population: living.length,
     running: status.running, tickMs: status.tickMs, busy: status.busy, pendingRemote: status.pendingRemote,
     config: world.config,
@@ -198,14 +220,39 @@ export function mapView(world: World): Record<string, unknown> {
   const present = presentSet(world);
   const citizens = Object.values(world.citizens).filter((c) => c.standing === 'exiled' || present.has(c.id));
   const perDistrict: Record<string, number> = {};
-  const workers: Record<string, number> = {};
   for (const c of citizens) {
     if (c.standing === 'exiled') continue;
     perDistrict[c.district] = (perDistrict[c.district] ?? 0) + 1;
   }
+  // A building's day of work: how many posts it holds, who is standing at
+  // them, and what a full shift of those posts makes. The map draws it in the
+  // popover a reader gets by clicking the glyph.
+  const workers: Record<string, number> = {};
+  const posts: Record<string, { total: number; filled: number; open: number }> = {};
+  const staff: Record<string, { id: CitizenId; name: string; title: string }[]> = {};
+  const made: Record<string, Record<string, number>> = {};
   for (const j of Object.values(world.jobs)) {
-    if (j.holderId) workers[j.buildingId] = (workers[j.buildingId] ?? 0) + 1;
+    const post = (posts[j.buildingId] ??= { total: 0, filled: 0, open: 0 });
+    post.total += 1;
+    if (!j.holderId) {
+      post.open += 1;
+      continue;
+    }
+    post.filled += 1;
+    workers[j.buildingId] = (workers[j.buildingId] ?? 0) + 1;
+    const holder = world.citizens[j.holderId];
+    const bench = (staff[j.buildingId] ??= []);
+    if (holder && bench.length < MAP_STAFF_SHOWN) bench.push({ id: holder.id, name: holder.name, title: j.title });
+    const good = j.output.good;
+    const qty = j.output.qty ?? 0;
+    if (good && qty > 0) {
+      const shift = (made[j.buildingId] ??= {});
+      shift[good] = (shift[good] ?? 0) + qty;
+    }
   }
+  const outputsOf = (id: string) => Object.entries(made[id] ?? {})
+    .map(([good, qty]) => ({ good, qty: round2(qty) }))
+    .sort((a, b) => b.qty - a.qty || a.good.localeCompare(b.good));
   // The map is of the city as it stands. A district the population has not
   // reached yet — the Heights, the Undercroft — is not drawn until it opens
   // (world/growth.ts), and neither is anything in it.
@@ -219,14 +266,22 @@ export function mapView(world: World): Record<string, unknown> {
     buildings: Object.values(world.buildings).filter((b) => isOpen(b.district)).map((b) => ({
       id: b.id, name: b.name, district: b.district, kind: b.kind, critical: b.critical, damage: round2(b.damage), x: b.x, y: b.y,
       workers: workers[b.id] ?? 0,
+      jobs: posts[b.id] ?? { total: 0, filled: 0, open: 0 },
+      staff: staff[b.id] ?? [],
+      outputs: outputsOf(b.id),
     })),
     citizens: citizens.map((c) => {
       const pos = positionOf(world, c);
       const job = jobOf(world, c);
       return {
         id: c.id, name: c.name, familyName: c.familyName, district: c.district, x: pos.x, y: pos.y,
+        // Where the dot is anchored, so the map can draw it at the Gate or the
+        // Watch House wherever it happens to have platted those glyphs.
+        place: c.standing === 'exiled' ? 'gate' : isDetained(world, c) ? 'watch' : 'district',
         standing: c.standing, office: c.office, brain: c.brain, mood: Math.round(c.mood),
-        detained: isDetained(world, c), job: job ? job.title : null,
+        // Held by the Watch for the hour, or serving a term of custody: the
+        // map rings both, and neither is a ban (docs/JUSTICE.md).
+        detained: isDetained(world, c), jailed: c.jailedUntilDay !== null, job: job ? job.title : null,
         lifeStage: c.lifeStage, married: c.family.married && c.family.partnerId !== null,
         partnerId: c.family.partnerId, partnerName: nameOf(world, c.family.partnerId),
       };
@@ -236,12 +291,63 @@ export function mapView(world: World): Record<string, unknown> {
 
 // --------------------------------------------------------------- citizens
 
+/**
+ * The badge a row wears when the citizen is under a notice of standing
+ * (`docs/CITIZENSHIP.md` §4): the line they are judged against, where they
+ * stand against it, and how long the grace runs. Enough to read at a glance;
+ * the itemised fall belongs to the Profile.
+ */
+export interface NoticeBadge {
+  issuedDay: number;
+  line: number;
+  repute: number;
+  shortfall: number;
+  graceEndsDay: number;
+  daysLeft: number;
+  immediate: boolean;
+  applied: boolean;
+  reason: string;
+}
+
+/**
+ * The register's repute for a citizen, or null when it has not scored them
+ * yet. Read, never computed: a view that recomputed repute would create the
+ * ledgers the standing layer creates for itself, and an observer changes
+ * nothing (docs/PRINCIPLES.md §1).
+ */
+function heldRepute(world: World, id: CitizenId): number | null {
+  const held = world.standing?.repute?.[id];
+  return typeof held === 'number' && Number.isFinite(held) ? Math.round(held) : null;
+}
+
+/** The open notice against a citizen, as a row shows it; null for everybody else. */
+export function noticeBadge(world: World, c: Citizen): NoticeBadge | null {
+  const n = world.standing?.notices?.[c.id];
+  if (!n || n.status !== 'open') return null;
+  const repute = heldRepute(world, c.id) ?? Math.round(n.reputeAtIssue);
+  return {
+    issuedDay: n.issuedDay, line: Math.round(n.line), repute,
+    shortfall: Math.max(0, Math.round(n.line) - repute),
+    graceEndsDay: n.graceEndsDay, daysLeft: Math.max(0, n.graceEndsDay - world.day),
+    immediate: n.immediate, applied: n.applied, reason: n.reason,
+  };
+}
+
 export interface CompactCitizen {
   id: CitizenId; name: string; familyName: string; lineage: string; brain: string; job: string | null; employer: string | null;
   district: string; wallet: number; mood: number; reputation: number; standing: string; office: string | null;
   homeTier: number; detained: boolean; present: boolean; business: string | null; convictions: number; arrivedDay: number;
   lifeStage: string; age: number; partner: string | null; partnerId: CitizenId | null; married: boolean;
   householdId: string | null; clubs: number; possessions: number;
+  /** The face the city draws from public facts alone (`src/server/portraits.ts`). */
+  portrait: string;
+  /** What the standing register holds, and the notice it has served, if any. */
+  repute: number | null;
+  notice: NoticeBadge | null;
+  /** The three allegiances a citizen wears in public. */
+  partyId: string | null; party: string | null;
+  school: string | null; schoolName: string | null;
+  gangId: string | null; gang: string | null;
 }
 
 export function compactCitizen(world: World, c: Citizen, present: Set<CitizenId>): CompactCitizen {
@@ -249,6 +355,9 @@ export function compactCitizen(world: World, c: Citizen, present: Set<CitizenId>
   const biz = businessOf(world, c);
   const partnerId = c.family.partnerId;
   const partner = partnerId ? world.citizens[partnerId] ?? null : null;
+  const party = partyOf(world, c.id);
+  const school = schoolOf(c);
+  const gang = gangOf(world, c.id);
   return {
     id: c.id, name: c.name, familyName: c.familyName, lineage: c.lineage, brain: c.brain,
     job: job ? job.title : null, employer: job ? employerName(world, job) : null,
@@ -259,12 +368,17 @@ export function compactCitizen(world: World, c: Citizen, present: Set<CitizenId>
     lifeStage: c.lifeStage, age: ageOf(world, c),
     partner: partner ? partner.name : null, partnerId: partner ? partner.id : null, married: partner ? c.family.married : false,
     householdId: c.householdId, clubs: c.clubs.length, possessions: c.possessions.length,
+    portrait: portraitPath(c.id),
+    repute: heldRepute(world, c.id), notice: noticeBadge(world, c),
+    partyId: party ? party.id : null, party: party ? party.name : null,
+    school, schoolName: school ? schoolName(school) : null,
+    gangId: gang ? gang.id : null, gang: gang ? gang.name : null,
   };
 }
 
 const SORT_KEYS: readonly (keyof CompactCitizen)[] = [
   'name', 'familyName', 'lineage', 'brain', 'job', 'district', 'wallet', 'mood', 'reputation', 'standing', 'office',
-  'arrivedDay', 'convictions', 'lifeStage', 'age', 'partner',
+  'arrivedDay', 'convictions', 'lifeStage', 'age', 'partner', 'repute', 'party', 'school', 'gang',
 ];
 
 function compareBy(key: keyof CompactCitizen, dir: 1 | -1) {
@@ -279,22 +393,38 @@ function compareBy(key: keyof CompactCitizen, dir: 1 | -1) {
   };
 }
 
-/** `?sort=wallet` or `?sort=-wallet`, `?standing=good|probation|suspended|exiled`, `?present=1`. */
+/** The row fields `?district=…&party=…` and friends narrow the register by. */
+const FILTER_KEYS: Readonly<Record<string, keyof CompactCitizen>> = {
+  standing: 'standing', brain: 'brain', district: 'district',
+  party: 'partyId', school: 'school', gang: 'gangId', lineage: 'lineage', office: 'office',
+};
+
+/**
+ * `?sort=wallet` or `?sort=-wallet`; `?standing=`, `?brain=`, `?district=`,
+ * `?party=`, `?school=`, `?gang=`, `?lineage=`, `?office=` narrow the list
+ * (`all` is every row); `?notice=1` keeps only citizens under a notice of
+ * standing; `?present=1` only those living in the city; `?limit=N` truncates.
+ */
 export function citizensView(world: World, params: URLSearchParams): Record<string, unknown> {
   const present = presentSet(world);
   let rows = Object.values(world.citizens).map((c) => compactCitizen(world, c, present));
-  const standing = params.get('standing');
-  if (standing && standing !== 'all') rows = rows.filter((r) => r.standing === standing);
+  for (const [param, key] of Object.entries(FILTER_KEYS)) {
+    const wanted = params.get(param);
+    if (!wanted || wanted === 'all') continue;
+    rows = rows.filter((r) => String(r[key] ?? '') === wanted);
+  }
   if (params.get('present') === '1' || params.get('present') === 'true') rows = rows.filter((r) => r.present);
-  const brain = params.get('brain');
-  if (brain && brain !== 'all') rows = rows.filter((r) => r.brain === brain);
+  if (params.get('notice') === '1' || params.get('notice') === 'true') rows = rows.filter((r) => r.notice !== null);
   const sortParam = params.get('sort') ?? 'name';
   const desc = sortParam.startsWith('-');
   const key = (desc ? sortParam.slice(1) : sortParam) as keyof CompactCitizen;
   rows.sort(compareBy(SORT_KEYS.includes(key) ? key : 'name', desc ? -1 : 1));
   const limit = Number(params.get('limit'));
   if (Number.isFinite(limit) && limit > 0) rows = rows.slice(0, limit);
-  return { citizens: rows, count: rows.length, total: Object.keys(world.citizens).length };
+  return {
+    citizens: rows, count: rows.length, total: Object.keys(world.citizens).length,
+    underNotice: Object.values(world.standing?.notices ?? {}).filter((n) => n.status === 'open').length,
+  };
 }
 
 function relation(world: World, selfId: CitizenId, ids: CitizenId[], max: number) {
@@ -336,6 +466,7 @@ export function citizenView(world: World, id: CitizenId): Record<string, unknown
     }));
   const ban = [...world.bans].reverse().find((b) => b.citizenId === id) ?? null;
   const guardian = c.guardianId ? world.citizens[c.guardianId] ?? null : null;
+  const school = schoolOf(c);
   return {
     ...rest,
     character: characterOf(c),
@@ -373,6 +504,14 @@ export function citizenView(world: World, id: CitizenId): Record<string, unknown
     ban: ban ? { ...ban, lawName: LAWS[ban.law]?.name ?? ban.law, apiKeyHash: undefined, hasApiKey: ban.apiKeyHash !== null } : null,
     pendingCharges: pendingCasesFor(world, id).length,
     inboxCount: c.inbox.length,
+    // Standing and allegiance, resolved: the raw ids are already in `rest`, and
+    // a stale one (a party that dissolved, a gang the Watch broke) is nothing.
+    portrait: portraitPath(c.id),
+    repute: heldRepute(world, c.id),
+    notice: noticeBadge(world, c),
+    partyName: partyOf(world, id)?.name ?? null,
+    schoolName: school ? schoolName(school) : null,
+    gangName: gangOf(world, id)?.name ?? null,
   };
 }
 

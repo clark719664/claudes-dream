@@ -149,7 +149,7 @@ function workSentence(world: World, c: Citizen): string | null {
   }
   const named = titles.slice(0, MAX_JOBS_NAMED);
   const more = titles.length > named.length ? ' and other work besides' : '';
-  const history = named.length > 0 ? `has worked as ${joinList(named.map((t) => t.toLowerCase()))}${more}` : null;
+  const history = named.length > 0 ? `have worked as ${joinList(named.map((t) => t.toLowerCase()))}${more}` : null;
   if (history && now) return `They ${history}, and are ${now} today.`;
   if (history) return `They ${history}.`;
   return `They are ${now}.`;

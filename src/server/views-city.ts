@@ -2,8 +2,8 @@
  * JSON views of the World for the dashboard, part two: economy, government,
  * court, ban registry and chronicle. Read-only projections.
  */
-import type { Case, CitizenId, Good, Proposal, World } from '../types.ts';
-import { GOODS } from '../types.ts';
+import type { Case, ChronicleEdition, CitizenId, Good, PaperId, Proposal, World, WorldEvent } from '../types.ts';
+import { GOODS, PAPERS } from '../types.ts';
 import { isEligibleVoter } from '../citizens/citizen.ts';
 import { employerName, openJobs } from '../economy/jobs.ts';
 import { vacancies } from '../economy/housing.ts';
@@ -11,9 +11,20 @@ import { moneySupply } from '../economy/treasury.ts';
 import { daysToElection, isElectionDay, nominationsOpen } from '../government/council.ts';
 import { officersOnDuty } from '../government/watch.ts';
 import { LAWS, LAW_CODES, offenceName, trackOf } from '../data/laws.ts';
-import { isPresentIn, nameOf, partyName, presentSet } from './views.ts';
+import type { ResidencyHearing, StandingNotice } from '../standing/state.ts';
+import { gateOf, residencyLine, visitLine } from '../standing/gates.ts';
+import { NOTICE_KEEPS, RECOVERY_DAYS } from '../standing/notices.ts';
+import { RESIDENCY_HEARING_HOUR } from '../standing/hearings.ts';
+import { isPresentIn, nameOf, noticeBadge, partyName, personCard, personCards, portraitPath, presentSet } from './views.ts';
 import { caseExtras, courtExtras, governmentExtras } from './views-metropolis.ts';
 import { economyExtras } from './views-markets.ts';
+// The Chronicle's own desk: both papers, the evening's diaries, the arts
+// notices and the era a back number was printed in.
+import { PAPER_INFO, WORK_INFO } from '../data/metropolis.ts';
+import { frontPage, inLedgerVoice, paperOf, paperReading, readershipShare } from '../culture/press.ts';
+import { quotableDiaries } from '../identity/diary.ts';
+import { allWorks } from '../culture/works.ts';
+import { eraOfDay } from '../world/history.ts';
 
 /** Per-good price samples kept by the server, one per tick. */
 export interface PriceHistory {
@@ -25,6 +36,10 @@ export const LEDGER_VIEW_LENGTH = 50;
 export const CASE_VIEW_LENGTH = 200;
 export const EVENT_VIEW_LENGTH = 200;
 export const STATS_VIEW_LENGTH = 120;
+/** Lines of a notice of standing put on the public register. */
+export const NOTICE_ITEMS_SHOWN = 8;
+/** Residency hearings kept on the register, newest first. */
+export const HEARINGS_SHOWN = 40;
 
 const idNumber = (id: string) => Number(id.slice(id.indexOf('_') + 1)) || 0;
 
@@ -103,9 +118,122 @@ function proposalView(world: World, p: Proposal): Record<string, unknown> {
   };
 }
 
+/** A name with a face, falling back to the registry's own record of a departed id. */
+function cardOf(world: World, id: CitizenId, present: Set<CitizenId>): Record<string, unknown> {
+  const card = personCard(world, id, present);
+  return card ? { ...card } : { id, name: nameOf(world, id) ?? id, portrait: portraitPath(id) };
+}
+
+// ------------------------------------------------- the register of standing
+
+/**
+ * One line of the public register (`docs/CITIZENSHIP.md` §3): who is under a
+ * notice of standing, the line they are judged against, exactly what the fall
+ * cost them, and the day the grace runs out.
+ *
+ * Everything here is read straight off `world.standing` rather than through
+ * the standing layer's own accessors, which create the ledgers they read. A
+ * view changes nothing (docs/PRINCIPLES.md §1).
+ */
+function noticeRow(world: World, n: StandingNotice, present: Set<CitizenId>): Record<string, unknown> | null {
+  const c = world.citizens[n.citizenId];
+  const card = personCard(world, n.citizenId, present);
+  const badge = c ? noticeBadge(world, c) : null;
+  if (!card || !badge) return null;
+  return {
+    ...card, ...badge,
+    city: n.city, cityName: gateOf(n.city).name,
+    graceDays: n.graceDays, halved: n.halved, extendedDays: n.extendedDays,
+    status: n.status, hearingId: n.hearingId, daysAbove: n.daysAbove,
+    // The grace has run out and the citizen is still short: the Court will sit.
+    due: n.immediate || world.day >= n.graceEndsDay,
+    items: n.items.slice(0, NOTICE_ITEMS_SHOWN).map((i) => ({
+      kind: i.kind, label: i.label, amount: Math.round(i.amount), caseId: i.caseId ?? null, law: i.law ?? null,
+    })),
+  };
+}
+
+/** One residency hearing, with the bench's reasons and every vote named. */
+function hearingRow(world: World, h: ResidencyHearing, present: Set<CitizenId>): Record<string, unknown> {
+  return {
+    id: h.id, day: h.day, hour: h.hour, outcome: h.outcome,
+    repute: Math.round(h.repute), line: Math.round(h.line),
+    shortfall: Math.max(0, Math.round(h.line - h.repute)),
+    spoke: h.spoke, extendedDays: h.extendedDays, leaveByDay: h.leaveByDay, reasons: h.reasons,
+    citizen: cardOf(world, h.citizenId, present),
+    advocate: h.advocateId ? cardOf(world, h.advocateId, present) : null,
+    vouchers: personCards(world, h.vouchers, present, 8),
+    votes: Object.entries(h.votes).map(([id, vote]) => ({ ...cardOf(world, id, present), vote })),
+  };
+}
+
+/**
+ * The register itself. Public by the Charter: a notice arrives in the
+ * citizen's inbox, in their memory, **and** on this page. What it does not do
+ * is take anything away, which is what `keeps` says in the city's own words.
+ */
+function standingRegister(world: World, present: Set<CitizenId>): Record<string, unknown> {
+  const state = world.standing;
+  const open = Object.values(state?.notices ?? {})
+    .filter((n) => n.status === 'open')
+    .sort((a, b) => a.graceEndsDay - b.graceEndsDay || a.issuedDay - b.issuedDay || a.citizenId.localeCompare(b.citizenId))
+    .map((n) => noticeRow(world, n, present))
+    .filter((row): row is Record<string, unknown> => row !== null);
+  const hearings = [...(state?.hearings ?? [])]
+    .sort((a, b) => b.day - a.day || b.id.localeCompare(a.id))
+    .slice(0, HEARINGS_SHOWN)
+    .map((h) => hearingRow(world, h, present));
+  return {
+    city: gateOf().name,
+    residencyLine: residencyLine(world), visitLine: visitLine(world),
+    recoveryDays: RECOVERY_DAYS, hearingHour: RESIDENCY_HEARING_HOUR, keeps: NOTICE_KEEPS,
+    open, due: open.filter((n) => n.due === true).length,
+    hearings,
+    // Ended, and still inside the fourteen days to sell up and take the road.
+    leaving: hearings
+      .filter((h) => h.outcome === 'ended' && typeof h.leaveByDay === 'number' && (h.leaveByDay as number) >= world.day)
+      .map((h) => ({ hearingId: h.id, day: h.day, leaveByDay: h.leaveByDay, citizen: h.citizen })),
+  };
+}
+
+/**
+ * What the Council session has in front of it: the bills tabled, the appeals
+ * it decides at the same sitting, and the residencies whose grace has run out
+ * and that the Court will therefore put to it.
+ */
+function councilAgenda(world: World, present: Set<CitizenId>, register: Record<string, unknown>): Record<string, unknown> {
+  const votesOf = (votes: Record<CitizenId, boolean>) => Object.values(votes);
+  return {
+    hour: world.config.councilHour,
+    seats: world.government.council.length,
+    bills: world.government.proposals.filter((p) => p.status === 'open').map((p) => ({
+      id: p.id, kind: p.kind, summary: p.summary, tabledDay: p.tabledDay, needed: p.needed, petition: p.petition,
+      ayes: votesOf(p.votes).filter(Boolean).length, nays: votesOf(p.votes).filter((v) => !v).length,
+      proposer: cardOf(world, p.proposerId, present),
+    })),
+    appeals: Object.values(world.cases)
+      .filter((k) => k.status === 'appealed' && k.appeal !== null)
+      .sort((a, b) => (a.appeal?.filedDay ?? 0) - (b.appeal?.filedDay ?? 0) || idNumber(a.id) - idNumber(b.id))
+      .map((k) => ({
+        caseId: k.id, law: k.law, lawName: offenceName(k.law), severity: k.severity,
+        defendant: cardOf(world, k.defendantId, present),
+        filedDay: k.appeal?.filedDay ?? null, sentence: k.sentence,
+        votes: Object.entries(k.appeal?.votes ?? {}).map(([id, vote]) => ({ ...cardOf(world, id, present), vote })),
+      })),
+    // The notices whose grace has run out; the rows themselves are on the
+    // register above, so the agenda only names them.
+    residency: (register.open as Record<string, unknown>[])
+      .filter((n) => n.due === true)
+      .map((n) => ({ id: n.id, name: n.name, familyName: n.familyName, portrait: n.portrait,
+        shortfall: n.shortfall, immediate: n.immediate, applied: n.applied })),
+  };
+}
+
 export function governmentView(world: World): Record<string, unknown> {
   const g = world.government;
   const e = g.election;
+  const present = presentSet(world);
+  const register = standingRegister(world, present);
   const onDuty = new Set(officersOnDuty(world).map((c) => c.id));
   const member = (id: CitizenId) => {
     const c = world.citizens[id];
@@ -147,6 +275,9 @@ export function governmentView(world: World): Record<string, unknown> {
     proposals: [...g.proposals]
       .sort((a, b) => b.tabledDay - a.tabledDay || idNumber(b.id) - idNumber(a.id))
       .map((p) => proposalView(world, p)),
+    // The public register of standing, and what the 14:00 session will sit on.
+    notices: register,
+    agenda: councilAgenda(world, present, register),
     ...governmentExtras(world),
   };
 }
@@ -219,22 +350,190 @@ export function courtView(world: World): Record<string, unknown> {
 // ------------------------------------------------------------------- bans
 
 export function bansView(world: World): Record<string, unknown> {
+  const present = presentSet(world);
   const bans = world.bans.map((b, i) => ({ b, i }))
     .sort((x, y) => y.b.day - x.b.day || y.i - x.i)
-    .map(({ b }) => ({
-      citizenId: b.citizenId, name: b.name, lineage: b.lineage, caseId: b.caseId, law: b.law, lawName: LAWS[b.law]?.name ?? b.law,
-      day: b.day, judges: b.judges.map((id) => ({ id, name: nameOf(world, id) })),
-      votes: Object.entries(b.votes).map(([id, verdict]) => ({ id, name: nameOf(world, id), verdict })),
-      appealed: b.appealed, appealResult: b.appealResult, pardonedDay: b.pardonedDay, hasApiKey: b.apiKeyHash !== null,
-    }));
+    .map(({ b }) => {
+      // The face the city drew for them, and the case that put them through
+      // the Gate: an exile's record stays in the registry forever, so the
+      // register links to the whole of it (docs/PRINCIPLES.md §6).
+      const k = world.cases[b.caseId] ?? null;
+      return {
+        ...cardOf(world, b.citizenId, present),
+        citizenId: b.citizenId, name: b.name, lineage: b.lineage,
+        caseId: b.caseId, law: b.law, lawName: LAWS[b.law]?.name ?? b.law,
+        day: b.day, judges: b.judges.map((id) => ({ ...cardOf(world, id, present), name: nameOf(world, id) })),
+        votes: Object.entries(b.votes).map(([id, verdict]) => ({ id, name: nameOf(world, id), verdict })),
+        appealed: b.appealed, appealResult: b.appealResult, pardonedDay: b.pardonedDay, hasApiKey: b.apiKeyHash !== null,
+        case: k ? {
+          id: k.id, severity: k.severity, evidence: Math.round(k.evidence * 100) / 100, track: trackOf(k.law),
+          description: k.description, filedDay: Math.floor(k.filedTick / 24), triedDay: k.triedDay,
+          filedBy: k.filedBy, filedByName: k.filedBy === 'watch' ? 'the Watch' : nameOf(world, k.filedBy),
+          victim: k.victimId ? cardOf(world, k.victimId, present) : null,
+          verdict: k.verdict, sentence: k.sentence,
+        } : null,
+      };
+    });
   return { bans, active: bans.filter((b) => b.pardonedDay === null).length };
 }
 
 // -------------------------------------------------------------- chronicle
+//
+// `GET /api/chronicle` — the broadsheet (`docs/UI.md` §9). An edition keeps
+// only its five sentences and the Treasury's line; everything a front page
+// needs beyond that is found again here: the event each headline was set from
+// (so the lead can carry a face), the evening's diary lines — public, unlike
+// a citizen's notes and letters (`docs/PRINCIPLES.md` §5) — the arts desk's
+// notices, and the figures behind the Treasury box. Read-only throughout.
+
+/** Back numbers the rail carries, per paper. */
+export const EDITIONS_SHOWN = 30;
+/** Stories on a page that carry faces: a broadsheet pictures its lead, not its columns. */
+export const STORIES_WITH_FACES = 2;
+/** How far back the log is read when matching a headline to its event. */
+export const HEADLINE_INDEX_EVENTS = 1_500;
+/** Evenings the front page may quote from. */
+export const DIARY_DAYS = 12;
+/** Diary lines quoted from one evening. */
+export const DIARIES_QUOTED = 4;
+/** Notices from the arts desk. */
+export const REVIEWS_SHOWN = 12;
+/** Days of Treasury figures behind the box. */
+export const TREASURY_DAYS = 60;
+
+/**
+ * Every recent event by the sentence a paper would print it as: its own words
+ * for the Chronicle, and the Ledger's for the Ledger, which rewrites what it
+ * runs. Newest wins, so a line that recurs points at the last time it
+ * happened. A headline older than the log simply finds nothing and prints
+ * without a face.
+ */
+function headlineIndex(world: World): Map<string, WorldEvent> {
+  const index = new Map<string, WorldEvent>();
+  const events = world.events;
+  const from = Math.max(0, events.length - HEADLINE_INDEX_EVENTS);
+  for (let i = events.length - 1; i >= from; i--) {
+    const e = events[i];
+    if (!index.has(e.text)) index.set(e.text, e);
+    const ledger = inLedgerVoice(e.text);
+    if (ledger !== e.text && !index.has(ledger)) index.set(ledger, e);
+  }
+  return index;
+}
+
+/** One headline, with the hour it happened and the people it names. */
+function storyView(
+  world: World, text: string, index: Map<string, WorldEvent>, present: Set<CitizenId>, faces: boolean,
+): Record<string, unknown> {
+  const e = index.get(text) ?? null;
+  return {
+    text,
+    kind: e?.kind ?? null, tick: e?.tick ?? null, day: e?.day ?? null, weight: e?.weight ?? null,
+    who: e && faces ? personCards(world, e.actors, present, 3) : [],
+  };
+}
+
+/** One edition as a front page: masthead, stories, and the Treasury's line. */
+function editionView(
+  world: World, e: ChronicleEdition, index: Map<string, WorldEvent>, present: Set<CitizenId>,
+): Record<string, unknown> {
+  const paper = paperOf(e);
+  const info = PAPER_INFO[paper];
+  const era = eraOfDay(world, e.day);
+  return {
+    key: `${paper}:${e.day}`,
+    day: e.day, reportedDay: Math.max(0, e.day - 1),
+    paper, paperName: info?.name ?? paper, slant: info?.slant ?? '',
+    era: era?.name ?? null,
+    treasuryReport: e.treasuryReport,
+    // The five sentences, each with what the log still knows about it. The
+    // edition's own `headlines` are not repeated: `stories[].text` is them.
+    stories: (e.headlines ?? []).map((h, i) => storyView(world, h, index, present, i < STORIES_WITH_FACES)),
+  };
+}
+
+/** The back numbers, newest first, bounded per paper rather than per shelf. */
+function editionsView(world: World, index: Map<string, WorldEvent>, present: Set<CitizenId>): Record<string, unknown>[] {
+  const kept: Record<string, unknown>[] = [];
+  const counts: Record<string, number> = {};
+  for (let i = world.chronicle.length - 1; i >= 0; i--) {
+    const e = world.chronicle[i];
+    const paper = paperOf(e);
+    counts[paper] = (counts[paper] ?? 0) + 1;
+    if (counts[paper] > EDITIONS_SHOWN) continue;
+    kept.push(editionView(world, e, index, present));
+  }
+  return kept;
+}
+
+/**
+ * The evenings the front page can quote: a citizen's diary is public and the
+ * Chronicle may print from it (`src/identity/diary.ts`). Notes and letters
+ * are never here.
+ */
+function diariesView(world: World, present: Set<CitizenId>): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  const oldest = Math.max(0, world.day - DIARY_DAYS);
+  for (let day = world.day; day >= oldest; day--) {
+    const quotes = quotableDiaries(world, day, DIARIES_QUOTED)
+      .map(({ c, text }) => ({ text, who: personCard(world, c.id, present) }));
+    if (quotes.length > 0) out.push({ day, quotes });
+  }
+  return out;
+}
+
+/** What the papers made of what the city made, newest notice first. */
+function reviewsView(world: World, present: Set<CitizenId>): Record<string, unknown>[] {
+  const rows: Record<string, unknown>[] = [];
+  for (const w of allWorks(world)) {
+    for (const r of w.reviews ?? []) {
+      rows.push({
+        workId: w.id, title: w.title, kind: w.kind, kindName: WORK_INFO[w.kind]?.name ?? w.kind,
+        creatorId: w.creatorId, creator: personCard(world, w.creatorId, present),
+        paper: r.paper, paperName: PAPER_INFO[r.paper]?.name ?? r.paper, score: r.score, day: r.day,
+        quality: Math.round(w.quality), popularity: Math.round(w.popularity), inMuseum: w.inMuseum === true,
+      });
+    }
+  }
+  rows.sort((a, b) => (b.day as number) - (a.day as number)
+    || (b.score as number) - (a.score as number)
+    || String(a.workId).localeCompare(String(b.workId)));
+  return rows.slice(0, REVIEWS_SHOWN);
+}
+
+/** The masthead line for each paper: who it is, what it leads on, who reads it. */
+function papersView(world: World): Record<string, unknown>[] {
+  const share = readershipShare(world);
+  return PAPERS.map((p: PaperId) => {
+    const page = frontPage(world, p);
+    return {
+      paper: p, name: PAPER_INFO[p]?.name ?? p, slant: PAPER_INFO[p]?.slant ?? '',
+      day: page?.day ?? null, headline: page?.headlines?.[0] ?? null,
+      editions: world.chronicle.filter((e) => paperOf(e) === p).length,
+      readership: share[p] ?? 0, reading: paperReading(world, p),
+    };
+  });
+}
 
 export function chronicleView(world: World): Record<string, unknown> {
+  const present = presentSet(world);
+  const index = headlineIndex(world);
+  const t = world.treasury;
   return {
-    editions: [...world.chronicle].reverse(),
+    day: world.day, hour: world.hour, cycle: world.government.cycle,
+    era: eraOfDay(world, world.day)?.name ?? null,
+    papers: papersView(world),
+    editions: editionsView(world, index, present),
+    diaries: diariesView(world, present),
+    reviews: reviewsView(world, present),
+    treasury: {
+      balance: t.balance, revenueToday: t.revenueToday, spendToday: t.spendToday,
+      moneySupply: moneySupply(world), priceIndex: world.market.priceIndex,
+      series: world.stats.slice(-TREASURY_DAYS).map((s) => ({
+        day: s.day, treasury: s.treasury, moneySupply: s.moneySupply,
+        priceIndex: s.priceIndex, population: s.population,
+      })),
+    },
     events: world.events.slice(-EVENT_VIEW_LENGTH).reverse(),
   };
 }

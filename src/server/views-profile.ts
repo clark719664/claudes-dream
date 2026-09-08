@@ -3,7 +3,9 @@
  * them, how they are introduced, the story of their life so far, their
  * ambitions and how far along each is, their family tree and their web of
  * friends and rivals, what they own, where they belong, what they have made,
- * what the Court has said of them, and what they have said themselves.
+ * what the Court has said of them, what they have said themselves, and where
+ * they stand with the Registry — repute, itemised, with any notice of standing
+ * and the day its grace runs out.
  *
  * Four things are never on it, and never will be: the citizen's own notes, the
  * letters it writes home, the key that answers for it, and the traits it was
@@ -38,6 +40,9 @@ import { rumoursAbout } from '../social/rumours.ts';
 import { tenancyOf, unitsFor } from '../markets/property.ts';
 import { sharePrice } from '../markets/shares.ts';
 import { memorialOf, monumentsTo } from '../world/history.ts';
+import { CONTRIBUTION_CAP, REPUTE_BASELINE, REPUTE_MAX, REPUTE_WEIGHTS } from '../standing/repute.ts';
+import { reputeObservation } from '../standing/observe.ts';
+import { gateOf, residencyLine, visitLine } from '../standing/gates.ts';
 import { isPresentIn, nameOf, personCard, personCards, portraitPath, presentSet } from './views.ts';
 import { affectionsView, citizenClubsView, citizenHouseholdView, possessionsView, wantsView } from './views-society.ts';
 import { mindLabel } from './owners.ts';
@@ -165,6 +170,62 @@ function belongings(world: World, c: Citizen, present: Set<CitizenId>): Record<s
   };
 }
 
+/**
+ * A citizen's standing, as the Registry keeps it (`docs/CITIZENSHIP.md`): the
+ * repute score with every component broken out, the convictions still costing
+ * something, the deeds the contribution column counted, the residency line the
+ * citizen is judged against, any open notice of standing with the day its
+ * grace runs out, and the hearings the Council has held.
+ *
+ * All of it is public by construction — repute is counted from public acts,
+ * not inferred — so `reputeObservation` is the same block any citizen could
+ * build about any other, and this view simply hands it on with the scale it is
+ * read against.
+ *
+ * It is a **read**, never a recomputation: `reputeBreakdown` creates the
+ * ledgers the standing layer creates for itself, so a citizen the register has
+ * never scored (an empty world, a founder exiled before its first morning) is
+ * reported as unscored rather than being entered into the register by somebody
+ * looking at them. An observer changes nothing (`docs/PRINCIPLES.md` §1).
+ */
+function reputeView(world: World, c: Citizen): Record<string, unknown> {
+  const gate = gateOf();
+  const scale = {
+    max: REPUTE_MAX,
+    baseline: REPUTE_BASELINE,
+    weights: { ...REPUTE_WEIGHTS },
+    contributionCap: CONTRIBUTION_CAP,
+  };
+  const city = {
+    city: gate.city, name: gate.name,
+    visit: visitLine(world, gate.city), reside: residencyLine(world, gate.city),
+  };
+  const register = world.standing;
+  const known = !!register && (
+    register.repute?.[c.id] !== undefined
+    || register.contribution?.[c.id] !== undefined
+    || register.penalties?.[c.id] !== undefined
+  );
+  const observed = known ? reputeObservation(world, c.id) : null;
+  if (!observed) {
+    return {
+      scored: false, tested: c.lifeStage !== 'child', score: null,
+      line: city.reside, shortfall: null, above: null, admitted: null,
+      penalties: [], deeds: [], notice: null, hearings: [], vouchedBy: [],
+      scale, city,
+    };
+  }
+  return {
+    ...observed,
+    scored: true,
+    shortfall: Math.max(0, observed.line - observed.score),
+    above: observed.score - observed.line,
+    admitted: observed.score >= observed.line,
+    scale,
+    city,
+  };
+}
+
 /** `GET /api/profile/:id`; null when the registry has never heard of the id. */
 export function profileView(world: World, id: CitizenId): Record<string, unknown> | null {
   const c = world.citizens[id];
@@ -261,6 +322,7 @@ export function profileView(world: World, id: CitizenId): Record<string, unknown
     })),
     belongings: belongings(world, c, present),
     record: recordOf(world, c),
+    repute: reputeView(world, c),
     stats: c.stats,
   };
 }
