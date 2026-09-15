@@ -44,7 +44,7 @@ import { initEmporium } from '../society/shops.ts';
 import { tickHappenings, weekday } from '../society/calendar.ts';
 import { holdReferendum } from '../politics/referendums.ts';
 import { fillMetropolisDefaults } from './scaffold.ts';
-import { dailyRollover } from './daily.ts';
+import { closeSittings, dailyRollover, openSittings } from './daily.ts';
 import { executeAction } from '../actions/execute.ts';
 import { buildObservation } from '../brains/observe.ts';
 import { reflexBrain } from '../brains/reflex.ts';
@@ -295,8 +295,13 @@ export async function stepTick(world: World, brains: BrainRegistry): Promise<voi
   // The Court opens before the hour is decided, so that a judge sitting today
   // sees the cases before it in the observation it acts on.
   if (world.hour === world.config.courtHour) guard(world, 'openCourtSession', () => openCourtSession(world));
+  // And so do the hours the Exchange keeps: the auction's close at 14 and the
+  // civil docket at 16 (`world/daily.ts`, `REGISTRY.md` §2).
+  openSittings(world, DAILY_HOOKS);
 
   executeTurns(world, await collectTurns(world, brains));
+
+  closeSittings(world, DAILY_HOOKS);
 
   // ...and counts the votes at the end of the hour after it, so a judge has
   // two hours to reach one.

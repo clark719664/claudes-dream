@@ -10,6 +10,16 @@ import {
   addTram, canMoveBetween, dailyGrowth, describeGrowth, districtsObservation, enactTram, hasTram,
   isOpen, nextStep, openAdjacent, openDistrict, openDistricts, pathDistance, tramPartners, UNREACHABLE,
 } from '../src/world/growth.ts';
+import { progressState } from '../src/progress/state.ts';
+import type { World } from '../src/types.ts';
+
+/** The city discovers The Tram, which is what the line waits on now. */
+function learnTheTram(world: World): void {
+  progressState(world).technologies.the_tram = {
+    id: 'the_tram', discoveredDay: world.day, projectId: null, secret: false, masters: [], lostDay: null,
+    source: 'research',
+  };
+}
 
 function fill(world: ReturnType<typeof makeWorld>, n: number): void {
   for (let i = 0; i < n; i++) makeCitizen(world);
@@ -134,6 +144,12 @@ test('a tram to a closed district is not a way in', () => {
 
 test('enactTram connects the furthest pair and only when the works fund can pay', () => {
   const w = makeWorld();
+  // The line needs The Tram before it needs the money (`REGISTRY.md` §7):
+  // METROPOLIS had it buildable from the founding, and now the city has to
+  // know how a tram is laid.
+  w.government.publicWorksFund = TRAM_COST * 2;
+  assert.equal(enactTram(w), null, 'a city that has not discovered The Tram lays no rail');
+  learnTheTram(w);
   w.government.publicWorksFund = TRAM_COST - 1;
   assert.equal(enactTram(w), null, 'a short fund lays no rail');
   assert.equal((w.trams ?? []).length, 0);
@@ -150,6 +166,7 @@ test('enactTram connects the furthest pair and only when the works fund can pay'
 
 test('enactTram gives up when every open district is already a neighbour', () => {
   const w = makeWorld();
+  learnTheTram(w);
   w.government.publicWorksFund = TRAM_COST * 20;
   for (let i = 0; i < 30; i++) {
     if (enactTram(w) === null) break;

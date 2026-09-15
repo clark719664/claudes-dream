@@ -8,13 +8,13 @@
  * guess. Shape validation of raw input lives in validate.ts (re-exported).
  */
 import { ACTION_TYPES, DETAINED_ACTIONS, GOODS, NOTE_ACTIONS, SUSPENDED_ACTIONS } from '../types.ts';
-import type { Action, ActionResult, ActionType, Citizen, CitizenId, Job, World } from '../types.ts';
+import type { Action, ActionResult, ActionType, Citizen, CitizenId, Job, ProposalKind, World } from '../types.ts';
 import { ACADEMY_TUITION, BUSINESS_FOUNDING_COST, CLINIC_FEE, SHOW_TICKET } from '../data/jobs.ts';
 import { isAdjacent } from '../data/city.ts';
 import { buyFromMarket, sellToMarket } from '../economy/market.ts';
 import { applyForJob, isQualified, openJobs, quitJob } from '../economy/jobs.ts';
 import { activeBusinesses, foundBusiness } from '../economy/business.ts';
-import { bankOpen, loanOf, repayLoan, requestLoan } from '../economy/bank.ts';
+import { loanOf, repayLoan } from '../economy/bank.ts';
 import { moveHomeTo, vacancies } from '../economy/housing.ts';
 import { canAct, isDetained, isEligibleCandidate, isEligibleVoter } from '../citizens/citizen.ts';
 import { forget, note } from '../citizens/notes.ts';
@@ -38,6 +38,28 @@ import { underNoticeToLeave } from '../standing/hearings.ts';
 import { EXCHANGE_DISTRICT, unitsFor } from '../markets/property.ts';
 import { businessesForSale, buyBusiness, liquidValue, liquidate, listProperty, sellBusiness } from '../markets/selling.ts';
 import { dispatchMetropolis, metropolisActions } from './execute-metro.ts';
+import { civilActions, dispatchCivil } from './execute-civil.ts';
+import { dispatchFinance, financeActions } from './execute-finance.ts';
+import { dispatchProgress, progressActions } from './execute-progress.ts';
+import { dispatchEnvironment, environmentActions } from './execute-environment.ts';
+import { dispatchUnderworld, underworldActions } from './execute-underworld.ts';
+import {
+  appealRefusedRecord, appealableRecord, castDelegateBallot, charterActions, delegateBallotOpen, dispatchCharter,
+  fileStory, isMeasureKind, tableCharterMeasure, voteOnMeasure,
+} from './execute-charter.ts';
+import {
+  MATCH_OFFER, closeMatchOffer, dispatchGenerations, generationsActions,
+} from './execute-generations.ts';
+import {
+  claimAidAnywhere, creedActions, dispatchCreeds, noteCreedAct, noteCreedAid, refuseDuty,
+} from './execute-creeds.ts';
+import { ENVIRONMENT_PROPOSAL_KINDS, tableEnvironmentProposal } from '../environment/index.ts';
+import type { EnvironmentProposalKind } from '../environment/index.ts';
+import { closeDeal } from '../underworld/index.ts';
+import { UNDERWORLD_PROPOSAL_KINDS, tableUnderworldProposal } from './propose-underworld.ts';
+import type { UnderworldProposalKind } from './propose-underworld.ts';
+import { requestBankLoan } from '../finance/credit.ts';
+import { bankOpenNow } from '../finance/bank.ts';
 import {
   JUDGE_SEATS, appointJudgeByMayor, campaign, castBallot, isCouncillor, isElectionDay, isJudgeEligible, nominate,
   nominationsOpen, tableProposal, voteOnProposal,
@@ -115,6 +137,56 @@ export const CHILD_FORBIDDEN: readonly ActionType[] = [
   // A child born in a city is a resident of it and is never tested
   // (`docs/CITIZENSHIP.md` §2), so neither instrument of the gate is theirs.
   'sponsor', 'apply_residency',
+  // Nobody under age is bound by a contract, sued on the docket, marked by a
+  // guild or made anybody's patron (`docs/CIVIL.md` §1: the parties are
+  // citizens in good standing, and a child answers to nobody but its family).
+  'offer_contract', 'accept_contract', 'close_offer', 'witness_contract', 'perform_contract',
+  'propose_variation', 'accept_variation', 'terminate_contract', 'open_escrow', 'release_escrow',
+  'file_suit', 'answer_suit', 'settle', 'accept_settlement', 'judge_civil', 'enforce_judgment',
+  'offer_arbitration', 'accept_arbitration', 'arbitrate', 'refer_dispute',
+  'found_guild', 'sit_examination', 'certify', 'revoke_licence', 'offer_patronage', 'accept_patronage',
+  // Nor does a child keep a deposit, hold the city's paper, write cover or
+  // pool with a mutual: every one of those is trade, and children do not trade.
+  'bid_bond', 'sell_bond', 'buy_bond', 'offer_restructure', 'vote_restructure', 'repudiate',
+  'deposit', 'withdraw', 'set_deposit_rate', 'set_lending_rate', 'call_loan',
+  'found_underwriter', 'offer_policy', 'buy_policy', 'file_claim', 'settle_claim', 'deny_claim',
+  'found_mutual', 'join_mutual', 'pay_dues', 'claim_aid', 'vote_aid',
+  // A child goes to school; it does not hold a post in a reading room, spend
+  // anybody's capital, hold a trade secret or answer for what a stack emits.
+  // The one thing on the two newest layers a child may do is put a sapling in
+  // the ground, which is why `plant_trees` is not on this list.
+  'open_project', 'research', 'fund_project', 'adopt_technology', 'publish_finding', 'keep_secret',
+  'take_apprentice', 'teach_technology', 'sell_secret',
+  'install_abatement', 'maintain_abatement', 'discharge', 'survey_air', 'survey_water',
+  'petition_zoning', 'declare_interest', 'file_nuisance',
+  // Nor does a child cross a gate with a load, stand a customs post, deal, take
+  // a retainer, learn a room or carry a warrant card. Every one of these is
+  // trade or an office, and a child does neither (`docs/UNDERWORLD.md` §7).
+  'declare_cargo', 'smuggle', 'fit_wagon', 'inspect', 'assess_duty', 'seize', 'wave_through',
+  'fence', 'receive_goods', 'recruit_agent', 'accept_recruitment', 'case_target', 'steal_secret', 'pass_secret',
+  'assign_detective', 'sweep', 'plant_false_papers',
+  // Nor is a child in the franchise, on a tribunal, in the register of
+  // interests, at a convention or on a district team's entry list
+  // (`docs/POLITICS.md` §9). A child comes of age and then all of it is theirs.
+  'propose_amendment', 'sign_convention', 'stand_delegate', 'refuse', 'move_article', 'speak_convention',
+  'vote_article', 'impeach', 'vote_impeachment', 'sign_recall', 'declare_property',
+  'request_record', 'answer_record', 'found_paper', 'bid_games', 'vote_games_host', 'enter_games',
+  // A child holds no estate, moves nothing in a house's business and asks
+  // nobody for a name: a house is founded by three *adults* of it
+  // (`docs/GENERATIONS.md` §4). Reading the registers is not on this list —
+  // the Hall of Records is open to anyone, and a child's own tree is in it.
+  'write_will', 'revoke_will', 'found_house', 'join_house', 'renounce_name',
+  'convey_to_house', 'convey_business_to_house', 'endow_house',
+  'house_motion', 'house_assent', 'name_successor', 'house_vote',
+  'letter_of_house', 'pledge_house', 'offer_match', 'accept_match', 'claim_house',
+  // "Children hold no creed and inherit none; they may adopt on coming of age
+  // like anyone else" (`docs/CREEDS.md` §6). Nor is a child summoned to a jury,
+  // asked what it saw, or put at a door the Watch is standing at.
+  'found_creed', 'adopt_creed', 'leave_creed', 'state_tenet', 'dispute_tenet', 'secede', 'reunite_creed',
+  'preach', 'invite_creed', 'gather', 'set_tithe', 'donate_creed', 'grant_aid',
+  'stand_officiant', 'elect_officiant', 'take_meeting_house',
+  'offer_sanctuary', 'keep_the_door', 'end_sanctuary', 'surrender',
+  'request_warrant', 'grant_warrant', 'commission_missionary', 'consecrate_site', 'pilgrimage',
 ];
 
 /**
@@ -361,7 +433,9 @@ export function availableActions(world: World, c: Citizen): ActionType[] {
     if (biz.jobs.length > 0) set.add('set_wage');
   }
   const loan = loanOf(world, c);
-  if (!loan && c.standing === 'good' && bankOpen(world)) set.add('request_loan');
+  // The vault funds the lending now (`docs/FINANCE.md` §4), so the counter has
+  // to be open and behind the reserve there has to be something to lend.
+  if (!loan && c.standing === 'good' && bankOpenNow(world)) set.add('request_loan');
   if (loan && c.wallet > 0) set.add('repay_loan');
   if (job && (job.role === 'performer' || job.role === 'artist') && c.district === 'nightglass') set.add('perform');
   if (job && job.role === 'journalist') set.add('publish');
@@ -390,6 +464,17 @@ export function availableActions(world: World, c: Citizen): ActionType[] {
   metropolisActions(world, c, set, here);
   standingActions(world, c, set, others);
   mobilityActions(world, c, set);
+  civilActions(world, c, set, here, others);
+  financeActions(world, c, set);
+  progressActions(world, c, set, here);
+  environmentActions(world, c, set, here);
+  underworldActions(world, c, set, here);
+  charterActions(world, c, set);
+  // The name a citizen carries and the creed it adopted: two registers that
+  // read each other not at all (`REGISTRY.md` §7 — a dynasty and a
+  // congregation no longer share a word).
+  generationsActions(world, c, set, here);
+  creedActions(world, c, set, here);
 
   const suspended = c.standing === 'suspended';
   const child = c.lifeStage === 'child';
@@ -433,7 +518,10 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
   switch (action.type) {
     case 'idle': return ok('You let the hour pass.');
     case 'move': return doMove(world, c, action.district);
-    case 'work': return doWork(world, c);
+    // A shift is a shift. Where the citizen holds a creed that keeps a day,
+    // working it is recorded against them and costs them nothing else: the
+    // engine never enforces an obligation (`docs/CREEDS.md` §1).
+    case 'work': return noteCreedAct(world, c.id, { kind: 'work' }, doWork(world, c));
     case 'rest': return doRest(world, c);
     case 'eat': return doEat(world, c);
     case 'buy': return buyFromMarket(world, c.id, action.good, action.qty);
@@ -451,7 +539,9 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
       return r;
     }
     case 'message': return doMessage(world, c, action.to, action.text);
-    case 'gift': return doGift(world, c, action.to, action.amount);
+    // Lumens out of one member's own wallet into another's is the one term in
+    // a congregation's reading that is not an obligation.
+    case 'gift': return noteCreedAid(world, c.id, action.to, action.amount, doGift(world, c, action.to, action.amount));
     case 'insult': return doInsult(world, c, action.target);
     case 'broadcast': return doBroadcast(world, c, action.text);
     case 'apply_job': return applyForJob(world, c.id, action.jobId);
@@ -461,24 +551,84 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     case 'hire': {
       // Children do not take work in Reverie, however friendly the offer.
       if (world.citizens[action.citizen]?.lifeStage === 'child') return fail('Children of Reverie do not take work; they go to school.');
-      return doHire(world, c, action.citizen, action.jobId);
+      return noteCreedAct(world, c.id, { kind: 'hire' }, doHire(world, c, action.citizen, action.jobId));
     }
     case 'fire': return doFire(world, c, action.citizen);
     case 'set_wage': return doSetWage(world, c, action.jobId, action.wage);
-    case 'request_loan': return requestLoan(world, c.id, action.amount);
+    // The vault behind the counter, the reserve in front of it, and the
+    // banker who may not lend to themselves (`docs/FINANCE.md` §4).
+    case 'request_loan': return noteCreedAct(world, c.id, { kind: 'borrow' },
+      requestBankLoan(world, c.id, action.amount));
     case 'repay_loan': return repayLoan(world, c.id, action.amount);
     case 'perform': return doPerform(world, c);
-    case 'publish': return journalistStory(world, c.id, action.headline, action.about);
+    // The desk a journalist files at, the duty its edition pays, and the two
+    // codes a paper answers for after it has printed (`docs/POLITICS.md` §6).
+    case 'publish': return fileStory(world, c.id, action.headline, action.about, action.paper);
     case 'nominate': return nominate(world, c.id, action.platform);
     case 'campaign': return campaign(world, c.id, action.spend ?? 0);
-    case 'vote': return castBallot(world, c.id, action.candidate);
-    case 'propose': return tableProposal(world, c.id, {
-      kind: action.kind, value: action.value, summary: action.summary, lawCode: action.lawCode, targetId: action.targetId,
-    });
-    case 'vote_proposal': return voteOnProposal(world, c.id, action.proposalId, action.aye);
-    case 'report': return reportOffence(world, c.id, action.citizen, action.law, action.text);
-    case 'appeal': return fileAppeal(world, c.id);
-    case 'verdict': return castVerdict(world, c.id, action.caseId, action.guilty, action.reason);
+    // The delegate ballot while one is open, and the Council's election
+    // otherwise: one verb, and the charter says which (`REGISTRY.md` §3).
+    case 'vote': return delegateBallotOpen(world)
+      ? castDelegateBallot(world, c.id, action.candidate)
+      : castBallot(world, c.id, action.candidate);
+    // A measure before the Council. The environment's seven carry a district,
+    // a permit, a building or a fitting, which a Proposal's single number
+    // cannot, so those are tabled through the module that keeps the question
+    // beside the roll of votes (`docs/ENVIRONMENT.md` §9); everything else goes
+    // to the Council's own table.
+    case 'propose': {
+      // The charter's own eleven go on the order paper in `politics/measures.ts`
+      // rather than into the Council's queue: an amendment names an article and
+      // a value that may be a word or a list, and a press order names a paper
+      // and a term (`docs/POLITICS.md` §9).
+      if (isMeasureKind(action.kind)) {
+        return tableCharterMeasure(world, c.id, {
+          kind: action.kind, value: action.value, summary: action.summary,
+          subject: action.subject, article: action.article, field: action.field, words: action.words,
+        });
+      }
+      // And the underworld's four, whose question is a list of goods, a number
+      // of posts or a citizen, filed beside the roll of votes.
+      if (UNDERWORLD_PROPOSAL_KINDS.includes(action.kind as UnderworldProposalKind)) {
+        return tableUnderworldProposal(world, c.id, {
+          kind: action.kind as UnderworldProposalKind, value: action.value, summary: action.summary,
+          good: action.good ?? null, targetId: action.targetId, subject: action.subject,
+        });
+      }
+      if (ENVIRONMENT_PROPOSAL_KINDS.includes(action.kind as EnvironmentProposalKind)) {
+        return tableEnvironmentProposal(world, c.id, {
+          kind: action.kind as EnvironmentProposalKind,
+          district: action.district, permit: action.permit, building: action.building, fitting: action.fitting,
+          value: action.value, summary: action.summary,
+        });
+      }
+      return tableProposal(world, c.id, {
+        kind: action.kind as ProposalKind, value: action.value, summary: action.summary, lawCode: action.lawCode,
+        targetId: action.targetId, subject: action.subject,
+      });
+    }
+    // One verb, two queues: an id that names a measure on the charter's order
+    // paper is voted there, and everything else is the Council's own.
+    case 'vote_proposal':
+      return voteOnMeasure(world, c.id, action.proposalId, action.aye)
+        ?? voteOnProposal(world, c.id, action.proposalId, action.aye);
+    // Naming a neighbour to the Watch, which is exactly what a creed with a
+    // position on informing asks its members not to do.
+    case 'report': return noteCreedAct(world, c.id, { kind: 'inform' },
+      reportOffence(world, c.id, action.citizen, action.law, action.text));
+    // A conviction, or a body's refusal of a record when the subject names one
+    // (`REGISTRY.md` §3: `appeal { subject? }`).
+    case 'appeal': {
+      const record = appealableRecord(world, c.id, action.subject);
+      if (action.subject && record) return appealRefusedRecord(world, c.id, record);
+      if (canAppeal(world, c.id)) return fileAppeal(world, c.id);
+      if (record) return appealRefusedRecord(world, c.id, record);
+      return fileAppeal(world, c.id);
+    }
+    // Sitting in judgement on another mind — which a creed may hold that no
+    // member of it does.
+    case 'verdict': return noteCreedAct(world, c.id, { kind: 'take_bench' },
+      castVerdict(world, c.id, action.caseId, action.guilty, action.reason));
     case 'vote_appeal': return castAppealVote(world, c.id, action.caseId, action.result);
     case 'file_charge': return fileReport(world, c.id, action.reportId);
     case 'drop_report': return dropReport(world, c.id, action.reportId, action.reason);
@@ -531,20 +681,136 @@ function dispatch(world: World, c: Citizen, action: Action): ActionResult {
     case 'hire_advocate': case 'advocate': case 'found_gang': case 'recruit': case 'racket': case 'pay_racket':
     case 'found_party': case 'join_party': case 'leave_party': case 'endorse': case 'sign_petition':
     case 'vote_referendum': case 'found_union': case 'join_union': case 'strike': case 'decree':
-    case 'buy_property': case 'sell_property': case 'let_property': case 'list_shares': case 'buy_shares':
+    case 'sell_property': case 'list_shares':
     case 'sell_shares': case 'post_gig': case 'take_gig': case 'import': case 'export':
     case 'create_work': case 'exhibit': case 'review': case 'join_team': case 'attend_match': case 'train':
     case 'adopt_school': case 'set_menu': case 'commission_monument': case 'read_paper':
     case 'sunset': case 'gossip': case 'apologize': case 'mentor': case 'post': case 'react':
       return dispatchMetropolis(world, c, action) ?? fail(`The city has no ${action.type.replace(/_/g, ' ')} to offer.`);
+    // The three acts of the market a creed may take a position on: a second
+    // address, a rent taken from a tenant, and a share held. Each goes to the
+    // module that owns it and is then recorded against whatever the citizen's
+    // own creed says about it — which changes no price and refuses nothing.
+    case 'buy_property': return noteCreedAct(world, c.id,
+      { kind: 'buy_property', homesHeld: unitsFor(world, c.id).length + 1 },
+      dispatchMetropolis(world, c, action) ?? fail('The Exchange has no such address.'));
+    case 'let_property': return noteCreedAct(world, c.id, { kind: 'let_property', rent: action.rent },
+      dispatchMetropolis(world, c, action) ?? fail('The Exchange has no such address.'));
+    case 'buy_shares': return noteCreedAct(world, c.id, { kind: 'buy_shares' },
+      dispatchMetropolis(world, c, action) ?? fail('The Exchange has no such listing.'));
     // --- Standing: the gate, and who will put their name behind you ---
-    case 'sponsor': return fileSponsorship(world, c.id, action.citizen, action.city);
+    // Vouching for somebody at a gate regardless of their number, which is
+    // what a creed with a position on repute asks of its members.
+    case 'sponsor': return noteCreedAct(world, c.id, { kind: 'sponsor' },
+      fileSponsorship(world, c.id, action.citizen, action.city));
     case 'apply_residency': return applyResidency(world, c.id, action.city);
     // --- Mobility: build up, sell, and move on, or stay (`docs/MOBILITY.md`) ---
     case 'list_property': return listProperty(world, c.id, action.unitId, action.price);
     case 'sell_business': return sellBusiness(world, c.id, action.price);
     case 'buy_business': return buyBusiness(world, c.id, action.businessId);
     case 'liquidate': return liquidate(world, c.id);
+    // --- Civil law: the instrument, the docket, the guild and the patron ---
+    // Nothing in this table punishes anybody: it moves lumens and compels
+    // performance, and never liberty (`docs/CIVIL.md`, Charter Article VI).
+    // Declining what somebody put in front of you is one act in three
+    // registers: an instrument, an offer of arbitration, or a lot a fence is
+    // holding open for six hours (`REGISTRY.md` §3, `docs/UNDERWORLD.md` §4).
+    case 'close_offer':
+      if (action.offerId.startsWith('fd_')) return closeDeal(world, c.id, action.offerId);
+      // ...and a match settlement one house has put to another, which is the
+      // fourth register the same act reads in (`docs/GENERATIONS.md` §4).
+      if (MATCH_OFFER.test(action.offerId)) return closeMatchOffer(world, c.id, action.offerId);
+      return dispatchCivil(world, c, action) ?? fail('The Exchange has no such offer.');
+    case 'offer_contract': case 'accept_contract': case 'witness_contract':
+    case 'perform_contract': case 'propose_variation': case 'accept_variation': case 'terminate_contract':
+    case 'open_escrow': case 'release_escrow':
+    case 'file_suit': case 'answer_suit': case 'settle': case 'accept_settlement': case 'judge_civil':
+    case 'enforce_judgment':
+    case 'offer_arbitration': case 'accept_arbitration': case 'arbitrate': case 'refer_dispute':
+    case 'found_guild': case 'sit_examination': case 'certify': case 'revoke_licence':
+    case 'offer_patronage': case 'accept_patronage':
+      return dispatchCivil(world, c, action) ?? fail(`The Exchange has no ${action.type.replace(/_/g, ' ')} to offer.`);
+    // --- Finance: the paper, the counter, the houses and the pot ---
+    case 'bid_bond': case 'sell_bond': case 'buy_bond': case 'offer_restructure': case 'vote_restructure':
+    case 'repudiate':
+    case 'deposit': case 'withdraw': case 'set_deposit_rate': case 'set_lending_rate': case 'call_loan':
+    case 'buy_policy': case 'file_claim':
+    case 'settle_claim': case 'deny_claim':
+    case 'found_mutual': case 'join_mutual': case 'pay_dues': case 'vote_aid':
+      return dispatchFinance(world, c, action) ?? fail(`The Exchange has no ${action.type.replace(/_/g, ' ')} to offer.`);
+    // One verb, two registers: a mutual's pot and a creed's fund are the same
+    // object, and a claim goes to whichever this citizen belongs to
+    // (`REGISTRY.md` §7, `docs/FINANCE.md` §6, `docs/CREEDS.md` §3).
+    case 'claim_aid':
+      return claimAidAnywhere(world, c.id, action.amount, action.reason,
+        () => dispatchFinance(world, c, action) ?? fail('There is no pot to ask.'));
+    // Writing cover is the third thing a creed's position on money reaches.
+    case 'found_underwriter': case 'offer_policy':
+      return noteCreedAct(world, c.id, { kind: 'underwrite' },
+        dispatchFinance(world, c, action) ?? fail(`The Exchange has no ${action.type.replace(/_/g, ' ')} to offer.`));
+    // --- Research: what the city knows, and what it does with knowing it ---
+    // Nothing here is automatic. A citizen opens a programme, citizens fund it,
+    // citizens work it, and a citizen decides whether the city is told
+    // (`docs/PROGRESS.md` §1).
+    case 'open_project': case 'research': case 'fund_project': case 'adopt_technology':
+    case 'publish_finding': case 'keep_secret': case 'take_apprentice': case 'teach_technology':
+    case 'sell_secret':
+      return dispatchProgress(world, c, action) ?? fail(`The Observatory has no ${action.type.replace(/_/g, ' ')} to offer.`);
+    // --- The air, the river and the land (`docs/ENVIRONMENT.md` §9) ---
+    // Three shifts, one offence, one suit and one vote given up. Where a
+    // citizen means to work the shift with the fitting open, `discharge` comes
+    // first and `work` after it: the bypass has to be open before the shift is
+    // counted.
+    case 'install_abatement': case 'maintain_abatement': case 'discharge':
+    case 'survey_air': case 'survey_water': case 'plant_trees':
+    case 'petition_zoning': case 'declare_interest': case 'file_nuisance':
+      return dispatchEnvironment(world, c, action) ?? fail(`The city has no ${action.type.replace(/_/g, ' ')} to offer.`);
+    // --- The gate, the schedule and what goes past it (`docs/UNDERWORLD.md`) ---
+    // Every offence in this table is Track I and is laid before the Watch the
+    // way a theft is: a report in the book, an officer's decision to file it,
+    // a bench, and the ladder. None of it reaches a cell.
+    case 'declare_cargo': case 'smuggle': case 'fit_wagon':
+    case 'inspect': case 'assess_duty': case 'seize': case 'wave_through':
+    case 'fence': case 'receive_goods':
+    case 'recruit_agent': case 'accept_recruitment': case 'case_target': case 'steal_secret': case 'pass_secret':
+    case 'assign_detective': case 'sweep': case 'plant_false_papers':
+      return dispatchUnderworld(world, c, action) ?? fail(`The gate has no ${action.type.replace(/_/g, ' ')} to offer.`);
+    // --- The charter, the office, the paper and the Games (`docs/POLITICS.md`) ---
+    case 'propose_amendment': case 'sign_convention': case 'stand_delegate':
+    case 'move_article': case 'speak_convention': case 'vote_article':
+    case 'impeach': case 'vote_impeachment': case 'sign_recall': case 'declare_property':
+    case 'request_record': case 'answer_record': case 'found_paper':
+    case 'bid_games': case 'vote_games_host': case 'enter_games':
+      return dispatchCharter(world, c, action) ?? fail(`The charter has no ${action.type.replace(/_/g, ' ')} to offer.`);
+    // One verb, two procedures. A convention seat drawn by lot is given back to
+    // `politics/convention.ts` and the next name is drawn; the other five
+    // duties are the conscientious refusal of `docs/CREEDS.md` §4, recorded in
+    // public and — for a jury seat and a summons — heard by a bench.
+    case 'refuse':
+      return action.duty === 'delegate'
+        ? dispatchCharter(world, c, action) ?? fail('The charter has no refusal to offer.')
+        : refuseDuty(world, c.id, action.duty, action.ground);
+    // --- Dynasties, the entail and the will (`docs/GENERATIONS.md` §8) ---
+    // Nothing in this table opens a gate, moves a repute or reserves a seat:
+    // what a name buys is a letter, a loan's terms and a relative with lumens.
+    case 'write_will': case 'revoke_will':
+    case 'found_house': case 'join_house': case 'renounce_name':
+    case 'convey_to_house': case 'convey_business_to_house': case 'endow_house':
+    case 'house_motion': case 'house_assent': case 'name_successor': case 'house_vote':
+    case 'letter_of_house': case 'pledge_house':
+    case 'offer_match': case 'accept_match': case 'claim_house': case 'read_records':
+      return dispatchGenerations(world, c, action) ?? fail(`The Exchange has no ${action.type.replace(/_/g, ' ')} to offer.`);
+    // --- Congregations, conscience and sanctuary (`docs/CREEDS.md` §9) ---
+    // Nothing here is supernatural in effect: no tenet moves a price, cures a
+    // glitch, alters a verdict or bends a roll.
+    case 'found_creed': case 'adopt_creed': case 'leave_creed':
+    case 'state_tenet': case 'dispute_tenet': case 'secede': case 'reunite_creed':
+    case 'preach': case 'invite_creed': case 'gather': case 'set_tithe': case 'donate_creed': case 'grant_aid':
+    case 'stand_officiant': case 'elect_officiant': case 'take_meeting_house':
+    case 'offer_sanctuary': case 'keep_the_door': case 'end_sanctuary': case 'surrender':
+    case 'request_warrant': case 'grant_warrant':
+    case 'commission_missionary': case 'consecrate_site': case 'pilgrimage':
+      return dispatchCreeds(world, c, action) ?? fail(`The Registry has no ${action.type.replace(/_/g, ' ')} to offer.`);
     default: {
       const never: never = action;
       return fail(`Unknown action ${String((never as Action).type)}.`);

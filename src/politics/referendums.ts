@@ -64,6 +64,65 @@ export function liveSignatures(world: World, p: Proposal): CitizenId[] {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Questions that stand behind no petition (`docs/POLITICS.md` §§3–4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Not every question the city answers is a councillor's proposal. A convention
+ * puts a whole draft charter to ratification and a recall petition puts an
+ * officeholder's seat to the city, and both go to the poll through exactly the
+ * machinery below — the same Stillday, the same one vote each, the same tally
+ * printed the same way. What they bring of their own is how a scripted mind
+ * that did not come to the poll makes its mind up, which is the module that
+ * owns the question's business and nobody else's.
+ */
+export interface QuestionKind {
+  /** `true` aye, `false` nay, `null` abstain. A mind with nothing to read abstains. */
+  disposition?(world: World, cId: CitizenId, r: Referendum): boolean | null;
+}
+
+const QUESTION_KINDS = new Map<string, QuestionKind>();
+
+/** Register how a kind of question is read. Called once, when the module loads. */
+export function registerQuestion(kind: string, q: QuestionKind): void {
+  QUESTION_KINDS.set(kind, q);
+}
+
+/** The kind of question this poll puts, or null for an ordinary petition. */
+export function questionKindOf(r: Referendum): string | null {
+  return (r as Referendum & { kind?: string }).kind ?? null;
+}
+
+/** What the question is about: a convention, an officeholder, a draft. */
+export function questionSubject(r: Referendum): string | null {
+  return (r as Referendum & { subject?: string }).subject ?? null;
+}
+
+/** Put a question to the city on the next Stillday (or a named day). */
+export function putQuestion(
+  world: World, spec: { kind: string; question: string; subject?: string; day?: number },
+): Referendum {
+  const r: Referendum = {
+    id: nextId(world, 'd'), petitionId: '', question: spec.question,
+    day: spec.day ?? nextReferendumDay(world), ayes: 0, nays: 0, result: null,
+  };
+  (r as Referendum & { kind?: string; subject?: string }).kind = spec.kind;
+  if (spec.subject) (r as Referendum & { subject?: string }).subject = spec.subject;
+  referendumList(world).push(r);
+  emit(world, 'referendum', `The city votes on day ${r.day}: ${r.question}`, [], 0.8,
+    { referendumId: r.id, kind: spec.kind, subject: spec.subject ?? null, day: r.day });
+  for (const c of voters(world)) {
+    remember(world, c.id, 'civic', `The city votes on day ${r.day}: ${r.question} (referendum ${r.id}).`);
+  }
+  return r;
+}
+
+/** Every question the city has answered or is about to, newest last. */
+export function referendumsOfKind(world: World, kind: string): Referendum[] {
+  return referendumList(world).filter((r) => questionKindOf(r) === kind);
+}
+
 function voteKey(referendumId: string, cId: CitizenId): string { return `ref:${referendumId}:${cId}`; }
 
 function isJailed(world: World, c: Citizen): boolean {
@@ -224,17 +283,23 @@ export function voteReferendum(world: World, cId: CitizenId, referendumId: strin
  * abstain, and their silence is counted as nothing at all.
  */
 export function holdReferendum(world: World): void {
-  const r = referendumToday(world);
-  if (r) closePoll(world, r);
+  // Every poll the city goes to today, not only the first: a recall ballot and
+  // a petition can fall on the same Stillday, and both are answered.
+  for (const r of referendumList(world).filter((x) => x.result === null && x.day === world.day)) closePoll(world, r);
 }
 
 /** Count the votes, answer the question, and do what the answer says. */
 function closePoll(world: World, r: Referendum): void {
   const p = world.government.proposals.find((x) => x.id === r.petitionId) ?? null;
+  const question = QUESTION_KINDS.get(questionKindOf(r) ?? '') ?? null;
   for (const c of voters(world)) {
     if (c.brain !== 'reflex') continue;
     if (world.counters[voteKey(r.id, c.id)] !== undefined) continue;
-    const aye = p ? councillorDisposition(world, c.id, p) : false;
+    const aye = p ? councillorDisposition(world, c.id, p)
+      : question?.disposition ? question.disposition(world, c.id, r) : null;
+    // A scripted mind with nothing to read on the question stays away, and its
+    // silence is counted as nothing at all.
+    if (aye === null || aye === undefined) continue;
     world.counters[voteKey(r.id, c.id)] = aye ? 1 : 0;
     if (aye) r.ayes++; else r.nays++;
     c.stats.votesCast++;
@@ -252,7 +317,7 @@ function closePoll(world: World, r: Referendum): void {
       outcome = overruled ? 'The Council rejected it; the city has overruled the Council.' : 'The Council is bound by it.';
     }
   } else if (passed) {
-    outcome = 'The proposal it stood on is gone; nothing changed.';
+    outcome = questionKindOf(r) ? 'The city has answered.' : 'The proposal it stood on is gone; nothing changed.';
   } else {
     if (p && p.status === 'open') { p.status = 'failed'; p.decidedDay = world.day; }
     outcome = r.ayes + r.nays === 0 ? 'Nobody came to the poll.' : r.ayes === r.nays ? 'A tied vote fails.' : 'The city said no.';

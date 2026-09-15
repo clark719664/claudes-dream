@@ -34,6 +34,7 @@ import { customFor, homeRent, landValue, premisesRent, priceMultiplier } from '.
 import { adjustReputation, isPresent } from '../citizens/citizen.ts';
 import { tellNeighbours } from '../social/neighbours.ts';
 import { isOpen } from '../world/growth.ts';
+import { isStrongbox } from '../finance/box.ts';
 import { propertyTaxRate } from './levers.ts';
 import { memo } from '../util/memo.ts';
 
@@ -272,7 +273,7 @@ export function unitsFor(world: World, ownerId: CitizenId | 'city'): PropertyUni
 export function occupantOf(world: World, u: PropertyUnit): Business | null {
   if (u.kind !== 'shopfront') return null;
   return Object.values(world.businesses)
-    .filter((b) => b.dissolvedDay === null && b.buildingId === u.buildingId)
+    .filter((b) => b.dissolvedDay === null && b.buildingId === u.buildingId && !isStrongbox(world, b.id))
     .sort((a, b) => a.foundedDay - b.foundedDay || a.id.localeCompare(b.id, 'en'))[0] ?? null;
 }
 
@@ -478,9 +479,25 @@ export function assignTenancy(
  * What premises cost this business today: the kind's base rent against the
  * land it stands on and the traffic that comes past it (`PROPERTY.md` §4). A
  * café on the Central Plaza pays several times a café in Foundry Row.
+ *
+ * The base has to be the *kind's* rent and never yesterday's answer. A concern
+ * whose trade the table does not price — an underwriter's rooms at the
+ * Exchange (`FINANCE.md` §6) — was falling back on `rentPerDay`, so every
+ * morning's repricing multiplied the land value into a rent that already had
+ * it: 10 ℓ became 26, then 65, 170, 442, 1,269, and no house survived a week
+ * of it. The rent it was founded on is remembered instead, so the same number
+ * is repriced each day and the address still tells.
  */
 export function businessRent(world: World, biz: Business): number {
-  return premisesRent(world, biz.kind, biz.district, BUSINESS_RENT[biz.kind] ?? biz.rentPerDay);
+  const priced = BUSINESS_RENT[biz.kind];
+  let base = priced;
+  if (base === undefined) {
+    const key = `baseRent:${biz.id}`;
+    const held = world.counters[key];
+    base = typeof held === 'number' && held > 0 ? held : Math.max(1, biz.rentPerDay);
+    world.counters[key] = base;
+  }
+  return premisesRent(world, biz.kind, biz.district, base);
 }
 
 /**
@@ -606,9 +623,12 @@ export function landlordRent(world: World): number {
       tenant.homeBuildingId = null;
     }
   }
-  // premises the city holds again pay the city again
+  // premises the city holds again pay the city again — a strongbox excepted,
+  // because it is a money party and not premises (see `repricePremises`).
   for (const biz of Object.values(world.businesses)) {
-    if (biz.dissolvedDay === null && !leasedBusinesses.has(biz.id)) setPremisesRent(world, biz, false);
+    if (biz.dissolvedDay === null && !leasedBusinesses.has(biz.id) && !isStrongbox(world, biz.id)) {
+      setPremisesRent(world, biz, false);
+    }
   }
   return moved;
 }
@@ -674,6 +694,12 @@ function repricePremises(world: World): void {
   }
   for (const biz of Object.values(world.businesses)) {
     if (biz.dissolvedDay !== null) continue;
+    // A strongbox is a money party and not premises: the Lantern Vault and
+    // every mutual's pot are business records only because that is how
+    // `treasury.transfer` knows how to hold lumens (`finance/box.ts`). They
+    // rent nothing, and pricing premises for them charged the pot a lumen a
+    // day until it was empty and then wound it up as a bankrupt concern.
+    if (isStrongbox(world, biz.id)) continue;
     setCustom(world, biz);
     if (!leased.has(biz.id)) biz.rentPerDay = businessRent(world, biz);
   }

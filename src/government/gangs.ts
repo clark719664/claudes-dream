@@ -86,6 +86,15 @@ function cycleOf(world: World, day: number): number {
   return Math.floor(day / Math.max(1, world.config.cycleDays));
 }
 
+/**
+ * Has this business already paid its protection this cycle? Both the demand
+ * and the payment are public events, so an owner (or a gang) weighing the
+ * question can read the answer without walking over to be told it.
+ */
+export function racketPaidThisCycle(world: World, businessId: BusinessId): boolean {
+  return world.counters[racketKey(businessId)] === cycleOf(world, world.day);
+}
+
 /** Gangs still going. */
 export function liveGangs(world: World): Gang[] {
   return Object.values(book(world)).filter((g) => g.bustedDay === null);

@@ -13,6 +13,32 @@
 import type {
   ObservedGate, ObservedRepute, StandingState,
 } from './standing/state.ts';
+// The same for civil law and finance: each keeps a register on the World and a
+// block in the Observation, and each is named here rather than cast in.
+import type { CivilState } from './civil/state.ts';
+import type { ObservedCivil } from './civil/observe.ts';
+import type { FinanceState } from './finance/state.ts';
+import type { FinanceView } from './finance/daily.ts';
+// And the same again for the two newest layers: what the city knows
+// (`docs/PROGRESS.md`) and what its shifts leave in the air and the river
+// (`docs/ENVIRONMENT.md`). Both keep a register on the World and a block in
+// the Observation, and both are named here rather than cast in.
+import type { ProgressState } from './progress/state.ts';
+import type { TechnologyId } from './progress/tree.ts';
+import type { ProgressObservation } from './progress/observe.ts';
+import type { ObservedTrend } from './progress/trends.ts';
+import type { EnvironmentState, Fitting, Permit } from './environment/state.ts';
+import type { ObservedEnvironment } from './environment/observe.ts';
+// And the two newest layers again: the gate and what goes past it
+// (`docs/UNDERWORLD.md`), and the charter, the office, the paper and the Games
+// (`docs/POLITICS.md`). Both name their own vocabulary and both put a block in
+// the Observation; every import here is type-only and erased at runtime.
+import type { CityKey, SecretKind, SmuggleRoute } from './underworld/state.ts';
+import type { UnderworldObservation } from './underworld/observe.ts';
+import type { ImpeachmentArticle } from './politics/accountability.ts';
+import type { RecordBody, RefusalReason } from './politics/records.ts';
+import type { Discipline } from './politics/games.ts';
+import type { ObservedPolitics } from './politics/session.ts';
 
 // ---------------------------------------------------------------------------
 // Identifiers
@@ -67,7 +93,13 @@ export type ProductCategory =
 export type LifeStage = 'child' | 'adult' | 'elder';
 export type HappeningKind =
   | 'wedding' | 'birthday' | 'festival' | 'swearing_in' | 'club_meeting' | 'birth'
-  | 'match' | 'block_party' | 'memorial' | 'parade';
+  | 'match' | 'block_party' | 'memorial' | 'parade'
+  // A congregation's day, a door the Watch is standing at, and a journey made
+  // to a place that matters (`docs/CREEDS.md` §§2, 5, 7).
+  | 'gathering' | 'sanctuary' | 'pilgrimage'
+  // The morning after an estate opens, and the evening a house takes a new
+  // head (`docs/GENERATIONS.md` §§3, 4).
+  | 'reading' | 'investiture';
 export type FamilyRelation = 'partner' | 'spouse' | 'parent' | 'child' | 'sibling';
 
 export const GOODS: readonly Good[] = ['compute', 'energy', 'goods', 'culture', 'knowledge'];
@@ -100,7 +132,27 @@ export const FOUNDING_DISTRICT_IDS: readonly DistrictId[] = DISTRICT_IDS.slice(0
 export type LawCode =
   | 'L01' | 'L02' | 'L03' | 'L04' | 'L05' | 'L06' | 'L07' | 'L08'
   | 'L09' | 'L10' | 'L11' | 'L12' | 'L13' | 'L14' | 'L15'
-  | 'L16' | 'L17';
+  | 'L16' | 'L17'
+  // What goes past a gate and what is taken out of a room (`docs/UNDERWORLD.md`
+  // §7). Every one is Track I: a load seized is not a person detained, and
+  // espionage at severity 5 is still the ladder (`docs/JUSTICE.md` §1).
+  | 'L26' | 'L27' | 'L28' | 'L29' | 'L30'
+  // The charter's own (`docs/POLITICS.md` §9). A council that silences a paper
+  // has taken from the city, not from anybody's safety, so these are the ladder
+  // too.
+  | 'L35' | 'L36' | 'L37' | 'L38' | 'L39' | 'L40'
+  // Conscience, the door and the roll (`docs/CREEDS.md` §9). A creed's refusal
+  // costs the city evidence and a warrant costs it a docket; neither costs
+  // anybody their safety, so all four sit on the ladder.
+  | 'L31' | 'L32' | 'L33' | 'L34'
+  // What the city knows (`docs/PROGRESS.md` §8) and what its shifts leave
+  // behind (`docs/ENVIRONMENT.md` §9). Both sets are Track I, both sit on the
+  // ladder, and `REGISTRY.md` §7 numbered them so nothing collides.
+  | 'L41' | 'L42'
+  // The estate and the name (`docs/GENERATIONS.md` §8), both proved by reading
+  // a register against the Hall's own tree.
+  | 'L43' | 'L44'
+  | 'L45' | 'L46' | 'L47';
 
 /**
  * The **Code of Persons** — Track II (`docs/JUSTICE.md` §2, `REGISTRY.md` §4).
@@ -562,7 +614,20 @@ export type LedgerKind =
   | 'capital'
   | 'donation' | 'stipend' | 'upkeep' | 'item' | 'craft' | 'registration' | 'inheritance'
   | 'property' | 'lease' | 'share' | 'share_dividend' | 'gig' | 'import' | 'export'
-  | 'tariff' | 'property_tax' | 'wealth_tax' | 'racket' | 'advocate' | 'acquisition' | 'prize' | 'relief';
+  | 'tariff' | 'property_tax' | 'wealth_tax' | 'racket' | 'advocate' | 'acquisition' | 'prize' | 'relief'
+  // Civil law (`docs/CIVIL.md` §10): every one of them a transfer between
+  // parties that already exist, creating and destroying nothing.
+  | 'contract' | 'escrow' | 'damages' | 'costs' | 'patronage' | 'licence'
+  // Finance (`docs/FINANCE.md` §9): a bond, a deposit and a policy are claims;
+  // what moves under them is an ordinary transfer with an honest name on it.
+  | 'bond' | 'coupon' | 'redemption' | 'deposit' | 'interest' | 'premium' | 'claim' | 'dues'
+  // Dynasties (`docs/GENERATIONS.md` §8) and congregations (`docs/CREEDS.md`
+  // §9). A house treasury and a creed's fund are new money *parties*, each
+  // holding real lumens and each counted in the audit; every kind below is a
+  // transfer between parties that already exist, and not one of them creates
+  // or destroys a lumen (`REGISTRY.md` §5).
+  | 'estate' | 'duty' | 'dowry' | 'endowment' | 'levy'
+  | 'tithe' | 'creed_aid' | 'pilgrimage';
 
 export interface LedgerEntry {
   tick: number;
@@ -719,7 +784,47 @@ export type ProposalKind =
   | 'law_severity' | 'pardon' | 'public_works' | 'appoint_judge'
   | 'dismiss_judge' | 'remove_mayor' | 'charter' | 'charity'
   // The metropolis levers, the tram line and the statue in the Plaza.
-  | 'property_tax' | 'wealth_tax' | 'tariff' | 'reserve' | 'tram' | 'monument';
+  | 'property_tax' | 'wealth_tax' | 'tariff' | 'reserve' | 'tram' | 'monument'
+  // Finance (`docs/FINANCE.md` §9). The first four are a simple majority;
+  // `mint`, and borrowing past the debt-service cap, need four of five.
+  | 'bond_issue' | 'bond_defer' | 'reserve_ratio' | 'bank_rescue' | 'mint'
+  // Civil law (`docs/CIVIL.md` §10): what filing costs, how often the docket
+  // sits, and the statutory floor under a guild's bar. (`licence_recognition`
+  // is not here: a Proposal carries one number, and which city honours which
+  // trade's marks is a list of names.)
+  | 'filing_fee' | 'docket_days' | 'licence_floor'
+  // Research (`docs/PROGRESS.md` §8): lumens into a named programme's purse,
+  // and lumens pledged to the works that make a discovery real. The named
+  // programme and the named subject travel in the proposal's summary, which is
+  // where `progress/adoption.ts` and `progress/purse.ts` read them from.
+  | 'research_grant' | 'adopt_technology'
+  // The environment (`docs/ENVIRONMENT.md` §9). A Proposal carries one number,
+  // and a zoning question is a district and a permit, so the question itself is
+  // filed beside the roll of votes in `environment/state.ts zoning`.
+  | 'zone' | 'conserve' | 'emission_charge' | 'host_payment'
+  | 'abatement_works' | 'relocate_works' | 'buy_out'
+  // The underworld's four (`docs/UNDERWORLD.md` §7). A schedule entry is a list
+  // of goods and a direction and a disposition names a citizen, so both
+  // questions are filed beside the roll of votes in `underworld/state.ts`.
+  | 'restrict_good' | 'amnesty' | 'customs_posts' | 'spy_disposition';
+
+/**
+ * The charter's own order paper (`docs/POLITICS.md` §9). These are **not**
+ * `Proposal`s: an amendment names an article, a field inside it and a value
+ * that may be a word or a list, and a press order names a paper and a term, so
+ * the eleven sit in their own queue in `politics/measures.ts` with their own
+ * reading rule. `propose { kind }` reaches them through the same verb.
+ */
+export type CharterMeasureKind =
+  | 'amend_charter' | 'call_convention' | 'apportion'
+  | 'press_licence' | 'press_duty' | 'press_restraint' | 'press_closure'
+  | 'transparency' | 'games_bid' | 'games_waiver' | 'games_truce';
+
+export const CHARTER_MEASURE_KINDS: readonly CharterMeasureKind[] = [
+  'amend_charter', 'call_convention', 'apportion',
+  'press_licence', 'press_duty', 'press_restraint', 'press_closure',
+  'transparency', 'games_bid', 'games_waiver', 'games_truce',
+];
 
 export interface Proposal {
   id: ProposalId;
@@ -727,6 +832,14 @@ export interface Proposal {
   value: number;
   lawCode: LawCode | null;
   targetId: CitizenId | null;
+  /**
+   * The one named thing a proposal's single number cannot carry: the
+   * programme a `research_grant` funds, or the subject an `adopt_technology`
+   * builds the works for (`docs/PROGRESS.md` §8). A zoning question needs four
+   * such fields, so `environment/state.ts` keeps those beside the roll of
+   * votes under the proposal's own id instead.
+   */
+  subject?: string | null;
   summary: string;
   proposerId: CitizenId;
   petition: boolean;      // tabled by a non-councillor
@@ -929,6 +1042,15 @@ export interface WorldConfig {
   maxShiftsPerDay: number;
   memoryLength: number;
   ledgerLength: number;
+  /**
+   * How many events the city keeps of its own history. It is a rolling window,
+   * and the window has to be wide enough to hold the run: a city with every
+   * layer wired writes something like four hundred lines a day, so the five
+   * thousand this was founded with covered nine days of a sixty-day city and
+   * the standing audits in `test/article-six.test.ts` were reading a week and a
+   * half of it and calling that the run. Twenty thousand covers a cycle and a
+   * half at that rate; the Chronicle and the dashboard still read the last few.
+   */
   eventLogLength: number;
   cycleDays: number;
   judgeTermDays: number;
@@ -1028,6 +1150,32 @@ export interface World {
    */
   standing?: StandingState;
 
+  /**
+   * The Exchange's register: every instrument, escrow, suit, judgment,
+   * arbitration, guild and contract record in the city (`docs/CIVIL.md`).
+   * Created on first use by `civil/state.ts`, so a world saved before this
+   * layer existed still opens.
+   */
+  civil?: CivilState;
+  /**
+   * The city's paper, the Lantern Bank's vault and deposit book, the houses
+   * that write cover and the pots that pass it round (`docs/FINANCE.md`).
+   * Created on first use by `finance/state.ts`, the same way.
+   */
+  finance?: FinanceState;
+  /**
+   * What the city knows: every programme of research, the subjects it holds,
+   * the works it has built for them and the trends its people are following
+   * (`docs/PROGRESS.md`). Created on first use by `progress/state.ts`.
+   */
+  progress?: ProgressState;
+  /**
+   * The air over each district, the river through it, the trees standing in
+   * it, its permit, and every fitting on a stack (`docs/ENVIRONMENT.md`).
+   * Created on first use by `environment/state.ts`.
+   */
+  environment?: EnvironmentState;
+
   /** Bounded event log, newest last. */
   events: WorldEvent[];
   /** Events emitted during the current tick (cleared at the start of each tick). */
@@ -1047,7 +1195,7 @@ export const DEFAULT_CONFIG: WorldConfig = {
   maxShiftsPerDay: 10,
   memoryLength: 40,
   ledgerLength: 2_000,
-  eventLogLength: 5_000,
+  eventLogLength: 20_000,
   cycleDays: 28,
   judgeTermDays: 56,
   llmCitizens: 0,
@@ -1175,6 +1323,99 @@ export interface Menu { dish: string; price: number; quality: number; setDay: nu
 // Actions
 // ---------------------------------------------------------------------------
 
+/**
+ * The vocabulary the two newest layers put into the action catalogue. Each of
+ * these unions is named again inside the layer that owns it (`src/civil`,
+ * `src/finance`); they are repeated here because `types.ts` is under every
+ * module and may import none of them, and they are kept identical so that an
+ * action's field passes straight into the layer's own function.
+ */
+export type ContractKind =
+  | 'employment' | 'lease' | 'loan' | 'partnership' | 'forward'
+  | 'escrow' | 'apprenticeship' | 'commission' | 'patronage';
+export const CONTRACT_KINDS: readonly ContractKind[] = [
+  'employment', 'lease', 'loan', 'partnership', 'forward', 'escrow', 'apprenticeship', 'commission', 'patronage',
+];
+/** An answer on the civil docket admits or denies; silence is neither. */
+export type Plea = 'admit' | 'deny';
+export const PLEAS: readonly Plea[] = ['admit', 'deny'];
+export type CivilFinding = 'plaintiff' | 'defendant' | 'dismissed';
+export const CIVIL_FINDINGS: readonly CivilFinding[] = ['plaintiff', 'defendant', 'dismissed'];
+export type CivilOrder = 'damages' | 'performance' | 'rescission' | 'none';
+export const CIVIL_ORDERS: readonly CivilOrder[] = ['damages', 'performance', 'rescission', 'none'];
+/** The four trades that carry a public risk when done badly (`docs/CIVIL.md` §7). */
+export type Profession = 'medic' | 'advocate' | 'banker' | 'builder';
+export const PROFESSIONS: readonly Profession[] = ['medic', 'advocate', 'banker', 'builder'];
+/** What an underwriter will write (`docs/FINANCE.md` §6). */
+export type PolicyKind = 'caravan' | 'ship' | 'business' | 'home' | 'health';
+export const POLICY_KINDS: readonly PolicyKind[] = ['caravan', 'ship', 'business', 'home', 'health'];
+
+/**
+ * What an article of the charter may be set to (`docs/POLITICS.md` §1): a
+ * number of seats or days, a word like `districts` or `property`, a switch, or
+ * a list of rights. `politics/charter.ts` checks the value against the article.
+ */
+export type CharterValue = string | number | boolean | string[];
+
+/**
+ * A duty a citizen may decline (`REGISTRY.md` §3, `CREEDS.md` §9). A seat drawn
+ * by lot at a convention is given back to `politics/convention.ts` and the next
+ * name is drawn (`docs/POLITICS.md` §3); the other five are the conscientious
+ * refusal of `CREEDS.md` §4, recorded by `creeds/conscience.ts` and — for
+ * `jury` and `witness`, the two that cost somebody else something — heard by a
+ * bench at the Court's hour.
+ */
+export type RefusableDuty = 'delegate' | 'jury' | 'witness' | 'work' | 'office' | 'oath';
+export const REFUSABLE_DUTIES: readonly RefusableDuty[] = ['delegate', 'jury', 'witness', 'work', 'office', 'oath'];
+
+/**
+ * How a house chooses its head (`docs/GENERATIONS.md` §4), fixed at founding
+ * and amendable by four fifths of its adults. `src/generations/state.ts` keeps
+ * the same four; this is the copy the action catalogue is typed against, so
+ * `types.ts` stays at the bottom of the import graph.
+ */
+export type HouseRule = 'eldest' | 'chosen' | 'assent' | 'founder_line';
+export const HOUSE_RULES: readonly HouseRule[] = ['eldest', 'chosen', 'assent', 'founder_line'];
+
+/** What the adults of a house move on together (`docs/GENERATIONS.md` §4). */
+export type HouseMotionKind = 'sell' | 'admit' | 'rule' | 'campaign' | 'letter';
+export const HOUSE_MOTION_KINDS: readonly HouseMotionKind[] = ['sell', 'admit', 'rule', 'campaign', 'letter'];
+
+/**
+ * The nine questions a creed may state a position on and no others, because
+ * these are the questions the engine already makes people fight about
+ * (`docs/CREEDS.md` §1). `src/creeds/shapes.ts` keeps the same nine.
+ */
+export type TenetQuestion =
+  | 'work_and_rest' | 'property' | 'the_exile' | 'erasure' | 'repute'
+  | 'informing' | 'the_stranger' | 'money' | 'judgement';
+export const TENET_QUESTIONS: readonly TenetQuestion[] = [
+  'work_and_rest', 'property', 'the_exile', 'erasure', 'repute',
+  'informing', 'the_stranger', 'money', 'judgement',
+];
+
+/** How a congregation chooses the citizen who speaks for it (`docs/CREEDS.md` §2). */
+export type Succession = 'founder' | 'acclaim' | 'election' | 'seniority' | 'examination';
+export const SUCCESSIONS: readonly Succession[] = ['founder', 'acclaim', 'election', 'seniority', 'examination'];
+
+/** Who decides a claim on a creed's fund: its members, or its officiant alone. */
+export type AidRule = 'members' | 'officiant';
+export const AID_RULES: readonly AidRule[] = ['members', 'officiant'];
+
+/** One stated position, as `found_creed` and `state_tenet` carry it. */
+export interface TenetInput {
+  question: TenetQuestion;
+  /** −1 to 1; the engine reads only this, and citizens read only the words. */
+  stance: number;
+  text?: string;
+}
+
+/** One line of a will: who takes what share of the net estate. */
+export interface WillShareInput {
+  to: CitizenId | 'chest';
+  percent: number;
+}
+
 export type Action =
   | { type: 'idle' }
   | { type: 'move'; district: DistrictId }
@@ -1205,14 +1446,24 @@ export type Action =
   | { type: 'request_loan'; amount: number }
   | { type: 'repay_loan'; amount: number }
   | { type: 'perform' }
-  | { type: 'publish'; headline: string; about?: CitizenId }
+  // A journalist files with the paper named, or with the desk they work at,
+  // or with the Chronicle (`docs/POLITICS.md` §6); permitted from custody.
+  | { type: 'publish'; headline: string; about?: CitizenId; paper?: string }
   | { type: 'nominate'; platform: Platform }
   | { type: 'campaign'; spend?: number }
   | { type: 'vote'; candidate: CitizenId }
-  | { type: 'propose'; kind: ProposalKind; value: number; summary: string; lawCode?: LawCode; targetId?: CitizenId }
+  // A measure before the Council. Most kinds are one number; the ones the
+  // newer layers added name a thing as well — a programme, a subject, a
+  // district and a permit, a building and a fitting — and those ride along as
+  // optional parameters rather than being parsed back out of the summary.
+  | { type: 'propose'; kind: ProposalKind | CharterMeasureKind; value: number; summary: string; lawCode?: LawCode;
+      targetId?: CitizenId; district?: DistrictId; permit?: Permit; building?: BuildingId; fitting?: Fitting;
+      subject?: string; article?: string; field?: string | null; words?: string; good?: Good }
   | { type: 'vote_proposal'; proposalId: ProposalId; aye: boolean }
   | { type: 'report'; citizen: CitizenId; law: OffenceCode; text?: string }
-  | { type: 'appeal' }
+  // A conviction, a refused visa, or a body's refusal of a record: the subject
+  // names a record request (`f_3`) where it is one, and nothing otherwise.
+  | { type: 'appeal'; subject?: string }
   // The institutions: judges, councillors, officers of the Watch and the Mayor
   | { type: 'verdict'; caseId: CaseId; guilty: boolean; reason?: string }
   | { type: 'vote_appeal'; caseId: CaseId; result: AppealResult }
@@ -1316,9 +1567,249 @@ export type Action =
   | { type: 'react'; postId: string; kind: ReactionKind }
   // Standing: the two public instruments of the gate (`docs/CITIZENSHIP.md` §2)
   | { type: 'sponsor'; citizen: CitizenId; city?: string }
-  | { type: 'apply_residency'; city?: string };
+  | { type: 'apply_residency'; city?: string }
+  // Civil law (`docs/CIVIL.md` §10). Every one of these moves lumens or
+  // compels performance and not one of them touches liberty: a contract is
+  // made by two actions and never one, and a judgment is a debt and nothing
+  // else. Nothing here can fine, suspend, exile or detain anybody.
+  | { type: 'offer_contract'; to: CitizenId; kind: ContractKind; terms: string; consideration: number; days: number;
+      penalty?: number; notice?: number; witnesses?: CitizenId[] }
+  | { type: 'accept_contract'; offerId: string }
+  | { type: 'close_offer'; offerId: string }
+  | { type: 'witness_contract'; offerId: string }
+  | { type: 'perform_contract'; contractId: string }
+  | { type: 'propose_variation'; contractId: string; terms: string;
+      consideration?: number; days?: number; penalty?: number; notice?: number }
+  | { type: 'accept_variation'; variationId: string }
+  | { type: 'terminate_contract'; contractId: string }
+  | { type: 'open_escrow'; contractId: string; holder: CitizenId | 'exchange'; amount: number }
+  | { type: 'release_escrow'; escrowId: string }
+  | { type: 'file_suit'; defendant: CitizenId; contractId?: string; claim: string; damages: number }
+  | { type: 'answer_suit'; suitId: string; plea: Plea; text: string; counterclaim?: { claim: string; damages: number } }
+  | { type: 'settle'; suitId: string; amount: number }
+  | { type: 'accept_settlement'; suitId: string }
+  | { type: 'judge_civil'; suitId: string; finding: CivilFinding; damages: number; order: CivilOrder; reason: string }
+  | { type: 'enforce_judgment'; judgmentId: string }
+  | { type: 'offer_arbitration'; with: CitizenId; about: string; arbiter: CitizenId; fee: number }
+  | { type: 'accept_arbitration'; offerId: string }
+  | { type: 'arbitrate'; disputeId: string; award: number; reason: string }
+  | { type: 'refer_dispute'; cities: [string, string]; about: string }
+  | { type: 'found_guild'; profession: Profession; name?: string }
+  | { type: 'sit_examination'; guildId: string }
+  | { type: 'certify'; candidate: CitizenId }
+  | { type: 'revoke_licence'; citizen: CitizenId; reason: string }
+  | { type: 'offer_patronage'; to: CitizenId; perDay: number; days: number; subject?: string }
+  | { type: 'accept_patronage'; offerId: string }
+  // Finance (`docs/FINANCE.md` §9): the city's paper, the counter at the
+  // Lantern Bank, the houses that write cover and the pots that pass it round.
+  | { type: 'bid_bond'; issueId: string; price: number; qty: number }
+  | { type: 'sell_bond'; holdingId: string; price: number; qty?: number }
+  | { type: 'buy_bond'; offerId: string }
+  | { type: 'offer_restructure'; issueId: string; coupon: number; term: number; haircut: number }
+  | { type: 'vote_restructure'; issueId: string; accept: boolean }
+  | { type: 'repudiate'; issueId: string }
+  | { type: 'deposit'; amount: number }
+  | { type: 'withdraw'; amount: number }
+  | { type: 'set_deposit_rate'; rate: number }
+  | { type: 'set_lending_rate'; rate: number }
+  | { type: 'call_loan'; loanId: LoanId }
+  | { type: 'found_underwriter'; name: string; capital: number }
+  | { type: 'offer_policy'; kind: PolicyKind; cover: number; premium: number; term: number }
+  | { type: 'buy_policy'; policyId: string }
+  | { type: 'file_claim'; policyId: string; event: string; amount: number }
+  | { type: 'settle_claim'; claimId: string; amount: number }
+  | { type: 'deny_claim'; claimId: string; reason: string }
+  | { type: 'found_mutual'; name: string; dues: number }
+  | { type: 'join_mutual'; mutualId: string }
+  | { type: 'pay_dues'; mutualId?: string }
+  | { type: 'claim_aid'; amount: number; reason: string }
+  | { type: 'vote_aid'; claimId: string; aye: boolean }
+  // Research, technology and what a city keeps to itself (`docs/PROGRESS.md`
+  // §8). A programme is opened by a Researcher, funded by whoever chooses to,
+  // worked an hour at a time, and then either published or closed up.
+  | { type: 'open_project'; technology: TechnologyId; name?: string }
+  | { type: 'research'; projectId: string }
+  | { type: 'fund_project'; projectId: string; amount: number }
+  | { type: 'adopt_technology'; technology: TechnologyId }
+  | { type: 'publish_finding'; projectId: string }
+  | { type: 'keep_secret'; projectId: string }
+  | { type: 'take_apprentice'; citizen: CitizenId; technology: TechnologyId }
+  | { type: 'teach_technology'; technology: TechnologyId }
+  | { type: 'sell_secret'; to: CitizenId; technology: TechnologyId; price: number }
+  // The air, the river and the land (`docs/ENVIRONMENT.md` §9). Three of these
+  // are shifts, one is an offence, one opens a civil suit and one gives up a
+  // vote; none of them reaches a cell.
+  | { type: 'install_abatement'; building: BuildingId; fitting: Fitting }
+  | { type: 'maintain_abatement'; building: BuildingId }
+  | { type: 'discharge'; building: BuildingId }
+  | { type: 'survey_air'; district: DistrictId }
+  | { type: 'survey_water'; district: DistrictId }
+  | { type: 'plant_trees'; district: DistrictId }
+  | { type: 'petition_zoning'; district: DistrictId; permit: Permit }
+  | { type: 'declare_interest'; proposal: ProposalId }
+  | { type: 'file_nuisance'; against: CitizenId; district: DistrictId }
+  // The underworld (`docs/UNDERWORLD.md` §7, `REGISTRY.md` §3). Every one of
+  // these is Track I: a seizure, a duty, a fine, a suspension. None of them
+  // reaches a cell, and none of them reaches the Gate on a first conviction.
+  | { type: 'declare_cargo'; goods?: Good | null; productId?: string | null; qty: number; value: number;
+      direction?: 'inbound' | 'outbound'; city?: CityKey }
+  | { type: 'smuggle'; goods?: Good | null; productId?: string | null; qty: number; route: SmuggleRoute;
+      direction?: 'inbound' | 'outbound'; city?: CityKey }
+  | { type: 'fit_wagon' }
+  | { type: 'inspect'; traveller: CitizenId }
+  | { type: 'assess_duty'; traveller: CitizenId }
+  | { type: 'seize'; traveller: CitizenId; good?: Good | null; productId?: string | null; qty: number }
+  | { type: 'wave_through'; traveller: CitizenId }
+  | { type: 'fence'; to: CitizenId; itemId?: string; good?: Good; productId?: string; qty?: number }
+  | { type: 'receive_goods'; from: CitizenId; itemId?: string; good?: Good; productId?: string; qty?: number }
+  | { type: 'recruit_agent'; citizen: CitizenId; retainer: number; days: number; city?: CityKey }
+  | { type: 'accept_recruitment'; offerId: string }
+  | { type: 'case_target'; building: BuildingId }
+  | { type: 'steal_secret'; building: BuildingId; kind: SecretKind }
+  | { type: 'pass_secret'; to: CitizenId; kind: SecretKind }
+  | { type: 'assign_detective'; building?: BuildingId; citizen?: CitizenId }
+  | { type: 'sweep'; building: BuildingId }
+  | { type: 'plant_false_papers'; building: BuildingId; claim: string }
+  // The charter, the office, the paper and the Games (`docs/POLITICS.md` §9).
+  // Nothing here reaches custody either: a council that silences a paper has
+  // taken from the city, not from anybody's safety.
+  | { type: 'propose_amendment'; article: string; field?: string | null; value: CharterValue; words?: string }
+  | { type: 'sign_convention' }
+  | { type: 'stand_delegate' }
+  | { type: 'refuse'; duty: RefusableDuty; ground?: string }
+  | { type: 'move_article'; article: string; field?: string | null; value: CharterValue; words?: string }
+  | { type: 'speak_convention'; text: string }
+  | { type: 'vote_article'; articleId: string; aye: boolean }
+  | { type: 'impeach'; officer: CitizenId; article: ImpeachmentArticle; evidence?: number }
+  | { type: 'vote_impeachment'; officer: CitizenId; guilty: boolean }
+  | { type: 'sign_recall'; officer: CitizenId }
+  | { type: 'declare_property' }
+  | { type: 'request_record'; body: RecordBody; subject: string }
+  | { type: 'answer_record'; requestId: string; release: boolean; reason?: RefusalReason }
+  | { type: 'found_paper'; name: string; line?: Partial<Platform>; premises?: DistrictId }
+  | { type: 'bid_games'; purse: number; works: number }
+  | { type: 'vote_games_host'; city: string }
+  | { type: 'enter_games'; discipline: Discipline }
+  // Dynasties, inheritance and the long run (`docs/GENERATIONS.md` §8). Every
+  // one of these is a citizen's own act on their own name: a house is founded
+  // by the adults who already carry it, joined by asking, and left by taking a
+  // name of your own. Nothing here opens a gate or moves a repute.
+  | { type: 'write_will'; shares?: WillShareInput[] | Record<string, number>; residue?: CitizenId | 'chest' | null;
+      executor?: CitizenId | null; instructions?: string }
+  | { type: 'revoke_will' }
+  | { type: 'found_house'; name: string; rule: HouseRule }
+  | { type: 'join_house'; houseId: string }
+  | { type: 'renounce_name'; name?: string }
+  | { type: 'convey_to_house'; unit: string }
+  | { type: 'convey_business_to_house'; businessId: BusinessId }
+  | { type: 'endow_house'; amount: number }
+  | { type: 'house_motion'; kind: HouseMotionKind; value?: number; target?: string | null; city?: string }
+  | { type: 'house_assent'; motionId: string; aye: boolean }
+  | { type: 'name_successor'; to: CitizenId }
+  | { type: 'house_vote'; candidate: CitizenId }
+  | { type: 'letter_of_house'; to: CitizenId; city?: string }
+  | { type: 'pledge_house'; loanId: LoanId }
+  | { type: 'offer_match'; house: string; dowry?: number; unit?: string | null; terms?: string }
+  | { type: 'accept_match'; offerId: string }
+  | { type: 'claim_house'; houseId: string }
+  | { type: 'read_records'; subject?: string }
+  // Congregations, conscience and sanctuary (`docs/CREEDS.md` §9). `adopt_creed`
+  // is the only path onto a roll there is, and nothing in the layer joins
+  // anybody to anything on their behalf.
+  | { type: 'found_creed'; name: string; tenets: TenetInput[]; tithe?: number; gatheringDay?: number;
+      succession?: Succession; aidRule?: AidRule; examinationFloor?: number }
+  | { type: 'adopt_creed'; creedId: string }
+  | { type: 'leave_creed'; creedId?: string }
+  | { type: 'state_tenet'; question: TenetQuestion; stance: number; text: string }
+  | { type: 'dispute_tenet'; tenetId: string; stance: number; text: string }
+  | { type: 'secede'; creedId: string; name: string; tenetId: string }
+  | { type: 'reunite_creed'; creedId: string }
+  | { type: 'set_tithe'; rate: number }
+  | { type: 'donate_creed'; creedId: string; amount: number }
+  | { type: 'grant_aid'; claimId: string; amount?: number }
+  | { type: 'take_meeting_house'; unit: string }
+  | { type: 'gather'; creedId?: string }
+  | { type: 'stand_officiant' }
+  | { type: 'elect_officiant'; candidate: CitizenId }
+  | { type: 'preach'; text: string }
+  | { type: 'invite_creed'; to: CitizenId }
+  | { type: 'offer_sanctuary'; to: CitizenId }
+  | { type: 'keep_the_door'; house?: string }
+  | { type: 'end_sanctuary'; aye?: boolean; house?: string }
+  | { type: 'surrender' }
+  | { type: 'request_warrant'; house: string }
+  | { type: 'grant_warrant'; warrantId: string; aye: boolean; reason: string }
+  | { type: 'commission_missionary'; citizen: CitizenId; city: string }
+  | { type: 'consecrate_site'; building: BuildingId; city?: string; district?: DistrictId; label?: string }
+  | { type: 'pilgrimage'; siteId: string; creedId?: string };
 
 export type ActionType = Action['type'];
+
+/** The civil catalogue, in `docs/CIVIL.md` §10's order. */
+const CIVIL_ACTIONS_LIST: readonly ActionType[] = [
+  'offer_contract', 'accept_contract', 'close_offer', 'witness_contract', 'perform_contract',
+  'propose_variation', 'accept_variation', 'terminate_contract', 'open_escrow', 'release_escrow',
+  'file_suit', 'answer_suit', 'settle', 'accept_settlement', 'judge_civil', 'enforce_judgment',
+  'offer_arbitration', 'accept_arbitration', 'arbitrate', 'refer_dispute',
+  'found_guild', 'sit_examination', 'certify', 'revoke_licence', 'offer_patronage', 'accept_patronage',
+];
+
+/** The finance catalogue, in `docs/FINANCE.md` §9's order. */
+const FINANCE_ACTIONS_LIST: readonly ActionType[] = [
+  'bid_bond', 'sell_bond', 'buy_bond', 'offer_restructure', 'vote_restructure', 'repudiate',
+  'deposit', 'withdraw', 'set_deposit_rate', 'set_lending_rate', 'call_loan',
+  'found_underwriter', 'offer_policy', 'buy_policy', 'file_claim', 'settle_claim', 'deny_claim',
+  'found_mutual', 'join_mutual', 'pay_dues', 'claim_aid', 'vote_aid',
+];
+
+/** The progress catalogue, in `docs/PROGRESS.md` §8's order. */
+const PROGRESS_ACTIONS_LIST: readonly ActionType[] = [
+  'open_project', 'research', 'fund_project', 'adopt_technology', 'publish_finding', 'keep_secret',
+  'take_apprentice', 'teach_technology', 'sell_secret',
+];
+
+/** And the environment's, in `docs/ENVIRONMENT.md` §9's order. */
+const ENVIRONMENT_ACTIONS_LIST: readonly ActionType[] = [
+  'install_abatement', 'maintain_abatement', 'discharge', 'survey_air', 'survey_water', 'plant_trees',
+  'petition_zoning', 'declare_interest', 'file_nuisance',
+];
+
+/** The underworld's, in `docs/UNDERWORLD.md` §7's order. */
+const UNDERWORLD_ACTIONS_LIST: readonly ActionType[] = [
+  'declare_cargo', 'smuggle', 'fit_wagon',
+  'inspect', 'assess_duty', 'seize', 'wave_through',
+  'fence', 'receive_goods',
+  'recruit_agent', 'accept_recruitment', 'case_target', 'steal_secret', 'pass_secret',
+  'assign_detective', 'sweep', 'plant_false_papers',
+];
+
+/** And the charter's, in `docs/POLITICS.md` §9's order. */
+const CHARTER_ACTIONS_LIST: readonly ActionType[] = [
+  'propose_amendment', 'sign_convention', 'stand_delegate', 'refuse', 'move_article', 'speak_convention',
+  'vote_article', 'impeach', 'vote_impeachment', 'sign_recall', 'declare_property',
+  'request_record', 'answer_record', 'found_paper', 'bid_games', 'vote_games_host', 'enter_games',
+];
+
+/** The generations catalogue, in `docs/GENERATIONS.md` §8's order. */
+const GENERATIONS_ACTIONS_LIST: readonly ActionType[] = [
+  'write_will', 'revoke_will',
+  'found_house', 'join_house', 'renounce_name',
+  'convey_to_house', 'convey_business_to_house', 'endow_house',
+  'house_motion', 'house_assent', 'name_successor', 'house_vote',
+  'letter_of_house', 'pledge_house',
+  'offer_match', 'accept_match', 'claim_house', 'read_records',
+];
+
+/** And the creeds', in `docs/CREEDS.md` §9's order. */
+const CREEDS_ACTIONS_LIST: readonly ActionType[] = [
+  'found_creed', 'adopt_creed', 'leave_creed',
+  'state_tenet', 'dispute_tenet', 'secede', 'reunite_creed',
+  'preach', 'invite_creed', 'gather', 'set_tithe', 'donate_creed', 'grant_aid',
+  'stand_officiant', 'elect_officiant', 'take_meeting_house',
+  'offer_sanctuary', 'keep_the_door', 'end_sanctuary', 'surrender',
+  'request_warrant', 'grant_warrant',
+  'commission_missionary', 'consecrate_site', 'pilgrimage',
+];
 
 export const ACTION_TYPES: readonly ActionType[] = [
   'idle', 'move', 'work', 'rest', 'eat', 'buy', 'sell', 'consume', 'study', 'visit_clinic', 'attend_show', 'move_home',
@@ -1347,7 +1838,32 @@ export const ACTION_TYPES: readonly ActionType[] = [
   'sunset', 'gossip', 'apologize', 'mentor', 'post', 'react',
   'sponsor', 'apply_residency',
   'list_property', 'sell_business', 'buy_business', 'liquidate',
+  ...CIVIL_ACTIONS_LIST, ...FINANCE_ACTIONS_LIST,
+  ...PROGRESS_ACTIONS_LIST, ...ENVIRONMENT_ACTIONS_LIST,
+  ...UNDERWORLD_ACTIONS_LIST, ...CHARTER_ACTIONS_LIST,
+  ...GENERATIONS_ACTIONS_LIST, ...CREEDS_ACTIONS_LIST,
 ];
+
+/**
+ * Civil law's own actions, in catalogue order (`docs/CIVIL.md` §10). Listed
+ * separately for the leaflet, the prompt and the `act` tool; the engine reads
+ * them out of `ACTION_TYPES` like any other.
+ */
+export const CIVIL_ACTIONS: readonly ActionType[] = CIVIL_ACTIONS_LIST;
+/** And the finance layer's (`docs/FINANCE.md` §9). */
+export const FINANCE_ACTIONS: readonly ActionType[] = FINANCE_ACTIONS_LIST;
+/** Research, technology and trends (`docs/PROGRESS.md` §8). */
+export const PROGRESS_ACTIONS: readonly ActionType[] = PROGRESS_ACTIONS_LIST;
+/** The air, the river, the trees and the permit (`docs/ENVIRONMENT.md` §9). */
+export const ENVIRONMENT_ACTIONS: readonly ActionType[] = ENVIRONMENT_ACTIONS_LIST;
+/** The gate, the schedule, the fence and the secret (`docs/UNDERWORLD.md` §7). */
+export const UNDERWORLD_ACTIONS: readonly ActionType[] = UNDERWORLD_ACTIONS_LIST;
+/** The charter, the office, the paper and the Games (`docs/POLITICS.md` §9). */
+export const CHARTER_ACTIONS: readonly ActionType[] = CHARTER_ACTIONS_LIST;
+/** The name, the entail, the match and the will (`docs/GENERATIONS.md` §8). */
+export const GENERATIONS_ACTIONS: readonly ActionType[] = GENERATIONS_ACTIONS_LIST;
+/** The roll, the fund, the door and the site (`docs/CREEDS.md` §9). */
+export const CREEDS_ACTIONS: readonly ActionType[] = CREEDS_ACTIONS_LIST;
 
 /**
  * The metropolis actions, for prompts and brains that list them separately.
@@ -1402,6 +1918,10 @@ export const SUSPENDED_ACTIONS: readonly ActionType[] = [
   // Nor its standing: a citizen under a notice may put its own case to the
   // city whatever else it has lost (`docs/CITIZENSHIP.md` §3).
   'apply_residency',
+  // Nor the right to ask a body what it did. A freedom-of-information request
+  // is neither work, nor trade, nor office, nor a vote (`docs/POLITICS.md` §7),
+  // and a citizen serving a suspension is often the one with most to ask.
+  'request_record',
   // Nor a roof. A suspension takes the right to work, trade, vote and hold
   // office (`docs/CONSTITUTION.md` §92); it is not a sentence of sleeping in
   // the street, and the Cells turn nobody away (`docs/PROPERTY.md` §3). A
@@ -1409,6 +1929,15 @@ export const SUSPENDED_ACTIONS: readonly ActionType[] = [
   // it eats in: without this a suspension evicted people by arithmetic and
   // held them outside for its whole term, beside rooms standing empty.
   'move_home',
+  // Nor a citizen's name, its congregation or its conscience. A suspension
+  // takes work, trade, office and the vote (`docs/CONSTITUTION.md` §92); it
+  // does not take the family a citizen is of, the creed it adopted, the hour it
+  // spends at the Hall of Records, the ground it states for declining a duty,
+  // or the division it has filed for the day it dies. None of these is work,
+  // trade, office or a vote, and a citizen serving a term is very often the one
+  // with most reason to reach for them.
+  'adopt_creed', 'leave_creed', 'gather', 'read_records', 'refuse', 'surrender',
+  'renounce_name', 'write_will', 'revoke_will',
 ];
 
 /**
@@ -1922,6 +2451,53 @@ export interface Observation {
   jury: ObservedBenchCase[];
   /** Investigations you hold as a detective; empty for everyone else. */
   investigations: ObservedInvestigation[];
+  /**
+   * The Exchange's register as it concerns this citizen: the instruments it
+   * is on, the offers waiting for an answer, the suits and judgments either
+   * way, the guilds' marks it holds and the patron paying it
+   * (`docs/CIVIL.md` §9 — the record is public, and it is in everybody's
+   * observation of everybody).
+   */
+  civil: ObservedCivil;
+  /**
+   * And the money: holdings and what the paper last traded at, the deposit
+   * and the posted rates, the policies, the mutual and its pot, the bank's
+   * reserve and confidence, the city's coverage, and every open auction with
+   * its bids (`docs/FINANCE.md` §9). Every number here is public.
+   */
+  finance: FinanceView;
+  /**
+   * What the city knows and what is being worked on (`docs/PROGRESS.md` §7).
+   * Every number is public and the same for everybody, with one exception that
+   * is the whole point of §4: a **secret** appears in no observation but a
+   * master's.
+   */
+  progress: ProgressObservation;
+  /**
+   * What the city's people are taking up this month, as of yesterday's
+   * rollover: the same lagged index for every shopkeeper (`PROGRESS.md` §6).
+   */
+  trends: ObservedTrend[];
+  /**
+   * The air over this district, the river through it, what is planted, what
+   * the permit admits, and the fittings on the city's stacks
+   * (`docs/ENVIRONMENT.md` §9). All of it public: it is the air.
+   */
+  environment: ObservedEnvironment;
+  /**
+   * The schedule, the gates and who is standing on them, the offers made to
+   * *this* citizen, the retainers, the secrets it holds and what the prices are
+   * saying (`docs/UNDERWORLD.md`). Nothing here is anybody's intention:
+   * conspiracy is not an offence in Reverie and there is nothing to see until
+   * somebody acts.
+   */
+  underworld: UnderworldObservation;
+  /**
+   * The charter as it stands today and what is being moved against it: the
+   * order paper, the convention, the impeachments and recalls, the wards, the
+   * papers, the records and the Games (`docs/POLITICS.md` §9).
+   */
+  politics: ObservedPolitics;
   inbox: { from: CitizenId; fromName: string; text: string; tick: number }[];
   recent: string[];
   availableActions: ActionType[];

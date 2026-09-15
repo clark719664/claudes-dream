@@ -206,7 +206,7 @@ test('a failed action leaves a note in the citizen memory', async () => {
   assert.ok(c.memory.some((m) => m.text.startsWith('(could not quit job:')), `memory: ${c.memory.map((m) => m.text).join(' | ')}`);
 });
 
-test('buildings repair a tenth a day and the loan-default hook files a fraud charge', async () => {
+test('buildings repair a tenth a day, and a defaulted loan is collected rather than charged', async () => {
   const w = city(8);
   w.buildings.compute_forge.damage = 0.25;
   w.buildings.central_plaza.damage = 0.05;
@@ -225,10 +225,16 @@ test('buildings repair a tenth a day and the loan-default hook files a fraud cha
   assert.equal(w.buildings.compute_forge.damage, 0.15);
   assert.equal(w.buildings.central_plaza.damage, 0);
   assert.ok(w.events.some((e) => /fully repaired/.test(e.text)));
-  const fraud = Object.values(w.cases).find((k) => k.defendantId === borrower.id && k.law === 'L07');
-  assert.ok(fraud, 'a fraud charge was filed on default');
-  assert.equal(fraud.filedBy, 'watch');
-  assert.equal(fraud.evidence, 0.5);
+  // The loan is in default, and that is a debt, not a crime: `JUSTICE.md` §1
+  // ("Debt is not a crime"), `REGISTRY.md` §7 ("a default is not a crime; the
+  // civil recovery ladder collects it") and `REGISTRY.md` §4, which lists a
+  // called loan among the debts that reach no code at all. The bank keeps
+  // taking its quarter of the wallet and the borrower's reputation carries it;
+  // the Watch is told nothing, because there is nothing to tell.
+  assert.equal(w.loans[loanId].defaulted, true, 'the loan is in default');
+  assert.ok(w.events.some((e) => /defaulted on a Lantern Bank loan/.test(e.text)), 'the default is public');
+  const charged = Object.values(w.cases).filter((k) => k.defendantId === borrower.id);
+  assert.deepEqual(charged, [], 'no charge of any kind follows a default');
 });
 
 test('twenty days of society: couples, clubs, ceremonies, stipends and a ledger that still balances', async () => {

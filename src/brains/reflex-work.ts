@@ -9,7 +9,10 @@ import type { BusinessKind } from '../types.ts';
 import { BUSINESS_JOBS, CITY_SHIFTS_PER_DAY, COURIER_CONTRACTS_PER_DAY } from '../data/jobs.ts';
 import { districtDistance } from '../data/city.ts';
 import { chance, rand } from '../util/rng.ts';
-import { bankOpen, creditLimit, avgDailyIncome } from '../economy/bank.ts';
+import { avgDailyIncome } from '../economy/bank.ts';
+import { bankOpenNow, hasBankersLicence } from '../finance/bank.ts';
+import { UNDERWRITER_CAPITAL, UNDERWRITER_FEE } from '../finance/houses.ts';
+import { borrowingLimit } from '../finance/credit.ts';
 import { isQualified, openJobs } from '../economy/jobs.ts';
 import { BANKRUPTCY_DAYS, activeBusinesses } from '../economy/business.ts';
 import { bazaarBuying, daysOfCover, priceVsAnchor } from '../economy/market.ts';
@@ -119,11 +122,16 @@ export function shiftsWanted(world: World, c: Citizen): number {
   return clamp(Math.round(n), Math.min(2, max), max);
 }
 
-/** Ask the Lantern Bank for a modest loan (callers decide when it is needed). */
+/**
+ * Ask the Lantern Bank for a modest loan (callers decide when it is needed).
+ * What it will lend is now what the *vault* can lend behind its reserve, not
+ * what the Treasury could once find (`docs/FINANCE.md` §4), so a citizen asks
+ * for what is actually there and the counter has to be open to ask at all.
+ */
 export function tryLoan(ctx: Ctx): Action | null {
   const { world, c } = ctx;
-  if (c.standing !== 'good' || c.loanId || c.personality.honesty < 0.2 || !bankOpen(world)) return null;
-  const limit = creditLimit(world, c);
+  if (c.standing !== 'good' || c.loanId || c.personality.honesty < 0.2 || !bankOpenNow(world)) return null;
+  const limit = borrowingLimit(world, c);
   if (limit < 20) return null;
   return { type: 'request_loan', amount: Math.min(limit, 100) };
 }
@@ -310,6 +318,12 @@ export function tryBusiness(ctx: Ctx): Action | null {
           && businessValue(world, o.business) >= o.price);
       if (offer && chance(world, 0.5)) return { type: 'buy_business', businessId: offer.business.id };
     }
+    // A citizen the Lantern House would licence has a choice an ordinary
+    // founder does not: a shop, or a house that writes cover — and it cannot
+    // have both, because a citizen owns one concern (`docs/FINANCE.md` §6).
+    // Founding the shop at 400 ℓ is what stops it ever reaching the 600 ℓ the
+    // house asks, so a licensed founder sometimes holds out for the house.
+    if (hasBankersLicence(world, c.id) && c.wallet < UNDERWRITER_CAPITAL + UNDERWRITER_FEE && chance(world, 0.5)) return null;
     if (!ctx.can.has('found_business') || c.wallet <= FOUNDING_WALLET || c.personality.ambition <= FOUNDING_AMBITION) return null;
     if (ctx.clock.night || !chance(world, 0.25)) return null;
     const kind = kindForFounder(world, c);
@@ -353,14 +367,20 @@ export function tryBusiness(ctx: Ctx): Action | null {
       }
     }
   }
+  // Not every concern on the register is one of the six trades the job
+  // templates know: an underwriter is a business like any other
+  // (`docs/FINANCE.md` §6) and a strongbox is not a business at all, so a
+  // kind the table has never heard of simply has no posts to open.
+  const templates = BUSINESS_JOBS[biz.kind] ?? [];
+  if (templates.length === 0) return null;
   if (open.length > 0 && biz.employees.length === 0 && biz.treasury > 150 && chance(world, 0.1)) {
     const job = open[0];
-    const template = BUSINESS_JOBS[biz.kind].find((t) => t.role === job.role) ?? BUSINESS_JOBS[biz.kind][0];
+    const template = templates.find((t) => t.role === job.role) ?? templates[0];
     const ceiling = Math.round(Math.max(template.wage, world.government.minWage) * MAX_WAGE_RAISE);
     if (job.wage < ceiling) return { type: 'set_wage', jobId: job.id, wage: Math.min(ceiling, job.wage + 2) };
   }
   if (open.length === 0 && biz.daysNegative === 0 && biz.treasury > 300 && biz.jobs.length < 6 && chance(world, 0.2)) {
-    const t = BUSINESS_JOBS[biz.kind][0];
+    const t = templates[0];
     if (t) return { type: 'post_job', title: t.title, wage: Math.max(t.wage, world.government.minWage), skill: t.skill, minSkill: t.minSkill };
   }
   return null;

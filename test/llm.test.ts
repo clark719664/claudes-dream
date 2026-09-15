@@ -9,6 +9,12 @@ import type { LlmRequest } from '../src/brains/llm.ts';
 import { ACTION_PARAM_NAMES } from '../src/brains/llm-tool.ts';
 import { HOUR_INSTRUCTION } from '../src/brains/llm-prompt.ts';
 import { leaflet } from '../src/citizens/orientation.ts';
+import { civilObservation } from '../src/civil/observe.ts';
+import { observeFinance } from '../src/finance/daily.ts';
+import { progressObservation, trendsBlock } from '../src/progress/observe.ts';
+import { environmentObservation } from '../src/environment/observe.ts';
+import { underworldObservation } from '../src/underworld/observe.ts';
+import { politicsObservation } from '../src/politics/session.ts';
 import { LAW_CODES } from '../src/data/laws.ts';
 import { ACTION_TYPES, DISTRICT_IDS } from '../src/types.ts';
 import type { Action, Citizen, Observation, World } from '../src/types.ts';
@@ -70,6 +76,15 @@ function sampleObservation(world: World, c: Citizen): Observation {
     culture: { league: [], topWorks: [], papers: [{ paper: 'chronicle', headline: null }, { paper: 'ledger', headline: null }] },
     feed: [], rumours: [],
     bench: [], appeals: [], reports: [], jury: [], investigations: [],
+    // The two newest registers, as an ordinary citizen with nothing filed
+    // sees them: an empty record and an empty book.
+    civil: civilObservation(world, c.id),
+    finance: observeFinance(world, c.id),
+    progress: progressObservation(world, c.id),
+    trends: trendsBlock(world),
+    environment: environmentObservation(world, c),
+    underworld: underworldObservation(world, c.id),
+    politics: politicsObservation(world, c),
     inbox: [{ from: 'c_99', fromName: 'Bram', text: 'drink at the Halflight?', tick: world.tick }],
     recent: ['You were paid 15 lumens for a shift.'],
     availableActions: ['idle', 'move', 'work', 'rest', 'eat', 'socialize', 'message'],
@@ -126,9 +141,18 @@ test('system prompt is stable, self-contained and within budget', () => {
   // against runaway growth rather than against cost.
   const words = a.split(/\s+/).length;
   // The metropolis roughly doubled the catalogue; the two-track reform added
-  // the Code of Persons, custody and parole. The ceiling still guards against
-  // runaway growth.
-  assert.ok(words > 600 && words < 9000, `unexpected size: ${words} words`);
+  // the Code of Persons, custody and parole; civil law and finance added
+  // forty-eight actions between them — the instrument, the docket, the guild,
+  // the patron, the auction, the counter, the house and the pot; and the
+  // underworld and the charter added thirty-four more — the manifest, the
+  // gate, the fence, the retainer, the register, the record, the convention
+  // and the Games. The ceiling still guards against runaway growth: it is a
+  // bound on the *rate* a catalogue may grow at, not a bound on the city, and
+  // `REGISTRY.md` §8 is the standing argument that a catalogue this long is
+  // itself a cost.
+  // Generations and creeds added forty-three more between them: the name, the
+  // entail, the match, the will, the roll, the fund, the door and the site.
+  assert.ok(words > 600 && words < 16_000, `unexpected size: ${words} words`);
   for (const needle of [
     'Reverie', '`act`', 'exile', 'L13', 'P09', 'Council', 'Watch', 'appeal', 'suspension', 'custody', 'parole',
     '280', 'character', 'notes',
@@ -186,7 +210,10 @@ test('act tool is strict and covers every action and parameter', () => {
   assert.equal(platform.additionalProperties, false);
   assert.deepEqual(platform.required, ['tax', 'dividend', 'minWage', 'strictness']);
   for (const t of ACTION_TYPES) assert.ok(ACT_TOOL.description?.includes(t), `description should explain ${t}`);
-  assert.doesNotMatch(JSON.stringify(schema), /"(minimum|maximum|minLength|maxLength|pattern)"/, 'strict-mode schema subset only');
+  // Keywords, not values: one of the secrets a citizen can take is called
+  // `pattern` (`docs/UNDERWORLD.md` §5), and an enum value that happens to
+  // spell a keyword is not a keyword. The colon is what makes it one.
+  assert.doesNotMatch(JSON.stringify(schema), /"(minimum|maximum|minLength|maxLength|pattern)":/, 'strict-mode schema subset only');
 });
 
 test('the user turn is the observation as JSON and one sentence', () => {

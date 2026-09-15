@@ -26,6 +26,7 @@ import { CITY_JOBS, TRAM_COST } from '../data/jobs.ts';
 import { HEIGHTS_POPULATION, TEAM_NAMES, UNDERCROFT_POPULATION } from '../data/metropolis.ts';
 import { nextId } from '../util/ids.ts';
 import { emit, remember } from '../sim/events.ts';
+import { tramGate } from '../progress/effects.ts';
 
 /** The districts that open with the city's population, in the order it meets them. */
 export const GROWTH_THRESHOLDS: readonly { district: DistrictId; population: number }[] = [
@@ -195,6 +196,14 @@ export function addTram(world: World, a: DistrictId, b: DistrictId): boolean {
  * Treasury; when the fund is short of TRAM_COST there is no line.
  */
 export function enactTram(world: World): [DistrictId, DistrictId] | null {
+  // A tram was buildable from the founding; it needs The Tram now
+  // (`REGISTRY.md` §7, `PROGRESS.md` §2). A secret does not open the door: a
+  // line the city has not been told how to lay is a line nobody lays.
+  const gate = tramGate(world);
+  if (!gate.ok) {
+    emit(world, 'growth', gate.message, [], 0.4, { blocked: 'the_tram' });
+    return null;
+  }
   const open = openDistricts(world);
   let best: [DistrictId, DistrictId] | null = null;
   let bestDistance = 1;

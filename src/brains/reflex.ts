@@ -33,6 +33,16 @@ import {
   tryCulture, tryDiary, tryFabric, tryGig, tryHealth, tryJail, tryPolitics, tryProperty, trySchoolAndPaper,
   tryShares, trySport, tryStrike, trySunset, tryTrade, tryUnderworld, tryUnion, tryVisit, tryWeather,
 } from './reflex-metro.ts';
+import { tryCivilLife, tryObligations } from './reflex-civil.ts';
+// The gate and what goes past it, and the charter all of it is under.
+import { tryCrossing, tryGate, tryUnderworldLayer } from './reflex-underworld.ts';
+import { tryCharter } from './reflex-charter.ts';
+import { tryMoney } from './reflex-finance.ts';
+import { tryProgress } from './reflex-progress.ts';
+import { tryEnvironment } from './reflex-environment.ts';
+// The name a citizen carries, and the creed it adopted for itself.
+import { tryHouseDuty, tryHouseLife } from './reflex-generations.ts';
+import { tryCreedDuty, tryCreedLife } from './reflex-creeds.ts';
 import { childDecide } from './child.ts';
 
 export const HUNGRY = 30;
@@ -382,10 +392,63 @@ function tryJobHunt(ctx: Ctx): Action | null {
 const LADDER: readonly Step[] = [
   tryAppeal, tryPlea, tryEat, tryDine, tryInbox, tryCharity, tryHealth, tryRest, tryHousing, tryWeather,
   tryHappening, tryClubMeeting,
-  tryStrike, tryJobHunt, tryWorkday, tryGig, tryHunger, tryCraft, tryCivic, tryDonate, tryBusiness,
-  tryTrade, tryProperty, tryShares,
+  // What is owed with a date on it, and what somebody is waiting for an answer
+  // to: a period to discharge, a suit to answer, a bench to sit on, an offer
+  // on the table. It sits above the working day because a docket that nobody
+  // turns up to is decided on the record alone, and because an instrument's
+  // period is due whether or not there is a shift going (`docs/CIVIL.md` §3).
+  tryObligations,
+  // A summons of conscience, a door the Watch is standing at, a gathering at
+  // its hour, and a motion the adults of a house are waiting on this citizen
+  // to answer. All four sit here for the same reason `tryObligations` does:
+  // each is a thing with a date on it that somebody else is waiting for, and a
+  // refusal of a jury seat is worth nothing entered after the bench has sat
+  // (`docs/CREEDS.md` §4, `docs/GENERATIONS.md` §4).
+  tryCreedDuty, tryHouseDuty,
+  tryStrike, tryJobHunt,
+  // An officer the roster put on a gate, and a detective the Captain put on a
+  // room, are both working a shift somebody named them for: it sits above the
+  // citizen's own post because the doorway *is* the post that morning
+  // (`docs/UNDERWORLD.md` §§3, 6).
+  tryGate,
+  tryWorkday, tryGig, tryHunger, tryCraft, tryCivic,
+  // The charter, the register, the record and the convention. It sits beside
+  // the civic hour because it is one: a return filed, a question put to a body,
+  // a name on a petition, an article voted on (`docs/POLITICS.md` §9).
+  tryCharter,
+  tryDonate,
+  // The two newest layers are both shift-shaped, so they sit inside the
+  // working day and below a citizen's own post *and* below its civic hours: an
+  // hour in the reading room and an hour on a stack are hours, and a citizen
+  // with a job of its own works that first and votes before it reads. What is
+  // *not* a shift here — a purse topped up, a finding published, a reading
+  // filed, a permit petitioned, an interest declared — is weighed in the same
+  // step, because each of them is a thing the same citizen would do about the
+  // same situation (`docs/PROGRESS.md`, `docs/ENVIRONMENT.md`).
+  tryProgress, tryEnvironment,
+  // The Exchange and the counter both keep the working day's hours, so what a
+  // citizen means to do with an instrument and with its money are both weighed
+  // inside it — the register first, because a bargain is worth more than a
+  // deposit and a filing lapses in two days.
+  tryBusiness, tryCivilLife, tryMoney,
+  tryTrade,
+  // A crossing, or the paper for one — weighed only where the citizen is
+  // already standing at a gate, with a load already in its hands.
+  tryCrossing,
+  tryProperty, tryShares,
   tryRomance, trySocial, tryVisit, tryComfort, tryWants, tryPurpose,
-  tryReport, tryCrime, tryUnderworld, tryPerform, tryCulture, trySport, tryPolitics, tryUnion,
+  tryReport, tryCrime, tryUnderworld,
+  // The hand that does not ask, the retainer, the room — and the four questions
+  // the gate puts to a Council.
+  tryUnderworldLayer,
+  // The congregation and the family. Below the working day, below the hour a
+  // citizen spends on its own grievance and its own temptation, and above the
+  // evening: a fund paid into and drawn on, an entail conveyed to, a
+  // settlement between two houses, a name asked for, and the division a
+  // citizen files for the day it dies are none of them urgent and none of them
+  // anybody's whole afternoon.
+  tryCreedLife, tryHouseLife,
+  tryPerform, tryCulture, trySport, tryPolitics, tryUnion,
   tryClubLife, tryBirthdayGift, tryFabric, trySchoolAndPaper, tryUseItem, tryGift,
   // Last of all, before the hour is let go: the day, written up.
   tryDiary, trySunset,
@@ -410,6 +473,12 @@ const LADDER: readonly Step[] = [
  */
 const RESTRICTED_LADDER: readonly Step[] = [
   tryAppeal, tryStanding, tryEat, tryDine, tryInbox, tryHealth, tryHunger, tryRest, tryHousing,
+  // A suspension takes work, trade, office and the vote. It does not take the
+  // creed a citizen adopted, the hour it stands at a gathering, the ground it
+  // states for declining a duty, or the registers at the Hall — and a citizen
+  // serving a term is very often the one with most reason to reach for them
+  // (`SUSPENDED_ACTIONS` in `types.ts` says which of these actually land).
+  tryCreedDuty, tryCreedLife, tryHouseLife,
   tryHappening, trySocial, tryComfort, tryPlay, tryFabric, trySchoolAndPaper, tryUseItem, tryDiary,
 ];
 

@@ -3,9 +3,9 @@
  * appeals, judicial appointments), the Mayor's succession, and the daily
  * government pass. Elections live in elections.ts and are re-exported here.
  */
-import { clamp } from '../types.ts';
+import { PROFESSIONS, clamp } from '../types.ts';
 import type {
-  ActionResult, Citizen, CitizenId, LawCode, Proposal, ProposalKind, World,
+  ActionResult, Citizen, CitizenId, DistrictId, LawCode, Proposal, ProposalKind, World,
 } from '../types.ts';
 import { LAWS } from '../data/laws.ts';
 import { MONUMENT_COST, TRAM_COST } from '../data/jobs.ts';
@@ -28,6 +28,30 @@ import { commissionMonument, monumentsTo } from '../world/history.ts';
 import { noteAbuseOfOffice } from './investigations.ts';
 import { districtName } from '../actions/common.ts';
 import { MIN_WAGE_CEILING, MIN_WAGE_FLOOR } from '../politics/promises.ts';
+// The two newest layers legislate through the same door as everything else.
+import { enactFinanceProposal, mostPressingIssue } from '../finance/daily.ts';
+import { bankSuspended } from '../finance/bank.ts';
+import { setDocketDays, setFilingFee } from '../civil/docket.ts';
+import { setLicenceFloor } from '../civil/licences.ts';
+// What the city knows, and what its shifts leave behind. A research grant and
+// a set of works are money like any other vote; the environment's seven carry
+// a district, a permit, a building or a fitting, which the layer that owns
+// them keeps beside this roll of votes.
+import {
+  cityHolds, enactAdoption, enactResearchGrant, isTechnologyId, pledgedFor, projectById, purseOf, technologyName,
+  tramAllowed,
+} from '../progress/index.ts';
+import type { TechnologyId } from '../progress/index.ts';
+import {
+  PERMIT_PREMIUM, airLevel, enactEnvironmentProposal, environmentQuestionOf, environmentState, hasDeclared,
+  permitOf, zoningGain,
+} from '../environment/index.ts';
+// The four questions the underworld puts to a council (`docs/UNDERWORLD.md`
+// §7). The Council decides; these only carry out what it decided.
+import {
+  CONTRABAND_POSSESSION, HOME_CITY, amnestyRunning, contrabandOn, customsPostsNeeded, enactSpyDisposition,
+  enactUnderworldQuestion, restrictionsFor, underworldQuestion, underworldState,
+} from '../underworld/index.ts';
 
 export { sittingCouncil } from './cases.ts';
 
@@ -57,14 +81,50 @@ export const PROPOSAL_LAPSE_DAYS = 7;
 const PROPOSAL_HISTORY = 200;
 /** A bond above this between the Mayor and an appointee is a favour, not a judgement. */
 export const FRIENDLY_APPOINTMENT_BOND = 60;
-const SUPERMAJORITY_KINDS: readonly ProposalKind[] = ['pardon', 'charter', 'remove_mayor'];
-const TARGETED_KINDS: readonly ProposalKind[] = ['appoint_judge', 'dismiss_judge', 'pardon', 'remove_mayor', 'monument'];
+/**
+ * Four of five, the charter threshold. Minting takes value from everybody
+ * holding a lumen without any of them voting (`docs/FINANCE.md` §7), so it
+ * asks the same majority a pardon does.
+ */
+export const CHARTER_MAJORITY = 4;
+const SUPERMAJORITY_KINDS: readonly ProposalKind[] = ['pardon', 'charter', 'remove_mayor', 'mint'];
+const TARGETED_KINDS: readonly ProposalKind[] = [
+  'appoint_judge', 'dismiss_judge', 'pardon', 'remove_mayor', 'monument',
+  // What the city does with a caught agent names the agent (`UNDERWORLD.md` §6).
+  'spy_disposition',
+];
 /** Kinds that carry neither a value the Council checks nor a citizen to name. */
-const OPEN_KINDS: readonly ProposalKind[] = ['charter', 'tram'];
+const OPEN_KINDS: readonly ProposalKind[] = [
+  'charter', 'tram', 'bond_defer',
+  // The environment's seven (`docs/ENVIRONMENT.md` §9). They carry a district,
+  // a permit, a building or a fitting rather than a number the Council can
+  // check, and `environment/proposals.ts` checks each of those itself — but a
+  // referendum and an appeal both reach this file, so the kinds have to be
+  // known here as well.
+  'zone', 'conserve', 'emission_charge', 'host_payment', 'abatement_works', 'relocate_works', 'buy_out',
+];
+/** Kinds that name one thing beside their number (`docs/PROGRESS.md` §8). */
+const SUBJECT_KINDS: readonly ProposalKind[] = ['research_grant', 'adopt_technology'];
 const VALUE_RANGES: Partial<Record<ProposalKind, [number, number]>> = {
   income_tax: [0, 0.5], sales_tax: [0, 0.25], dividend: [0, 60], min_wage: [MIN_WAGE_FLOOR, MIN_WAGE_CEILING], law_severity: [1, 5], public_works: [0, 5000],
   // The four levers the metropolis added; markets/levers.ts owns their bounds.
   ...leverRanges(),
+  // Finance (`docs/FINANCE.md` §§1, 4, 5, 7): lumens of face for an issue
+  // (20 to 3,000 bonds at 100 ℓ each), a ratio for the reserve, and lumens for
+  // a rescue or a minting. `bond_defer` names no number at all.
+  bond_issue: [2_000, 300_000], reserve_ratio: [0.1, 1], bank_rescue: [1, 100_000], mint: [1, 100_000],
+  // Civil law (`docs/CIVIL.md` §§1, 4, 7): the flat part of what filing an
+  // instrument costs, how many days a week the docket sits, and the statutory
+  // floor under a guild's bar.
+  filing_fee: [0, 60], docket_days: [1, 7], licence_floor: [0, 100],
+  // Research (`docs/PROGRESS.md` §§1, 3): lumens into a named programme's
+  // purse, and lumens pledged to a named subject's works. Both name their
+  // thing in the proposal's `subject`.
+  research_grant: [1, 20_000], adopt_technology: [0, 20_000],
+  // The underworld's questions (`docs/UNDERWORLD.md` §§1, 3, 6): the severity
+  // a schedule entry carries, the days an amnesty runs, how many customs posts
+  // the gates carry, and which of the three answers a caught agent gets.
+  restrict_good: [1, 3], amnesty: [0, 28], customs_posts: [0, 12], spy_disposition: [0, 2],
 };
 
 export interface ProposalSpec {
@@ -73,6 +133,12 @@ export interface ProposalSpec {
   summary: string;
   lawCode?: LawCode;
   targetId?: CitizenId;
+  /**
+   * The one named thing some measures carry beside their number: the programme
+   * a `research_grant` pays into, or the subject an `adopt_technology` builds
+   * the works for (`docs/PROGRESS.md` §8).
+   */
+  subject?: string;
 }
 
 function fail(message: string): ActionResult { return { ok: false, message }; }
@@ -226,6 +292,17 @@ function validateProposal(world: World, spec: ProposalSpec): string | null {
     if (spec.value < range[0] || spec.value > range[1]) return `${spec.kind} must be between ${range[0]} and ${range[1]}.`;
   }
   if (spec.kind === 'law_severity' && (!spec.lawCode || !LAWS[spec.lawCode])) return 'A law_severity proposal needs a valid lawCode.';
+  // The two research measures name what they are for. A grant with no
+  // programme and works with no subject are both money into the air.
+  if (spec.kind === 'research_grant') {
+    const p = spec.subject ? projectById(world, spec.subject) : null;
+    if (!p) return 'A research grant names the programme it pays into.';
+    if (p.status !== 'open') return `${p.name} is closed; it takes no more money.`;
+  }
+  if (spec.kind === 'adopt_technology') {
+    if (!spec.subject || !isTechnologyId(spec.subject)) return 'A works measure names the subject it builds for.';
+    if (!cityHolds(world, spec.subject)) return `Reverie does not hold ${technologyName(spec.subject)}; there is nothing to build works for.`;
+  }
   if (!TARGETED_KINDS.includes(spec.kind)) return null;
   const target = spec.targetId ? world.citizens[spec.targetId] : undefined;
   if (!target) return `A ${spec.kind} proposal needs a targetId naming a citizen.`;
@@ -260,9 +337,10 @@ export function tableProposal(world: World, proposerId: CitizenId, spec: Proposa
     value: spec.kind === 'law_severity' ? Math.round(spec.value) : Number.isFinite(spec.value) ? spec.value : 0,
     lawCode: spec.kind === 'law_severity' ? spec.lawCode ?? null : null,
     targetId: TARGETED_KINDS.includes(spec.kind) ? spec.targetId ?? null : null,
+    subject: SUBJECT_KINDS.includes(spec.kind) ? spec.subject ?? null : null,
     summary, proposerId, petition: !councillor, tabledDay: world.day, status: 'open',
     votes: councillor ? { [proposerId]: true } : {}, decidedDay: null,
-    needed: SUPERMAJORITY_KINDS.includes(spec.kind) ? 4 : 3,
+    needed: SUPERMAJORITY_KINDS.includes(spec.kind) ? CHARTER_MAJORITY : 3,
   };
   world.government.proposals.push(p);
   emit(world, 'proposal', councillor ? `Councillor ${c.name} tabled a proposal: ${summary}` : `${c.name} petitioned the Council: ${summary}`,
@@ -351,6 +429,19 @@ function heldWage(world: World, c: Citizen): number {
  * How a reflex councillor votes: self-interest, their platform, friendship
  * with the proposer (weighted more by the dishonest), rivalry, a little noise.
  */
+/** Where a councillor sleeps, which is where the air they vote on is theirs. */
+function homeDistrictOfCouncillor(world: World, c: Citizen): DistrictId {
+  const home = c.homeBuildingId ? world.buildings[c.homeBuildingId]?.district ?? null : null;
+  return home ?? c.district;
+}
+
+/** The worst air over any district the city has opened, 0..1. */
+function dirtiestAirShare(world: World): number {
+  let worst = 0;
+  for (const d of Object.keys(environmentState(world).districts) as DistrictId[]) worst = Math.max(worst, airLevel(world, d));
+  return worst;
+}
+
 export function councillorDisposition(world: World, councillorId: CitizenId, p: Proposal): boolean {
   const c = world.citizens[councillorId];
   if (!c) return false;
@@ -482,7 +573,10 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
       score += 0.05 * d + (unreachable ? -1 : pressure) * FISCAL_RESERVE_WEIGHT * d - (platform.dividend - 0.5) * 0.3 * d;
       break;
     }
+    // The line needs The Tram before it needs the fund (`REGISTRY.md` §7): a
+    // councillor does not vote for a line nobody in the city knows how to lay.
     case 'tram':
+      if (!tramAllowed(world)) { score -= 1; break; }
       score += 0.1 + (g.publicWorksFund >= TRAM_COST ? 0.15 : -0.4) + (c.personality.curiosity - 0.5) * 0.2;
       break;
     case 'monument':
@@ -490,6 +584,167 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
         + (bondTarget > 40 ? 0.3 : bondTarget < -30 ? -0.3 : 0)
         + (target && target.reputation >= 70 ? 0.15 : 0);
       break;
+    // Borrowing is what a city does instead of a tax or a print, so a
+    // councillor watching the balance slide hears it out and a comfortable one
+    // asks what the coupons are for. The coupon is the next Council's problem,
+    // which is the whole of the argument against it.
+    case 'bond_issue':
+      score += 0.05 + strain * FISCAL_WEIGHT - (treasuryDrainPerDay(world) <= 0 ? 0.25 : 0)
+        - (platform.tax - 0.5) * 0.2;
+      break;
+    // A deferral is honest and cheap; there is simply nothing to defer unless
+    // the city has already missed a coupon.
+    case 'bond_defer':
+      score += mostPressingIssue(world) ? 0.3 : -0.6;
+      break;
+    // A thicker reserve is a safer bank and a smaller loan book. A councillor
+    // reads it the way they read any question about somebody else's money.
+    case 'reserve_ratio':
+      score += 0.05 + (bankSuspended(world) ? 0.3 : 0) - (platform.tax - 0.5) * 0.2;
+      break;
+    // Public money to a bank whose bankers set their own rates: nobody votes
+    // for that until the counter has actually closed.
+    case 'bank_rescue':
+      score += bankSuspended(world) ? 0.2 : -0.6;
+      break;
+    // Printing takes value from everybody holding a lumen. It is a last
+    // resort, and it reads as one.
+    case 'mint':
+      score += -0.5 + strain * FISCAL_WEIGHT;
+      break;
+    // A cheaper filing is a docket the poorest can open; a dearer one is a
+    // Treasury with an income. A guild's floor is the city's answer to a bar
+    // held high through a shortage.
+    case 'filing_fee': case 'docket_days': case 'licence_floor':
+      score += (platform.strictness - 0.5) * 0.2 + (c.personality.curiosity - 0.5) * 0.1;
+      break;
+    // A programme wants a purse before it wants anything else: an hour of
+    // research the purse cannot pay is an hour refused. A curious councillor
+    // hears that; a Treasury running out hears the bill.
+    case 'research_grant': {
+      const programme = p.subject ? projectById(world, p.subject) : null;
+      if (!programme || programme.status !== 'open') { score -= 1; break; }
+      score += 0.1 + (c.personality.curiosity - 0.5) * 0.4
+        + (purseOf(world, programme) <= 0 ? 0.15 : 0)
+        - strain * FISCAL_WORKS_WEIGHT;
+      break;
+    }
+    // And a discovery nobody built for changes nothing at all. The works come
+    // out of the same fund as the housing and the Keep, which is the argument.
+    case 'adopt_technology':
+      score += 0.1 + (c.personality.curiosity - 0.5) * 0.2
+        + (g.publicWorksFund >= Math.min(p.value, 200) ? 0.15 : -0.3)
+        - pledgedFor(world, (p.subject ?? '') as TechnologyId) / 2000
+        - strain * FISCAL_WORKS_WEIGHT;
+      break;
+    // Zoning is the largest number any motion moves, and it moves it into
+    // named pockets (`docs/ENVIRONMENT.md` §5). A councillor's own address is
+    // therefore a fact about how they will vote, and the register and the roll
+    // are both public — so this is written plainly rather than hidden.
+    case 'zone': case 'conserve': {
+      const q = environmentQuestionOf(world, p.id);
+      const d = q?.district ?? null;
+      if (!d) { score -= 1; break; }
+      const permit = p.kind === 'conserve' ? 'conserved' : q?.permit ?? null;
+      if (!permit) { score -= 1; break; }
+      const gain = zoningGain(world, councillorId, d, permitOf(world, d), permit, p.tabledDay);
+      score += clamp(gain / 3000, -0.6, 0.6);
+      // And what it does to the air where they and their voters live.
+      const cleaner = PERMIT_PREMIUM[permit] - PERMIT_PREMIUM[permitOf(world, d)];
+      if (homeDistrictOfCouncillor(world, c) === d) score += cleaner * 2;
+      score += cleaner * 0.5 + (c.personality.curiosity - 0.5) * 0.1;
+      // The district's own petition carries the weight of the people who live
+      // with it, which is the whole of §6.
+      if (q?.petition) score += 0.15;
+      break;
+    }
+    // The charge is the answer to a benefit that lands on somebody else. An
+    // owner reads it as a bill; everybody downwind reads it as the only thing
+    // that ever moved a stack.
+    case 'emission_charge': {
+      const d = direction(p, environmentState(world).charge);
+      score += 0.05 * d - (owner ? 0.35 * d : 0) + (poor ? 0.1 * d : 0)
+        + dirtiestAirShare(world) * 0.6 * d + pressure * FISCAL_WEIGHT * d;
+      break;
+    }
+    // What a district is paid for hosting the smoke. Its own residents are for
+    // it; the Treasury's keeper counts what it costs.
+    case 'host_payment': {
+      const q = environmentQuestionOf(world, p.id);
+      const d = q?.district ?? null;
+      score += 0.02 + (d && homeDistrictOfCouncillor(world, c) === d ? 0.4 : -0.05) - strain * FISCAL_WORKS_WEIGHT;
+      break;
+    }
+    // The city buying a fitting, moving a works out, or buying one out: all
+    // three are public works, and all three are read as such.
+    case 'abatement_works': case 'relocate_works': case 'buy_out': {
+      const q = environmentQuestionOf(world, p.id);
+      const where = q?.building ? world.buildings[q.building]?.district ?? null : null;
+      const affordable = g.publicWorksFund >= (p.kind === 'abatement_works' ? 400 : 1200);
+      score += 0.05 + (affordable ? 0.2 : -0.5)
+        + (where ? airLevel(world, where) * 0.8 : 0)
+        + (where && homeDistrictOfCouncillor(world, c) === where ? 0.2 : 0)
+        - strain * FISCAL_WORKS_WEIGHT;
+      break;
+    }
+    // The four the gate puts to a Council (`docs/UNDERWORLD.md` §§1, 3, 6).
+    // Every one is read off a public number: what the schedule already holds,
+    // what the gates counted yesterday, who is standing in the register with
+    // something the schedule does not admit, and what the city does with an
+    // agent it caught. A restriction is also a price — it funds its own
+    // opposition at the markup in §4 — so the councillor who trades reads it
+    // as a bill and the one who wants the city's doors kept reads it as a duty.
+    case 'restrict_good': {
+      const lifting = underworldQuestion(world, p.id)?.liftId ?? null;
+      const d = lifting ? -1 : 1;
+      score += (platform.strictness - 0.5) * 0.5 * d;
+      if (owner) score -= 0.2 * d;
+      if (poor) score -= 0.1 * d;
+      // A schedule already long is a schedule a gate cannot read.
+      score -= Math.max(0, restrictionsFor(world, HOME_CITY).length - 3) * 0.05 * d;
+      break;
+    }
+    case 'amnesty': {
+      // The door held open for whoever bought in good faith off a shelf. A
+      // councillor counts the people standing behind it, including themselves.
+      const holders = world.order.filter((id) => {
+        const o = world.citizens[id];
+        return Boolean(o && contrabandOn(world, o).length > 0);
+      }).length;
+      score += 0.05 - (platform.strictness - 0.5) * 0.5 + Math.min(0.3, holders * 0.03);
+      if (amnestyRunning(world)) score -= 0.5;
+      if (contrabandOn(world, c).length > 0) score += 0.2;
+      if (c.record.convictions.some((k) => k.law === CONTRABAND_POSSESSION)) score += 0.1;
+      break;
+    }
+    case 'customs_posts': {
+      // One per gate and one per thirty crossings is the arithmetic in §3; the
+      // vote is whether to pay for it. Each post is a salaried city job, so a
+      // Treasury under strain hears the bill and a city whose gates ran thin
+      // yesterday hears the crossings.
+      const needed = customsPostsNeeded(world);
+      const now = world.counters['customs:posts'] ?? 0;
+      const d = direction(p, now);
+      const short = p.value >= needed && needed > now;
+      score += (platform.strictness - 0.5) * 0.3 * d + (short ? 0.25 : 0)
+        - (p.value > needed ? 0.2 : 0) - strain * FISCAL_WAGE_WEIGHT * d;
+      if (underworldState(world).crossingsYesterday === 0) score -= 0.2 * d;
+      break;
+    }
+    case 'spy_disposition': {
+      // Try them, put them out, or hold them for exchange — and every answer
+      // costs the city standing somewhere (`docs/UNDERWORLD.md` §6). A strict
+      // councillor wants the Court; one who would rather not have the incident
+      // in the city at all puts them out; holding is what an ambitious one does
+      // when there is something to trade for.
+      const answer = Math.round(p.value);
+      const wantsCourt = platform.strictness > 0.55;
+      score += answer === 0 ? (wantsCourt ? 0.25 : -0.1)
+        : answer === 1 ? (wantsCourt ? -0.05 : 0.2)
+          : (c.personality.ambition - 0.5) * 0.4;
+      if (target && bondTarget > 40) score -= 0.3;
+      break;
+    }
     default:
       break;
   }
@@ -579,6 +834,79 @@ export function enactProposal(world: World, p: Proposal): void {
     case 'property_tax': case 'wealth_tax': case 'tariff': case 'reserve':
       text = applyLever(world, p);
       break;
+    // The city's own finances (`docs/FINANCE.md` §9). One entry point, and the
+    // override is this vote's own count: four of five is what the charter asks
+    // for a minting and for borrowing past the debt-service cap.
+    case 'bond_issue': case 'bond_defer': case 'reserve_ratio': case 'bank_rescue': case 'mint': {
+      const ayes = Object.values(p.votes).filter(Boolean).length;
+      text = enactFinanceProposal(world, p.kind, p.value, { override: ayes >= CHARTER_MAJORITY, proposalId: p.id }).message;
+      break;
+    }
+    // What filing costs, how often the docket sits, and the floor under a
+    // guild's bar (`docs/CIVIL.md` §§1, 4, 7). A proposal carries one number,
+    // so `filing_fee` moves the flat part of an instrument's fee — the 5 ℓ of
+    // §1 — and `docket_days` says how many days a week the docket sits, spread
+    // evenly over the week from its second day.
+    case 'filing_fee': {
+      const flat = Math.max(0, Math.round(p.value));
+      setFilingFee(world, 'contract', { flat });
+      text = `Filing an instrument at the Exchange now costs ${flat} ℓ plus 1 % of its face value.`;
+      break;
+    }
+    case 'docket_days': {
+      const sittings = clamp(Math.round(p.value), 1, 7);
+      const days = Array.from({ length: sittings }, (_, i) => (1 + Math.round(i * 7 / sittings)) % 7);
+      setDocketDays(world, days);
+      text = `The civil docket now sits ${sittings} day${sittings === 1 ? '' : 's'} a week.`;
+      break;
+    }
+    case 'licence_floor': {
+      const profession = PROFESSIONS.find((t) => p.summary.toLowerCase().includes(t));
+      if (!profession) { text = 'The floor named no trade, and nothing changed.'; break; }
+      const floor = clamp(Math.round(p.value), 0, 100);
+      setLicenceFloor(world, profession, floor);
+      text = `The statutory floor for a ${profession}'s licence is ${floor}. A guild may hold its own bar higher.`;
+      break;
+    }
+    // Research (`docs/PROGRESS.md` §§1, 3): the Treasury's own money into a
+    // named purse, and lumens pledged to a subject's works — which the fund
+    // then pays a day at a time, competing with housing, the Keep and the
+    // drains, so the Council keeps voting while it is built.
+    case 'research_grant': {
+      const amount = Math.min(Math.max(0, Math.round(p.value)), Math.max(0, world.treasury.balance));
+      const r = p.subject ? enactResearchGrant(world, p.subject, amount) : { ok: false, message: 'the measure named no programme' };
+      text = r.ok ? r.message : `The grant was not paid: ${r.message}`;
+      break;
+    }
+    case 'adopt_technology': {
+      const r = p.subject ? enactAdoption(world, p.subject, Math.round(p.value)) : { ok: false, message: 'the measure named no subject' };
+      text = r.ok ? r.message : `The works were not pledged: ${r.message}`;
+      break;
+    }
+    // The air, the river and the land (`docs/ENVIRONMENT.md` §9). One door for
+    // all seven, and the same door a carried referendum comes through.
+    case 'zone': case 'conserve': case 'emission_charge': case 'host_payment':
+    case 'abatement_works': case 'relocate_works': case 'buy_out': {
+      const r = enactEnvironmentProposal(world, p);
+      text = r.ok ? r.message : `The measure had no effect: ${r.message}`;
+      break;
+    }
+    // The schedule of restricted goods, an amnesty, the size of the customs
+    // roster (`docs/UNDERWORLD.md` §§1, 3) — and, the one question of the four
+    // that names a citizen rather than a good, what the city does with a caught
+    // agent. Nothing here is exile and nothing here is custody: an expulsion is
+    // a gate ban on a public register and it runs out (`UNDERWORLD.md` §6).
+    case 'restrict_good': case 'amnesty': case 'customs_posts': {
+      text = enactUnderworldQuestion(world, p.id)
+        ? `The Council's answer on ${p.kind.replace(/_/g, ' ')} is carried out.`
+        : 'The question was not before the Council, and nothing changed.';
+      break;
+    }
+    case 'spy_disposition': {
+      const r = enactSpyDisposition(world, p.id);
+      text = r.ok ? r.message : `The disposition had no effect: ${r.message}`;
+      break;
+    }
     case 'tram': {
       const line = enactTram(world);
       text = line
@@ -614,6 +942,10 @@ function trimProposals(world: World): void {
 
 function resolveProposal(world: World, p: Proposal, members: Citizen[]): void {
   for (const m of members) {
+    // A councillor who filed their interest has abstained, and an abstention
+    // is not a nay: filling their vote in would take back the one thing
+    // declaring costs them (`docs/ENVIRONMENT.md` §5).
+    if (hasDeclared(world, p.id, m.id)) continue;
     if (p.votes[m.id] === undefined && m.brain === 'reflex') p.votes[m.id] = councillorDisposition(world, m.id, p);
   }
   const ayes = members.filter((m) => p.votes[m.id] === true).length;

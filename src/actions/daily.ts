@@ -15,6 +15,7 @@ import { employerName, workShift } from '../economy/jobs.ts';
 import { activeBusinesses } from '../economy/business.ts';
 import { districtName, fail, isPresent, ok } from './common.ts';
 import { UNREACHABLE, canMoveBetween, isOpen, openAdjacent, pathDistance } from '../world/growth.ts';
+import { restAirFactor } from '../environment/readings.ts';
 import { memo } from '../util/memo.ts';
 
 export const REST_AT_HOME = 15;
@@ -125,7 +126,11 @@ export function doRest(world: World, c: Citizen): ActionResult {
       ? `Your home is in ${districtName(world, where)}; go there to rest.`
       : 'You have no home; the Community Garden in the Verdant Quarter is the only place to rest.');
   }
-  const gain = c.homeTier > 0 ? REST_AT_HOME : REST_IN_GARDEN;
+  // A cheap room by the forge costs hours of sleep: rest restores
+  // `15 × (1 − 0.4 × burden)` where the citizen actually lies down
+  // (`docs/ENVIRONMENT.md` §2). Clean air restores the flat 15 it always did.
+  const base = c.homeTier > 0 ? REST_AT_HOME : REST_IN_GARDEN;
+  const gain = Math.max(1, Math.round(base * restAirFactor(world, where)));
   c.needs.rest = clamp(c.needs.rest + gain, 0, 100);
   return ok(c.homeTier > 0 ? `You rested at home (rest +${gain}).` : `You rested in the Community Garden (rest +${gain}).`);
 }

@@ -16,6 +16,7 @@ import {
   customFor, dailyLand, footfall, footfallFor, homeRent, landObservation, landReading,
   landValue, premisesRent, priceMultiplier, recomputeLand,
 } from '../src/economy/land.ts';
+import { districtEnvironment } from '../src/environment/state.ts';
 
 /** A room on the register, so a district has stock to be scarce. */
 function room(world: World, buildingId: string, tier: 1 | 2 | 3, tenantId: string | null = null): PropertyUnit {
@@ -97,9 +98,20 @@ test('the forge and the gate drag on their neighbours, the library and the garde
 test('what the heavy shifts emit is a number, and it costs the district when the city counts it', () => {
   const world = makeWorld();
   const clean = recomputeLand(world).foundry_row.amenity;
-  world.counters['air:foundry_row'] = 1;
+  // The reading itself, not a counter: amenity reads `environment/readings.ts`
+  // now, so a scrubbed forge costs its neighbours less than a hard-run one and
+  // an idle one costs them nothing (`REGISTRY.md` §7).
+  districtEnvironment(world, 'foundry_row').air = 1;
   const smoky = recomputeLand(world).foundry_row.amenity;
   assert.ok(smoky < clean, 'a hard-run forge costs its neighbours more than a scrubbed one');
+  // And the gradient, read where there is room on the scale to read it:
+  // Foundry Row is already at the bottom of it, so the comparison is made in a
+  // district a stack's drift would actually cost something.
+  districtEnvironment(world, 'archive').air = 0.6;
+  const downwind = recomputeLand(world).archive.amenity;
+  districtEnvironment(world, 'archive').air = 0.2;
+  const scrubbed = recomputeLand(world).archive.amenity;
+  assert.ok(scrubbed > downwind, 'and a scrubbed one costs its neighbours less than a hard-run one');
 });
 
 // ---------------------------------------------------------------------------

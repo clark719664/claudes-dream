@@ -55,10 +55,20 @@ import { frontPages } from '../culture/press.ts';
 import { feedFor } from '../social/feed.ts';
 import { rumoursHeardBy } from '../social/rumours.ts';
 import { gateObservation, reputeObservation } from '../standing/observe.ts';
+import { civilObservation } from '../civil/observe.ts';
+import { observeFinance } from '../finance/daily.ts';
+import { progressObservation, trendsBlock } from '../progress/observe.ts';
+import { environmentObservation } from '../environment/observe.ts';
+// The gate and what goes past it, and the charter all of it is under. Both are
+// public in full: the schedule is law, a roster is people standing in a
+// doorway, an assignment is printed the day it is made, and a shelf price is
+// written on the shelf (`docs/PRINCIPLES.md` §5).
+import { underworldObservation } from '../underworld/observe.ts';
+import { politicsObservation } from '../politics/session.ts';
 import { availableActions, heldJob } from '../actions/execute.ts';
 import { ownedBusiness } from '../actions/enterprise.ts';
 import { buildingsIn, citizensIn, districtName, isPresent } from '../actions/common.ts';
-import { memo } from '../util/memo.ts';
+import { memo, memoBy } from '../util/memo.ts';
 
 /** Memory entries surfaced as `recent`. */
 export const RECENT_MEMORIES = 8;
@@ -449,6 +459,30 @@ export function buildObservation(world: World, cId: CitizenId): Observation {
     reports: observedReportsFor(world, cId),
     jury: juryFor(world, cId),
     investigations: investigationsFor(world, cId),
+    // The Exchange's register and the city's money, as they concern this
+    // citizen: the instruments and offers it has to answer, the suits either
+    // way, the marks it holds, the paper, the counter, the cover and the pot.
+    // Every id a civil or finance action needs is named in one of these two.
+    civil: civilObservation(world, cId),
+    finance: observeFinance(world, cId),
+    // What the city knows and what it is taking up, and what its own shifts
+    // have left in the air over this district. All three are public, with the
+    // one exception `PROGRESS.md` §4 is built on: a secret is in no
+    // observation but a master's.
+    progress: progressObservation(world, cId),
+    // The trends are one lagged index for the whole city and the air is one
+    // reading per district, so both are computed once for the reading round
+    // rather than once per citizen (`util/memo.ts`).
+    trends: memo(world, 'progress:trends', () => trendsBlock(world)),
+    environment: memoBy(world, 'env:observation', c.district, () => environmentObservation(world, c)),
+    // What this citizen may see of the gate: the schedule, who is on the
+    // doorway, the offers made to *them*, the retainers, what they hold and
+    // what the prices are saying. Never anybody's intention.
+    underworld: underworldObservation(world, cId),
+    // And the charter as it stands today, with everything being moved against
+    // it: the order paper, the convention, the impeachments, the wards, the
+    // papers, the records and the Games.
+    politics: politicsObservation(world, c),
     inbox,
     recent: c.memory.slice(-RECENT_MEMORIES).map((m) => m.text),
     availableActions: availableActions(world, c),

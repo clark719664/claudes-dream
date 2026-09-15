@@ -4,7 +4,11 @@
  * who wronged them, and — for journalists — the story of the day.
  */
 import { clamp } from '../types.ts';
-import type { Action, Citizen, CitizenId, EventKind, LawCode, OffenceCode, Platform, ProposalKind, World, WorldEvent } from '../types.ts';
+import type {
+  Action, BuildingId, Citizen, CitizenId, DistrictId, EventKind, LawCode, OffenceCode, Platform, ProposalKind,
+  World, WorldEvent,
+} from '../types.ts';
+import type { Fitting, Permit } from '../environment/state.ts';
 import { LAWS, offenceName } from '../data/laws.ts';
 import { chance, pick, rand } from '../util/rng.ts';
 import { vacancies } from '../economy/housing.ts';
@@ -25,8 +29,16 @@ import { reputeOf } from '../standing/repute.ts';
 import { noticeOf } from '../standing/state.ts';
 import type { StandingNotice } from '../standing/state.ts';
 import { underNoticeToLeave } from '../standing/hearings.ts';
+import { dailyDebtService, debtServiceCap } from '../finance/bonds.ts';
+import { bankState, bankSuspended, depositsTotal, vaultBalance } from '../finance/bank.ts';
+import { mostPressingIssue } from '../finance/daily.ts';
+import { financeState } from '../finance/state.ts';
+import { allContracts } from '../civil/terms.ts';
+import { pendingSuits } from '../civil/docket.ts';
+import { civilSettings } from '../civil/state.ts';
 import { inGoodStanding, stepTo } from './reflex-util.ts';
 import type { Ctx } from './reflex-util.ts';
+import { knowledgeMotions, smokeMotions } from './reflex-motions.ts';
 
 /** A grievance older than this is let go. */
 export const GRIEVANCE_WINDOW_TICKS = 24;
@@ -58,6 +70,13 @@ export interface ReflexProposal {
   summary: string;
   lawCode?: LawCode;
   targetId?: CitizenId;
+  /** The programme a grant pays into, or the subject the works are for. */
+  subject?: string;
+  /** What a zoning, host-payment or works measure is about. */
+  district?: DistrictId;
+  permit?: Permit;
+  building?: BuildingId;
+  fitting?: Fitting;
 }
 
 // ---------------------------------------------------------------------------
@@ -146,6 +165,12 @@ export function treasuryHealthy(world: World): boolean {
  */
 export const PUBLIC_WORKS_TOPUP = 1200;
 
+/**
+ * The smallest issue of the city's paper the Exchange will take: 20 bonds of
+ * 100 ℓ (`docs/FINANCE.md` §1).
+ */
+export const SMALLEST_ISSUE = 2_000;
+
 /** A gap this wide between spending and takings is one a councillor would table a motion about. */
 export const NOTICEABLE_DEFICIT = 0.1;
 
@@ -156,9 +181,18 @@ export const RESERVE_FLOOR = 2_000;
  * share of what the city holds today. A reserve set at the whole of the
  * current balance is a bar the city can never clear — it reads as strained for
  * ever, taxes stay at their ceiling, and the citizens are squeezed dry to
- * defend a number nobody can reach. Half is a line with room under it.
+ * defend a number nobody can reach. There has to be room under it.
+ *
+ * Half turned out to be too much room. `floatDividend` only starts defending
+ * the line once the balance has fallen *below* it, so a line at half the
+ * balance is an instruction to do nothing until the Treasury has halved: on
+ * seed 7 the reserve was drawn at 40,000 ℓ on day 30 and the dividend did not
+ * move a lumen until day 118, by which time the city had spent forty thousand
+ * lumens waiting for its own alarm. Three quarters still leaves a quarter of
+ * the Treasury under the line, and the correction starts in weeks instead of
+ * months. It is still a number a councillor tables and a Council votes on.
  */
-export const RESERVE_SHARE = 0.5;
+export const RESERVE_SHARE = 0.75;
 /** The Treasury has to be this far above its reserve before anyone proposes raising it. */
 export const RESERVE_RAISE_AT = 2;
 /** Below this share of its reserve, a failing city's reserve is one nobody can reach. */
@@ -187,6 +221,9 @@ export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
   // question about the months, not about yesterday.
   const healthy = treasuryHealthy(world);
   const strained = treasuryThin(world);
+  // And how near the Treasury is to the end of its money, which is what the
+  // dividend, a bond issue and a minting are all really questions about.
+  const desperate = treasuryStrained(world);
   const pct = (x: number) => `${Math.round(x * 100)}%`;
   const fine = (x: number) => `${Math.round(x * 1000) / 10}%`;
   const r2 = (x: number) => Math.round(x * 100) / 100;
@@ -203,7 +240,6 @@ export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
   // The dividend is what the city's poorest live on; a deficit is met with
   // taxes first, and the dividend is only trimmed when the Treasury itself
   // is running out.
-  const desperate = treasuryStrained(world);
   if ((platform.dividend < 0.4 || desperate) && g.dividend >= 5) {
     options.push({ kind: 'dividend', value: g.dividend - 5, summary: desperate
       ? `Trim the dividend to ${g.dividend - 5} ℓ to steady the Treasury`
@@ -298,17 +334,101 @@ export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
     options.push({ kind: 'property_tax', value, summary: value > 0 ? `Ease the tax on let property to ${pct(value)} of the rent` : 'Lift the tax on let property' });
   }
 
+  // --- The city's own paper, its bank, and the Exchange (`docs/FINANCE.md`,
+  // `docs/CIVIL.md`). Five of these levers move money the Council does not
+  // have to tax anybody for, which is exactly why each of them is weighed
+  // against a fact rather than a mood: a bond is only proposed by a councillor
+  // watching the balance run out, a rescue only while the counter is shut, and
+  // a minting only when there is nothing else left.
+  const service = dailyDebtService(world);
+  const cap = debtServiceCap(world);
+  const barred = world.day < financeState(world).noIssuesUntilDay;
+  // Borrowing is the last thing before printing, and a city already paying
+  // coupons does not borrow to pay them: an issue is proposed only when the
+  // Treasury is running out *and* the city owes nothing yet. The coupon is
+  // the next Council's bill, which is the whole of the argument against it
+  // and the reason a scripted one asks so rarely (`docs/FINANCE.md` §10).
+  if (desperate && service <= 0 && !barred && cap > 0) {
+    // And it borrows the least the Exchange will take. At the founding coupon
+    // a bond costs the Treasury 1.5 ℓ a day for four cycles and repays its
+    // face at the end of them, so the smallest issue is a fortnight's relief
+    // bought with a year's instalments — which is what borrowing is, and why
+    // the size is the floor rather than whatever the cap allows.
+    const face = SMALLEST_ISSUE;
+    options.push({ kind: 'bond_issue', value: face,
+      summary: `Borrow ${face} ℓ of face at auction, the smallest issue the Exchange will take, rather than tax the city dry` });
+  }
+  if (mostPressingIssue(world) !== null) {
+    options.push({ kind: 'bond_defer', value: 0, summary: 'Defer the coupons the Treasury has missed; they accrue at a quarter more' });
+  }
+  if (bankSuspended(world) && world.treasury.balance > 4_000) {
+    const amount = Math.min(4_000, Math.round(world.treasury.balance / 5));
+    options.push({ kind: 'bank_rescue', value: amount,
+      summary: `Put ${amount} ℓ of the Treasury into the Lantern Vault and open the counter again` });
+  }
+  const bank = bankState(world);
+  const deposits = depositsTotal(world);
+  if (deposits > 0 && vaultBalance(world) < deposits * bank.reserveRatio && bank.reserveRatio < 1) {
+    const ratio = Math.min(1, Math.round((bank.reserveRatio + 0.1) * 100) / 100);
+    options.push({ kind: 'reserve_ratio', value: ratio,
+      summary: `Make the Lantern Bank hold ${Math.round(ratio * 100)}% of its deposits in the vault` });
+  }
+  if (desperate && world.treasury.balance < g.dividend * Math.max(1, world.order.length) * 3) {
+    options.push({ kind: 'mint', value: 5_000, summary: 'Mint 5,000 ℓ: there is nothing else left to pay the city with' });
+  }
+  // The Exchange's own two: a docket that cannot keep up with what is filed,
+  // and a filing fee that has priced the register out of use.
+  if (pendingSuits(world).length > 3) {
+    options.push({ kind: 'docket_days', value: 3, summary: 'Sit the civil docket three days a week; the list is longer than the sittings' });
+  }
+  if (civilSettings(world).filingFlat > 3 && allContracts(world).length < 5 && platform.tax < 0.5) {
+    options.push({ kind: 'filing_fee', value: 3, summary: 'Cut the flat part of a filing to 3 ℓ so an ordinary bargain is worth writing down' });
+  }
+
+  // What the city knows, and what it is breathing: two more sets of measures
+  // a councillor reads off the same morning's numbers as every other lever
+  // (`docs/PROGRESS.md` §§1, 3, `docs/ENVIRONMENT.md` §§3-6).
+  options.push(...knowledgeMotions(ctx, healthy));
+  options.push(...smokeMotions(ctx));
+
   const exiledFriend = Object.values(world.citizens).find((o) => o.standing === 'exiled' && bondBetween(world, c.id, o.id) > 50);
   if (exiledFriend) options.push({ kind: 'pardon', value: 0, targetId: exiledFriend.id, summary: `Pardon ${exiledFriend.name} and let them come home` });
   const mayor = g.mayorId ? world.citizens[g.mayorId] : null;
   if (mayor && mayor.id !== c.id && bondBetween(world, c.id, mayor.id) < -30 && c.personality.ambition > 0.7) {
     options.push({ kind: 'remove_mayor', value: 0, targetId: mayor.id, summary: `Remove Mayor ${mayor.name} from office` });
   }
+  // A long list is not a shrug. Every layer written since the founding has put
+  // more motions on this one — a research grant, a zoning permit, a fitting,
+  // and now a gate question and a charter measure — and picking uniformly out
+  // of it means the lever that matters most is tabled a tenth as often as it
+  // was when the list was short. On seed 7 the reserve went untabled for a
+  // hundred and fifty days for exactly that reason, `floatDividend` never
+  // engaged, and the city paid a 30 ℓ dividend all the way down.
+  //
+  // So: a councillor watching the balance slide reaches for what steadies it.
+  // The reserve first, because it is the only lever that keeps working after it
+  // is pulled; then the taxes and the dividend, which have to be pulled again
+  // every time. Everything else on the paper can wait a day. Which of them a
+  // councillor believes in is still their own platform's business, and the
+  // Council still has to vote for it.
+  if (!healthy && options.length > 1) {
+    const reserve = options.filter((o) => o.kind === 'reserve');
+    if (reserve.length > 0 && chance(world, 0.7)) return pick(world, reserve);
+    const steadying = options.filter((o) => (o.kind === 'income_tax' && o.value > g.incomeTax)
+      || (o.kind === 'sales_tax' && o.value > g.salesTax)
+      || (o.kind === 'dividend' && o.value < g.dividend));
+    if (steadying.length > 0 && chance(world, 0.5)) return pick(world, steadying);
+  }
   return options.length ? pick(world, options) : null;
 }
 
 function proposeAction(spec: ReflexProposal): Action {
-  return { type: 'propose', kind: spec.kind, value: spec.value, summary: spec.summary, lawCode: spec.lawCode, targetId: spec.targetId };
+  return {
+    type: 'propose', kind: spec.kind, value: spec.value, summary: spec.summary,
+    lawCode: spec.lawCode, targetId: spec.targetId,
+    subject: spec.subject, district: spec.district, permit: spec.permit,
+    building: spec.building, fitting: spec.fitting,
+  };
 }
 
 // ---------------------------------------------------------------------------

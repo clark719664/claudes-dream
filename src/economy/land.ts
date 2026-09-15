@@ -34,6 +34,8 @@ import type {
 import { BUILDINGS, DISTRICTS, blockOf } from '../data/city.ts';
 import { emit } from '../sim/events.ts';
 import { isOpen, openDistricts, pathDistance } from '../world/growth.ts';
+import { amenityAdjustment } from '../environment/readings.ts';
+import { worksAmenity } from '../progress/effects.ts';
 
 // ---------------------------------------------------------------------------
 // The weights
@@ -73,10 +75,11 @@ export const MONUMENT_AMENITY = 0.5;
 export const MONUMENT_AMENITY_CAP = 4;
 
 /**
- * What the shifts of a heavy building actually emit, when the city has begun
- * to count it (`ENVIRONMENT.md` §1–4, `PROPERTY.md` §1). Nothing writes
- * `air:<district>` yet; the moment something does, a scrubbed forge will cost
- * its neighbours less than a hard-run one and an idle one nothing at all.
+ * What the shifts of a heavy building actually cost the land around them
+ * (`ENVIRONMENT.md` §§1-4, `PROPERTY.md` §1). The reading itself now lives in
+ * `environment/readings.ts` — this is the same number as its `AMENITY_AIR`,
+ * kept here because `PROPERTY.md` quotes it, and `amenityOf` reads the
+ * environment's own term rather than a counter.
  */
 export const AIR_PENALTY = 0.45;
 
@@ -201,9 +204,18 @@ function amenityOf(world: World, d: DistrictId): number {
   if (plaza === d) {
     score += Math.min(MONUMENT_AMENITY_CAP, (world.monuments ?? []).length) * MONUMENT_AMENITY;
   }
-  // What the heavy shifts emit, once anything in the world counts it.
-  score -= AIR_PENALTY * clamp(world.counters[`air:${d}`] ?? 0, 0, 4);
-  return clamp((score + 4) / 10, 0, 1);
+  // Drains, a tram stop and a printing house are buildings: adopted works lift
+  // the land where they stand (`docs/PROGRESS.md` §3, `PROPERTY.md` §1), on
+  // the same scale as everything else standing here and squashed with it.
+  score += worksAmenity(world, d);
+  // What the district may be built for, what grows in it, and what its own
+  // shifts emit — all three on the 0..1 amenity scale, which is the scale
+  // `ENVIRONMENT.md`'s table is written on (air 0.33 → −0.15). It is added
+  // after the squash, not into `score`, because a tenth of the intended size
+  // is not the number the table means; and it replaces the founding line that
+  // asserted the Forge subtracts, because it subtracts for what it emits now
+  // (`REGISTRY.md` §7 — a scrubbed forge subtracts less, an idle one nothing).
+  return clamp((score + 4) / 10 + amenityAdjustment(world, d), 0, 1);
 }
 
 /** Offences committed by the people of a district in the last fortnight. */

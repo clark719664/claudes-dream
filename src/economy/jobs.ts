@@ -24,6 +24,10 @@ import { mentorshipMultiplier } from '../social/mentorship.ts';
 import { isJailed } from '../government/jail.ts';
 import { isOnStrike } from '../politics/unions.ts';
 import { pursue } from '../government/investigations.ts';
+import { recordShiftEmission } from '../environment/emissions.ts';
+import { hinterlandYieldFactor } from '../environment/readings.ts';
+import { haulageFee } from '../environment/zoning.ts';
+import { outputMultiplier, trainShift } from '../progress/effects.ts';
 import { memo } from '../util/memo.ts';
 
 export const CITY_EMPLOYER_NAME = 'City of Reverie';
@@ -357,9 +361,18 @@ export function workShift(world: World, cId: CitizenId): ActionResult {
   const skillValue = job.skill ? c.skills[job.skill] : meanSkill(c);
   const productivity = (0.5 + skillValue / 200) * (1 - damage) * (hasCriticalNeed(c) ? 0.5 : 1)
     * (isGlitched(c) ? GLITCH_PRODUCTIVITY : 1) * disasterProductionFactor(world, job);
-  const effective = productivity * supplyEnergy(world, job, biz);
-
   const out = job.output;
+  // What the city has built and trained for, and what the fields downwind are
+  // breathing. The first is 1 until somebody digs and somebody is trained
+  // (`docs/PROGRESS.md` §3); the second is 1 in clean air and closes the loop
+  // in dirty — the Forge's own smoke cuts the Forge's own yield
+  // (`docs/ENVIRONMENT.md` §2).
+  const works = outputMultiplier(world, {
+    buildingId: job.buildingId, good: out.good ?? undefined, businessId: biz ? biz.id : null,
+  });
+  const fields = out.good === 'compute' ? hinterlandYieldFactor(world) : 1;
+  const effective = productivity * supplyEnergy(world, job, biz) * works * fields;
+
   let produced = 0;
   let made = 0;
   if (out.good && out.qty) {
@@ -377,7 +390,11 @@ export function workShift(world: World, cId: CitizenId): ActionResult {
 
   // city production posts are paid by the piece: a share of what the shift's output fetches today
   const byThePiece = isPieceRateJob(job);
-  const wage = byThePiece ? pieceRate(world, job, made) : flatWage;
+  // A works the city moved out to a hinterland site pays a lumen a unit in
+  // haulage, and the worker pays it (`docs/ENVIRONMENT.md` §3). It is 0
+  // everywhere the city has not moved anything.
+  const haulage = Math.round(haulageFee(world, job.buildingId) * made);
+  const wage = byThePiece ? Math.max(0, pieceRate(world, job, made) - haulage) : flatWage;
   const evadeKey = `evade:${cId}`;
   const evading = (world.counters[evadeKey] ?? 0) > 0;
   if (evading) world.counters[evadeKey] -= 1;
@@ -386,6 +403,15 @@ export function workShift(world: World, cId: CitizenId): ActionResult {
   if (!biz) { if (byThePiece) notePieceWage(world, net); else noteCitySpend(world, net); }
 
   applyRoleSpecials(world, c, job, biz);
+  // What the shift put in the air, after whatever fitting was on the stack —
+  // and, on the same hour, what it taught the hands that worked it. Emission
+  // comes from work and not from a building standing there, so a closed post
+  // never reaches this line (`docs/ENVIRONMENT.md` §1); three shifts under a
+  // set of works make a worker one of the trained hands the effect is scaled
+  // by, and familiar with the subject for the rest of their life
+  // (`docs/PROGRESS.md` §§3-4).
+  recordShiftEmission(world, job);
+  trainShift(world, cId, biz ? biz.id : null);
   growSkill(world, c, job);
   c.needs.purpose = clamp(c.needs.purpose + 8, 0, 100);
   c.needs.rest = clamp(c.needs.rest - 4, 0, 100);

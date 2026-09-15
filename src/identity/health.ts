@@ -26,6 +26,11 @@ import { transfer } from '../economy/treasury.ts';
 import { DILIGENT_SHIFTS_PER_DAY } from '../citizens/character.ts';
 import { CRITICAL_NEED, computeMood } from '../citizens/citizen.ts';
 import { activeOf, openDisaster } from '../world/disasters.ts';
+// What the city has built for, and what it is breathing (`docs/PROGRESS.md`
+// §2, `docs/ENVIRONMENT.md` §2). Every one of these is 1, or the number the
+// engine already had, until somebody digs a drain or works a shift.
+import { glitchOnsetMultiplier, glitchSpreadMultiplier, outbreakThreshold, wardCureChance } from '../progress/effects.ts';
+import { glitchAirFactor } from '../environment/readings.ts';
 
 /** What a glitched citizen produces in a shift, as a share of a well one. */
 export const GLITCH_PRODUCTIVITY = 0.5;
@@ -129,6 +134,11 @@ export function glitchChance(world: World, c: Citizen): number {
   if (c.lifeStage === 'elder') p *= 2;
   if (world.season === 'frost' || world.weather === 'storm') p *= 1.5;
   if ((c.homeTier ?? 0) >= 3) p *= 0.5;
+  // What the district is breathing and drinking (`docs/ENVIRONMENT.md` §2):
+  // 1 in clean air, and half again where the smoke settles. Sanitation's ×0.6
+  // still bites, and the cap still caps.
+  p *= glitchAirFactor(world, c.district);
+  p *= glitchOnsetMultiplier(world);
   return clamp(p, 0, MAX_GLITCH_CHANCE);
 }
 
@@ -282,7 +292,8 @@ export function treat(world: World, cId: CitizenId): ActionResult {
   if (!isGlitched(c)) {
     return OK(`You were seen at ${venue.place} for ${HOSPITAL_FEE} ℓ (energy and rest +${TREATMENT_RESTORE}).`);
   }
-  if (chance(world, venue.cure)) {
+  // Anaesthesia, once the city has built for it: the Ward's own chance rises.
+  if (chance(world, wardCureChance(world, venue.cure))) {
     cureGlitch(world, c, venue.place);
     return OK(`${venue.place} cleared your glitch for ${HOSPITAL_FEE} ℓ (energy and rest +${TREATMENT_RESTORE}).`);
   }
@@ -302,7 +313,9 @@ export function spreadGlitches(world: World): void {
     if (c && alive.has(id) && isGlitched(c) && !isJailed(world, c)) carriers.push(c);
   }
   for (const carrier of carriers) {
-    const p = (carrier.homeTier ?? 0) >= SPREAD_SHELTER_TIER ? SPREAD_CHANCE / 2 : SPREAD_CHANCE;
+    const base = (carrier.homeTier ?? 0) >= SPREAD_SHELTER_TIER ? SPREAD_CHANCE / 2 : SPREAD_CHANCE;
+    // Sanitation, where the drains have been dug and hands trained to them.
+    const p = base * glitchSpreadMultiplier(world);
     for (const other of householdAndNeighbours(world, carrier, alive)) {
       if (isGlitched(other) || isJailed(world, other)) continue;
       if (chance(world, p)) strikeGlitch(world, other, `caught from ${carrier.name}`);
@@ -333,7 +346,8 @@ export function checkOutbreaks(world: World): void {
   const cycle = (world.government?.cycle ?? 0) + 1;
   for (const d of world.openDistricts ?? Object.keys(world.districts) as DistrictId[]) {
     const glitched = glitchedIn(world, d);
-    if (glitched.length < OUTBREAK_GLITCHES) continue;
+    // Germ Theory raises what counts as an outbreak from three to five.
+    if (glitched.length < outbreakThreshold(world, OUTBREAK_GLITCHES)) continue;
     const key = `outbreak_${d}`;
     if (world.counters[key] === cycle) continue;
     if (activeOf(world, 'outbreak', d)) continue;

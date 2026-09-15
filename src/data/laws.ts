@@ -66,6 +66,74 @@ export const LAWS: Record<LawCode, Law> = {
     description: 'Spreading a claim about a citizen that is not true.' },
   L17: { code: 'L17', name: 'Insider trading', severity: 3, visibility: 0.25,
     description: 'Trading shares on what an office told you before the city was told.' },
+  // What goes past a gate, what is held after it, the paper that said
+  // otherwise, the hand that dealt without a licence and the secret taken for
+  // somebody else's city (`docs/UNDERWORLD.md` §7). All five are Track I: the
+  // load is seized and the person is not detained, and severity 5 alone is
+  // never exile (`docs/JUSTICE.md` §1). The visibilities are the ones
+  // `underworld/codes.ts` wrote them at, so putting them in the book changes
+  // what the Watch is told about them and not how often it sees one.
+  L26: { code: 'L26', name: 'Smuggling', severity: 3, visibility: 0.35,
+    description: 'Crossing a gate with a load the schedule does not admit, unmanifested. Where the restriction it broke is itself a 3, the report carries a 4.' },
+  L27: { code: 'L27', name: 'Contraband possession', severity: 2, visibility: 0.30,
+    description: 'Holding what the schedule does not admit. The goods are seized; the person is not detained, and an amnesty forgives the holding and nothing else.' },
+  L28: { code: 'L28', name: 'False manifest', severity: 3, visibility: 0.40,
+    description: 'A declaration that understates the quantity, the value or the kind of a load. The paper is a separate act from the crossing.' },
+  L29: { code: 'L29', name: 'Unlicensed dealing', severity: 2, visibility: 0.25,
+    description: "Trading goods as a business with no trading licence. Not CIVIL's L20, which is a reserved professional act." },
+  L30: { code: 'L30', name: 'Espionage', severity: 5, visibility: 0.30,
+    description: "Taking a city's secret under a foreign retainer. It is the retainer in the ledger that tells this from L41, and severity 5 alone is never exile." },
+  // Conscience, the door and the roll (`docs/CREEDS.md` §9). All four are
+  // Track I: a thin case and a full docket are what a creed costs the city, and
+  // neither is a danger to anybody's person. L31 is charged only after a bench
+  // has refused the ground; a refusal a bench accepts is no offence at all.
+  L31: { code: 'L31', name: 'Refusal of testimony', severity: 2, visibility: 1.0,
+    description: 'Declining a lawful summons about what you saw, after a bench has heard the ground and refused it. The refusal is public from the hour it is made.' },
+  L32: { code: 'L32', name: 'Obstruction of a warrant', severity: 3, visibility: 1.0,
+    description: 'Keeping a door the Court has opened. Standing at a door is not an offence until a warrant has issued, and then everybody still standing there commits one.' },
+  L33: { code: 'L33', name: 'Harbouring', severity: 4, visibility: 0.8,
+    description: 'Sheltering a terror or erasure convict, or holding a sanctuary the congregation has voted ended. The whole Expanse agrees that line.' },
+  L34: { code: 'L34', name: 'Coerced adoption', severity: 4, visibility: 0.4,
+    description: 'Making a wage, a job, a tenancy or aid conditional on belonging to a creed. Doing it by threat of harm is P06 instead, and custody.' },
+  // The charter's own (`docs/POLITICS.md` §9). Four of the six are proved by
+  // reading a public register rather than by anybody seeing an act, which is
+  // why they are so visible — and why every one of them is a new way to be
+  // wrongly convicted (`REGISTRY.md` §8).
+  L35: { code: 'L35', name: 'Unlicensed printing', severity: 2, visibility: 0.7,
+    description: 'Printing where the charter requires a licence. An edition is a public thing; so is the register of papers.' },
+  L36: { code: 'L36', name: 'Defiance of a press order', severity: 3, visibility: 0.8,
+    description: 'Printing a restrained subject, or reopening a paper the Council closed. The order and the edition are both on the record.' },
+  L37: { code: 'L37', name: 'False return', severity: 3, visibility: 0.35,
+    description: 'A register of interests that omits a property, a business, shares or a creditor. The register and the deeds are both public, and they are compared.' },
+  L38: { code: 'L38', name: 'Obstruction of a record', severity: 4, visibility: 0.5,
+    description: 'Destroying, altering or withholding a record lawfully asked for. A refusal with a reason is lawful; a body that answers nothing at all is this.' },
+  L39: { code: 'L39', name: 'Sitting unlawfully', severity: 4, visibility: 1.0,
+    description: 'Holding an office after removal, or a body sitting past its term with no election called. The roll of who sat is public every day.' },
+  L40: { code: 'L40', name: 'Interference with a convention or a ballot', severity: 5, visibility: 0.5,
+    description: "Obstructing a delegate, or tampering with the signatures on a petition. The charter's own procedure is what is being taken." },
+  // What the city knows (`docs/PROGRESS.md` §8). L41 is charged by
+  // `UNDERWORLD.md` §5's `steal_secret`, which is a different layer's action;
+  // the number is claimed here so nobody reuses it.
+  L41: { code: 'L41', name: 'Industrial espionage', severity: 3, visibility: 0.25,
+    description: "Taking a guild's or a business's secret by watching a workshop, for yourself or for a business of this city." },
+  L42: { code: 'L42', name: 'False finding', severity: 2, visibility: 0.5,
+    description: 'Publishing a paper for a programme that found nothing, or claiming a technology the city does not hold. The register says otherwise, and it is public.' },
+  // The estate and the name (`docs/GENERATIONS.md` §8). Both are found by
+  // reading a register against the Hall's own tree, which is why they are seen
+  // as often as they are — and why each is a new way to be wrongly convicted.
+  L43: { code: 'L43', name: 'Concealment of an estate', severity: 3, visibility: 0.5,
+    description: 'An executor under-declaring what an estate held. The Hall keeps the tree, the Exchange keeps the filings, and the arithmetic does not match.' },
+  L44: { code: 'L44', name: 'False claim of descent', severity: 2, visibility: 1.0,
+    description: "Claiming a dormant house you cannot show descent from. The Hall's family tree is public and permanent, so the claim is checked as it is made." },
+  // What the city's shifts leave in the air, the river and the land
+  // (`docs/ENVIRONMENT.md` §9). All three are offences against the city:
+  // a bypassed fitting takes from its regard, not from anybody's safety.
+  L45: { code: 'L45', name: 'Unlawful discharge', severity: 3, visibility: 0.25,
+    description: 'Dumping to the river, or working a shift with the fitting bypassed. A downstream reading to compare against makes it very much easier to see.' },
+  L46: { code: 'L46', name: 'False abatement return', severity: 3, visibility: 0.4,
+    description: 'A fitting signed as maintained on a day it was worked open, or works certified undone. The maintenance book is public and permanent.' },
+  L47: { code: 'L47', name: 'Undeclared interest', severity: 3, visibility: 1.0,
+    description: 'Voting a zoning question that moves land you or your household hold, without filing the holding. The register and the roll of votes are both public.' },
 };
 
 /** Every code the books hold, retired ones included. */

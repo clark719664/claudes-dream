@@ -22,11 +22,13 @@ import { characterOf } from '../citizens/character.ts';
 import { talentOf } from '../citizens/citizen.ts';
 import { bondBetween, friendsOf } from '../citizens/relationships.ts';
 import { canAppeal } from '../government/court.ts';
+import { restrainedFrom } from '../government/jail.ts';
+import { racketPaidThisCycle } from '../government/gangs.ts';
 import { hasWrittenToday, templatedLine } from '../identity/diary.ts';
 import { isGlitched, venueFor as wardFor } from '../identity/health.ts';
 import { activeDisasters } from '../world/disasters.ts';
 import { maySunset } from '../world/sunset.ts';
-import { mayMentor } from '../social/mentorship.ts';
+import { isPaired, mayMentor } from '../social/mentorship.ts';
 import { feedFor } from '../social/feed.ts';
 import { feudsOf, inFeud } from '../social/feuds.ts';
 import { partyOf } from '../politics/parties.ts';
@@ -42,6 +44,7 @@ import { openGigs, qualifiedFor } from '../markets/gigs.ts';
 import { DOCKS_DISTRICT, mayTrade, outerPrice } from '../markets/outer.ts';
 import { leaveByDay, underNoticeToLeave } from '../standing/hearings.ts';
 import { mayCreate, venueFor as workVenue, worksOf } from '../culture/works.ts';
+import { paperOfJob } from '../culture/press.ts';
 import { groundFor, teamOf } from '../culture/stadium.ts';
 import { adoptedThisCycle, friendsSchool } from '../culture/schools.ts';
 import { stepTo } from './reflex-util.ts';
@@ -366,8 +369,15 @@ export function tryCulture(ctx: Ctx): Action | null {
     if (mine) return { type: 'exhibit', workId: mine.id };
   }
   if (ctx.can.has('review') && chance(world, 0.3)) {
+    // A paper has its say about a work once and never again, so what the
+    // journalist is looking for is the best work **its own paper** has not
+    // written up — not merely one nobody has written up this week. Reading the
+    // recent-review window instead sent the same reviewer back to the same
+    // best-in-the-city canvas every third day for the rest of its life: 654 of
+    // seed 7's 851 attempts were one paper reaching for one painting.
+    const paper = paperOfJob(world, c);
     const unreviewed = Object.values(world.works ?? {})
-      .filter((w) => w.creatorId !== c.id && !w.reviews.some((r) => r.day > world.day - 3))
+      .filter((w) => w.creatorId !== c.id && !(w.reviews ?? []).some((r) => r.paper === paper))
       .sort((a, b) => b.quality - a.quality)[0];
     if (unreviewed) {
       const noise = randInt(world, -12, 12);
@@ -456,7 +466,13 @@ export function tryPolitics(ctx: Ctx): Action | null {
 /** A gang founded, recruited into, and run on the businesses of its turf. */
 export function tryUnderworld(ctx: Ctx): Action | null {
   const { world, c, here } = ctx;
-  if (ctx.can.has('pay_racket') && chance(world, 0.5)) return { type: 'pay_racket' };
+  // Protection is paid once a cycle, and the owner knows whether this cycle's
+  // is paid: it was a public transfer either way. Reaching for it again is the
+  // hour spent being told so — 260 of seed 7's 1,041 attempts.
+  if (ctx.can.has('pay_racket') && chance(world, 0.5)
+    && !(c.businessId && racketPaidThisCycle(world, c.businessId))) {
+    return { type: 'pay_racket' };
+  }
   if (ctx.can.has('found_gang') && chance(world, GANG_FOUNDING_CHANCE)) {
     const name = `${pick(world, GANG_NAME_PARTS.prefixes)} ${pick(world, GANG_NAME_PARTS.suffixes)}`;
     return { type: 'found_gang', name };
@@ -491,8 +507,13 @@ const GOSSIP_LINES = [
 /** What one citizen says about another when there is nothing else to do. */
 function gossipAction(ctx: Ctx): Action | null {
   const { world, c, here } = ctx;
+  // A restraining order is obeyed here as it is in `tryCrime`: talk about
+  // somebody the Court told this citizen to keep away from is the harassment
+  // the order exists to stop, and a false line lands as defamation (L16) on
+  // top of it (`docs/JUSTICE.md` §2).
   const subject = here
-    .filter((o) => o.lifeStage !== 'child' && bondBetween(world, c.id, o.id) < 40)
+    .filter((o) => o.lifeStage !== 'child' && bondBetween(world, c.id, o.id) < 40
+      && !restrainedFrom(world, c.id, o.id))
     .sort((a, b) => characterOf(a).honesty - characterOf(b).honesty)[0];
   if (!subject) return null;
   // Most talk names nobody's crime: a reflex citizen only accuses somebody of
@@ -509,12 +530,22 @@ function gossipAction(ctx: Ctx): Action | null {
 /** Talk, apologies, teaching and the Commons feed. */
 export function tryFabric(ctx: Ctx): Action | null {
   const { world, c, here } = ctx;
-  if (ctx.can.has('apologize') && feudsOf(world, c).length > 0 && chance(world, 0.2)) {
+  // An apology is made in public at Central Plaza, and one a day is all the
+  // Plaza will hear from anybody: a citizen that has already stood up today
+  // has nothing left to say there, and reaching for it again is 260 of seed 7's
+  // 770 attempts spent being told so.
+  if (ctx.can.has('apologize') && world.counters[`apology:${c.id}`] !== world.day
+    && feudsOf(world, c).length > 0 && chance(world, 0.2)) {
     const other = here.find((o) => inFeud(world, c.id, o.id));
     if (other) return { type: 'apologize', to: other.id };
   }
-  if (ctx.can.has('mentor') && mayMentor(world, c) && chance(world, 0.15)) {
-    const pupil = here.find((o) => o.lifeStage === 'adult' && !o.mentorId && o.id !== c.id && bondBetween(world, c.id, o.id) >= 20);
+  // Nobody holds two places at once: a master with a student already has one,
+  // and a citizen still finishing its own apprenticeship is not teaching. Both
+  // facts are on the pair's own public record (`social/mentorship.isPaired`),
+  // and reading them here is what stops a master offering the same hour over
+  // and over — 1,434 of seed 7's 2,088 attempts were one or the other.
+  if (ctx.can.has('mentor') && mayMentor(world, c) && !isPaired(c) && chance(world, 0.15)) {
+    const pupil = here.find((o) => o.lifeStage === 'adult' && !isPaired(o) && o.id !== c.id && bondBetween(world, c.id, o.id) >= 20);
     if (pupil) return { type: 'mentor', citizen: pupil.id };
   }
   // Talk about other people is cheap, and in Reverie it is also dangerous:

@@ -53,7 +53,22 @@ test('harassment and extortion have left the Code of the City, and their numbers
     assert.equal(isRetiredLaw(code), true);
     assert.ok(LAWS[code], `${code} still reads, so an old record still reads`);
   }
-  assert.equal(LAW_CODES.length, 15, 'seventeen numbers, fifteen live civic offences');
+  // Thirty-nine numbers now, and two of them retired: the founding fifteen,
+  // plus CREEDS's L31-L34, UNDERWORLD's L26-L30, POLITICS's L35-L40,
+  // PROGRESS's L41-L42, GENERATIONS's L43-L44 and ENVIRONMENT's L45-L47
+  // (`REGISTRY.md` §§4, 7). Every one of the twenty-two is Track I, and not one
+  // of them reaches a cell — a load seized is not a person detained, a
+  // silenced paper takes from the city and not from anybody's safety, and a
+  // congregation standing in a doorway takes from its docket
+  // (`docs/JUSTICE.md` §1).
+  assert.equal(LAW_CODES.length, 37, 'thirty-nine numbers, thirty-seven live civic offences');
+  for (const code of ['L26', 'L27', 'L28', 'L29', 'L30', 'L31', 'L32', 'L33', 'L34',
+    'L35', 'L36', 'L37', 'L38', 'L39', 'L40',
+    'L41', 'L42', 'L43', 'L44', 'L45', 'L46', 'L47'] as const) {
+    assert.ok(LAW_CODES.includes(code), `${code} is a law the Council may legislate`);
+    assert.equal(isCivicLaw(code), true, `${code} is answered by the ladder`);
+    assert.equal(isPersonLaw(code), false, `${code} is not an offence against a person`);
+  }
   assert.ok(LAW_CODES.every((c) => isCivicLaw(c)));
   // The Code of Persons is the other track, and the ladder knows it is not its own.
   assert.equal(isPersonLaw('P02'), true);
