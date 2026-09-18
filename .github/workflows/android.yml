@@ -1,0 +1,61 @@
+name: Build APK
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Create a signing key if the repo has none
+        run: |
+          if [ ! -f keystore/sideload.jks ]; then
+            mkdir -p keystore
+            keytool -genkeypair -v \
+              -keystore keystore/sideload.jks -storetype PKCS12 \
+              -alias sideload -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass sideload -keypass sideload \
+              -dname "CN=Hum Sideload, OU=Hum, O=Hum, L=Somewhere, ST=Somewhere, C=US"
+            echo "NOTE: generated a throwaway key. Commit keystore/sideload.jks if you want"
+            echo "every build to install as an update over the previous one."
+          fi
+
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Name the APK
+        id: apk
+        run: |
+          APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          cp "$APK" hum.apk
+          echo "path=hum.apk" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hum-APK
+          path: hum.apk
+          if-no-files-found: error
+
+      - name: Attach APK to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: hum.apk
