@@ -17,6 +17,7 @@ import {
   PROPERTY_TAX_MAX, RESERVE_MAX, WEALTH_TAX_MAX, propertyTaxRate, reserveTarget, wealthTaxRate,
 } from '../markets/levers.ts';
 import { bondBetween, friendsOf } from '../citizens/relationships.ts';
+import { STIPEND, chestBalance, claimants } from '../society/chest.ts';
 import { hasUndetectedRecentOffence, topStories } from '../sim/chronicle.ts';
 import { REPORT_WINDOW_TICKS } from '../government/watch.ts';
 import { councillorDisposition, impliedPlatform, isCouncillor, treasuryDeficitShare, voterPreference } from '../government/council.ts';
@@ -176,6 +177,12 @@ export const NOTICEABLE_DEFICIT = 0.1;
 
 /** A Treasury too thin for a reserve target to mean anything. */
 export const RESERVE_FLOOR = 2_000;
+/** The most a single charity motion may ask for; `council.ts` refuses more. */
+export const CHARITY_MAX = 20_000;
+/** Days of stipend a grant is sized to cover, the share of the Treasury it may not pass, and how long before the Council is asked again. */
+export const CHARITY_DAYS = 7;
+export const CHARITY_TREASURY_SHARE = 0.01;
+export const CHARITY_COOLDOWN_DAYS = 12;
 /**
  * The line a councillor draws when the balance is sliding: not less than this
  * share of what the city holds today. A reserve set at the whole of the
@@ -274,6 +281,50 @@ export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
   if (vacancies(world)[1] === 0 && world.treasury.balance > 5000) options.push({ kind: 'public_works', value: 500, summary: 'Fund 500 ℓ of public works to build more homes' });
   if (healthy && g.publicWorksFund < PUBLIC_WORKS_TOPUP) {
     options.push({ kind: 'public_works', value: PUBLIC_WORKS_TOPUP, summary: `Commit ${PUBLIC_WORKS_TOPUP} ℓ to the public works fund; the city has building to do` });
+  }
+  // The Community Chest has exactly two ways to be filled: a citizen with
+  // something spare who remembers it, and this motion. Until the expansion
+  // layers landed the first was enough — the Chest held 12,186 ℓ at day 120 on
+  // seed 7. It is not enough any more: a citizen's spare lumens now go to a
+  // mutual's dues and a creed's fund first (698 `pay_dues` against 94
+  // `donate` over sixty days), both of which pay out to their own members
+  // rather than to whoever is on the street. So the Chest runs at 0 for the
+  // whole run and `dailyChest` prints that citizens in hardship went without,
+  // while `enactCharity` — the backstop written for exactly this — sits
+  // unreachable, because the only thing that tables a motion in a scripted
+  // city is this function and it never offered one.
+  //
+  // A councillor proposes charity on the plain public facts: the register
+  // shows citizens in hardship, the Chest cannot pay them, and the Treasury
+  // can. Sized to carry today's claimants for a fortnight rather than to a
+  // round number, so a city with two wards asks for little and a city in a
+  // bad month asks for what a bad month costs.
+  // Read off this morning's rollover rather than the roll at this instant: by
+  // the time the Council sits, a citizen who went without a stipend at dawn
+  // has often earned past the hardship line, so `claimants` here reports none
+  // on a day seven people were turned away.
+  const needy = world.counters.chestUnpaidDay === world.day ? (world.counters.chestUnpaid ?? 0) : 0;
+  // A grant has to be bounded three ways or it is a pump, not a relief. The
+  // Chest pays *every* claimant *every* morning and `stipendToday` raises the
+  // rate to STIPEND_MAX while it is flush, so a fat Chest empties in a few
+  // days and asks again — and the first version of this, granting a fortnight
+  // of stipend whenever the Chest ran dry, turned the Treasury from +28 ℓ a
+  // day over the settled stretch into −248 ℓ a day, roughly 43,000 ℓ across
+  // 155 days on seed 7. Relief the city cannot pay for is not relief.
+  //
+  // So: only out of a Treasury that is actually healthy (not merely one that
+  // is not yet desperate), never more than CHARITY_TREASURY_SHARE of what the
+  // city holds, and not again while a recent grant is still being spent.
+  const lastGrant = world.counters.charityGrantDay;
+  const cooled = lastGrant === undefined || world.day - lastGrant >= CHARITY_COOLDOWN_DAYS;
+  if (needy > 0 && healthy && cooled) {
+    const owed = needy * STIPEND * CHARITY_DAYS;
+    const affordable = Math.max(0, Math.floor(world.treasury.balance) - RESERVE_FLOOR);
+    const share = Math.floor(world.treasury.balance * CHARITY_TREASURY_SHARE);
+    const grant = Math.min(owed, affordable, share, CHARITY_MAX);
+    if (chestBalance(world) < needy * STIPEND && grant >= STIPEND) {
+      options.push({ kind: 'charity', value: grant, summary: `Put ${grant} ℓ into the Community Chest; ${needy} citizen${needy === 1 ? '' : 's'} in hardship and nothing in it to pay them` });
+    }
   }
   // The three levers the metropolis added and nothing in a scripted city ever
   // reached for. `markets/levers.ts` has held them since the metropolis layer
@@ -411,6 +462,17 @@ export function proposalFromPlatform(ctx: Ctx): ReflexProposal | null {
   // every time. Everything else on the paper can wait a day. Which of them a
   // councillor believes in is still their own platform's business, and the
   // Council still has to vote for it.
+  // Citizens going without a stipend is the one item on this paper that is
+  // measured in people rather than in lumens, and it is the one the uniform
+  // pick buried worst: the charity motion competed with twenty-odd levers, so
+  // across ninety days on seed 7 it was tabled exactly never while the Chest
+  // sat at 0 and four citizens a day went unpaid. It gets the same treatment
+  // the reserve got, and for the same reason — not because a councillor must
+  // care, but because a councillor who does care needs the motion to reach the
+  // table often enough to be voted down on its merits rather than lost in the
+  // shuffle. The Council still decides.
+  const relief = options.filter((o) => o.kind === 'charity');
+  if (relief.length > 0 && chance(world, 0.6)) return pick(world, relief);
   if (!healthy && options.length > 1) {
     const reserve = options.filter((o) => o.kind === 'reserve');
     if (reserve.length > 0 && chance(world, 0.7)) return pick(world, reserve);

@@ -160,6 +160,14 @@ export function dailyChest(world: World): void {
     remember(world, citizen.id, 'money', `The Community Chest paid you a hardship stipend of ${amt} ℓ (${hardship}).`);
   }
   const unpaid = list.length - count;
+  // What the morning actually came to, kept where anybody can read it. The
+  // claimant roll itself is a snapshot of this instant: a citizen in hardship
+  // at dawn has often earned its way back over the wage line by the time the
+  // Council sits at hour 14, so a councillor reading `claimants` at the table
+  // sees an empty roll on a day seven people went without. The count that
+  // matters is the one the Chest failed to pay, and it belongs in the record.
+  world.counters.chestUnpaidDay = world.day;
+  world.counters.chestUnpaid = unpaid;
   if (count > 0) {
     emit(world, 'paid', `The Community Chest paid ${count} hardship stipend${count === 1 ? '' : 's'} (${formatLumens(paid)}); ${formatLumens(chestBalance(world))} remain.`,
       list.slice(0, count).map((r) => r.citizen.id), 0.1, { paid, count, chest: chestBalance(world) });
@@ -189,6 +197,9 @@ export function enactCharity(world: World, value: number): string {
   if (amount <= 0 || !transfer(world, 'treasury', 'chest', amount, 'donation', 'Council charity grant')) {
     return `The Treasury could spare nothing for the Community Chest (it holds ${formatLumens(chestBalance(world))}).`;
   }
+  // When the Council last opened the Treasury for this, so a scripted
+  // councillor can let a grant be spent before asking for another.
+  world.counters.charityGrantDay = world.day;
   const short = amount < wanted ? ', all the Treasury could spare' : '';
   return `${formatLumens(amount)} moves from the Treasury to the Community Chest${short}; the Chest now holds ${formatLumens(chestBalance(world))}.`;
 }

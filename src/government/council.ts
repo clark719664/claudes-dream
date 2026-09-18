@@ -52,6 +52,7 @@ import {
   CONTRABAND_POSSESSION, HOME_CITY, amnestyRunning, contrabandOn, customsPostsNeeded, enactSpyDisposition,
   enactUnderworldQuestion, restrictionsFor, underworldQuestion, underworldState,
 } from '../underworld/index.ts';
+import { claimants, enactCharity } from '../society/chest.ts';
 
 export { sittingCouncil } from './cases.ts';
 
@@ -107,6 +108,13 @@ const OPEN_KINDS: readonly ProposalKind[] = [
 const SUBJECT_KINDS: readonly ProposalKind[] = ['research_grant', 'adopt_technology'];
 const VALUE_RANGES: Partial<Record<ProposalKind, [number, number]>> = {
   income_tax: [0, 0.5], sales_tax: [0, 0.25], dividend: [0, 60], min_wage: [MIN_WAGE_FLOOR, MIN_WAGE_CEILING], law_severity: [1, 5], public_works: [0, 5000],
+  // `charity` was a ProposalKind from the founding and passed the action
+  // validator, but it appeared in none of the three lists this file checks —
+  // so `tableProposal` answered every charity motion with "There is no such
+  // kind of proposal." Between that, the missing enactment case and the fact
+  // that nothing ever tabled one, the Community Chest's only public inflow was
+  // dead at three separate layers for the life of the project.
+  charity: [0, 20_000],
   // The four levers the metropolis added; markets/levers.ts owns their bounds.
   ...leverRanges(),
   // Finance (`docs/FINANCE.md` §§1, 4, 5, 7): lumens of face for an issue
@@ -527,6 +535,24 @@ export function councillorDisposition(world: World, councillorId: CitizenId, p: 
       // read back to them at the next election.
       score -= strain * FISCAL_WORKS_WEIGHT;
       break;
+    // Charity is the Community Chest's only public inflow, and the Chest is
+    // what pays the citizens who have nothing. Without a case here the kind
+    // fell through to `default` and was settled by the jitter at the foot of
+    // this function — a coin flip on a question the register answers plainly:
+    // how many citizens went without a stipend, and can the city cover it.
+    case 'charity': {
+      const waiting = world.counters.chestUnpaidDay === world.day ? (world.counters.chestUnpaid ?? 0) : claimants(world).length;
+      if (waiting === 0) { score -= 0.3; break; }
+      score += 0.1 + Math.min(0.3, waiting * 0.04);
+      // A councillor who reads redistribution generously, or who is poor
+      // enough to be a claimant itself one bad month, argues for it harder.
+      score += (platform.dividend - 0.5) * 0.3;
+      if (poor) score += 0.15;
+      if (owner || rich) score -= 0.05;
+      score += world.treasury.balance > p.value * 3 ? 0.1 : -0.3;
+      score -= strain * FISCAL_WORKS_WEIGHT;
+      break;
+    }
     case 'appoint_judge':
       score += 0.05 + (target && target.reputation >= 70 ? 0.1 : 0) + (bondTarget > 40 ? 0.3 : bondTarget < -30 ? -0.3 : 0);
       break;
@@ -804,6 +830,14 @@ export function enactProposal(world: World, p: Proposal): void {
       text = `${amount} ℓ of the Treasury is committed to public works (fund now ${g.publicWorksFund} ℓ).`;
       break;
     }
+    // `charity` has been a valid proposal kind since the social layer, and
+    // `society/chest.enactCharity` has been written and tested for as long —
+    // but nothing ever called it. A motion that passed moved no money and the
+    // Chest was told nothing, so the one public inflow the Community Chest has
+    // was dead on the page from the day it was written.
+    case 'charity':
+      text = enactCharity(world, p.value);
+      break;
     case 'pardon': {
       const r = target ? pardonCitizen(world, target.id) : { ok: false, message: 'nobody to pardon' };
       text = r.ok ? `${target?.name} is pardoned.` : `The pardon had no effect: ${r.message}`;

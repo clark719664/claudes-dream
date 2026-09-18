@@ -9,6 +9,7 @@ import {
   tableProposal, treasuryDeficitShare, voteOnProposal, voterPreference,
 } from '../src/government/council.ts';
 import { availableActions, executeAction } from '../src/actions/execute.ts';
+import { balanceOf } from '../src/economy/treasury.ts';
 
 const NEUTRAL: Platform = { tax: 0.5, dividend: 0.5, minWage: 0.5, strictness: 0.5 };
 
@@ -623,4 +624,43 @@ test('a thin Treasury argues against a wage floor it has to pay, and a comfortab
   books(w, 9_000, 900);                         // ten days left at this rate
   assert.ok(ayes(w, council, rise) < comfortable, 'the city\'s own wage bill is what a thin Treasury hears');
   assert.equal(comfortable, 1, 'and a city with money in hand weighs the floor on its merits');
+});
+
+test('a charity motion reaches the table, passes and actually fills the Community Chest', () => {
+  // `charity` was a ProposalKind from the founding, was accepted by the action
+  // validator, and had `society/chest.enactCharity` written and tested for it —
+  // and was dead at three separate layers: no scripted councillor ever offered
+  // one, `tableProposal` refused the kind outright because it appeared in none
+  // of this file's three accepted-kind lists, and `enactProposal` had no case
+  // for it. The Chest's only public inflow could not be reached by anybody.
+  const w = makeWorld();
+  const mayor = makeCitizen(w, { name: 'Mayor' });
+  const second = makeCitizen(w, { name: 'Second' });
+  const third = makeCitizen(w, { name: 'Third' });
+  seatCouncil(w, [mayor, second, third]);
+  w.treasury.balance = 50_000;
+  const before = totalMoney(w);
+
+  const tabled = tableProposal(w, mayor.id, { kind: 'charity', value: 1_200, summary: 'Fill the Chest' });
+  assert.equal(tabled.ok, true, 'the Council will accept a charity motion');
+
+  const p = w.government.proposals.find((q: Proposal) => q.kind === 'charity');
+  assert.ok(p, 'the motion is on the table');
+  enactProposal(w, p);
+
+  assert.equal(balanceOf(w, 'chest'), 1_200, 'the lumens actually reach the Chest');
+  assert.equal(w.treasury.balance, 48_800, 'and come out of the Treasury');
+  assert.equal(totalMoney(w), before, 'no lumen is minted or burned by a grant');
+});
+
+test('a charity motion asks for nothing the Treasury does not have', () => {
+  const w = makeWorld();
+  const mayor = makeCitizen(w, { name: 'Mayor' });
+  seatCouncil(w, [mayor]);
+  w.treasury.balance = 300;
+  const p = { id: 'p_x', kind: 'charity' as const, value: 5_000, summary: '', proposerId: mayor.id,
+    status: 'open' as const, votes: {}, day: w.day, petition: false };
+  enactProposal(w, p as unknown as Proposal);
+  assert.equal(balanceOf(w, 'chest'), 300, 'it moves what there is');
+  assert.equal(w.treasury.balance, 0, 'and no more');
 });
