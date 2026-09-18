@@ -25,14 +25,21 @@ sorts it into songs, albums, artists and folders by itself. No accounts, no clou
 
 - Android 7.0 (API 24) or newer.
 
-## Getting the APK
+## Getting the APK — from your phone, no computer needed
 
-The APK is built by GitHub Actions — nothing to install on your computer.
+Every push builds the APK on GitHub Actions and publishes it as a release, so the download is a
+plain `.apk` file you can tap.
 
-1. Open the **Actions** tab of this repo.
-2. Click the most recent **Build APK** run for your branch.
-3. Download the **Hum-APK** artifact (a zip containing `hum.apk`).
-4. Unzip it and move `hum.apk` to your phone.
+1. On your phone, open the repo's **Releases** page and pick **Hum (latest build)**:
+   <https://github.com/clark719664/claudes-dream/releases/tag/latest>
+2. Tap `hum.apk` under Assets. (Sign in to GitHub in the browser first if the repo is private.)
+3. Open the download from the notification shade.
+
+That's the whole loop — build in the cloud, download on the phone, install. A computer is only
+needed if you want to change the code yourself.
+
+The same APK is also attached to each Actions run as the **Hum-APK** artifact, but that one comes
+as a zip, so the release link above is the easier route on mobile.
 
 To cut a versioned release with the APK attached, push a tag starting with `v`:
 
@@ -42,9 +49,9 @@ git tag v1.0 && git push origin v1.0
 
 ## Installing it on your phone (sideloading)
 
-1. Open the APK from your Files app or notification shade.
-2. Android will ask whether to allow installs from that app — tap **Settings**, turn on
-   **Allow from this source**, then go back and tap **Install**.
+1. Open the APK from the notification shade or your Files app.
+2. Android will ask whether to allow installs from that app (your browser, usually) — tap
+   **Settings**, turn on **Allow from this source**, then go back and tap **Install**.
 3. Open Hum and tap **Find my music**, then allow access to audio files. That's it.
 
 On Android 13+ the permission is "Music and audio". On Android 12 and below it's "Files and media".

@@ -6,6 +6,9 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -54,7 +57,26 @@ jobs:
           path: hum.apk
           if-no-files-found: error
 
-      - name: Attach APK to release
+      # A release gives a plain .apk download link that installs straight from a phone
+      # browser — no zip to unpack, unlike an Actions artifact.
+      - name: Publish the latest APK as a release
+        if: github.ref == format('refs/heads/{0}', 'claude/android-music-player-y9ksd1')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Hum (latest build)
+          body: |
+            Newest build of Hum, straight from the branch.
+
+            **Installing from your phone:** tap `hum.apk` below, then open the download.
+            Android will ask whether to allow installs from your browser — allow it, then
+            tap Install. Open Hum and tap "Find my music".
+
+            Built from commit ${{ github.sha }}.
+          prerelease: true
+          files: hum.apk
+
+      - name: Attach APK to a version tag
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
