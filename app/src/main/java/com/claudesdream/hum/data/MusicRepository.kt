@@ -80,7 +80,7 @@ class MusicRepository(context: Context) {
     }
 
     private fun buildLibrary(songs: List<Song>): Library {
-        val byTitle = songs.sortedWith(compareBy<Song>(String.CASE_INSENSITIVE_ORDER) { it.title })
+        val byTitle = songs.sortedWith(compareBy<Song, String>(String.CASE_INSENSITIVE_ORDER) { it.title })
 
         val albums = songs
             // Group by album id where MediaStore has one, otherwise by name so loose downloads
@@ -100,7 +100,7 @@ class MusicRepository(context: Context) {
                     songs = ordered,
                 )
             }
-            .sortedWith(compareBy<Album>(String.CASE_INSENSITIVE_ORDER) { it.name })
+            .sortedWith(compareBy<Album, String>(String.CASE_INSENSITIVE_ORDER) { it.name })
 
         val artists = songs
             .groupBy { it.artist }
@@ -109,10 +109,10 @@ class MusicRepository(context: Context) {
                     name = name,
                     albumCount = tracks.map { it.album }.distinct().size,
                     artworkUri = tracks.first().artworkUri,
-                    songs = tracks.sortedWith(compareBy<Song>(String.CASE_INSENSITIVE_ORDER) { it.title }),
+                    songs = tracks.sortedWith(compareBy<Song, String>(String.CASE_INSENSITIVE_ORDER) { it.title }),
                 )
             }
-            .sortedWith(compareBy<Artist>(String.CASE_INSENSITIVE_ORDER) { it.name })
+            .sortedWith(compareBy<Artist, String>(String.CASE_INSENSITIVE_ORDER) { it.name })
 
         val folders = songs
             .groupBy { it.folderPath }
@@ -120,7 +120,7 @@ class MusicRepository(context: Context) {
                 MusicFolder(
                     path = path,
                     name = tracks.first().folderName,
-                    songs = tracks.sortedWith(compareBy<Song>(String.CASE_INSENSITIVE_ORDER) { it.title }),
+                    songs = tracks.sortedWith(compareBy<Song, String>(String.CASE_INSENSITIVE_ORDER) { it.title }),
                 )
             }
             .sortedWith(compareByDescending<MusicFolder> { it.songs.size }.thenBy { it.name })

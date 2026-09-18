@@ -56,11 +56,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         when (order) {
             SongSort.TITLE -> lib.songs
             SongSort.ARTIST -> lib.songs.sortedWith(
-                compareBy<Song>(String.CASE_INSENSITIVE_ORDER) { it.artist }
+                compareBy<Song, String>(String.CASE_INSENSITIVE_ORDER) { it.artist }
                     .thenBy(String.CASE_INSENSITIVE_ORDER) { it.title }
             )
             SongSort.ALBUM -> lib.songs.sortedWith(
-                compareBy<Song>(String.CASE_INSENSITIVE_ORDER) { it.album }
+                compareBy<Song, String>(String.CASE_INSENSITIVE_ORDER) { it.album }
                     .thenBy { if (it.track > 0) it.track else Int.MAX_VALUE }
             )
             SongSort.RECENTLY_ADDED -> lib.songs.sortedByDescending { it.dateAddedSec }
