@@ -3,15 +3,23 @@
   "private": true,
   "version": "0.1.0",
   "description": "Bridge an Android music app into a Discord voice channel.",
-  "workspaces": ["shared", "bridge", "bot"],
-  "engines": { "node": ">=20" },
+  "workspaces": [
+    "shared",
+    "bridge",
+    "bot",
+    "simulator"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
     "typecheck": "tsc -b",
     "bridge": "node bridge/dist/index.js",
     "bot": "node bot/dist/index.js",
-    "deploy-commands": "node bot/dist/deploy-commands.js"
+    "deploy-commands": "node bot/dist/deploy-commands.js",
+    "simulator": "node simulator/dist/index.js"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

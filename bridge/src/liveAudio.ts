@@ -22,7 +22,7 @@ export class LiveAudioStream extends Readable {
   private queuedBytes = 0;
   private timer: NodeJS.Timeout | null = null;
   private primed = false;
-  private closed = false;
+  private stopped = false;
 
   constructor(
     private readonly prebufferBytes: number,
@@ -33,7 +33,7 @@ export class LiveAudioStream extends Readable {
 
   /** Called by the session whenever the device sends PCM. */
   push_pcm(chunk: Buffer): void {
-    if (this.closed) return;
+    if (this.stopped) return;
     this.queue.push(chunk);
     this.queuedBytes += chunk.length;
     if (!this.primed && this.queuedBytes >= this.prebufferBytes) this.primed = true;
@@ -90,9 +90,9 @@ export class LiveAudioStream extends Readable {
   }
 
   override _read(): void {
-    if (this.timer || this.closed) return;
+    if (this.timer || this.stopped) return;
     this.timer = setInterval(() => {
-      if (this.closed) return;
+      if (this.stopped) return;
       // push() returning false is backpressure; we keep pacing regardless
       // because dropping live audio beats drifting behind real time.
       this.push(this.takeFrame());
@@ -107,8 +107,8 @@ export class LiveAudioStream extends Readable {
   }
 
   close(): void {
-    if (this.closed) return;
-    this.closed = true;
+    if (this.stopped) return;
+    this.stopped = true;
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;

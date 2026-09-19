@@ -1,8 +1,17 @@
 {
   "files": [],
   "references": [
-    { "path": "./shared" },
-    { "path": "./bridge" },
-    { "path": "./bot" }
+    {
+      "path": "./shared"
+    },
+    {
+      "path": "./bridge"
+    },
+    {
+      "path": "./bot"
+    },
+    {
+      "path": "./simulator"
+    }
   ]
 }
