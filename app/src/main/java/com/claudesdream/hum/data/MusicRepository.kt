@@ -10,6 +10,7 @@ import android.provider.MediaStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,9 +19,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * Owns the device library. Scans MediaStore, groups it into albums/artists/folders, and rescans
- * on its own whenever the system reports new audio — so a song downloaded while the app is open
- * shows up without the user doing anything.
+ * Owns the device library. Scans MediaStore, splits music from audiobooks, groups the rest into
+ * albums/artists/folders, and rescans on its own whenever the system reports new audio — so a song
+ * downloaded while the app is open shows up without the user doing anything.
  */
 class MusicRepository(context: Context) {
 
@@ -32,6 +33,10 @@ class MusicRepository(context: Context) {
     private val _library = MutableStateFlow(Library())
     val library: StateFlow<Library> = _library.asStateFlow()
 
+    /** Raw scan results, kept so re-categorising a file does not need a rescan. */
+    private var scanned: List<Song> = emptyList()
+    private var overrides: Map<Long, AudioKind> = emptyMap()
+
     private var observer: ContentObserver? = null
     private var pendingRescan: Boolean = false
 
@@ -39,9 +44,30 @@ class MusicRepository(context: Context) {
         scope.launch {
             scanLock.withLock {
                 _library.value = _library.value.copy(isScanning = true)
-                val songs = scanner.scan()
-                _library.value = buildLibrary(songs)
+                scanned = scanner.scan()
+                _library.value = buildLibrary(applyOverrides(scanned))
             }
+        }
+    }
+
+    /** Called when the user moves a file between Music and Audiobooks by hand. */
+    fun setKindOverrides(map: Map<Long, AudioKind>) {
+        if (map == overrides) return
+        overrides = map
+        scope.launch {
+            scanLock.withLock {
+                if (scanned.isNotEmpty()) {
+                    _library.value = buildLibrary(applyOverrides(scanned))
+                }
+            }
+        }
+    }
+
+    private fun applyOverrides(songs: List<Song>): List<Song> {
+        if (overrides.isEmpty()) return songs
+        return songs.map { song ->
+            val override = overrides[song.id]
+            if (override != null && override != song.kind) song.copy(kind = override) else song
         }
     }
 
@@ -73,16 +99,19 @@ class MusicRepository(context: Context) {
         if (pendingRescan) return
         pendingRescan = true
         scope.launch {
-            kotlinx.coroutines.delay(1_500)
+            delay(1_500)
             pendingRescan = false
             refresh()
         }
     }
 
-    private fun buildLibrary(songs: List<Song>): Library {
-        val byTitle = songs.sortedWith(compareBy<Song, String>(String.CASE_INSENSITIVE_ORDER) { it.title })
+    private fun buildLibrary(all: List<Song>): Library {
+        val music = all.filter { it.kind == AudioKind.MUSIC }
+        val spokenWord = all.filter { it.kind != AudioKind.MUSIC }
 
-        val albums = songs
+        val byTitle = music.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
+
+        val albums = music
             // Group by album id where MediaStore has one, otherwise by name so loose downloads
             // from the same album still land together.
             .groupBy { if (it.albumId > 0L) "id:${it.albumId}" else "name:${it.album.lowercase()}" }
@@ -100,27 +129,27 @@ class MusicRepository(context: Context) {
                     songs = ordered,
                 )
             }
-            .sortedWith(compareBy<Album, String>(String.CASE_INSENSITIVE_ORDER) { it.name })
+            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
 
-        val artists = songs
+        val artists = music
             .groupBy { it.artist }
             .map { (name, tracks) ->
                 Artist(
                     name = name,
                     albumCount = tracks.map { it.album }.distinct().size,
                     artworkUri = tracks.first().artworkUri,
-                    songs = tracks.sortedWith(compareBy<Song, String>(String.CASE_INSENSITIVE_ORDER) { it.title }),
+                    songs = tracks.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }),
                 )
             }
-            .sortedWith(compareBy<Artist, String>(String.CASE_INSENSITIVE_ORDER) { it.name })
+            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
 
-        val folders = songs
+        val folders = music
             .groupBy { it.folderPath }
             .map { (path, tracks) ->
                 MusicFolder(
                     path = path,
                     name = tracks.first().folderName,
-                    songs = tracks.sortedWith(compareBy<Song, String>(String.CASE_INSENSITIVE_ORDER) { it.title }),
+                    songs = tracks.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }),
                 )
             }
             .sortedWith(compareByDescending<MusicFolder> { it.songs.size }.thenBy { it.name })
@@ -130,11 +159,35 @@ class MusicRepository(context: Context) {
             albums = albums,
             artists = artists,
             folders = folders,
-            recentlyAdded = songs.sortedByDescending { it.dateAddedSec }.take(60),
+            books = buildBooks(spokenWord),
+            recentlyAdded = music.sortedByDescending { it.dateAddedSec }.take(60),
             isScanning = false,
             scanned = true,
         )
     }
+
+    /** One book per album, falling back to the folder for the untagged rips people actually have. */
+    private fun buildBooks(spokenWord: List<Song>): List<Book> = spokenWord
+        .groupBy { song ->
+            if (song.album != TagCleaner.UNKNOWN_ALBUM && song.album.isNotBlank()) {
+                "album:${song.album.lowercase()}"
+            } else {
+                "folder:${song.folderPath}"
+            }
+        }
+        .map { (key, chapters) ->
+            val ordered = chapters.sortedWith(AudioClassifier.chapterOrder())
+            val first = ordered.first()
+            Book(
+                id = key,
+                title = if (key.startsWith("album:")) first.album else first.folderName,
+                author = dominantArtist(chapters),
+                artworkUri = first.artworkUri,
+                chapters = ordered,
+                isPodcast = chapters.all { it.kind == AudioKind.PODCAST },
+            )
+        }
+        .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
 
     /** Compilations end up with one artist per track; show the one that appears most. */
     private fun dominantArtist(tracks: List<Song>): String {

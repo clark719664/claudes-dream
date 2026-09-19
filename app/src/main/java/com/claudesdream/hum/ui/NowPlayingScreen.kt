@@ -22,6 +22,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Forward30
+import androidx.compose.material.icons.rounded.Replay30
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -32,6 +34,7 @@ import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -64,6 +67,7 @@ fun NowPlayingScreen(
     val song by viewModel.currentSong.collectAsStateWithLifecycle()
     val state by viewModel.playerState.collectAsStateWithLifecycle()
     val isFavorite by viewModel.isFavoriteCurrent.collectAsStateWithLifecycle()
+    val speed by viewModel.speed.collectAsStateWithLifecycle()
     val queue by viewModel.queue.collectAsStateWithLifecycle()
 
     var scrubPosition by remember { mutableStateOf<Float?>(null) }
@@ -162,15 +166,26 @@ fun NowPlayingScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = viewModel::toggleShuffle) {
-                    Icon(
-                        imageVector = Icons.Rounded.Shuffle,
-                        contentDescription = "Shuffle",
-                        tint = if (state.shuffle) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                IconButton(onClick = viewModel::previous) {
-                    Icon(Icons.Rounded.SkipPrevious, contentDescription = "Previous", modifier = Modifier.size(40.dp))
+                // Books and podcasts get the controls that actually matter for them: jump back
+                // thirty seconds, and a speed you can change without leaving the screen.
+                if (current.isSpokenWord) {
+                    TextButton(onClick = { viewModel.setSpeed(nextSpeed(speed)) }) {
+                        Text(speedLabel(speed), style = MaterialTheme.typography.titleSmall)
+                    }
+                    IconButton(onClick = { viewModel.seekBy(-30_000L) }) {
+                        Icon(Icons.Rounded.Replay30, contentDescription = "Back 30 seconds", modifier = Modifier.size(36.dp))
+                    }
+                } else {
+                    IconButton(onClick = viewModel::toggleShuffle) {
+                        Icon(
+                            imageVector = Icons.Rounded.Shuffle,
+                            contentDescription = "Shuffle",
+                            tint = if (state.shuffle) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    IconButton(onClick = viewModel::previous) {
+                        Icon(Icons.Rounded.SkipPrevious, contentDescription = "Previous", modifier = Modifier.size(40.dp))
+                    }
                 }
                 FilledIconButton(onClick = viewModel::playPause, modifier = Modifier.size(72.dp)) {
                     Icon(
@@ -179,19 +194,28 @@ fun NowPlayingScreen(
                         modifier = Modifier.size(38.dp),
                     )
                 }
-                IconButton(onClick = viewModel::next) {
-                    Icon(Icons.Rounded.SkipNext, contentDescription = "Next", modifier = Modifier.size(40.dp))
-                }
-                IconButton(onClick = viewModel::cycleRepeat) {
-                    Icon(
-                        imageVector = if (state.repeatMode == Player.REPEAT_MODE_ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
-                        contentDescription = "Repeat",
-                        tint = if (state.repeatMode == Player.REPEAT_MODE_OFF) {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        },
-                    )
+                if (current.isSpokenWord) {
+                    IconButton(onClick = { viewModel.seekBy(30_000L) }) {
+                        Icon(Icons.Rounded.Forward30, contentDescription = "Forward 30 seconds", modifier = Modifier.size(36.dp))
+                    }
+                    IconButton(onClick = viewModel::next) {
+                        Icon(Icons.Rounded.SkipNext, contentDescription = "Next chapter", modifier = Modifier.size(36.dp))
+                    }
+                } else {
+                    IconButton(onClick = viewModel::next) {
+                        Icon(Icons.Rounded.SkipNext, contentDescription = "Next", modifier = Modifier.size(40.dp))
+                    }
+                    IconButton(onClick = viewModel::cycleRepeat) {
+                        Icon(
+                            imageVector = if (state.repeatMode == Player.REPEAT_MODE_ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
+                            contentDescription = "Repeat",
+                            tint = if (state.repeatMode == Player.REPEAT_MODE_OFF) {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            },
+                        )
+                    }
                 }
             }
 
@@ -253,4 +277,11 @@ fun NowPlayingScreen(
             Spacer(Modifier.height(24.dp))
         }
     }
+}
+
+/** Taps cycle through the usual audiobook speeds. */
+private fun nextSpeed(current: Float): Float {
+    val options = listOf(0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
+    val index = options.indexOfFirst { it > current - 0.01f && it < current + 0.01f }
+    return options[(index + 1) % options.size]
 }

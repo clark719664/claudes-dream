@@ -25,6 +25,7 @@ data class PlayerState(
     val durationMs: Long = 0L,
     val shuffle: Boolean = false,
     val repeatMode: Int = Player.REPEAT_MODE_OFF,
+    val speed: Float = 1f,
     val queueIds: List<Long> = emptyList(),
     val queueIndex: Int = 0,
 ) {
@@ -45,6 +46,13 @@ class PlayerConnection(context: Context, private val scope: CoroutineScope) {
 
     private val _state = MutableStateFlow(PlayerState())
     val state: StateFlow<PlayerState> = _state.asStateFlow()
+
+    /** Fired when playback moves off a track, with how much of it actually played (0f–1f). */
+    var onTrackFinished: ((songId: Long, playedFraction: Float) -> Unit)? = null
+
+    private var trackedId: Long? = null
+    private var trackedPositionMs: Long = 0L
+    private var trackedDurationMs: Long = 0L
 
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = pushState()
@@ -131,6 +139,21 @@ class PlayerConnection(context: Context, private val scope: CoroutineScope) {
         pushState()
     }
 
+    fun setSpeed(speed: Float) {
+        val player = controller ?: return
+        player.setPlaybackSpeed(speed)
+        pushState()
+    }
+
+    /** Jump by a fixed amount — the ±30s buttons audiobooks live on. */
+    fun seekBy(deltaMs: Long) {
+        val player = controller ?: return
+        val target = (player.currentPosition + deltaMs).coerceAtLeast(0L)
+        val duration = player.duration
+        player.seekTo(if (duration > 0L) target.coerceAtMost(duration) else target)
+        pushState()
+    }
+
     fun cycleRepeat() {
         val player = controller ?: return
         player.repeatMode = when (player.repeatMode) {
@@ -190,17 +213,47 @@ class PlayerConnection(context: Context, private val scope: CoroutineScope) {
         for (i in 0 until player.mediaItemCount) {
             queueIds += player.getMediaItemAt(i).mediaId.toLongOrNull() ?: -1L
         }
+        val currentId = player.currentMediaItem?.mediaId?.toLongOrNull()
+        trackListening(currentId, player.currentPosition, player.duration)
+
         _state.value = PlayerState(
             connected = true,
             isPlaying = player.isPlaying,
-            currentSongId = player.currentMediaItem?.mediaId?.toLongOrNull(),
+            currentSongId = currentId,
             positionMs = player.currentPosition.coerceAtLeast(0L),
             durationMs = player.duration.takeIf { it > 0L } ?: 0L,
             shuffle = player.shuffleModeEnabled,
             repeatMode = player.repeatMode,
+            speed = player.playbackParameters.speed,
             queueIds = queueIds,
             queueIndex = player.currentMediaItemIndex,
         )
+    }
+
+    /**
+     * Watches for the current track changing and reports how much of the previous one played, so
+     * the mixes can tell a real listen from a skip.
+     */
+    private fun trackListening(currentId: Long?, positionMs: Long, durationMs: Long) {
+        val previous = trackedId
+        if (previous != null && previous != currentId) {
+            val fraction = if (trackedDurationMs > 0L) {
+                (trackedPositionMs.toFloat() / trackedDurationMs).coerceIn(0f, 1f)
+            } else {
+                0f
+            }
+            onTrackFinished?.invoke(previous, fraction)
+        }
+        if (currentId != previous) {
+            trackedId = currentId
+            trackedPositionMs = 0L
+            trackedDurationMs = 0L
+        }
+        if (currentId != null) {
+            // Keep the high-water mark: seeking back before a track ends should not erase it.
+            if (positionMs > trackedPositionMs) trackedPositionMs = positionMs
+            if (durationMs > 0L) trackedDurationMs = durationMs
+        }
     }
 
     private fun Song.toMediaItem(): MediaItem = MediaItem.Builder()

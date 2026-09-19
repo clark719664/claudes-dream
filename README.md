@@ -15,6 +15,14 @@ sorts it into songs, albums, artists and folders by itself. No accounts, no clou
   as `(Live)` or `(Remix)` are kept. Untagged files get their artist parsed out of the filename.
 - **Sorts itself.** Songs, Albums, Artists and Folders tabs, all derived at scan time.
   Sort songs by title, artist, album, recently added or length.
+- **Audiobooks get their own tab.** Anything that looks like a book — .m4b files, an Audiobooks or
+  Audible folder, long chaptered tracks — is filed under Books instead of cluttering your music.
+  Books resume where you left off, chapter by chapter, with ±30s buttons and a speed control.
+  Anything filed wrongly can be moved between Music and Books from its ⋮ menu.
+- **Mixes made from your listening.** Hum counts plays, skips, favourites and the time of day, then
+  builds playlists: On repeat, Rediscover, Fresh finds, More like <artist>, Never skipped and a
+  mix for whatever part of the day it is. All computed on the phone — no account, no network,
+  nothing uploaded.
 - **Simple playback.** Big artwork, scrub bar, shuffle, repeat, queue you can reorder by removing
   and re-adding, play next / add to queue, favourites.
 - **Plays in the background** with lock-screen, notification and Bluetooth controls, and it
@@ -89,6 +97,9 @@ If you ever publish the app, replace this with a real key you keep private.
 | --- | --- |
 | `data/MediaStoreScanner.kt` | Queries MediaStore for every music file, resolves folders and artwork |
 | `data/TagCleaner.kt` | Turns messy filenames and missing tags into clean title / artist / album |
+| `data/AudioClassifier.kt` | Tells audiobooks and podcasts apart from music, and orders chapters |
+| `data/ListeningStore.kt` | Play counts, skips and times of day, kept on the phone |
+| `data/MixBuilder.kt` | Builds the playlists on the Mixes tab from that history |
 | `data/MusicRepository.kt` | Groups the library, watches for new downloads, debounces rescans |
 | `playback/PlaybackService.kt` | Media3 `MediaSessionService` — background playback, notification, lock screen |
 | `playback/PlayerConnection.kt` | `MediaController` bridge exposing player state to Compose |

@@ -109,6 +109,7 @@ fun DetailScreen(
                     onToggleFavorite = { viewModel.toggleFavorite(song.id) },
                     onOpenAlbum = onOpenAlbum?.let { open -> { open(song.albumId) } },
                     onOpenArtist = onOpenArtist?.let { open -> { open(song.artist) } },
+                    onChangeKind = { kind -> viewModel.setKind(song.id, kind) },
                 )
             }
         }

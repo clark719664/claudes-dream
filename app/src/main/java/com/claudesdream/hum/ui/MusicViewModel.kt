@@ -6,8 +6,13 @@ import androidx.lifecycle.viewModelScope
 import com.claudesdream.hum.HumApplication
 import com.claudesdream.hum.data.Album
 import com.claudesdream.hum.data.Artist
+import com.claudesdream.hum.data.AudioKind
+import com.claudesdream.hum.data.Book
+import com.claudesdream.hum.data.BookProgress
 import com.claudesdream.hum.data.Library
-import com.claudesdream.hum.data.MusicFolder
+import com.claudesdream.hum.data.ListeningStore
+import com.claudesdream.hum.data.Mix
+import com.claudesdream.hum.data.MixBuilder
 import com.claudesdream.hum.data.Song
 import com.claudesdream.hum.data.SongSort
 import com.claudesdream.hum.playback.PlayerConnection
@@ -23,14 +28,16 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 /** Search results, split so each section can be rendered with a heading. */
 data class SearchResults(
     val songs: List<Song> = emptyList(),
     val albums: List<Album> = emptyList(),
     val artists: List<Artist> = emptyList(),
+    val books: List<Book> = emptyList(),
 ) {
-    val isEmpty: Boolean get() = songs.isEmpty() && albums.isEmpty() && artists.isEmpty()
+    val isEmpty: Boolean get() = songs.isEmpty() && albums.isEmpty() && artists.isEmpty() && books.isEmpty()
 }
 
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
@@ -38,12 +45,14 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as HumApplication
     private val repository = app.repository
     private val prefs = app.prefs
+    private val history = app.history
     private val connection = PlayerConnection(application, viewModelScope)
 
     val library: StateFlow<Library> = repository.library
     val playerState: StateFlow<PlayerState> = connection.state
     val sort: StateFlow<SongSort> = prefs.sort
     val favorites: StateFlow<Set<Long>> = prefs.favorites
+    val speed: StateFlow<Float> = prefs.speed
 
     private val _hasPermission = MutableStateFlow(false)
     val hasPermission: StateFlow<Boolean> = _hasPermission.asStateFlow()
@@ -72,6 +81,21 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         lib.songs.filter { it.id in ids }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** Rebuilt whenever the library, your history or your favourites change. */
+    val mixes: StateFlow<List<Mix>> = combine(
+        library,
+        history.stats,
+        favorites,
+    ) { lib, stats, favs ->
+        MixBuilder.build(
+            songs = lib.songs,
+            stats = stats,
+            favorites = favs,
+            nowSec = System.currentTimeMillis() / 1000L,
+            hourOfDay = Calendar.getInstance().get(Calendar.HOUR_OF_DAY),
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     val searchResults: StateFlow<SearchResults> = combine(library, _query) { lib, raw ->
         val q = raw.trim().lowercase()
         if (q.isBlank()) {
@@ -81,6 +105,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 songs = lib.songs.filter { q in it.searchKey }.take(50),
                 albums = lib.albums.filter { q in it.name.lowercase() || q in it.artist.lowercase() }.take(20),
                 artists = lib.artists.filter { q in it.name.lowercase() }.take(20),
+                books = lib.books.filter { q in it.title.lowercase() || q in it.author.lowercase() }.take(20),
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SearchResults())
@@ -99,6 +124,18 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         connection.connect()
+        connection.onTrackFinished = { songId, fraction ->
+            history.record(
+                songId = songId,
+                playedFraction = fraction,
+                nowSec = System.currentTimeMillis() / 1000L,
+                hourOfDay = Calendar.getInstance().get(Calendar.HOUR_OF_DAY),
+            )
+        }
+        viewModelScope.launch { repository.setKindOverrides(prefs.kindOverrides.value) }
+        viewModelScope.launch {
+            prefs.kindOverrides.collect { repository.setKindOverrides(it) }
+        }
         viewModelScope.launch { restoreLastTrack() }
         viewModelScope.launch { rememberPositionPeriodically() }
     }
@@ -123,18 +160,37 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleFavorite(songId: Long) = prefs.toggleFavorite(songId)
 
+    /** Moves a file between the music library and the Books tab. */
+    fun setKind(songId: Long, kind: AudioKind) = prefs.setKind(songId, kind)
+
     fun play(songs: List<Song>, index: Int) = connection.play(songs, index)
 
     fun shuffle(songs: List<Song>) {
         if (songs.isEmpty()) return
-        val shuffled = songs.shuffled()
-        connection.play(shuffled, 0)
+        connection.play(songs.shuffled(), 0)
     }
+
+    /** Books start where you left off, not at chapter one. */
+    fun playBook(book: Book) {
+        val progress = prefs.bookProgress(book.id)
+        val index = book.chapters.indexOfFirst { it.id == progress?.songId }.takeIf { it >= 0 } ?: 0
+        connection.play(book.chapters, index)
+        if (progress != null && progress.positionMs > 0L) connection.seekTo(progress.positionMs)
+        applySpeedForCurrent()
+    }
+
+    fun playBookFrom(book: Book, index: Int) {
+        connection.play(book.chapters, index)
+        applySpeedForCurrent()
+    }
+
+    fun playMix(mix: Mix) = connection.play(mix.songs, 0)
 
     fun playPause() = connection.playPause()
     fun next() = connection.next()
     fun previous() = connection.previous()
     fun seekTo(positionMs: Long) = connection.seekTo(positionMs)
+    fun seekBy(deltaMs: Long) = connection.seekBy(deltaMs)
     fun toggleShuffle() = connection.toggleShuffle()
     fun cycleRepeat() = connection.cycleRepeat()
     fun playQueueItem(index: Int) = connection.playQueueItem(index)
@@ -142,11 +198,31 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     fun playNext(song: Song) = connection.playNext(song)
     fun addToQueue(songs: List<Song>) = connection.addToQueue(songs)
 
-    fun albumOf(song: Song): Album? = library.value.albums.firstOrNull { it.id == song.albumId }
+    fun setSpeed(value: Float) {
+        prefs.setSpeed(value)
+        connection.setSpeed(value)
+    }
 
-    fun artistNamed(name: String): Artist? = library.value.artists.firstOrNull { it.name == name }
+    private fun applySpeedForCurrent() {
+        connection.setSpeed(prefs.speed.value)
+    }
 
-    fun folderAt(path: String): MusicFolder? = library.value.folders.firstOrNull { it.path == path }
+    fun mixById(id: String): Mix? = mixes.value.firstOrNull { it.id == id }
+
+    fun bookProgress(book: Book): BookProgress? = prefs.bookProgress(book.id)
+
+    /** How far through the whole book you are, for the bar on the Books tab. */
+    fun bookProgressFraction(book: Book): Float {
+        val progress = prefs.bookProgress(book.id) ?: return 0f
+        val index = book.chapters.indexOfFirst { it.id == progress.songId }
+        if (index < 0) return 0f
+        val before = book.chapters.take(index).sumOf { it.durationMs }
+        val total = book.totalMs
+        if (total <= 0L) return 0f
+        return ((before + progress.positionMs).toFloat() / total).coerceIn(0f, 1f)
+    }
+
+    fun bookById(id: String): Book? = library.value.books.firstOrNull { it.id == id }
 
     /** Puts the last played track back in the mini player (paused) after a cold start. */
     private suspend fun restoreLastTrack() {
@@ -163,14 +239,24 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         while (true) {
             delay(5_000L)
             val state = playerState.value
-            val id = state.currentSongId
-            if (id != null) prefs.saveResume(id, state.positionMs)
+            val id = state.currentSongId ?: continue
+            prefs.saveResume(id, state.positionMs)
+            // Books also remember their own place, per book.
+            library.value.bookContaining(id)?.let { book ->
+                prefs.saveBookProgress(book.id, id, state.positionMs)
+            }
         }
     }
 
     override fun onCleared() {
         val state = playerState.value
-        state.currentSongId?.let { prefs.saveResume(it, state.positionMs) }
+        state.currentSongId?.let { id ->
+            prefs.saveResume(id, state.positionMs)
+            library.value.bookContaining(id)?.let { book ->
+                prefs.saveBookProgress(book.id, id, state.positionMs)
+            }
+        }
+        connection.onTrackFinished = null
         connection.release()
         super.onCleared()
     }

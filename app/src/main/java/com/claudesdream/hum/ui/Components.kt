@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.Equalizer
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.MenuBook
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -54,6 +55,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.claudesdream.hum.data.AudioKind
 import com.claudesdream.hum.data.Song
 
 /** Album art with a graceful fallback: the placeholder simply stays visible if nothing loads. */
@@ -101,6 +103,7 @@ fun SongRow(
     onToggleFavorite: () -> Unit,
     onOpenAlbum: (() -> Unit)? = null,
     onOpenArtist: (() -> Unit)? = null,
+    onChangeKind: ((AudioKind) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -191,6 +194,19 @@ fun SongRow(
                         text = { Text("Go to artist") },
                         leadingIcon = { Icon(Icons.Rounded.Person, null) },
                         onClick = { menuOpen = false; onOpenArtist() },
+                    )
+                }
+                if (onChangeKind != null) {
+                    val toBooks = song.kind == AudioKind.MUSIC
+                    DropdownMenuItem(
+                        text = { Text(if (toBooks) "Move to Audiobooks" else "Move to Music") },
+                        leadingIcon = {
+                            Icon(if (toBooks) Icons.Rounded.MenuBook else Icons.Rounded.MusicNote, null)
+                        },
+                        onClick = {
+                            menuOpen = false
+                            onChangeKind(if (toBooks) AudioKind.AUDIOBOOK else AudioKind.MUSIC)
+                        },
                     )
                 }
             }

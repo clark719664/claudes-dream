@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
@@ -42,6 +43,7 @@ fun SearchScreen(
     onBack: () -> Unit,
     onOpenAlbum: (Long) -> Unit,
     onOpenArtist: (String) -> Unit,
+    onOpenBook: (String) -> Unit,
     bottomPadding: PaddingValues = PaddingValues(bottom = 0.dp),
 ) {
     val query by viewModel.query.collectAsStateWithLifecycle()
@@ -147,6 +149,35 @@ fun SearchScreen(
                     }
                 }
             }
+            if (results.books.isNotEmpty()) {
+                item(key = "books-header") { SectionHeader("Audiobooks") }
+                items(results.books, key = { "book-" + it.id }) { book ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenBook(book.id) }
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Artwork(
+                            uri = book.artworkUri,
+                            modifier = Modifier.size(44.dp),
+                            fallbackIcon = Icons.Rounded.MenuBook,
+                        )
+                        Spacer(Modifier.width(14.dp))
+                        Column {
+                            Text(book.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                text = book.author + " · " + plural(book.chapters.size, "chapter"),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+            }
             if (results.songs.isNotEmpty()) {
                 item(key = "songs-header") { SectionHeader("Songs") }
                 items(results.songs, key = { "song-" + it.id }) { song ->
@@ -160,6 +191,7 @@ fun SearchScreen(
                         onToggleFavorite = { viewModel.toggleFavorite(song.id) },
                         onOpenAlbum = { onOpenAlbum(song.albumId) },
                         onOpenArtist = { onOpenArtist(song.artist) },
+                        onChangeKind = { kind -> viewModel.setKind(song.id, kind) },
                     )
                 }
             }

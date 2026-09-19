@@ -12,19 +12,27 @@ class MediaStoreScanner(private val context: Context) {
 
     private val albumArtBase: Uri = Uri.parse("content://media/external/audio/albumart")
 
-    private val projection = arrayOf(
-        MediaStore.Audio.Media._ID,
-        MediaStore.Audio.Media.TITLE,
-        MediaStore.Audio.Media.ARTIST,
-        MediaStore.Audio.Media.ALBUM,
-        MediaStore.Audio.Media.ALBUM_ID,
-        MediaStore.Audio.Media.DURATION,
-        MediaStore.Audio.Media.TRACK,
-        MediaStore.Audio.Media.YEAR,
-        MediaStore.Audio.Media.DATE_ADDED,
-        MediaStore.Audio.Media.DISPLAY_NAME,
-        MediaStore.Audio.Media.DATA,
-    )
+    private fun projection(): Array<String> {
+        val base = mutableListOf(
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.TITLE,
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ALBUM,
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Media.DURATION,
+            MediaStore.Audio.Media.TRACK,
+            MediaStore.Audio.Media.YEAR,
+            MediaStore.Audio.Media.DATE_ADDED,
+            MediaStore.Audio.Media.DISPLAY_NAME,
+            MediaStore.Audio.Media.DATA,
+            MediaStore.Audio.Media.IS_PODCAST,
+        )
+        // IS_AUDIOBOOK only exists from Android 10; asking for it earlier throws.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            base += MediaStore.Audio.Media.IS_AUDIOBOOK
+        }
+        return base.toTypedArray()
+    }
 
     /**
      * @param minDurationMs anything shorter is almost certainly a notification blip, not a song.
@@ -37,7 +45,8 @@ class MediaStoreScanner(private val context: Context) {
         }
 
         // Anything flagged as music, plus any other audio that is not a ringtone/alarm/notification —
-        // that second half is what catches files dropped into Download/ by a browser.
+        // that second half is what catches files dropped into Download/ by a browser, and audiobooks,
+        // which MediaStore never flags as music.
         val selection = "(${MediaStore.Audio.Media.IS_MUSIC} != 0 OR (" +
             "${MediaStore.Audio.Media.IS_RINGTONE} = 0 AND " +
             "${MediaStore.Audio.Media.IS_ALARM} = 0 AND " +
@@ -49,7 +58,7 @@ class MediaStoreScanner(private val context: Context) {
         try {
             context.contentResolver.query(
                 collection,
-                projection,
+                projection(),
                 selection,
                 selectionArgs,
                 "${MediaStore.Audio.Media.TITLE} COLLATE NOCASE ASC",
@@ -65,6 +74,12 @@ class MediaStoreScanner(private val context: Context) {
                 val dateAddedCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
                 val nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
                 val dataCol = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
+                val podcastCol = cursor.getColumnIndex(MediaStore.Audio.Media.IS_PODCAST)
+                val audiobookCol = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    cursor.getColumnIndex(MediaStore.Audio.Media.IS_AUDIOBOOK)
+                } else {
+                    -1
+                }
                 val relativePathCol = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     cursor.getColumnIndex(MediaStore.Audio.Media.RELATIVE_PATH)
                 } else {
@@ -84,16 +99,26 @@ class MediaStoreScanner(private val context: Context) {
                     val relativePath = if (relativePathCol >= 0) cursor.getStringOrNull(relativePathCol) else null
                     val folder = folderOf(fullPath, relativePath)
                     val albumId = cursor.getLong(albumIdCol)
+                    val durationMs = cursor.getLong(durationCol)
+
+                    val kind = AudioClassifier.classify(
+                        fileName = fileName,
+                        folderPath = folder.first,
+                        album = cleaned.album,
+                        durationMs = durationMs,
+                        mediaStoreAudiobook = audiobookCol >= 0 && cursor.getInt(audiobookCol) != 0,
+                        mediaStorePodcast = podcastCol >= 0 && cursor.getInt(podcastCol) != 0,
+                    )
 
                     songs += Song(
                         id = id,
-                        uri = ContentUris.withAppendedId(collection, id),
-                        artworkUri = ContentUris.withAppendedId(albumArtBase, albumId),
+                        uriString = ContentUris.withAppendedId(collection, id).toString(),
+                        artworkUriString = ContentUris.withAppendedId(albumArtBase, albumId).toString(),
                         title = cleaned.title,
                         artist = cleaned.artist,
                         album = cleaned.album,
                         albumId = albumId,
-                        durationMs = cursor.getLong(durationCol),
+                        durationMs = durationMs,
                         // TRACK is often encoded as disc*1000 + track.
                         track = cursor.getInt(trackCol).let { if (it > 1000) it % 1000 else it },
                         year = cursor.getInt(yearCol),
@@ -101,6 +126,7 @@ class MediaStoreScanner(private val context: Context) {
                         folderName = folder.second,
                         folderPath = folder.first,
                         fileName = fileName,
+                        kind = kind,
                     )
                 }
             }
