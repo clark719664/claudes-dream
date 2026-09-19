@@ -47,7 +47,7 @@ export interface NowPlaying {
 }
 
 export interface DeviceInfo {
-  /** Shown in Discord, e.g. "Pixel 8 - MyMusicApp". */
+  /** Shown in Discord, e.g. "Pixel 8 - Stash". */
   name: string;
   /** Your app's version, for your own debugging. */
   appVersion?: string;

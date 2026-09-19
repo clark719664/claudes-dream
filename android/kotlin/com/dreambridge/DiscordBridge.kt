@@ -18,11 +18,11 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Typical use:
  * ```
  * val bridge = DiscordBridge("https://bridge.example.com")
- * val result = bridge.pair(codeFromDiscord, DeviceInfo("Pixel 8 - MyApp"))
+ * val result = bridge.pair(codeFromDiscord, DeviceInfo("Pixel 8 - Stash"))
  * prefs.edit().putString("deviceToken", result.deviceToken).apply()
  *
  * bridge.connect(result.deviceToken)
- * bridge.onCommand = { command -> myPlayer.handle(command); true }
+ * bridge.onCommand = { command -> stashPlayer.handle(command); true }
  * bridge.publish(nowPlaying)
  * ```
  *

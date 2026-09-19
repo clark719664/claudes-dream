@@ -84,7 +84,7 @@ immediately.
 
 ## Connecting your own app
 
-See [`android/README.md`](android/README.md). The short version: pair once
+See [`android/README.md`](android/README.md) for connecting Stash. The short version: pair once
 with a code, then call `publish()` on every track change. Choose **URL mode**
 unless your audio exists only on the device — it costs no upload bandwidth, no
 battery, and keeps playing when the screen is off.

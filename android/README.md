@@ -1,6 +1,6 @@
-# Android integration
+# Connecting Stash
 
-Drop these three files into your app and call four methods. Nothing here reads
+Drop these three files into Stash and call four methods. Nothing here reads
 your player, your library, or your UI, and none of it needs your source to be
 shared with anyone.
 
@@ -45,7 +45,7 @@ When in doubt, URL mode.
 val bridge = DiscordBridge("https://bridge.example.com")
 
 // Off the main thread — this does network I/O.
-val result = bridge.pair(codeTheUserTyped, DeviceInfo("Pixel 8 - MyApp"))
+val result = bridge.pair(codeTheUserTyped, DeviceInfo("Pixel 8 - Stash"))
 prefs.edit().putString("deviceToken", result.deviceToken).apply()
 ```
 
@@ -56,7 +56,7 @@ Discord. Treat the returned token like a password.
 
 ```kotlin
 val token = prefs.getString("deviceToken", null) ?: return
-bridge.connect(token, DeviceInfo("Pixel 8 - MyApp"))
+bridge.connect(token, DeviceInfo("Pixel 8 - Stash"))
 ```
 
 ### 3. Report what's playing

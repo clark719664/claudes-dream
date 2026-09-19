@@ -48,7 +48,7 @@ data class NowPlaying(
 )
 
 data class DeviceInfo(
-    /** Shown in Discord, e.g. "Pixel 8 - MyMusicApp". */
+    /** Shown in Discord, e.g. "Pixel 8 - Stash". */
     val name: String,
     val appVersion: String? = null,
     val platform: String? = "android",
