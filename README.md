@@ -29,7 +29,38 @@ So Lasts ships the knowledge as well as the reminder. Every one of its **78 cata
 entries** answers three questions a reminder app leaves to you: how long the thing lasts,
 where its date is printed, and why being late costs you something.
 
-## What it does
+## Read it from a photo
+
+Every catalogue entry tells you to *go and look at the label*. The camera does the looking:
+point it at a thing — or a whole room — and Lasts works out what needs tracking and
+transcribes the date printed on it. A photo of the back of a smoke alarm reading
+`MFD 04/2016` comes back as a unit that was due for replacement in April 2026.
+
+The design rule is that **the model is an eye, not an authority.** It names what it can see
+and transcribes what is printed. Every interval, lead time and explanation still comes from
+this repository's own catalogue, so the advice never depends on what a model happens to
+recall, and improving an entry improves every item already tracked against it.
+
+Three consequences of that rule, all deliberate:
+
+- **Nothing is saved until you confirm it.** Findings arrive as a proposal with a confidence
+  chip, one clause naming what in the image prompted it, the characters as printed, and an
+  editable date. Low-confidence rows arrive unticked.
+- **Partial dates round to the start of the period.** A label reading `2016` becomes
+  `2016-01-01`. That is the safe direction in both cases this app cares about: an earlier
+  manufacture date expires sooner, and an earlier printed expiry warns sooner. A safety date
+  is never rounded later than it might be.
+- **What a date *means* decides how it is used.** A printed expiry is the due date itself; a
+  manufacture date starts a lifespan; a service date starts a cycle. Getting this backwards
+  would file a 2016 smoke alarm as "later" instead of eight years past its useful life, so it
+  is `dueFromRead()` and it is tested.
+
+**This is the one feature that leaves your browser,** and it says so where you use it. The
+photo goes to Claude on the viewer's own account to be read; your list never goes anywhere.
+It requires a host that provides the capability, so it appears on the hosted page and is
+simply absent when you self-host — every other feature works with the network switched off.
+
+## What else it does
 
 - **Browse what to track** — 78 entries across safety, home systems, vehicles, documents,
   money, health, kitchen, pets and digital, each with a sensible interval and a lead time
@@ -83,8 +114,9 @@ knowledge base.
 | `src/core.js` | Pure logic: calendar arithmetic, status buckets, relative phrasing, RFC 5545 export. No DOM, no storage — this is what the tests import. |
 | `src/catalog.js` | The knowledge base. 78 entries with intervals, lead times, where the date is printed, and why it matters. |
 | `src/store.js` | `localStorage` persistence, schema sanitising on load, backup/restore, example seeding. |
+| `src/vision.js` | Photo reading: prompt construction, tolerant normalising of the reply, safe date rounding, and the date-meaning-to-due-date mapping. Pure except for the canvas re-encode. |
 | `src/ui.js` | Four views, one detail sheet, one toast. Renders to strings, delegates events from `document`. |
-| `build/bundle.mjs` | Flattens the modules and stylesheet into `dist/`. Fails the build on duplicate top-level names, surviving imports, or a leftover module script. |
+| `build/bundle.mjs` | Flattens the modules and stylesheet into `dist/`. Walks the imports from the entry module rather than keeping a list, and fails the build on duplicate top-level names, surviving imports, or a leftover module script. |
 
 ### Things worth knowing if you change it
 
@@ -97,6 +129,11 @@ knowledge base.
   The test suite enforces this across the whole catalogue.
 - **The catalogue is copied by reference, not by value.** Items store a catalogue id, so
   improving an entry's wording improves it everywhere, and exports stay small.
+- **Everything a model returns is untrusted in shape and in content.** `normalizeFindings()`
+  takes only what fits: an invented catalogue id degrades to a custom item, an unknown
+  confidence reads as `low`, an unparseable date becomes no date, and the list is capped.
+- **Host capabilities are optional and advertised through data attributes**, so the CSS hides
+  affordances the host cannot serve. The app is fully usable with none of them.
 
 ## About the intervals
 
@@ -104,6 +141,16 @@ Every interval is typical manufacturer or public-safety guidance, and every one 
 per item. Where they disagree, **the label on your device and your local rules win** — this
 app's job is to remind you to go and read them. Nothing here is medical, legal, or
 engineering advice.
+
+## Known limits
+
+- **Your list lives in one browser.** It does not sync between devices, and clearing site data
+  takes it with you. Back it up from the Data tab.
+- **The calendar file is copy-paste on the hosted page.** `.ics` is not in the host's download
+  allowlist, so it comes as copyable text with instructions; the self-hosted version downloads
+  it directly, and the JSON backup saves as a real file either way.
+- **Photo reading needs a host that offers it.** Absent when self-hosted.
+- **The intervals are guidance, not a compliance schedule.** See above.
 
 ## Accessibility
 

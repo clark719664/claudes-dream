@@ -9,6 +9,9 @@ import {
   state, makeItem, fromCatalog, hintsFor, load, save,
   exportJSON, importJSON, wipe, hasExamples, clearExamples,
 } from './store.js';
+import {
+  buildPrompt, normalizeFindings, dueFromRead, prepImage, sampleErrorCopy,
+} from './vision.js';
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -30,6 +33,7 @@ const ICON = {
   shield: '<path d="M12 3l7 3v5.5c0 4.2-2.9 7.9-7 9.5-4.1-1.6-7-5.3-7-9.5V6l7-3Z"/><path d="M9 12l2 2 4-4"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4.3-4.3"/>',
   check: '<path d="M5 13l4 4L19 7"/>',
+  camera: '<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.1a2 2 0 0 0 1.7-.95l.5-.8A2 2 0 0 1 11.5 3.3h1a2 2 0 0 1 1.7.95l.5.8A2 2 0 0 0 16.4 6h1.1A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-8Z"/><circle cx="12" cy="12.5" r="3.2"/>',
 };
 
 const svg = (name, cls = '') =>
@@ -138,7 +142,10 @@ function renderDue() {
       groupHTML('Needs a date', nodate, 'nodate') +
       groupHTML('Later', later, 'later')
     : `<div class="empty">${svg('tag')}<p>Add the things you would rather not find out about late.</p>
-        <button class="btn btn-primary" data-act="go-add" type="button">Browse what to track</button></div>`;
+        <div class="btn-row" style="justify-content:center">
+          <button class="btn btn-primary" data-cansee-only data-act="photo" type="button">${svg('camera')} Read a photo</button>
+          <button class="btn" data-act="go-add" type="button">Browse what to track</button>
+        </div></div>`;
 
   $('#view-due').innerHTML = `<div class="wrap">
     <div class="view-head"><div class="summary">
@@ -184,9 +191,16 @@ function renderAdd() {
 
   $('#view-add').innerHTML = `<div class="wrap">
     <div class="view-head">
-      <h2>What should you be tracking?</h2>
-      <p>${CATALOG.length} things with a real shelf life, each with the interval, where the date is printed, and why it matters. Pick one and answer a single question.</p>
+      <h2>What catches people out</h2>
+      <p>${CATALOG.length} things with a real shelf life, each with the interval, where the date is printed, and what being late actually costs. Pick one and answer a single question.</p>
     </div>
+    <button class="photo-cta" type="button" data-act="photo" data-cansee-only>
+      ${svg('camera')}
+      <span>
+        <b>Read it from a photo</b>
+        <small>Point your camera at a thing — or a whole room — and it will work out what needs tracking and read the date off the label.</small>
+      </span>
+    </button>
     <div class="search">${svg('search')}
       <label class="sr" for="add-search">Search what to track</label>
       <input type="search" id="add-search" class="searchbox" placeholder="Search — filter, passport, tyres, sponge…" value="${esc(addQuery)}">
@@ -244,7 +258,8 @@ function renderData() {
   $('#view-data').innerHTML = `<div class="wrap">
     <div class="view-head">
       <h2>Your data, and where it is</h2>
-      <p>Everything you enter stays in this browser. There is no account, no server, and nothing is sent anywhere — which also means nobody else is keeping a copy for you.</p>
+      <p>Your list stays in this browser. There is no account, no server, and no analytics — which also means nobody else is keeping a copy for you.</p>
+      <p><b>One exception:</b> if you use <i>Read it from a photo</i>, that photo is sent to Claude on your own account to be read, and what it finds comes back as a suggestion you confirm. Your list is never sent, and the feature is only offered where the host provides it. Everything else here works with the network switched off.</p>
     </div>
 
     <div class="panel">
@@ -319,10 +334,19 @@ async function copyText(text) {
  * so a calendar file falls back to the copy panel, which always works.
  */
 let saver = null;
+let asker = null;
+let imageLimits = null;
 
-function markSavePaths() {
+/**
+ * Two host abilities, both optional. Saving a file needs either a link (self-hosted) or the
+ * host's downloads capability; reading a photo needs the host's sample capability AND a view
+ * that can carry images. Both are advertised through data attributes so the CSS can hide the
+ * affordances, and the app is fully usable without either.
+ */
+function initCapabilities() {
   const root = document.documentElement;
   if (!FRAMED) root.dataset.cansave = 'local';
+
   Promise.resolve()
     .then(() => window.claude?.use?.('downloads'))
     .then((d) => {
@@ -332,6 +356,21 @@ function markSavePaths() {
     })
     .catch(() => {
       /* no save path; the copy panel covers it */
+    });
+
+  Promise.resolve()
+    .then(() => window.claude?.use?.('sample'))
+    .then(async (fn) => {
+      if (!fn) return;
+      const limits = await fn.limits().catch(() => null);
+      if (!limits?.images) return;
+      asker = fn;
+      imageLimits = limits.images;
+      root.dataset.cansee = '1';
+      refresh();
+    })
+    .catch(() => {
+      /* photo reading stays hidden */
     });
 }
 
@@ -377,6 +416,228 @@ function outputPanel(host, { text, label, note, filename, mime, localOnly }) {
       <button class="btn btn-primary btn-sm" data-copy="${host.id}-ta" type="button">Copy to clipboard</button>
       <button class="btn btn-sm" ${localOnly ? 'data-save-local' : 'data-save-only'} data-dl="${esc(filename)}" data-mime="${esc(mime)}" data-src="${host.id}-ta" type="button">Save ${esc(filename)}</button>
     </div>`;
+}
+
+
+// ---------------------------------------------------------------- reading a photo
+
+let findings = null;      // the last normalized reply, awaiting confirmation
+let photoCtl = null;      // AbortController for the call in flight
+let photoURL = null;      // object URL for the preview thumbnail
+
+function releasePhoto() {
+  if (photoURL) URL.revokeObjectURL(photoURL);
+  photoURL = null;
+  photoCtl?.abort();
+  photoCtl = null;
+  findings = null;
+}
+
+const CONF_LABEL = { high: 'confident', medium: 'fairly sure', low: 'a guess' };
+
+function photoStage(html, foot) {
+  const stage = $('#photo-stage');
+  if (!stage) return;
+  stage.innerHTML = html;
+  $('#photo-foot').innerHTML = foot;
+}
+
+/** Stage one: ask for the photo, and be straight about where it goes. */
+function stagePick(mode, item) {
+  const accept = (imageLimits?.mediaTypes || ['image/jpeg', 'image/png']).join(',');
+  const tip =
+    mode === 'date'
+      ? hintsFor(item).where || 'Get the printed date filling as much of the frame as you can.'
+      : 'One thing up close, or a whole room to find several at once.';
+  photoStage(
+    `<p class="help" style="margin-top:14px">${esc(tip)}</p>
+     <label class="photo-drop" for="photo-file">
+       ${svg('camera')}
+       <span class="photo-drop-main">Take or choose a photo</span>
+       <span class="photo-drop-sub">Fill the frame with the label. Avoid glare.</span>
+     </label>
+     <input type="file" id="photo-file" class="sr" accept="${esc(accept)}">
+     <p class="callout" style="margin-top:16px"><span class="label">Where this photo goes</span>
+       This one feature sends your photo to Claude, on your own account, to be read. It is the only
+       thing in this app that leaves your browser — your list never does. Nothing is stored there,
+       and nothing is added here until you confirm it.</p>`,
+    `<button class="btn btn-quiet" type="button" data-act="close">Cancel</button>`
+  );
+}
+
+function stageBusy() {
+  photoStage(
+    `<div class="photo-busy">
+       ${photoURL ? `<img src="${esc(photoURL)}" alt="The photo you chose">` : ''}
+       <p class="photo-status" id="photo-status">Reading the photo…</p>
+       <p class="help">Looking for what it is and any date printed on it. This usually takes a few seconds.</p>
+     </div>`,
+    `<button class="btn btn-quiet" type="button" data-act="photo-stop">Stop</button>`
+  );
+}
+
+function stageError(msg) {
+  photoStage(
+    `<div class="notice" data-tone="warn" style="margin-top:16px"><p>${esc(msg)}</p></div>`,
+    `<button class="btn btn-quiet" type="button" data-act="close">Close</button>
+     <button class="btn" type="button" data-act="photo-again">Try another photo</button>`
+  );
+}
+
+/** Stage three: everything the model returned, as a proposal to accept, edit or ignore. */
+function stageResults(mode, item) {
+  const { items, note } = findings;
+  if (!items.length) {
+    return stageError(
+      note || 'Nothing trackable turned up in that photo. Try getting closer, or add the item by hand.'
+    );
+  }
+
+  const rows = items
+    .map((f, i) => {
+      const entry = f.entry;
+      const cycle = entry
+        ? entry.kind === 'interval'
+          ? humanizeInterval(entry.every)
+          : entry.life
+            ? `${entry.life.n}-${entry.life.unit} life`
+            : 'expiry date'
+        : 'one-off date';
+      const due = dueFromRead(entry, f.date?.kind, f.date?.iso);
+      const hint = entry?.where;
+      return `<div class="found" data-found="${i}">
+        <label class="found-head">
+          <input type="checkbox" id="found-${i}" ${f.confidence === 'low' ? '' : 'checked'}>
+          <span class="found-name">${esc(f.label)}</span>
+          <span class="chip" data-state="${f.confidence === 'high' ? 'later' : f.confidence === 'medium' ? 'soon' : 'overdue'}">${esc(CONF_LABEL[f.confidence])}</span>
+        </label>
+        ${f.seen ? `<p class="found-seen">Saw: ${esc(f.seen)}</p>` : ''}
+        <p class="found-cycle">${esc(entry ? `${entry.name} · ${cycle}` : `Not in the catalogue — tracked as “${f.label}”`)}</p>
+        ${f.date
+          ? `<p class="found-read">Read <b>${esc(f.date.text || f.date.iso)}</b>${
+              f.date.kind ? ` as the ${esc(f.date.kind)} date` : ''
+            }${f.date.precision !== 'day' ? `, to the nearest ${esc(f.date.precision)}` : ''}.</p>`
+          : `<p class="found-read found-none">No date legible.${hint ? ` ${esc(hint)}` : ''}</p>`}
+        <div class="field" style="margin-top:8px">
+          <label for="found-date-${i}">${esc(f.date?.kind === 'expiry' || entry?.kind === 'expiry' ? 'Expires' : 'Next due')}</label>
+          <input type="date" id="found-date-${i}" value="${esc(due || '')}">
+        </div>
+      </div>`;
+    })
+    .join('');
+
+  const one = mode === 'date';
+  photoStage(
+    `<div class="photo-found">
+       ${photoURL ? `<img src="${esc(photoURL)}" alt="The photo you chose">` : ''}
+       <p class="help">${esc(
+         one
+           ? 'Check this against the label before you rely on it.'
+           : 'Untick anything wrong, fix any date, then add the rest. Check dates against the label before you rely on them.'
+       )}</p>
+     </div>
+     ${rows}
+     ${note ? `<p class="help" style="margin-top:12px">${esc(note)}</p>` : ''}`,
+    `<button class="btn btn-quiet" type="button" data-act="photo-again">Another photo</button>
+     <button class="btn btn-primary" type="button" data-act="photo-apply">${one ? 'Save date' : 'Add ticked'}</button>`
+  );
+}
+
+function openPhoto(mode, item) {
+  releasePhoto();
+  openSheet(`<div data-photo="${esc(mode)}"${item ? ` data-target="${esc(item.id)}"` : ''}>
+    <div class="sheet-head">
+      <div>
+        <h3>${mode === 'date' ? 'Read the date' : 'What is this?'}</h3>
+        <p class="sub">${esc(mode === 'date' ? item.name : 'Point your camera at a thing or a room')}</p>
+      </div>
+      <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
+    </div>
+    <div class="sheet-body"><div id="photo-stage"></div></div>
+    <div class="sheet-foot" id="photo-foot"></div>
+  </div>`);
+  stagePick(mode, item);
+}
+
+function photoContext() {
+  const holder = sheet().querySelector('[data-photo]');
+  if (!holder) return null;
+  return { mode: holder.dataset.photo, item: holder.dataset.target ? byId(holder.dataset.target) : null };
+}
+
+async function runPhoto(file) {
+  const ctx = photoContext();
+  if (!ctx || !asker) return;
+  const { mode, item } = ctx;
+
+  if (photoURL) URL.revokeObjectURL(photoURL);
+  photoURL = URL.createObjectURL(file);
+  stageBusy();
+
+  photoCtl = new AbortController();
+  try {
+    const blob = await prepImage(file, imageLimits);
+    const raw = await asker.json(buildPrompt(mode, item), {
+      images: blob,
+      signal: photoCtl.signal,
+      onText: () => {
+        const el = $('#photo-status');
+        if (el) el.textContent = 'Writing down what it found…';
+      },
+    });
+    findings = normalizeFindings(raw, mode === 'date' ? 1 : 6);
+    stageResults(mode, item);
+  } catch (err) {
+    if (err?.code === 'cancelled') return closeSheet();
+    if (err?.code === 'not_granted' || err?.code === 'sampling_disabled') {
+      asker = null;
+      document.documentElement.removeAttribute('data-cansee');
+      refresh();
+    }
+    stageError(err?.code ? sampleErrorCopy(err.code) : err?.message || sampleErrorCopy('upstream_error'));
+  } finally {
+    photoCtl = null;
+  }
+}
+
+/** Nothing the model said reaches the list until it passes through here. */
+function applyFindings() {
+  const ctx = photoContext();
+  if (!ctx || !findings) return;
+  const { mode, item } = ctx;
+
+  if (mode === 'date') {
+    const val = $('#found-date-0')?.value;
+    if (item && isISO(val)) {
+      item.due = val;
+      item.history = [...item.history, { on: todayISO(), kind: 'renewed', to: val }];
+      item.example = false;
+      save();
+      closeSheet();
+      refresh();
+      toast(`Date set — ${prettyDate(val)}.`);
+    } else {
+      closeSheet();
+    }
+    return;
+  }
+
+  let added = 0;
+  findings.items.forEach((f, i) => {
+    if (!$(`#found-${i}`)?.checked) return;
+    const due = $(`#found-date-${i}`)?.value;
+    const made = f.entry
+      ? fromCatalog(f.entry, { dontKnow: true })
+      : makeItem({ name: f.label, kind: 'expiry', cat: 'home', lead: 30 });
+    made.due = isISO(due) ? due : null;
+    state.items.push(made);
+    added += 1;
+  });
+  save();
+  closeSheet();
+  if (!added) return toast('Nothing ticked, so nothing added.');
+  switchView('due');
+  toast(`Added ${added} ${added === 1 ? 'thing' : 'things'} from the photo.`);
 }
 
 // ---------------------------------------------------------------- sheet
@@ -510,6 +771,7 @@ function openItem(item) {
     </div>
     <div class="sheet-body">
       ${st.state === 'nodate' && hints.where ? `<p class="callout"><span class="label">Where the date is</span>${esc(hints.where)}</p>` : ''}
+      ${st.state === 'nodate' ? `<div class="btn-row" style="margin-top:14px"><button class="btn" type="button" data-act="photo-date" data-cansee-only>${svg('camera')} Read the date from a photo</button></div>` : ''}
       <div class="btn-row" style="margin-top:16px">
         ${isExpiry
           ? `<button class="btn btn-primary" type="button" data-act="renew">Renewed — set new date</button>`
@@ -653,7 +915,7 @@ function switchView(next) {
 
 export function start() {
   load();
-  markSavePaths();
+  initCapabilities();
   switchView('due');
 
   document.addEventListener('click', (e) => {
@@ -672,6 +934,14 @@ export function start() {
       return;
     }
     if (act === 'close') return closeSheet();
+    if (act === 'photo') return openPhoto('scan');
+    if (act === 'photo-again') {
+      const ctx = photoContext();
+      releasePhoto();
+      return stagePick(ctx?.mode || 'scan', ctx?.item);
+    }
+    if (act === 'photo-stop') return photoCtl?.abort();
+    if (act === 'photo-apply') return applyFindings();
     if (act === 'go-add') return switchView('add');
     if (act === 'custom') return openCustom();
     if (act === 'clear-examples') {
@@ -708,6 +978,7 @@ export function start() {
       if (act === 'done') return markDone(item);
       if (act === 'snooze') return snooze(item, Number(btn.dataset.days));
       if (act === 'renew') return renew(item);
+      if (act === 'photo-date') return openPhoto('date', item);
       if (act === 'archive') {
         item.archived = !item.archived;
         save();
@@ -836,6 +1107,11 @@ export function start() {
 
   // ---- live editing in the item sheet
   document.addEventListener('change', (e) => {
+    if (e.target.id === 'photo-file') {
+      const file = e.target.files?.[0];
+      if (file) runPhoto(file);
+      return;
+    }
     const holder = sheet().querySelector('[data-item]');
     if (!holder || !sheet().open) return;
     const item = byId(holder.dataset.item);
@@ -936,6 +1212,7 @@ export function start() {
 
   // Emptying it on close means a stale data-item can never catch a later click.
   sheet().addEventListener('close', () => {
+    releasePhoto();
     sheet().innerHTML = '';
   });
 }

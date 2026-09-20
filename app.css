@@ -468,6 +468,72 @@ section[hidden] { display: none !important; }
 :root:not([data-cansave]) [data-save-only],
 :root:not([data-cansave="local"]) [data-save-local] { display: none !important; }
 
+/* Reading a photo needs a host that offers it — see initCapabilities(). */
+:root:not([data-cansee]) [data-cansee-only] { display: none !important; }
+
+/* ------------------------------------------------------------------ photo flow */
+.photo-cta {
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 18px;
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.photo-cta:hover { border-color: var(--accent-deep); }
+.photo-cta svg { width: 22px; height: 22px; flex: none; color: var(--accent); margin-top: 1px; }
+.photo-cta b { display: block; font-family: var(--display); font-size: 16px; letter-spacing: -.01em; }
+.photo-cta small { display: block; color: var(--ink-soft); font-size: 13px; margin-top: 2px; }
+
+.photo-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 28px 18px;
+  border: 1px dashed var(--rule-firm);
+  border-radius: var(--r);
+  background: var(--sunk);
+  cursor: pointer;
+  text-align: center;
+}
+.photo-drop:hover, .photo-drop:focus-within { border-color: var(--accent); background: var(--accent-soft); }
+.photo-drop svg { width: 28px; height: 28px; color: var(--accent); }
+.photo-drop-main { font-family: var(--display); font-weight: 700; font-size: 16px; }
+.photo-drop-sub { font-size: 12.5px; color: var(--ink-soft); }
+
+.photo-busy, .photo-found { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 14px; }
+.photo-busy img, .photo-found img {
+  max-height: 150px;
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+  object-fit: cover;
+}
+.photo-found { align-items: stretch; }
+.photo-found img { max-width: 100%; align-self: center; }
+.photo-status { margin: 4px 0 0; font-family: var(--display); font-weight: 600; font-size: 16px; }
+.photo-busy .help, .photo-found .help { text-align: center; margin: 0; }
+.photo-found .help { text-align: left; }
+
+.found { border-top: 1px solid var(--rule); padding: 14px 0 4px; }
+.found-head { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+.found-head input { width: 19px; height: 19px; flex: none; accent-color: var(--accent); }
+.found-name { font-family: var(--display); font-weight: 700; font-size: 16px; letter-spacing: -.01em; flex: 1; }
+.found-seen, .found-cycle, .found-read { margin: 5px 0 0 28px; font-size: 13px; color: var(--ink-soft); }
+.found-read { color: var(--ink); }
+.found-read b { font-family: var(--mono); font-size: 12.5px; }
+.found-none { color: var(--ink-soft); }
+.found .field { margin-left: 28px; }
+
 .btn-link {
   appearance: none;
   border: 0;

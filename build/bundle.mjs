@@ -12,13 +12,36 @@ import { dirname, join } from 'node:path';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 
-const MODULES = ['src/core.js', 'src/catalog.js', 'src/store.js', 'src/ui.js'];
+const ENTRY = 'src/ui.js';
 const IMPORT = /^import\b[\s\S]*?from\s*['"][^'"]*['"];[ \t]*\n/gm;
+const FROM = /from\s*['"](\.[^'"]*)['"]/g;
+
+/**
+ * Walk the imports from the entry module so the module list cannot drift out of date —
+ * a hand-maintained list silently omitted a module once, and the bug only showed at runtime.
+ * Depth-first post-order, so a module is emitted after everything it depends on.
+ */
+function moduleOrder(entry) {
+  const order = [];
+  const done = new Set();
+  const visit = (path) => {
+    if (done.has(path)) return;
+    done.add(path);
+    const src = read(path);
+    const dir = dirname(path);
+    for (const m of src.matchAll(FROM)) visit(join(dir, m[1]));
+    order.push(path);
+  };
+  visit(entry);
+  return order;
+}
 
 function flatten() {
   const seen = new Map();
   const parts = [];
-  for (const path of MODULES) {
+  const modules = moduleOrder(ENTRY);
+  console.log(`modules: ${modules.join(' -> ')}`);
+  for (const path of modules) {
     const src = read(path).replace(IMPORT, '').replace(/^export\s+/gm, '');
     // Flattening puts every module in one scope, so a name used twice would silently shadow.
     for (const m of src.matchAll(/^(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/gm)) {

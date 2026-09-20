@@ -2,7 +2,7 @@
 const VERSION = 'lasts-v1';
 const SHELL = [
   './', './index.html', './app.css', './icon.svg', './manifest.webmanifest',
-  './src/ui.js', './src/core.js', './src/store.js', './src/catalog.js',
+  './src/ui.js', './src/core.js', './src/store.js', './src/catalog.js', './src/vision.js',
 ];
 
 self.addEventListener('install', (e) => {

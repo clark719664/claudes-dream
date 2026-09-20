@@ -4,7 +4,7 @@
 export const DAY = 86400000;
 export const SCHEMA = 1;
 
-const pad = (n) => String(n).padStart(2, '0');
+export const pad = (n) => String(n).padStart(2, '0');
 
 /** Today as YYYY-MM-DD in the viewer's own timezone. */
 export function todayISO(now = new Date()) {
