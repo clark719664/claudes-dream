@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPrompt, catalogIndex, normalizeReadDate, normalizeFindings, sampleErrorCopy, dueFromRead } from '../src/vision.js';
+import {
+  buildPrompt, catalogIndex, normalizeReadDate, normalizeFindings, sampleErrorCopy, dueFromRead,
+  normalizeNameplate, nameplateHasContent,
+} from '../src/vision.js';
 import { catalogEntry } from '../src/catalog.js';
 import { CATALOG } from '../src/catalog.js';
 
@@ -122,4 +125,48 @@ test('an entry with a lifespan but no life figure does not invent one', () => {
   const visa = catalogEntry('visa'); // expiry kind, life: null
   assert.equal(visa.life, null);
   assert.equal(dueFromRead(visa, 'install', '2026-01-01'), '2026-01-01');
+});
+
+test('the nameplate prompt asks for a transcription, not an interpretation', () => {
+  const p = buildPrompt('nameplate');
+  assert.match(p, /Transcribe characters exactly as printed/);
+  assert.match(p, /never put a serial in model/);
+  assert.match(p, /never use today's date/);
+  assert.ok(!p.includes('smoke-alarm'), 'the catalogue is not needed to read a label');
+  assert.ok(Buffer.byteLength(p) < 4000, 'a short prompt answers faster');
+});
+
+test('a nameplate reply is trimmed to what the app can use', () => {
+  const plate = normalizeNameplate({
+    kindOfThing: 'Refrigerator',
+    brand: '  Frigidaire  ',
+    model: 'FFSS2615TS\n',
+    serial: 'BA12345678',
+    size: '20 x 25 x 1',
+    dates: [
+      { value: '2019-06', kind: 'manufacture', text: 'MFD 06/19' },
+      { value: 'garbage' },
+      { value: '2024', kind: 'service' },
+    ],
+    note: 'Sticker partly peeled.',
+    injected: 'ignored',
+  });
+  assert.equal(plate.brand, 'Frigidaire', 'whitespace is collapsed');
+  assert.equal(plate.model, 'FFSS2615TS');
+  assert.equal(plate.size, '20 x 25 x 1');
+  assert.equal(plate.dates.length, 2, 'an unparseable date is dropped, not guessed');
+  assert.equal(plate.dates[0].iso, '2019-06-01');
+  assert.equal(plate.dates[1].iso, '2024-01-01');
+  assert.equal(plate.note, 'Sticker partly peeled.');
+  assert.ok(!('injected' in plate), 'extra fields are not carried through');
+});
+
+test('an unreadable label reports nothing rather than something', () => {
+  const empty = normalizeNameplate({ note: 'Too blurred to read.' });
+  assert.equal(empty.model, '');
+  assert.deepEqual(empty.dates, []);
+  assert.equal(nameplateHasContent(empty), false);
+  assert.equal(nameplateHasContent(normalizeNameplate(null)), false);
+  assert.equal(nameplateHasContent(normalizeNameplate({ model: 'WF3CB' })), true);
+  assert.equal(nameplateHasContent(normalizeNameplate({ dates: [{ value: '2016' }] })), true);
 });

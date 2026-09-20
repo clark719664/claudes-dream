@@ -615,7 +615,7 @@ input[type="search"].searchbox {
 }
 .pick:hover { background: var(--sunk); }
 .pick-name { font-weight: 600; }
-.pick-every { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); white-space: nowrap; }
+.pick-every { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); text-align: right; overflow-wrap: anywhere; max-width: 42%; }
 .pick-why {
   grid-column: 1 / -1;
   font-size: 12.5px;
@@ -815,6 +815,115 @@ dialog.sheet::backdrop { background: rgba(10, 16, 18, .5); backdrop-filter: blur
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ scanner */
+.scan-view {
+  position: relative;
+  margin-top: 12px;
+  border-radius: var(--r);
+  overflow: hidden;
+  background: #0a0e10;
+  aspect-ratio: 4 / 3;
+  max-width: 100%;
+}
+.scan-view video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Four corner marks rather than a full frame: they say "aim here" without hiding the label. */
+.scan-reticle {
+  position: absolute;
+  inset: 22% 8%;
+  pointer-events: none;
+}
+.scan-reticle span {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 2.5px solid var(--accent);
+}
+.scan-reticle span:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; border-radius: 4px 0 0 0; }
+.scan-reticle span:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; border-radius: 0 4px 0 0; }
+.scan-reticle span:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; border-radius: 0 0 0 4px; }
+.scan-reticle span:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; border-radius: 0 0 4px 0; }
+
+.scan-status {
+  margin: 12px 0 4px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 15px;
+  text-align: center;
+}
+
+.code-shown {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: .04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+input.code-input {
+  font-family: var(--mono);
+  font-size: 18px;
+  letter-spacing: .12em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ what to buy */
+.order-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin: 0;
+  padding: 9px 12px;
+  background: var(--accent-soft);
+  border-radius: 8px;
+  font-size: 14px;
+}
+.order-line .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.order-line b {
+  font-family: var(--mono);
+  font-size: 13.5px;
+  letter-spacing: -.01em;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------ nameplate readout */
+dl.plate {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 14px;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--sunk);
+}
+dl.plate dt {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding-top: 3px;
+}
+dl.plate dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 </style>
@@ -1179,6 +1288,12 @@ const CATALOG = [
     ask: 'When did you last change it?',
     where: 'On the box — usually quoted in litres or gallons as well as weeks.',
     why: 'Rated by volume, roughly two months for one household. The taste goes before the filtering does.',
+  },
+  {
+    id: 'undersink-filter', cat: 'home', name: 'Under-sink or RO water filter', kind: 'interval', every: { n: 9, unit: 'month' }, lead: 14,
+    ask: 'When did you last change the cartridges?',
+    where: 'Each cartridge carries its own rating; standard housings take generic 10 x 2.5 inch cartridges.',
+    why: 'The sediment and carbon stages run 6 to 12 months, and they are what protect the expensive part — the reverse osmosis membrane, which then lasts two to three years instead of one. A neglected pre-filter is how people end up replacing a membrane early.',
   },
   {
     id: 'water-heater-flush', cat: 'home', name: 'Flush the water heater', kind: 'interval', every: { n: 1, unit: 'year' }, lead: 21,
@@ -1594,6 +1709,399 @@ function searchCatalog(q) {
   );
 }
 
+/* ---- src/barcode.js ---- */
+// A dependency-free EAN-13 / UPC-A / UPC-E / EAN-8 decoder.
+//
+// Written rather than imported for two reasons: the app has to work with the network off,
+// and iOS Safari has no BarcodeDetector, so a browser-native fast path alone would leave
+// every iPhone unable to scan. Everything here is pure — it takes a row of grey pixels and
+// returns digits — so test/barcode.test.mjs can synthesize barcodes and decode them back.
+//
+// Structure of an EAN-13 symbol, in modules (95 total):
+//   start guard 101 | 6 left digits (7 each) | middle guard 01010 | 6 right digits | end 101
+// Left digits are encoded in one of two parities (L = odd, G = even) and the pattern of
+// those parities across the six is what encodes the 13th digit.
+
+/**
+ * Run-length widths of the four runs making up each digit, in modules. An L digit begins on
+ * a space, an R digit on a bar, and both use these widths; a G digit is an L digit reversed.
+ * The three sets are mutually disjoint, so one width match identifies digit AND parity.
+ */
+const WIDTHS = [
+  [3, 2, 1, 1], [2, 2, 2, 1], [2, 1, 2, 2], [1, 4, 1, 1], [1, 1, 3, 2],
+  [1, 2, 3, 1], [1, 1, 1, 4], [1, 3, 1, 2], [1, 2, 1, 3], [3, 1, 1, 2],
+];
+
+/** Which left-hand parity pattern encodes which leading digit of an EAN-13. 1 = even (G). */
+const LEADING = [
+  [0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 1, 1], [0, 0, 1, 1, 0, 1], [0, 0, 1, 1, 1, 0],
+  [0, 1, 0, 0, 1, 1], [0, 1, 1, 0, 0, 1], [0, 1, 1, 1, 0, 0], [0, 1, 0, 1, 0, 1],
+  [0, 1, 0, 1, 1, 0], [0, 1, 1, 0, 1, 0],
+];
+
+/** UPC-E parity patterns, indexed by check digit, for number system 0. 1 = even (G). */
+const UPCE_PARITY = [
+  [1, 1, 1, 0, 0, 0], [1, 1, 0, 1, 0, 0], [1, 1, 0, 0, 1, 0], [1, 1, 0, 0, 0, 1],
+  [1, 0, 1, 1, 0, 0], [1, 0, 0, 1, 1, 0], [1, 0, 0, 0, 1, 1], [1, 0, 1, 0, 1, 0],
+  [1, 0, 1, 0, 0, 1], [1, 0, 0, 1, 0, 1],
+];
+
+const L_PATTERNS = WIDTHS.map((w, d) => ({ digit: d, parity: 0, w }));
+const G_PATTERNS = WIDTHS.map((w, d) => ({ digit: d, parity: 1, w: [...w].reverse() }));
+const LEFT_PATTERNS = [...L_PATTERNS, ...G_PATTERNS];
+const RIGHT_PATTERNS = L_PATTERNS; // R widths equal L widths; only the starting colour differs
+
+/** How far a digit's normalized widths may sit from the nearest table entry before we refuse. */
+const MAX_DIGIT_ERROR = 0.85;
+/** A guard's three runs must be within this ratio of one another. */
+const GUARD_TOLERANCE = 0.65;
+
+// ---------------------------------------------------------------- checksums
+
+/** GS1 mod-10: every second digit from the right counts triple. */
+function gs1CheckDigit(digits) {
+  let sum = 0;
+  for (let i = digits.length - 1, weight = 3; i >= 0; i -= 1, weight = weight === 3 ? 1 : 3) {
+    sum += digits[i] * weight;
+  }
+  return (10 - (sum % 10)) % 10;
+}
+
+function checksumOK(code) {
+  if (!/^\d{8}$|^\d{12,14}$/.test(code)) return false;
+  const digits = [...code].map(Number);
+  return gs1CheckDigit(digits.slice(0, -1)) === digits[digits.length - 1];
+}
+
+// ---------------------------------------------------------------- UPC-E
+
+/**
+ * Expand a zero-suppressed UPC-E to its full UPC-A. Which zeros were dropped is encoded in
+ * the sixth data digit, so this is a lookup rather than arithmetic.
+ */
+function expandUPCE(upce) {
+  if (!/^\d{8}$/.test(upce)) return null;
+  const n = upce[0];
+  if (n !== '0' && n !== '1') return null;
+  const d = upce.slice(1, 7);
+  const check = upce[7];
+  const last = d[5];
+  let body;
+  if (last <= '2') body = `${d[0]}${d[1]}${last}0000${d[2]}${d[3]}${d[4]}`;
+  else if (last === '3') body = `${d[0]}${d[1]}${d[2]}00000${d[3]}${d[4]}`;
+  else if (last === '4') body = `${d[0]}${d[1]}${d[2]}${d[3]}00000${d[4]}`;
+  else body = `${d[0]}${d[1]}${d[2]}${d[3]}${d[4]}0000${last}`;
+  const upca = `${n}${body}${check}`;
+  return checksumOK(upca) ? upca : null;
+}
+
+/** Everything is normalized to 13 digits so one code always looks up the same way. */
+function toEAN13(code) {
+  const raw = String(code || '').replace(/\D/g, '');
+  if (raw.length === 8) {
+    const expanded = expandUPCE(raw);
+    if (expanded) return `0${expanded}`;
+    return checksumOK(raw) ? raw.padStart(13, '0') : null; // EAN-8
+  }
+  if (raw.length === 12) return checksumOK(raw) ? `0${raw}` : null; // UPC-A
+  if (raw.length === 13) return checksumOK(raw) ? raw : null;
+  if (raw.length === 14) return checksumOK(raw) ? raw.slice(1) : null; // GTIN-14 carton
+  return null;
+}
+
+/** The human-facing form: a UPC-A is shown as 12 digits, not zero-padded to 13. */
+function displayCode(ean13) {
+  if (!ean13) return '';
+  return ean13.startsWith('0') ? ean13.slice(1) : ean13;
+}
+
+// ---------------------------------------------------------------- GS1 prefix
+
+const REGIONS = [
+  [0, 19, 'US or Canada'], [20, 29, 'in-store code'], [30, 39, 'US drugs or France'],
+  [40, 44, 'Germany'], [45, 49, 'Japan'], [50, 59, 'coupon or in-store'],
+  [60, 61, 'US or Canada'], [62, 62, 'US or Canada'], [63, 63, 'US or Canada'],
+  [64, 64, 'Finland'], [70, 70, 'Norway'], [73, 73, 'Sweden'], [76, 76, 'Switzerland'],
+  [80, 83, 'Italy'], [84, 84, 'Spain'], [87, 87, 'Netherlands'], [90, 91, 'Austria'],
+  [93, 93, 'Australia'], [94, 94, 'New Zealand'], [97, 97, 'reserved'],
+];
+const REGIONS_3 = [
+  [380, 380, 'Bulgaria'], [385, 385, 'Croatia'], [400, 440, 'Germany'], [471, 471, 'Taiwan'],
+  [474, 474, 'Estonia'], [476, 476, 'Azerbaijan'], [480, 480, 'Philippines'],
+  [489, 489, 'Hong Kong'], [500, 509, 'United Kingdom'], [520, 521, 'Greece'],
+  [528, 528, 'Lebanon'], [531, 531, 'North Macedonia'], [535, 535, 'Malta'],
+  [539, 539, 'Ireland'], [540, 549, 'Belgium or Luxembourg'], [560, 560, 'Portugal'],
+  [569, 569, 'Iceland'], [570, 579, 'Denmark'], [590, 590, 'Poland'], [594, 594, 'Romania'],
+  [599, 599, 'Hungary'], [600, 601, 'South Africa'], [608, 608, 'Bahrain'],
+  [611, 611, 'Morocco'], [613, 613, 'Algeria'], [616, 616, 'Kenya'], [619, 619, 'Tunisia'],
+  [621, 621, 'Syria'], [622, 622, 'Egypt'], [625, 625, 'Jordan'], [626, 626, 'Iran'],
+  [628, 628, 'Saudi Arabia'], [629, 629, 'United Arab Emirates'], [640, 649, 'Finland'],
+  [690, 699, 'China'], [700, 709, 'Norway'], [729, 729, 'Israel'], [730, 739, 'Sweden'],
+  [740, 745, 'Central America'], [746, 746, 'Dominican Republic'], [750, 750, 'Mexico'],
+  [754, 755, 'Canada'], [759, 759, 'Venezuela'], [770, 771, 'Colombia'], [773, 773, 'Uruguay'],
+  [775, 775, 'Peru'], [777, 777, 'Bolivia'], [778, 779, 'Argentina'], [780, 780, 'Chile'],
+  [784, 784, 'Paraguay'], [786, 786, 'Ecuador'], [789, 790, 'Brazil'], [850, 850, 'Cuba'],
+  [858, 858, 'Slovakia'], [859, 859, 'Czechia'], [860, 860, 'Serbia'], [865, 865, 'Mongolia'],
+  [867, 867, 'North Korea'], [868, 869, 'Turkey'], [880, 880, 'South Korea'],
+  [883, 883, 'Myanmar'], [884, 884, 'Cambodia'], [885, 885, 'Thailand'], [888, 888, 'Singapore'],
+  [890, 890, 'India'], [893, 893, 'Vietnam'], [896, 896, 'Pakistan'], [899, 899, 'Indonesia'],
+  [950, 950, 'GS1 head office'], [955, 955, 'Malaysia'], [958, 958, 'Macau'],
+  [977, 977, 'periodical'], [978, 979, 'book or sheet music'], [980, 980, 'refund receipt'],
+  [981, 984, 'coupon'], [99, 99, 'coupon'],
+];
+
+/**
+ * Where a code was registered. Not the product — but it is real, published information, and
+ * it is honest about being all a number alone can tell you.
+ */
+function codeOrigin(ean13) {
+  if (!/^\d{13}$/.test(ean13)) return '';
+  const three = Number(ean13.slice(0, 3));
+  for (const [lo, hi, name] of REGIONS_3) if (three >= lo && three <= hi) return name;
+  const two = Number(ean13.slice(0, 2));
+  for (const [lo, hi, name] of REGIONS) if (two >= lo && two <= hi) return name;
+  return '';
+}
+
+// ---------------------------------------------------------------- binarizing a row
+
+/**
+ * Threshold a row by finding the two tallest peaks in its brightness histogram and cutting
+ * between them. A single global threshold across a whole camera frame fails on the uneven
+ * lighting you get holding a phone over a label; per-row two-peak works far better.
+ */
+function rowToRuns(gray, width, offset = 0) {
+  const buckets = new Array(32).fill(0);
+  for (let x = 0; x < width; x += 1) buckets[gray[offset + x] >> 3] += 1;
+
+  let first = 0;
+  for (let i = 1; i < 32; i += 1) if (buckets[i] > buckets[first]) first = i;
+  let second = 0;
+  let bestScore = -1;
+  for (let i = 0; i < 32; i += 1) {
+    const gap = i - first;
+    const score = buckets[i] * gap * gap; // favour a peak that is both tall and far away
+    if (score > bestScore) {
+      bestScore = score;
+      second = i;
+    }
+  }
+  const [lo, hi] = first < second ? [first, second] : [second, first];
+  if (hi - lo <= 2) return null; // the two peaks sit on top of each other: no contrast
+  if (buckets[second] * 64 < width) return null; // the second peak is empty: one flat tone
+  const threshold = ((lo + hi) << 2) + 4; // midpoint of the two buckets, back in 0-255
+
+  const runs = [];
+  const startsDark = gray[offset] < threshold;
+  let dark = startsDark;
+  let len = 0;
+  for (let x = 0; x < width; x += 1) {
+    const isDark = gray[offset + x] < threshold;
+    if (isDark === dark) {
+      len += 1;
+    } else {
+      runs.push(len);
+      dark = isDark;
+      len = 1;
+    }
+  }
+  runs.push(len);
+  return { runs, startsDark };
+}
+
+// ---------------------------------------------------------------- decoding runs
+
+function matchDigit(runs, at, patterns) {
+  let total = 0;
+  for (let i = 0; i < 4; i += 1) total += runs[at + i];
+  if (total <= 0) return null;
+  const unit = total / 7; // self-normalising: each digit is 7 modules wide whatever the scale
+  let best = null;
+  let bestError = Infinity;
+  for (const pattern of patterns) {
+    let error = 0;
+    for (let i = 0; i < 4; i += 1) {
+      const diff = runs[at + i] / unit - pattern.w[i];
+      error += diff * diff;
+    }
+    if (error < bestError) {
+      bestError = error;
+      best = pattern;
+    }
+  }
+  return bestError <= MAX_DIGIT_ERROR ? { ...best, error: bestError } : null;
+}
+
+function guardOK(runs, at, count) {
+  let total = 0;
+  for (let i = 0; i < count; i += 1) {
+    const w = runs[at + i];
+    if (!(w > 0)) return 0;
+    total += w;
+  }
+  const unit = total / count;
+  for (let i = 0; i < count; i += 1) {
+    if (Math.abs(runs[at + i] - unit) / unit > GUARD_TOLERANCE) return 0;
+  }
+  return unit;
+}
+
+function readDigits(runs, at, count, patterns) {
+  const digits = [];
+  const parities = [];
+  for (let i = 0; i < count; i += 1) {
+    const hit = matchDigit(runs, at + i * 4, patterns);
+    if (!hit) return null;
+    digits.push(hit.digit);
+    parities.push(hit.parity);
+  }
+  return { digits, parities };
+}
+
+function tryEAN13(runs, at) {
+  if (at + 59 > runs.length) return null;
+  if (!guardOK(runs, at, 3)) return null;
+  const left = readDigits(runs, at + 3, 6, LEFT_PATTERNS);
+  if (!left) return null;
+  if (!guardOK(runs, at + 27, 5)) return null;
+  const right = readDigits(runs, at + 32, 6, RIGHT_PATTERNS);
+  if (!right) return null;
+  if (!guardOK(runs, at + 56, 3)) return null;
+  const leading = LEADING.findIndex((p) => p.every((v, i) => v === left.parities[i]));
+  if (leading < 0) return null;
+  const ean = `${leading}${left.digits.join('')}${right.digits.join('')}`;
+  if (!checksumOK(ean)) return null;
+  const upcA = leading === 0;
+  return { format: upcA ? 'upc_a' : 'ean_13', code: upcA ? ean.slice(1) : ean, runsUsed: 59 };
+}
+
+function tryEAN8(runs, at) {
+  if (at + 43 > runs.length) return null;
+  if (!guardOK(runs, at, 3)) return null;
+  const left = readDigits(runs, at + 3, 4, L_PATTERNS);
+  if (!left) return null;
+  if (!guardOK(runs, at + 19, 5)) return null;
+  const right = readDigits(runs, at + 24, 4, RIGHT_PATTERNS);
+  if (!right) return null;
+  if (!guardOK(runs, at + 40, 3)) return null;
+  const code = `${left.digits.join('')}${right.digits.join('')}`;
+  if (!checksumOK(code)) return null;
+  return { format: 'ean_8', code, runsUsed: 43 };
+}
+
+function tryUPCE(runs, at) {
+  if (at + 33 > runs.length) return null;
+  if (!guardOK(runs, at, 3)) return null;
+  const data = readDigits(runs, at + 3, 6, LEFT_PATTERNS);
+  if (!data) return null;
+  if (!guardOK(runs, at + 27, 6)) return null;
+  // The parity pattern carries the check digit; number system 1 inverts it.
+  let check = UPCE_PARITY.findIndex((p) => p.every((v, i) => v === data.parities[i]));
+  let system = 0;
+  if (check < 0) {
+    check = UPCE_PARITY.findIndex((p) => p.every((v, i) => v !== data.parities[i]));
+    system = 1;
+  }
+  if (check < 0) return null;
+  const code = `${system}${data.digits.join('')}${check}`;
+  if (!expandUPCE(code)) return null;
+  return { format: 'upc_e', code, runsUsed: 33 };
+}
+
+const ATTEMPTS = [tryEAN13, tryUPCE, tryEAN8];
+
+/**
+ * Find and decode a symbol anywhere in one row of runs. Tries every dark run as a possible
+ * start guard, and then the whole row reversed, since a barcode held upside down produces a
+ * structurally valid but unreadable run order rather than a wrong answer.
+ */
+function decodeRuns(runs, startsDark) {
+  for (const reversed of [false, true]) {
+    const seq = reversed ? [...runs].reverse() : runs;
+    const firstDark = reversed ? (runs.length % 2 === 1) === startsDark : startsDark;
+    for (let at = firstDark ? 0 : 1; at + 33 <= seq.length; at += 2) {
+      for (const attempt of ATTEMPTS) {
+        const hit = attempt(seq, at);
+        if (hit) return hit;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Sweep a grey frame for a barcode. Rows are tried from the middle outwards, because that is
+ * where someone aiming a phone puts the thing they are aiming at.
+ */
+function decodeGray(gray, width, height, { rows = 24 } = {}) {
+  const order = [];
+  const middle = Math.floor(height / 2);
+  const step = Math.max(1, Math.floor(height / (rows * 2)));
+  for (let i = 0; i < rows; i += 1) {
+    const delta = Math.ceil(i / 2) * step * (i % 2 === 0 ? 1 : -1);
+    const y = middle + delta;
+    if (y >= 0 && y < height) order.push(y);
+  }
+  for (const y of order) {
+    const row = rowToRuns(gray, width, y * width);
+    if (!row) continue;
+    const hit = decodeRuns(row.runs, row.startsDark);
+    if (hit) return { ...hit, row: y };
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------- encoding, for tests and previews
+
+const GUARD_START = '101';
+const GUARD_MIDDLE = '01010';
+const GUARD_END = '101';
+
+function bitsFor(digit, parity) {
+  const w = parity === 1 ? [...WIDTHS[digit]].reverse() : WIDTHS[digit];
+  let bits = '';
+  let dark = parity === 2; // parity 2 marks an R digit, which starts on a bar
+  for (const width of w) {
+    bits += (dark ? '1' : '0').repeat(width);
+    dark = !dark;
+  }
+  return bits;
+}
+
+/** Turn a 12- or 13-digit code into its module string. Used by the tests and the demo strip. */
+function encodeEAN13(code) {
+  const ean = toEAN13(code);
+  if (!ean) return null;
+  const leading = Number(ean[0]);
+  const left = ean.slice(1, 7);
+  const right = ean.slice(7);
+  let bits = GUARD_START;
+  for (let i = 0; i < 6; i += 1) bits += bitsFor(Number(left[i]), LEADING[leading][i]);
+  bits += GUARD_MIDDLE;
+  for (let i = 0; i < 6; i += 1) bits += bitsFor(Number(right[i]), 2);
+  bits += GUARD_END;
+  return bits;
+}
+
+function encodeEAN8(code) {
+  if (!/^\d{8}$/.test(code) || !checksumOK(code)) return null;
+  let bits = GUARD_START;
+  for (let i = 0; i < 4; i += 1) bits += bitsFor(Number(code[i]), 0);
+  bits += GUARD_MIDDLE;
+  for (let i = 4; i < 8; i += 1) bits += bitsFor(Number(code[i]), 2);
+  return bits + GUARD_END;
+}
+
+function encodeUPCE(code) {
+  if (!/^\d{8}$/.test(code) || !expandUPCE(code)) return null;
+  const system = Number(code[0]);
+  const check = Number(code[7]);
+  const parity = UPCE_PARITY[check].map((p) => (system === 1 ? 1 - p : p));
+  let bits = GUARD_START;
+  for (let i = 0; i < 6; i += 1) bits += bitsFor(Number(code[i + 1]), parity[i]);
+  return bits + '010101';
+}
+
 /* ---- src/store.js ---- */
 // Persistence. Everything lives in this browser's localStorage and goes nowhere else,
 // which is also why the backup panel in the Data tab is not optional.
@@ -1603,10 +2111,31 @@ const KEY = 'lasts.v1';
 
 const state = {
   items: [],
+  /** Barcodes this browser has been taught, keyed by normalized EAN-13. See rememberCode(). */
+  learned: {},
   showedExamples: false,
   storageOK: true,
   storageNote: '',
 };
+
+/** What a thing actually is, as distinct from when it is next due. */
+function emptyProduct() {
+  return { brand: '', model: '', part: '', code: '', serial: '' };
+}
+
+function cleanProduct(raw) {
+  const out = emptyProduct();
+  if (!raw || typeof raw !== 'object') return out;
+  for (const key of Object.keys(out)) {
+    if (typeof raw[key] === 'string') out[key] = raw[key].trim().slice(0, 60);
+  }
+  return out;
+}
+
+function hasProduct(item) {
+  const p = item.product;
+  return !!p && Object.values(p).some(Boolean);
+}
 
 function uid() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID().slice(0, 8);
@@ -1626,6 +2155,7 @@ function makeItem(patch = {}) {
     every: null,
     lead: 14,
     note: '',
+    product: emptyProduct(),
     history: [],
     archived: false,
     created: todayISO(),
@@ -1678,13 +2208,38 @@ function sanitize(raw) {
         lead: Number.isFinite(it.lead) ? it.lead : 14,
         history: Array.isArray(it.history) ? it.history.slice(-40) : [],
         archived: !!it.archived,
+        product: cleanProduct(it.product),
         every:
           it.every && Number.isFinite(it.every.n) && ['day', 'week', 'month', 'year'].includes(it.every.unit)
             ? { n: it.every.n, unit: it.every.unit }
             : null,
       })
     );
-  return { items, showedExamples: !!raw.showedExamples };
+  return { items, learned: cleanLearned(raw.learned), showedExamples: !!raw.showedExamples };
+}
+
+/** The learned-barcode map is user data too, so it gets the same treatment on the way in. */
+function cleanLearned(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object') return out;
+  for (const [key, value] of Object.entries(raw)) {
+    const code = toEAN13(key);
+    if (!code || !value || typeof value !== 'object') continue;
+    const str = (v) => (typeof v === 'string' ? v.trim().slice(0, 60) : '');
+    const entry = {
+      name: str(value.name),
+      catalogId: str(value.catalogId) || null,
+      partId: str(value.partId) || null,
+      brand: str(value.brand),
+      model: str(value.model),
+      part: str(value.part),
+      at: isISO(value.at) ? value.at : todayISO(),
+    };
+    if (!entry.name && !entry.catalogId && !entry.partId && !entry.part) continue;
+    out[code] = entry;
+    if (Object.keys(out).length >= 2000) break;
+  }
+  return out;
 }
 
 function load() {
@@ -1705,6 +2260,7 @@ function load() {
     const parsed = sanitize(JSON.parse(raw));
     if (!parsed) throw new Error('shape');
     state.items = parsed.items;
+    state.learned = parsed.learned;
     state.showedExamples = parsed.showedExamples;
   } catch {
     state.items = seedExamples();
@@ -1716,7 +2272,10 @@ function load() {
 function save() {
   if (!state.storageOK) return;
   try {
-    localStorage.setItem(KEY, JSON.stringify({ schema: SCHEMA, items: state.items, showedExamples: state.showedExamples }));
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({ schema: SCHEMA, items: state.items, learned: state.learned, showedExamples: state.showedExamples })
+    );
   } catch {
     state.storageOK = false;
     state.storageNote = 'Local storage is full or blocked, so changes are no longer being saved. Copy your backup from the Data tab.';
@@ -1724,13 +2283,18 @@ function save() {
 }
 
 function exportJSON() {
-  return JSON.stringify({ schema: SCHEMA, exported: todayISO(), items: state.items }, null, 2);
+  return JSON.stringify(
+    { schema: SCHEMA, exported: todayISO(), items: state.items, learned: state.learned },
+    null,
+    2
+  );
 }
 
 function importJSON(text) {
   const parsed = sanitize(JSON.parse(text));
   if (!parsed) throw new Error('That does not look like a Lasts backup — it should be JSON with an "items" list.');
   state.items = parsed.items;
+  state.learned = parsed.learned;
   state.showedExamples = false;
   save();
   return parsed.items.length;
@@ -1738,12 +2302,59 @@ function importJSON(text) {
 
 function wipe() {
   state.items = [];
+  state.learned = {};
   state.showedExamples = false;
   try {
     localStorage.removeItem(KEY);
   } catch {
     /* nothing to clear */
   }
+}
+
+// ---------------------------------------------------------------- learned barcodes
+
+/**
+ * Nobody can ship an offline barcode database, so the app builds its own one scan at a time.
+ * Tell it what a code is once and that code is exact forever, on this device, for free.
+ */
+function rememberCode(code, info) {
+  const key = toEAN13(code);
+  if (!key) return null;
+  state.learned[key] = {
+    name: String(info.name || '').trim().slice(0, 60),
+    catalogId: info.catalogId || null,
+    partId: info.partId || null,
+    brand: String(info.brand || '').trim().slice(0, 60),
+    model: String(info.model || '').trim().slice(0, 60),
+    part: String(info.part || '').trim().slice(0, 60),
+    at: todayISO(),
+  };
+  save();
+  return state.learned[key];
+}
+
+function recallCode(code) {
+  const key = toEAN13(code);
+  return key ? state.learned[key] || null : null;
+}
+
+function forgetCode(code) {
+  const key = toEAN13(code);
+  if (key && state.learned[key]) {
+    delete state.learned[key];
+    save();
+  }
+}
+
+function learnedCount() {
+  return Object.keys(state.learned).length;
+}
+
+/** Items already carrying this barcode — "you tracked this before" rather than a duplicate. */
+function itemsWithCode(code) {
+  const key = toEAN13(code);
+  if (!key) return [];
+  return state.items.filter((it) => it.product?.code && toEAN13(it.product.code) === key);
 }
 
 // ---------------------------------------------------------------- example data
@@ -1805,7 +2416,33 @@ function catalogIndex() {
 
 const SHAPE = `{"items":[{"catalogId":"smoke-alarm","label":"Smoke alarm","confidence":"high","seen":"ceiling-mounted alarm, Kidde branding","date":{"value":"2016-04","kind":"manufacture","text":"MFD 04/2016","confidence":"high"}}],"note":""}`;
 
+const NAMEPLATE_SHAPE = `{"kindOfThing":"Refrigerator","brand":"Frigidaire","model":"FFSS2615TS","part":"","serial":"BA12345678","size":"","dates":[{"value":"2019-06","kind":"manufacture","text":"MFD 06/19"}],"note":""}`;
+
+/**
+ * Nameplate mode is the most exact identification the app has. A rating plate carries a brand
+ * and a model number, and those cross-reference locally to the consumables the thing takes —
+ * which is far more use than a barcode, since a barcode identifies a box and a model number
+ * identifies the machine.
+ */
+function nameplatePrompt() {
+  return `You are the eye of a maintenance tracker. The attached photo shows a product label, rating plate, sticker or packaging. Transcribe what is printed on it.
+
+Reply with only JSON in this shape, and nothing else:
+${NAMEPLATE_SHAPE}
+
+Rules:
+- Transcribe characters exactly as printed. Do not correct, expand or tidy a model number.
+- model is the appliance or product model number. part is a replacement-part or cartridge number if the label is for a part rather than a machine. Use "" for anything not printed.
+- Prefer the string labelled "Model", "Model No", "M/N", "Mod" or similar. Serial numbers are usually labelled "Serial", "S/N" or "SER" — never put a serial in model.
+- size is any dimension or capacity printed on it, such as a filter size like "20x25x1" or "16 x 25 x 4".
+- dates lists every date printed on the label, each as "YYYY", "YYYY-MM" or "YYYY-MM-DD", only as precise as you can read. kind is "manufacture", "expiry", "install", "service" or "purchase". text is the characters as printed.
+- Never estimate a date from how old something looks, and never use today's date.
+- If the label is unreadable, return empty strings and say why in one sentence in note.
+- Say nothing about any people in the image; ignore them.`;
+}
+
 function buildPrompt(mode, subject) {
+  if (mode === 'nameplate') return nameplatePrompt();
   const common = `You are the eye of a maintenance tracker. Read the attached photo or photos.
 
 Reply with only JSON in this shape, and nothing else:
@@ -1909,6 +2546,32 @@ function dueFromRead(entry, kind, dateISO) {
   return entry.every ? addInterval(dateISO, entry.every) : dateISO;
 }
 
+/** Everything a nameplate reply claims, trimmed to what the app can use. */
+function normalizeNameplate(raw) {
+  const str = (v) => (typeof v === 'string' ? v.trim().replace(/\s+/g, ' ').slice(0, 60) : '');
+  const dates = [];
+  const list = Array.isArray(raw?.dates) ? raw.dates.slice(0, 6) : [];
+  for (const d of list) {
+    const parsed = normalizeReadDate(d);
+    if (parsed) dates.push(parsed);
+  }
+  return {
+    kindOfThing: str(raw?.kindOfThing),
+    brand: str(raw?.brand),
+    model: str(raw?.model),
+    part: str(raw?.part),
+    serial: str(raw?.serial),
+    size: str(raw?.size),
+    dates,
+    note: typeof raw?.note === 'string' ? raw.note.slice(0, 240) : '',
+  };
+}
+
+/** Did the label give us anything at all to work with? */
+function nameplateHasContent(plate) {
+  return !!(plate.brand || plate.model || plate.part || plate.size || plate.dates.length);
+}
+
 // ---------------------------------------------------------------- preparing the file
 
 /**
@@ -1965,6 +2628,671 @@ function sampleErrorCopy(code) {
   }
 }
 
+/* ---- src/scanner.js ---- */
+// Camera plumbing for the barcode scanner. Two decode paths, both local:
+//
+//   1. BarcodeDetector, where the browser has it (Chrome, Edge, Android WebView) — fastest.
+//   2. src/barcode.js over greyscale frames, everywhere else. iOS Safari has no
+//      BarcodeDetector, so without this path every iPhone would be unable to scan.
+//
+// No network either way, and no library.
+
+
+const FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e'];
+/** Work at this width; more pixels cost frame rate without helping a 95-module symbol. */
+const WORK_WIDTH = 640;
+/** Scan the middle band, where someone aiming a phone puts the thing they are aiming at. */
+const BAND = 0.5;
+/** A code must be read twice running before it is accepted. */
+const AGREE = 2;
+
+function cameraSupport() {
+  const secure = typeof window !== 'undefined' && (window.isSecureContext ?? false);
+  const api = !!navigator.mediaDevices?.getUserMedia;
+  if (!api) {
+    return {
+      ok: false,
+      reason: secure
+        ? 'This browser does not offer camera access to web pages.'
+        : 'The camera needs the page to be served over https. Open the hosted version, or serve the folder over https rather than from a file:// path.',
+    };
+  }
+  if (!secure) {
+    return {
+      ok: false,
+      reason:
+        'The camera needs a secure page. Browsers only allow it over https or on localhost, so a file:// copy cannot scan — everything else still works.',
+    };
+  }
+  return { ok: true, reason: '' };
+}
+
+function permissionCopy(err) {
+  switch (err?.name) {
+    case 'NotAllowedError':
+    case 'SecurityError':
+      return 'Camera access was blocked. Allow it for this page in your browser settings, then try again.';
+    case 'NotFoundError':
+    case 'OverconstrainedError':
+      return 'No camera was found on this device.';
+    case 'NotReadableError':
+      return 'The camera is already in use by another app. Close that and try again.';
+    default:
+      return 'The camera could not be started. Type the digits underneath the barcode instead.';
+  }
+}
+
+/**
+ * Start scanning into `video`. Calls `onHit({code, format})` once a code has been read twice
+ * in a row, and `onStatus(text)` with anything worth telling the person. Returns a handle
+ * with stop() and, where the hardware allows, torch().
+ */
+async function startScanner(video, { onHit, onStatus } = {}) {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+    },
+    audio: false,
+  });
+
+  video.srcObject = stream;
+  video.setAttribute('playsinline', '');
+  video.muted = true;
+  await video.play().catch(() => {
+    /* some browsers resolve play() late; the frames still arrive */
+  });
+
+  const track = stream.getVideoTracks()[0];
+  const canTorch = !!track?.getCapabilities?.().torch;
+  let torchOn = false;
+
+  let detector = null;
+  if ('BarcodeDetector' in window) {
+    try {
+      const available = await window.BarcodeDetector.getSupportedFormats();
+      const usable = FORMATS.filter((f) => available.includes(f));
+      if (usable.length) detector = new window.BarcodeDetector({ formats: usable });
+    } catch {
+      detector = null; // fall through to our own decoder
+    }
+  }
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+  let running = true;
+  let lastCode = null;
+  let agreed = 0;
+  let frames = 0;
+  let vertical = false;
+  let announced = false;
+
+  /** Draw a source rectangle of the video into the work canvas and return it as luma. */
+  function grabRect(sx, sy, sw, sh, w, h) {
+    canvas.width = w;
+    canvas.height = h;
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, w, h);
+    const { data } = ctx.getImageData(0, 0, w, h);
+    const gray = new Uint8Array(w * h);
+    for (let i = 0, p = 0; i < gray.length; i += 1, p += 4) {
+      // Rec. 601 luma, integer-only: barcodes are printed in black, so green dominates fine.
+      gray[i] = (data[p] * 77 + data[p + 1] * 151 + data[p + 2] * 28) >> 8;
+    }
+    return gray;
+  }
+
+  /**
+   * Sample the frame for a scanline sweep. The band has to be cropped ACROSS the bars and
+   * kept whole ALONG them: a band of the frame's height only suits a barcode lying
+   * horizontally, and cropping the same way for a sideways one cuts digits off the symbol
+   * before it can be read.
+   */
+  function grabGray() {
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (!vw || !vh) return null;
+
+    if (!vertical) {
+      const scale = Math.min(1, WORK_WIDTH / vw);
+      const w = Math.max(64, Math.round(vw * scale));
+      const h = Math.max(32, Math.round(vh * scale * BAND));
+      const gray = grabRect(0, Math.round((vh * (1 - BAND)) / 2), vw, Math.round(vh * BAND), w, h);
+      return { gray, width: w, height: h };
+    }
+
+    // Held sideways: take a tall middle column at full height, then transpose so the symbol
+    // runs along rows and the same scanline sweep applies.
+    const scale = Math.min(1, WORK_WIDTH / vh);
+    const h = Math.max(64, Math.round(vh * scale));
+    const w = Math.max(32, Math.round(vw * scale * BAND));
+    const gray = grabRect(Math.round((vw * (1 - BAND)) / 2), 0, Math.round(vw * BAND), vh, w, h);
+    const flipped = new Uint8Array(gray.length);
+    for (let y = 0; y < h; y += 1) for (let x = 0; x < w; x += 1) flipped[x * h + y] = gray[y * w + x];
+    return { gray: flipped, width: h, height: w };
+  }
+
+  function accept(code, format) {
+    const normalized = toEAN13(code);
+    if (!normalized) return;
+    if (code === lastCode) {
+      agreed += 1;
+    } else {
+      lastCode = code;
+      agreed = 1;
+    }
+    if (agreed < AGREE) return;
+    running = false;
+    onHit?.({ code, format, ean13: normalized });
+  }
+
+  async function tick() {
+    if (!running) return;
+    frames += 1;
+    try {
+      if (detector) {
+        const found = await detector.detect(video);
+        for (const hit of found) {
+          if (hit.rawValue) accept(hit.rawValue, hit.format);
+          if (!running) return;
+        }
+      } else {
+        // Alternate orientation between frames so each frame stays cheap.
+        vertical = frames % 2 === 1;
+        const frame = grabGray();
+        if (frame) {
+          const hit = decodeGray(frame.gray, frame.width, frame.height, { rows: 20 });
+          if (hit) accept(hit.code, hit.format);
+          if (!running) return;
+        }
+      }
+      if (!announced && frames > 90) {
+        announced = true;
+        onStatus?.('Still looking. Fill the frame with the barcode, hold steady, and try more light.');
+      }
+    } catch {
+      /* a dropped frame is normal; keep going */
+    }
+    if (running) requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(tick);
+
+  return {
+    engine: detector ? 'BarcodeDetector' : 'built-in',
+    canTorch,
+    async torch() {
+      if (!canTorch) return false;
+      torchOn = !torchOn;
+      try {
+        await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+        return torchOn;
+      } catch {
+        return false;
+      }
+    },
+    stop() {
+      running = false;
+      for (const t of stream.getTracks()) t.stop();
+      video.srcObject = null;
+    },
+  };
+}
+
+/* ---- src/parts.js ---- */
+// Consumable cross-reference: which replacement part a thing takes, and how often.
+//
+// Deliberately NOT a UPC database. Nobody can ship a complete offline barcode-to-product
+// table, and a wrong part number is worse than none — someone buys the wrong filter. So this
+// holds only widely published, stable cross-references, every record says where to confirm
+// the number on your own unit, and no UPC is guessed. A scanned barcode the app has not been
+// taught is reported honestly as unknown rather than matched to something plausible.
+//
+// The universal rule, which is why `where` matters more than any table: the old part tells
+// you the new part. Almost every consumable has its own number printed on it.
+
+const PART_GROUPS = [
+  { id: 'fridge', name: 'Refrigerator' },
+  { id: 'water', name: 'Drinking water' },
+  { id: 'air', name: 'Air & heating' },
+  { id: 'clean', name: 'Cleaning' },
+  { id: 'personal', name: 'Personal care' },
+  { id: 'vehicle', name: 'Vehicle' },
+  { id: 'plumbing', name: 'Plumbing' },
+  { id: 'alarm', name: 'Alarms' },
+  { id: 'office', name: 'Office' },
+];
+
+/**
+ * every  — how often this consumable is replaced
+ * parts  — order numbers, OEM first; matched case- and punctuation-insensitively
+ * fits   — model prefixes of the appliances that take it, for a nameplate lookup
+ * where  — how to confirm it against your own unit, which always beats this table
+ */
+const PARTS = [
+  // ---------------------------------------------------------------- fridge water
+  {
+    id: 'ps3', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'Frigidaire', names: ['PureSource 3'], parts: ['WF3CB', 'PS-RF200', 'PS2364646'],
+    fits: ['FFSS', 'FGHS', 'FPHB', 'LFSS', 'FFHS'], every: { n: 6, unit: 'month' },
+    where: 'Pull the old cartridge — its number is printed on the body.',
+    note: 'Twist-out cartridge, usually bottom-right of the fresh-food compartment.',
+  },
+  {
+    id: 'ultrawf', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'Frigidaire', names: ['PureSource Ultra II', 'PureSource Ultra'],
+    parts: ['ULTRAWF', 'EPTWFU01', 'PS2364646'], fits: ['FGHB', 'FPBC', 'LGHB', 'FGSS'],
+    every: { n: 6, unit: 'month' },
+    where: 'Printed on the old cartridge.',
+    note: 'EPTWFU01 is the newer push-in version of the same filter; they are not interchangeable, so match the shape.',
+  },
+  {
+    id: 'ps2', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'Frigidaire', names: ['PureSource 2'], parts: ['WF2CB', 'WFCB', 'NGFC2000'],
+    fits: [], every: { n: 6, unit: 'month' },
+    where: 'Printed on the old cartridge.',
+  },
+  {
+    id: 'edr1', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'Whirlpool, Maytag, KitchenAid', names: ['EveryDrop Filter 1'],
+    parts: ['EDR1RXD1', 'W10295370A', 'W10295370', 'P4RFWB'],
+    fits: ['WRS', 'WRX', 'MSS', 'KRS'], every: { n: 6, unit: 'month' },
+    where: 'EveryDrop filters are numbered 1 to 6 and the number is printed on the old cartridge. Read it rather than guessing from the fridge model.',
+  },
+  {
+    id: 'edr2', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'Whirlpool, Maytag, KitchenAid', names: ['EveryDrop Filter 2'],
+    parts: ['EDR2RXD1', 'W10413645A', 'W10413645'], fits: ['WRF', 'WRB', 'MFI'],
+    every: { n: 6, unit: 'month' },
+    where: 'The number 2 is printed on the old cartridge.',
+  },
+  {
+    id: 'edr3', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'Whirlpool, Maytag, KitchenAid', names: ['EveryDrop Filter 3'],
+    parts: ['EDR3RXD1', '4396841', '4396710', 'T2WG2L'], fits: ['ED5', 'GS6', 'GD5'],
+    every: { n: 6, unit: 'month' },
+    where: 'The number 3 is printed on the old cartridge.',
+  },
+  {
+    id: 'samsung-cin', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'Samsung', names: ['HAF-CIN', 'HAF-CIN/EXP'], parts: ['DA29-00020B', 'DA29-00020A', 'HAFCIN'],
+    fits: ['RF', 'RS', 'RH'], every: { n: 6, unit: 'month' },
+    where: 'Printed on the old cartridge, inside the fridge or behind the base grille.',
+  },
+  {
+    id: 'samsung-cu1s', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'Samsung', names: ['HAF-CU1S'], parts: ['DA29-00003G', 'DA29-00003B', 'HAFCU1S'],
+    fits: [], every: { n: 6, unit: 'month' },
+    where: 'Printed on the old cartridge.',
+  },
+  {
+    id: 'lg-lt1000p', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'LG', names: ['LT1000P'], parts: ['LT1000P', 'ADQ74793501', 'ADQ747935', 'MDJ64844601'],
+    fits: ['LFXS', 'LMXS', 'LRFVS', 'LRMVS'], every: { n: 6, unit: 'month' },
+    where: 'Printed on the old cartridge, top-right inside the fridge.',
+  },
+  {
+    id: 'lg-lt700p', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'LG', names: ['LT700P'], parts: ['LT700P', 'ADQ36006101', 'ADQ36006102'],
+    fits: ['LFX', 'LMX', 'LSXS'], every: { n: 6, unit: 'month' },
+    where: 'Printed on the old cartridge.',
+  },
+  {
+    id: 'ge-mwf', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'GE', names: ['SmartWater MWF'], parts: ['MWF', 'MWFP', 'MWFA', 'GWF', 'MWFINT'],
+    fits: ['GSH', 'GSS', 'PSS'], every: { n: 6, unit: 'month' },
+    where: 'Printed on the old cartridge.',
+  },
+  {
+    id: 'ge-rpwfe', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'GE', names: ['RPWFE'], parts: ['RPWFE', 'RPWF'], fits: ['GFE', 'GNE', 'PFE', 'PYE'],
+    every: { n: 6, unit: 'month' },
+    where: 'Printed on the old cartridge.',
+    note: 'RPWFE carries an RFID chip and RPWF does not — a fridge expecting the chipped one will not recognise the other.',
+  },
+  {
+    id: 'ge-xwf', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'GE', names: ['XWF'], parts: ['XWF', 'XWFE'], fits: ['GBE', 'GDE', 'GFD', 'GSS25'],
+    every: { n: 6, unit: 'month' },
+    where: 'Printed on the old cartridge.',
+  },
+  {
+    id: 'bosch-uc', group: 'fridge', catalogId: 'fridge-filter', what: 'Refrigerator water filter',
+    brand: 'Bosch', names: ['UltraClarity'], parts: ['11032518', '11028820', '644845', 'BORPLFTR50'],
+    fits: ['B36', 'B26', 'KAD'], every: { n: 6, unit: 'month' },
+    where: 'Printed on the old cartridge.',
+  },
+  {
+    id: 'paultra', group: 'fridge', catalogId: 'fridge-coils', what: 'Refrigerator air filter',
+    brand: 'Frigidaire', names: ['PureAir Ultra', 'PureAir Ultra II'],
+    parts: ['PAULTRA', 'PAULTRA2', '242047805', '5303918825'], fits: ['FGHB', 'FPBC', 'FFSS'],
+    every: { n: 6, unit: 'month' },
+    where: 'A small cassette clipped to the rear wall inside the fridge.',
+    note: 'Separate from the water filter, and the one nobody knows exists.',
+  },
+  {
+    id: 'air1', group: 'fridge', catalogId: 'fridge-coils', what: 'Refrigerator air filter',
+    brand: 'Whirlpool', names: ['FreshFlow AIR1'], parts: ['W10311524', 'AIR1', 'W10335147'],
+    fits: ['WRF', 'WRX', 'KRF'], every: { n: 6, unit: 'month' },
+    where: 'Inside the fridge, usually in the upper-left corner behind a small door.',
+  },
+
+  // ---------------------------------------------------------------- drinking water
+  {
+    id: 'brita-standard', group: 'water', catalogId: 'pitcher-filter', what: 'Water pitcher filter',
+    brand: 'Brita', names: ['Standard', 'White filter'], parts: ['OB03', '35557', 'SAFF-100'],
+    fits: [], every: { n: 2, unit: 'month' },
+    where: 'The white round cartridge. Rated about 40 gallons or 150 litres.',
+  },
+  {
+    id: 'brita-elite', group: 'water', catalogId: 'pitcher-filter', what: 'Water pitcher filter',
+    brand: 'Brita', names: ['Elite', 'Longlast', 'Blue filter'], parts: ['OB06', 'FR-200', '36311'],
+    fits: [], every: { n: 6, unit: 'month' },
+    where: 'The blue cartridge. Rated about 120 gallons or 450 litres — three times the white one.',
+  },
+  {
+    id: 'pur-plus', group: 'water', catalogId: 'pitcher-filter', what: 'Water pitcher filter',
+    brand: 'PUR', names: ['PUR Plus', 'PUR Basic'], parts: ['PPF900Z', 'PPF951K', 'CRF-950Z'],
+    fits: [], every: { n: 2, unit: 'month' },
+    where: 'Printed on the cartridge collar. Rated about 40 gallons.',
+  },
+  {
+    id: 'zerowater', group: 'water', catalogId: 'pitcher-filter', what: 'Water pitcher filter',
+    brand: 'ZeroWater', names: ['ZeroWater filter'], parts: ['ZR-001', 'ZR-017', 'ZR-006'],
+    fits: [], every: { n: 2, unit: 'month' },
+    where: 'Replace by the meter, not the calendar: change it when the included TDS meter reads 006 ppm.',
+  },
+  {
+    id: 'ro-set', group: 'water', catalogId: 'undersink-filter', what: 'Reverse osmosis filters',
+    brand: 'Generic', names: ['RO pre-filters', 'RO membrane'],
+    parts: ['10x2.5', 'FILTER-SET', 'TFC-1812', 'TFC-2012'], fits: [], every: { n: 9, unit: 'month' },
+    where: 'Standard 10-inch housings take generic 10 x 2.5 inch cartridges; the membrane is a separate longer-lived part.',
+    note: 'Sediment and carbon stages run 6 to 12 months; the membrane 2 to 3 years; the polishing carbon annually.',
+  },
+  {
+    id: 'shower-filter', group: 'water', catalogId: 'undersink-filter', what: 'Shower filter cartridge',
+    brand: 'Generic', names: ['Shower filter'], parts: [], fits: [], every: { n: 6, unit: 'month' },
+    where: 'Unscrew the housing; the cartridge model is printed on its end cap.',
+  },
+
+  // ---------------------------------------------------------------- air & heating
+  {
+    id: 'hvac-1in', group: 'air', catalogId: 'hvac-filter', what: 'Furnace / AC filter (1 inch)',
+    brand: 'Any', names: ['Pleated filter'], parts: ['16x25x1', '20x25x1', '16x20x1', '20x20x1', '14x25x1', '14x20x1', '12x24x1'],
+    fits: [], every: { n: 3, unit: 'month' },
+    where: 'The size is printed on the cardboard frame of the one you pull out. Photograph it before you bin it — the nominal size on the frame is what you order, not the tape-measure size.',
+    note: 'A thin pleated filter is a 1 to 3 month part. MERV 8 to 11 suits most homes; higher than your system is rated for restricts airflow.',
+  },
+  {
+    id: 'honeywell-media', group: 'air', catalogId: 'hvac-filter', what: 'Furnace media filter (4-5 inch)',
+    brand: 'Honeywell', names: ['Media air cleaner filter'],
+    parts: ['FC100A1037', 'FC100A1029', 'FC100A1003', 'FC100A1025', 'FC40R1003'],
+    fits: ['F100', 'F200', 'FC100'], every: { n: 9, unit: 'month' },
+    where: 'The filter number is printed inside the cabinet door. FC100A1037 is 20x25x4, FC100A1029 is 16x25x4, FC100A1003 is 16x20x4.',
+    note: 'Thick media filters run 6 to 12 months rather than 3.',
+  },
+  {
+    id: 'aprilaire-media', group: 'air', catalogId: 'hvac-filter', what: 'Furnace media filter',
+    brand: 'Aprilaire', names: ['Aprilaire media filter'], parts: ['201', '210', '213', '413', '401', '501'],
+    fits: ['1210', '2210', '3210', '4200', '2120', '2200'], every: { n: 9, unit: 'month' },
+    where: 'The filter number is on a label inside the cabinet door — match it exactly, because the cabinet sizes are not interchangeable.',
+  },
+  {
+    id: 'aprilaire-pad-35', group: 'air', catalogId: 'hvac-service', what: 'Humidifier water panel',
+    brand: 'Aprilaire', names: ['Water Panel 35'], parts: ['35', '#35'],
+    fits: ['350', '360', '560', '568', '600', '700', '760', '768'], every: { n: 1, unit: 'year' },
+    where: 'The pad number is printed on the old panel and on the humidifier label.',
+    note: 'Replace at the start of each heating season. A scaled pad evaporates almost nothing.',
+  },
+  {
+    id: 'aprilaire-pad-45', group: 'air', catalogId: 'hvac-service', what: 'Humidifier water panel',
+    brand: 'Aprilaire', names: ['Water Panel 45'], parts: ['45', '#45'],
+    fits: ['400', '400A', '400M', '440', '445', '448'], every: { n: 1, unit: 'year' },
+    where: 'Printed on the old panel.',
+  },
+  {
+    id: 'aprilaire-pad-10', group: 'air', catalogId: 'hvac-service', what: 'Humidifier water panel',
+    brand: 'Aprilaire', names: ['Water Panel 10'], parts: ['10', '#10'],
+    fits: ['110', '220', '500', '500A', '500M', '550', '558'], every: { n: 1, unit: 'year' },
+    where: 'Printed on the old panel.',
+  },
+  {
+    id: 'generalaire-pad', group: 'air', catalogId: 'hvac-service', what: 'Humidifier pad',
+    brand: 'GeneralAire', names: ['GeneralAire pad'], parts: ['1099', 'GFI7', '7', '990-13'],
+    fits: ['1042', '1137', '900', '1000'], every: { n: 1, unit: 'year' },
+    where: 'Printed on the old pad.',
+  },
+  {
+    id: 'honeywell-hepa', group: 'air', catalogId: null, what: 'Air purifier HEPA filter',
+    brand: 'Honeywell', names: ['True HEPA filter'], parts: ['HRF-R1', 'HRF-R2', 'HRF-R3', 'HRF-AP1', 'HRF-APP1'],
+    fits: ['HPA100', 'HPA200', 'HPA300', 'HPA5300', 'HPA8350'], every: { n: 1, unit: 'year' },
+    where: 'The letter R filters are the HEPA rounds; HRF-AP1 is the black pre-filter. The count you need is printed inside the door.',
+    note: 'HEPA rounds run about a year; the pre-filter about three months.',
+  },
+  {
+    id: 'levoit', group: 'air', catalogId: null, what: 'Air purifier filter',
+    brand: 'Levoit', names: ['Levoit replacement filter'],
+    parts: ['CORE300-RF', 'CORE400S-RF', 'CORE200S-RF', 'LV-H132-RF', 'CORE600S-RF'],
+    fits: ['CORE300', 'CORE400S', 'CORE200S', 'LV-H132', 'CORE600S'], every: { n: 7, unit: 'month' },
+    where: 'The filter code is printed on the filter itself and matches the unit model.',
+  },
+  {
+    id: 'coway', group: 'air', catalogId: null, what: 'Air purifier filter set',
+    brand: 'Coway', names: ['Airmega filter set'], parts: ['3304899', '3304900'],
+    fits: ['AP-1512HH', 'AP-1512', '200M', '250'], every: { n: 1, unit: 'year' },
+    where: 'Model is on the back of the unit.',
+    note: 'The carbon pre-filter is washable and the HEPA is not — the HEPA is the annual part.',
+  },
+  {
+    id: 'winix', group: 'air', catalogId: null, what: 'Air purifier filter',
+    brand: 'Winix', names: ['Winix filter'], parts: ['115115', '116130', '1712-0096-00'],
+    fits: ['5300', '5500', '6300', 'C535', 'P300', 'C545'], every: { n: 1, unit: 'year' },
+    where: 'Model is on the back; 115115 is the common "Filter A" set.',
+  },
+  {
+    id: 'range-charcoal', group: 'air', catalogId: 'range-filter', what: 'Extractor hood charcoal filter',
+    brand: 'Broan, Whirlpool, GE', names: ['Recirculating charcoal filter'],
+    parts: ['BPPF30', 'BPSF30', 'W10272068', '883149', 'JXCF27', 'WB02X10943'],
+    fits: [], every: { n: 6, unit: 'month' },
+    where: 'Only ductless hoods have one. Look under the hood behind the metal mesh.',
+    note: 'The metal mesh washes in the dishwasher; the charcoal pad does not and is the part that gets replaced.',
+  },
+
+  // ---------------------------------------------------------------- cleaning
+  {
+    id: 'shark-nav', group: 'clean', catalogId: null, what: 'Vacuum filter set',
+    brand: 'Shark', names: ['Navigator filter set'], parts: ['XFF350', 'XHF350', 'XFF500', 'XHF680'],
+    fits: ['NV350', 'NV351', 'NV352', 'NV356', 'NV360', 'NV370', 'NV391', 'NV392'],
+    every: { n: 3, unit: 'month' },
+    where: 'Model number is on a label underneath the vacuum.',
+    note: 'The foam and felt pair washes and air-dries; the HEPA behind the dust cup is the one to replace.',
+  },
+  {
+    id: 'miele-fjm', group: 'clean', catalogId: null, what: 'Vacuum dust bags',
+    brand: 'Miele', names: ['AirClean FJM'], parts: ['FJM', '9917710'],
+    fits: ['C1', 'C2', 'S241', 'S256', 'S290', 'S500'], every: { n: 3, unit: 'month' },
+    where: 'The bag letter is printed on the collar of the bag already fitted, and on the inside of the lid.',
+    note: 'Miele bag types are not interchangeable: FJM for compact canisters, GN for full-size, KK for some uprights.',
+  },
+  {
+    id: 'miele-gn', group: 'clean', catalogId: null, what: 'Vacuum dust bags',
+    brand: 'Miele', names: ['AirClean GN'], parts: ['GN', '10123210'],
+    fits: ['C3', 'S400', 'S600', 'S700', 'S800', 'S2', 'S5', 'S8'], every: { n: 3, unit: 'month' },
+    where: 'Printed on the collar of the fitted bag.',
+  },
+  {
+    id: 'roomba', group: 'clean', catalogId: null, what: 'Robot vacuum filter & brushes',
+    brand: 'iRobot', names: ['Roomba filter'], parts: ['4632772', '4655985', '4639164'],
+    fits: ['E5', 'E6', 'I3', 'I4', 'I6', 'I7', 'J7', 'S9'], every: { n: 2, unit: 'month' },
+    where: 'Model is printed under the dust bin.',
+    note: 'Filter every couple of months, brushes every 6 to 12, and the side brush is a separate part.',
+  },
+  {
+    id: 'washer-hose-part', group: 'plumbing', catalogId: 'washer-hoses', what: 'Washing machine supply hoses',
+    brand: 'Generic', names: ['Braided inlet hose'], parts: ['3/4 FHT', '4FT', '5FT', '6FT'],
+    fits: [], every: { n: 5, unit: 'year' },
+    where: 'Both ends are 3/4 inch female hose thread on almost every machine; you only need the length.',
+    note: 'Buy stainless braided rather than rubber, and fit them in pairs. This is a cheap part whose failure floods a house.',
+  },
+  {
+    id: 'anode', group: 'plumbing', catalogId: 'anode-rod', what: 'Water heater anode rod',
+    brand: 'Generic', names: ['Sacrificial anode'], parts: ['3/4 NPT', 'MAGNESIUM', 'ALUMINIUM', 'SEGMENTED'],
+    fits: [], every: { n: 4, unit: 'year' },
+    where: 'Under a plastic cap on top of the tank, or combined with the hot water outlet on some models.',
+    note: 'A segmented flexible rod fits where there is no headroom to pull a straight one. Magnesium protects better; aluminium lasts longer in hard water.',
+  },
+
+  // ---------------------------------------------------------------- personal care
+  {
+    id: 'oralb', group: 'personal', catalogId: 'toothbrush', what: 'Electric toothbrush head',
+    brand: 'Oral-B', names: ['Oral-B brush head'], parts: ['EB20', 'EB50', 'EB60', 'EB18', 'EB30', 'EB25'],
+    fits: [], every: { n: 3, unit: 'month' },
+    where: 'The code is printed on the head or its packet. EB20 is Precision Clean, EB50 CrossAction, EB60 Sensitive, EB18 3D White.',
+    note: 'All Oral-B round heads fit all Oral-B handles except the Pulsonic and iO ranges.',
+  },
+  {
+    id: 'sonicare', group: 'personal', catalogId: 'toothbrush', what: 'Electric toothbrush head',
+    brand: 'Philips Sonicare', names: ['Sonicare brush head'],
+    parts: ['HX6064', 'HX9044', 'HX6062', 'HX9024', 'HX6074', 'HX9054'], fits: [],
+    every: { n: 3, unit: 'month' },
+    where: 'Printed on the packet. HX6064 is C2 Optimal Plaque Control, HX9044 is G3 Gum Care, HX6062 is ProResults.',
+    note: 'Snap-on heads fit all recent Sonicare handles; the older screw-on Essence range is different.',
+  },
+
+  // ---------------------------------------------------------------- vehicle
+  {
+    id: 'car-battery-group', group: 'vehicle', catalogId: 'car-battery', what: 'Car battery',
+    brand: 'Any', names: ['Battery group size'],
+    parts: ['24F', '25', '34', '35', '47', 'H5', '48', 'H6', '49', 'H8', '51R', '65', '94R', 'H7'],
+    fits: [], every: { n: 4, unit: 'year' },
+    where: 'The group size is printed on the label of the battery already in the car. That number, not the car model, is what you order.',
+    note: 'Group size fixes the case dimensions and terminal positions. Note the cold cranking amps too and do not go below the original.',
+  },
+  {
+    id: 'wiper-size', group: 'vehicle', catalogId: 'wipers', what: 'Wiper blades',
+    brand: 'Any', names: ['Blade length'], parts: [], fits: [], every: { n: 1, unit: 'year' },
+    where: 'Lay the old blade against a tape measure. Driver and passenger sides are usually different lengths, and the rear is different again.',
+    note: 'The attachment clip matters as much as the length — take a photo of how the old one clips on before you pull it off.',
+  },
+  {
+    id: 'cabin-filter-part', group: 'vehicle', catalogId: 'cabin-filter', what: 'Cabin air filter',
+    brand: 'Any', names: ['Pollen filter'], parts: ['CF10285', 'CF10134', 'CU2939', 'CUK2939'],
+    fits: [], every: { n: 1, unit: 'year' },
+    where: 'The part number is printed on the frame of the filter you take out. Those listed here are common cross-reference numbers, not a match for your car.',
+    note: 'Usually behind the glovebox and a five-minute job. Fit it with the airflow arrow pointing the way the old one did.',
+  },
+
+  // ---------------------------------------------------------------- alarms
+  {
+    id: 'alarm-battery', group: 'alarm', catalogId: 'smoke-battery', what: 'Smoke alarm battery',
+    brand: 'Any', names: ['Alarm battery'], parts: ['9V', 'AA', 'CR123A', 'CR2450'],
+    fits: [], every: { n: 1, unit: 'year' },
+    where: 'Open the battery door — the type is moulded inside, and often printed beside it.',
+    note: 'A sealed 10-year lithium alarm has no replaceable battery: when it chirps at end of life, the whole unit is what gets replaced.',
+  },
+  {
+    id: 'sealed-alarm', group: 'alarm', catalogId: 'smoke-alarm', what: 'Sealed 10-year smoke alarm',
+    brand: 'Kidde, First Alert', names: ['10-year sealed alarm'],
+    parts: ['I9010', 'P3010', 'SA511', 'SA340', '0916E'], fits: [], every: { n: 10, unit: 'year' },
+    where: 'The model and a manufacture date are on the back plate.',
+    note: 'Nothing to change but the unit itself, on the tenth year from manufacture.',
+  },
+  {
+    id: 'co-alarm-part', group: 'alarm', catalogId: 'co-alarm', what: 'Carbon monoxide alarm',
+    brand: 'Kidde, First Alert', names: ['CO alarm'],
+    parts: ['KN-COPP-3', 'KN-COEG-3', 'CO400', 'CO605', '7DCO'], fits: [],
+    every: { n: 7, unit: 'year' },
+    where: 'Model and an end-of-life or manufacture date are printed on the back.',
+    note: 'CO sensor life is model-specific — commonly 5 to 10 years. Set the figure your own label states rather than this default.',
+  },
+
+  // ---------------------------------------------------------------- office
+  {
+    id: 'hp-ink', group: 'office', catalogId: null, what: 'Printer ink',
+    brand: 'HP', names: ['HP cartridge'], parts: ['63', '63XL', '64', '64XL', '65', '65XL', '67', '67XL', '910', '910XL', '962'],
+    fits: [], every: { n: 6, unit: 'month' },
+    where: 'The number is printed on the cartridge and on a sticker inside the printer lid.',
+  },
+  {
+    id: 'brother-drum', group: 'office', catalogId: null, what: 'Laser toner & drum',
+    brand: 'Brother', names: ['Brother toner', 'Brother drum'],
+    parts: ['TN760', 'TN730', 'DR730', 'TN830', 'DR830', 'TN660', 'DR630'], fits: [],
+    every: { n: 1, unit: 'year' },
+    where: 'Printed on the cartridge. The toner and the drum are two separate parts.',
+    note: 'The drum is the one people forget — it lasts several toners and then streaks every page until replaced.',
+  },
+  {
+    id: 'canon-ink', group: 'office', catalogId: null, what: 'Printer ink',
+    brand: 'Canon', names: ['Canon cartridge'],
+    parts: ['PG-243', 'CL-244', 'PG-245XL', 'CL-246XL', 'PGI-280', 'CLI-281'], fits: [],
+    every: { n: 6, unit: 'month' },
+    where: 'Printed on the cartridge.',
+  },
+];
+
+// ---------------------------------------------------------------- lookup
+
+/** Part numbers are written with and without dashes and spaces; compare them stripped. */
+function normalizePart(text) {
+  return String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+const INDEX = new Map();
+for (const rec of PARTS) {
+  for (const key of [...rec.parts, ...rec.names]) {
+    const norm = normalizePart(key);
+    if (norm.length < 2) continue;
+    if (!INDEX.has(norm)) INDEX.set(norm, []);
+    INDEX.get(norm).push(rec);
+  }
+}
+
+function partById(id) {
+  return PARTS.find((p) => p.id === id) || null;
+}
+
+/**
+ * Find records by a part number read off a label. Exact normalized matches first, then
+ * records whose number is contained in the text — a sticker often reads "FILTER WF3CB".
+ */
+function findByPart(text) {
+  const norm = normalizePart(text);
+  if (norm.length < 2) return [];
+  const exact = INDEX.get(norm);
+  if (exact) return [...new Set(exact)];
+  const hits = new Set();
+  for (const [key, recs] of INDEX) {
+    if (key.length >= 4 && (norm.includes(key) || key.includes(norm))) for (const r of recs) hits.add(r);
+  }
+  return [...hits];
+}
+
+/** Find what an appliance takes, from the model number on its nameplate. */
+function findByModel(model) {
+  const norm = normalizePart(model);
+  if (norm.length < 3) return [];
+  return PARTS.filter((rec) => rec.fits.some((prefix) => norm.startsWith(normalizePart(prefix))));
+}
+
+function searchParts(query) {
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) return PARTS;
+  const norm = normalizePart(q);
+  return PARTS.filter(
+    (rec) =>
+      `${rec.what} ${rec.brand} ${rec.names.join(' ')}`.toLowerCase().includes(q) ||
+      (norm.length >= 2 && [...rec.parts, ...rec.names].some((p) => normalizePart(p).includes(norm)))
+  );
+}
+
+/** The one-line answer to "what do I buy again?". */
+function orderLine(rec) {
+  const first = rec.parts[0] || rec.names[0] || rec.what;
+  const alternates = rec.parts.slice(1, 4);
+  return alternates.length ? `${first} (also sold as ${alternates.join(', ')})` : first;
+}
+
 /* ---- src/ui.js ---- */
 // Rendering and interaction. The app is four views, one detail sheet, and a toast.
 
@@ -1989,6 +3317,7 @@ const ICON = {
   shield: '<path d="M12 3l7 3v5.5c0 4.2-2.9 7.9-7 9.5-4.1-1.6-7-5.3-7-9.5V6l7-3Z"/><path d="M9 12l2 2 4-4"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4.3-4.3"/>',
   check: '<path d="M5 13l4 4L19 7"/>',
+  barcode: '<path d="M3.5 5.5v13M6.5 5.5v13M10 5.5v13M13.5 5.5v9M17 5.5v13M20.5 5.5v13"/>',
   camera: '<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.1a2 2 0 0 0 1.7-.95l.5-.8A2 2 0 0 1 11.5 3.3h1a2 2 0 0 1 1.7.95l.5.8A2 2 0 0 0 16.4 6h1.1A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-8Z"/><circle cx="12" cy="12.5" r="3.2"/>',
 };
 
@@ -2007,6 +3336,7 @@ let undo = null;
 let allFilter = 'active';
 let allQuery = '';
 let addQuery = '';
+let partQuery = '';
 
 // ---------------------------------------------------------------- shared bits
 
@@ -2015,11 +3345,14 @@ function rows(today) {
 }
 
 function subLine(item) {
+  const part = item.product?.part;
   if (item.kind === 'interval') {
     const every = humanizeInterval(item.every);
+    if (part) return `${every} · ${part}`;
     const last = [...(item.history || [])].reverse().find((h) => h.kind === 'done');
     return last ? `${every} · last done ${prettyDate(last.on)}` : every;
   }
+  if (part) return part;
   if (!isISO(item.due)) return 'Needs the date from the label';
   const life = hintsFor(item).life;
   return life ? `${life.n}-${life.unit} life` : 'Expiry date';
@@ -2150,10 +3483,24 @@ function renderAdd() {
       <h2>What catches people out</h2>
       <p>${CATALOG.length} things with a real shelf life, each with the interval, where the date is printed, and what being late actually costs. Pick one and answer a single question.</p>
     </div>
+    <button class="photo-cta" type="button" data-act="scan">
+      ${svg('barcode')}
+      <span>
+        <b>Scan a barcode</b>
+        <small>Decoded on your device, with no lookup service. Tell it what a code is once and that code is exact from then on.</small>
+      </span>
+    </button>
+    <button class="photo-cta" type="button" data-act="plate" data-cansee-only>
+      ${svg('camera')}
+      <span>
+        <b>Read a label or nameplate</b>
+        <small>Brand, model and part numbers off a rating plate — then it tells you which filter, pad or cartridge that machine takes.</small>
+      </span>
+    </button>
     <button class="photo-cta" type="button" data-act="photo" data-cansee-only>
       ${svg('camera')}
       <span>
-        <b>Read it from a photo</b>
+        <b>Identify from a photo</b>
         <small>Point your camera at a thing — or a whole room — and it will work out what needs tracking and read the date off the label.</small>
       </span>
     </button>
@@ -2167,7 +3514,39 @@ function renderAdd() {
       <p>Anything with a date works — a bike service, a visa appointment, a plant that needs repotting.</p>
       <button class="btn" data-act="custom" type="button">Add your own</button>
     </div>
+
+    <div class="panel">
+      <h3>What does it take?</h3>
+      <p>${PARTS.length} consumables with their order numbers, what they fit, and where the number is printed on your own unit. Search a model number or a part code.</p>
+      <div class="search">${svg('search')}
+        <label class="sr" for="parts-search">Search parts and model numbers</label>
+        <input type="search" id="parts-search" class="searchbox" placeholder="WF3CB, FFSS2615TS, 20x25x1, brush head…" value="${esc(partQuery)}">
+      </div>
+      <div id="parts-out">${partsResultsHTML()}</div>
+    </div>
   </div>`;
+}
+
+/** Results for the parts search: a model number finds what it takes, a code finds itself. */
+function partsResultsHTML() {
+  const q = partQuery.trim();
+  if (!q) return '<p class="help">Nothing typed yet — try the model number off a nameplate.</p>';
+  const hits = [...new Set([...findByPart(q), ...findByModel(q), ...searchParts(q)])].slice(0, 10);
+  if (!hits.length) {
+    return `<p class="help">No match for “${esc(q)}”. The number printed on the old part is always the reliable answer — this list only covers common consumables.</p>`;
+  }
+  return hits
+    .map(
+      (rec) => `<div class="found">
+      <p class="order-line"><span class="label">Buy</span><b>${esc(orderLine(rec))}</b>
+        <button class="btn-link" type="button" data-copy-text="${esc(rec.parts[0] || rec.names[0] || '')}">Copy</button></p>
+      <p class="found-cycle">${esc(rec.what)} · ${esc(rec.brand)} · ${esc(humanizeInterval(rec.every))}</p>
+      <p class="found-seen">${esc(rec.where)}</p>
+      ${rec.note ? `<p class="found-seen">${esc(rec.note)}</p>` : ''}
+      <div class="btn-row" style="margin-top:10px"><button class="btn btn-sm" type="button" data-plate-part="${esc(rec.id)}">Track this</button></div>
+    </div>`
+    )
+    .join('');
 }
 
 // ---------------------------------------------------------------- all view
@@ -2223,6 +3602,13 @@ function renderData() {
       <p>Turns ${dated.length} dated ${dated.length === 1 ? 'item' : 'items'} into a calendar file, with a reminder the right number of days ahead of each one. Repeating upkeep comes through as a repeating event, so the calendar keeps it going on its own.</p>
       <div class="btn-row"><button class="btn btn-primary" data-act="ics" type="button">${svg('check')} Build calendar file</button></div>
       <div id="ics-out" hidden></div>
+    </div>
+
+    <div class="panel">
+      <h3>Barcodes this device knows</h3>
+      <p>${learnedCount() === 0
+        ? 'None yet. Scan something, tell it what it is once, and that code is exact from then on — no lookup service involved.'
+        : `${learnedCount()} ${learnedCount() === 1 ? 'code' : 'codes'} you have taught it. They travel in the backup below, so a restore brings them with you.`}</p>
     </div>
 
     <div class="panel">
@@ -2387,6 +3773,7 @@ function releasePhoto() {
   photoCtl?.abort();
   photoCtl = null;
   findings = null;
+  plate = null;
 }
 
 const CONF_LABEL = { high: 'confident', medium: 'fairly sure', low: 'a guess' };
@@ -2404,7 +3791,9 @@ function stagePick(mode, item) {
   const tip =
     mode === 'date'
       ? hintsFor(item).where || 'Get the printed date filling as much of the frame as you can.'
-      : 'One thing up close, or a whole room to find several at once.';
+      : mode === 'nameplate'
+        ? 'The rating plate or sticker — the one with a model number on it. Inside the door, round the back, or under the base.'
+        : 'One thing up close, or a whole room to find several at once.';
   photoStage(
     `<p class="help" style="margin-top:14px">${esc(tip)}</p>
      <label class="photo-drop" for="photo-file">
@@ -2504,8 +3893,14 @@ function openPhoto(mode, item) {
   openSheet(`<div data-photo="${esc(mode)}"${item ? ` data-target="${esc(item.id)}"` : ''}>
     <div class="sheet-head">
       <div>
-        <h3>${mode === 'date' ? 'Read the date' : 'What is this?'}</h3>
-        <p class="sub">${esc(mode === 'date' ? item.name : 'Point your camera at a thing or a room')}</p>
+        <h3>${mode === 'date' ? 'Read the date' : mode === 'nameplate' ? 'Read the label' : 'What is this?'}</h3>
+        <p class="sub">${esc(
+          mode === 'date'
+            ? item.name
+            : mode === 'nameplate'
+              ? 'Brand, model and part numbers'
+              : 'Point your camera at a thing or a room'
+        )}</p>
       </div>
       <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
     </div>
@@ -2541,8 +3936,13 @@ async function runPhoto(file) {
         if (el) el.textContent = 'Writing down what it found…';
       },
     });
-    findings = normalizeFindings(raw, mode === 'date' ? 1 : 6);
-    stageResults(mode, item);
+    if (mode === 'nameplate') {
+      plate = normalizeNameplate(raw);
+      stageNameplate();
+    } else {
+      findings = normalizeFindings(raw, mode === 'date' ? 1 : 6);
+      stageResults(mode, item);
+    }
   } catch (err) {
     if (err?.code === 'cancelled') return closeSheet();
     if (err?.code === 'not_granted' || err?.code === 'sampling_disabled') {
@@ -2594,6 +3994,317 @@ function applyFindings() {
   if (!added) return toast('Nothing ticked, so nothing added.');
   switchView('due');
   toast(`Added ${added} ${added === 1 ? 'thing' : 'things'} from the photo.`);
+}
+
+
+// ---------------------------------------------------------------- scanning a barcode
+
+let scanHandle = null;
+let plate = null;        // the last nameplate reading, awaiting confirmation
+
+function stopScanner() {
+  scanHandle?.stop();
+  scanHandle = null;
+}
+
+const FORMAT_NAMES = { upc_a: 'UPC-A', upc_e: 'UPC-E', ean_13: 'EAN-13', ean_8: 'EAN-8' };
+
+function scanStage(html, foot) {
+  const stage = $('#scan-stage');
+  if (!stage) return;
+  stage.innerHTML = html;
+  $('#scan-foot').innerHTML = foot;
+}
+
+function openScanner() {
+  const support = cameraSupport();
+  openSheet(`<div data-scan="1">
+    <div class="sheet-head">
+      <div><h3>Scan a barcode</h3><p class="sub">Decoded here on your device</p></div>
+      <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
+    </div>
+    <div class="sheet-body"><div id="scan-stage"></div></div>
+    <div class="sheet-foot" id="scan-foot"></div>
+  </div>`);
+
+  if (!support.ok) return stageScanBlocked(support.reason);
+
+  scanStage(
+    `<div class="scan-view">
+       <video id="scan-video" playsinline muted></video>
+       <div class="scan-reticle" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+     </div>
+     <p class="scan-status" id="scan-status">Starting the camera…</p>
+     <p class="help">Hold the barcode so it fills the width of the box. Sideways is fine.</p>`,
+    `<button class="btn btn-quiet" type="button" data-act="close">Cancel</button>
+     <button class="btn" type="button" data-act="type-code">Type the digits</button>`
+  );
+
+  const video = $('#scan-video');
+  startScanner(video, {
+    onHit: (hit) => {
+      stopScanner();
+      openCode(hit);
+    },
+    onStatus: (text) => {
+      const el = $('#scan-status');
+      if (el) el.textContent = text;
+    },
+  })
+    .then((handle) => {
+      scanHandle = handle;
+      const el = $('#scan-status');
+      if (el) el.textContent = 'Looking for a barcode…';
+      if (handle.canTorch) {
+        $('#scan-foot').insertAdjacentHTML(
+          'afterbegin',
+          '<button class="btn btn-quiet" type="button" data-act="torch">Light</button>'
+        );
+      }
+    })
+    .catch((err) => stageScanBlocked(permissionCopy(err)));
+}
+
+function stageScanBlocked(reason) {
+  scanStage(
+    `<div class="notice" data-tone="warn" style="margin-top:16px"><p>${esc(reason)}</p></div>
+     <p class="help">The digits printed under the barcode work just as well — the check digit is verified either way.</p>`,
+    `<button class="btn btn-quiet" type="button" data-act="close">Close</button>
+     <button class="btn btn-primary" type="button" data-act="type-code">Type the digits</button>`
+  );
+}
+
+/** Typing the digits is the universal fallback: no camera, no permission, no https needed. */
+function openTypeCode() {
+  stopScanner();
+  openSheet(`<form id="code-form">
+    <div class="sheet-head">
+      <div><h3>Type the digits</h3><p class="sub">The number printed under the barcode</p></div>
+      <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label for="code-in">Barcode number</label>
+        <input type="text" id="code-in" data-autofocus inputmode="numeric" autocomplete="off"
+               spellcheck="false" placeholder="012345678905" class="code-input">
+        <p class="help">8, 12 or 13 digits. The last one is a check digit, so a typo is caught rather than looked up.</p>
+      </div>
+      <p class="help" id="code-msg"></p>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-quiet" type="button" data-act="close">Cancel</button>
+      <button class="btn btn-primary" type="submit">Look it up</button>
+    </div>
+  </form>`);
+}
+
+// ---------------------------------------------------------------- what a code turned out to be
+
+/** Candidates for "what is this?", drawn from both knowledge bases at once. */
+function pickerHTML(query, prefix) {
+  const q = query.trim();
+  const cats = (q ? searchCatalog(q) : CATALOG).slice(0, 8);
+  const parts = (q ? searchParts(q) : PARTS).slice(0, 8);
+  if (!cats.length && !parts.length) {
+    return `<p class="help">Nothing matches “${esc(q)}”. Name it yourself below instead.</p>`;
+  }
+  const partRows = parts
+    .map(
+      (rec) => `<button class="pick" type="button" data-${prefix}-part="${esc(rec.id)}">
+        <span class="pick-name">${esc(rec.what)}</span>
+        <span class="pick-every">${esc(rec.parts[0] || rec.names[0] || '')}</span>
+        <span class="pick-why">${esc(rec.brand)} · ${esc(humanizeInterval(rec.every))}</span>
+      </button>`
+    )
+    .join('');
+  const catRows = cats
+    .map(
+      (c) => `<button class="pick" type="button" data-${prefix}-cat="${esc(c.id)}">
+        <span class="pick-name">${esc(c.name)}</span>
+        <span class="pick-every">${esc(c.kind === 'interval' ? humanizeInterval(c.every) : c.life ? `${c.life.n}-${c.life.unit} life` : 'expiry date')}</span>
+      </button>`
+    )
+    .join('');
+  return `${parts.length ? `<p class="field-label" style="margin-top:14px">Replacement parts</p>${partRows}` : ''}
+          ${cats.length ? `<p class="field-label" style="margin-top:14px">Things to track</p>${catRows}` : ''}`;
+}
+
+function openCode(hit) {
+  const ean13 = hit.ean13 || toEAN13(hit.code);
+  const shown = displayCode(ean13) || hit.code;
+  const known = recallCode(ean13);
+  const already = itemsWithCode(ean13);
+  const origin = codeOrigin(ean13);
+  const rec = known?.partId ? partById(known.partId) : null;
+
+  const head = `<div class="sheet-head">
+      <div>
+        <h3>${esc(known?.name || (already.length ? already[0].name : 'Barcode read'))}</h3>
+        <p class="sub"><span class="code-shown">${esc(shown)}</span> · ${esc(FORMAT_NAMES[hit.format] || 'barcode')}${origin ? ` · registered in ${esc(origin)}` : ''}</p>
+      </div>
+      <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
+    </div>`;
+
+  // Already on your list: the most useful answer, and the commonest once the app is in use.
+  if (already.length) {
+    const item = already[0];
+    const st = statusOf(item, todayISO());
+    openSheet(`<div data-code="${esc(ean13)}">
+      ${head}
+      <div class="sheet-body">
+        <p class="callout" style="margin-top:14px"><span class="label">You already track this</span>
+          ${esc(item.name)}${item.where ? ` · ${esc(item.where)}` : ''} — ${esc(st.state === 'nodate' ? 'no date set yet' : `${item.kind === 'expiry' ? 'expires' : 'due'} ${prettyDate(item.due)}, ${relativeDays(st.days)}`)}</p>
+        ${item.product?.part ? `<p class="order-line"><span class="label">Buy</span><b>${esc(item.product.part)}</b></p>` : ''}
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn btn-primary" type="button" data-act="code-open" data-id="${esc(item.id)}">Open it</button>
+          ${item.kind === 'interval' ? `<button class="btn" type="button" data-act="code-done" data-id="${esc(item.id)}">${svg('check')} Just replaced it</button>` : ''}
+        </div>
+      </div>
+      <div class="sheet-foot"><button class="btn btn-quiet" type="button" data-act="scan-again">Scan another</button></div>
+    </div>`);
+    return;
+  }
+
+  // Taught before, so this is exact — the whole point of the learned map.
+  if (known) {
+    openSheet(`<div data-code="${esc(ean13)}">
+      ${head}
+      <div class="sheet-body">
+        <p class="callout" style="margin-top:14px"><span class="label">You taught this one</span>
+          Saved on this device ${esc(prettyDate(known.at))}. No lookup, no network — just what you told it.</p>
+        ${rec ? `<p class="order-line"><span class="label">Buy</span><b>${esc(orderLine(rec))}</b>
+          <button class="btn-link" type="button" data-copy-text="${esc(rec.parts[0] || rec.names[0] || '')}">Copy</button></p>
+          <p class="help">${esc(rec.where)}</p>` : ''}
+        ${known.part && !rec ? `<p class="order-line"><span class="label">Buy</span><b>${esc(known.part)}</b>
+          <button class="btn-link" type="button" data-copy-text="${esc(known.part)}">Copy</button></p>` : ''}
+      </div>
+      <div class="sheet-foot">
+        <button class="btn btn-quiet" type="button" data-act="forget-code">Forget</button>
+        <button class="btn btn-primary" type="button" data-act="track-known">Track this</button>
+      </div>
+    </div>`);
+    return;
+  }
+
+  // Never seen. Say so plainly rather than matching it to something plausible.
+  openSheet(`<div data-code="${esc(ean13)}">
+    ${head}
+    <div class="sheet-body">
+      <p class="callout" style="margin-top:14px"><span class="label">Not a product name — yet</span>
+        A barcode is only a number. Turning one into a product needs a lookup service, and this app
+        does not call out to anything. Tell it what this is once and the code is exact from then on,
+        on this device, for good.</p>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn" type="button" data-act="plate" data-cansee-only>${svg('camera')} Read the label instead</button>
+      </div>
+      <div class="field">
+        <label for="code-search">What is it?</label>
+        <input type="search" id="code-search" class="searchbox" placeholder="filter, brush head, battery…" autocomplete="off">
+      </div>
+      <div id="code-picker">${pickerHTML('', 'code')}</div>
+      <hr class="sheet-sep">
+      <form id="code-name-form">
+        <div class="field">
+          <label for="code-name">Or just name it</label>
+          <input type="text" id="code-name" placeholder="Kitchen tap filter">
+        </div>
+        <div class="field">
+          <label for="code-part">Part number, if the pack shows one</label>
+          <input type="text" id="code-part" placeholder="WF3CB" autocomplete="off">
+        </div>
+        <button class="btn" type="submit">Remember it under that name</button>
+      </form>
+    </div>
+    <div class="sheet-foot"><button class="btn btn-quiet" type="button" data-act="scan-again">Scan another</button></div>
+  </div>`);
+}
+
+/** Create an item from a picked catalogue entry or part record, and learn the code. */
+function trackFromCode(ean13, { entry, rec, name, part }) {
+  const made = entry
+    ? fromCatalog(entry, { dontKnow: true })
+    : makeItem({
+        name: rec?.what || name || 'Scanned item',
+        cat: rec ? 'home' : 'home',
+        kind: 'interval',
+        every: rec?.every || { n: 6, unit: 'month' },
+        lead: 7,
+      });
+  made.product = {
+    ...emptyProduct(),
+    code: displayCode(ean13),
+    part: part || rec?.parts?.[0] || '',
+    brand: rec?.brand && rec.brand !== 'Any' && rec.brand !== 'Generic' ? rec.brand : '',
+  };
+  if (rec && !entry) made.note = rec.where;
+  if (rec?.every) made.every = rec.every;
+  state.items.push(made);
+  rememberCode(ean13, {
+    name: made.name,
+    catalogId: entry?.id || null,
+    partId: rec?.id || null,
+    brand: made.product.brand,
+    part: made.product.part,
+  });
+  save();
+  closeSheet();
+  switchView('due');
+  toast(`${made.name} added, and this barcode is now remembered.`);
+}
+
+// ---------------------------------------------------------------- reading a nameplate
+
+function stageNameplate() {
+  const found = [
+    ...(plate.part ? findByPart(plate.part) : []),
+    ...(plate.model ? findByModel(plate.model) : []),
+    ...(plate.size ? findByPart(plate.size) : []),
+  ];
+  const unique = [...new Set(found)];
+  const fields = [
+    ['Brand', plate.brand],
+    ['Model', plate.model],
+    ['Part', plate.part],
+    ['Size', plate.size],
+    ['Serial', plate.serial],
+  ].filter(([, v]) => v);
+
+  const takes = unique.length
+    ? `<p class="field-label" style="margin-top:18px">What this takes</p>
+       ${unique
+         .map(
+           (rec, i) => `<div class="found">
+            <p class="order-line"><span class="label">Buy</span><b>${esc(orderLine(rec))}</b>
+              <button class="btn-link" type="button" data-copy-text="${esc(rec.parts[0] || rec.names[0] || '')}">Copy</button></p>
+            <p class="found-cycle">${esc(rec.what)} · ${esc(humanizeInterval(rec.every))}</p>
+            <p class="found-seen">${esc(rec.where)}</p>
+            ${rec.note ? `<p class="found-seen">${esc(rec.note)}</p>` : ''}
+            <div class="btn-row" style="margin-top:10px"><button class="btn btn-sm" type="button" data-plate-part="${esc(rec.id)}">Track this part</button></div>
+          </div>`
+         )
+         .join('')}`
+    : `<p class="callout" style="margin-top:18px"><span class="label">No cross-reference</span>
+        Nothing in the built-in parts list matches this label. The details above are saved with the item
+        anyway, which is what you need when you come to reorder.</p>`;
+
+  photoStage(
+    `<div class="photo-found">
+       ${photoURL ? `<img src="${esc(photoURL)}" alt="The label you photographed">` : ''}
+     </div>
+     ${fields.length
+       ? `<dl class="plate">${fields.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`
+       : '<p class="help" style="margin-top:14px">Nothing legible on that label.</p>'}
+     ${plate.dates.length
+       ? `<p class="found-read" style="margin-left:0">Dates read: ${plate.dates
+           .map((d) => `<b>${esc(d.text || d.iso)}</b>${d.kind ? ` (${esc(d.kind)})` : ''}`)
+           .join(', ')}</p>`
+       : ''}
+     ${nameplateHasContent(plate) ? takes : ''}
+     ${plate.note ? `<p class="help" style="margin-top:12px">${esc(plate.note)}</p>` : ''}
+     <p class="help" style="margin-top:14px">Transcribed from your photo — check it against the label before ordering.</p>`,
+    `<button class="btn btn-quiet" type="button" data-act="photo-again">Another photo</button>
+     ${nameplateHasContent(plate) ? '<button class="btn btn-primary" type="button" data-act="plate-save">Save these details</button>' : ''}`
+  );
 }
 
 // ---------------------------------------------------------------- sheet
@@ -2706,6 +4417,33 @@ function openCustom() {
 }
 
 /** Sheet 3: an item you already track. Fields save as you change them. */
+/**
+ * The answer to "what do I buy again?", resolved fresh from whatever the item currently
+ * knows: a stored part number first, then a live cross-reference against its own part or
+ * model number, so filling in a model after the fact still surfaces the filter it takes.
+ */
+function buyLineFor(item) {
+  const product = item.product || {};
+  if (product.part) {
+    const hits = findByPart(product.part);
+    const rec = hits[0];
+    return `<p class="order-line" style="margin-top:6px"><span class="label">Buy</span><b>${esc(rec ? orderLine(rec) : product.part)}</b>
+      <button class="btn-link" type="button" data-copy-text="${esc(product.part)}">Copy</button></p>
+      ${rec?.where ? `<p class="found-seen">${esc(rec.where)}</p>` : ''}`;
+  }
+  const byModel = product.model ? findByModel(product.model) : [];
+  if (byModel.length) {
+    return byModel
+      .map(
+        (rec) => `<p class="order-line" style="margin-top:6px"><span class="label">Takes</span><b>${esc(orderLine(rec))}</b>
+          <button class="btn-link" type="button" data-copy-text="${esc(rec.parts[0] || rec.names[0] || '')}">Copy</button></p>
+          <p class="found-seen">${esc(rec.where)}</p>`
+      )
+      .join('');
+  }
+  return '';
+}
+
 function openItem(item) {
   const today = todayISO();
   const st = statusOf(item, today);
@@ -2742,6 +4480,17 @@ function openItem(item) {
       <div class="field"><label for="i-name">Name</label><input type="text" id="i-name" value="${esc(item.name)}"></div>
       <div class="field"><label for="i-where">Which one</label><input type="text" id="i-where" value="${esc(item.where || '')}" placeholder="optional"></div>
       <div class="field"><label for="i-note">Note</label><input type="text" id="i-note" value="${esc(item.note || '')}" placeholder="optional"></div>
+
+      <hr class="sheet-sep">
+      <p class="field-label" style="margin-top:16px">Product</p>
+      ${item.product?.code ? `<p class="found-seen">Barcode <span class="code-shown">${esc(item.product.code)}</span></p>` : ''}
+      <div class="field-2">
+        <div class="field"><label for="i-brand">Brand</label><input type="text" id="i-brand" value="${esc(item.product?.brand || '')}" placeholder="optional"></div>
+        <div class="field"><label for="i-model">Model</label><input type="text" id="i-model" value="${esc(item.product?.model || '')}" placeholder="optional"></div>
+      </div>
+      <div class="field"><label for="i-part">Replacement part number</label><input type="text" id="i-part" value="${esc(item.product?.part || '')}" placeholder="e.g. WF3CB"></div>
+      <div id="i-buy">${buyLineFor(item)}</div>
+      ${!item.product?.code ? `<div class="btn-row" style="margin-top:8px"><button class="btn btn-sm" type="button" data-act="scan">${svg('barcode')} Attach a scanned barcode</button></div>` : ''}
 
       ${hints.why ? `<hr class="sheet-sep"><p class="callout" style="margin-top:16px"><span class="label">Why it matters</span>${esc(hints.why)}</p>` : ''}
       ${hints.where && st.state !== 'nodate' ? `<p class="callout"><span class="label">Where the date is</span>${esc(hints.where)}</p>` : ''}
@@ -2898,6 +4647,80 @@ function start() {
     }
     if (act === 'photo-stop') return photoCtl?.abort();
     if (act === 'photo-apply') return applyFindings();
+    if (act === 'scan') return openScanner();
+    if (act === 'type-code') return openTypeCode();
+    if (act === 'plate') return openPhoto('nameplate');
+    if (act === 'torch') {
+      scanHandle?.torch().then((on) => {
+        btn.textContent = on ? 'Light off' : 'Light';
+      });
+      return;
+    }
+    if (act === 'scan-again') {
+      stopScanner();
+      return openScanner();
+    }
+    if (act === 'plate-save') {
+      closeSheet();
+      return toast('Details saved with the item.');
+    }
+
+    // ---- barcode: candidate picked from the catalogue or parts list, inside the code sheet
+    const codeHolder = sheet().querySelector('[data-code]');
+    const codeVal = codeHolder?.dataset.code;
+    const codeCat = t.closest?.('[data-code-cat]')?.dataset.codeCat;
+    if (codeVal && codeCat) return trackFromCode(codeVal, { entry: catalogEntry(codeCat) });
+    const codePart = t.closest?.('[data-code-part]')?.dataset.codePart;
+    if (codeVal && codePart) return trackFromCode(codeVal, { rec: partById(codePart) });
+    const platePart = t.closest?.('[data-plate-part]')?.dataset.platePart;
+    if (platePart) {
+      const rec = partById(platePart);
+      const due = plate?.dates?.[0]
+        ? dueFromRead(rec.catalogId ? catalogEntry(rec.catalogId) : null, plate.dates[0].kind, plate.dates[0].iso)
+        : null;
+      const made = rec.catalogId
+        ? fromCatalog(catalogEntry(rec.catalogId), { dontKnow: true })
+        : makeItem({ name: rec.what, cat: rec.group === 'fridge' ? 'home' : 'home', kind: 'interval', every: rec.every, lead: 14 });
+      made.every = rec.every;
+      made.due = due;
+      made.product = { ...emptyProduct(), part: rec.parts[0] || '', brand: rec.brand !== 'Any' && rec.brand !== 'Generic' ? rec.brand : '', model: plate?.model || '' };
+      made.note = rec.where;
+      state.items.push(made);
+      save();
+      closeSheet();
+      switchView('due');
+      toast(`${made.name} added.`);
+      return;
+    }
+
+    if (act === 'code-open') {
+      const item = byId(btn.dataset.id);
+      closeSheet();
+      if (item) openItem(item);
+      return;
+    }
+    if (act === 'code-done') {
+      const item = byId(btn.dataset.id);
+      if (item) markDone(item);
+      return;
+    }
+    if (act === 'track-known' && codeVal) {
+      const known = recallCode(codeVal);
+      const rec = known?.partId ? partById(known.partId) : null;
+      const entry = known?.catalogId ? catalogEntry(known.catalogId) : null;
+      return trackFromCode(codeVal, { entry, rec, name: known?.name, part: known?.part });
+    }
+    if (act === 'forget-code' && codeVal) {
+      forgetCode(codeVal);
+      closeSheet();
+      return toast('Forgotten.');
+    }
+
+    const copyText2 = t.closest?.('[data-copy-text]')?.dataset.copyText;
+    if (copyText2) {
+      copyText(copyText2).then((ok) => toast(ok ? 'Copied.' : 'Could not copy — select and copy by hand.'));
+      return;
+    }
     if (act === 'go-add') return switchView('add');
     if (act === 'custom') return openCustom();
     if (act === 'clear-examples') {
@@ -3059,6 +4882,21 @@ function start() {
     if (e.target.id === 'c-kind') {
       $('#c-every-wrap').hidden = e.target.value === 'expiry';
     }
+    if (e.target.id === 'parts-search') {
+      partQuery = e.target.value;
+      const at = e.target.selectionStart;
+      $('#parts-out').innerHTML = partsResultsHTML();
+      const again = $('#parts-search');
+      again.focus();
+      again.setSelectionRange(at, at);
+    }
+    if (e.target.id === 'code-search') {
+      const at = e.target.selectionStart;
+      $('#code-picker').innerHTML = pickerHTML(e.target.value, 'code');
+      const again = $('#code-search');
+      again.focus();
+      again.setSelectionRange(at, at);
+    }
   });
 
   // ---- live editing in the item sheet
@@ -3081,6 +4919,9 @@ function start() {
       'i-note': () => (item.note = e.target.value.trim()),
       'i-n': () => (item.every = { n: Math.max(1, Number($('#i-n').value) || 1), unit: $('#i-u').value }),
       'i-u': () => (item.every = { n: Math.max(1, Number($('#i-n').value) || 1), unit: $('#i-u').value }),
+      'i-brand': () => (item.product = { ...emptyProduct(), ...item.product, brand: e.target.value.trim() }),
+      'i-model': () => (item.product = { ...emptyProduct(), ...item.product, model: e.target.value.trim() }),
+      'i-part': () => (item.product = { ...emptyProduct(), ...item.product, part: e.target.value.trim() }),
     };
     if (!map[id]) return;
     map[id]();
@@ -3092,6 +4933,10 @@ function start() {
       const st = statusOf(item, todayISO());
       sub.textContent =
         st.state === 'nodate' ? 'No date yet' : `${item.kind === 'expiry' ? 'Expires' : 'Due'} ${prettyDate(item.due)} · ${relativeDays(st.days)}`;
+    }
+    if (id === 'i-brand' || id === 'i-model' || id === 'i-part') {
+      const buyBox = $('#i-buy');
+      if (buyBox) buyBox.innerHTML = buyLineFor(item);
     }
   });
 
@@ -3145,6 +4990,31 @@ function start() {
       return;
     }
 
+    if (form.id === 'code-form') {
+      const raw = $('#code-in').value.replace(/\D/g, '');
+      const ean13 = toEAN13(raw);
+      const msg = $('#code-msg');
+      if (!ean13) {
+        msg.textContent = raw.length < 8
+          ? 'That is not enough digits for a barcode.'
+          : 'Those digits do not check out as a real barcode — check for a typo.';
+        msg.style.color = 'var(--alarm)';
+        return;
+      }
+      openCode({ code: raw, format: raw.length === 8 ? 'ean_8' : raw.length === 12 ? 'upc_a' : 'ean_13', ean13 });
+      return;
+    }
+
+    if (form.id === 'code-name-form') {
+      const codeHolder = sheet().querySelector('[data-code]');
+      const ean13 = codeHolder?.dataset.code;
+      const name = $('#code-name').value.trim();
+      const part = $('#code-part').value.trim();
+      if (!ean13 || !name) return;
+      trackFromCode(ean13, { name, part });
+      return;
+    }
+
     if (form.id === 'renew-form') {
       const item = byId(form.dataset.item);
       const val = $('#r-due').value;
@@ -3169,6 +5039,7 @@ function start() {
   // Emptying it on close means a stale data-item can never catch a later click.
   sheet().addEventListener('close', () => {
     releasePhoto();
+    stopScanner();
     sheet().innerHTML = '';
   });
 }

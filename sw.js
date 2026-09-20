@@ -1,8 +1,10 @@
 // Cache-first for the app shell so it opens with no network at all. Bump VERSION on release.
 const VERSION = 'lasts-v1';
 const SHELL = [
-  './', './index.html', './app.css', './icon.svg', './manifest.webmanifest',
+  './', './index.html', './app.css', './manifest.webmanifest',
+  './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png',
   './src/ui.js', './src/core.js', './src/store.js', './src/catalog.js', './src/vision.js',
+  './src/barcode.js', './src/parts.js', './src/scanner.js',
 ];
 
 self.addEventListener('install', (e) => {

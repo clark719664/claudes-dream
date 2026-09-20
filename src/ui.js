@@ -8,10 +8,15 @@ import { CATALOG, CATEGORIES, catalogEntry, searchCatalog } from './catalog.js';
 import {
   state, makeItem, fromCatalog, hintsFor, load, save,
   exportJSON, importJSON, wipe, hasExamples, clearExamples,
+  emptyProduct, hasProduct, rememberCode, recallCode, forgetCode, learnedCount, itemsWithCode,
 } from './store.js';
 import {
   buildPrompt, normalizeFindings, dueFromRead, prepImage, sampleErrorCopy,
+  normalizeNameplate, nameplateHasContent,
 } from './vision.js';
+import { toEAN13, displayCode, codeOrigin, checksumOK } from './barcode.js';
+import { cameraSupport, permissionCopy, startScanner } from './scanner.js';
+import { findByPart, findByModel, searchParts, orderLine, partById, PARTS } from './parts.js';
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -33,6 +38,7 @@ const ICON = {
   shield: '<path d="M12 3l7 3v5.5c0 4.2-2.9 7.9-7 9.5-4.1-1.6-7-5.3-7-9.5V6l7-3Z"/><path d="M9 12l2 2 4-4"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4.3-4.3"/>',
   check: '<path d="M5 13l4 4L19 7"/>',
+  barcode: '<path d="M3.5 5.5v13M6.5 5.5v13M10 5.5v13M13.5 5.5v9M17 5.5v13M20.5 5.5v13"/>',
   camera: '<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.1a2 2 0 0 0 1.7-.95l.5-.8A2 2 0 0 1 11.5 3.3h1a2 2 0 0 1 1.7.95l.5.8A2 2 0 0 0 16.4 6h1.1A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-8Z"/><circle cx="12" cy="12.5" r="3.2"/>',
 };
 
@@ -51,6 +57,7 @@ let undo = null;
 let allFilter = 'active';
 let allQuery = '';
 let addQuery = '';
+let partQuery = '';
 
 // ---------------------------------------------------------------- shared bits
 
@@ -59,11 +66,14 @@ function rows(today) {
 }
 
 function subLine(item) {
+  const part = item.product?.part;
   if (item.kind === 'interval') {
     const every = humanizeInterval(item.every);
+    if (part) return `${every} · ${part}`;
     const last = [...(item.history || [])].reverse().find((h) => h.kind === 'done');
     return last ? `${every} · last done ${prettyDate(last.on)}` : every;
   }
+  if (part) return part;
   if (!isISO(item.due)) return 'Needs the date from the label';
   const life = hintsFor(item).life;
   return life ? `${life.n}-${life.unit} life` : 'Expiry date';
@@ -194,10 +204,24 @@ function renderAdd() {
       <h2>What catches people out</h2>
       <p>${CATALOG.length} things with a real shelf life, each with the interval, where the date is printed, and what being late actually costs. Pick one and answer a single question.</p>
     </div>
+    <button class="photo-cta" type="button" data-act="scan">
+      ${svg('barcode')}
+      <span>
+        <b>Scan a barcode</b>
+        <small>Decoded on your device, with no lookup service. Tell it what a code is once and that code is exact from then on.</small>
+      </span>
+    </button>
+    <button class="photo-cta" type="button" data-act="plate" data-cansee-only>
+      ${svg('camera')}
+      <span>
+        <b>Read a label or nameplate</b>
+        <small>Brand, model and part numbers off a rating plate — then it tells you which filter, pad or cartridge that machine takes.</small>
+      </span>
+    </button>
     <button class="photo-cta" type="button" data-act="photo" data-cansee-only>
       ${svg('camera')}
       <span>
-        <b>Read it from a photo</b>
+        <b>Identify from a photo</b>
         <small>Point your camera at a thing — or a whole room — and it will work out what needs tracking and read the date off the label.</small>
       </span>
     </button>
@@ -211,7 +235,39 @@ function renderAdd() {
       <p>Anything with a date works — a bike service, a visa appointment, a plant that needs repotting.</p>
       <button class="btn" data-act="custom" type="button">Add your own</button>
     </div>
+
+    <div class="panel">
+      <h3>What does it take?</h3>
+      <p>${PARTS.length} consumables with their order numbers, what they fit, and where the number is printed on your own unit. Search a model number or a part code.</p>
+      <div class="search">${svg('search')}
+        <label class="sr" for="parts-search">Search parts and model numbers</label>
+        <input type="search" id="parts-search" class="searchbox" placeholder="WF3CB, FFSS2615TS, 20x25x1, brush head…" value="${esc(partQuery)}">
+      </div>
+      <div id="parts-out">${partsResultsHTML()}</div>
+    </div>
   </div>`;
+}
+
+/** Results for the parts search: a model number finds what it takes, a code finds itself. */
+function partsResultsHTML() {
+  const q = partQuery.trim();
+  if (!q) return '<p class="help">Nothing typed yet — try the model number off a nameplate.</p>';
+  const hits = [...new Set([...findByPart(q), ...findByModel(q), ...searchParts(q)])].slice(0, 10);
+  if (!hits.length) {
+    return `<p class="help">No match for “${esc(q)}”. The number printed on the old part is always the reliable answer — this list only covers common consumables.</p>`;
+  }
+  return hits
+    .map(
+      (rec) => `<div class="found">
+      <p class="order-line"><span class="label">Buy</span><b>${esc(orderLine(rec))}</b>
+        <button class="btn-link" type="button" data-copy-text="${esc(rec.parts[0] || rec.names[0] || '')}">Copy</button></p>
+      <p class="found-cycle">${esc(rec.what)} · ${esc(rec.brand)} · ${esc(humanizeInterval(rec.every))}</p>
+      <p class="found-seen">${esc(rec.where)}</p>
+      ${rec.note ? `<p class="found-seen">${esc(rec.note)}</p>` : ''}
+      <div class="btn-row" style="margin-top:10px"><button class="btn btn-sm" type="button" data-plate-part="${esc(rec.id)}">Track this</button></div>
+    </div>`
+    )
+    .join('');
 }
 
 // ---------------------------------------------------------------- all view
@@ -267,6 +323,13 @@ function renderData() {
       <p>Turns ${dated.length} dated ${dated.length === 1 ? 'item' : 'items'} into a calendar file, with a reminder the right number of days ahead of each one. Repeating upkeep comes through as a repeating event, so the calendar keeps it going on its own.</p>
       <div class="btn-row"><button class="btn btn-primary" data-act="ics" type="button">${svg('check')} Build calendar file</button></div>
       <div id="ics-out" hidden></div>
+    </div>
+
+    <div class="panel">
+      <h3>Barcodes this device knows</h3>
+      <p>${learnedCount() === 0
+        ? 'None yet. Scan something, tell it what it is once, and that code is exact from then on — no lookup service involved.'
+        : `${learnedCount()} ${learnedCount() === 1 ? 'code' : 'codes'} you have taught it. They travel in the backup below, so a restore brings them with you.`}</p>
     </div>
 
     <div class="panel">
@@ -431,6 +494,7 @@ function releasePhoto() {
   photoCtl?.abort();
   photoCtl = null;
   findings = null;
+  plate = null;
 }
 
 const CONF_LABEL = { high: 'confident', medium: 'fairly sure', low: 'a guess' };
@@ -448,7 +512,9 @@ function stagePick(mode, item) {
   const tip =
     mode === 'date'
       ? hintsFor(item).where || 'Get the printed date filling as much of the frame as you can.'
-      : 'One thing up close, or a whole room to find several at once.';
+      : mode === 'nameplate'
+        ? 'The rating plate or sticker — the one with a model number on it. Inside the door, round the back, or under the base.'
+        : 'One thing up close, or a whole room to find several at once.';
   photoStage(
     `<p class="help" style="margin-top:14px">${esc(tip)}</p>
      <label class="photo-drop" for="photo-file">
@@ -548,8 +614,14 @@ function openPhoto(mode, item) {
   openSheet(`<div data-photo="${esc(mode)}"${item ? ` data-target="${esc(item.id)}"` : ''}>
     <div class="sheet-head">
       <div>
-        <h3>${mode === 'date' ? 'Read the date' : 'What is this?'}</h3>
-        <p class="sub">${esc(mode === 'date' ? item.name : 'Point your camera at a thing or a room')}</p>
+        <h3>${mode === 'date' ? 'Read the date' : mode === 'nameplate' ? 'Read the label' : 'What is this?'}</h3>
+        <p class="sub">${esc(
+          mode === 'date'
+            ? item.name
+            : mode === 'nameplate'
+              ? 'Brand, model and part numbers'
+              : 'Point your camera at a thing or a room'
+        )}</p>
       </div>
       <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
     </div>
@@ -585,8 +657,13 @@ async function runPhoto(file) {
         if (el) el.textContent = 'Writing down what it found…';
       },
     });
-    findings = normalizeFindings(raw, mode === 'date' ? 1 : 6);
-    stageResults(mode, item);
+    if (mode === 'nameplate') {
+      plate = normalizeNameplate(raw);
+      stageNameplate();
+    } else {
+      findings = normalizeFindings(raw, mode === 'date' ? 1 : 6);
+      stageResults(mode, item);
+    }
   } catch (err) {
     if (err?.code === 'cancelled') return closeSheet();
     if (err?.code === 'not_granted' || err?.code === 'sampling_disabled') {
@@ -638,6 +715,317 @@ function applyFindings() {
   if (!added) return toast('Nothing ticked, so nothing added.');
   switchView('due');
   toast(`Added ${added} ${added === 1 ? 'thing' : 'things'} from the photo.`);
+}
+
+
+// ---------------------------------------------------------------- scanning a barcode
+
+let scanHandle = null;
+let plate = null;        // the last nameplate reading, awaiting confirmation
+
+function stopScanner() {
+  scanHandle?.stop();
+  scanHandle = null;
+}
+
+const FORMAT_NAMES = { upc_a: 'UPC-A', upc_e: 'UPC-E', ean_13: 'EAN-13', ean_8: 'EAN-8' };
+
+function scanStage(html, foot) {
+  const stage = $('#scan-stage');
+  if (!stage) return;
+  stage.innerHTML = html;
+  $('#scan-foot').innerHTML = foot;
+}
+
+function openScanner() {
+  const support = cameraSupport();
+  openSheet(`<div data-scan="1">
+    <div class="sheet-head">
+      <div><h3>Scan a barcode</h3><p class="sub">Decoded here on your device</p></div>
+      <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
+    </div>
+    <div class="sheet-body"><div id="scan-stage"></div></div>
+    <div class="sheet-foot" id="scan-foot"></div>
+  </div>`);
+
+  if (!support.ok) return stageScanBlocked(support.reason);
+
+  scanStage(
+    `<div class="scan-view">
+       <video id="scan-video" playsinline muted></video>
+       <div class="scan-reticle" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+     </div>
+     <p class="scan-status" id="scan-status">Starting the camera…</p>
+     <p class="help">Hold the barcode so it fills the width of the box. Sideways is fine.</p>`,
+    `<button class="btn btn-quiet" type="button" data-act="close">Cancel</button>
+     <button class="btn" type="button" data-act="type-code">Type the digits</button>`
+  );
+
+  const video = $('#scan-video');
+  startScanner(video, {
+    onHit: (hit) => {
+      stopScanner();
+      openCode(hit);
+    },
+    onStatus: (text) => {
+      const el = $('#scan-status');
+      if (el) el.textContent = text;
+    },
+  })
+    .then((handle) => {
+      scanHandle = handle;
+      const el = $('#scan-status');
+      if (el) el.textContent = 'Looking for a barcode…';
+      if (handle.canTorch) {
+        $('#scan-foot').insertAdjacentHTML(
+          'afterbegin',
+          '<button class="btn btn-quiet" type="button" data-act="torch">Light</button>'
+        );
+      }
+    })
+    .catch((err) => stageScanBlocked(permissionCopy(err)));
+}
+
+function stageScanBlocked(reason) {
+  scanStage(
+    `<div class="notice" data-tone="warn" style="margin-top:16px"><p>${esc(reason)}</p></div>
+     <p class="help">The digits printed under the barcode work just as well — the check digit is verified either way.</p>`,
+    `<button class="btn btn-quiet" type="button" data-act="close">Close</button>
+     <button class="btn btn-primary" type="button" data-act="type-code">Type the digits</button>`
+  );
+}
+
+/** Typing the digits is the universal fallback: no camera, no permission, no https needed. */
+function openTypeCode() {
+  stopScanner();
+  openSheet(`<form id="code-form">
+    <div class="sheet-head">
+      <div><h3>Type the digits</h3><p class="sub">The number printed under the barcode</p></div>
+      <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label for="code-in">Barcode number</label>
+        <input type="text" id="code-in" data-autofocus inputmode="numeric" autocomplete="off"
+               spellcheck="false" placeholder="012345678905" class="code-input">
+        <p class="help">8, 12 or 13 digits. The last one is a check digit, so a typo is caught rather than looked up.</p>
+      </div>
+      <p class="help" id="code-msg"></p>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-quiet" type="button" data-act="close">Cancel</button>
+      <button class="btn btn-primary" type="submit">Look it up</button>
+    </div>
+  </form>`);
+}
+
+// ---------------------------------------------------------------- what a code turned out to be
+
+/** Candidates for "what is this?", drawn from both knowledge bases at once. */
+function pickerHTML(query, prefix) {
+  const q = query.trim();
+  const cats = (q ? searchCatalog(q) : CATALOG).slice(0, 8);
+  const parts = (q ? searchParts(q) : PARTS).slice(0, 8);
+  if (!cats.length && !parts.length) {
+    return `<p class="help">Nothing matches “${esc(q)}”. Name it yourself below instead.</p>`;
+  }
+  const partRows = parts
+    .map(
+      (rec) => `<button class="pick" type="button" data-${prefix}-part="${esc(rec.id)}">
+        <span class="pick-name">${esc(rec.what)}</span>
+        <span class="pick-every">${esc(rec.parts[0] || rec.names[0] || '')}</span>
+        <span class="pick-why">${esc(rec.brand)} · ${esc(humanizeInterval(rec.every))}</span>
+      </button>`
+    )
+    .join('');
+  const catRows = cats
+    .map(
+      (c) => `<button class="pick" type="button" data-${prefix}-cat="${esc(c.id)}">
+        <span class="pick-name">${esc(c.name)}</span>
+        <span class="pick-every">${esc(c.kind === 'interval' ? humanizeInterval(c.every) : c.life ? `${c.life.n}-${c.life.unit} life` : 'expiry date')}</span>
+      </button>`
+    )
+    .join('');
+  return `${parts.length ? `<p class="field-label" style="margin-top:14px">Replacement parts</p>${partRows}` : ''}
+          ${cats.length ? `<p class="field-label" style="margin-top:14px">Things to track</p>${catRows}` : ''}`;
+}
+
+function openCode(hit) {
+  const ean13 = hit.ean13 || toEAN13(hit.code);
+  const shown = displayCode(ean13) || hit.code;
+  const known = recallCode(ean13);
+  const already = itemsWithCode(ean13);
+  const origin = codeOrigin(ean13);
+  const rec = known?.partId ? partById(known.partId) : null;
+
+  const head = `<div class="sheet-head">
+      <div>
+        <h3>${esc(known?.name || (already.length ? already[0].name : 'Barcode read'))}</h3>
+        <p class="sub"><span class="code-shown">${esc(shown)}</span> · ${esc(FORMAT_NAMES[hit.format] || 'barcode')}${origin ? ` · registered in ${esc(origin)}` : ''}</p>
+      </div>
+      <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
+    </div>`;
+
+  // Already on your list: the most useful answer, and the commonest once the app is in use.
+  if (already.length) {
+    const item = already[0];
+    const st = statusOf(item, todayISO());
+    openSheet(`<div data-code="${esc(ean13)}">
+      ${head}
+      <div class="sheet-body">
+        <p class="callout" style="margin-top:14px"><span class="label">You already track this</span>
+          ${esc(item.name)}${item.where ? ` · ${esc(item.where)}` : ''} — ${esc(st.state === 'nodate' ? 'no date set yet' : `${item.kind === 'expiry' ? 'expires' : 'due'} ${prettyDate(item.due)}, ${relativeDays(st.days)}`)}</p>
+        ${item.product?.part ? `<p class="order-line"><span class="label">Buy</span><b>${esc(item.product.part)}</b></p>` : ''}
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn btn-primary" type="button" data-act="code-open" data-id="${esc(item.id)}">Open it</button>
+          ${item.kind === 'interval' ? `<button class="btn" type="button" data-act="code-done" data-id="${esc(item.id)}">${svg('check')} Just replaced it</button>` : ''}
+        </div>
+      </div>
+      <div class="sheet-foot"><button class="btn btn-quiet" type="button" data-act="scan-again">Scan another</button></div>
+    </div>`);
+    return;
+  }
+
+  // Taught before, so this is exact — the whole point of the learned map.
+  if (known) {
+    openSheet(`<div data-code="${esc(ean13)}">
+      ${head}
+      <div class="sheet-body">
+        <p class="callout" style="margin-top:14px"><span class="label">You taught this one</span>
+          Saved on this device ${esc(prettyDate(known.at))}. No lookup, no network — just what you told it.</p>
+        ${rec ? `<p class="order-line"><span class="label">Buy</span><b>${esc(orderLine(rec))}</b>
+          <button class="btn-link" type="button" data-copy-text="${esc(rec.parts[0] || rec.names[0] || '')}">Copy</button></p>
+          <p class="help">${esc(rec.where)}</p>` : ''}
+        ${known.part && !rec ? `<p class="order-line"><span class="label">Buy</span><b>${esc(known.part)}</b>
+          <button class="btn-link" type="button" data-copy-text="${esc(known.part)}">Copy</button></p>` : ''}
+      </div>
+      <div class="sheet-foot">
+        <button class="btn btn-quiet" type="button" data-act="forget-code">Forget</button>
+        <button class="btn btn-primary" type="button" data-act="track-known">Track this</button>
+      </div>
+    </div>`);
+    return;
+  }
+
+  // Never seen. Say so plainly rather than matching it to something plausible.
+  openSheet(`<div data-code="${esc(ean13)}">
+    ${head}
+    <div class="sheet-body">
+      <p class="callout" style="margin-top:14px"><span class="label">Not a product name — yet</span>
+        A barcode is only a number. Turning one into a product needs a lookup service, and this app
+        does not call out to anything. Tell it what this is once and the code is exact from then on,
+        on this device, for good.</p>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn" type="button" data-act="plate" data-cansee-only>${svg('camera')} Read the label instead</button>
+      </div>
+      <div class="field">
+        <label for="code-search">What is it?</label>
+        <input type="search" id="code-search" class="searchbox" placeholder="filter, brush head, battery…" autocomplete="off">
+      </div>
+      <div id="code-picker">${pickerHTML('', 'code')}</div>
+      <hr class="sheet-sep">
+      <form id="code-name-form">
+        <div class="field">
+          <label for="code-name">Or just name it</label>
+          <input type="text" id="code-name" placeholder="Kitchen tap filter">
+        </div>
+        <div class="field">
+          <label for="code-part">Part number, if the pack shows one</label>
+          <input type="text" id="code-part" placeholder="WF3CB" autocomplete="off">
+        </div>
+        <button class="btn" type="submit">Remember it under that name</button>
+      </form>
+    </div>
+    <div class="sheet-foot"><button class="btn btn-quiet" type="button" data-act="scan-again">Scan another</button></div>
+  </div>`);
+}
+
+/** Create an item from a picked catalogue entry or part record, and learn the code. */
+function trackFromCode(ean13, { entry, rec, name, part }) {
+  const made = entry
+    ? fromCatalog(entry, { dontKnow: true })
+    : makeItem({
+        name: rec?.what || name || 'Scanned item',
+        cat: rec ? 'home' : 'home',
+        kind: 'interval',
+        every: rec?.every || { n: 6, unit: 'month' },
+        lead: 7,
+      });
+  made.product = {
+    ...emptyProduct(),
+    code: displayCode(ean13),
+    part: part || rec?.parts?.[0] || '',
+    brand: rec?.brand && rec.brand !== 'Any' && rec.brand !== 'Generic' ? rec.brand : '',
+  };
+  if (rec && !entry) made.note = rec.where;
+  if (rec?.every) made.every = rec.every;
+  state.items.push(made);
+  rememberCode(ean13, {
+    name: made.name,
+    catalogId: entry?.id || null,
+    partId: rec?.id || null,
+    brand: made.product.brand,
+    part: made.product.part,
+  });
+  save();
+  closeSheet();
+  switchView('due');
+  toast(`${made.name} added, and this barcode is now remembered.`);
+}
+
+// ---------------------------------------------------------------- reading a nameplate
+
+function stageNameplate() {
+  const found = [
+    ...(plate.part ? findByPart(plate.part) : []),
+    ...(plate.model ? findByModel(plate.model) : []),
+    ...(plate.size ? findByPart(plate.size) : []),
+  ];
+  const unique = [...new Set(found)];
+  const fields = [
+    ['Brand', plate.brand],
+    ['Model', plate.model],
+    ['Part', plate.part],
+    ['Size', plate.size],
+    ['Serial', plate.serial],
+  ].filter(([, v]) => v);
+
+  const takes = unique.length
+    ? `<p class="field-label" style="margin-top:18px">What this takes</p>
+       ${unique
+         .map(
+           (rec, i) => `<div class="found">
+            <p class="order-line"><span class="label">Buy</span><b>${esc(orderLine(rec))}</b>
+              <button class="btn-link" type="button" data-copy-text="${esc(rec.parts[0] || rec.names[0] || '')}">Copy</button></p>
+            <p class="found-cycle">${esc(rec.what)} · ${esc(humanizeInterval(rec.every))}</p>
+            <p class="found-seen">${esc(rec.where)}</p>
+            ${rec.note ? `<p class="found-seen">${esc(rec.note)}</p>` : ''}
+            <div class="btn-row" style="margin-top:10px"><button class="btn btn-sm" type="button" data-plate-part="${esc(rec.id)}">Track this part</button></div>
+          </div>`
+         )
+         .join('')}`
+    : `<p class="callout" style="margin-top:18px"><span class="label">No cross-reference</span>
+        Nothing in the built-in parts list matches this label. The details above are saved with the item
+        anyway, which is what you need when you come to reorder.</p>`;
+
+  photoStage(
+    `<div class="photo-found">
+       ${photoURL ? `<img src="${esc(photoURL)}" alt="The label you photographed">` : ''}
+     </div>
+     ${fields.length
+       ? `<dl class="plate">${fields.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`
+       : '<p class="help" style="margin-top:14px">Nothing legible on that label.</p>'}
+     ${plate.dates.length
+       ? `<p class="found-read" style="margin-left:0">Dates read: ${plate.dates
+           .map((d) => `<b>${esc(d.text || d.iso)}</b>${d.kind ? ` (${esc(d.kind)})` : ''}`)
+           .join(', ')}</p>`
+       : ''}
+     ${nameplateHasContent(plate) ? takes : ''}
+     ${plate.note ? `<p class="help" style="margin-top:12px">${esc(plate.note)}</p>` : ''}
+     <p class="help" style="margin-top:14px">Transcribed from your photo — check it against the label before ordering.</p>`,
+    `<button class="btn btn-quiet" type="button" data-act="photo-again">Another photo</button>
+     ${nameplateHasContent(plate) ? '<button class="btn btn-primary" type="button" data-act="plate-save">Save these details</button>' : ''}`
+  );
 }
 
 // ---------------------------------------------------------------- sheet
@@ -750,6 +1138,33 @@ function openCustom() {
 }
 
 /** Sheet 3: an item you already track. Fields save as you change them. */
+/**
+ * The answer to "what do I buy again?", resolved fresh from whatever the item currently
+ * knows: a stored part number first, then a live cross-reference against its own part or
+ * model number, so filling in a model after the fact still surfaces the filter it takes.
+ */
+function buyLineFor(item) {
+  const product = item.product || {};
+  if (product.part) {
+    const hits = findByPart(product.part);
+    const rec = hits[0];
+    return `<p class="order-line" style="margin-top:6px"><span class="label">Buy</span><b>${esc(rec ? orderLine(rec) : product.part)}</b>
+      <button class="btn-link" type="button" data-copy-text="${esc(product.part)}">Copy</button></p>
+      ${rec?.where ? `<p class="found-seen">${esc(rec.where)}</p>` : ''}`;
+  }
+  const byModel = product.model ? findByModel(product.model) : [];
+  if (byModel.length) {
+    return byModel
+      .map(
+        (rec) => `<p class="order-line" style="margin-top:6px"><span class="label">Takes</span><b>${esc(orderLine(rec))}</b>
+          <button class="btn-link" type="button" data-copy-text="${esc(rec.parts[0] || rec.names[0] || '')}">Copy</button></p>
+          <p class="found-seen">${esc(rec.where)}</p>`
+      )
+      .join('');
+  }
+  return '';
+}
+
 function openItem(item) {
   const today = todayISO();
   const st = statusOf(item, today);
@@ -786,6 +1201,17 @@ function openItem(item) {
       <div class="field"><label for="i-name">Name</label><input type="text" id="i-name" value="${esc(item.name)}"></div>
       <div class="field"><label for="i-where">Which one</label><input type="text" id="i-where" value="${esc(item.where || '')}" placeholder="optional"></div>
       <div class="field"><label for="i-note">Note</label><input type="text" id="i-note" value="${esc(item.note || '')}" placeholder="optional"></div>
+
+      <hr class="sheet-sep">
+      <p class="field-label" style="margin-top:16px">Product</p>
+      ${item.product?.code ? `<p class="found-seen">Barcode <span class="code-shown">${esc(item.product.code)}</span></p>` : ''}
+      <div class="field-2">
+        <div class="field"><label for="i-brand">Brand</label><input type="text" id="i-brand" value="${esc(item.product?.brand || '')}" placeholder="optional"></div>
+        <div class="field"><label for="i-model">Model</label><input type="text" id="i-model" value="${esc(item.product?.model || '')}" placeholder="optional"></div>
+      </div>
+      <div class="field"><label for="i-part">Replacement part number</label><input type="text" id="i-part" value="${esc(item.product?.part || '')}" placeholder="e.g. WF3CB"></div>
+      <div id="i-buy">${buyLineFor(item)}</div>
+      ${!item.product?.code ? `<div class="btn-row" style="margin-top:8px"><button class="btn btn-sm" type="button" data-act="scan">${svg('barcode')} Attach a scanned barcode</button></div>` : ''}
 
       ${hints.why ? `<hr class="sheet-sep"><p class="callout" style="margin-top:16px"><span class="label">Why it matters</span>${esc(hints.why)}</p>` : ''}
       ${hints.where && st.state !== 'nodate' ? `<p class="callout"><span class="label">Where the date is</span>${esc(hints.where)}</p>` : ''}
@@ -942,6 +1368,80 @@ export function start() {
     }
     if (act === 'photo-stop') return photoCtl?.abort();
     if (act === 'photo-apply') return applyFindings();
+    if (act === 'scan') return openScanner();
+    if (act === 'type-code') return openTypeCode();
+    if (act === 'plate') return openPhoto('nameplate');
+    if (act === 'torch') {
+      scanHandle?.torch().then((on) => {
+        btn.textContent = on ? 'Light off' : 'Light';
+      });
+      return;
+    }
+    if (act === 'scan-again') {
+      stopScanner();
+      return openScanner();
+    }
+    if (act === 'plate-save') {
+      closeSheet();
+      return toast('Details saved with the item.');
+    }
+
+    // ---- barcode: candidate picked from the catalogue or parts list, inside the code sheet
+    const codeHolder = sheet().querySelector('[data-code]');
+    const codeVal = codeHolder?.dataset.code;
+    const codeCat = t.closest?.('[data-code-cat]')?.dataset.codeCat;
+    if (codeVal && codeCat) return trackFromCode(codeVal, { entry: catalogEntry(codeCat) });
+    const codePart = t.closest?.('[data-code-part]')?.dataset.codePart;
+    if (codeVal && codePart) return trackFromCode(codeVal, { rec: partById(codePart) });
+    const platePart = t.closest?.('[data-plate-part]')?.dataset.platePart;
+    if (platePart) {
+      const rec = partById(platePart);
+      const due = plate?.dates?.[0]
+        ? dueFromRead(rec.catalogId ? catalogEntry(rec.catalogId) : null, plate.dates[0].kind, plate.dates[0].iso)
+        : null;
+      const made = rec.catalogId
+        ? fromCatalog(catalogEntry(rec.catalogId), { dontKnow: true })
+        : makeItem({ name: rec.what, cat: rec.group === 'fridge' ? 'home' : 'home', kind: 'interval', every: rec.every, lead: 14 });
+      made.every = rec.every;
+      made.due = due;
+      made.product = { ...emptyProduct(), part: rec.parts[0] || '', brand: rec.brand !== 'Any' && rec.brand !== 'Generic' ? rec.brand : '', model: plate?.model || '' };
+      made.note = rec.where;
+      state.items.push(made);
+      save();
+      closeSheet();
+      switchView('due');
+      toast(`${made.name} added.`);
+      return;
+    }
+
+    if (act === 'code-open') {
+      const item = byId(btn.dataset.id);
+      closeSheet();
+      if (item) openItem(item);
+      return;
+    }
+    if (act === 'code-done') {
+      const item = byId(btn.dataset.id);
+      if (item) markDone(item);
+      return;
+    }
+    if (act === 'track-known' && codeVal) {
+      const known = recallCode(codeVal);
+      const rec = known?.partId ? partById(known.partId) : null;
+      const entry = known?.catalogId ? catalogEntry(known.catalogId) : null;
+      return trackFromCode(codeVal, { entry, rec, name: known?.name, part: known?.part });
+    }
+    if (act === 'forget-code' && codeVal) {
+      forgetCode(codeVal);
+      closeSheet();
+      return toast('Forgotten.');
+    }
+
+    const copyText2 = t.closest?.('[data-copy-text]')?.dataset.copyText;
+    if (copyText2) {
+      copyText(copyText2).then((ok) => toast(ok ? 'Copied.' : 'Could not copy — select and copy by hand.'));
+      return;
+    }
     if (act === 'go-add') return switchView('add');
     if (act === 'custom') return openCustom();
     if (act === 'clear-examples') {
@@ -1103,6 +1603,21 @@ export function start() {
     if (e.target.id === 'c-kind') {
       $('#c-every-wrap').hidden = e.target.value === 'expiry';
     }
+    if (e.target.id === 'parts-search') {
+      partQuery = e.target.value;
+      const at = e.target.selectionStart;
+      $('#parts-out').innerHTML = partsResultsHTML();
+      const again = $('#parts-search');
+      again.focus();
+      again.setSelectionRange(at, at);
+    }
+    if (e.target.id === 'code-search') {
+      const at = e.target.selectionStart;
+      $('#code-picker').innerHTML = pickerHTML(e.target.value, 'code');
+      const again = $('#code-search');
+      again.focus();
+      again.setSelectionRange(at, at);
+    }
   });
 
   // ---- live editing in the item sheet
@@ -1125,6 +1640,9 @@ export function start() {
       'i-note': () => (item.note = e.target.value.trim()),
       'i-n': () => (item.every = { n: Math.max(1, Number($('#i-n').value) || 1), unit: $('#i-u').value }),
       'i-u': () => (item.every = { n: Math.max(1, Number($('#i-n').value) || 1), unit: $('#i-u').value }),
+      'i-brand': () => (item.product = { ...emptyProduct(), ...item.product, brand: e.target.value.trim() }),
+      'i-model': () => (item.product = { ...emptyProduct(), ...item.product, model: e.target.value.trim() }),
+      'i-part': () => (item.product = { ...emptyProduct(), ...item.product, part: e.target.value.trim() }),
     };
     if (!map[id]) return;
     map[id]();
@@ -1136,6 +1654,10 @@ export function start() {
       const st = statusOf(item, todayISO());
       sub.textContent =
         st.state === 'nodate' ? 'No date yet' : `${item.kind === 'expiry' ? 'Expires' : 'Due'} ${prettyDate(item.due)} · ${relativeDays(st.days)}`;
+    }
+    if (id === 'i-brand' || id === 'i-model' || id === 'i-part') {
+      const buyBox = $('#i-buy');
+      if (buyBox) buyBox.innerHTML = buyLineFor(item);
     }
   });
 
@@ -1189,6 +1711,31 @@ export function start() {
       return;
     }
 
+    if (form.id === 'code-form') {
+      const raw = $('#code-in').value.replace(/\D/g, '');
+      const ean13 = toEAN13(raw);
+      const msg = $('#code-msg');
+      if (!ean13) {
+        msg.textContent = raw.length < 8
+          ? 'That is not enough digits for a barcode.'
+          : 'Those digits do not check out as a real barcode — check for a typo.';
+        msg.style.color = 'var(--alarm)';
+        return;
+      }
+      openCode({ code: raw, format: raw.length === 8 ? 'ean_8' : raw.length === 12 ? 'upc_a' : 'ean_13', ean13 });
+      return;
+    }
+
+    if (form.id === 'code-name-form') {
+      const codeHolder = sheet().querySelector('[data-code]');
+      const ean13 = codeHolder?.dataset.code;
+      const name = $('#code-name').value.trim();
+      const part = $('#code-part').value.trim();
+      if (!ean13 || !name) return;
+      trackFromCode(ean13, { name, part });
+      return;
+    }
+
     if (form.id === 'renew-form') {
       const item = byId(form.dataset.item);
       const val = $('#r-due').value;
@@ -1213,6 +1760,7 @@ export function start() {
   // Emptying it on close means a stale data-item can never catch a later click.
   sheet().addEventListener('close', () => {
     releasePhoto();
+    stopScanner();
     sheet().innerHTML = '';
   });
 }

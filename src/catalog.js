@@ -109,6 +109,12 @@ export const CATALOG = [
     why: 'Rated by volume, roughly two months for one household. The taste goes before the filtering does.',
   },
   {
+    id: 'undersink-filter', cat: 'home', name: 'Under-sink or RO water filter', kind: 'interval', every: { n: 9, unit: 'month' }, lead: 14,
+    ask: 'When did you last change the cartridges?',
+    where: 'Each cartridge carries its own rating; standard housings take generic 10 x 2.5 inch cartridges.',
+    why: 'The sediment and carbon stages run 6 to 12 months, and they are what protect the expensive part — the reverse osmosis membrane, which then lasts two to three years instead of one. A neglected pre-filter is how people end up replacing a membrane early.',
+  },
+  {
     id: 'water-heater-flush', cat: 'home', name: 'Flush the water heater', kind: 'interval', every: { n: 1, unit: 'year' }, lead: 21,
     ask: 'When was it last flushed?',
     where: 'Drain valve at the bottom of the tank.',

@@ -29,6 +29,51 @@ So Lasts ships the knowledge as well as the reminder. Every one of its **78 cata
 entries** answers three questions a reminder app leaves to you: how long the thing lasts,
 where its date is printed, and why being late costs you something.
 
+## Scan a barcode
+
+Scanning is fully local. There is a dependency-free EAN-13 / UPC-A / UPC-E / EAN-8 decoder in
+`src/barcode.js`, written rather than imported for two reasons: the app has to work with the
+network off, and **iOS Safari has no `BarcodeDetector`**, so relying on the browser-native
+fast path alone would leave every iPhone unable to scan. Where the API exists it is used; where
+it does not, greyscale frames go through our own scanline decoder instead.
+
+What a scan actually gets you, in the order the app tries:
+
+1. **Already on your list** — the commonest answer once the app is in use, and the most useful.
+   "You already track this: fridge filter, due in 3 weeks", with a one-tap *Just replaced it*.
+2. **A code you taught it** — exact, instant, no network. See below.
+3. **Nothing yet**, said plainly. A barcode is only a number; turning one into a product needs
+   a lookup service, and this app does not call out to anything.
+
+**There is deliberately no shipped UPC database.** Nobody can ship a complete offline
+barcode-to-product table, every online UPC API breaks the local-only promise, and a *wrong*
+part number is worse than none — someone buys the wrong filter. So instead the app builds its
+own memory: tell it what a code is once, and that code is exact from then on, on that device,
+for good. Learned codes ride along in the JSON backup. A test asserts that no record in the
+parts table carries a guessed barcode.
+
+Every scan is checksum-verified, so a misread or a typo is refused rather than looked up. Typing
+the digits printed under the barcode is a first-class path, and the only one that needs no
+camera, no permission and no https.
+
+## Find the exact part
+
+`src/parts.js` holds 51 consumables with their order numbers, what they fit, and — the field
+that matters most — **where the number is printed on your own unit.** Because the universal
+rule is that the old part tells you the new part.
+
+Two ways in:
+
+- **A part number** — `WF3CB`, `wf-3cb`, or `FILTER MODEL ULTRAWF` off a pack all resolve to
+  the same record, with its alternates (`also sold as PS-RF200`) and its interval.
+- **A model number** — photograph a fridge nameplate reading `FFSS2615TS` and you get back
+  *both* the water filter (`WF3CB`, every 6 months) and the PureAir air filter (`PAULTRA`) that
+  the same machine takes and that almost nobody knows exists.
+
+Tracked items carry that identity with them: brand, model, part number and barcode, with the
+order line shown on the item and the part number in its row — which is what you need when
+you are standing in a shop.
+
 ## Read it from a photo
 
 Every catalogue entry tells you to *go and look at the label*. The camera does the looking:
@@ -81,9 +126,17 @@ simply absent when you self-host — every other feature works with the network 
 - **Works offline** — a service worker caches the whole app after first load. Installable to
   a home screen as a PWA.
 
+## Install it
+
+It is a PWA: open it on a phone and use *Add to Home Screen* (iOS) or the install prompt
+(Android). It then launches standalone, offline, with its own icon — the manifest ships real
+PNG icons at 192, 512 and maskable sizes plus an `apple-touch-icon`, because an SVG-only
+manifest gives iOS a blank tile.
+
 ## Try it
 
-Serve the folder over HTTP (ES modules will not load over `file://`):
+Serve the folder over HTTP (ES modules will not load over `file://`, and the camera needs a
+secure origin):
 
 ```sh
 npm start          # python3 -m http.server 8000
@@ -115,6 +168,9 @@ knowledge base.
 | `src/catalog.js` | The knowledge base. 78 entries with intervals, lead times, where the date is printed, and why it matters. |
 | `src/store.js` | `localStorage` persistence, schema sanitising on load, backup/restore, example seeding. |
 | `src/vision.js` | Photo reading: prompt construction, tolerant normalising of the reply, safe date rounding, and the date-meaning-to-due-date mapping. Pure except for the canvas re-encode. |
+| `src/barcode.js` | The barcode decoder. Checksums, UPC-E expansion, GS1 prefix origins, per-row two-peak binarising, and scanline decoding of four symbologies. Entirely pure — the tests synthesize barcode images and decode them back. |
+| `src/parts.js` | The consumable cross-reference: order numbers, what they fit, where the number is printed. Pure lookup. |
+| `src/scanner.js` | Camera plumbing: `getUserMedia`, the `BarcodeDetector` fast path, and the frame-grab fallback that alternates orientation so a barcode held sideways still reads. |
 | `src/ui.js` | Four views, one detail sheet, one toast. Renders to strings, delegates events from `document`. |
 | `build/bundle.mjs` | Flattens the modules and stylesheet into `dist/`. Walks the imports from the entry module rather than keeping a list, and fails the build on duplicate top-level names, surviving imports, or a leftover module script. |
 
@@ -134,6 +190,13 @@ knowledge base.
   confidence reads as `low`, an unparseable date becomes no date, and the list is capped.
 - **Host capabilities are optional and advertised through data attributes**, so the CSS hides
   affordances the host cannot serve. The app is fully usable with none of them.
+- **A UPC-A decodes to 12 digits, not a zero-padded EAN-13**, matching what the browser's own
+  `BarcodeDetector` returns. The two scan paths have to hand the lookup identical strings, so
+  `toEAN13()` does normalising at the boundary and nowhere else.
+- **The scan band is cropped across the bars and kept whole along them.** A band of the frame's
+  height only suits a barcode lying horizontally; cropping the same way for a sideways one cuts
+  digits off the symbol before it can be read. Only a live-camera test catches that, which is
+  why there is one.
 
 ## About the intervals
 
@@ -144,6 +207,12 @@ engineering advice.
 
 ## Known limits
 
+- **There is no product database, by design.** See above. The parts table covers common
+  consumables, not every SKU on earth, and the long tail is handled by teaching it a barcode or
+  photographing a label.
+- **The camera needs a secure page.** Browsers only allow `getUserMedia` over https or on
+  localhost, so the single-file `file://` copy cannot scan. Typing the digits works everywhere,
+  and everything else is unaffected.
 - **Your list lives in one browser.** It does not sync between devices, and clearing site data
   takes it with you. Back it up from the Data tab.
 - **The calendar file is copy-paste on the hosted page.** `.ics` is not in the host's download

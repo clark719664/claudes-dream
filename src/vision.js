@@ -16,7 +16,33 @@ export function catalogIndex() {
 
 const SHAPE = `{"items":[{"catalogId":"smoke-alarm","label":"Smoke alarm","confidence":"high","seen":"ceiling-mounted alarm, Kidde branding","date":{"value":"2016-04","kind":"manufacture","text":"MFD 04/2016","confidence":"high"}}],"note":""}`;
 
+const NAMEPLATE_SHAPE = `{"kindOfThing":"Refrigerator","brand":"Frigidaire","model":"FFSS2615TS","part":"","serial":"BA12345678","size":"","dates":[{"value":"2019-06","kind":"manufacture","text":"MFD 06/19"}],"note":""}`;
+
+/**
+ * Nameplate mode is the most exact identification the app has. A rating plate carries a brand
+ * and a model number, and those cross-reference locally to the consumables the thing takes —
+ * which is far more use than a barcode, since a barcode identifies a box and a model number
+ * identifies the machine.
+ */
+function nameplatePrompt() {
+  return `You are the eye of a maintenance tracker. The attached photo shows a product label, rating plate, sticker or packaging. Transcribe what is printed on it.
+
+Reply with only JSON in this shape, and nothing else:
+${NAMEPLATE_SHAPE}
+
+Rules:
+- Transcribe characters exactly as printed. Do not correct, expand or tidy a model number.
+- model is the appliance or product model number. part is a replacement-part or cartridge number if the label is for a part rather than a machine. Use "" for anything not printed.
+- Prefer the string labelled "Model", "Model No", "M/N", "Mod" or similar. Serial numbers are usually labelled "Serial", "S/N" or "SER" — never put a serial in model.
+- size is any dimension or capacity printed on it, such as a filter size like "20x25x1" or "16 x 25 x 4".
+- dates lists every date printed on the label, each as "YYYY", "YYYY-MM" or "YYYY-MM-DD", only as precise as you can read. kind is "manufacture", "expiry", "install", "service" or "purchase". text is the characters as printed.
+- Never estimate a date from how old something looks, and never use today's date.
+- If the label is unreadable, return empty strings and say why in one sentence in note.
+- Say nothing about any people in the image; ignore them.`;
+}
+
 export function buildPrompt(mode, subject) {
+  if (mode === 'nameplate') return nameplatePrompt();
   const common = `You are the eye of a maintenance tracker. Read the attached photo or photos.
 
 Reply with only JSON in this shape, and nothing else:
@@ -118,6 +144,32 @@ export function dueFromRead(entry, kind, dateISO) {
   if (!entry) return dateISO;
   if (entry.kind === 'expiry') return entry.life ? addInterval(dateISO, entry.life) : dateISO;
   return entry.every ? addInterval(dateISO, entry.every) : dateISO;
+}
+
+/** Everything a nameplate reply claims, trimmed to what the app can use. */
+export function normalizeNameplate(raw) {
+  const str = (v) => (typeof v === 'string' ? v.trim().replace(/\s+/g, ' ').slice(0, 60) : '');
+  const dates = [];
+  const list = Array.isArray(raw?.dates) ? raw.dates.slice(0, 6) : [];
+  for (const d of list) {
+    const parsed = normalizeReadDate(d);
+    if (parsed) dates.push(parsed);
+  }
+  return {
+    kindOfThing: str(raw?.kindOfThing),
+    brand: str(raw?.brand),
+    model: str(raw?.model),
+    part: str(raw?.part),
+    serial: str(raw?.serial),
+    size: str(raw?.size),
+    dates,
+    note: typeof raw?.note === 'string' ? raw.note.slice(0, 240) : '',
+  };
+}
+
+/** Did the label give us anything at all to work with? */
+export function nameplateHasContent(plate) {
+  return !!(plate.brand || plate.model || plate.part || plate.size || plate.dates.length);
 }
 
 // ---------------------------------------------------------------- preparing the file

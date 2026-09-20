@@ -1,14 +1,18 @@
 {
   "name": "Lasts — how long things last",
   "short_name": "Lasts",
-  "description": "Track everything that expires, wears out or needs renewing. No account, no server, no ads.",
+  "description": "Scan a barcode or a label and find out what a thing takes, what it costs to be late, and when it is next due. No account, no server, no ads.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#f6f4ef",
   "theme_color": "#0d6e62",
+  "categories": ["utilities", "productivity", "lifestyle"],
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }

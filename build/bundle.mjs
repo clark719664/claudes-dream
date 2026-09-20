@@ -62,14 +62,16 @@ const FONTS = [...html.matchAll(/^\s*<link rel="(?:preconnect|stylesheet)"[^>]*f
   .join('\n');
 
 // ---- complete document, no sibling files
+const SIBLINGS = /^[ \t]*<link rel="(?:manifest|icon|apple-touch-icon)"[^>]*>[ \t]*\n/gm;
 let single = html
-  .replace(/^\s*<link rel="(?:manifest|icon)"[^>]*>\s*$/gm, '')
+  .replace(SIBLINGS, '')
   .replace('<link rel="stylesheet" href="app.css">', `<style>\n${css}\n</style>`)
   .replace(/<script type="module">[\s\S]*?<\/script>/, `<script>\n${js}</script>`);
 writeFileSync(join(root, 'dist/lasts.html'), single);
 
 // ---- body content only, title and styles first
 const body = html.slice(html.indexOf('<body>') + 6, html.lastIndexOf('</body>')).trim();
+const strayLink = /<link rel="(?:manifest|icon|apple-touch-icon)"[^>]*>/;
 const artifact = [
   '<title>Lasts</title>',
   FONTS,
@@ -80,6 +82,7 @@ writeFileSync(join(root, 'dist/artifact.html'), artifact);
 
 for (const [name, out] of [['dist/lasts.html', single], ['dist/artifact.html', artifact]]) {
   const problems = [];
+  if (strayLink.test(out)) problems.push('a link to a sibling file survived into a single-file build');
   if (/\bfrom\s+['"]\.\//.test(out)) problems.push('a module import survived');
   if (/^export\s/m.test(out)) problems.push('an export survived');
   if (/type="module"/.test(out)) problems.push('a module script survived');
