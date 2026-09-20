@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lasts</title>
+<meta name="description" content="A tracker for everything that expires, wears out or needs renewing — with a built-in guide to how long things last, where the date is printed, and why it matters.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style id="standalone-reset">
+  /* Matches the reset the hosted build is wrapped in, so both versions sit the same way. */
+  :root { padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to your list</a>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 3H6a3 3 0 0 0-3 3v7.5a3 3 0 0 0 .88 2.12l5.5 5.5a3 3 0 0 0 4.24 0l6.5-6.5a3 3 0 0 0 0-4.24l-5.5-5.5A3 3 0 0 0 13.5 3Z"/><circle cx="8" cy="8" r="1.25"/></svg>
+      <div class="brand-text">
+        <h1>Lasts</h1>
+        <p class="tagline">How long things last</p>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" type="button" role="tab" data-view="due" aria-selected="true" aria-controls="view-due">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+        <span>Due<span class="pip" id="pip-due" hidden></span></span>
+      </button>
+      <button class="tab" type="button" role="tab" data-view="add" aria-selected="false" aria-controls="view-add">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8.5v7M8.5 12h7"/></svg>
+        <span>Add</span>
+      </button>
+      <button class="tab" type="button" role="tab" data-view="all" aria-selected="false" aria-controls="view-all">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
+        <span>All</span>
+      </button>
+      <button class="tab" type="button" role="tab" data-view="data" aria-selected="false" aria-controls="view-data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.2-2.9 7.9-7 9.5-4.1-1.6-7-5.3-7-9.5V6l7-3Z"/><path d="M9 12l2 2 4-4"/></svg>
+        <span>Data</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section id="view-due" role="tabpanel" aria-label="Due"></section>
+  <section id="view-add" role="tabpanel" aria-label="Add" hidden></section>
+  <section id="view-all" role="tabpanel" aria-label="All" hidden></section>
+  <section id="view-data" role="tabpanel" aria-label="Data" hidden></section>
+</main>
+
+<dialog class="sheet" id="sheet" aria-label="Details"></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module">
+  import { start } from './src/ui.js';
+  start();
+  if (window.self === window.top && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {
+      /* offline caching is a bonus, not a requirement */
+    });
+  }
+</script>
+</body>
+</html>

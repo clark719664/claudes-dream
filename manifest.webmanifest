@@ -1,0 +1,14 @@
+{
+  "name": "Lasts — how long things last",
+  "short_name": "Lasts",
+  "description": "Track everything that expires, wears out or needs renewing. No account, no server, no ads.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f6f4ef",
+  "theme_color": "#0d6e62",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

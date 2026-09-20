@@ -1,0 +1,15 @@
+{
+  "name": "lasts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A tracker for everything that expires, wears out, or needs renewing — with a built-in knowledge base of how long things last.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "build": "node build/bundle.mjs",
+    "start": "python3 -m http.server 8000"
+  },
+  "dependencies": {
+    "playwright": "^1.63.0"
+  }
+}

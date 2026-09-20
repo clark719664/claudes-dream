@@ -1,0 +1,941 @@
+// Rendering and interaction. The app is four views, one detail sheet, and a toast.
+
+import {
+  todayISO, addDays, addInterval, statusOf, bySoonest, relativeDays,
+  humanizeInterval, prettyDate, toICS, isISO,
+} from './core.js';
+import { CATALOG, CATEGORIES, catalogEntry, searchCatalog } from './catalog.js';
+import {
+  state, makeItem, fromCatalog, hintsFor, load, save,
+  exportJSON, importJSON, wipe, hasExamples, clearExamples,
+} from './store.js';
+const $ = (sel, root = document) => root.querySelector(sel);
+const esc = (s) =>
+  String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/** Downloads are inert inside a sandboxed frame, so the copy panel leads there instead. */
+const FRAMED = (() => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+})();
+
+const ICON = {
+  tag: '<path d="M13.5 3H6a3 3 0 0 0-3 3v7.5a3 3 0 0 0 .88 2.12l5.5 5.5a3 3 0 0 0 4.24 0l6.5-6.5a3 3 0 0 0 0-4.24l-5.5-5.5A3 3 0 0 0 13.5 3Z"/><circle cx="8" cy="8" r="1.25"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/>',
+  plus: '<circle cx="12" cy="12" r="9"/><path d="M12 8.5v7M8.5 12h7"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+  shield: '<path d="M12 3l7 3v5.5c0 4.2-2.9 7.9-7 9.5-4.1-1.6-7-5.3-7-9.5V6l7-3Z"/><path d="M9 12l2 2 4-4"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4.3-4.3"/>',
+  check: '<path d="M5 13l4 4L19 7"/>',
+};
+
+const svg = (name, cls = '') =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="${cls}" aria-hidden="true">${ICON[name]}</svg>`;
+
+const LEADS = [
+  [0, 'on the day'], [3, '3 days before'], [7, 'a week before'], [14, '2 weeks before'],
+  [30, 'a month before'], [45, '6 weeks before'], [60, '2 months before'],
+  [90, '3 months before'], [180, '6 months before'], [270, '9 months before'],
+];
+const UNITS = [['day', 'days'], ['week', 'weeks'], ['month', 'months'], ['year', 'years']];
+
+let view = 'due';
+let undo = null;
+let allFilter = 'active';
+let allQuery = '';
+let addQuery = '';
+
+// ---------------------------------------------------------------- shared bits
+
+function rows(today) {
+  return state.items.map((item) => ({ item, ...statusOf(item, today) }));
+}
+
+function subLine(item) {
+  if (item.kind === 'interval') {
+    const every = humanizeInterval(item.every);
+    const last = [...(item.history || [])].reverse().find((h) => h.kind === 'done');
+    return last ? `${every} · last done ${prettyDate(last.on)}` : every;
+  }
+  if (!isISO(item.due)) return 'Needs the date from the label';
+  const life = hintsFor(item).life;
+  return life ? `${life.n}-${life.unit} life` : 'Expiry date';
+}
+
+function rowHTML({ item, state: st, days }) {
+  const rel = st === 'nodate' ? 'no date yet' : relativeDays(days);
+  return `<button class="row" type="button" data-id="${esc(item.id)}" data-state="${st}">
+    <span class="stripe" aria-hidden="true"></span>
+    <span class="row-main">
+      <span class="row-name">${esc(item.name)}${item.where ? ` <span class="where">· ${esc(item.where)}</span>` : ''}</span>
+      <span class="row-sub">${esc(subLine(item))}</span>
+    </span>
+    <span class="row-when">
+      <span class="row-rel">${esc(rel)}</span>
+      <span class="row-date">${item.due ? esc(prettyDate(item.due)) : '—'}</span>
+    </span>
+  </button>`;
+}
+
+function groupHTML(title, list, st) {
+  if (!list.length) return '';
+  return `<section class="group" data-state="${st}">
+    <h3 class="group-head">${esc(title)} <span class="n">${list.length}</span></h3>
+    <div class="rows">${list.map(rowHTML).join('')}</div>
+  </section>`;
+}
+
+// ---------------------------------------------------------------- due view
+
+function renderDue() {
+  const today = todayISO();
+  const all = rows(today).filter((r) => !r.item.archived).sort(bySoonest);
+  const overdue = all.filter((r) => r.state === 'overdue');
+  const soon = all.filter((r) => r.state === 'soon');
+  const nodate = all.filter((r) => r.state === 'nodate');
+  const later = all.filter((r) => r.state === 'later');
+
+  let line;
+  if (!all.length) {
+    line = 'Nothing tracked yet. Open <b>Add</b> and start with Safety — that list is where the surprises are.';
+  } else if (overdue.length && soon.length) {
+    line = `<em>${overdue.length} ${overdue.length === 1 ? 'thing is' : 'things are'} overdue</em>, and ${soon.length} ${soon.length === 1 ? 'is' : 'are'} coming up.`;
+  } else if (overdue.length) {
+    line = `<em>${overdue.length} ${overdue.length === 1 ? 'thing is' : 'things are'} overdue.</em>`;
+  } else if (soon.length) {
+    line = `${soon.length} ${soon.length === 1 ? 'thing is' : 'things are'} coming up.`;
+  } else if (later.length) {
+    const next = later[0];
+    line = `Nothing needs attention. Next is <b>${esc(next.item.name)}</b>, ${esc(relativeDays(next.days))}.`;
+  } else {
+    line = 'Nothing needs attention.';
+  }
+
+  const counts = [
+    ['overdue', 'overdue', overdue.length],
+    ['soon', 'due soon', soon.length],
+    ['nodate', 'need a date', nodate.length],
+    ['tracked', 'tracked', all.length],
+  ]
+    .map(([st, label, n]) => `<li data-state="${st}"><b>${n}</b> ${label}</li>`)
+    .join('');
+
+  const notices = [];
+  if (!state.storageOK || state.storageNote) {
+    notices.push(`<div class="notice" data-tone="warn"><p>${esc(state.storageNote)}</p></div>`);
+  }
+  if (hasExamples()) {
+    notices.push(`<div class="notice"><p><b>These are examples</b> so the list is not blank — the dates are made up.</p>
+      <button class="btn btn-sm btn-quiet" data-act="clear-examples" type="button">Clear examples</button></div>`);
+  }
+
+  const body = all.length
+    ? groupHTML('Overdue', overdue, 'overdue') +
+      groupHTML('Due soon', soon, 'soon') +
+      groupHTML('Needs a date', nodate, 'nodate') +
+      groupHTML('Later', later, 'later')
+    : `<div class="empty">${svg('tag')}<p>Add the things you would rather not find out about late.</p>
+        <button class="btn btn-primary" data-act="go-add" type="button">Browse what to track</button></div>`;
+
+  $('#view-due').innerHTML = `<div class="wrap">
+    <div class="view-head"><div class="summary">
+      <p class="summary-line">${line}</p>
+      <ul class="counts">${counts}</ul>
+    </div></div>
+    ${notices.join('')}
+    ${body}
+  </div>`;
+
+  const pip = $('#pip-due');
+  const n = overdue.length + soon.length;
+  pip.textContent = n ? String(n) : '';
+  pip.hidden = !n;
+}
+
+// ---------------------------------------------------------------- add view
+
+function renderAdd() {
+  const found = searchCatalog(addQuery);
+  const ids = new Set(found.map((c) => c.id));
+  const groups = CATEGORIES.map((cat) => {
+    const list = CATALOG.filter((c) => c.cat === cat.id && ids.has(c.id));
+    if (!list.length) return '';
+    const open = addQuery ? ' open' : cat.id === 'safety' ? ' open' : '';
+    return `<details class="cat"${open}>
+      <summary>
+        <span class="cat-name">${esc(cat.name)}</span>
+        <span class="cat-n">${list.length}</span>
+        <p class="cat-blurb">${esc(cat.blurb)}</p>
+      </summary>
+      <div class="cat-body">${list
+        .map(
+          (c) => `<button class="pick" type="button" data-pick="${esc(c.id)}">
+          <span class="pick-name">${esc(c.name)}</span>
+          <span class="pick-every">${esc(c.kind === 'interval' ? humanizeInterval(c.every) : c.life ? `${c.life.n}-${c.life.unit} life` : 'expiry date')}</span>
+          <span class="pick-why">${esc(c.why)}</span>
+        </button>`
+        )
+        .join('')}</div>
+    </details>`;
+  }).join('');
+
+  $('#view-add').innerHTML = `<div class="wrap">
+    <div class="view-head">
+      <h2>What should you be tracking?</h2>
+      <p>${CATALOG.length} things with a real shelf life, each with the interval, where the date is printed, and why it matters. Pick one and answer a single question.</p>
+    </div>
+    <div class="search">${svg('search')}
+      <label class="sr" for="add-search">Search what to track</label>
+      <input type="search" id="add-search" class="searchbox" placeholder="Search — filter, passport, tyres, sponge…" value="${esc(addQuery)}">
+    </div>
+    ${groups || `<div class="empty"><p>Nothing matches “${esc(addQuery)}”.</p><button class="btn" data-act="custom" type="button">Add it yourself</button></div>`}
+    <div class="panel">
+      <h3>Something not on the list?</h3>
+      <p>Anything with a date works — a bike service, a visa appointment, a plant that needs repotting.</p>
+      <button class="btn" data-act="custom" type="button">Add your own</button>
+    </div>
+  </div>`;
+}
+
+// ---------------------------------------------------------------- all view
+
+function renderAll() {
+  const today = todayISO();
+  const q = allQuery.trim().toLowerCase();
+  let list = rows(today);
+  if (allFilter === 'active') list = list.filter((r) => !r.item.archived);
+  if (allFilter === 'nodate') list = list.filter((r) => !r.item.archived && r.state === 'nodate');
+  if (allFilter === 'archived') list = list.filter((r) => r.item.archived);
+  if (q) list = list.filter((r) => (r.item.name + ' ' + r.item.where + ' ' + r.item.note).toLowerCase().includes(q));
+  list.sort(bySoonest);
+
+  const byCat = CATEGORIES.map((cat) => {
+    const inCat = list.filter((r) => r.item.cat === cat.id);
+    return inCat.length ? groupHTML(cat.name, inCat, 'later') : '';
+  }).join('');
+  const other = list.filter((r) => !CATEGORIES.some((c) => c.id === r.item.cat));
+
+  const filters = [['active', 'Active'], ['nodate', 'Needs a date'], ['archived', 'Archived']]
+    .map(([id, label]) => `<button class="filter" type="button" data-filter="${id}" aria-pressed="${allFilter === id}">${label}</button>`)
+    .join('');
+
+  $('#view-all').innerHTML = `<div class="wrap">
+    <div class="view-head">
+      <h2>Everything you track</h2>
+      <p>${state.items.filter((i) => !i.archived).length} active, grouped the way the catalogue groups them.</p>
+    </div>
+    <div class="search">${svg('search')}
+      <label class="sr" for="all-search">Search your list</label>
+      <input type="search" id="all-search" class="searchbox" placeholder="Search your list" value="${esc(allQuery)}">
+    </div>
+    <div class="filters">${filters}</div>
+    ${byCat + groupHTML('Other', other, 'later') || `<div class="empty"><p>Nothing here yet.</p></div>`}
+  </div>`;
+}
+
+// ---------------------------------------------------------------- data view
+
+function renderData() {
+  const active = state.items.filter((i) => i.archived !== true);
+  const dated = active.filter((i) => isISO(i.due));
+  $('#view-data').innerHTML = `<div class="wrap">
+    <div class="view-head">
+      <h2>Your data, and where it is</h2>
+      <p>Everything you enter stays in this browser. There is no account, no server, and nothing is sent anywhere — which also means nobody else is keeping a copy for you.</p>
+    </div>
+
+    <div class="panel">
+      <h3>Put it in your calendar</h3>
+      <p>Turns ${dated.length} dated ${dated.length === 1 ? 'item' : 'items'} into a calendar file, with a reminder the right number of days ahead of each one. Repeating upkeep comes through as a repeating event, so the calendar keeps it going on its own.</p>
+      <div class="btn-row"><button class="btn btn-primary" data-act="ics" type="button">${svg('check')} Build calendar file</button></div>
+      <div id="ics-out" hidden></div>
+    </div>
+
+    <div class="panel">
+      <h3>Back it up</h3>
+      <p>Clearing your browser data, or a private window closing, takes this list with it. Keep a copy somewhere you trust — a note, a file, an email to yourself.</p>
+      <div class="btn-row">
+        <button class="btn" data-act="backup" type="button">Show backup</button>
+        <button class="btn" data-save-only data-act="backup-dl" type="button">Save a .json file</button>
+      </div>
+      <div id="backup-out" hidden></div>
+    </div>
+
+    <div class="panel">
+      <h3>Restore from a backup</h3>
+      <p>Paste a backup here to replace what is currently in this browser.</p>
+      <div class="field">
+        <label for="restore-in">Backup text</label>
+        <textarea id="restore-in" spellcheck="false" placeholder='{ "items": [ … ] }'></textarea>
+      </div>
+      <div class="btn-row"><button class="btn" data-act="restore" type="button">Replace my list</button></div>
+      <p id="restore-msg" class="help"></p>
+    </div>
+
+    <div class="panel">
+      <h3>Start over</h3>
+      <p>Deletes all ${state.items.length} ${state.items.length === 1 ? 'item' : 'items'} from this browser. There is no copy anywhere else, so take a backup first if you might want it.</p>
+      <div class="btn-row"><button class="btn btn-danger" data-act="wipe" data-armed="0" type="button">Delete everything</button></div>
+    </div>
+
+    <div class="foot">
+      <p><b>About the defaults.</b> Every interval in the catalogue is typical manufacturer or public-safety guidance, and every one is editable. Where they disagree, the label on your device and your local rules win — this app's job is to remind you to go and read them.</p>
+      <p>Lasts 1.0 · no account, no network calls, no analytics, no ads. Works offline once loaded.</p>
+    </div>
+  </div>`;
+}
+
+// ---------------------------------------------------------------- copy / files
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    /* fall through to the old way, which works in more places */
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Two ways to hand over a file, because neither works everywhere.
+ * Self-hosted, a link saves it. On claude.ai the frame cannot, so the host's
+ * downloads capability asks the viewer instead — but its allowlist has no .ics,
+ * so a calendar file falls back to the copy panel, which always works.
+ */
+let saver = null;
+
+function markSavePaths() {
+  const root = document.documentElement;
+  if (!FRAMED) root.dataset.cansave = 'local';
+  Promise.resolve()
+    .then(() => window.claude?.use?.('downloads'))
+    .then((d) => {
+      if (!d) return;
+      saver = d;
+      if (!root.dataset.cansave) root.dataset.cansave = 'hosted';
+    })
+    .catch(() => {
+      /* no save path; the copy panel covers it */
+    });
+}
+
+function linkDownload(name, text, type) {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+async function saveFile(name, text, type) {
+  if (saver) {
+    try {
+      await saver.save({ filename: name, data: text });
+      return toast('Saved.');
+    } catch (err) {
+      if (err?.code === 'declined') return;
+      if (err?.code === 'rate_limited') return toast('Try that again in a moment.');
+      if (!FRAMED) return linkDownload(name, text, type), toast('File saved.');
+      return toast('This page cannot hand you a file — copy the text instead.');
+    }
+  }
+  if (!FRAMED) {
+    linkDownload(name, text, type);
+    return toast('File saved.');
+  }
+  toast('This page cannot hand you a file — copy the text instead.');
+}
+
+function outputPanel(host, { text, label, note, filename, mime, localOnly }) {
+  host.hidden = false;
+  host.innerHTML = `<div class="field">
+      <label class="field-label" for="${host.id}-ta">${esc(label)}</label>
+      <textarea id="${host.id}-ta" readonly spellcheck="false">${esc(text)}</textarea>
+      ${note ? `<p class="help">${note}</p>` : ''}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary btn-sm" data-copy="${host.id}-ta" type="button">Copy to clipboard</button>
+      <button class="btn btn-sm" ${localOnly ? 'data-save-local' : 'data-save-only'} data-dl="${esc(filename)}" data-mime="${esc(mime)}" data-src="${host.id}-ta" type="button">Save ${esc(filename)}</button>
+    </div>`;
+}
+
+// ---------------------------------------------------------------- sheet
+
+const sheet = () => $('#sheet');
+
+function closeSheet() {
+  const d = sheet();
+  if (d.open) d.close();
+}
+
+function openSheet(html) {
+  const d = sheet();
+  d.innerHTML = html;
+  if (!d.open) d.showModal();
+  d.scrollTop = 0;
+  const first = d.querySelector('[data-autofocus]') || d.querySelector('input, button');
+  first?.focus();
+}
+
+function leadSelect(id, value) {
+  const opts = LEADS.map(([n, label]) => `<option value="${n}"${n === value ? ' selected' : ''}>${label}</option>`).join('');
+  return `<select id="${id}">${opts}</select>`;
+}
+
+function everyFields(idN, idU, every) {
+  const n = every?.n ?? 3;
+  const unit = every?.unit ?? 'month';
+  return `<div class="field-2">
+    <input type="number" id="${idN}" min="1" max="120" value="${n}" aria-label="Repeat every, number">
+    <select id="${idU}" aria-label="Repeat every, unit">${UNITS.map(([v, l]) => `<option value="${v}"${v === unit ? ' selected' : ''}>${l}</option>`).join('')}</select>
+  </div>`;
+}
+
+/** Sheet 1: adding something from the catalogue — one question, with the label hint beside it. */
+function openAdd(entry) {
+  const isExpiry = entry.kind === 'expiry';
+  openSheet(`<form id="add-form" data-ref="${esc(entry.id)}">
+    <div class="sheet-head">
+      <div>
+        <h3>${esc(entry.name)}</h3>
+        <p class="sub">${esc(isExpiry ? (entry.life ? `Lasts about ${entry.life.n} ${entry.life.unit}${entry.life.n === 1 ? '' : 's'}` : 'Has an expiry date') : humanizeInterval(entry.every))}</p>
+      </div>
+      <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label for="add-date">${esc(entry.ask)}</label>
+        <input type="date" id="add-date" data-autofocus value="${isExpiry ? '' : todayISO()}">
+      </div>
+      <div class="quick">
+        ${isExpiry ? '' : `<button class="btn btn-sm" type="button" data-quick="today">Today</button>
+        <button class="btn btn-sm" type="button" data-quick="month">A month ago</button>`}
+        <button class="btn btn-sm btn-quiet" type="button" data-quick="unknown">I need to go and look</button>
+      </div>
+      <p class="callout" style="margin-top:16px"><span class="label">Where the date is</span>${esc(entry.where)}</p>
+      <p class="callout"><span class="label">Why it matters</span>${esc(entry.why)}</p>
+      <hr class="sheet-sep">
+      <div class="field">
+        <label for="add-where">Which one is it? <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input type="text" id="add-where" placeholder="upstairs landing, the blue car, kitchen">
+        <p class="help">Handy once you are tracking more than one of something.</p>
+      </div>
+      ${isExpiry ? '' : `<div class="field"><span class="field-label">Repeat every</span>${everyFields('add-n', 'add-u', entry.every)}</div>`}
+      <div class="field"><label for="add-lead">Warn me</label>${leadSelect('add-lead', entry.lead)}</div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-quiet" type="button" data-act="close">Cancel</button>
+      <button class="btn btn-primary" type="submit">Track this</button>
+    </div>
+  </form>`);
+}
+
+/** Sheet 2: adding something the catalogue does not cover. */
+function openCustom() {
+  openSheet(`<form id="custom-form">
+    <div class="sheet-head">
+      <div><h3>Add your own</h3><p class="sub">Anything with a date on it</p></div>
+      <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label for="c-name">What is it?</label>
+        <input type="text" id="c-name" data-autofocus required placeholder="Bike service, visa appointment, repot the fig">
+      </div>
+      <div class="field">
+        <label for="c-where">Which one <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input type="text" id="c-where" placeholder="garage, spare room">
+      </div>
+      <div class="field">
+        <span class="field-label">Is it a one-off date, or does it repeat?</span>
+        <div class="field-2">
+          <select id="c-kind" aria-label="Kind">
+            <option value="interval">Repeats</option>
+            <option value="expiry">One-off date</option>
+          </select>
+          <select id="c-cat" aria-label="Category">${CATEGORIES.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="field"><label for="c-due">Due date</label><input type="date" id="c-due" value="${addDays(todayISO(), 30)}"></div>
+      <div id="c-every-wrap" class="field"><span class="field-label">Repeat every</span>${everyFields('c-n', 'c-u', { n: 6, unit: 'month' })}</div>
+      <div class="field"><label for="c-lead">Warn me</label>${leadSelect('c-lead', 14)}</div>
+      <div class="field"><label for="c-note">Note <span style="text-transform:none;letter-spacing:0">(optional)</span></label><input type="text" id="c-note" placeholder="Account number, where the receipt is"></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-quiet" type="button" data-act="close">Cancel</button>
+      <button class="btn btn-primary" type="submit">Track this</button>
+    </div>
+  </form>`);
+}
+
+/** Sheet 3: an item you already track. Fields save as you change them. */
+function openItem(item) {
+  const today = todayISO();
+  const st = statusOf(item, today);
+  const hints = hintsFor(item);
+  const isExpiry = item.kind === 'expiry';
+  const history = [...(item.history || [])].reverse().slice(0, 8);
+  const statusText =
+    st.state === 'nodate'
+      ? 'No date yet'
+      : `${isExpiry ? 'Expires' : 'Due'} ${prettyDate(item.due)} · ${relativeDays(st.days)}`;
+
+  openSheet(`<div data-item="${esc(item.id)}">
+    <div class="sheet-head">
+      <div>
+        <h3>${esc(item.name)}${item.where ? ` <span style="font-weight:400;color:var(--ink-faint)">· ${esc(item.where)}</span>` : ''}</h3>
+        <p class="sub">${esc(statusText)}</p>
+      </div>
+      <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
+    </div>
+    <div class="sheet-body">
+      ${st.state === 'nodate' && hints.where ? `<p class="callout"><span class="label">Where the date is</span>${esc(hints.where)}</p>` : ''}
+      <div class="btn-row" style="margin-top:16px">
+        ${isExpiry
+          ? `<button class="btn btn-primary" type="button" data-act="renew">Renewed — set new date</button>`
+          : `<button class="btn btn-primary" type="button" data-act="done">${svg('check')} Done today</button>`}
+        ${isISO(item.due) ? `<button class="btn" type="button" data-act="snooze" data-days="7">+1 week</button>
+        <button class="btn" type="button" data-act="snooze" data-days="30">+1 month</button>` : ''}
+      </div>
+
+      <div class="field"><label for="i-due">${isExpiry ? 'Expiry date' : 'Next due'}</label><input type="date" id="i-due" value="${esc(item.due || '')}"></div>
+      ${isExpiry ? '' : `<div class="field"><span class="field-label">Repeat every</span>${everyFields('i-n', 'i-u', item.every)}</div>`}
+      <div class="field"><label for="i-lead">Warn me</label>${leadSelect('i-lead', item.lead)}</div>
+      <div class="field"><label for="i-name">Name</label><input type="text" id="i-name" value="${esc(item.name)}"></div>
+      <div class="field"><label for="i-where">Which one</label><input type="text" id="i-where" value="${esc(item.where || '')}" placeholder="optional"></div>
+      <div class="field"><label for="i-note">Note</label><input type="text" id="i-note" value="${esc(item.note || '')}" placeholder="optional"></div>
+
+      ${hints.why ? `<hr class="sheet-sep"><p class="callout" style="margin-top:16px"><span class="label">Why it matters</span>${esc(hints.why)}</p>` : ''}
+      ${hints.where && st.state !== 'nodate' ? `<p class="callout"><span class="label">Where the date is</span>${esc(hints.where)}</p>` : ''}
+
+      ${history.length ? `<hr class="sheet-sep"><div class="field"><span class="field-label">History</span>
+        <ul class="hist">${history.map((h) => `<li><time>${esc(prettyDate(h.on))}</time><span>${esc(h.kind === 'done' ? 'marked done' : h.kind === 'renewed' ? `renewed to ${prettyDate(h.to)}` : `pushed back to ${prettyDate(h.to)}`)}</span></li>`).join('')}</ul></div>` : ''}
+
+      <hr class="sheet-sep">
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn btn-sm" type="button" data-act="archive">${item.archived ? 'Put back on the list' : 'Archive'}</button>
+        <button class="btn btn-sm btn-danger" type="button" data-act="delete" data-armed="0">Delete</button>
+      </div>
+    </div>
+    <div class="sheet-foot"><button class="btn btn-quiet" type="button" data-act="close">Close</button></div>
+  </div>`);
+}
+
+// ---------------------------------------------------------------- actions
+
+function toast(msg, undoFn) {
+  const t = $('#toast');
+  undo = undoFn || null;
+  t.innerHTML = `<span>${esc(msg)}</span>${undoFn ? '<button class="btn-link" data-act="undo" type="button">Undo</button>' : ''}`;
+  t.hidden = false;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => {
+    t.hidden = true;
+    undo = null;
+  }, undoFn ? 7000 : 3200);
+}
+
+function byId(id) {
+  return state.items.find((i) => i.id === id);
+}
+
+function refresh() {
+  if (view === 'due') renderDue();
+  else if (view === 'add') renderAdd();
+  else if (view === 'all') renderAll();
+  else renderData();
+  // The badge is on the Due tab, so it has to be recomputed whichever view is showing.
+  if (view !== 'due') {
+    const today = todayISO();
+    const n = rows(today).filter((r) => !r.item.archived && (r.state === 'overdue' || r.state === 'soon')).length;
+    const pip = $('#pip-due');
+    pip.textContent = n ? String(n) : '';
+    pip.hidden = !n;
+  }
+}
+
+function markDone(item) {
+  const before = { due: item.due, history: [...item.history] };
+  const today = todayISO();
+  item.due = item.every ? addInterval(today, item.every) : null;
+  item.history = [...item.history, { on: today, kind: 'done', to: item.due }];
+  item.example = false;
+  save();
+  closeSheet();
+  refresh();
+  toast(`Done. Next ${prettyDate(item.due)}.`, () => {
+    Object.assign(item, before);
+    save();
+    refresh();
+  });
+}
+
+function snooze(item, days) {
+  const before = { due: item.due, history: [...item.history] };
+  const base = isISO(item.due) ? item.due : todayISO();
+  item.due = addDays(base, days);
+  item.history = [...item.history, { on: todayISO(), kind: 'snoozed', to: item.due }];
+  save();
+  closeSheet();
+  refresh();
+  toast(`Pushed back to ${prettyDate(item.due)}.`, () => {
+    Object.assign(item, before);
+    save();
+    refresh();
+  });
+}
+
+function renew(item) {
+  const hints = hintsFor(item);
+  const suggested = hints.life ? addInterval(todayISO(), hints.life) : item.due;
+  openSheet(`<form id="renew-form" data-item="${esc(item.id)}">
+    <div class="sheet-head">
+      <div><h3>${esc(item.name)} renewed</h3><p class="sub">What is the new expiry date?</p></div>
+      <button class="x" type="button" data-act="close" aria-label="Close">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field"><label for="r-due">New expiry date</label><input type="date" id="r-due" data-autofocus value="${esc(suggested || '')}"></div>
+      ${hints.life ? `<p class="help">Suggested from the usual ${hints.life.n}-${hints.life.unit} life. Use the date on the new one if you have it.</p>` : ''}
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-quiet" type="button" data-act="close">Cancel</button>
+      <button class="btn btn-primary" type="submit">Save date</button>
+    </div>
+  </form>`);
+}
+
+function armOrRun(btn, run) {
+  if (btn.dataset.armed === '1') return run();
+  btn.dataset.armed = '1';
+  btn.dataset.label = btn.textContent;
+  btn.textContent = 'Tap again to confirm';
+  setTimeout(() => {
+    if (btn.isConnected && btn.dataset.armed === '1') {
+      btn.dataset.armed = '0';
+      btn.textContent = btn.dataset.label;
+    }
+  }, 4000);
+}
+
+function switchView(next) {
+  view = next;
+  for (const tab of document.querySelectorAll('.tab')) {
+    tab.setAttribute('aria-selected', String(tab.dataset.view === next));
+  }
+  for (const sec of document.querySelectorAll('main > section')) {
+    sec.hidden = sec.id !== `view-${next}`;
+  }
+  refresh();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+// ---------------------------------------------------------------- wiring
+
+export function start() {
+  load();
+  markSavePaths();
+  switchView('due');
+
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    const tab = t.closest?.('.tab');
+    if (tab) return switchView(tab.dataset.view);
+
+    const act = t.closest?.('[data-act]')?.dataset.act;
+    const btn = t.closest?.('[data-act]');
+
+    if (act === 'undo') {
+      const fn = undo;
+      undo = null;
+      $('#toast').hidden = true;
+      fn?.();
+      return;
+    }
+    if (act === 'close') return closeSheet();
+    if (act === 'go-add') return switchView('add');
+    if (act === 'custom') return openCustom();
+    if (act === 'clear-examples') {
+      clearExamples();
+      refresh();
+      return toast('Examples cleared.');
+    }
+
+    const pick = t.closest?.('[data-pick]');
+    if (pick) {
+      const entry = catalogEntry(pick.dataset.pick);
+      if (entry) openAdd(entry);
+      return;
+    }
+
+    const row = t.closest?.('.row');
+    if (row) {
+      const item = byId(row.dataset.id);
+      if (item) openItem(item);
+      return;
+    }
+
+    const filter = t.closest?.('[data-filter]');
+    if (filter) {
+      allFilter = filter.dataset.filter;
+      renderAll();
+      return;
+    }
+
+    // ---- sheet actions, scoped to the open item
+    const holder = sheet().querySelector('[data-item]');
+    const item = holder ? byId(holder.dataset.item) : null;
+    if (item) {
+      if (act === 'done') return markDone(item);
+      if (act === 'snooze') return snooze(item, Number(btn.dataset.days));
+      if (act === 'renew') return renew(item);
+      if (act === 'archive') {
+        item.archived = !item.archived;
+        save();
+        closeSheet();
+        refresh();
+        return toast(item.archived ? 'Archived.' : 'Back on the list.');
+      }
+      if (act === 'delete') {
+        return armOrRun(btn, () => {
+          const copy = { ...item };
+          const at = state.items.indexOf(item);
+          state.items.splice(at, 1);
+          save();
+          closeSheet();
+          refresh();
+          toast(`Deleted ${copy.name}.`, () => {
+            state.items.splice(at, 0, copy);
+            save();
+            refresh();
+          });
+        });
+      }
+    }
+
+    // ---- data tab
+    if (act === 'ics') {
+      const text = toICS(state.items);
+      outputPanel($('#ics-out'), {
+        text,
+        label: 'Calendar file (.ics)',
+        filename: 'lasts.ics',
+        mime: 'text/calendar',
+        localOnly: true,
+        note: FRAMED
+          ? 'Copy this, paste it into a plain text file named <code>lasts.ics</code>, then open that file — your calendar app will offer to add the reminders. On a phone, emailing the file to yourself and tapping the attachment is the easiest route. Re-import after you add new things; existing events update rather than duplicate.'
+          : 'Open the downloaded file and your calendar app will offer to add the reminders. Re-import after you add new things; existing events update rather than duplicate.',
+      });
+      return;
+    }
+    if (act === 'backup') {
+      outputPanel($('#backup-out'), {
+        text: exportJSON(),
+        label: 'Backup (JSON)',
+        filename: 'lasts-backup.json',
+        mime: 'application/json',
+        note: 'Keep this somewhere you will find it again. Pasting it into the restore box on any device brings your list back.',
+      });
+      return;
+    }
+    if (act === 'backup-dl') {
+      saveFile('lasts-backup.json', exportJSON(), 'application/json');
+      return;
+    }
+    if (act === 'restore') {
+      const msg = $('#restore-msg');
+      try {
+        const n = importJSON($('#restore-in').value);
+        refresh();
+        toast(`Restored ${n} ${n === 1 ? 'item' : 'items'}.`);
+      } catch (err) {
+        msg.textContent = err.message || 'That backup could not be read.';
+        msg.style.color = 'var(--alarm)';
+      }
+      return;
+    }
+    if (act === 'wipe') {
+      return armOrRun(btn, () => {
+        wipe();
+        refresh();
+        toast('Everything deleted.');
+      });
+    }
+
+    const copyBtn = t.closest?.('[data-copy]');
+    if (copyBtn) {
+      const ta = document.getElementById(copyBtn.dataset.copy);
+      copyText(ta.value).then((ok) => {
+        if (ok) return toast('Copied.');
+        ta.focus();
+        ta.select();
+        toast('Selected — press Ctrl+C or ⌘C to copy.');
+      });
+      return;
+    }
+    const dlBtn = t.closest?.('[data-dl]');
+    if (dlBtn) {
+      saveFile(dlBtn.dataset.dl, document.getElementById(dlBtn.dataset.src).value, dlBtn.dataset.mime);
+      return;
+    }
+
+    const quick = t.closest?.('[data-quick]')?.dataset.quick;
+    if (quick) {
+      const input = $('#add-date');
+      if (quick === 'today') input.value = todayISO();
+      if (quick === 'month') input.value = addDays(todayISO(), -30);
+      if (quick === 'unknown') {
+        input.value = '';
+        toast('Saved without a date — it will sit under “Needs a date”.');
+      }
+      return;
+    }
+  });
+
+  // ---- searches
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'add-search') {
+      addQuery = e.target.value;
+      const at = e.target.selectionStart;
+      renderAdd();
+      const again = $('#add-search');
+      again.focus();
+      again.setSelectionRange(at, at);
+    }
+    if (e.target.id === 'all-search') {
+      allQuery = e.target.value;
+      const at = e.target.selectionStart;
+      renderAll();
+      const again = $('#all-search');
+      again.focus();
+      again.setSelectionRange(at, at);
+    }
+    if (e.target.id === 'c-kind') {
+      $('#c-every-wrap').hidden = e.target.value === 'expiry';
+    }
+  });
+
+  // ---- live editing in the item sheet
+  document.addEventListener('change', (e) => {
+    const holder = sheet().querySelector('[data-item]');
+    if (!holder || !sheet().open) return;
+    const item = byId(holder.dataset.item);
+    if (!item) return;
+    const id = e.target.id;
+    const map = {
+      'i-due': () => (item.due = isISO(e.target.value) ? e.target.value : null),
+      'i-lead': () => (item.lead = Number(e.target.value)),
+      'i-name': () => (item.name = e.target.value.trim() || item.name),
+      'i-where': () => (item.where = e.target.value.trim()),
+      'i-note': () => (item.note = e.target.value.trim()),
+      'i-n': () => (item.every = { n: Math.max(1, Number($('#i-n').value) || 1), unit: $('#i-u').value }),
+      'i-u': () => (item.every = { n: Math.max(1, Number($('#i-n').value) || 1), unit: $('#i-u').value }),
+    };
+    if (!map[id]) return;
+    map[id]();
+    item.example = false;
+    save();
+    refresh();
+    const sub = sheet().querySelector('.sheet-head .sub');
+    if (sub) {
+      const st = statusOf(item, todayISO());
+      sub.textContent =
+        st.state === 'nodate' ? 'No date yet' : `${item.kind === 'expiry' ? 'Expires' : 'Due'} ${prettyDate(item.due)} · ${relativeDays(st.days)}`;
+    }
+  });
+
+  // ---- form submits
+  document.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const form = e.target;
+
+    if (form.id === 'add-form') {
+      const entry = catalogEntry(form.dataset.ref);
+      const date = $('#add-date').value;
+      const every = entry.kind === 'interval' ? { n: Math.max(1, Number($('#add-n').value) || 1), unit: $('#add-u').value } : null;
+      const item = fromCatalog(entry, {
+        date,
+        dontKnow: !isISO(date),
+        where: $('#add-where').value.trim(),
+        every,
+        lead: Number($('#add-lead').value),
+      });
+      state.items.push(item);
+      save();
+      closeSheet();
+      switchView('due');
+      const st = statusOf(item, todayISO());
+      toast(
+        st.state === 'nodate'
+          ? `${item.name} added — go and find the date.`
+          : `${item.name} added · ${item.kind === 'expiry' ? 'expires' : 'due'} ${prettyDate(item.due)}.`
+      );
+      return;
+    }
+
+    if (form.id === 'custom-form') {
+      const kind = $('#c-kind').value;
+      const due = $('#c-due').value;
+      const item = makeItem({
+        name: $('#c-name').value.trim() || 'Untitled',
+        where: $('#c-where').value.trim(),
+        cat: $('#c-cat').value,
+        kind,
+        due: isISO(due) ? due : null,
+        every: kind === 'interval' ? { n: Math.max(1, Number($('#c-n').value) || 1), unit: $('#c-u').value } : null,
+        lead: Number($('#c-lead').value),
+        note: $('#c-note').value.trim(),
+      });
+      state.items.push(item);
+      save();
+      closeSheet();
+      switchView('due');
+      toast(`${item.name} added.`);
+      return;
+    }
+
+    if (form.id === 'renew-form') {
+      const item = byId(form.dataset.item);
+      const val = $('#r-due').value;
+      if (item && isISO(val)) {
+        item.due = val;
+        item.history = [...item.history, { on: todayISO(), kind: 'renewed', to: val }];
+        item.example = false;
+        save();
+        closeSheet();
+        refresh();
+        toast(`Renewed — expires ${prettyDate(val)}.`);
+      }
+      return;
+    }
+  });
+
+  // Clicking the backdrop of a sheet closes it, the way a bottom sheet should.
+  sheet().addEventListener('click', (e) => {
+    if (e.target === sheet()) closeSheet();
+  });
+
+  // Emptying it on close means a stale data-item can never catch a later click.
+  sheet().addEventListener('close', () => {
+    sheet().innerHTML = '';
+  });
+}
