@@ -9,9 +9,10 @@ export const CFG = {
   clear: {
     /**
      * Clearing several lines with one piece is the whole skill of the game, so
-     * the multiplier for doing it is steep.
+     * the multiplier for it is steep and explicitly named on screen: a double
+     * is worth more than two singles, a triple much more than three.
      */
-    comboStep: 0.8,
+    comboMultipliers: [1, 1, 2.5, 4.5, 7, 10] as const,
     /** Extra multiplier per consecutive clearing placement. */
     streakStep: 0.25,
     maxStreakBonus: 3,
@@ -21,6 +22,10 @@ export const CFG = {
     perTilePlaced: 2,
     perTileCleared: 14,
     lineBonus: 140,
+    /** A line where every tile is the same colour. Colour is worth chasing. */
+    monochromeBonus: 600,
+    /** Emptying the board outright — the rarest thing a player can do. */
+    perfectClearBonus: 2500,
     gemBonus: 250,
     blastBonus: 40,
     movesLeftBonus: 200,

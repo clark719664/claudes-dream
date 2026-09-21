@@ -27,6 +27,10 @@ fighting is space.
 a single piece is worth far more than clearing them one at a time, and clearing
 on consecutive moves builds a streak on top. That is the whole game.
 
+Three bonuses sit on it: a **multi-line multiplier**, a **pure line** (every
+tile in the cleared line the same colour), and a **board clear** (the placement
+empties the board outright). Each of those wants a moment on screen — see §8.
+
 There are two modes. **Levels** have an objective, a move limit, stars and a
 world map. **Classic** is endless: one board, no limit, play until nothing fits.
 
@@ -40,10 +44,14 @@ There are five hues:
 | 3 | Amber | `#ffb703` | `#ffd978` |
 | 4 | Violet | `#c77dff` | `#e2b8ff` |
 
-**Colour is decoration.** It has no effect on what clears — five hues are in
-play purely so a packed board stays readable, because a wall of one colour is
-much harder to parse than a mixed one. This is the single most important thing
-to know before you design anything, and it is what gives you room to work.
+**Colour never decides whether a line clears.** It is worth *noticing* but never
+worth *obeying*: a player who ignores hue entirely still plays correctly, and one
+who spots a free same-colour line gets paid a bonus for it.
+
+That is the single most important thing to know before you design anything, and
+it is what gives you room to work — but it is not permission to make hue hard to
+read, because the pure-line bonus is only satisfying if a player can see it
+coming a move ahead.
 
 Background is `#080a14`. Everything is drawn on an HTML5 canvas.
 
@@ -224,6 +232,21 @@ Answer in four sections, A–D, matching the deliverables above. For each item:
 1. **Design** — name, fantasy, exact mechanical rule, the decision it creates
 2. **Art** — SVG path data in a 100×100 box, with a paint role per path
 3. **Motion** — what animates, driven by transform/opacity only
+
+## 8 · Three moments that need a look
+
+The game currently marks these with floating text and screen shake, which is
+placeholder. Each deserves a designed treatment, described in prose plus any SVG
+it needs:
+
+- **Multi-line clear** — a double, triple or quad. Has to escalate visibly, and
+  read differently from a single clear at a glance.
+- **Pure line** — every tile the same colour. The one place hue carries meaning,
+  so it should feel like the colour itself is paying out.
+- **Board clear** — the board is empty. The rarest thing a player can do, and the
+  one they will screenshot. This can be as big as you like.
+
+Keep all three inside §2.5: transforms and opacity, no per-frame path work.
 
 Then a final section of **ready-to-paste TypeScript** implementing this
 interface. Nothing consumes it yet — it is the contract the renderer will be

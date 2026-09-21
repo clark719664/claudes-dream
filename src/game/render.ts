@@ -421,6 +421,17 @@ export class Renderer {
       ctx.globalAlpha = fits ? 1 : 0.28;
       this.drawShape(ctx, item, cx, cy, this.trayScale(L, item));
       ctx.restore();
+
+      // ...and if a discard is spare, it is marked as tappable to throw away.
+      if (!fits && game.discardsLeft > 0) {
+        ctx.save();
+        ctx.fillStyle = '#ffe08a';
+        ctx.font = `700 ${Math.round(L.trayBand * 0.14)}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🗑 tap to bin', cx, L.trayY + L.trayBand - 26);
+        ctx.restore();
+      }
     }
   }
 

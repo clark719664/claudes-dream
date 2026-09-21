@@ -657,3 +657,48 @@ input.field::placeholder {
 #hud-shots.low {
   color: var(--danger);
 }
+
+/* ------------------------------------------------------- player level --- */
+.levelbar {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 14px 11px;
+  margin-bottom: 12px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.levelbar:active {
+  transform: scale(0.99);
+}
+.levelbar-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.levelbar-top b {
+  font-size: 16px;
+}
+.levelbar-top span {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+}
+.levelbar .bar {
+  margin-bottom: 5px;
+}
+.levelbar-xp {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.row.dim {
+  opacity: 0.42;
+}

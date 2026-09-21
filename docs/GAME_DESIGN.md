@@ -6,12 +6,19 @@
 
 A shape-placement puzzle. You are dealt three pieces at a time and drag them
 anywhere they fit. **A complete row or column clears — that is the only rule.**
-Colour is decoration. All that matters is whether a piece fits.
+Colour never decides *whether* a line clears. All that matters is whether a
+piece fits.
 
-The depth is in the second-order move: a single piece that finishes two or three
-lines at once is worth far more than clearing them one at a time, and clearing on
-consecutive moves builds a streak on top. Setting those up, while never leaving a
-hole you can't fill, is the game.
+The depth is in the second-order move. Three bonuses sit on top of the one rule,
+and chasing them is what separates a 5,000-point run from a 50,000-point one:
+
+| Bonus | Why it is there |
+| --- | --- |
+| **Multi-line multiplier** — ×2.5 for a double, ×4.5 a triple, ×7 a quad | Makes setting up one big placement strictly better than taking clears as they come |
+| **Pure line** — every tile in the cleared line the same colour | Gives colour something to be worth without ever letting it gate a move |
+| **Board clear** — the placement empties the board outright | The rarest thing a player can do, and the one they will tell someone about |
+
+Plus a streak multiplier for clearing on consecutive moves.
 
 Two modes, and a collection sitting under both:
 
@@ -35,12 +42,29 @@ understands "fill a row" in three seconds. What separates a 5,000-point Classic
 run from a 50,000-point one is never the rule — it is whether you are building
 toward *two lines at once*, and whether the gaps you leave behind are fillable.
 
-Colour was tried as a second clear rule — five touching tiles of one hue — and
+Colour was tried as a second *clear* rule — five touching tiles of one hue — and
 cut. It made every placement two decisions instead of one, which sounds like
 depth and played as noise: the colour half kept emptying the board before the
-packing half could get interesting. Five hues remain purely so a packed board
-stays readable, because a wall of one colour is much harder to parse than a
-mixed one.
+packing half got interesting. What replaced it is the **pure line** bonus, which
+is the same idea demoted to where it belongs. Colour is now worth *noticing*
+without ever being worth *obeying*: a player who ignores it entirely still plays
+the game correctly, and one who spots a free pure line gets paid for it.
+
+### The deal never looks at the board
+
+Three pieces, drawn purely at random from the weighted shape pool. The board is
+not consulted, the pieces are not filtered for fit, and nothing shrinks when
+space gets tight.
+
+Two earlier versions did help. One fit-checked every dealt piece; another
+swapped unplaceable leftovers for something that fitted. The second made the
+game **unloseable** — a bot ran 5,000 pieces without ever being stuck. But the
+first was the worse mistake, because it was invisible: any deal that reads the
+board is the game quietly playing for you, and once a player suspects that,
+every good hand feels unearned and every bad one feels rigged.
+
+So the hand is the hand. It can be three pieces that do not fit, and that is the
+run. That possibility is what makes the rest of it matter.
 
 ### Nothing moves unless you move it
 
@@ -84,7 +108,32 @@ colour and space.
 | **Gem** | Worth a lot of score, but only a line can reach one. |
 | **Bomb** | Takes its 3×3 with it when a line clears it, chains into other bombs. |
 
-## 3. Levels
+## 3. The player level
+
+A single track that rises from everything you do — clearing a level, replaying
+one, or any Classic run — with rewards hung off it at 13 milestones up to level
+30.
+
+This exists because 24 authored levels are finite. Without a track, a player who
+finishes them has nothing left to climb and Classic is just a scoreboard. With
+it, every run still moves a bar, and the next thing unlocking is always visible
+and always close. It is the Monopoly Go shape, and it is the single most
+reliable retention structure in the genre.
+
+Early milestones **open features** — packs at 2, gifting at 4, Prismatic packs at
+7 — which doubles as onboarding: a new player sees one screen at a time instead
+of nine. Later ones **change how the game plays**: extra moves, a fourth and
+eventually fifth tray slot, discards for pieces with nowhere to go, bigger
+bombs, better shard rates.
+
+The XP curve is deliberately shallow at the start, so the first reward lands
+inside the first session, and steepens after, so the track still has somewhere
+to go at level 20.
+
+The album is the **other** ladder, deliberately separate: the track rewards
+showing up, the album rewards collecting, and their perks stack.
+
+## 4. Levels
 
 **24 levels across 3 worlds**, each authored as a text grid rather than
 generated, with an objective, a move limit and three star thresholds.
@@ -115,14 +164,14 @@ because the shuffler handed them three pieces that could never have gone
 anywhere. That reads as the game cheating, and it is the fastest way to lose a
 player.
 
-## 4. The collectible layer
+## 5. The collectible layer
 
 **37 stickers across 5 album pages.** Rarity ★1–★5.
 
 | Page | Completion perk |
 | --- | --- |
 | Neon Menagerie | +1 move on every level |
-| Deep Space | A fourth piece in the tray, always — the strongest perk in the game |
+| Deep Space | One more piece in the tray, always — the strongest perk in the game |
 | Arcade Legends | Throw away one piece you cannot use, every level |
 | Cursed Carnival | Bombs blow a 5×5 hole instead of 3×3 |
 | Founders (chase) | +25% Prism Shards |
@@ -156,7 +205,7 @@ Packs — not shards — are what players chase, so they hang off moments worth
 repeating: a first clear every third level, a Prismatic every ninth, and any
 three-star finish.
 
-## 5. Balance, measured
+## 6. Balance, measured
 
 `npm test` auto-plays **all 24 levels** with a bot that plays the way an
 attentive player would: it prizes clearing several lines at once, chases whatever the
@@ -179,7 +228,7 @@ It also plays Classic: ten runs a suite, asserting every one of them *ends*,
 that a good player lasts more than 40 pieces on average and fewer than 1200, and
 that the same seed replays identically.
 
-**Five real faults this harness caught**, none of which were visible by reading
+**Six real faults this harness caught**, none of which were visible by reading
 the code:
 
 - The deal only fit-checked one of the three pieces, so a nearly empty board
@@ -194,8 +243,13 @@ the code:
   deadlocks — made the game effectively **unloseable**: the bot ran 5,000 pieces
   in Classic without ever being stuck. A hand now stands once dealt. Being able
   to run out of room *is* the game.
+- Move budgets calibrated under the old helping deal were far too tight once the
+  deal went random; three levels became unwinnable and four became trivial. Both
+  budgets and star thresholds are now measured over seven attempts per level,
+  budgeted on the *worst* observed run rather than the median, so an unlucky
+  hand is survivable rather than fatal.
 
-## 6. Viral loops
+## 7. Viral loops
 
 **1 · Gifting duplicates (built).** A duplicate can be spent to mint a code like
 `PB-2KPQ-Y0A`, shared through the native share sheet, redeemed once by whoever
@@ -219,8 +273,9 @@ replay the same way, which makes a disputed score checkable.
 trading spares inside the crew. Collection games live on the social obligation
 of not letting your crew down.
 
-## 7. Retention
+## 8. Retention
 
+- **The player level** — the primary one. Always a next unlock, always close.
 - **Daily streak** — escalating shards, packs on days 3/6/9, Prismatic on 7.
 - **Album completion** — the long-horizon goal that survives a losing streak.
 - **Perk compounding** — each finished page makes levels more winnable, which
@@ -229,7 +284,7 @@ of not letting your crew down.
 - **Failure is cheap** — no lives, no energy timer. The game never tells you to
   stop playing.
 
-## 8. Monetisation (designed, not implemented)
+## 9. Monetisation (designed, not implemented)
 
 Deliberately not built: shipping payments into a prototype is how you end up
 tuning an economy nobody has played yet.
@@ -245,10 +300,11 @@ The line held everywhere: **you can buy speed, never power a free player cannot
 also reach.** Set bonuses must stay earnable, or the perk system stops being a
 build and becomes a paywall.
 
-## 9. Build status
+## 10. Build status
 
 **Working end to end:** placement and the full clear resolution (lines,
-bomb chains, obstacle wear, gems), the checked deal, creep, Classic endless mode
+bomb chains, obstacle wear, gems, pure-line and board-clear bonuses), the random
+deal, creep, the player level and its 13-step unlock track, Classic endless mode
 with its own high score, 24 authored levels with objectives and stars, the world
 map with unlock progression, the drag preview, the renderer with particles and shake,
 procedural audio, native haptics, the album, packs with reveals, dust and

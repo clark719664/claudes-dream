@@ -38,11 +38,15 @@ import {
 import { LEVELS, WORLDS, objectiveText, type LevelSpec } from '../game/levels';
 import {
   bestScoreFor,
+  hasFeature,
   highestUnlocked,
   isUnlocked,
+  levelProgress,
+  playerLevel,
   starsFor,
   totalStars,
 } from '../meta/profile';
+import { MAX_LEVEL, UNLOCKS, nextUnlock } from '../meta/progression';
 import { esc, fmt, mount, on, share, toast, unmount } from './dom';
 
 export interface Nav {
@@ -67,6 +71,29 @@ function wallet(): string {
   </div>`;
 }
 
+/** The player-level bar, with whatever is unlocking next spelled out. */
+function levelBar(): string {
+  const { level, into, needed } = levelProgress();
+  const pct = Number.isFinite(needed) ? Math.round((into / needed) * 100) : 100;
+  const next = nextUnlock(level);
+  return `<button class="levelbar" data-act="rewards">
+    <div class="levelbar-top">
+      <b>Level ${level}</b>
+      <span>${
+        next
+          ? `Next: ${next.icon} ${esc(next.label)} at ${next.level}`
+          : level >= MAX_LEVEL
+            ? 'Everything unlocked'
+            : ''
+      }</span>
+    </div>
+    <div class="bar"><i style="width:${pct}%;background:linear-gradient(90deg,#4cc9f0,#c77dff)"></i></div>
+    <div class="levelbar-xp">${
+      Number.isFinite(needed) ? `${fmt(into)} / ${fmt(needed)} XP` : 'Max level'
+    }</div>
+  </button>`;
+}
+
 // ------------------------------------------------------------------ home --
 export function homeScreen(): void {
   const daily = pendingDaily();
@@ -79,7 +106,8 @@ export function homeScreen(): void {
   mount(
     `
     <h1 class="title">PRISM<br />BREAK</h1>
-    <p class="tagline">Cut the supports. Collapse the board. Fill the album.</p>
+    <p class="tagline">Fit the shape. Fill the line. Don't run out of room.</p>
+    ${levelBar()}
     ${wallet()}
     ${
       daily
@@ -101,10 +129,18 @@ export function homeScreen(): void {
     <button class="btn" data-act="album">
       📖  Sticker Album <span class="badge">${album.owned}/${album.total}</span>
     </button>
-    <button class="btn" data-act="shop">
-      🎴  Packs ${packs ? `<span class="badge gold">${packs} to open</span>` : ''}
-    </button>
-    <button class="btn" data-act="gift">🤝  Gift &amp; Redeem</button>
+    ${
+      hasFeature('packs')
+        ? `<button class="btn" data-act="shop">
+             🎴  Packs ${packs ? `<span class="badge gold">${packs} to open</span>` : ''}
+           </button>`
+        : `<button class="btn" disabled>🔒  Packs — unlocks at level 2</button>`
+    }
+    ${
+      hasFeature('gifting')
+        ? '<button class="btn" data-act="gift">🤝  Gift &amp; Redeem</button>'
+        : '<button class="btn" disabled>🔒  Gifting — unlocks at level 4</button>'
+    }
     <div class="btn-row">
       <button class="btn ghost" data-act="help">How to play</button>
       <button class="btn ghost" data-act="settings">Settings</button>
@@ -123,6 +159,9 @@ export function homeScreen(): void {
             break;
           case 'classic':
             nav.classic();
+            break;
+          case 'rewards':
+            rewardsScreen();
             break;
           case 'daily-claim': {
             const reward = claimDaily();
@@ -150,6 +189,45 @@ export function homeScreen(): void {
             settingsScreen();
             break;
         }
+      });
+    },
+    true,
+  );
+}
+
+// --------------------------------------------------------------- rewards --
+/** The whole unlock track, so what is coming is never a mystery. */
+export function rewardsScreen(): void {
+  const level = playerLevel();
+  const { into, needed } = levelProgress();
+
+  const rows = UNLOCKS.map((u) => {
+    const got = level >= u.level;
+    return `<div class="row ${got ? '' : 'dim'}">
+      <span style="font-size:22px;width:28px;text-align:center">${got ? u.icon : '🔒'}</span>
+      <div class="grow">
+        <b>${esc(u.label)}</b>
+        <small>${esc(u.detail)}</small>
+      </div>
+      <span class="badge ${got ? 'gold' : ''}">Lv ${u.level}</span>
+    </div>`;
+  }).join('');
+
+  mount(
+    `
+    <h2 class="screen-title">Level ${level}</h2>
+    <p class="sub">${
+      Number.isFinite(needed)
+        ? `${fmt(needed - into)} XP to level ${level + 1}. Everything you play earns XP — levels, replays and Classic runs alike.`
+        : 'Max level. Everything on the track is yours.'
+    }</p>
+    <div class="set-card">${rows}</div>
+    <button class="btn ghost" data-act="back">← Back</button>
+  `,
+    (root) => {
+      on(root, '[data-act="back"]', () => {
+        sfx.uiTap();
+        homeScreen();
       });
     },
     true,
@@ -400,11 +478,15 @@ export function shopScreen(): void {
     }>
       🎴 Standard Pack — ${packSize('standard')} stickers · ${fmt(packCost('standard'))} shards
     </button>
-    <button class="btn ${canAfford('premium') ? 'gold' : ''}" data-buy="premium" ${
-      canAfford('premium') ? '' : 'disabled'
-    }>
-      💎 Prismatic Pack — ${packSize('premium')} stickers, one Epic+ · ${fmt(packCost('premium'))} shards
-    </button>
+    ${
+      hasFeature('premium-packs')
+        ? `<button class="btn ${canAfford('premium') ? 'gold' : ''}" data-buy="premium" ${
+            canAfford('premium') ? '' : 'disabled'
+          }>
+             💎 Prismatic Pack — ${packSize('premium')} stickers, one Epic+ · ${fmt(packCost('premium'))} shards
+           </button>`
+        : '<button class="btn" disabled>🔒 Prismatic Packs — unlocks at level 7</button>'
+    }
     <div class="hint">
       <b>Odds.</b> Standard: ★1 55% · ★2 27% · ★3 13% · ★4 4.2% · ★5 0.8%, with at least one ★2+.
       Prismatic: ★3 30% · ★4 14% · ★5 4%, with at least one ★4+. Missing stickers are favoured.
@@ -625,9 +707,23 @@ export interface ClassicPayload {
   lines: number;
   bestCombo: number;
   tiles: number;
+  monochrome: number;
+  perfectClears: number;
   newBest: boolean;
   previousBest: number;
   shards: number;
+  xp: number;
+  levelledTo: number | null;
+}
+
+/** The line that appears when a payout crossed a player level. */
+function levelUpNote(levelledTo: number | null): string {
+  if (levelledTo === null) return '';
+  const unlocked = UNLOCKS.filter((u) => u.level === levelledTo);
+  const what = unlocked.length
+    ? ` — ${unlocked.map((u) => `${u.icon} ${esc(u.label)}`).join(', ')} unlocked!`
+    : '';
+  return ` · <b>Level ${levelledTo}!</b>${what}`;
 }
 
 /** The endless run's own end screen: one number, and whether it beat the last. */
@@ -641,7 +737,10 @@ export function classicResultsScreen(r: ClassicPayload): void {
       <div><span>Lines</span><b>${fmt(r.lines)}</b></div>
       <div><span>Best combo</span><b>×${r.bestCombo}</b></div>
       <div><span>Shards earned</span><b class="hi">${fmt(r.shards)}</b></div>
+      ${r.monochrome ? `<div><span>Pure lines</span><b>${r.monochrome}</b></div>` : ''}
+      ${r.perfectClears ? `<div><span>Board clears</span><b class="hi">${r.perfectClears}</b></div>` : ''}
     </div>
+    ${r.xp ? `<div class="hint"><b>+${fmt(r.xp)} XP</b>${levelUpNote(r.levelledTo)}</div>` : ''}
     <button class="btn primary" data-act="again">↻  Play again</button>
     ${profile.unopened.length ? '<button class="btn gold" data-act="open">🎴 Open your packs</button>' : ''}
     <button class="btn" data-act="share">Share your score</button>
@@ -680,6 +779,8 @@ export interface ResultPayload {
   firstClear: boolean;
   nextLevelId: number | null;
   packsWon: string[];
+  xp: number;
+  levelledTo: number | null;
 }
 
 export function resultsScreen(r: ResultPayload): void {
@@ -704,6 +805,7 @@ export function resultsScreen(r: ResultPayload): void {
         : ''
     }
     ${r.won && r.shards ? `<div class="hint"><b>+${fmt(r.shards)} Prism Shards</b>${r.firstClear ? ' — first clear bonus included' : ''}</div>` : ''}
+    ${r.xp ? `<div class="hint"><b>+${fmt(r.xp)} XP</b>${levelUpNote(r.levelledTo)}</div>` : ''}
     ${r.packsWon.map((why) => `<div class="hint"><b>🎴 Pack earned</b> — ${esc(why)}</div>`).join('')}
     ${
       r.won && r.nextLevelId
@@ -837,8 +939,8 @@ export function settingsScreen(): void {
     <button class="btn" data-act="mute">${isMuted() ? '🔇 Sound off' : '🔊 Sound on'}</button>
     <div class="stats">
       <div><span>Levels played</span><b>${fmt(profile.runs)}</b></div>
-      <div><span>Blocks broken</span><b>${fmt(profile.blocksBroken)}</b></div>
-      <div><span>Stars</span><b class="hi">${totalStars()}</b></div>
+      <div><span>Stars</span><b>${totalStars()}</b></div>
+      <div><span>Player level</span><b class="hi">${playerLevel()}</b></div>
       <div><span>Classic best</span><b>${fmt(profile.classicBest)}</b></div>
     </div>
     <button class="btn ghost" data-act="reset">Erase all progress</button>

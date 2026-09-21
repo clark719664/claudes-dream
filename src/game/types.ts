@@ -66,6 +66,8 @@ export interface ClearEvent {
   /** Row/column index, for the sweep animation. */
   index: number;
   hue: Hue;
+  /** Every tile in the line was the same colour — worth a bonus. */
+  monochrome: boolean;
 }
 
 export interface PlaceResult {
@@ -75,6 +77,8 @@ export interface PlaceResult {
   removed: { cell: Cell; tile: Tile }[];
   /** Simultaneous clears from one placement. */
   combo: number;
+  /** The placement emptied the board completely. */
+  perfectClear: boolean;
 }
 
 export const enum Phase {
@@ -95,4 +99,6 @@ export interface LevelResult {
   bestCombo: number;
   tilesCleared: number;
   linesCleared: number;
+  monochromeLines: number;
+  perfectClears: number;
 }

@@ -2,12 +2,18 @@
 
 A shape-placement puzzle. You're dealt three pieces at a time and drag them
 anywhere they fit. **A complete row or column clears — that's the only rule.**
-Colour is decoration. All that matters is whether a piece fits.
+Colour never decides whether a line clears. All that matters is whether a piece
+fits.
 
-The depth is the second-order move: one piece that finishes two or three lines
-at once is worth far more than clearing them one at a time, and clearing on
-consecutive moves builds a streak on top. Setting those up without leaving a
+The depth is the second-order move. One piece that finishes two or three lines
+at once is worth ×2.5, ×4.5 or more — far better than taking clears as they
+come. A line where every tile happens to be the same colour pays a bonus, and
+emptying the board outright pays a big one. Setting those up without leaving a
 hole you can't fill is the game.
+
+The three pieces in your tray are drawn purely at random. The deal never looks
+at the board, never filters for fit, and never shrinks pieces when you're
+cornered — so a good hand is earned and a bad one is real.
 
 Nothing falls, nothing is on a timer, and the board never moves on its own.
 While you drag, it outlines exactly what the placement will clear.
@@ -17,8 +23,9 @@ While you drag, it outlines exactly what the placement will clear.
 | **Levels** | 24 authored boards across 3 worlds — objective, move limit, three stars, on a map |
 | **Classic** | Endless. No move limit. Play until nothing fits and chase your own high score. |
 
-Underneath both: a 37-sticker album whose completed pages give permanent
-gameplay perks, packs, duplicate dust, and offline gift codes.
+Underneath both: a **player level** that rises from everything you play, with
+features and perks unlocking along a 30-level track — and a 37-sticker album
+whose completed pages give a second, parallel set of perks.
 
 Built as a web app and wrapped with Capacitor, so one codebase ships to the App
 Store and Google Play.
@@ -39,8 +46,9 @@ actually fun is to open it on a real phone rather than in a desktop browser.
 ## The rules
 
 1. **Fill a row or column** and it clears. That's it.
-2. **Clear more than one at a time** for a combo multiplier; clear on
-   consecutive moves for a streak on top.
+2. **Clear more than one at a time** — a double is ×2.5, a triple ×4.5. Clearing
+   on consecutive moves builds a streak on top, a same-colour line pays a bonus,
+   and emptying the board pays a big one.
 3. **Watch the gaps.** When none of your three pieces fits anywhere, it's over —
    so single-cell holes are what actually kill you.
 

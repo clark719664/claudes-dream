@@ -1,4 +1,11 @@
 import * as storage from '../core/storage';
+import {
+  applyLevelPerks,
+  levelFromXp,
+  unlockedFeatures,
+  xpForClassic,
+  xpForLevelClear,
+} from './progression';
 import { SETS, STICKERS, STICKERS_BY_ID, basePerks, stickersInSet, type Perks } from './stickers';
 
 export interface Profile {
@@ -10,6 +17,8 @@ export interface Profile {
   owned: Record<string, number>;
   /** Packs won but not yet opened. */
   unopened: { kind: 'standard' | 'premium'; reason: string }[];
+  /** Total experience, which drives the player level and its unlock track. */
+  xp: number;
   /** Per level: best score and best star rating earned. */
   levels: Record<number, { stars: 0 | 1 | 2 | 3; score: number }>;
   bestScore: number;
@@ -39,6 +48,7 @@ function fresh(): Profile {
     dust: 0,
     owned: {},
     unopened: [],
+    xp: 0,
     levels: {},
     bestScore: 0,
     bestChain: 0,
@@ -103,13 +113,40 @@ export function albumProgress(): { owned: number; total: number } {
   return { owned, total: STICKERS.length };
 }
 
-/** Every completed set's bonus, folded into one perk object. */
+/**
+ * Everything the player has earned, folded into one object: the player level's
+ * unlock track first, then any completed album pages on top. The two are
+ * deliberately separate ladders — the track rewards showing up, the album
+ * rewards collecting — and they stack.
+ */
 export function activePerks(): Perks {
   const perks = basePerks();
+  applyLevelPerks(playerLevel(), perks);
   for (const set of SETS) {
     if (isSetComplete(set.id)) set.bonus.apply(perks);
   }
   return perks;
+}
+
+export function playerLevel(): number {
+  return levelFromXp(profile.xp).level;
+}
+
+export function levelProgress(): { level: number; into: number; needed: number } {
+  return levelFromXp(profile.xp);
+}
+
+export function hasFeature(feature: 'packs' | 'gifting' | 'premium-packs'): boolean {
+  return unlockedFeatures(playerLevel()).has(feature);
+}
+
+/** Award XP and report any levels crossed, so the UI can celebrate them. */
+export function addXp(amount: number): { gained: number; from: number; to: number } {
+  const from = playerLevel();
+  profile.xp += Math.max(0, Math.round(amount));
+  const to = playerLevel();
+  saveProfile();
+  return { gained: amount, from, to };
 }
 
 export function addShards(n: number): void {
@@ -209,6 +246,14 @@ export interface LevelRecord {
 }
 
 /** Returns whether this run beat the stored high score. */
+export function classicXp(score: number): number {
+  return xpForClassic(score);
+}
+
+export function levelClearXp(stars: number, firstClear: boolean): number {
+  return xpForLevelClear(stars, firstClear);
+}
+
 export function recordClassic(score: number, lines: number, tiles: number): boolean {
   profile.classicRuns++;
   profile.blocksBroken += tiles;

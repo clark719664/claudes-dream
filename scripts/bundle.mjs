@@ -40,6 +40,7 @@ const FILES = [
   'src/core/audio.ts',
   'src/core/haptics.ts',
   'src/meta/stickers.ts',
+  'src/meta/progression.ts',
   'src/meta/profile.ts',
   'src/meta/packs.ts',
   'src/ui/dom.ts',

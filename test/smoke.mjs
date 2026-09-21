@@ -33,6 +33,14 @@ await page.screenshot({ path: `${out}/03-map.png`, fullPage: true });
 await page.locator('[data-act="back"]').click();
 await page.waitForTimeout(250);
 
+// The player-level track.
+await page.locator('[data-act="rewards"]').click();
+await page.waitForTimeout(350);
+console.log('unlock rows:', await page.locator('.set-card .row').count());
+await page.screenshot({ path: `${out}/09-rewards.png`, fullPage: true });
+await page.locator('[data-act="back"]').click();
+await page.waitForTimeout(300);
+
 // Classic mode: endless, no move limit, no objective.
 await page.locator('[data-act="classic"]').click();
 await page.waitForTimeout(500);

@@ -119,7 +119,13 @@ export class Board {
 
     const clears = this.findClears();
     const removed = this.applyClears(clears);
-    return { placed, clears, removed, combo: clears.length };
+    return {
+      placed,
+      clears,
+      removed,
+      combo: clears.length,
+      perfectClear: clears.length > 0 && this.isClear,
+    };
   }
 
   /** Everything that qualifies to clear right now, with no board changes. */
@@ -127,24 +133,26 @@ export class Board {
     const events: ClearEvent[] = [];
 
     for (let row = 0; row < this.rows; row++) {
-      if (this.rowFull(row)) {
-        events.push({
-          kind: ClearKind.Row,
-          index: row,
-          hue: this.dominantHue(this.rowCells(row)),
-          cells: this.rowCells(row),
-        });
-      }
+      if (!this.rowFull(row)) continue;
+      const cells = this.rowCells(row);
+      events.push({
+        kind: ClearKind.Row,
+        index: row,
+        hue: this.dominantHue(cells),
+        cells,
+        monochrome: this.isMonochrome(cells),
+      });
     }
     for (let col = 0; col < this.cols; col++) {
-      if (this.columnFull(col)) {
-        events.push({
-          kind: ClearKind.Column,
-          index: col,
-          hue: this.dominantHue(this.columnCells(col)),
-          cells: this.columnCells(col),
-        });
-      }
+      if (!this.columnFull(col)) continue;
+      const cells = this.columnCells(col);
+      events.push({
+        kind: ClearKind.Column,
+        index: col,
+        hue: this.dominantHue(cells),
+        cells,
+        monochrome: this.isMonochrome(cells),
+      });
     }
     return events;
   }
@@ -165,6 +173,22 @@ export class Board {
 
   private columnCells(col: number): Cell[] {
     return Array.from({ length: this.rows }, (_, row) => ({ col, row }));
+  }
+
+  /**
+   * A line made entirely of one colour. Colour has no bearing on *whether* a
+   * line clears — only on what it is worth — so this is a reason to care about
+   * hue without it ever gating a move.
+   */
+  private isMonochrome(cells: Cell[]): boolean {
+    let hue: Hue | null = null;
+    for (const c of cells) {
+      const t = this.at(c.col, c.row);
+      if (!t || t.kind !== TileKind.Colour) return false;
+      if (hue === null) hue = t.hue;
+      else if (t.hue !== hue) return false;
+    }
+    return hue !== null;
   }
 
   private dominantHue(cells: Cell[]): Hue {

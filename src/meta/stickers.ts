@@ -17,8 +17,8 @@ export interface SetBonus {
 
 export interface Perks {
   extraMoves: number;
-  /** A fourth slot in the tray — the strongest thing you can have in a fitting game. */
-  extraTraySlot: boolean;
+  /** Extra tray slots — the strongest thing you can have in a fitting game. */
+  extraTraySlots: number;
   /** Lets a piece you cannot use be thrown away, once per level. */
   discards: number;
   bombRadius: number;
@@ -28,7 +28,7 @@ export interface Perks {
 export function basePerks(): Perks {
   return {
     extraMoves: 0,
-    extraTraySlot: false,
+    extraTraySlots: 0,
     discards: 0,
     bombRadius: 1,
     shardMultiplier: 1,
@@ -59,9 +59,9 @@ export const SETS: StickerSet[] = [
     name: 'Deep Space',
     accent: '#c77dff',
     bonus: {
-      label: 'A fourth piece in the tray, always',
+      label: 'One more piece in the tray, always',
       apply: (p) => {
-        p.extraTraySlot = true;
+        p.extraTraySlots += 1;
       },
     },
   },

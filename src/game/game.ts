@@ -1,6 +1,6 @@
 import { CFG } from './config';
 import { Board, countPreset, makeTile } from './board';
-import { SHAPES, RESCUE_SHAPES } from './shapes';
+import { SHAPES } from './shapes';
 import { Rng, randomSeed } from '../core/rng';
 import { basePerks, type Perks } from '../meta/stickers';
 import { CHAR_TO_HUE, charKind, layoutRows, type LevelSpec, type Objective } from './levels';
@@ -21,6 +21,8 @@ export type FxKind =
   | 'place'
   | 'clearLine'
   | 'gem'
+  | 'monochrome'
+  | 'perfect'
   | 'discard'
   | 'shatter'
   | 'bomb'
@@ -41,6 +43,9 @@ export interface Fx {
 }
 
 let nextTrayId = 1;
+
+/** What a multi-line clear is called on screen. */
+const COMBO_NAMES = ['', '', 'DOUBLE!', 'TRIPLE!', 'QUAD!!', 'INCREDIBLE!!'] as const;
 
 /**
  * One attempt at one level.
@@ -75,6 +80,8 @@ export class Game {
   tilesCleared = 0;
   linesCleared = 0;
   gemsCleared = 0;
+  monochromeLines = 0;
+  perfectClears = 0;
   cratesBroken = 0;
   won = false;
 
@@ -98,7 +105,7 @@ export class Game {
     this.board.bombRadius = perks.bombRadius;
     this.movesLeft = level.endless ? Infinity : level.moves + perks.extraMoves;
     this.discardsLeft = perks.discards;
-    this.traySize = CFG.traySize + (perks.extraTraySlot ? 1 : 0);
+    this.traySize = CFG.traySize + perks.extraTraySlots;
     this.creepCountdown = level.creepEvery ?? 0;
 
     this.loadLayout();
@@ -139,17 +146,14 @@ export class Game {
   // -- the deal ------------------------------------------------------------
 
   /**
-   * Refill the tray.
+   * Refill the tray with three pieces drawn purely at random from the weighted
+   * shape pool — the board is not consulted at all.
    *
-   * Every piece is checked against the board it is being dealt onto, and the
-   * tighter the board gets the more the deal leans toward small pieces — so a
-   * fresh hand is never dead on arrival, which reads as the game cheating.
-   *
-   * That is as far as the help goes. Once a hand is dealt it stands: if you
-   * spend one piece and the other two no longer fit, the run is over. Swapping
-   * those leftovers out for something that fits was tried, and it made the game
-   * effectively unloseable — a bot ran 5,000 pieces without ever being stuck.
-   * Being able to run out of room *is* the game.
+   * Earlier versions checked each piece against the board and leaned toward
+   * small shapes when space got tight. Both were cut. Any deal that reads the
+   * board is the game quietly playing for you, and once a player suspects that,
+   * every good hand feels unearned and every bad one feels rigged. The hand is
+   * the hand: it can be three pieces that do not fit, and that is the run.
    */
   private deal(): void {
     this.tray = [];
@@ -173,23 +177,12 @@ export class Game {
   }
 
   private rollPiece(): TrayItem {
-    const hue = this.rng.pick(this.palette());
-    const fitting = SHAPES.filter((s) => this.board.hasAnyPlacement(s));
-    const usable = fitting.length ? fitting : RESCUE_SHAPES;
-
-    // How much of the board is still open, 0..1.
-    const room = 1 - this.board.occupied / (this.board.cols * this.board.rows);
-    const shape = this.rng.weighted(
-      usable,
-      usable.map((s) => {
-        // On a crowded board, big pieces get less likely — but not so much
-        // less that the squeeze stops being the thing you are playing against.
-        const size = s.cells.length;
-        const crowdPenalty = room < 0.35 ? Math.pow(room / 0.35, Math.max(0, size - 3) * 0.6) : 1;
-        return s.weight * crowdPenalty + 0.01;
-      }),
-    );
-    return { id: nextTrayId++, shape, hue, used: false };
+    return {
+      id: nextTrayId++,
+      shape: this.rng.weighted(SHAPES, SHAPES.map((s) => s.weight)),
+      hue: this.rng.pick(this.palette()),
+      used: false,
+    };
   }
 
   get liveTray(): TrayItem[] {
@@ -245,7 +238,8 @@ export class Game {
   }
 
   private scoreClears(result: PlaceResult): void {
-    const comboMult = 1 + (result.clears.length - 1) * CFG.clear.comboStep;
+    const table = CFG.clear.comboMultipliers;
+    const comboMult = table[Math.min(result.clears.length, table.length - 1)];
     const streakMult = Math.min(
       CFG.clear.maxStreakBonus,
       1 + this.streak * CFG.clear.streakStep,
@@ -257,6 +251,13 @@ export class Game {
       this.linesCleared++;
       const c = centreOf(ev.cells);
       this.emit('clearLine', c.x, c.y, ev.hue, result.clears.length);
+
+      // Colour never decides whether a line clears, only what it is worth.
+      if (ev.monochrome) {
+        this.monochromeLines++;
+        this.score += Math.round(CFG.scoring.monochromeBonus * streakMult);
+        this.emit('monochrome', c.x, c.y, ev.hue, 0, 'PURE LINE');
+      }
     }
 
     for (const { cell, tile } of result.removed) {
@@ -275,11 +276,17 @@ export class Game {
       this.emit('shatter', cell.col + 0.5, cell.row + 0.5, tile.hue, result.clears.length);
     }
 
+    if (result.perfectClear) {
+      this.perfectClears++;
+      this.score += CFG.scoring.perfectClearBonus;
+      this.emit('perfect', this.board.cols / 2, this.board.rows / 2, 0, 0, 'BOARD CLEAR!');
+    }
+
     if (result.clears.length > 1 || this.streak >= 2) {
       const first = centreOf(result.clears[0].cells);
       const label =
         result.clears.length > 1
-          ? `COMBO ×${result.clears.length}`
+          ? COMBO_NAMES[Math.min(result.clears.length, COMBO_NAMES.length - 1)]
           : `STREAK ×${this.streak + 1}`;
       this.emit('combo', first.x, first.y, result.clears[0].hue, result.clears.length, label);
     }
@@ -309,16 +316,10 @@ export class Game {
 
     if (this.movesLeft <= 0) return this.finish(false);
 
-    // The one way an endless run ends: nothing left in the tray fits anywhere.
+    // The one way a run ends: nothing left in the tray fits anywhere. A spare
+    // discard does not fire by itself — spending it is the player's call, made
+    // before they are cornered, which is what makes it a decision.
     if (!this.liveTray.some((t) => this.board.hasAnyPlacement(t.shape))) {
-      // A spare discard buys one more look before it is over.
-      if (this.discardsLeft > 0 && this.liveTray.length > 1) {
-        const dead = this.liveTray[0];
-        this.discardsLeft--;
-        dead.used = true;
-        this.emit('discard', 0, 0, dead.hue, 0);
-        return this.afterMove();
-      }
       return this.finish(false);
     }
     this.phase = Phase.Placing;
@@ -418,6 +419,8 @@ export class Game {
       bestCombo: this.bestCombo,
       tilesCleared: this.tilesCleared,
       linesCleared: this.linesCleared,
+      monochromeLines: this.monochromeLines,
+      perfectClears: this.perfectClears,
     };
   }
 

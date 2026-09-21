@@ -10,6 +10,9 @@ import { haptics } from './core/haptics';
 import {
   activePerks,
   addShards,
+  addXp,
+  classicXp,
+  levelClearXp,
   loadProfile,
   profile,
   queuePack,
@@ -157,8 +160,11 @@ canvas.addEventListener('pointerdown', (ev) => {
   const slot = renderer.traySlotAt(ev.clientX, ev.clientY);
   const item = slot >= 0 ? game.tray[slot] : undefined;
   if (!item || item.used) return;
+
+  // A piece with nowhere to go can be thrown away, if a discard is spare.
   if (!game.board.hasAnyPlacement(item.shape)) {
-    haptics.tap();
+    if (game.discard(item)) haptics.reward();
+    else haptics.tap();
     return;
   }
 
@@ -260,6 +266,8 @@ function endLevel(): void {
     );
     addShards(shards);
     if (newBest && previousBest > 0) queuePack('standard', 'New Classic high score');
+    const xp = classicXp(r.score);
+    const levelUp = addXp(xp);
     saveProfile();
 
     setTimeout(() => {
@@ -269,9 +277,13 @@ function endLevel(): void {
         lines: r.linesCleared,
         bestCombo: r.bestCombo,
         tiles: r.tilesCleared,
+        monochrome: r.monochromeLines,
+        perfectClears: r.perfectClears,
         newBest,
         previousBest,
         shards,
+        xp,
+        levelledTo: levelUp.to > levelUp.from ? levelUp.to : null,
       });
     }, 1000);
     return;
@@ -309,6 +321,8 @@ function endLevel(): void {
     saveProfile();
   }
 
+  const xp = r.won ? levelClearXp(r.stars, firstClear) : 10;
+  const levelUp = addXp(xp);
   const next = LEVELS.find((l) => l.id === level.id + 1);
 
   setTimeout(() => {
@@ -325,6 +339,8 @@ function endLevel(): void {
       firstClear,
       nextLevelId: next ? next.id : null,
       packsWon,
+      xp,
+      levelledTo: levelUp.to > levelUp.from ? levelUp.to : null,
     });
   }, 1100);
 }

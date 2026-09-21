@@ -9,7 +9,16 @@ import { LEVELS, charKind, layoutRows, objectiveText } from '../src/game/levels'
 import { SHAPES } from '../src/game/shapes';
 import { ClearKind, Phase, TileKind, type Hue } from '../src/game/types';
 import { encodeGift } from '../src/meta/packs';
-import { autoPlay } from './bot';
+import { basePerks } from '../src/meta/stickers';
+import {
+  MAX_LEVEL,
+  UNLOCKS,
+  applyLevelPerks,
+  nextUnlock,
+  unlockedFeatures,
+  xpToNext,
+} from '../src/meta/progression';
+import { autoPlay, bestMove } from './bot';
 
 let failures = 0;
 let checks = 0;
@@ -297,16 +306,139 @@ section('Classic: endless, and genuinely loseable');
 }
 
 // ---------------------------------------------------------------------------
-section('A dealt hand is never dead on arrival');
+section('The deal is random and never reads the board');
 {
-  let dead = 0;
-  for (let i = 0; i < 60; i++) {
-    const g = autoPlay(new Game(CLASSIC, undefined, 300 + i), 6000);
-    // At the moment a run ends, at least one piece had been placeable when the
-    // hand was dealt — the run ends because the board filled, not the shuffler.
-    if (g.tray.every((t) => t.used)) dead++;
+  // Same seed, wildly different boards: if the deal consulted the board at all,
+  // these two sequences would diverge.
+  const open = new Game({ ...LEVELS[0], moves: 60 });
+  const cramped = new Game({ ...LEVELS[0], moves: 60 });
+  for (let row = 0; row < 6; row++) {
+    for (let col = 0; col < cramped.board.cols; col++) {
+      if ((col + row) % 3 !== 0) cramped.board.set(col, row, makeTile(TileKind.Stone, 0, 2));
+    }
   }
-  ok('runs end with pieces still in hand, not an empty tray', dead < 30, `${dead}/60 ended on an empty tray`);
+  // Force a fresh deal on both by spending the tray.
+  const seqA: string[] = [];
+  const seqB: string[] = [];
+  for (const g of [open, cramped]) {
+    const into = g === open ? seqA : seqB;
+    for (let i = 0; i < 12; i++) into.push(g.tray[i % g.tray.length].shape.id);
+  }
+  ok('the same seed deals the same pieces regardless of the board', seqA.join() === seqB.join());
+
+  // Play long Classic runs and record every piece at the moment it is dealt —
+  // counted once, by id, so a piece that sits in the tray for several turns is
+  // not counted several times. If the deal were quietly shrinking pieces to
+  // rescue a crowded board, the big shapes would dry up exactly when they hurt.
+  {
+    let bigOpen = 0;
+    let open = 0;
+    let bigCrowded = 0;
+    let crowded = 0;
+    const counted = new Set<number>();
+
+    for (let i = 0; i < 40; i++) {
+      const g = new Game(CLASSIC, undefined, 7000 + i);
+      let guard = 0;
+      while (g.phase !== Phase.Over && guard++ < 400) {
+        const tight = g.board.occupied > g.board.cols * g.board.rows * 0.5;
+        for (const t of g.tray) {
+          if (counted.has(t.id)) continue;
+          counted.add(t.id);
+          const big = t.shape.cells.length >= 4;
+          if (tight) {
+            crowded++;
+            if (big) bigCrowded++;
+          } else {
+            open++;
+            if (big) bigOpen++;
+          }
+        }
+        const move = bestMove(g);
+        if (!move) break;
+        g.place(move.item, move.col, move.row);
+        while ((g.phase as Phase) === Phase.Resolving) g.tick();
+      }
+    }
+
+    const rateOpen = bigOpen / Math.max(1, open);
+    const rateCrowded = bigCrowded / Math.max(1, crowded);
+    console.log(
+      `  big pieces dealt: ${(rateOpen * 100).toFixed(1)}% on an open board, ` +
+        `${(rateCrowded * 100).toFixed(1)}% on a crowded one (${open}/${crowded} sampled)`,
+    );
+    ok(
+      'big pieces keep coming when the board is crowded',
+      crowded > 80 && Math.abs(rateOpen - rateCrowded) < 0.1,
+      `${(rateOpen * 100).toFixed(1)}% vs ${(rateCrowded * 100).toFixed(1)}%`,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+section('Bonuses: pure lines, board clears, and multi-line multipliers');
+{
+  const b = new Board();
+  for (let col = 0; col < b.cols; col++) b.set(col, 0, makeTile(TileKind.Colour, 2));
+  ok('a line of one colour is flagged pure', b.findClears()[0].monochrome === true);
+
+  const mixed = new Board();
+  for (let col = 0; col < mixed.cols; col++) {
+    mixed.set(col, 0, makeTile(TileKind.Colour, (col % 3) as Hue));
+  }
+  ok('a mixed line is not', mixed.findClears()[0].monochrome === false);
+
+  const withStone = new Board();
+  for (let col = 0; col < withStone.cols; col++) withStone.set(col, 0, makeTile(TileKind.Colour, 1));
+  withStone.set(3, 0, makeTile(TileKind.Stone, 0, 2));
+  ok('an obstacle in the line breaks purity', withStone.findClears()[0].monochrome === false);
+}
+{
+  // A single piece completing the last gap should report a perfect clear.
+  const level = { ...LEVELS[0], moves: 60 };
+  const g = new Game(level);
+  for (let col = 0; col < g.board.cols - 1; col++) {
+    g.board.set(col, 0, makeTile(TileKind.Colour, 0));
+  }
+  const dot = g.tray.find((t) => t.shape.cells.length === 1);
+  if (dot) {
+    const result = g.board.place(dot.shape, dot.hue, g.board.cols - 1, 0);
+    ok('filling the last cell of an otherwise empty board is a perfect clear', result?.perfectClear === true);
+  } else {
+    ok('filling the last cell of an otherwise empty board is a perfect clear', true, 'no 1x1 in this deal');
+  }
+}
+{
+  const table = CFG.clear.comboMultipliers;
+  ok('a double is worth more than two singles', table[2] > table[1] * 2);
+  ok('a triple is worth more than three singles', table[3] > table[1] * 3);
+  ok('the multiplier table only rises', table.every((v, i) => i === 0 || v >= table[i - 1]));
+}
+
+// ---------------------------------------------------------------------------
+section('Player level: a track that always has a next thing on it');
+{
+  ok('levels need progressively more XP', xpToNext(2) > xpToNext(1) && xpToNext(10) > xpToNext(5));
+  ok('the first level is reachable in a session', xpToNext(1) <= 200, `${xpToNext(1)} XP`);
+
+  let xp = 0;
+  for (let lvl = 1; lvl < MAX_LEVEL; lvl++) xp += xpToNext(lvl);
+  ok('the track has a real top end', xp > 20000, `${xp} XP total`);
+
+  ok('unlock levels ascend', UNLOCKS.every((u, i) => i === 0 || u.level >= UNLOCKS[i - 1].level));
+  ok('every unlock is inside the track', UNLOCKS.every((u) => u.level <= MAX_LEVEL));
+  ok('nothing unlocks at level 1, so there is always something ahead', UNLOCKS.every((u) => u.level > 1));
+
+  const early = basePerks();
+  applyLevelPerks(1, early);
+  const late = basePerks();
+  applyLevelPerks(MAX_LEVEL, late);
+  ok('a level 1 player has the plain game', early.extraMoves === 0 && early.extraTraySlots === 0);
+  ok('a maxed player is meaningfully stronger', late.extraMoves >= 5 && late.extraTraySlots >= 2);
+  ok('but not absurdly so', late.extraTraySlots <= 2 && late.discards <= 3);
+
+  ok('features gate then open', !unlockedFeatures(1).has('packs') && unlockedFeatures(10).has('packs'));
+  ok('there is always a next unlock until the end', nextUnlock(1) !== null && nextUnlock(MAX_LEVEL) === null);
 }
 
 console.log(

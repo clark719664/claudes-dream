@@ -62,6 +62,3 @@ export const SHAPES: ShapeDef[] = [
 ];
 
 export const SHAPES_BY_ID = new Map(SHAPES.map((s) => [s.id, s]));
-
-/** Shapes small enough to fit almost anywhere, used to unstick a dead board. */
-export const RESCUE_SHAPES = SHAPES.filter((s) => s.cells.length <= 2);
