@@ -12,6 +12,8 @@
     "bundle": "npm run build && node scripts/bundle.mjs",
     "test": "tsx test/run.ts",
     "test:browser": "node test/smoke.mjs ./test/shots && node test/smoke-meta.mjs ./test/shots",
+    "test:perf": "node test/prof.mjs && node test/perf.mjs",
+    "profile": "node test/cpuprof.mjs",
     "cap:sync": "npm run build && cap sync",
     "cap:add": "cap add android && cap add ios",
     "android": "npm run cap:sync && cap open android",

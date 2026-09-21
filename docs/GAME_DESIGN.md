@@ -50,6 +50,28 @@ is the same idea demoted to where it belongs. Colour is now worth *noticing*
 without ever being worth *obeying*: a player who ignores it entirely still plays
 the game correctly, and one who spots a free pure line gets paid for it.
 
+### The drag is one object, and it is magnetic
+
+The piece you pick up is a single thing for the whole gesture. Over a legal spot
+it eases onto the grid; elsewhere it follows your hand. It never switches
+between a copy under the finger and a separate ghost in the cells, and it never
+jumps between the two — that swap was most of what made dragging feel like two
+interactions stitched together.
+
+It grows from tray size to board size as you lift it, a dark footprint shows
+where it will land, and anything the placement would clear is ringed before you
+let go. One source of truth decides where a drag lands, shared by the renderer
+and the input code, so what is drawn and what is placed cannot disagree.
+
+### Animation runs on a clock, not on frames
+
+Every effect advances by elapsed time rather than once per rendered frame.
+
+This was a real bug, not a nicety: on a device managing 30fps, every animation
+in the game — the clear sweeps, tiles settling, the drag magnet — ran at exactly
+half speed. The game got mushier the slower the device, which is the opposite of
+what it should do.
+
 ### No pause between moves
 
 The board settles the instant a piece lands — clears resolve inside the
@@ -234,7 +256,32 @@ Packs — not shards — are what players chase, so they hang off moments worth
 repeating: a first clear every third level, a Prismatic every ninth, and any
 three-star finish.
 
-## 6. Balance, measured
+## 6. Performance
+
+`npm run test:perf` measures frame times under CPU throttling; `npm run profile`
+takes a real CPU profile of a drag on a full board.
+
+Current state: a steady **16.7ms — a clean 60fps — unthrottled**, 22.7ms at 4×.
+The JS is about 1% of a frame; the rest is rasterisation.
+
+Three things came out of profiling rather than guessing:
+
+- Tiles were drawn live, each with a fresh gradient and a `shadowBlur` fill.
+  They are pre-rendered once and blitted now. A glow is cheap once and ruinous
+  sixty-four times a frame.
+- The first version of that cache was **slower than no cache at all**: it was
+  keyed by the size being drawn, and since a piece being picked up animates its
+  scale, the cache invalidated itself every frame and re-rendered every glow.
+  Sprites are now rendered once at board size and scaled on the way out.
+- The renderer asked the board where every tray piece could fit, and cloned the
+  whole board for the drag preview, on every frame. Both are cached against a
+  board version counter.
+
+One caveat on the numbers: the test container has **no GPU**, so under heavy
+throttling it is software-rasterising two megapixels a frame and the figures
+there are pessimistic against any real device.
+
+## 7. Balance, measured
 
 `npm test` auto-plays **all 24 levels** with a bot that plays the way an
 attentive player would: it prizes clearing several lines at once, chases whatever the
@@ -286,7 +333,7 @@ the code:
   budgeted on the *worst* observed run rather than the median, so an unlucky
   hand is survivable rather than fatal.
 
-## 7. Viral loops
+## 8. Viral loops
 
 **1 · Gifting duplicates (built).** A duplicate can be spent to mint a code like
 `PB-2KPQ-Y0A`, shared through the native share sheet, redeemed once by whoever
@@ -310,7 +357,7 @@ replay the same way, which makes a disputed score checkable.
 trading spares inside the crew. Collection games live on the social obligation
 of not letting your crew down.
 
-## 8. Retention
+## 9. Retention
 
 - **The player level** — the primary one. Always a next unlock, always close.
 - **Daily streak** — escalating shards, packs on days 3/6/9, Prismatic on 7.
@@ -321,7 +368,7 @@ of not letting your crew down.
 - **Failure is cheap** — no lives, no energy timer. The game never tells you to
   stop playing.
 
-## 9. Monetisation (designed, not implemented)
+## 10. Monetisation (designed, not implemented)
 
 Deliberately not built: shipping payments into a prototype is how you end up
 tuning an economy nobody has played yet.
@@ -337,7 +384,7 @@ The line held everywhere: **you can buy speed, never power a free player cannot
 also reach.** Set bonuses must stay earnable, or the perk system stops being a
 build and becomes a paywall.
 
-## 10. Build status
+## 11. Build status
 
 **Working end to end:** placement and the full clear resolution (lines,
 bomb chains, obstacle wear, gems, pure-line and board-clear bonuses), the random

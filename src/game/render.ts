@@ -42,21 +42,48 @@ export interface Layout {
   traySlot: number;
 }
 
-/** What the player is currently dragging. */
+/** What the player is currently dragging. Pointer position is canvas-local. */
 export interface DragState {
   item: TrayItem;
-  /** Pointer position in CSS pixels. */
   px: number;
   py: number;
-  /** Board cell the shape's top-left would land on, or null when off-board. */
-  target: Cell | null;
 }
+
+/**
+ * How far above the finger the piece rides, in cells. Enough that a thumb does
+ * not cover the piece or the cells it is about to land on.
+ */
+export const DRAG_LIFT = 1.35;
 
 export class Renderer {
   private particles: Particle[] = [];
   private floaters: Floater[] = [];
   private departing: Departing[] = [];
   private sweeps: Sweep[] = [];
+  /**
+   * Tiles are pre-rendered once each and then blitted.
+   *
+   * Drawing them live cost a fresh gradient and a `shadowBlur` fill per tile
+   * per frame. With a full board that alone put frame times at 50ms on a
+   * throttled phone — which was the entire reason this felt sluggish. A glow is
+   * cheap once and ruinous sixty-four times a frame.
+   */
+  private sprites = new Map<string, HTMLCanvasElement>();
+  private gridSprite: HTMLCanvasElement | null = null;
+  private spriteCell = 48;
+  private bgGradient: CanvasGradient | null = null;
+  /**
+   * Where the dragged piece is actually drawn, eased toward where it belongs.
+   *
+   * The piece is one object for the whole gesture. It never switches between a
+   * copy under the finger and a separate ghost in the grid — that swap is what
+   * made dragging feel like two different interactions stitched together.
+   * Instead it is magnetic: over a legal spot it eases onto the grid, and
+   * elsewhere it follows the hand.
+   */
+  private dragDraw = { x: 0, y: 0, scale: 1, itemId: -1 };
+  /** Per tray item, 0..1, so a fresh hand arrives rather than appearing. */
+  private trayIn = new Map<number, number>();
   private shake = 0;
   private flash = 0;
   private t = 0;
@@ -68,10 +95,120 @@ export class Renderer {
   ) {}
 
   resize(): void {
-    this.dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    // Capped at 2: a 3x phone would be rasterising over four megapixels a
+    // frame for detail nobody can see at this tile size.
+    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
     const rect = this.canvas.getBoundingClientRect();
     this.canvas.width = Math.round(rect.width * this.dpr);
     this.canvas.height = Math.round(rect.height * this.dpr);
+    // Cached art is resolution-specific, so it goes when the canvas changes.
+    this.sprites.clear();
+    this.gridSprite = null;
+    this.bgGradient = null;
+    this.spriteCell = Math.round(this.layout().cell);
+  }
+
+  /**
+   * Glow needs room to spill past the cell, but every pixel of margin is
+   * overdraw on sixty-four sprites a frame, so it is kept tight.
+   */
+  private spritePad(cell: number): number {
+    return Math.ceil(cell * 0.16);
+  }
+
+  /**
+   * One tile, rendered once at board size and scaled on the way out.
+   *
+   * Sprites are deliberately NOT keyed by the size they are drawn at. The tray
+   * draws small, and a piece being picked up animates its scale every frame —
+   * keying on size meant the cache invalidated itself sixty times a second and
+   * every glow was being re-rendered live, which was slower than never caching
+   * at all.
+   */
+  private tileSprite(kind: TileKind, hue: Hue): HTMLCanvasElement {
+    const key = `${kind}:${hue}`;
+    const cached = this.sprites.get(key);
+    if (cached) return cached;
+
+    const cell = this.spriteCell;
+    const pad = this.spritePad(cell);
+    const box = cell + pad * 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(box * this.dpr);
+    canvas.height = Math.ceil(box * this.dpr);
+    const c = canvas.getContext('2d')!;
+    c.scale(this.dpr, this.dpr);
+    this.paintTile(c, cell, pad, pad, kind, hue);
+    this.sprites.set(key, canvas);
+    return canvas;
+  }
+
+  /** The actual tile art. Runs once per sprite, never per frame. */
+  private paintTile(
+    ctx: CanvasRenderingContext2D,
+    cell: number,
+    x0: number,
+    y0: number,
+    kind: TileKind,
+    hue: Hue,
+  ): void {
+    const pad = cell * 0.06;
+    const x = x0 + pad;
+    const y = y0 + pad;
+    const size = cell - pad * 2;
+    const radius = cell * 0.18;
+
+    let core: string;
+    let glow: string;
+    if (kind === TileKind.Stone) {
+      core = PALETTE.stone.core;
+      glow = PALETTE.stone.glow;
+    } else if (kind === TileKind.Gem) {
+      core = PALETTE.gem.core;
+      glow = PALETTE.gem.glow;
+    } else if (kind === TileKind.Crate) {
+      core = PALETTE.crate.core;
+      glow = PALETTE.crate.glow;
+    } else {
+      core = hueColour(hue);
+      glow = hueGlow(hue);
+    }
+
+    ctx.save();
+    roundRect(ctx, x, y, size, size, radius);
+    const grad = ctx.createLinearGradient(x, y, x, y + size);
+    grad.addColorStop(0, glow);
+    grad.addColorStop(1, core);
+    ctx.fillStyle = grad;
+    ctx.shadowColor = core;
+    ctx.shadowBlur = cell * 0.28;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.globalAlpha = 0.26;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = Math.max(1, cell * 0.035);
+    roundRect(ctx, x + size * 0.08, y + size * 0.08, size * 0.84, size * 0.84, radius * 0.7);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    if (kind === TileKind.Gem) {
+      const rim = ctx.createLinearGradient(x, y, x + size, y + size);
+      for (let i = 0; i <= 5; i++) rim.addColorStop(i / 5, `hsl(${i * 60}, 95%, 65%)`);
+      ctx.strokeStyle = rim;
+      ctx.lineWidth = Math.max(1.5, cell * 0.07);
+      roundRect(ctx, x, y, size, size, radius);
+      ctx.stroke();
+    }
+
+    if (kind === TileKind.Bomb) {
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
+      ctx.font = `${Math.round(cell * 0.44)}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✦', x0 + cell / 2, y0 + cell / 2);
+    }
+    ctx.restore();
   }
 
   /**
@@ -107,13 +244,19 @@ export class Renderer {
     };
   }
 
-  /** Pointer position → board cell (may be off-board). */
-  toCell(clientX: number, clientY: number): Cell {
-    const rect = this.canvas.getBoundingClientRect();
+  /**
+   * Where a dragged piece would land: the cell its top-left corner occupies.
+   * Both the renderer and the input code go through this, so what is drawn and
+   * what is placed can never disagree.
+   */
+  dragTarget(drag: DragState): Cell {
     const { cell, ox, oy } = this.layout();
+    const shape = drag.item.shape;
+    const cx = drag.px - ox;
+    const cy = drag.py - oy - cell * DRAG_LIFT;
     return {
-      col: Math.floor((clientX - rect.left - ox) / cell),
-      row: Math.floor((clientY - rect.top - oy) / cell),
+      col: Math.round(cx / cell - shape.w / 2),
+      row: Math.round(cy / cell - shape.h / 2),
     };
   }
 
@@ -149,7 +292,7 @@ export class Renderer {
           this.shake = Math.min(5, this.shake + 1.5);
           break;
         case 'shatter': {
-          this.burst(fx.x, fx.y, hueColour(fx.hue), 8 + fx.value * 2);
+          this.burst(fx.x, fx.y, hueColour(fx.hue), 5 + fx.value);
           // Keep drawing the tile for a few frames after the board drops it,
           // so a clear reads as tiles leaving rather than tiles vanishing.
           const col = Math.floor(fx.x);
@@ -181,7 +324,7 @@ export class Renderer {
           }
           break;
         case 'gem':
-          this.burst(fx.x, fx.y, '#ffffff', 22);
+          this.burst(fx.x, fx.y, '#ffffff', 14);
           if (fx.text) this.float(fx.x, fx.y, fx.text, '#ffffff', 20);
           break;
         case 'combo':
@@ -189,7 +332,7 @@ export class Renderer {
           this.shake = Math.min(20, this.shake + 6);
           break;
         case 'bomb':
-          this.burst(fx.x, fx.y, '#ffd978', 24);
+          this.burst(fx.x, fx.y, '#ffd978', 16);
           this.shake = Math.min(20, this.shake + 7);
           break;
         case 'creep':
@@ -208,12 +351,69 @@ export class Renderer {
     }
   }
 
+  /**
+   * Advance every animation by `frames` sixtieths of a second.
+   *
+   * Animation used to tick once per rendered frame, which meant that on a
+   * device managing 30fps every effect in the game ran at half speed — the
+   * clear sweeps, the piece settling, the drag magnet, all of it. Driving them
+   * from elapsed time instead makes the game feel the same whatever the device
+   * is doing.
+   */
+  advance(frames: number): void {
+    const dt = Math.min(frames, 4); // a long stall must not teleport everything
+    this.t += dt / 60;
+    this.shake *= Math.pow(0.85, dt);
+    if (this.shake < 0.1) this.shake = 0;
+    this.flash *= Math.pow(0.85, dt);
+
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 0.01 * dt;
+      p.vx *= Math.pow(0.97, dt);
+      p.vy *= Math.pow(0.97, dt);
+      p.life -= dt;
+      if (p.life <= 0) this.particles.splice(i, 1);
+    }
+
+    for (let i = this.floaters.length - 1; i >= 0; i--) {
+      const f = this.floaters[i];
+      f.y -= 0.014 * dt;
+      f.life -= dt;
+      if (f.life <= 0) this.floaters.splice(i, 1);
+    }
+
+    for (let i = this.departing.length - 1; i >= 0; i--) {
+      const d = this.departing[i];
+      if (d.delay > 0) {
+        d.delay -= dt;
+        continue;
+      }
+      d.life -= dt;
+      if (d.life <= 0) this.departing.splice(i, 1);
+    }
+
+    for (let i = this.sweeps.length - 1; i >= 0; i--) {
+      const sw = this.sweeps[i];
+      sw.life -= dt;
+      if (sw.life <= 0) this.sweeps.splice(i, 1);
+    }
+
+    for (const [id, v] of this.trayIn) {
+      if (v < 1) this.trayIn.set(id, Math.min(1, v + 0.11 * dt));
+    }
+    this.dragDt = dt;
+  }
+
+  private dragDt = 1;
+
   draw(game: Game, drag: DragState | null): void {
     const ctx = this.ctx;
     const L = this.layout();
     const w = this.canvas.width / this.dpr;
     const h = this.canvas.height / this.dpr;
-    this.t += 1 / 60;
 
     ctx.save();
     ctx.scale(this.dpr, this.dpr);
@@ -221,8 +421,6 @@ export class Renderer {
 
     const sx = (Math.random() - 0.5) * this.shake;
     const sy = (Math.random() - 0.5) * this.shake;
-    this.shake *= 0.85;
-    if (this.shake < 0.1) this.shake = 0;
 
     ctx.save();
     ctx.translate(L.ox + sx, L.oy + sy);
@@ -230,15 +428,13 @@ export class Renderer {
     this.drawTiles(ctx, L.cell, game);
     this.drawDeparting(ctx, L.cell);
     this.drawSweeps(ctx, L.cell);
-    const snapped = drag ? this.drawDropPreview(ctx, L.cell, game, drag) : false;
+    if (drag) this.drawDragShadow(ctx, L.cell, game, drag);
     this.drawParticles(ctx, L.cell);
     this.drawFloaters(ctx, L.cell);
+    if (drag) this.drawDraggedPiece(ctx, L, game, drag);
     ctx.restore();
 
     this.drawTray(ctx, L, game, drag);
-    // Once the piece has snapped into the grid, the copy under the finger is a
-    // second answer to the same question — so it fades out of the way.
-    if (drag) this.drawHeldPiece(ctx, L, drag, snapped);
     ctx.restore();
 
     if (this.flash > 0.001) {
@@ -247,30 +443,42 @@ export class Renderer {
       ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.22})`;
       ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.restore();
-      this.flash *= 0.85;
     }
   }
 
   private drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number): void {
-    const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, '#0d1024');
-    g.addColorStop(0.55, PALETTE.bg);
-    g.addColorStop(1, '#05060e');
-    ctx.fillStyle = g;
+    if (!this.bgGradient) {
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#0d1024');
+      g.addColorStop(0.55, PALETTE.bg);
+      g.addColorStop(1, '#05060e');
+      this.bgGradient = g;
+    }
+    ctx.fillStyle = this.bgGradient;
     ctx.fillRect(0, 0, w, h);
   }
 
+  /** The empty grid never changes, so it is painted once and blitted. */
   private drawGrid(ctx: CanvasRenderingContext2D, cell: number): void {
-    ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,0.035)';
-    for (let row = 0; row < CFG.rows; row++) {
-      for (let col = 0; col < CFG.cols; col++) {
-        const pad = cell * 0.06;
-        roundRect(ctx, col * cell + pad, row * cell + pad, cell - pad * 2, cell - pad * 2, cell * 0.18);
-        ctx.fill();
+    const w = cell * CFG.cols;
+    const h = cell * CFG.rows;
+    if (!this.gridSprite) {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(w * this.dpr);
+      canvas.height = Math.ceil(h * this.dpr);
+      const c = canvas.getContext('2d')!;
+      c.scale(this.dpr, this.dpr);
+      c.fillStyle = 'rgba(255,255,255,0.035)';
+      const pad = cell * 0.06;
+      for (let row = 0; row < CFG.rows; row++) {
+        for (let col = 0; col < CFG.cols; col++) {
+          roundRect(c, col * cell + pad, row * cell + pad, cell - pad * 2, cell - pad * 2, cell * 0.18);
+          c.fill();
+        }
       }
+      this.gridSprite = canvas;
     }
-    ctx.restore();
+    ctx.drawImage(this.gridSprite, 0, 0, w, h);
   }
 
   private drawTiles(ctx: CanvasRenderingContext2D, cell: number, game: Game): void {
@@ -282,6 +490,7 @@ export class Renderer {
     }
   }
 
+  /** Blit a cached tile. Scale comes from the placement animation. */
   private drawTile(
     ctx: CanvasRenderingContext2D,
     cell: number,
@@ -293,65 +502,13 @@ export class Renderer {
     // Overshoot then settle: a tile that eases straight to size reads as
     // appearing, one that overshoots reads as being put down.
     const grow = anim >= 1 ? 1 : 0.8 + 0.28 * anim - 0.08 * anim * anim;
-    const pad = cell * 0.06 + (cell * (1 - grow)) / 2;
-    const x = x0 + pad;
-    const y = y0 + pad;
-    const s = cell - pad * 2;
-    const radius = cell * 0.18;
+    const sprite = this.tileSprite(tile.kind, tile.hue);
+    // The sprite's margin is proportional, so it scales with the blit.
+    const pad = cell * 0.16;
+    const box = (cell + pad * 2) * grow;
+    const offset = pad * grow + (cell * (1 - grow)) / 2;
 
-    let core: string;
-    let glow: string;
-    if (tile.kind === TileKind.Stone) {
-      core = PALETTE.stone.core;
-      glow = PALETTE.stone.glow;
-    } else if (tile.kind === TileKind.Gem) {
-      core = PALETTE.gem.core;
-      glow = PALETTE.gem.glow;
-    } else if (tile.kind === TileKind.Crate) {
-      core = PALETTE.crate.core;
-      glow = PALETTE.crate.glow;
-    } else {
-      core = hueColour(tile.hue);
-      glow = hueGlow(tile.hue);
-    }
-
-    ctx.save();
-    roundRect(ctx, x, y, s, s, radius);
-    const grad = ctx.createLinearGradient(x, y, x, y + s);
-    grad.addColorStop(0, glow);
-    grad.addColorStop(1, core);
-    ctx.fillStyle = grad;
-    ctx.shadowColor = core;
-    ctx.shadowBlur = cell * 0.28;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    ctx.globalAlpha = 0.26;
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = Math.max(1, cell * 0.035);
-    roundRect(ctx, x + s * 0.08, y + s * 0.08, s * 0.84, s * 0.84, radius * 0.7);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    if (tile.kind === TileKind.Gem) {
-      const rim = ctx.createLinearGradient(x, y, x + s, y + s);
-      const shift = (this.t * 90 + x * 0.6 + y * 0.4) % 360;
-      for (let i = 0; i <= 5; i++) rim.addColorStop(i / 5, `hsl(${(shift + i * 60) % 360}, 95%, 65%)`);
-      ctx.strokeStyle = rim;
-      ctx.lineWidth = Math.max(1.5, cell * 0.07);
-      roundRect(ctx, x, y, s, s, radius);
-      ctx.stroke();
-    }
-
-    if (tile.kind === TileKind.Bomb) {
-      ctx.fillStyle = 'rgba(0,0,0,0.75)';
-      ctx.font = `${Math.round(cell * 0.44)}px system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('✦', x0 + cell / 2, y0 + cell / 2);
-    }
-    ctx.restore();
-
+    ctx.drawImage(sprite, x0 - offset, y0 - offset, box, box);
     this.drawDamage(ctx, cell, x0, y0, tile);
   }
 
@@ -392,15 +549,8 @@ export class Renderer {
   private drawDeparting(ctx: CanvasRenderingContext2D, cell: number): void {
     for (let i = this.departing.length - 1; i >= 0; i--) {
       const d = this.departing[i];
-      if (d.delay > 0) {
-        d.delay--;
-        continue;
-      }
-      if (--d.life <= 0) {
-        this.departing.splice(i, 1);
-        continue;
-      }
-      const t = d.life / d.maxLife;
+      if (d.delay > 0) continue;
+      const t = Math.max(0, d.life / d.maxLife);
       ctx.save();
       ctx.globalAlpha = t;
       const grow = 1 + (1 - t) * 0.45;
@@ -431,11 +581,7 @@ export class Renderer {
   private drawSweeps(ctx: CanvasRenderingContext2D, cell: number): void {
     for (let i = this.sweeps.length - 1; i >= 0; i--) {
       const sw = this.sweeps[i];
-      if (--sw.life <= 0) {
-        this.sweeps.splice(i, 1);
-        continue;
-      }
-      const t = 1 - sw.life / sw.maxLife;
+      const t = 1 - Math.max(0, sw.life) / sw.maxLife;
       const span = (sw.vertical ? CFG.rows : CFG.cols) * cell;
       const head = t * span;
 
@@ -455,43 +601,90 @@ export class Renderer {
   }
 
   /**
-   * The drop preview. A ghost of the piece sits in the cells it would occupy,
-   * and anything the placement would clear is outlined right then — so the
-   * consequence of a move is visible before the finger lifts, and a move is a
-   * decision rather than a guess.
+   * The dark footprint the piece is about to occupy, drawn under everything so
+   * the target reads even while the piece itself is still easing into place.
    */
-  private drawDropPreview(
+  private drawDragShadow(
     ctx: CanvasRenderingContext2D,
     cell: number,
     game: Game,
     drag: DragState,
-  ): boolean {
-    if (!drag.target) return false;
-    const { valid, footprint, clears } = game.previewPlacement(
-      drag.item,
-      drag.target.col,
-      drag.target.row,
-    );
+  ): void {
+    const target = this.dragTarget(drag);
+    const { valid, footprint, clears } = game.previewPlacement(drag.item, target.col, target.row);
 
     ctx.save();
-    if (!valid) {
-      ctx.globalAlpha = 0.35;
-      ctx.fillStyle = PALETTE.danger;
-      for (const c of footprint) {
-        if (!game.board.inBounds(c.col, c.row)) continue;
-        const pad = cell * 0.1;
-        roundRect(ctx, c.col * cell + pad, c.row * cell + pad, cell - pad * 2, cell - pad * 2, cell * 0.16);
-        ctx.fill();
-      }
-      ctx.restore();
-      return false;
+    for (const c of footprint) {
+      if (!game.board.inBounds(c.col, c.row)) continue;
+      const pad = cell * 0.06;
+      ctx.fillStyle = valid ? 'rgba(0,0,0,0.5)' : 'rgba(255,46,99,0.28)';
+      roundRect(ctx, c.col * cell + pad, c.row * cell + pad, cell - pad * 2, cell - pad * 2, cell * 0.18);
+      ctx.fill();
     }
 
-    // Snapped: draw the piece as it will actually sit, not as a hint of it.
-    ctx.globalAlpha = 1;
-    for (const c of footprint) {
-      this.drawTile(ctx, cell, c.col * cell, c.row * cell, {
-        id: drag.item.id * 31 + c.col * 7 + c.row,
+    // Everything this placement would clear, ringed before the finger lifts.
+    if (valid && clears.length) {
+      const pulse = 0.55 + Math.sin(this.t * 9) * 0.3;
+      ctx.globalAlpha = pulse;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(2, cell * 0.07);
+      for (const ev of clears) {
+        for (const c of ev.cells) {
+          const pad = cell * 0.1;
+          roundRect(ctx, c.col * cell + pad, c.row * cell + pad, cell - pad * 2, cell - pad * 2, cell * 0.16);
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  /**
+   * The piece itself. One object for the whole gesture: it eases onto the grid
+   * when it is over a legal spot and follows the hand when it is not, so there
+   * is never a moment where it jumps between two representations.
+   */
+  private drawDraggedPiece(
+    ctx: CanvasRenderingContext2D,
+    L: Layout,
+    game: Game,
+    drag: DragState,
+  ): void {
+    const target = this.dragTarget(drag);
+    const valid = game.previewPlacement(drag.item, target.col, target.row).valid;
+    const shape = drag.item.shape;
+
+    // Freehand position, in board space, with the lift already applied.
+    const freeX = drag.px - L.ox - (shape.w * L.cell) / 2;
+    const freeY = drag.py - L.oy - L.cell * DRAG_LIFT - (shape.h * L.cell) / 2;
+    const wantX = valid ? target.col * L.cell : freeX;
+    const wantY = valid ? target.row * L.cell : freeY;
+
+    // A new gesture starts from the tray, at tray size, and grows in.
+    if (this.dragDraw.itemId !== drag.item.id) {
+      this.dragDraw = {
+        itemId: drag.item.id,
+        x: freeX,
+        y: freeY,
+        scale: this.trayScale(L, drag.item) / L.cell,
+      };
+    }
+
+    // Snapping pulls harder than free movement: that difference is the magnet.
+    const ease = 1 - Math.pow(1 - (valid ? 0.45 : 0.6), this.dragDt);
+    this.dragDraw.x += (wantX - this.dragDraw.x) * ease;
+    this.dragDraw.y += (wantY - this.dragDraw.y) * ease;
+    this.dragDraw.scale += (1 - this.dragDraw.scale) * (1 - Math.pow(0.7, this.dragDt));
+
+    const cell = L.cell * this.dragDraw.scale;
+    const ox = this.dragDraw.x + (shape.w * L.cell - shape.w * cell) / 2;
+    const oy = this.dragDraw.y + (shape.h * L.cell - shape.h * cell) / 2;
+
+    ctx.save();
+    ctx.globalAlpha = valid ? 1 : 0.72;
+    for (const [dx, dy] of shape.cells) {
+      this.drawTile(ctx, cell, ox + dx * cell, oy + dy * cell, {
+        id: drag.item.id * 31 + dx * 7 + dy,
         kind: TileKind.Colour,
         hue: drag.item.hue,
         hp: 1,
@@ -501,23 +694,7 @@ export class Renderer {
         preset: false,
       });
     }
-
-    // Everything this move takes out, ringed in advance.
-    if (clears.length) {
-      const pulse = 0.6 + Math.sin(this.t * 10) * 0.3;
-      ctx.globalAlpha = pulse;
-      ctx.lineWidth = Math.max(2, cell * 0.07);
-      for (const ev of clears) {
-        ctx.strokeStyle = '#ffffff';
-        for (const c of ev.cells) {
-          const pad = cell * 0.1;
-          roundRect(ctx, c.col * cell + pad, c.row * cell + pad, cell - pad * 2, cell - pad * 2, cell * 0.16);
-          ctx.stroke();
-        }
-      }
-    }
     ctx.restore();
-    return true;
   }
 
   private drawTray(
@@ -526,6 +703,12 @@ export class Renderer {
     game: Game,
     drag: DragState | null,
   ): void {
+    // Forget pieces that have left the tray, so the map cannot grow forever.
+    if (this.trayIn.size > 24) {
+      const live = new Set(game.tray.map((t) => t.id));
+      for (const id of this.trayIn.keys()) if (!live.has(id)) this.trayIn.delete(id);
+    }
+
     // A panel under the tray so it reads as a separate place from the board.
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.035)';
@@ -538,14 +721,23 @@ export class Renderer {
       if (item.used || drag?.item.id === item.id) continue;
 
       const cx = 10 + i * L.traySlot + L.traySlot / 2;
-      const cy = L.trayY + (L.trayBand - 10) / 2;
-      const fits = game.board.hasAnyPlacement(item.shape);
+      const fits = game.board.hasAnyPlacementCached(item.shape);
+
+      // A newly dealt piece rises into its slot, staggered across the tray.
+      let intro = this.trayIn.get(item.id);
+      if (intro === undefined) {
+        intro = -i * 0.18;
+        this.trayIn.set(item.id, intro);
+      }
+      const eased = intro <= 0 ? 0 : 1 - Math.pow(1 - intro, 3);
+      const cy = L.trayY + (L.trayBand - 10) / 2 + (1 - eased) * L.trayBand * 0.5;
 
       ctx.save();
+      ctx.globalAlpha = eased;
       // A piece that no longer fits anywhere goes dim, so a dead tray is
       // visible before it is fatal.
-      ctx.globalAlpha = fits ? 1 : 0.28;
-      this.drawShape(ctx, item, cx, cy, this.trayScale(L, item));
+      ctx.globalAlpha *= fits ? 1 : 0.28;
+      this.drawShape(ctx, item, cx, cy, this.trayScale(L, item) * (0.6 + 0.4 * eased));
       ctx.restore();
 
       // ...and if a discard is spare, it is marked as tappable to throw away.
@@ -582,43 +774,12 @@ export class Renderer {
     }
   }
 
-  /**
-   * The piece under the finger, lifted clear so the hand does not cover it.
-   *
-   * The moment it snaps into the grid this copy goes away entirely: the tiles
-   * sitting in their real cells are better feedback than a floating duplicate,
-   * and showing both — even faintly — puts two answers to the same question on
-   * screen a cell and a half apart, which is most of what made dragging feel
-   * clumsy.
-   */
-  private drawHeldPiece(
-    ctx: CanvasRenderingContext2D,
-    L: Layout,
-    drag: DragState,
-    snapped: boolean,
-  ): void {
-    if (snapped) return;
-    ctx.save();
-    ctx.globalAlpha = 0.95;
-    this.drawShape(ctx, drag.item, drag.px, drag.py - L.cell * 1.6, L.cell);
-    ctx.restore();
-  }
-
   private drawParticles(ctx: CanvasRenderingContext2D, cell: number): void {
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.01;
-      p.vx *= 0.97;
-      p.vy *= 0.97;
-      if (--p.life <= 0) {
-        this.particles.splice(i, 1);
-        continue;
-      }
-      ctx.globalAlpha = (p.life / p.maxLife) * 0.9;
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife) * 0.9;
       ctx.fillStyle = p.colour;
       ctx.beginPath();
       ctx.arc(p.x * cell, p.y * cell, p.size * cell, 0, Math.PI * 2);
@@ -634,12 +795,7 @@ export class Renderer {
     ctx.lineJoin = 'round';
     for (let i = this.floaters.length - 1; i >= 0; i--) {
       const f = this.floaters[i];
-      f.y -= 0.014;
-      if (--f.life <= 0) {
-        this.floaters.splice(i, 1);
-        continue;
-      }
-      ctx.globalAlpha = Math.min(1, f.life / 26);
+      ctx.globalAlpha = Math.min(1, Math.max(0, f.life) / 26);
       ctx.font = `900 ${Math.round(f.size * (cell / 44))}px system-ui, -apple-system, sans-serif`;
       ctx.lineWidth = Math.max(2, cell * 0.09);
       ctx.strokeStyle = 'rgba(4,6,16,0.9)';
@@ -653,8 +809,9 @@ export class Renderer {
   }
 
   private burst(x: number, y: number, colour: string, count: number): void {
-    // Capped so a big combo cannot tank the frame rate on a phone.
-    if (this.particles.length > 700) return;
+    // Capped so a big combo cannot tank the frame rate on a phone. Each one is
+    // an alpha-blended arc under 'lighter', which is not cheap in bulk.
+    if (this.particles.length > 260) return;
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;
       const sp = 0.02 + Math.random() * 0.07;

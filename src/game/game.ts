@@ -201,20 +201,43 @@ export class Game {
     );
   }
 
-  /** Where a shape would land, and what it would set off — without committing. */
+  private previewCache: {
+    key: string;
+    value: { valid: boolean; footprint: Cell[]; clears: ClearEvent[] };
+  } | null = null;
+
+  /**
+   * Where a shape would land, and what it would set off — without committing.
+   *
+   * Cached on the piece, the cell and the board version, because the renderer
+   * asks for this every frame while a finger is down and the honest answer
+   * costs a board clone.
+   */
   previewPlacement(item: TrayItem, col: number, row: number): {
     valid: boolean;
     footprint: Cell[];
     clears: ClearEvent[];
   } {
-    const footprint = this.board.footprint(item.shape, col, row);
-    if (!this.canPlace(item, col, row)) return { valid: false, footprint, clears: [] };
+    const key = `${item.id}:${col}:${row}:${this.board.version}`;
+    if (this.previewCache?.key === key) return this.previewCache.value;
 
-    // Run the real placement on a copy: what the player is shown is exactly
-    // what will happen, never an approximation of it.
-    const ghost = this.board.clone();
-    for (const cell of footprint) ghost.set(cell.col, cell.row, makeTile(TileKind.Colour, item.hue));
-    return { valid: true, footprint, clears: ghost.findClears() };
+    const footprint = this.board.footprint(item.shape, col, row);
+    let value: { valid: boolean; footprint: Cell[]; clears: ClearEvent[] };
+
+    if (!this.canPlace(item, col, row)) {
+      value = { valid: false, footprint, clears: [] };
+    } else {
+      // Run the real placement on a copy: what the player is shown is exactly
+      // what will happen, never an approximation of it.
+      const ghost = this.board.clone();
+      for (const cell of footprint) {
+        ghost.set(cell.col, cell.row, makeTile(TileKind.Colour, item.hue));
+      }
+      value = { valid: true, footprint, clears: ghost.findClears() };
+    }
+
+    this.previewCache = { key, value };
+    return value;
   }
 
   place(item: TrayItem, col: number, row: number): PlaceResult | null {

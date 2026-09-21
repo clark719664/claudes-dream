@@ -65,6 +65,8 @@ them, and the damage shows as cracking. The board carries no numbers anywhere.
 | `npm test` | Board rules, level validation, and a bot that plays all 24 levels + Classic |
 | `npm run test:browser` | Playwright drags real pieces through a level and the album |
 | `npm run typecheck` | TypeScript across `src/` and `test/` |
+| `npm run test:perf` | Frame times under CPU throttling |
+| `npm run profile` | CPU profile of a drag on a full board |
 | `npm run bundle` | Packages the whole project for handing to another model |
 
 `npm test` auto-plays **all 24 levels plus Classic** with a bot that plays the way

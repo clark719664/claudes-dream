@@ -71,6 +71,9 @@ function frame(now: number): void {
   }
 
   if (game) {
+    // Animation is driven by elapsed time, not by however many frames the
+    // device managed, so the game feels the same at 30fps as at 60.
+    renderer.advance(delta / STEP);
     renderer.draw(game, drag);
     updateHud();
   }
@@ -128,9 +131,14 @@ function consumeFx(): void {
   }
 }
 
+/** The displayed score chases the real one, so a big clear reads as a payout. */
+let shownScore = 0;
+
 function updateHud(): void {
   if (!game) return;
-  hudScore.textContent = fmt(game.score);
+  const gap = game.score - shownScore;
+  shownScore = Math.abs(gap) < 2 ? game.score : shownScore + Math.ceil(gap * 0.18);
+  hudScore.textContent = fmt(shownScore);
   hudShots.textContent = Number.isFinite(game.movesLeft)
     ? String(Math.max(0, game.movesLeft))
     : '∞';
@@ -141,18 +149,9 @@ function updateHud(): void {
 
 // --------------------------------------------------------------- input ---
 /**
- * One gesture: press a tray piece, drag it onto the board, let go. The piece is
- * drawn above the finger so it is never hidden by the hand, and the cell it
- * snaps to is offset to match — what the preview outlines is what gets placed.
+ * One gesture: press a tray piece, drag it, let go. The renderer owns where a
+ * drag lands, so what is drawn and what is placed cannot disagree.
  */
-function targetCellFor(item: DragState['item'], clientX: number, clientY: number) {
-  const anchor = renderer.toCell(clientX, clientY - renderer.layout().cell * 1.6);
-  return {
-    col: anchor.col - Math.floor((item.shape.w - 1) / 2),
-    row: anchor.row - Math.floor((item.shape.h - 1) / 2),
-  };
-}
-
 canvas.addEventListener('pointerdown', (ev) => {
   unlockAudio();
   if (!game || paused || game.phase !== Phase.Placing) return;
@@ -162,7 +161,7 @@ canvas.addEventListener('pointerdown', (ev) => {
   if (!item || item.used) return;
 
   // A piece with nowhere to go can be thrown away, if a discard is spare.
-  if (!game.board.hasAnyPlacement(item.shape)) {
+  if (!game.board.hasAnyPlacementCached(item.shape)) {
     if (game.discard(item)) haptics.reward();
     else haptics.tap();
     return;
@@ -170,7 +169,7 @@ canvas.addEventListener('pointerdown', (ev) => {
 
   canvas.setPointerCapture(ev.pointerId);
   const p = renderer.toLocal(ev.clientX, ev.clientY);
-  drag = { item, px: p.x, py: p.y, target: targetCellFor(item, ev.clientX, ev.clientY) };
+  drag = { item, px: p.x, py: p.y };
   haptics.tap();
 });
 
@@ -179,17 +178,17 @@ canvas.addEventListener('pointermove', (ev) => {
   const p = renderer.toLocal(ev.clientX, ev.clientY);
   drag.px = p.x;
   drag.py = p.y;
-  drag.target = targetCellFor(drag.item, ev.clientX, ev.clientY);
 });
 
 function endDrag(ev: PointerEvent): void {
   if (!game || !drag) return;
   const held = drag;
+  const p = renderer.toLocal(ev.clientX, ev.clientY);
+  held.px = p.x;
+  held.py = p.y;
+  const target = renderer.dragTarget(held);
   drag = null;
-  const target = targetCellFor(held.item, ev.clientX, ev.clientY);
-  if (game.place(held.item, target.col, target.row)) {
-    haptics.hit();
-  }
+  if (game.place(held.item, target.col, target.row)) haptics.hit();
 }
 
 canvas.addEventListener('pointerup', endDrag);
@@ -223,6 +222,7 @@ function startClassic(): void {
   resultShown = false;
   paused = false;
   drag = null;
+  shownScore = 0;
   accumulator = 0;
   game = new Game(CLASSIC, activePerks());
   hudGoalText.textContent = 'Classic · lines';
@@ -237,6 +237,7 @@ function startLevel(levelId: number): void {
 
   classicMode = false;
   currentLevelId = levelId;
+  shownScore = 0;
   resultShown = false;
   paused = false;
   drag = null;

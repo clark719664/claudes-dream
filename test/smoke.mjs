@@ -92,7 +92,7 @@ const trayCentreY = geom.top + geom.trayY + (geom.trayBand - 10) / 2;
 async function dropAt(slot, gx, gy, shot) {
   const fromX = geom.left + 10 + slot * ((geom.width - 20) / 3) + (geom.width - 20) / 6;
   const toX = geom.left + geom.ox + (gx + 0.5) * geom.cell;
-  const toY = geom.top + geom.oy + (gy + 0.5) * geom.cell + geom.cell * 1.6;
+  const toY = geom.top + geom.oy + (gy + 0.5) * geom.cell + geom.cell * 1.35;
 
   await page.mouse.move(fromX, trayCentreY);
   await page.mouse.down();

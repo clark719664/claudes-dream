@@ -40,6 +40,8 @@ export class Board {
   cells: (Tile | null)[];
   /** Bomb blast reach in cells; 1 is 3x3, raised to 2 by "Cursed Carnival". */
   bombRadius = 1;
+  /** Bumped on every change, so callers can cache derived answers safely. */
+  version = 0;
 
   constructor() {
     this.cells = new Array(this.cols * this.rows).fill(null);
@@ -58,7 +60,9 @@ export class Board {
   }
 
   set(col: number, row: number, t: Tile | null): void {
-    if (this.inBounds(col, row)) this.cells[this.idx(col, row)] = t;
+    if (!this.inBounds(col, row)) return;
+    this.cells[this.idx(col, row)] = t;
+    this.version++;
   }
 
   get occupied(): number {
@@ -94,7 +98,27 @@ export class Board {
     return true;
   }
 
-  /** Anywhere at all this shape still fits. Used for the dead-board check. */
+  /**
+   * Anywhere at all this shape still fits.
+   *
+   * Cached on the board version: the renderer asks this for every tray piece on
+   * every frame, and a full scan is up to 64 positions by 9 cells each.
+   */
+  private fitCache = new Map<string, boolean>();
+  private fitCacheVersion = -1;
+
+  hasAnyPlacementCached(shape: ShapeDef): boolean {
+    if (this.fitCacheVersion !== this.version) {
+      this.fitCache.clear();
+      this.fitCacheVersion = this.version;
+    }
+    const hit = this.fitCache.get(shape.id);
+    if (hit !== undefined) return hit;
+    const fits = this.hasAnyPlacement(shape);
+    this.fitCache.set(shape.id, fits);
+    return fits;
+  }
+
   hasAnyPlacement(shape: ShapeDef): boolean {
     for (let row = 0; row <= this.rows - shape.h; row++) {
       for (let col = 0; col <= this.cols - shape.w; col++) {
@@ -282,6 +306,7 @@ export class Board {
   clone(): Board {
     const b = new Board();
     b.bombRadius = this.bombRadius;
+    b.version = this.version;
     b.cells = this.cells.map((c) => (c ? { ...c } : null));
     return b;
   }
