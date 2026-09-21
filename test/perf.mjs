@@ -1,7 +1,6 @@
 import { chromium } from 'playwright';
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-});
+import { chromiumOptions } from './browser.mjs';
+const browser = await chromium.launch(chromiumOptions());
 // Throttle CPU to something phone-like; a desktop core hides frame cost.
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 const client = await page.context().newCDPSession(page);

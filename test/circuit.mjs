@@ -1,8 +1,7 @@
 /** Drives the Circuit: surge, collect, build a Beacon, finish a Sector. */
 import { chromium } from 'playwright';
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-});
+import { chromiumOptions } from './browser.mjs';
+const browser = await chromium.launch(chromiumOptions());
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));

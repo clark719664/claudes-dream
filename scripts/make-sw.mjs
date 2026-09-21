@@ -4,9 +4,10 @@
  * worker that lists stale names would serve a broken app offline.
  */
 import { readdirSync, writeFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const DIST = new URL('../dist/', import.meta.url).pathname;
+const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
 
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {
@@ -16,7 +17,7 @@ function walk(dir) {
 }
 
 const assets = walk(DIST)
-  .map((f) => './' + relative(DIST, f).split('\\').join('/'))
+  .map((f) => './' + relative(DIST, f).split(sep).join('/'))
   .filter((f) => !f.endsWith('sw.js'));
 
 // The cache name carries the build's own fingerprint, so a new build takes

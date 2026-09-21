@@ -5,6 +5,11 @@
  */
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { chromiumOptions } from '../test/browser.mjs';
+
+const PUBLIC = fileURLToPath(new URL('../public/', import.meta.url));
 
 const ICON = (size) => `<!doctype html><html><body style="margin:0">
 <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 512 512">
@@ -34,17 +39,12 @@ const ICON = (size) => `<!doctype html><html><body style="margin:0">
   </g>
 </svg></body></html>`;
 
-mkdirSync(new URL('../public', import.meta.url), { recursive: true });
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-});
+mkdirSync(PUBLIC, { recursive: true });
+const browser = await chromium.launch(chromiumOptions());
 for (const size of [180, 192, 512]) {
   const page = await browser.newPage({ viewport: { width: size, height: size } });
   await page.setContent(ICON(size));
-  await page.screenshot({
-    path: new URL(`../public/icon-${size}.png`, import.meta.url).pathname,
-    omitBackground: false,
-  });
+  await page.screenshot({ path: join(PUBLIC, `icon-${size}.png`), omitBackground: false });
   await page.close();
   console.log(`public/icon-${size}.png`);
 }

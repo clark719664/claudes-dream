@@ -62,9 +62,14 @@ Xcode or Android Studio, which this repo cannot run for you.
 ### Local development
 
 ```bash
+git clone https://github.com/clark719664/claudes-dream.git
+cd claudes-dream
 npm install
 npm run dev          # binds to your LAN; open the printed URL on your phone
 ```
+
+📖 **[docs/SETUP.md](docs/SETUP.md)** — running it on Windows, macOS or Linux,
+getting it onto a phone, native builds, and pointing an AI agent at the repo.
 
 ## The rules
 

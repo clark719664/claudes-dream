@@ -1,8 +1,7 @@
 /** Where the frame actually goes, from a real CPU profile rather than a guess. */
 import { chromium } from 'playwright';
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-});
+import { chromiumOptions } from './browser.mjs';
+const browser = await chromium.launch(chromiumOptions());
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 const client = await page.context().newCDPSession(page);
 await client.send('Emulation.setCPUThrottlingRate', { rate: 6 });

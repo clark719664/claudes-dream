@@ -9,17 +9,21 @@
  * The brief goes first on purpose: a model should read the task before the
  * 130 KB of code it applies to.
  */
-import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, rmSync, writeFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { writeZip } from './zip.mjs';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+// fileURLToPath, not URL.pathname: on Windows the latter yields "/C:/..." and
+// every path built from it is wrong.
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const OUT = join(ROOT, 'package');
 
 /** Ordered so a reader meets the task, then the design, then the code. */
 const FILES = [
   'docs/GEMINI_ART_BRIEF.md',
   'README.md',
+  'docs/SETUP.md',
   'docs/GAME_DESIGN.md',
   'package.json',
   'tsconfig.json',
@@ -130,9 +134,13 @@ writeFileSync(mdPath, bundle);
 
 // The zip carries the real files, for anyone who would rather open a project.
 const zipPath = join(OUT, 'prism-break-source.zip');
-execFileSync('zip', ['-q', '-X', zipPath, ...FILES, 'package/prism-break-source.md'], {
-  cwd: ROOT,
-});
+writeZip(zipPath, [
+  ...FILES.filter((rel) => !missing.includes(rel)).map((rel) => ({
+    name: rel,
+    data: readFileSync(join(ROOT, rel)),
+  })),
+  { name: 'package/prism-break-source.md', data: Buffer.from(bundle, 'utf8') },
+]);
 
 const kb = (p) => `${(statSync(p).size / 1024).toFixed(1)} KB`;
 console.log(`prism-break-source.md   ${kb(mdPath)}  (${FILES.length} files)`);

@@ -1,9 +1,8 @@
 /** Verifies the app actually installs: manifest, icons, offline, standalone. */
 import { chromium } from 'playwright';
+import { chromiumOptions } from './browser.mjs';
 
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-});
+const browser = await chromium.launch(chromiumOptions());
 const ctx = await browser.newContext({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 2,

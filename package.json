@@ -4,6 +4,9 @@
   "private": true,
   "description": "Prism Break - a one-thumb colour-chaining brick breaker with a collectible sticker album.",
   "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
     "dev": "vite",
     "build": "npm run typecheck && vite build && node scripts/make-sw.mjs",
@@ -11,6 +14,7 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p test",
     "bundle": "npm run build && node scripts/bundle.mjs",
     "icons": "node scripts/make-icons.mjs",
+    "setup:browser": "playwright install chromium",
     "test": "tsx test/run.ts",
     "test:browser": "node test/smoke.mjs ./test/shots && node test/smoke-meta.mjs ./test/shots && node test/circuit.mjs ./test/shots && node test/pwa.mjs",
     "test:perf": "node test/prof.mjs && node test/perf.mjs",
