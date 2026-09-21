@@ -385,7 +385,19 @@ async function setupNativeShell(): Promise<void> {
   await StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
 }
 
+/**
+ * Register the service worker so the game installs to a home screen and runs
+ * offline. Failure here is never fatal — it just means no offline copy.
+ */
+function registerServiceWorker(): void {
+  if (!('serviceWorker' in navigator)) return;
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register(new URL('sw.js', location.href)).catch(() => {});
+  });
+}
+
 loadProfile();
+registerServiceWorker();
 initAudio(profile.muted);
 renderer.resize();
 void setupNativeShell();

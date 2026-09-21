@@ -33,15 +33,31 @@ Store and Google Play.
 📖 **[docs/GAME_DESIGN.md](docs/GAME_DESIGN.md)** — the full design: mechanics,
 levels, economy, viral loops, measured balance, and what is built vs. designed.
 
-## Play it
+## Put it on your phone
+
+The game is a **PWA**: installed to a home screen it runs fullscreen, with its
+own icon, no browser chrome and no address bar, and works offline. That is the
+only way to judge how it feels — inside a browser tab, or worse an iframe, it is
+a web page with a game in it.
+
+Once GitHub Pages is enabled for this repo (Settings → Pages → Source: GitHub
+Actions), every push publishes to
+`https://<user>.github.io/<repo>/`. Then:
+
+- **iPhone** — open that URL in Safari, tap Share, **Add to Home Screen**
+- **Android** — open it in Chrome, menu, **Install app**
+
+Launch it from the icon, not the browser.
+
+For a true native build, Capacitor is already configured — see below. That needs
+Xcode or Android Studio, which this repo cannot run for you.
+
+### Local development
 
 ```bash
 npm install
-npm run dev          # then open the printed URL on your phone (same Wi-Fi)
+npm run dev          # binds to your LAN; open the printed URL on your phone
 ```
-
-The dev server binds to your LAN, so the fastest way to feel whether it is
-actually fun is to open it on a real phone rather than in a desktop browser.
 
 ## The rules
 
