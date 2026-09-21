@@ -1,0 +1,10 @@
+node_modules/
+dist/
+test/shots/
+.DS_Store
+*.log
+
+# Capacitor generates these from the web build; they are not source.
+/ios/
+/android/
+.capacitor/
