@@ -1,0 +1,51 @@
+# Compiles the iOS app on a GitHub-hosted Mac — real Apple hardware, properly
+# licensed, Xcode preinstalled. This is how you build for iOS without owning a
+# Mac and without breaching Apple's licence by virtualising macOS elsewhere.
+#
+# Manual trigger only: macOS runners bill at 10x the rate of Linux ones, so on
+# a private repo they eat a monthly allowance fast.
+#
+# This builds UNSIGNED, which proves the app compiles and links. Producing an
+# installable .ipa needs an Apple Developer account and signing certificates —
+# see docs/SETUP.md.
+name: iOS build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - run: npx cap add ios
+      - run: npx cap sync ios
+
+      - name: Install CocoaPods dependencies
+        working-directory: ios/App
+        run: pod install
+
+      - name: Compile (unsigned)
+        working-directory: ios/App
+        run: |
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Report
+        run: echo "iOS target compiles. Signing needs an Apple Developer account."

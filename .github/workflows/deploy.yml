@@ -1,6 +1,10 @@
-# Publishes the game to GitHub Pages on every push to the feature branch, so
-# there is a real URL to install from a phone home screen — not an iframe
-# inside another page, which is where this was being judged before.
+# Publishes the game to GitHub Pages on every push, so there is a real URL to
+# install from a phone home screen.
+#
+# NOTE: GitHub Pages on a *private* repository needs a paid plan (Pro, Team or
+# Enterprise). On a free account this workflow will fail until the repo is made
+# public — or use Netlify, Vercel or Cloudflare Pages, all of which serve a
+# private repo on their free tier. See docs/SETUP.md.
 name: Deploy to GitHub Pages
 
 on:

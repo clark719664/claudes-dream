@@ -1,0 +1,44 @@
+# Builds an installable Android APK on a free Linux runner. No Mac, no Android
+# Studio, no Play Store account — download the artifact and sideload it.
+name: Android APK
+
+on:
+  push:
+    branches: [main, claude/viral-mobile-game-collectibles-i538fb]
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - run: npm ci
+      - run: npm run build
+
+      # The native project is generated rather than committed, so it always
+      # matches the current Capacitor config and plugin set.
+      - run: npx cap add android
+      - run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prism-break-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

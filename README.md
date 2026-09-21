@@ -135,8 +135,12 @@ platform SDKs (Xcode for iOS, Android Studio for Android):
 ```bash
 npm run cap:add      # one time: creates ./ios and ./android
 npm run android      # build, sync, open in Android Studio
-npm run ios          # build, sync, open in Xcode
+npm run ios          # build, sync, open in Xcode   (macOS only)
 ```
+
+Or skip the local toolchain entirely: **Actions → Android APK** builds an
+installable APK on every push, and **Actions → iOS build** compiles on a
+GitHub-hosted Mac. See [docs/SETUP.md](docs/SETUP.md).
 
 `npm run cap:sync` rebuilds the web bundle and pushes it into both native
 projects. App id and native theming live in `capacitor.config.ts`.

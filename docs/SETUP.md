@@ -74,19 +74,33 @@ npm run setup:browser
 
 ## 5. Getting it onto a phone as a real app
 
-### The quick way — install the web app
+### A real Android APK — no Mac, no Android Studio, no store account
 
-No Apple or Google account, no build tools, works today.
+`.github/workflows/android.yml` builds an installable APK on a free Linux
+runner on every push. To get it onto a phone:
 
-1. In the repo on GitHub: **Settings → Pages → Source: GitHub Actions**
-2. Push anything. The workflow in `.github/workflows/deploy.yml` publishes to
-   `https://clark719664.github.io/claudes-dream/`
-3. On the phone open that URL and:
+1. GitHub → **Actions** → **Android APK** → the latest run
+2. Download the **prism-break-debug-apk** artifact and unzip it
+3. Put the `.apk` on the phone (email, Drive, USB) and tap it
+4. Android will ask you to allow installing from that source — allow it once
+
+That is a genuine native app: its own icon in the launcher, fullscreen, no
+browser anywhere in it. It is a *debug* build, so it is signed with Android's
+debug key — fine for your own device, not for the Play Store.
+
+### The web app — works on both, installs in seconds
+
+1. Host the built `dist/` somewhere. **This repo is private, and GitHub Pages
+   on a private repo needs a paid plan** — so either make the repo public, or
+   use **Netlify**, **Vercel** or **Cloudflare Pages**, all of which serve a
+   private repo free. Point any of them at this repo with build command
+   `npm run build` and publish directory `dist`.
+2. On the phone, open the URL and:
    - **iPhone**: Safari → Share → **Add to Home Screen**
    - **Android**: Chrome → menu → **Install app**
 
-Launch it from the icon, not the browser. It runs fullscreen with no address
-bar and works with no signal.
+Launch it from the icon, not the browser. Fullscreen, no address bar, works
+with no signal.
 
 ### The full way — a native build
 
@@ -103,10 +117,30 @@ npm run ios          # build, sync, open in Xcode   (macOS only)
 First launch, let it download the SDK and a virtual device. `npm run android`
 then opens the project and you press Run.
 
-**iOS**: needs **Xcode**, which only runs on macOS. There is no way around this
-on a PC — not Windows, not Linux. Options are a Mac, a rented cloud Mac
-(MacStadium, Scaleway and others rent them by the hour), or shipping Android
-first and doing iOS when you have access to one.
+**iOS** needs **Xcode**, which only runs on macOS.
+
+A quick word on the obvious workaround: running macOS in a VM on a PC. It is
+technically possible, and it **breaches Apple's software licence**, which
+permits virtualising macOS only on Apple-branded hardware. Worth knowing before
+you build a release pipeline on top of it.
+
+The ways that do work:
+
+| | What it costs | Good for |
+| --- | --- | --- |
+| **GitHub Actions macOS runner** | Free minutes, billed at 10× | Building and testing in CI. `.github/workflows/ios.yml` already does this |
+| **Rented cloud Mac** | Roughly £0.10–£0.60/hour (Scaleway, MacStadium, AWS EC2 Mac) | Interactive Xcode when you need the simulator or the debugger |
+| **A Mac** | Mac mini from ~£599 | Everything, if iOS becomes the main platform |
+| **macOS VM on a Mac** | Free, licensed for up to 2 VMs | Clean build environments, once you have a Mac |
+
+`.github/workflows/ios.yml` compiles the app unsigned on a GitHub Mac — real
+Apple hardware, properly licensed — which proves it builds. Run it from the
+Actions tab. It is manual-trigger only because macOS minutes bill at 10× and go
+quickly on a private repo.
+
+Turning that into something installable needs an **Apple Developer account**
+($99/year). With one, the same workflow can sign the build and push it to
+TestFlight, and you never touch a Mac directly.
 
 For either store you will also need: app icons and splash screens, a signing
 certificate, a developer account (Apple $99/year, Google $25 once), a privacy
