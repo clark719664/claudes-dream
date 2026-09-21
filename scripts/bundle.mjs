@@ -1,0 +1,137 @@
+/**
+ * Packages the whole project into two things you can hand to another model:
+ *
+ *   package/prism-break-source.md   one file, brief first, then every source
+ *                                   file — paste or upload this straight into
+ *                                   Gemini
+ *   package/prism-break-source.zip  the same files as a normal archive
+ *
+ * The brief goes first on purpose: a model should read the task before the
+ * 130 KB of code it applies to.
+ */
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, readFileSync, rmSync, writeFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+
+const ROOT = new URL('..', import.meta.url).pathname;
+const OUT = join(ROOT, 'package');
+
+/** Ordered so a reader meets the task, then the design, then the code. */
+const FILES = [
+  'docs/GEMINI_ART_BRIEF.md',
+  'README.md',
+  'docs/GAME_DESIGN.md',
+  'package.json',
+  'tsconfig.json',
+  'vite.config.ts',
+  'capacitor.config.ts',
+  'index.html',
+  'src/main.ts',
+  'src/style.css',
+  'src/game/config.ts',
+  'src/game/types.ts',
+  'src/game/grid.ts',
+  'src/game/physics.ts',
+  'src/game/game.ts',
+  'src/game/render.ts',
+  'src/core/rng.ts',
+  'src/core/storage.ts',
+  'src/core/audio.ts',
+  'src/core/haptics.ts',
+  'src/meta/stickers.ts',
+  'src/meta/profile.ts',
+  'src/meta/packs.ts',
+  'src/ui/dom.ts',
+  'src/ui/screens.ts',
+  'test/run.ts',
+  'test/smoke.mjs',
+  'test/smoke-meta.mjs',
+  'test/tsconfig.json',
+];
+
+const LANG = {
+  ts: 'ts',
+  mjs: 'js',
+  js: 'js',
+  json: 'json',
+  css: 'css',
+  html: 'html',
+  md: 'md',
+};
+
+/** Files that matter most to an art pass, called out up front. */
+const HOTSPOTS = {
+  'src/game/render.ts': 'All drawing. `drawBlock` and `drawArmour` are what the art replaces.',
+  'src/game/config.ts': 'Every tunable, plus PALETTE — the five hues and their exact hex.',
+  'src/game/types.ts': 'Block, Ball, Pickup and the BlockKind enum a new block type extends.',
+  'src/game/grid.ts': 'Gravity-up, cascade detection, bomb chains, wave generation.',
+  'src/game/physics.ts': 'Resonance, repaint, the energy budget, collision.',
+  'src/game/game.ts': 'The run state machine and the FX events the renderer consumes.',
+};
+
+rmSync(OUT, { recursive: true, force: true });
+mkdirSync(OUT, { recursive: true });
+
+const parts = [];
+const missing = [];
+
+parts.push(`# Prism Break — complete source bundle
+
+Generated ${new Date().toISOString().slice(0, 10)} · ${FILES.length} files.
+
+This single file contains the entire game. The art & design brief is first;
+everything after it is the code that brief applies to.
+
+## Where to look first
+
+${Object.entries(HOTSPOTS)
+  .map(([f, why]) => `- \`${f}\` — ${why}`)
+  .join('\n')}
+
+## Everything in this bundle
+
+${FILES.map((f) => `- \`${f}\``).join('\n')}
+
+## How it fits together
+
+\`src/game/\` is the simulation and has no DOM or canvas reference anywhere in
+it, which is what lets the test suite auto-play thousands of waves headlessly.
+\`src/game/render.ts\` is the only file that draws. \`src/meta/\` is the sticker
+album and economy. \`src/ui/\` is the menu layer, plain DOM over the canvas.
+
+---
+`);
+
+for (const rel of FILES) {
+  let body;
+  try {
+    body = readFileSync(join(ROOT, rel), 'utf8');
+  } catch {
+    missing.push(rel);
+    continue;
+  }
+  const ext = rel.split('.').pop() ?? '';
+  const lang = LANG[ext] ?? '';
+  // Markdown files get an extra-long fence so any fences inside survive.
+  const fence = lang === 'md' ? '`````' : '```';
+  parts.push(`\n---\n\n## \`${rel}\`\n\n${fence}${lang}\n${body.trimEnd()}\n${fence}\n`);
+}
+
+const bundle = parts.join('');
+const mdPath = join(OUT, 'prism-break-source.md');
+writeFileSync(mdPath, bundle);
+
+// The zip carries the real files, for anyone who would rather open a project.
+const zipPath = join(OUT, 'prism-break-source.zip');
+execFileSync('zip', ['-q', '-X', zipPath, ...FILES, 'package/prism-break-source.md'], {
+  cwd: ROOT,
+});
+
+const kb = (p) => `${(statSync(p).size / 1024).toFixed(1)} KB`;
+console.log(`prism-break-source.md   ${kb(mdPath)}  (${FILES.length} files)`);
+console.log(`prism-break-source.zip  ${kb(zipPath)}`);
+console.log(`~${Math.round(bundle.length / 4 / 1000)}k tokens, well inside Gemini's window`);
+if (missing.length) {
+  console.error(`\nMISSING (not bundled): ${missing.join(', ')}`);
+  process.exit(1);
+}

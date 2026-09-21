@@ -271,12 +271,57 @@ export class Renderer {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('◈', col * cell + cell / 2, row * cell + cell / 2);
-    } else if (b.maxHp > 1) {
-      ctx.fillStyle = 'rgba(0,0,0,0.62)';
-      ctx.font = `700 ${Math.round(cell * 0.34)}px system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(String(b.hp), col * cell + cell / 2, row * cell + cell / 2);
+    }
+    ctx.restore();
+
+    if (b.hp > 1) this.drawArmour(ctx, cell, col, row, b.hp);
+  }
+
+  /**
+   * Health without digits. The board is read, never counted:
+   *
+   *   • each stud is worth 1        • a plate frame is worth 4
+   *
+   * so 3 = two studs, 5 = a plate, 7 = a plate and two studs, 9 = two plates.
+   * A hit visibly strips a stud or a plate, which teaches the scheme without
+   * a tutorial line. This is placeholder art — see docs/GEMINI_ART_BRIEF.md
+   * for the spec a designed block set has to satisfy in its place.
+   */
+  private drawArmour(
+    ctx: CanvasRenderingContext2D,
+    cell: number,
+    col: number,
+    row: number,
+    hp: number,
+  ): void {
+    const plates = Math.min(2, Math.floor((hp - 1) / 4));
+    const studs = hp - 1 - plates * 4;
+    const x = col * cell;
+    const y = row * cell;
+    const ink = 'rgba(8,10,24,0.72)';
+
+    ctx.save();
+    ctx.strokeStyle = ink;
+    ctx.fillStyle = ink;
+
+    for (let i = 0; i < plates; i++) {
+      const inset = cell * (0.17 + i * 0.1);
+      ctx.lineWidth = Math.max(1.5, cell * 0.055);
+      roundRect(ctx, x + inset, y + inset, cell - inset * 2, cell - inset * 2, cell * 0.11);
+      ctx.stroke();
+    }
+
+    if (studs > 0) {
+      const r = cell * 0.052;
+      const gap = cell * 0.16;
+      const cx = x + cell / 2;
+      const cy = y + cell * (plates > 0 ? 0.5 : 0.72);
+      const start = cx - ((studs - 1) * gap) / 2;
+      for (let i = 0; i < studs; i++) {
+        ctx.beginPath();
+        ctx.arc(start + i * gap, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
     ctx.restore();
   }

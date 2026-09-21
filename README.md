@@ -43,11 +43,30 @@ volley alive.
 | `npm test` | Headless mechanics tests + a balance simulation |
 | `npm run test:browser` | Playwright walk-through of the game and the album |
 | `npm run typecheck` | TypeScript across `src/` and `test/` |
+| `npm run bundle` | Packages the whole project for handing to another model |
 
 `npm test` auto-plays full runs and asserts the difficulty curve still holds —
 that random play dies around wave 22, that a targeting heuristic roughly doubles
 that, and that neither can play forever. A balance change that flattens the
 skill ceiling fails the suite.
+
+## Handing the project to another model
+
+```bash
+npm run bundle
+```
+
+writes two things into `package/`:
+
+- **`prism-break-source.md`** — the entire project as one file (~165 KB, ~42k
+  tokens), with [`docs/GEMINI_ART_BRIEF.md`](docs/GEMINI_ART_BRIEF.md) first so
+  a model reads the task before the code it applies to. Upload or paste this.
+- **`prism-break-source.zip`** — the same files as a normal archive.
+
+The brief asks for a designed block set, five block characters, an expanded
+block and item roster, and a real visual language for health — all against the
+constraints that make art succeed or fail in *this* game, chiefly that colour is
+the mechanic and must never be competed with.
 
 ## Shipping to iOS and Android
 

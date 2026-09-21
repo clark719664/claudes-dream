@@ -9,6 +9,7 @@
     "build": "npm run typecheck && vite build",
     "preview": "vite preview --host",
     "typecheck": "tsc --noEmit && tsc --noEmit -p test",
+    "bundle": "npm run build && node scripts/bundle.mjs",
     "test": "tsx test/run.ts",
     "test:browser": "node test/smoke.mjs ./test/shots && node test/smoke-meta.mjs ./test/shots",
     "cap:sync": "npm run build && cap sync",

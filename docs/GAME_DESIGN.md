@@ -68,6 +68,16 @@ Crucially, cascades resolve **after** the volley, not during it. The volley is
 the input; the collapse is the payoff. That separation gives every turn a clean
 two-beat rhythm: *tension while the ball flies, release when the wall falls in.*
 
+### Health without digits
+
+The board carries no numbers. Health is read off the block's face: a **stud** is
+worth 1 and a **plate** frame is worth 4, so 3 is two studs, 5 is a plate, and 7
+is a plate and two studs. Every hit visibly strips a mark, which teaches the
+scheme without a line of tutorial text, and keeps the player *reading* the wall
+rather than *counting* it. The current marks are placeholder art;
+[GEMINI_ART_BRIEF.md](GEMINI_ART_BRIEF.md) specifies what a designed
+replacement has to satisfy.
+
 ### Block types
 
 | | Behaviour |
