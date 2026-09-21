@@ -11,6 +11,26 @@ interface Floater {
   x: number; y: number; text: string; life: number; colour: string; size: number;
 }
 
+/** A tile that has already left the board but is still on screen. */
+interface Departing {
+  col: number;
+  row: number;
+  kind: TileKind;
+  hue: Hue;
+  life: number;
+  maxLife: number;
+  delay: number;
+}
+
+/** The bright wipe that runs down a line as it clears. */
+interface Sweep {
+  vertical: boolean;
+  index: number;
+  life: number;
+  maxLife: number;
+  colour: string;
+}
+
 /** Where the board and the tray sit, in CSS pixels. */
 export interface Layout {
   cell: number;
@@ -35,6 +55,8 @@ export interface DragState {
 export class Renderer {
   private particles: Particle[] = [];
   private floaters: Floater[] = [];
+  private departing: Departing[] = [];
+  private sweeps: Sweep[] = [];
   private shake = 0;
   private flash = 0;
   private t = 0;
@@ -126,13 +148,37 @@ export class Renderer {
         case 'place':
           this.shake = Math.min(5, this.shake + 1.5);
           break;
-        case 'shatter':
+        case 'shatter': {
           this.burst(fx.x, fx.y, hueColour(fx.hue), 8 + fx.value * 2);
+          // Keep drawing the tile for a few frames after the board drops it,
+          // so a clear reads as tiles leaving rather than tiles vanishing.
+          const col = Math.floor(fx.x);
+          const row = Math.floor(fx.y);
+          this.departing.push({
+            col,
+            row,
+            kind: fx.tileKind ?? TileKind.Colour,
+            hue: fx.hue,
+            life: 17,
+            maxLife: 17,
+            // Stagger along the line so the clear travels instead of blinking.
+            delay: ((col + row) % 8) * 1.4,
+          });
           break;
+        }
         case 'clearLine':
           // More lines at once means more of everything.
           this.shake = Math.min(20, this.shake + 4 + fx.value * 2);
           this.flash = Math.min(0.5, this.flash + 0.1 * fx.value);
+          if (fx.line) {
+            this.sweeps.push({
+              vertical: fx.line.vertical,
+              index: fx.line.index,
+              life: 16,
+              maxLife: 16,
+              colour: hueGlow(fx.hue),
+            });
+          }
           break;
         case 'gem':
           this.burst(fx.x, fx.y, '#ffffff', 22);
@@ -182,13 +228,17 @@ export class Renderer {
     ctx.translate(L.ox + sx, L.oy + sy);
     this.drawGrid(ctx, L.cell);
     this.drawTiles(ctx, L.cell, game);
-    if (drag) this.drawDropPreview(ctx, L.cell, game, drag);
+    this.drawDeparting(ctx, L.cell);
+    this.drawSweeps(ctx, L.cell);
+    const snapped = drag ? this.drawDropPreview(ctx, L.cell, game, drag) : false;
     this.drawParticles(ctx, L.cell);
     this.drawFloaters(ctx, L.cell);
     ctx.restore();
 
     this.drawTray(ctx, L, game, drag);
-    if (drag) this.drawHeldPiece(ctx, L, drag);
+    // Once the piece has snapped into the grid, the copy under the finger is a
+    // second answer to the same question — so it fades out of the way.
+    if (drag) this.drawHeldPiece(ctx, L, drag, snapped);
     ctx.restore();
 
     if (this.flash > 0.001) {
@@ -240,7 +290,9 @@ export class Renderer {
     tile: Tile,
     anim = 1,
   ): void {
-    const grow = 0.86 + 0.14 * anim;
+    // Overshoot then settle: a tile that eases straight to size reads as
+    // appearing, one that overshoots reads as being put down.
+    const grow = anim >= 1 ? 1 : 0.8 + 0.28 * anim - 0.08 * anim * anim;
     const pad = cell * 0.06 + (cell * (1 - grow)) / 2;
     const x = x0 + pad;
     const y = y0 + pad;
@@ -336,6 +388,72 @@ export class Renderer {
     ctx.restore();
   }
 
+  /** Tiles the board has already released, shrinking and flashing out. */
+  private drawDeparting(ctx: CanvasRenderingContext2D, cell: number): void {
+    for (let i = this.departing.length - 1; i >= 0; i--) {
+      const d = this.departing[i];
+      if (d.delay > 0) {
+        d.delay--;
+        continue;
+      }
+      if (--d.life <= 0) {
+        this.departing.splice(i, 1);
+        continue;
+      }
+      const t = d.life / d.maxLife;
+      ctx.save();
+      ctx.globalAlpha = t;
+      const grow = 1 + (1 - t) * 0.45;
+      const inset = (cell * (grow - 1)) / 2;
+      ctx.translate(d.col * cell - inset, d.row * cell - inset);
+      ctx.scale(grow, grow);
+      this.drawTile(ctx, cell, 0, 0, {
+        id: d.col * 97 + d.row,
+        kind: d.kind,
+        hue: d.hue,
+        hp: 1,
+        maxHp: 1,
+        anim: 1,
+        dying: true,
+        preset: false,
+      });
+      // Blown out toward white as it goes, which is what sells the pop.
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = (1 - t) * 0.8;
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, cell * 0.06, cell * 0.06, cell * 0.88, cell * 0.88, cell * 0.18);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  /** A bright wipe travelling down the row or column that just cleared. */
+  private drawSweeps(ctx: CanvasRenderingContext2D, cell: number): void {
+    for (let i = this.sweeps.length - 1; i >= 0; i--) {
+      const sw = this.sweeps[i];
+      if (--sw.life <= 0) {
+        this.sweeps.splice(i, 1);
+        continue;
+      }
+      const t = 1 - sw.life / sw.maxLife;
+      const span = (sw.vertical ? CFG.rows : CFG.cols) * cell;
+      const head = t * span;
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const grad = sw.vertical
+        ? ctx.createLinearGradient(0, head - cell * 1.6, 0, head + cell * 0.4)
+        : ctx.createLinearGradient(head - cell * 1.6, 0, head + cell * 0.4, 0);
+      grad.addColorStop(0, 'rgba(255,255,255,0)');
+      grad.addColorStop(1, sw.colour);
+      ctx.fillStyle = grad;
+      ctx.globalAlpha = (1 - t) * 0.85;
+      if (sw.vertical) ctx.fillRect(sw.index * cell, 0, cell, span);
+      else ctx.fillRect(0, sw.index * cell, span, cell);
+      ctx.restore();
+    }
+  }
+
   /**
    * The drop preview. A ghost of the piece sits in the cells it would occupy,
    * and anything the placement would clear is outlined right then — so the
@@ -347,8 +465,8 @@ export class Renderer {
     cell: number,
     game: Game,
     drag: DragState,
-  ): void {
-    if (!drag.target) return;
+  ): boolean {
+    if (!drag.target) return false;
     const { valid, footprint, clears } = game.previewPlacement(
       drag.item,
       drag.target.col,
@@ -366,15 +484,22 @@ export class Renderer {
         ctx.fill();
       }
       ctx.restore();
-      return;
+      return false;
     }
 
-    ctx.globalAlpha = 0.5;
+    // Snapped: draw the piece as it will actually sit, not as a hint of it.
+    ctx.globalAlpha = 1;
     for (const c of footprint) {
-      const pad = cell * 0.06;
-      roundRect(ctx, c.col * cell + pad, c.row * cell + pad, cell - pad * 2, cell - pad * 2, cell * 0.18);
-      ctx.fillStyle = hueGlow(drag.item.hue);
-      ctx.fill();
+      this.drawTile(ctx, cell, c.col * cell, c.row * cell, {
+        id: drag.item.id * 31 + c.col * 7 + c.row,
+        kind: TileKind.Colour,
+        hue: drag.item.hue,
+        hp: 1,
+        maxHp: 1,
+        anim: 1,
+        dying: false,
+        preset: false,
+      });
     }
 
     // Everything this move takes out, ringed in advance.
@@ -392,6 +517,7 @@ export class Renderer {
       }
     }
     ctx.restore();
+    return true;
   }
 
   private drawTray(
@@ -456,8 +582,22 @@ export class Renderer {
     }
   }
 
-  /** The piece under the finger, lifted clear of it so it stays visible. */
-  private drawHeldPiece(ctx: CanvasRenderingContext2D, L: Layout, drag: DragState): void {
+  /**
+   * The piece under the finger, lifted clear so the hand does not cover it.
+   *
+   * The moment it snaps into the grid this copy goes away entirely: the tiles
+   * sitting in their real cells are better feedback than a floating duplicate,
+   * and showing both — even faintly — puts two answers to the same question on
+   * screen a cell and a half apart, which is most of what made dragging feel
+   * clumsy.
+   */
+  private drawHeldPiece(
+    ctx: CanvasRenderingContext2D,
+    L: Layout,
+    drag: DragState,
+    snapped: boolean,
+  ): void {
+    if (snapped) return;
     ctx.save();
     ctx.globalAlpha = 0.95;
     this.drawShape(ctx, drag.item, drag.px, drag.py - L.cell * 1.6, L.cell);

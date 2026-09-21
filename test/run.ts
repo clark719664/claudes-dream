@@ -262,10 +262,16 @@ section('Auto-play: every level is winnable, and none is a walkover');
 
   ok('every level is beatable', lost.length === 0, lost.map((r) => r.id).join(','));
   ok('no level is a walkover', instant.length === 0, instant.map((r) => r.id).join(','));
+  const avgSpare = spare.reduce((a, b) => a + b, 0) / spare.length;
   ok(
-    'levels are not trivially generous with moves',
-    spare.every((s) => s < 0.8),
-    'some level leaves over 80% of its moves unused',
+    'budgets are tight, not generous',
+    spare.every((s) => s < 0.35) && avgSpare < 0.2,
+    `avg ${Math.round(avgSpare * 100)}% of the budget left unspent`,
+  );
+  ok(
+    'no level is over before it starts',
+    results.every((r) => r.moves >= 8),
+    `shortest was ${Math.min(...results.map((r) => r.moves))} moves`,
   );
   ok(
     'three stars takes better play than the bot manages everywhere',

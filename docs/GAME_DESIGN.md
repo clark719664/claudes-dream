@@ -50,6 +50,31 @@ is the same idea demoted to where it belongs. Colour is now worth *noticing*
 without ever being worth *obeying*: a player who ignores it entirely still plays
 the game correctly, and one who spots a free pure line gets paid for it.
 
+### No pause between moves
+
+The board settles the instant a piece lands — clears resolve inside the
+placement — so the next piece can go down immediately. Nothing in the game ever
+holds input while an animation finishes.
+
+An earlier build froze input for 18 frames after every clear so the shatter
+could play. Three hundred milliseconds sounds like nothing written down; in the
+hand it read as the game stopping to think after every good move, which is the
+worst possible moment to interrupt someone. The fix is that the animation does
+not own the simulation: the board is already settled, and the renderer keeps
+drawing the departed tiles on its own for a few frames after they are gone.
+
+What that buys, all of it independent of the game state: cleared tiles swell and
+flash white as they leave rather than blinking out, staggered along the line so a
+clear travels; a bright wipe runs down the row or column that went; and a placed
+piece overshoots its size slightly before settling, so it reads as being put down
+rather than appearing.
+
+The drag has one rule of its own: **one piece on screen, not two.** While a
+placement is invalid the piece follows the finger, lifted clear of the hand. The
+moment it snaps to a legal spot, the floating copy disappears and the tiles draw
+in their real cells. Showing both — even faintly — puts two answers to the same
+question a cell and a half apart.
+
 ### The deal never looks at the board
 
 Three pieces, drawn purely at random from the weighted shape pool. The board is
@@ -143,11 +168,15 @@ board with things in the way; world 3 adds creep. Objectives are `lines`,
 `clear-stone`, `clear-crates`, `clear-gems`, `clear-preset` (clear everything the
 level started with) and `score`.
 
-One rule governs every layout: **obstacles come in clusters, never scattered or
-striped.** In a game purely about fitting, a lone tile in open space ruins far
+Two rules govern every layout. **Obstacles come in clusters, never scattered or
+striped**, and **a cluster set spans at most four rows.** In a game purely about fitting, a lone tile in open space ruins far
 more placements than a 2×2 block against a wall does. A checkerboard of single
 stones looks like a fair puzzle and is unplayable — which is exactly what the
 first two passes at this table were, and what `npm test` now checks for.
+
+The four-row rule was the surprise: twelve obstacles across six rows chokes the
+board dead, while *sixteen* across four rows plays fine. It is rows spanned, not
+cell count, that decides whether a layout leaves anywhere to put a piece.
 
 A level is seeded by its **id alone**, so the board, the deal and the whole
 puzzle are identical on every attempt and every device. Retrying is retrying the
@@ -213,22 +242,26 @@ level's objective actually asks for, avoids leaving unfillable single-cell gaps,
 and builds toward
 lines that are nearly complete.
 
-Current state: the bot clears **24/24**, finishing with about **30% of the move
+Current state: the bot clears **24/24**, finishing with about **11% of the move
 budget spare** on average, and three-stars **none** of them. That is the shape
 we want — beatable by a thinking player, with the top rating still out of reach
 of merely competent play. The suite fails if any level becomes unbeatable, if
 any becomes a walkover (won in under five moves), if any leaves over 80% of its
 moves unused, or if three stars becomes automatic.
 
-Star thresholds are not hand-picked. They are generated from measured bot
-scores — 1★ at 62%, 2★ at 95%, 3★ at 130% — so the ratings track what the level
-actually plays like rather than what it looked like it should.
+Neither move budgets nor star thresholds are hand-picked. A level is handed an
+unlimited budget, the bot plays it, and the budget is set at **112% of what it
+needed** — tight enough that a good line is required, with retries free. Stars
+come from measured scores at 60%, 95% and 135%.
+
+Levels are seeded by id, so a level is the same puzzle on every attempt; the
+measurement is therefore exact rather than an average over luck.
 
 It also plays Classic: ten runs a suite, asserting every one of them *ends*,
 that a good player lasts more than 40 pieces on average and fewer than 1200, and
 that the same seed replays identically.
 
-**Six real faults this harness caught**, none of which were visible by reading
+**Seven real faults this harness caught**, none of which were visible by reading
 the code:
 
 - The deal only fit-checked one of the three pieces, so a nearly empty board
@@ -243,6 +276,10 @@ the code:
   deadlocks — made the game effectively **unloseable**: the bot ran 5,000 pieces
   in Classic without ever being stuck. A hand now stands once dealt. Being able
   to run out of room *is* the game.
+- An obstacle caught inside a cleared line was deleted outright, so an entire
+  cluster vanished in one move and obstacle levels finished before they had
+  started. Obstacles are now chipped by a line running through them exactly as
+  they are by one going off beside them.
 - Move budgets calibrated under the old helping deal were far too tight once the
   deal went random; three levels became unwinnable and four became trivial. Both
   budgets and star thresholds are now measured over seven attempts per level,

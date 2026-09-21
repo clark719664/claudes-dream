@@ -74,9 +74,10 @@ automatically, or scatters lone obstacles where clusters belong. For Classic it
 asserts every run actually *ends*, that a good player lasts 40+ pieces but under
 1200, and that a seed replays identically.
 
-It currently clears 24/24 with ~30% of the move budget spare and three-stars none
+It currently clears 24/24 with ~11% of the move budget spare and three-stars none
 of them. Move budgets and star thresholds are both generated from measured bot
-play rather than hand-picked, so they track what a level actually plays like.
+play — the budget is set at 112% of what the bot needed — so levels are tight by
+construction rather than by guesswork.
 
 ## Handing the project to another model
 

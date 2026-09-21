@@ -206,10 +206,11 @@ export class Board {
    * Remove everything the given clears touch, expanding bombs as they go.
    *
    * Obstacles cannot be covered — they occupy the cell — so they are worn down
-   * by clears going off beside them: stone takes two, a crate takes three. The
-   * alternative, requiring a full line straight through the obstacle, sounds
-   * tidier and is unplayable, because lines are the rare clear and an objective
-   * built on them stalls out completely.
+   * rather than removed. A clear beside one damages it, and a clear that runs
+   * straight through one damages it too; either way it takes the same number of
+   * hits to break. Letting a line delete an obstacle outright made a whole
+   * cluster vanish in a single move, which is what made obstacle levels finish
+   * before they had started.
    */
   applyClears(events: ClearEvent[]): { cell: Cell; tile: Tile }[] {
     const removed: { cell: Cell; tile: Tile }[] = [];
@@ -248,6 +249,14 @@ export class Board {
       const cell = queue.shift()!;
       const tile = this.at(cell.col, cell.row);
       if (!tile) continue;
+
+      // An obstacle in the line is chipped, not deleted. Splash damage above
+      // already took its hit, so this only applies to ones inside the clear.
+      if (isObstacle(tile) && !scorched.has(this.idx(cell.col, cell.row))) {
+        if (--tile.hp > 0) continue;
+      } else if (isObstacle(tile) && tile.hp > 0) {
+        continue;
+      }
 
       this.set(cell.col, cell.row, null);
       removed.push({ cell, tile });

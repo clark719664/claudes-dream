@@ -5,6 +5,7 @@ import { Rng, randomSeed } from '../core/rng';
 import { basePerks, type Perks } from '../meta/stickers';
 import { CHAR_TO_HUE, charKind, layoutRows, type LevelSpec, type Objective } from './levels';
 import {
+  ClearKind,
   HUES,
   Phase,
   TileKind,
@@ -40,6 +41,10 @@ export interface Fx {
   hue: Hue;
   value: number;
   text?: string;
+  /** What kind of tile this was, so a departing tile can be drawn as itself. */
+  tileKind?: TileKind;
+  /** For a line clear: which row or column, so the sweep runs down it. */
+  line?: { vertical: boolean; index: number };
 }
 
 let nextTrayId = 1;
@@ -85,8 +90,7 @@ export class Game {
   cratesBroken = 0;
   won = false;
 
-  /** Ticks held after a clearing move so the shatter animation can play. */
-  private resolveTimer = 0;
+
   private creepCountdown: number;
 
   readonly seed: number;
@@ -228,12 +232,15 @@ export class Game {
       this.scoreClears(result);
       this.streak++;
       this.bestCombo = Math.max(this.bestCombo, result.clears.length);
-      this.phase = Phase.Resolving;
-      this.resolveTimer = 18;
     } else {
       this.streak = 0;
-      this.afterMove();
     }
+
+    // No pause. The board is already settled, so the next piece can go down
+    // immediately while the clear plays out in the renderer. Holding input for
+    // the length of an animation is what made this feel like it was thinking
+    // between every move.
+    this.afterMove();
     return result;
   }
 
@@ -250,7 +257,14 @@ export class Game {
       this.score += Math.round(CFG.scoring.lineBonus * mult);
       this.linesCleared++;
       const c = centreOf(ev.cells);
-      this.emit('clearLine', c.x, c.y, ev.hue, result.clears.length);
+      this.fx.push({
+        kind: 'clearLine',
+        x: c.x,
+        y: c.y,
+        hue: ev.hue,
+        value: result.clears.length,
+        line: { vertical: ev.kind === ClearKind.Column, index: ev.index },
+      });
 
       // Colour never decides whether a line clears, only what it is worth.
       if (ev.monochrome) {
@@ -273,7 +287,14 @@ export class Game {
         this.score += CFG.scoring.blastBonus;
         this.emit('bomb', cell.col + 0.5, cell.row + 0.5, tile.hue, 0);
       }
-      this.emit('shatter', cell.col + 0.5, cell.row + 0.5, tile.hue, result.clears.length);
+      this.fx.push({
+        kind: 'shatter',
+        x: cell.col + 0.5,
+        y: cell.row + 0.5,
+        hue: tile.hue,
+        value: result.clears.length,
+        tileKind: tile.kind,
+      });
     }
 
     if (result.perfectClear) {
@@ -295,12 +316,8 @@ export class Game {
   // -- turn flow -----------------------------------------------------------
 
   tick(): void {
-    if (this.phase === Phase.Resolving) {
-      if (--this.resolveTimer > 0) return;
-      this.afterMove();
-    }
     for (const cell of this.board.cells) {
-      if (cell && cell.anim < 1) cell.anim = Math.min(1, cell.anim + 0.12);
+      if (cell && cell.anim < 1) cell.anim = Math.min(1, cell.anim + 0.16);
     }
   }
 

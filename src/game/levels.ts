@@ -105,17 +105,17 @@ const LEVEL_TABLE: LevelSpec[] = [
   {
     id: 1, world: 1, name: 'First Fit',
     layout: `........`,
-    moves: 12,
-    objective: { kind: 'lines', count: 3 },
-    stars: [900, 1400, 2000],
+    moves: 17,
+    objective: { kind: 'lines', count: 4 },
+    stars: [950, 1500, 2100],
     hint: 'Drag a piece from the tray onto the board. Fill a whole row or column and it clears.',
   },
   {
     id: 2, world: 1, name: 'Double Up',
     layout: `........`,
-    moves: 21,
+    moves: 18,
     objective: { kind: 'lines', count: 5 },
-    stars: [1450, 2300, 3300],
+    stars: [1100, 1750, 2500],
     hint: 'One piece that finishes two lines at once is worth far more than two that finish one each.',
   },
   {
@@ -123,16 +123,16 @@ const LEVEL_TABLE: LevelSpec[] = [
     layout: `
 ##......
 ##......
-........
-........
+......##
+......##
 ........
 ........
 ........
 ........
 `,
-    moves: 13,
+    moves: 12,
     objective: { kind: 'clear-stone' },
-    stars: [700, 1100, 1550],
+    stars: [800, 1250, 1750],
     hint: 'Stone cannot be built over. Clear a line beside it and it wears away.',
   },
   {
@@ -147,9 +147,9 @@ const LEVEL_TABLE: LevelSpec[] = [
 ......##
 ......##
 `,
-    moves: 28,
+    moves: 25,
     objective: { kind: 'clear-stone' },
-    stars: [2950, 4700, 6650],
+    stars: [2500, 4000, 5700],
   },
   {
     id: 5, world: 1, name: 'Spring Clean',
@@ -163,43 +163,43 @@ VV......
 ........
 ........
 `,
-    moves: 36,
+    moves: 31,
     objective: { kind: 'clear-preset' },
-    stars: [2450, 3850, 5450],
+    stars: [1850, 2900, 4100],
     hint: 'Only the tiles the level started with count. Yours are just raw material.',
   },
   {
     id: 6, world: 1, name: 'Crate Expectations',
     layout: `
 ........
-........
-...XX...
-...XX...
-........
+.XX.....
+.XX.....
+.....XX.
+.....XX.
 ........
 ........
 ........
 `,
-    moves: 12,
+    moves: 15,
     objective: { kind: 'clear-crates' },
-    stars: [950, 1550, 2200],
+    stars: [1100, 1750, 2450],
     hint: 'A crate takes two clears going off beside it. Watch it crack.',
   },
   {
     id: 7, world: 1, name: 'Gemcutter',
     layout: `
 ........
-........
-...PP...
-...PP...
-........
+.PP.....
+.PP.....
+.....PP.
+.....PP.
 ........
 ........
 ........
 `,
-    moves: 15,
+    moves: 27,
     objective: { kind: 'clear-gems' },
-    stars: [1650, 2600, 3700],
+    stars: [3100, 4900, 6950],
     hint: 'Gems are worth a lot, but only a line can reach one.',
   },
   {
@@ -208,15 +208,15 @@ VV......
 VV......
 VV......
 ........
-........
-........
+...LL...
+...LL...
 ........
 ......AA
 ......AA
 `,
-    moves: 15,
+    moves: 27,
     objective: { kind: 'clear-preset' },
-    stars: [1100, 1750, 2450],
+    stars: [2100, 3300, 4700],
   },
 
   // ---- World 2 · Less room ----------------------------------------------
@@ -224,33 +224,33 @@ VV......
     id: 9, world: 2, name: 'Bedrock',
     layout: `
 ........
-........
 ..####..
 ..####..
 ........
-........
+##....##
+##....##
 ........
 ........
 `,
-    moves: 12,
+    moves: 18,
     objective: { kind: 'clear-stone' },
-    stars: [950, 1450, 2100],
+    stars: [1300, 2050, 2900],
   },
   {
     id: 10, world: 2, name: 'Short Fuse',
     layout: `
 ........
-........
 ..rr....
 ..rr....
-....##..
-....##..
-........
+##......
+##......
+......##
+......##
 ........
 `,
-    moves: 15,
+    moves: 10,
     objective: { kind: 'clear-stone' },
-    stars: [1000, 1600, 2250],
+    stars: [850, 1350, 1900],
     hint: 'A bomb takes its whole neighbourhood with it when a line clears it.',
   },
   {
@@ -258,16 +258,16 @@ VV......
     layout: `
 XX......
 XX......
-....XX..
-....XX..
-..XX....
-..XX....
+......XX
+......XX
+........
+........
 ........
 ........
 `,
-    moves: 19,
+    moves: 17,
     objective: { kind: 'clear-crates' },
-    stars: [1350, 2100, 3000],
+    stars: [1900, 3000, 4250],
   },
   {
     id: 12, world: 2, name: 'Four Corners',
@@ -281,9 +281,9 @@ XX......
 ##....##
 ##....##
 `,
-    moves: 12,
+    moves: 34,
     objective: { kind: 'clear-stone' },
-    stars: [1450, 2300, 3300],
+    stars: [2700, 4300, 6100],
   },
   {
     id: 13, world: 2, name: 'Minefield',
@@ -297,9 +297,9 @@ XX......
 ....aa..
 ........
 `,
-    moves: 40,
+    moves: 35,
     objective: { kind: 'clear-preset' },
-    stars: [3000, 4750, 6800],
+    stars: [2400, 3800, 5450],
   },
   {
     id: 14, world: 2, name: 'Narrow Margins',
@@ -313,9 +313,9 @@ XX......
 ........
 ........
 `,
-    moves: 13,
+    moves: 22,
     objective: { kind: 'clear-stone' },
-    stars: [850, 1400, 1950],
+    stars: [1450, 2250, 3250],
     hint: 'Two blocks, one lane between them. Keep it open.',
   },
   {
@@ -330,9 +330,9 @@ PP......
 ........
 ........
 `,
-    moves: 41,
+    moves: 36,
     objective: { kind: 'clear-gems' },
-    stars: [4550, 7250, 10250],
+    stars: [3950, 6300, 8900],
   },
   {
     id: 16, world: 2, name: 'Quarantine',
@@ -346,26 +346,26 @@ PP......
 .....PP.
 ........
 `,
-    moves: 51,
+    moves: 25,
     objective: { kind: 'clear-preset' },
-    stars: [4600, 7250, 10350],
+    stars: [2600, 4100, 5850],
   },
 
   // ---- World 3 · Creep --------------------------------------------------
   {
     id: 17, world: 3, name: 'Encroach',
     layout: `........`,
-    moves: 35, creepEvery: 6,
+    moves: 30, creepEvery: 6,
     objective: { kind: 'lines', count: 9 },
-    stars: [2500, 3950, 5650],
+    stars: [1900, 3000, 4300],
     hint: 'Junk now seeps into empty cells every few moves. Nothing you placed moves — you just get less room.',
   },
   {
     id: 18, world: 3, name: 'Tidewater',
     layout: `........`,
-    moves: 26, creepEvery: 10,
-    objective: { kind: 'lines', count: 6 },
-    stars: [1750, 2750, 3950],
+    moves: 30, creepEvery: 10,
+    objective: { kind: 'lines', count: 10 },
+    stars: [2150, 3400, 4850],
   },
   {
     id: 19, world: 3, name: 'Quarry',
@@ -379,9 +379,9 @@ PP......
 ........
 ........
 `,
-    moves: 28, creepEvery: 6,
+    moves: 25, creepEvery: 6,
     objective: { kind: 'clear-stone' },
-    stars: [2100, 3350, 4750],
+    stars: [1750, 2800, 3950],
   },
   {
     id: 20, world: 3, name: 'Chain Reaction',
@@ -395,41 +395,41 @@ PP......
 ....cc..
 ........
 `,
-    moves: 31, creepEvery: 6,
+    moves: 27, creepEvery: 6,
     objective: { kind: 'score', target: 3000 },
-    stars: [2750, 4300, 6150],
+    stars: [2250, 3550, 5050],
   },
   {
     id: 21, world: 3, name: 'Cathedral',
     layout: `
 ........
-.XX.....
-.XX.....
+.XX..XX.
+.XX..XX.
 ........
 ........
 ........
 ....PP..
 ....PP..
 `,
-    moves: 21, creepEvery: 8,
+    moves: 15, creepEvery: 8,
     objective: { kind: 'clear-crates' },
-    stars: [2850, 4550, 6450],
+    stars: [1900, 3000, 4300],
   },
   {
     id: 22, world: 3, name: 'Scaffold',
     layout: `
-##......
-##......
-......##
-......##
+##....##
+##....##
+........
 ....##..
 ....##..
+........
 ........
 ........
 `,
-    moves: 27, creepEvery: 9,
+    moves: 17, creepEvery: 9,
     objective: { kind: 'clear-stone' },
-    stars: [1850, 2950, 4200],
+    stars: [1350, 2150, 3100],
   },
   {
     id: 23, world: 3, name: 'Kiln',
@@ -443,9 +443,9 @@ XX......
 ........
 ........
 `,
-    moves: 18, creepEvery: 9,
+    moves: 25, creepEvery: 9,
     objective: { kind: 'clear-preset' },
-    stars: [1850, 2950, 4200],
+    stars: [2300, 3600, 5150],
   },
   {
     id: 24, world: 3, name: 'The Long Dark',
@@ -459,9 +459,9 @@ XX......
 ......XX
 ......XX
 `,
-    moves: 44, creepEvery: 9,
+    moves: 39, creepEvery: 9,
     objective: { kind: 'clear-preset' },
-    stars: [4250, 6750, 9550],
+    stars: [3600, 5700, 8150],
     hint: 'Everything you have learned, at once.',
   },
 ];
