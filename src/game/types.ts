@@ -1,74 +1,98 @@
-/** The five playable colours plus the two colourless block kinds. */
+/** The five playable colours. */
 export type Hue = 0 | 1 | 2 | 3 | 4;
 
 export const HUE_COUNT = 5;
 export const HUES: Hue[] = [0, 1, 2, 3, 4];
 
-export const enum BlockKind {
-  /** Ordinary coloured block. Resonates with a ball of the same hue. */
+export const enum TileKind {
+  /** Ordinary coloured tile. Joins colour groups and fills lines. */
   Colour = 0,
-  /** Colourless. Never resonates, never joins a cascade cluster. Pure HP wall. */
+  /** Colourless obstacle. Only a line clear removes it. */
   Stone = 1,
-  /** Resonates with every hue, and leaves the ball's hue untouched. */
+  /** Counts as every colour when a group is measured. */
   Prism = 2,
-  /** Coloured, but detonates a 3x3 when it dies. */
+  /** Takes its 3x3 with it when cleared. */
   Bomb = 3,
+  /** Needs to be caught by two separate clears. */
+  Crate = 4,
 }
 
-export interface Block {
+export interface Tile {
   id: number;
-  kind: BlockKind;
-  /** Meaningless for Stone/Prism; the match hue otherwise. */
+  kind: TileKind;
   hue: Hue;
   hp: number;
   maxHp: number;
-  /** Animation state, 0..1, drives the spawn-drop and the shatter. */
+  /** 0..1 spawn-in animation. */
   anim: number;
+  /** Set the moment it is doomed, so the renderer can flash it. */
   dying: boolean;
+  /** Placed by the level rather than by the player: this is the thing to clear. */
+  preset: boolean;
 }
 
-export const enum PickupKind {
-  ExtraBall = 0,
-  Shards = 1,
+/** A polyomino: cells relative to its own top-left corner. */
+export interface ShapeDef {
+  id: string;
+  cells: [number, number][];
+  w: number;
+  h: number;
+  /** Relative frequency in the deal. */
+  weight: number;
 }
 
-export interface Pickup {
+/** One of the pieces currently sitting in the tray. */
+export interface TrayItem {
   id: number;
-  kind: PickupKind;
+  shape: ShapeDef;
+  hue: Hue;
+  used: boolean;
+}
+
+export interface Cell {
   col: number;
   row: number;
-  taken: boolean;
-  anim: number;
 }
 
-export interface Ball {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
+export const enum ClearKind {
+  Row = 'row',
+  Column = 'column',
+  Group = 'group',
+}
+
+/** One thing that cleared, kept separate so each can be scored and animated. */
+export interface ClearEvent {
+  kind: ClearKind;
+  cells: Cell[];
+  /** Row/column index, for the sweep animation. */
+  index: number;
   hue: Hue;
-  /** Consecutive resonance hits without touching a wall. Drives pierce speed. */
-  streak: number;
-  /** Bounces left before the ball burns out. Resonance pierces refund it. */
-  energy: number;
-  alive: boolean;
-  /** Frames of invulnerability to re-colliding with the block just pierced. */
-  pierceCooldown: number;
-  trail: { x: number; y: number }[];
+}
+
+export interface PlaceResult {
+  placed: Cell[];
+  clears: ClearEvent[];
+  /** Every tile actually removed, after bombs expanded. */
+  removed: { cell: Cell; tile: Tile }[];
+  /** Simultaneous clears from one placement. */
+  combo: number;
 }
 
 export const enum Phase {
-  Aiming = 'aiming',
-  Firing = 'firing',
-  Settling = 'settling',
-  Advancing = 'advancing',
+  Placing = 'placing',
+  Resolving = 'resolving',
   Over = 'over',
 }
 
-export interface RunResult {
+export interface LevelResult {
+  levelId: number;
+  won: boolean;
   score: number;
+  stars: 0 | 1 | 2 | 3;
   shards: number;
-  waves: number;
-  bestChain: number;
-  blocksBroken: number;
+  movesUsed: number;
+  movesLeft: number;
+  bestCombo: number;
+  tilesCleared: number;
+  linesCleared: number;
 }

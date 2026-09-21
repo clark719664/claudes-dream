@@ -21,8 +21,11 @@
     <div id="app">
       <header id="hud" hidden>
         <div class="hud-stat"><span class="hud-label">Score</span><b id="hud-score">0</b></div>
-        <div class="hud-stat"><span class="hud-label">Wave</span><b id="hud-wave">1</b></div>
-        <div class="hud-stat"><span class="hud-label">Shards</span><b id="hud-shards">0</b></div>
+        <div class="hud-stat"><span class="hud-label">Moves</span><b id="hud-shots">0</b></div>
+        <div class="hud-goal">
+          <span class="txt"><b id="hud-goal-count">0</b> <span id="hud-goal-text">Goal</span></span>
+          <div class="bar"><i id="hud-goal-bar" style="width:0%;background:var(--accent)"></i></div>
+        </div>
         <button id="hud-pause" class="icon-btn" aria-label="Pause">❚❚</button>
       </header>
       <canvas id="stage"></canvas>

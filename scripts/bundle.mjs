@@ -30,8 +30,9 @@ const FILES = [
   'src/style.css',
   'src/game/config.ts',
   'src/game/types.ts',
-  'src/game/grid.ts',
-  'src/game/physics.ts',
+  'src/game/shapes.ts',
+  'src/game/board.ts',
+  'src/game/levels.ts',
   'src/game/game.ts',
   'src/game/render.ts',
   'src/core/rng.ts',
@@ -44,6 +45,7 @@ const FILES = [
   'src/ui/dom.ts',
   'src/ui/screens.ts',
   'test/run.ts',
+  'test/bot.ts',
   'test/smoke.mjs',
   'test/smoke-meta.mjs',
   'test/tsconfig.json',
@@ -61,12 +63,13 @@ const LANG = {
 
 /** Files that matter most to an art pass, called out up front. */
 const HOTSPOTS = {
-  'src/game/render.ts': 'All drawing. `drawBlock` and `drawArmour` are what the art replaces.',
+  'src/game/render.ts': 'All drawing. `drawTile`, `drawDamage` and `drawShape` are what the art replaces.',
   'src/game/config.ts': 'Every tunable, plus PALETTE — the five hues and their exact hex.',
-  'src/game/types.ts': 'Block, Ball, Pickup and the BlockKind enum a new block type extends.',
-  'src/game/grid.ts': 'Gravity-up, cascade detection, bomb chains, wave generation.',
-  'src/game/physics.ts': 'Resonance, repaint, the energy budget, collision.',
-  'src/game/game.ts': 'The run state machine and the FX events the renderer consumes.',
+  'src/game/types.ts': 'Tile, ShapeDef, TrayItem and the TileKind enum a new tile type extends.',
+  'src/game/board.ts': 'Placement, line and colour-group clears, bomb chains, obstacle wear.',
+  'src/game/levels.ts': 'All 24 levels as text grids, with objectives and star thresholds.',
+  'src/game/game.ts': 'The level state machine, the deal, and the FX the renderer consumes.',
+  'src/game/shapes.ts': 'The polyomino set and how often each is dealt.',
 };
 
 rmSync(OUT, { recursive: true, force: true });
@@ -95,7 +98,7 @@ ${FILES.map((f) => `- \`${f}\``).join('\n')}
 ## How it fits together
 
 \`src/game/\` is the simulation and has no DOM or canvas reference anywhere in
-it, which is what lets the test suite auto-play thousands of waves headlessly.
+it, which is what lets the test suite play all 24 levels headlessly.
 \`src/game/render.ts\` is the only file that draws. \`src/meta/\` is the sticker
 album and economy. \`src/ui/\` is the menu layer, plain DOM over the canvas.
 

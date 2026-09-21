@@ -1,117 +1,110 @@
 # Prism Break — Game Design
 
-> Chain the colours. Collapse the wall. Fill the album.
+> Fit the shape. Fill the line. Gather the colour.
 
 ## 1. The pitch
 
-A one-thumb brick breaker where **the ball takes on the colour of whatever it
-hits**, and hitting your own colour shatters the block instantly and lets you
-carry straight on through it. The wall then collapses like a match-3 board, and
-every collapse pays out currency for a Monopoly-Go-style sticker album whose
-completed pages give you permanent gameplay perks.
+A shape-placement puzzle where **the pieces are coloured**, so every placement
+is two decisions at once: *does it fit*, and *what colour does it put where*.
+
+A complete row or column clears, the way it does in every block-fitting game.
+But five touching tiles of one colour also clear — so the board is simultaneously
+a packing problem and a match-3 board, and the best moves satisfy both at once.
 
 Three proven loops, welded into one:
 
 | Borrowed from | What it contributes |
 | --- | --- |
-| Ballz / Bricks n Balls | Turn-based aim-and-shoot, readable on a phone, one thumb |
-| Candy Crush | Colour matching, gravity collapse, cascade chains |
+| Block Blast / Woodoku | Drag-to-place polyominoes, line clears, no timer |
+| Candy Crush | Colour matching, levels, objectives, move limits, a world map |
 | Monopoly Go | Sticker album, packs, duplicates, gifting between friends |
 
-## 2. The two rules that make it different
+## 2. What makes it different
 
-Everything in the game falls out of two sentences:
+### Two clear rules, both live at once
 
-1. **Same colour → shatter and pierce.** The block dies whatever its health, the
-   ball does not bounce, and it speeds up. Consecutive pierces build a streak.
-2. **Different colour → chip and repaint.** You take one health off, you bounce,
-   and **you become that colour.**
+Every other block-fitting game is colourless: a piece is a shape and nothing
+else. Every match-3 game is placeless: you never choose *where* a piece goes,
+only which two to swap. Prism Break runs both at the same time, and the tension
+between them is the game.
 
-That second rule is the whole design. In every other brick breaker, the ball is
-a constant and the wall is the variable. Here the wall *edits your ball*. You
-are not aiming at a block — you are aiming at a block **in order to become the
-colour that unlocks the next four**. It turns a reflex game into a routing
-puzzle you solve in the half-second before you release your thumb.
+A piece that fits perfectly in the wrong colour is a wasted move. A piece that
+lands five violet tiles together but leaves a hole you can never fill is a worse
+one. The good moves — a placement that closes a row *and* completes a colour
+group, scoring both with a combo multiplier on top — are the ones you have to go
+looking for.
 
-### The energy budget
+To keep colour groups achievable, most levels deal from **three of the five
+hues**, chosen by the level id. Across the full palette, five touching
+same-colour tiles almost never happen by accident and the colour half of the
+game quietly stops existing.
 
-A ball carries **11 energy**. Every bounce — wall or block — costs one, and the
-ball burns out at zero. A resonance pierce costs nothing and refunds one, up to
-a cap of 17.
+### Nothing moves unless you move it
 
-This is the balancing spine of the game. Flailing ends a volley in about four
-seconds. A well-read colour chain keeps one ball alive across the whole board.
-It means skill expresses itself as *volley length*, which is the most legible,
-most satisfying thing a player can watch happen.
+There is no gravity, no falling, no timer, and no randomness inside a move. A
+tile stays exactly where it was put until something clears it, and while you
+drag, the board **outlines every tile the placement would clear** — computed by
+running the real placement on a copy of the board, not by approximating it.
 
-### The wall hangs from the ceiling
+This is the whole feel of the game. The player is never reacting; they are
+deciding. What they are fighting is space.
 
-Gravity pulls blocks **up**, not down. The wall is anchored to the top of the
-screen and grows toward you.
+It is also a constraint on everything added later. An earlier build put a clock
+on the board by pushing a new row in from the top every few moves — and it had
+to be cut, because it shoved tiles the player had placed. The replacement,
+**creep**, only ever fills cells that were already empty. You can take a
+player's room away; you cannot move their work.
 
-- Each turn a new row is inserted at the ceiling and shoves everything one row
-  closer to the danger line.
-- Carving a hole anywhere makes the blocks below it rise to fill it, so the
-  wall's leading edge **recedes away from you**.
+### Obstacles are worn down, not covered
 
-Clearing therefore buys back distance directly, and the screen reads as one
-mass being eaten from inside rather than a row-by-row grind.
+Stone and crates occupy a cell, so they can never be built over. They are
+damaged by clears going off *beside* them — stone takes two, a crate takes
+three — and the damage shows as **cracking**, never as a number.
 
-### Cascades
+The obvious alternative, requiring a full line straight through the obstacle,
+sounds tidier and is unplayable: lines are the rare clear, and objectives built
+on them stall out completely. This was measured, not guessed — see §5.
 
-When the volley ends, gravity settles and any orthogonally-connected group of
-**5+ blocks of one colour detonates on its own**, which collapses the wall
-again, which can form another group. Each chain step multiplies score by
-`1 + 0.75 × (chain − 1)`.
+### The board carries no numbers at all
 
-Crucially, cascades resolve **after** the volley, not during it. The volley is
-the input; the collapse is the payoff. That separation gives every turn a clean
-two-beat rhythm: *tension while the ball flies, release when the wall falls in.*
+Health is read off the tile face as damage: hairline, split, about to go. A
+player should *read* the board, never *count* it, so their attention stays on
+colour and space.
 
-### Health without digits
-
-The board carries no numbers. Health is read off the block's face: a **stud** is
-worth 1 and a **plate** frame is worth 4, so 3 is two studs, 5 is a plate, and 7
-is a plate and two studs. Every hit visibly strips a mark, which teaches the
-scheme without a line of tutorial text, and keeps the player *reading* the wall
-rather than *counting* it. The current marks are placeholder art;
-[GEMINI_ART_BRIEF.md](GEMINI_ART_BRIEF.md) specifies what a designed
-replacement has to satisfy.
-
-### Block types
+### Tile types
 
 | | Behaviour |
 | --- | --- |
-| **Coloured** | The default. Resonates with its own hue, joins cascades. |
-| **◈ Prism** | Resonates with *every* hue and leaves your colour alone. Joins a cascade group but never bridges two colours together. |
-| **✦ Bomb** | Coloured, one health, takes its 3×3 neighbourhood with it. Chains into other bombs. |
-| **Grey stone** | Never resonates, never cascades. Pure health. The thing that makes a board hard. |
+| **Coloured** | The default. Fills lines, joins colour groups. |
+| **Stone** | Colourless obstacle. Never joins a group. Two nearby clears. |
+| **Crate** | As stone, but three. |
+| **Prism** | Counts as every colour when a group is measured — but is never expanded *from*, so it extends a group without welding two colours together. |
+| **Bomb** | Coloured, groups normally, takes its 3×3 with it, chains into other bombs. |
 
-## 3. Session shape
+## 3. Levels
 
-A run is 2–5 minutes, ends in failure, and hands you currency on the way out —
-the arcade/roguelite shape that makes "one more go" the default.
+**24 levels across 3 worlds**, each authored as a text grid rather than
+generated, with an objective, a move limit and three star thresholds.
 
-Pacing levers, all in `src/game/config.ts`:
+World 1 teaches lines then groups on an open board; world 2 fills the board with
+things in the way; world 3 adds creep. Objectives are `lines`, `groups`,
+`clear-hue`, `clear-stone`, `clear-crates`, `clear-preset` (clear everything the
+level started with) and `score`.
 
-- Rows get denser and gain health as waves climb.
-- Grey stone creeps in from 0% to 22%.
-- From wave 16, **two** rows arrive per turn; from wave 32, three.
-- `+1 BALL` pickups appear every fourth wave, capped at 12 balls so the volley
-  cannot snowball into an auto-win.
+A level is seeded by its **id alone**, so the board, the deal and the whole
+puzzle are identical on every attempt and every device. Retrying is retrying the
+same problem, which is what makes a level a level rather than a run.
 
-### Measured balance
+### The deal is checked, not shuffled blind
 
-From `npm test`, which auto-plays full runs headlessly:
+Every piece in the tray is checked against the board it is being dealt onto, and
+the deal leans harder toward small pieces as the board tightens. A piece already
+in the tray that stops fitting gets swapped out once anything has been placed.
 
-| Play style | Waves survived (avg) | Range |
-| --- | --- | --- |
-| Random aiming | 22.5 | 15–33 |
-| Simple targeting heuristic | 39.8 | 27–61 |
-
-A crude bot that just aims at the lowest resonant block nearly doubles a random
-player's run. That gap **is** the skill ceiling, and it is checked on every test
-run so a balance change cannot quietly flatten it.
+A level should end because the player ran out of room or out of moves — never
+because the shuffler handed them three pieces that could never have gone
+anywhere. That reads as the game cheating, and it is the fastest way to lose a
+player.
 
 ## 4. The collectible layer
 
@@ -119,29 +112,26 @@ run so a balance change cannot quietly flatten it.
 
 | Page | Completion perk |
 | --- | --- |
-| Neon Menagerie | +1 ball in every volley |
-| Deep Space | Cascades trigger at 4 blocks instead of 5 |
-| Arcade Legends | Every run opens with a free Prism row |
+| Neon Menagerie | +1 move on every level |
+| Deep Space | Colour groups trigger at 4 tiles instead of 5 |
+| Arcade Legends | Every level opens with a free Prism |
 | Cursed Carnival | Bombs blow a 5×5 hole instead of 3×3 |
-| Founders (chase) | +25% Prism Shards from every run |
+| Founders (chase) | +25% Prism Shards |
 
-The perks are the point. Monopoly Go's stickers are inert — they buy you money
-and bragging rights. Here **finishing a page changes how the game plays**, so
-the collection loop feeds the skill loop and a returning player is measurably
-stronger than they were last week. That is what converts a collection from a
-chore into a build.
+The perks are the point. Monopoly Go's stickers are inert — they buy money and
+bragging rights. Here **finishing a page changes how the game plays**, so the
+collection loop feeds the skill loop and a returning player is measurably
+stronger than last week. That converts a collection from a chore into a build.
 
 ### Economy
 
-- **Prism Shards** — the run currency. Earned per block, per cascade block, per
-  wave, and a 150-shard bonus for a full-board clear. Buys packs.
-- **Dust** — duplicate currency. A duplicate melts into 5–300 dust by rarity;
-  dust crafts a *specific* missing sticker for 25–1500. This is the anti-rage
-  valve: the last sticker on a page is always reachable by grinding, never
-  purely by luck.
+- **Prism Shards** — earned per level cleared, scaled by stars, with a first-clear
+  bonus so replaying an easy level cannot be farmed. Buys packs.
+- **Dust** — duplicates melt into 5–300 dust by rarity; dust crafts a *specific*
+  missing sticker for 25–1500. The anti-rage valve: the last sticker on a page is
+  always reachable by grinding, never purely by luck.
 
-Pack odds are stated openly on the shop screen (required in several
-jurisdictions anyway, and players trust a game that volunteers them):
+Pack odds are stated openly on the shop screen:
 
 | | ★1 | ★2 | ★3 | ★4 | ★5 | Floor |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -151,86 +141,105 @@ jurisdictions anyway, and players trust a game that volunteers them):
 A pull favours stickers you are missing 60% of the time, so early albums fill
 fast and the remaining 40% still generates the duplicates that gifting needs.
 
-### Where packs come from
+Packs — not shards — are what players chase, so they hang off moments worth
+repeating: a first clear every third level, a Prismatic every ninth, and any
+three-star finish.
 
-Packs — not shards — are the thing players chase, so they are attached to the
-moments worth repeating: wave 12, 24 and 36 in a single run; a new personal
-best; any chain of ×4 or higher; day 3, 6, 9… of a login streak, with a
-Prismatic pack every 7th day.
+## 5. Balance, measured
 
-## 5. Viral loops
+`npm test` auto-plays **all 24 levels** with a bot that plays the way an
+attentive player would: it prizes clears, chases whatever the level's objective
+actually asks for, avoids leaving unfillable single-cell gaps, and builds toward
+colour groups rather than scattering.
 
-This is the part that decides whether the game grows, and it is designed as
-four separate loops rather than one share button.
+Current state: the bot clears **24/24**, finishing with about **40% of the move
+budget spare** on average, and three-stars **none** of them. That is the shape
+we want — beatable by a thinking player, with the top rating still out of reach
+of merely competent play. The suite fails if any level becomes unbeatable, if
+any becomes a walkover (won in under five moves), if any leaves over 80% of its
+moves unused, or if three stars becomes automatic.
 
-**1 · Gifting duplicates (built).** Any duplicate can be spent to mint a code
-like `PB-2CZC-F0J`, shared through the native share sheet, and redeemed once by
-whoever receives it. Monopoly Go's growth engine is people asking friends for
-the one sticker they are missing, and it works because the ask is *specific*
-("I need Aurora Whale"), which is a far better message than "play my game".
-Every gift is also a re-engagement ping for the sender.
+Star thresholds are not hand-picked. They are generated from measured bot
+scores — 1★ at 62%, 2★ at 95%, 3★ at 130% — so the ratings track what the level
+actually plays like rather than what it looked like it should.
 
-**2 · Seeded daily challenge (built).** Everyone in the world plays the exact
-same board each UTC day, because the level generator is a seeded PRNG. Same
-seed, same wall, no excuses — which makes a shared score directly comparable
-and turns the share card into a genuine challenge rather than a boast.
+**Four real faults this harness caught**, none of which were visible by reading
+the code:
 
-**3 · Ghost races (designed).** Because a run is fully determined by its seed,
-a friend's run can be replayed as a translucent ghost alongside yours from
-nothing but the seed and their input list — a few hundred bytes, no video, no
-server-side simulation.
+- The deal only fit-checked one of the three pieces, so a nearly empty board
+  could deadlock in five moves.
+- Pushing rows down meant any tile in the bottom row lost instantly — and the
+  bottom row is exactly where players build.
+- The hue palette picked three of five *without* including the colours the
+  level's own layout used, making those preset tiles literally unclearable.
+- Crates could only be caught by full lines, and lines are far too rare to
+  build an objective on.
 
-**4 · Crews (designed).** Eight-player groups with a shared weekly album page.
-Members trade spares inside the crew. Collection games live or die on the
-social obligation of not letting your crew down.
+## 6. Viral loops
 
-The share card carries score, wave, best chain and the day's seed, so a
-screenshot is playable content rather than a static brag.
+**1 · Gifting duplicates (built).** A duplicate can be spent to mint a code like
+`PB-2KPQ-Y0A`, shared through the native share sheet, redeemed once by whoever
+receives it. Monopoly Go's growth engine is people asking friends for the one
+sticker they are missing, and it works because the ask is *specific* ("I need
+Aurora Whale") — a far better message than "play my game". Every gift is also a
+re-engagement ping for the sender.
 
-## 6. Retention
+**2 · Comparable scores (built).** Levels are seeded by id, so two players on
+level 14 played the identical puzzle. A shared score is directly comparable,
+which turns the share card into a challenge rather than a boast.
+
+**3 · Race a friend's ghost (designed).** Because a level is fully determined,
+a friend's attempt replays from nothing but the level id and their move list — a
+few hundred bytes, no video, no server-side simulation.
+
+**4 · Crews (designed).** Eight-player groups with a shared weekly album page,
+trading spares inside the crew. Collection games live on the social obligation
+of not letting your crew down.
+
+## 7. Retention
 
 - **Daily streak** — escalating shards, packs on days 3/6/9, Prismatic on 7.
-- **Album completion** — the long-horizon goal that survives losing streaks.
-- **Perk compounding** — each finished page makes runs longer, which earns more
-  shards, which fills the album faster. A deliberate positive feedback loop for
-  returning players, bounded by there being only five pages.
-- **Failure is cheap** — every run pays out. There is no lives system and no
-  energy timer; the game never tells you to stop playing.
+- **Album completion** — the long-horizon goal that survives a losing streak.
+- **Perk compounding** — each finished page makes levels more winnable, which
+  earns more shards, which fills the album faster. Bounded by there being only
+  five pages.
+- **Failure is cheap** — no lives, no energy timer. The game never tells you to
+  stop playing.
 
-## 7. Monetisation (designed, not implemented)
+## 8. Monetisation (designed, not implemented)
 
 Deliberately not built: shipping payments into a prototype is how you end up
 tuning an economy nobody has played yet.
 
-- **Cosmetics** — ball trails, block skins, shatter effects. Pure expression,
-  zero pay-to-win.
-- **Season pass** — a sixth, rotating album page with its own perk.
+- **Cosmetics** — tile skins, clear effects, board themes. Zero pay-to-win.
+- **Season pass** — a sixth rotating album page with its own perk.
 - **Shard bundles** — accelerate the album; everything in it is reachable free.
 - **Remove ads** — one purchase, permanent.
-- **Rewarded video** — optional double-shards at the end of a run, never a
-  gate mid-run.
+- **Rewarded video** — optional extra moves after a loss, never a mid-level gate.
 
-The line held everywhere: **you can buy speed, never power that a free player
-cannot also reach.** Set bonuses must stay earnable, or the perk system stops
-being a build and starts being a paywall.
+The line held everywhere: **you can buy speed, never power a free player cannot
+also reach.** Set bonuses must stay earnable, or the perk system stops being a
+build and becomes a paywall.
 
-## 8. Build status
+## 9. Build status
 
-**Working end to end:** the full simulation (physics, resonance, absorb, energy,
-gravity, cascades, bomb chains, pickups, wave ramp, danger line), the renderer
-with particles and screen shake, procedural audio, native haptics, the album,
-packs with reveals, dust and crafting, gift codes, daily streak, daily
-challenge, share cards, save/load, and the whole screen flow.
+**Working end to end:** placement and the full clear resolution (lines, colour
+groups, prism grouping, bomb chains, obstacle wear), the checked deal, creep,
+24 authored levels with objectives and stars, the world map with unlock
+progression, the drag preview, the renderer with particles and screen shake,
+procedural audio, native haptics, the album, packs with reveals, dust and
+crafting, gift codes, daily streak, share cards, save/load and the whole screen
+flow.
 
-**Designed but not built:** crews, ghost races, server-backed leaderboards,
-payments, ads, push notifications, accounts and cloud save.
+**Designed but not built:** power-ups, crews, ghost replays, server-backed
+leaderboards, payments, ads, push notifications, accounts and cloud save.
 
 **Known limits of the prototype:**
 
 - Gift codes are validated client-side, so a determined player could mint their
-  own. Real gifting needs a server to sign and burn codes. The offline scheme
-  exists so the loop can be play-tested before any backend exists.
+  own. Real gifting needs a server to sign and burn codes; the offline scheme
+  exists so the loop can be play-tested before any backend does.
 - Progress is `localStorage` only — clearing site data or reinstalling loses the
-  album. Accounts and cloud save are a prerequisite for launch.
-- No tutorial beyond the How-to-play card; the real version should teach the
-  repaint rule by making the first board a single guaranteed chain.
+  album. Accounts and cloud save are a launch prerequisite.
+- Art is placeholder throughout. [GEMINI_ART_BRIEF.md](GEMINI_ART_BRIEF.md)
+  specifies what a designed replacement has to satisfy.

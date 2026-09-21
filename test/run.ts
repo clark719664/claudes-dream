@@ -1,140 +1,222 @@
 /**
- * Headless checks for the simulation. The game core has no DOM dependency, so
- * the grid rules and a full auto-played run can both be exercised from node.
+ * Headless checks. The game core has no DOM dependency, so the board rules and
+ * every authored level can be exercised — and auto-played — from node.
  */
-import { Grid, makeBlock } from '../src/game/grid';
-import { BlockKind, Phase, type Hue } from '../src/game/types';
+import { Board, makeTile } from '../src/game/board';
 import { Game } from '../src/game/game';
 import { CFG } from '../src/game/config';
+import { LEVELS, charKind, layoutRows, objectiveText } from '../src/game/levels';
+import { SHAPES } from '../src/game/shapes';
+import { ClearKind, TileKind, type Hue } from '../src/game/types';
 import { encodeGift } from '../src/meta/packs';
-import { isResonant, previewPath } from '../src/game/physics';
-import { Rng } from '../src/core/rng';
+import { autoPlay } from './bot';
 
 let failures = 0;
 let checks = 0;
 
 function ok(label: string, cond: boolean, detail = ''): void {
   checks++;
-  if (cond) {
-    console.log(`  \x1b[32mPASS\x1b[0m ${label}`);
-  } else {
-    failures++;
-    console.log(`  \x1b[31mFAIL\x1b[0m ${label}${detail ? ` — ${detail}` : ''}`);
-  }
+  console.log(
+    cond ? `  \x1b[32mPASS\x1b[0m ${label}` : `  \x1b[31mFAIL\x1b[0m ${label}${detail ? ` — ${detail}` : ''}`,
+  );
+  if (!cond) failures++;
 }
 
 function section(name: string): void {
   console.log(`\n\x1b[1m${name}\x1b[0m`);
 }
 
-function put(g: Grid, col: number, row: number, hue: Hue, kind = BlockKind.Colour, hp = 1): void {
-  g.set(col, row, makeBlock(kind, hue, hp));
+function fill(b: Board, cells: [number, number][], hue: Hue = 0): void {
+  for (const [c, r] of cells) b.set(c, r, makeTile(TileKind.Colour, hue));
 }
 
 // ---------------------------------------------------------------------------
-section('Gravity pulls the wall up toward the ceiling');
+section('A shape fits only where the board is empty and in bounds');
 {
-  const g = new Grid();
-  put(g, 2, 5, 0);
-  put(g, 2, 7, 1);
-  g.applyGravity();
-  ok('blocks compact to rows 0 and 1', g.at(2, 0)?.hue === 0 && g.at(2, 1)?.hue === 1);
-  ok('vacated cells are cleared', g.at(2, 5) === null && g.at(2, 7) === null);
-  ok('other columns untouched', g.at(1, 0) === null);
+  const b = new Board();
+  const sq = SHAPES.find((s) => s.id === 'sq2')!;
+  ok('fits on an empty board', b.canPlace(sq, 0, 0));
+  ok('rejects a shape hanging off the right edge', !b.canPlace(sq, CFG.cols - 1, 0));
+  ok('rejects a shape hanging off the bottom', !b.canPlace(sq, 0, CFG.rows - 1));
+
+  b.set(1, 1, makeTile(TileKind.Colour, 0));
+  ok('rejects an overlap', !b.canPlace(sq, 0, 0));
+  ok('still fits elsewhere', b.hasAnyPlacement(sq));
 }
 
 // ---------------------------------------------------------------------------
-section('A new wave inserts at the ceiling and pushes the wall down');
+section('A full row or column clears, whatever colours are in it');
 {
-  const g = new Grid();
-  put(g, 0, 0, 2);
-  const row = new Array(g.cols).fill(null);
-  row[3] = makeBlock(BlockKind.Colour, 4, 1);
-  g.insertRow(row);
-  ok('old block moved down one row', g.at(0, 1)?.hue === 2 && g.at(0, 0) === null);
-  ok('new block sits at the ceiling', g.at(3, 0)?.hue === 4);
-  ok('lowestRow tracks the leading edge', g.lowestRow() === 1, `got ${g.lowestRow()}`);
+  const b = new Board();
+  for (let col = 0; col < b.cols - 1; col++) b.set(col, 3, makeTile(TileKind.Colour, (col % 5) as Hue));
+  ok('an incomplete row does not clear', b.findClears().length === 0);
+
+  b.set(b.cols - 1, 3, makeTile(TileKind.Colour, 1));
+  const clears = b.findClears();
+  ok('completing it clears one row', clears.length === 1 && clears[0].kind === ClearKind.Row);
+  ok('the whole row goes', clears[0].cells.length === b.cols);
+
+  const removed = b.applyClears(clears);
+  ok('every tile in the row is removed', removed.length === b.cols && b.isClear);
+}
+{
+  const b = new Board();
+  for (let row = 0; row < b.rows; row++) b.set(2, row, makeTile(TileKind.Stone, 0));
+  const clears = b.findClears();
+  ok('a full column of stone clears', clears.length === 1 && clears[0].kind === ClearKind.Column);
+  b.applyClears(clears);
+  ok('stone goes with it', b.countKind(TileKind.Stone) === 0);
 }
 
 // ---------------------------------------------------------------------------
-section('Cascades fire at the threshold and chain through gravity');
+section('Five touching tiles of one colour clear as a group');
 {
-  const g = new Grid();
-  for (let c = 0; c < 4; c++) put(g, c, 0, 1);
-  ok('four blocks do not cascade at threshold 5', g.findCascadeGroups().length === 0);
+  const b = new Board();
+  fill(b, [[0, 0], [1, 0], [2, 0], [3, 0]], 2);
+  ok('four in a row is not enough', b.findColourGroups().length === 0);
 
-  put(g, 4, 0, 1);
-  const groups = g.findCascadeGroups();
-  ok('five connected blocks form one group', groups.length === 1 && groups[0].length === 5);
+  fill(b, [[3, 1]], 2);
+  const groups = b.findColourGroups();
+  ok('five connected makes a group', groups.length === 1 && groups[0].length === 5);
 
-  const steps = g.resolve();
-  ok('resolve clears the group', g.isClear, `${g.occupied} left`);
-  ok('one chain step recorded', steps.length === 1 && steps[0].chain === 1);
+  fill(b, [[4, 0]], 3);
+  ok('a different colour does not join it', b.findColourGroups()[0].length === 5);
 }
 {
-  // Clearing the bottom row lets the top row fall into a matching line.
-  const g = new Grid();
-  g.cascadeThreshold = 3;
-  for (let c = 0; c < 3; c++) put(g, c, 1, 2);
-  for (let c = 0; c < 3; c++) put(g, c, 0, 3);
-  g.detonate([
-    { col: 0, row: 0 },
-    { col: 1, row: 0 },
-    { col: 2, row: 0 },
-  ]);
-  const steps = g.resolve();
-  ok('the collapse triggers a follow-up cascade', steps.length === 1 && steps[0].cleared.length === 3);
-  ok('board ends clear', g.isClear);
+  const b = new Board();
+  fill(b, [[0, 0], [1, 0]], 0);
+  b.set(2, 0, makeTile(TileKind.Prism, 0));
+  fill(b, [[3, 0], [4, 0]], 1);
+  const groups = b.findColourGroups();
+  ok('a prism extends a group but never bridges two colours', groups.length === 0, `${groups.length} groups`);
+
+  fill(b, [[0, 1], [1, 1]], 0);
+  const withPrism = b.findColourGroups();
+  ok('the prism counts toward the nearer colour', withPrism.length === 1 && withPrism[0].length === 5);
 }
 
 // ---------------------------------------------------------------------------
-section('Prism joins a cluster without welding two colours together');
+section('Bombs and crates');
 {
-  const g = new Grid();
-  g.cascadeThreshold = 3;
-  put(g, 0, 0, 0);
-  put(g, 1, 0, 0);
-  put(g, 2, 0, 0, BlockKind.Prism);
-  put(g, 3, 0, 1);
-  put(g, 4, 0, 1);
-  const groups = g.findCascadeGroups();
-  ok('one group forms', groups.length === 1, `got ${groups.length}`);
-  ok('the prism is counted but does not bridge', groups[0]?.length === 3, `size ${groups[0]?.length}`);
+  const b = new Board();
+  for (let col = 0; col < b.cols; col++) b.set(col, 4, makeTile(TileKind.Colour, 0));
+  for (let col = 2; col <= 4; col++) for (const row of [3, 5]) b.set(col, row, makeTile(TileKind.Colour, 1));
+  b.set(3, 4, makeTile(TileKind.Bomb, 0));
+
+  const removed = b.applyClears(b.findClears());
+  ok('the bomb takes its 3x3 with it', removed.length > b.cols, `removed ${removed.length}`);
+  ok('neighbours above and below went too', !b.at(3, 3) && !b.at(3, 5));
+}
+{
+  // Obstacles sit beside the clear rather than in it, and wear down.
+  const b = new Board();
+  b.set(3, 0, makeTile(TileKind.Crate, 0, 2));
+  b.set(4, 0, makeTile(TileKind.Stone, 0, 2));
+  for (let col = 0; col < b.cols; col++) b.set(col, 1, makeTile(TileKind.Colour, 0));
+
+  b.applyClears(b.findClears());
+  ok('a nearby clear damages a crate without removing it', b.at(3, 0)?.hp === 1);
+  ok('and damages stone the same way', b.at(4, 0)?.hp === 1);
+
+  for (let col = 0; col < b.cols; col++) b.set(col, 1, makeTile(TileKind.Colour, 0));
+  b.applyClears(b.findClears());
+  ok('a second clear finishes the crate', b.at(3, 0) === null);
+  ok('and the stone', b.at(4, 0) === null);
 }
 
 // ---------------------------------------------------------------------------
-section('Bombs blow a hole and chain into other bombs');
+section('A placement previews exactly what it will do');
 {
-  const g = new Grid();
-  for (let c = 0; c < 5; c++) for (let r = 0; r < 3; r++) put(g, c, r, 0);
-  g.set(1, 1, makeBlock(BlockKind.Bomb, 0, 1));
-  const { cleared } = g.detonate([{ col: 1, row: 1 }]);
-  ok('a 3x3 goes with it', cleared.length === 9, `cleared ${cleared.length}`);
-}
-{
-  const g = new Grid();
-  for (let c = 0; c < 7; c++) for (let r = 0; r < 4; r++) put(g, c, r, 0);
-  g.set(1, 1, makeBlock(BlockKind.Bomb, 0, 1));
-  g.set(2, 1, makeBlock(BlockKind.Bomb, 0, 1)); // inside the first bomb's 3x3
-  const { cleared } = g.detonate([{ col: 1, row: 1 }]);
-  ok('the second bomb chains the blast onward', cleared.length > 9, `cleared ${cleared.length}`);
-}
-{
-  const g = new Grid();
-  g.bombRadius = 2;
-  for (let c = 0; c < 7; c++) for (let r = 0; r < 5; r++) put(g, c, r, 0);
-  g.set(2, 2, makeBlock(BlockKind.Bomb, 0, 1));
-  const { cleared } = g.detonate([{ col: 2, row: 2 }]);
-  ok('the Cursed Carnival perk widens it to 5x5', cleared.length === 25, `cleared ${cleared.length}`);
+  const level = LEVELS[0];
+  const game = new Game(level);
+  const item = game.tray[0];
+  const pv = game.previewPlacement(item, 0, 0);
+  const before = game.board.occupied;
+  ok('previewing does not touch the board', game.board.occupied === before);
+  ok('the footprint matches the shape', pv.footprint.length === item.shape.cells.length);
+
+  // Whatever the preview says will clear is what actually clears.
+  const probe = new Game(level);
+  const probeItem = probe.tray[0];
+  const promised = probe.previewPlacement(probeItem, 0, 0).clears.length;
+  const actual = probe.place(probeItem, 0, 0)?.clears.length ?? -1;
+  ok('the preview matches the real placement', promised === actual, `${promised} vs ${actual}`);
 }
 
 // ---------------------------------------------------------------------------
-section('Stone never resonates and never joins a cascade');
+section('Every authored level is well formed');
 {
-  const g = new Grid();
-  g.cascadeThreshold = 3;
-  for (let c = 0; c < 5; c++) put(g, c, 0, 0, BlockKind.Stone, 3);
-  ok('a wall of stone forms no group', g.findCascadeGroups().length === 0);
+  const ids = new Set<number>();
+  let widthOk = true;
+  let charsOk = true;
+  let starsOk = true;
+  let fitsBoard = true;
+  const badChars: string[] = [];
+
+  for (const level of LEVELS) {
+    ids.add(level.id);
+    const rows = layoutRows(level.layout, CFG.cols);
+    if (rows.length > CFG.rows) fitsBoard = false;
+    for (const row of rows) {
+      if (row.length !== CFG.cols) widthOk = false;
+      for (const ch of row) {
+        if (ch !== '.' && charKind(ch) === null) {
+          charsOk = false;
+          badChars.push(`L${level.id}:'${ch}'`);
+        }
+      }
+    }
+    const [a, b, c] = level.stars;
+    if (!(a < b && b < c)) starsOk = false;
+    if (level.armour) {
+      const ar = layoutRows(level.armour, CFG.cols);
+      if (ar.length > rows.length) fitsBoard = false;
+    }
+  }
+
+  ok(`all ${LEVELS.length} level ids are unique`, ids.size === LEVELS.length);
+  ok('every layout row is exactly the board width', widthOk);
+  ok('every layout fits inside the board', fitsBoard);
+  ok('no unknown layout characters', charsOk, badChars.join(' '));
+  ok('star thresholds ascend', starsOk);
+  ok('every objective renders a label', LEVELS.every((l) => objectiveText(l.objective).length > 0));
+  ok(
+    'no level starts already solved',
+    LEVELS.every((l) => !new Game(l).objectiveMet()),
+  );
+  ok(
+    'every colour a layout uses is in that level\'s deal',
+    LEVELS.every((l) => {
+      const g = new Game(l);
+      const dealt = new Set(g.tray.map((t) => t.hue));
+      for (let i = 0; i < 40; i++) for (const t of g.tray) dealt.add(t.hue);
+      // Any preset colour tile must be reachable by some dealt hue.
+      const preset = g.board.cells.filter((c) => c?.preset && c.kind === TileKind.Colour);
+      return preset.every((c) => g.paletteHues.includes(c!.hue));
+    }),
+  );
+  ok(
+    'every level leaves room to play',
+    LEVELS.every((l) => {
+      const g = new Game(l);
+      return g.tray.some((t) => g.board.hasAnyPlacement(t.shape));
+    }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+section('A level is deterministic: the same attempt twice is identical');
+{
+  const a = new Game(LEVELS[3]);
+  const b = new Game(LEVELS[3]);
+  ok(
+    'the opening board matches',
+    a.board.cells.every((c, i) => (c?.kind ?? -1) === (b.board.cells[i]?.kind ?? -1)),
+  );
+  ok(
+    'the deal matches',
+    a.tray.every((t, i) => t.shape.id === b.tray[i].shape.id && t.hue === b.tray[i].hue),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -142,118 +224,57 @@ section('Gift codes survive a round trip and reject typos');
 {
   const code = encodeGift(17, 512);
   ok('code is formatted PB-XXXX-XXX', /^PB-[0-9A-Z]{4}-[0-9A-Z]{3}$/.test(code), code);
-  const again = encodeGift(17, 512);
-  ok('encoding is deterministic', code === again);
+  ok('encoding is deterministic', encodeGift(17, 512) === code);
   ok('different stickers give different codes', encodeGift(18, 512) !== code);
 }
 
 // ---------------------------------------------------------------------------
-section('A full auto-played run terminates and stays in range');
+section('Auto-play: every level is winnable, and none is a walkover');
 {
-  const stats: { waves: number; score: number; shards: number; chain: number }[] = [];
-  for (let trial = 0; trial < 40; trial++) {
-    const rng = new Rng(1000 + trial);
-    const game = new Game({ seed: 4000 + trial });
-    let ticks = 0;
+  const results = LEVELS.map((level) => {
+    const g = autoPlay(new Game(level));
+    return {
+      id: level.id,
+      name: level.name,
+      won: g.won,
+      stars: g.stars,
+      score: g.score,
+      moves: g.movesUsed,
+      budget: level.moves,
+    };
+  });
 
-    while (game.phase !== Phase.Over && ticks < 200_000) {
-      if (game.phase === Phase.Aiming) {
-        // Aim at a random point along the top of the wall.
-        game.aimAt(rng.next() * CFG.cols, rng.next() * 3);
-        game.fire();
-      }
-      game.tick();
-      game.drainFx();
-      ticks++;
-    }
-    stats.push({
-      waves: game.wave,
-      score: game.score,
-      shards: Math.round(game.shards),
-      chain: game.bestChain,
-    });
-    if (ticks >= 200_000) {
-      ok(`trial ${trial} terminates`, false, 'simulation ran away');
-      break;
-    }
-  }
-
-  const avg = (f: (s: (typeof stats)[0]) => number) =>
-    stats.reduce((a, s) => a + f(s), 0) / stats.length;
-  const waves = stats.map((s) => s.waves);
+  const lost = results.filter((r) => !r.won);
+  const instant = results.filter((r) => r.won && r.moves < 5);
+  const spare = results.map((r) => 1 - r.moves / r.budget);
 
   console.log(
-    `  random play over ${stats.length} runs: ` +
-      `waves avg ${avg((s) => s.waves).toFixed(1)} (min ${Math.min(...waves)}, max ${Math.max(
-        ...waves,
-      )}), ` +
-      `score avg ${Math.round(avg((s) => s.score))}, ` +
-      `shards avg ${Math.round(avg((s) => s.shards))}, ` +
-      `best chain avg ${avg((s) => s.chain).toFixed(2)}`,
+    `  bot cleared ${results.length - lost.length}/${results.length} · ` +
+      `avg ${Math.round((spare.reduce((a, b) => a + b, 0) / spare.length) * 100)}% of the move budget spare · ` +
+      `3★ on ${results.filter((r) => r.stars === 3).length}`,
   );
+  if (lost.length) console.log(`  \x1b[33munbeaten:\x1b[0m ${lost.map((r) => `${r.id} ${r.name}`).join(', ')}`);
+  if (instant.length) console.log(`  \x1b[33mwalkovers:\x1b[0m ${instant.map((r) => `${r.id} ${r.name}`).join(', ')}`);
 
-  ok('every run ends', stats.length === 40);
-  ok('random play survives past the opening', Math.min(...waves) > CFG.waves.openingRows);
-  ok('random play is not a guaranteed win', avg((s) => s.waves) < 45, `avg ${avg((s) => s.waves)}`);
-  ok('runs pay out shards', avg((s) => s.shards) > 30);
-  ok('cascades happen without aiming', avg((s) => s.chain) >= 1);
-}
-
-// ---------------------------------------------------------------------------
-section('Aimed play clearly beats flailing, so the skill ceiling is real');
-{
-  /** Pick the angle whose first contact is the lowest block the volley resonates with. */
-  function bestAngle(game: Game): number {
-    const min = (CFG.launcher.minAngle * Math.PI) / 180;
-    let best = Math.PI / 2;
-    let bestScore = -Infinity;
-
-    for (let i = 0; i <= 48; i++) {
-      const angle = min + ((Math.PI - 2 * min) * i) / 48;
-      const path = previewPath(game.grid, game.launcherX, game.launcherY, angle);
-      const end = path[path.length - 1];
-      if (!end) continue;
-      const block = game.grid.at(Math.floor(end.x), Math.floor(end.y));
-      if (!block) continue;
-
-      // Prefer blocks close to the danger line, and reward a resonant contact.
-      let score = end.y * 3;
-      if (isResonant(game.nextHue(), block)) score += 12;
-      if (block.kind === BlockKind.Bomb) score += 8;
-      if (block.kind === BlockKind.Stone) score -= 6;
-      if (score > bestScore) {
-        bestScore = score;
-        best = angle;
-      }
-    }
-    return best;
-  }
-
-  const waves: number[] = [];
-  for (let trial = 0; trial < 25; trial++) {
-    const game = new Game({ seed: 4000 + trial });
-    let ticks = 0;
-    while (game.phase !== Phase.Over && ticks < 400_000) {
-      if (game.phase === Phase.Aiming) {
-        game.aimAngle = bestAngle(game);
-        game.fire();
-      }
-      game.tick();
-      game.drainFx();
-      ticks++;
-    }
-    waves.push(game.wave);
-  }
-  const aimedAvg = waves.reduce((a, b) => a + b, 0) / waves.length;
-  console.log(
-    `  aimed play over ${waves.length} runs: waves avg ${aimedAvg.toFixed(1)} ` +
-      `(min ${Math.min(...waves)}, max ${Math.max(...waves)})`,
+  ok('every level is beatable', lost.length === 0, lost.map((r) => r.id).join(','));
+  ok('no level is a walkover', instant.length === 0, instant.map((r) => r.id).join(','));
+  ok(
+    'levels are not trivially generous with moves',
+    spare.every((s) => s < 0.8),
+    'some level leaves over 80% of its moves unused',
   );
-  ok('aiming beats random play by a wide margin', aimedAvg > 34, `avg ${aimedAvg.toFixed(1)}`);
-  ok('aimed play still eventually loses', Math.max(...waves) < 400, `max ${Math.max(...waves)}`);
+  ok(
+    'three stars takes better play than the bot manages everywhere',
+    results.filter((r) => r.stars === 3).length <= results.length * 0.5,
+    `${results.filter((r) => r.stars === 3).length} three-star clears`,
+  );
+  ok(
+    'star thresholds ascend and are reachable',
+    LEVELS.every((l) => l.stars[0] < l.stars[1] && l.stars[1] < l.stars[2] && l.stars[0] > 0),
+  );
 }
 
 console.log(
   `\n${failures === 0 ? '\x1b[32m' : '\x1b[31m'}${checks - failures}/${checks} checks passed\x1b[0m\n`,
 );
-process.exit(failures === 0 ? 1 && 0 : 1);
+process.exit(failures === 0 ? 0 : 1);

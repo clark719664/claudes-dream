@@ -20,7 +20,6 @@ import {
   resetProfile,
   saveProfile,
   setProgress,
-  todayKey,
 } from '../meta/profile';
 import {
   buyPack,
@@ -37,13 +36,22 @@ import {
   type PackKind,
   type PullResult,
 } from '../meta/packs';
+import { LEVELS, WORLDS, objectiveText, type LevelSpec } from '../game/levels';
+import {
+  bestScoreFor,
+  highestUnlocked,
+  isUnlocked,
+  starsFor,
+  totalStars,
+} from '../meta/profile';
 import { esc, fmt, mount, on, share, toast, unmount } from './dom';
 
 export interface Nav {
-  play: (daily: boolean) => void;
+  play: (levelId: number) => void;
   resume: () => void;
   restart: () => void;
   home: () => void;
+  map: () => void;
 }
 
 let nav: Nav;
@@ -64,12 +72,14 @@ export function homeScreen(): void {
   const daily = pendingDaily();
   const album = albumProgress();
   const packs = profile.unopened.length;
-  const todayBest = profile.dailyBest[todayKey()] ?? 0;
+  const next = highestUnlocked(LEVELS.map((l) => l.id));
+  const level = LEVELS.find((l) => l.id === next);
+  const cleared = LEVELS.filter((l) => starsFor(l.id) > 0).length;
 
   mount(
     `
     <h1 class="title">PRISM<br />BREAK</h1>
-    <p class="tagline">Chain the colours. Collapse the wall. Fill the album.</p>
+    <p class="tagline">Cut the supports. Collapse the board. Fill the album.</p>
     ${wallet()}
     ${
       daily
@@ -78,9 +88,12 @@ export function homeScreen(): void {
            </button>`
         : ''
     }
-    <button class="btn primary" data-act="play">▶  PLAY</button>
-    <button class="btn" data-act="daily">
-      ☀️  Daily Challenge ${todayBest ? `<span class="badge">best ${fmt(todayBest)}</span>` : '<span class="badge live">new</span>'}
+    <button class="btn primary" data-act="play">
+      ▶  ${cleared ? `LEVEL ${next}` : 'START'}${level ? ` · ${esc(level.name)}` : ''}
+    </button>
+    <button class="btn" data-act="map">
+      🗺️  Level Map <span class="badge">${cleared}/${LEVELS.length}</span>
+      <span class="badge gold">★ ${totalStars()}</span>
     </button>
     <button class="btn" data-act="album">
       📖  Sticker Album <span class="badge">${album.owned}/${album.total}</span>
@@ -93,9 +106,6 @@ export function homeScreen(): void {
       <button class="btn ghost" data-act="help">How to play</button>
       <button class="btn ghost" data-act="settings">Settings</button>
     </div>
-    <p class="sub" style="text-align:center;margin-top:10px">
-      Best ${fmt(profile.bestScore)} · Wave ${profile.bestWave} · Chain ×${profile.bestChain}
-    </p>
   `,
     (root) => {
       on(root, '[data-act]', (el) => {
@@ -103,10 +113,10 @@ export function homeScreen(): void {
         haptics.tap();
         switch (el.dataset.act) {
           case 'play':
-            nav.play(false);
+            nav.play(next);
             break;
-          case 'daily':
-            nav.play(true);
+          case 'map':
+            nav.map();
             break;
           case 'daily-claim': {
             const reward = claimDaily();
@@ -134,6 +144,103 @@ export function homeScreen(): void {
             settingsScreen();
             break;
         }
+      });
+    },
+    true,
+  );
+}
+
+// ------------------------------------------------------------------- map --
+function starRow(n: number, size = 13): string {
+  return `<span class="stars" style="font-size:${size}px">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</span>`;
+}
+
+export function mapScreen(): void {
+  const body = WORLDS.map((world) => {
+    const levels = LEVELS.filter((l) => l.world === world.id);
+    const got = levels.reduce((a, l) => a + starsFor(l.id), 0);
+
+    const nodes = levels
+      .map((l) => {
+        const open = isUnlocked(l.id);
+        const stars = starsFor(l.id);
+        return `<button class="node ${open ? '' : 'locked'} ${stars ? 'done' : ''}"
+                        data-level="${l.id}" ${open ? '' : 'disabled'}
+                        style="--accent:${world.accent}">
+          <b>${open ? l.id : '🔒'}</b>
+          <span class="nm">${open ? esc(l.name) : 'Locked'}</span>
+          ${open ? starRow(stars, 11) : ''}
+        </button>`;
+      })
+      .join('');
+
+    return `<section class="set-card">
+      <div class="set-head">
+        <h3 style="color:${world.accent}">${esc(world.name)}</h3>
+        <span class="count">★ ${got}/${levels.length * 3}</span>
+      </div>
+      <div class="node-grid">${nodes}</div>
+    </section>`;
+  }).join('');
+
+  mount(
+    `
+    <h2 class="screen-title">Level Map</h2>
+    <p class="sub">${totalStars()} of ${LEVELS.length * 3} stars. Clear a level to open the next.</p>
+    ${body}
+    <button class="btn ghost" data-act="back">← Back</button>
+  `,
+    (root) => {
+      on(root, '[data-act="back"]', () => {
+        sfx.uiTap();
+        homeScreen();
+      });
+      on(root, '[data-level]', (el) => {
+        sfx.uiTap();
+        levelIntroScreen(Number(el.dataset.level));
+      });
+    },
+    true,
+  );
+}
+
+// ---------------------------------------------------------- level intro --
+export function levelIntroScreen(levelId: number): void {
+  const level = LEVELS.find((l) => l.id === levelId);
+  if (!level) return homeScreen();
+  const world = WORLDS.find((w) => w.id === level.world);
+  const best = bestScoreFor(levelId);
+
+  mount(
+    `
+    <p class="sub" style="margin-bottom:6px">${esc(world?.name ?? '')} · Level ${level.id}</p>
+    <h2 class="screen-title">${esc(level.name)}</h2>
+    ${starRow(starsFor(levelId), 26)}
+    <div class="stats" style="margin-top:16px">
+      <div><span>Goal</span><b style="font-size:15px;line-height:1.3">${esc(objectiveText(level.objective))}</b></div>
+      <div><span>Moves</span><b>${level.moves}</b></div>
+    </div>
+    ${level.hint ? `<div class="hint">${esc(level.hint)}</div>` : ''}
+    ${
+      level.creepEvery
+        ? `<div class="hint"><b>☣ Creep.</b> Junk seeps into empty cells every ${level.creepEvery} moves. Nothing you placed ever moves — you just get less room.</div>`
+        : ''
+    }
+    <div class="hint">
+      <b>★ ${fmt(level.stars[0])}</b> · <b>★★ ${fmt(level.stars[1])}</b> ·
+      <b>★★★ ${fmt(level.stars[2])}</b>${best ? ` — your best ${fmt(best)}` : ''}
+    </div>
+    <button class="btn primary" data-act="go">▶  Play</button>
+    <button class="btn ghost" data-act="back">← Map</button>
+  `,
+    (root) => {
+      on(root, '[data-act="go"]', () => {
+        sfx.uiTap();
+        nav.play(levelId);
+      });
+      on(root, '[data-act="back"]', () => {
+        sfx.uiTap();
+        mapScreen();
       });
     },
     true,
@@ -508,54 +615,74 @@ function giftCodeScreen(st: Sticker, code: string): void {
 
 // --------------------------------------------------------------- results --
 export interface ResultPayload {
+  level: LevelSpec;
+  won: boolean;
   score: number;
-  wave: number;
+  stars: 0 | 1 | 2 | 3;
   shards: number;
-  bestChain: number;
-  blocksBroken: number;
-  newBest: boolean;
-  daily: string | null;
+  movesLeft: number;
+  bestCombo: number;
+  linesCleared: number;
+  firstClear: boolean;
+  nextLevelId: number | null;
   packsWon: string[];
 }
 
 export function resultsScreen(r: ResultPayload): void {
+  // Explicit literals: TS does not narrow a 0|1|2|3 union through `<=`.
+  const nextStar =
+    r.won && r.stars === 1 ? r.level.stars[1] : r.won && r.stars === 2 ? r.level.stars[2] : null;
+
   mount(
     `
-    <h2 class="screen-title">${r.newBest ? '🏆 New best!' : r.daily ? 'Daily run over' : 'Run over'}</h2>
-    <p class="sub">The wall reached the line at wave ${r.wave}.</p>
+    <h2 class="screen-title">${r.won ? 'Level clear!' : 'Out of moves'}</h2>
+    <p class="sub">${esc(r.level.name)} · ${esc(objectiveText(r.level.objective))}</p>
+    ${r.won ? `<div style="text-align:center;margin:8px 0 18px">${starRow(r.stars, 40)}</div>` : ''}
     <div class="stats">
-      <div><span>Score</span><b class="${r.newBest ? 'hi' : ''}">${fmt(r.score)}</b></div>
-      <div><span>Wave</span><b>${r.wave}</b></div>
-      <div><span>Best chain</span><b>×${r.bestChain}</b></div>
-      <div><span>Shards earned</span><b class="hi">${fmt(r.shards)}</b></div>
-      <div><span>Blocks broken</span><b>${fmt(r.blocksBroken)}</b></div>
-      <div><span>Album</span><b>${albumProgress().owned}/${albumProgress().total}</b></div>
+      <div><span>Score</span><b class="${r.won ? 'hi' : ''}">${fmt(r.score)}</b></div>
+      <div><span>Moves left</span><b>${r.movesLeft}</b></div>
+      <div><span>Best combo</span><b>×${r.bestCombo}</b></div>
+      <div><span>Lines</span><b>${fmt(r.linesCleared)}</b></div>
     </div>
-    ${r.packsWon
-      .map((reason) => `<div class="hint"><b>🎴 Pack earned</b> — ${esc(reason)}</div>`)
-      .join('')}
-    <button class="btn primary" data-act="again">↻  Play again</button>
+    ${
+      nextStar
+        ? `<div class="hint">${fmt(nextStar - r.score)} more points for ${'★'.repeat(r.stars + 1)}.</div>`
+        : ''
+    }
+    ${r.won && r.shards ? `<div class="hint"><b>+${fmt(r.shards)} Prism Shards</b>${r.firstClear ? ' — first clear bonus included' : ''}</div>` : ''}
+    ${r.packsWon.map((why) => `<div class="hint"><b>🎴 Pack earned</b> — ${esc(why)}</div>`).join('')}
+    ${
+      r.won && r.nextLevelId
+        ? `<button class="btn primary" data-act="next">▶  Next level</button>`
+        : `<button class="btn primary" data-act="again">↻  ${r.won ? 'Play again' : 'Retry'}</button>`
+    }
+    ${r.won ? '<button class="btn" data-act="again">↻ Replay for more stars</button>' : ''}
     ${profile.unopened.length ? '<button class="btn gold" data-act="open">🎴 Open your packs</button>' : ''}
-    <button class="btn" data-act="share">Share your score</button>
-    <button class="btn ghost" data-act="home">← Home</button>
+    <button class="btn" data-act="share">Share</button>
+    <button class="btn ghost" data-act="map">🗺️ Level map</button>
   `,
     (root) => {
       on(root, '[data-act="again"]', () => {
         sfx.uiTap();
         nav.restart();
       });
+      on(root, '[data-act="next"]', () => {
+        sfx.uiTap();
+        if (r.nextLevelId) nav.play(r.nextLevelId);
+      });
       on(root, '[data-act="open"]', () => {
         sfx.uiTap();
         shopScreen();
       });
-      on(root, '[data-act="home"]', () => {
+      on(root, '[data-act="map"]', () => {
         sfx.uiTap();
-        nav.home();
+        nav.map();
       });
       on(root, '[data-act="share"]', () => {
-        const label = r.daily ? `Daily Challenge ${r.daily}` : 'Prism Break';
         void share(
-          `${label}: ${fmt(r.score)} points, wave ${r.wave}, best chain ×${r.bestChain}. Beat that.`,
+          r.won
+            ? `Prism Break level ${r.level.id} "${r.level.name}" — ${'★'.repeat(r.stars)} with ${fmt(r.score)}. Beat that.`
+            : `Level ${r.level.id} "${r.level.name}" beat me. ${fmt(r.score)} points.`,
         );
       });
     },
@@ -568,10 +695,10 @@ export function pauseScreen(): void {
   mount(
     `
     <h2 class="screen-title">Paused</h2>
-    <p class="sub">Score ${fmt(profile.bestScore)} is the one to beat.</p>
     <button class="btn primary" data-act="resume">Resume</button>
-    <button class="btn" data-act="restart">Restart run</button>
+    <button class="btn" data-act="restart">Restart level</button>
     <button class="btn" data-act="help">How to play</button>
+    <button class="btn ghost" data-act="map">🗺️ Level map</button>
     <button class="btn ghost" data-act="home">Quit to menu</button>
   `,
     (root) => {
@@ -584,6 +711,10 @@ export function pauseScreen(): void {
         nav.restart();
       });
       on(root, '[data-act="help"]', () => helpScreen(() => pauseScreen()));
+      on(root, '[data-act="map"]', () => {
+        sfx.uiTap();
+        nav.map();
+      });
       on(root, '[data-act="home"]', () => {
         sfx.uiTap();
         nav.home();
@@ -594,43 +725,43 @@ export function pauseScreen(): void {
 
 // ------------------------------------------------------------------ help --
 export function helpScreen(back: () => void = homeScreen): void {
-  const sw = (i: number) =>
-    `<i class="swatch" style="background:${PALETTE.hues[i].core}"></i>`;
+  const sw = (i: number) => `<i class="swatch" style="background:${PALETTE.hues[i].core}"></i>`;
 
   mount(
     `
     <h2 class="screen-title">How to play</h2>
-    <p class="sub">Two rules do all the work.</p>
+    <p class="sub">Drag a piece onto the board. That is the whole control scheme.</p>
 
     <div class="hint">
-      <b>1 · Same colour shatters and pierces.</b><br />
-      Your ball carries a colour. Hit a block of that colour ${sw(0)}${sw(0)} and it
-      shatters instantly — whatever its health — and the ball carries straight on,
-      faster. Strung together, one ball can rip a whole vein out of the wall.
+      <b>1 · Fill a line.</b><br />
+      Complete a whole row or column and it clears, whatever colours are in it.
+      This is how you get rid of stone, crates and anything else in your way.
     </div>
     <div class="hint">
-      <b>2 · A different colour repaints you.</b><br />
-      Hit a block of another colour ${sw(1)} and you chip it, bounce off, and
-      <b>become that colour</b>. That is the whole game: reading the wall, and
-      planning what you will turn into next.
+      <b>2 · Or gather a colour.</b><br />
+      Five or more touching tiles of one colour ${sw(0)}${sw(0)}${sw(0)} clear on
+      their own. Pieces arrive already coloured, so where you put a colour matters
+      as much as whether it fits.
     </div>
     <div class="hint">
-      <b>Energy.</b> Every bounce burns a ball's energy and it burns out at zero.
-      Piercing costs nothing and gives energy back — so good chains keep the volley alive.
+      <b>Do both at once.</b> A placement that finishes a line <i>and</i> a colour
+      group at the same time scores far more than doing them one after the other,
+      and clearing on consecutive moves builds a streak on top of that.
     </div>
     <div class="hint">
-      <b>Cascades.</b> When the volley ends, the wall collapses upward into the gaps.
-      Five or more touching blocks of one colour detonate on their own, which collapses
-      it again — chain multipliers stack fast.
+      <b>Nothing is hidden.</b> While you drag, the board rings every tile the
+      placement would clear. Nothing falls, nothing is on a timer, and nothing
+      moves until you move it — so there is no luck in a move.
     </div>
     <div class="hint">
-      <b>The wall.</b> Each turn a new row pushes in from the top. Clearing blocks pulls
-      the wall back up and away from you. Let it cross the red line and the run ends.
+      <b>The pieces.</b> Three at a time; a new three arrives when all of them are
+      down. A piece that no longer fits anywhere goes dim. When none of them fit,
+      the level is over.
     </div>
     <div class="hint">
-      <b>◈ Prism</b> matches every colour and leaves yours alone.
-      <b>✦ Bomb</b> takes its neighbours with it. <b>Grey stone</b> never resonates —
-      chip it down the hard way.
+      <b>◈ Prism</b> counts as whatever colour touches it. <b>✦ Bomb</b> takes its
+      neighbours when something clears it. <b>Crates</b> need two separate clears.
+      <b>Stone</b> never joins a colour group — only a full line shifts it.
     </div>
     <button class="btn primary" data-act="back">Got it</button>
   `,
@@ -652,9 +783,9 @@ export function settingsScreen(): void {
     <p class="sub">Player ID ${esc(profile.playerId)}</p>
     <button class="btn" data-act="mute">${isMuted() ? '🔇 Sound off' : '🔊 Sound on'}</button>
     <div class="stats">
-      <div><span>Runs</span><b>${fmt(profile.runs)}</b></div>
+      <div><span>Levels played</span><b>${fmt(profile.runs)}</b></div>
       <div><span>Blocks broken</span><b>${fmt(profile.blocksBroken)}</b></div>
-      <div><span>Daily streak</span><b>${profile.dailyStreak}</b></div>
+      <div><span>Stars</span><b class="hi">${totalStars()}</b></div>
       <div><span>Best chain</span><b>×${profile.bestChain}</b></div>
     </div>
     <button class="btn ghost" data-act="reset">Erase all progress</button>

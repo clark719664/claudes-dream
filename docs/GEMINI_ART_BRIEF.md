@@ -6,10 +6,10 @@
 ---
 
 You are the art director and gameplay designer for **Prism Break**, a finished,
-playable mobile game. The complete source follows this brief. Your job is to
-replace its placeholder programmer-art with a designed visual system, and to
-expand its block and item roster — **without breaking the mechanic the whole
-game rests on.**
+playable mobile puzzle game. The complete source follows this brief. Your job is
+to replace its placeholder programmer-art with a designed visual system, and to
+expand its tile and item roster — **without breaking the two things the game
+rests on.**
 
 Read the rest of this brief before you draw anything. The constraints in §2 are
 the difference between art that ships and art that has to be thrown away.
@@ -18,18 +18,20 @@ the difference between art that ships and art that has to be thrown away.
 
 ## 1. What the game is
 
-A one-thumb brick breaker on a 7-column grid. Two rules drive everything:
+A shape-placement puzzle on an 8×8 board. You are dealt three pieces at a time
+and drag them anywhere they fit. **Nothing falls, nothing bounces, nothing is on
+a timer, and the board never moves on its own** — the only thing you are
+fighting is space.
 
-1. **Same colour → shatter and pierce.** Hit a block matching your ball's
-   colour and it shatters whatever its health, the ball does *not* bounce, and
-   it speeds up.
-2. **Different colour → chip and repaint.** You chip it, you bounce, and **your
-   ball becomes that colour.**
+Two things clear:
 
-The wall hangs from the ceiling and gravity pulls blocks *upward*, so clearing a
-hole makes the wall's leading edge recede away from the player. After each
-volley the board collapses and groups of 5+ same-colour blocks auto-detonate in
-chains.
+1. **A line.** A complete row or column clears, whatever colours are in it.
+2. **A group.** Five or more touching tiles of one colour clear on their own.
+
+Pieces arrive already coloured, so every placement is two decisions at once:
+does it fit, and what colour does it put where. A placement that finishes a line
+*and* a colour group together scores far more than doing them one at a time,
+and clearing on consecutive moves builds a streak on top of that.
 
 There are five hues, and they are the game's vocabulary:
 
@@ -41,7 +43,13 @@ There are five hues, and they are the game's vocabulary:
 | 3 | Amber | `#ffb703` | `#ffd978` |
 | 4 | Violet | `#c77dff` | `#e2b8ff` |
 
+Most levels deal from only three of the five, so groups are achievable.
 Background is `#080a14`. Everything is drawn on an HTML5 canvas.
+
+Levels are authored as text grids with objectives, move limits and star
+thresholds, arranged on a world map. A sticker album, packs, duplicates and
+gifting sit on top. None of that needs art from you unless you want to propose
+it — the board is the job.
 
 ---
 
@@ -49,155 +57,157 @@ Background is `#080a14`. Everything is drawn on an HTML5 canvas.
 
 **2.1 · Colour is the mechanic, not the decoration.**
 This is the constraint that kills most proposals. A player reads the board by
-hue and nothing else: "am I cyan, where is the cyan". Any character art,
+hue: *where is the violet, can I reach five of them*. Any character art,
 pattern, texture or outline that competes with hue for attention makes the game
-*unplayable*, however beautiful it looks in isolation.
+**unplayable**, however good it looks in isolation.
 
-Concretely: every block you design must stay **instantly sortable by colour at a
-glance, at arm's length, in one frame**. Detail lives in the dark ink layer and
-the silhouette — never in a second competing colour. No block may carry a hue
-that belongs to another block type.
+Concretely: every tile you design must stay **instantly sortable by colour at a
+glance, at arm's length, in one frame**. Detail lives in a dark ink layer and in
+the silhouette — never in a second competing colour. No tile type may carry a
+hue that belongs to another tile type.
 
 **2.2 · One shape, five tints.**
-The same block art is rendered in all five hues. So assets must be
-**hue-agnostic** — monochrome masks, `currentColor`, or explicit paint *roles* —
-never a baked-in colour. Do not deliver five coloured PNGs of the same block;
-deliver one shape that gets tinted at runtime.
+The same tile art is rendered in all five hues. Assets must be **hue-agnostic** —
+monochrome masks, `currentColor`, or explicit paint *roles* — never a baked-in
+colour. Do not deliver five coloured PNGs of the same tile; deliver one shape
+that gets tinted at runtime.
 
-**2.3 · It has to read at 50 pixels.**
-One cell is roughly 50×50 CSS px on a phone (up to 2.5× device pixel ratio).
-Anything thinner than ~2px at that size disappears. Faces need to work at the
-size of a fingernail. Test every design mentally at 50px before you commit to it.
+**2.3 · It has to read at 45 pixels.**
+One cell is roughly 45×45 CSS px on a phone (up to 2.5× device pixel ratio), and
+tray pieces are smaller again. Anything thinner than ~2px at that size
+disappears. Faces need to work at the size of a fingernail.
 
 **2.4 · Vector, not raster.**
-The entire game is **23 KB gzipped with zero binary assets** — it loads
-instantly, which matters enormously for a game meant to spread by link. Please
-deliver **SVG path data**, not PNGs. Canvas consumes SVG paths directly via
-`new Path2D(d)`, so paths drop straight into the existing renderer. Design every
-path in a **100×100 coordinate box**; the renderer scales it to the cell.
+The whole game is **26 KB gzipped with zero binary assets** — it loads instantly,
+which matters enormously for something meant to spread by link. Deliver **SVG
+path data**, not PNGs. Canvas consumes SVG paths directly via `new Path2D(d)`,
+so paths drop into the existing renderer. Design every path in a **100×100
+coordinate box**; the renderer scales it to the cell.
 
 **2.5 · Animation must be cheap.**
-Up to ~77 blocks are on screen at 60fps alongside a particle system. Animation
-must come from transforms and opacity on existing paths (a bob, a pulse, a
-squash on hit, a blink), never from per-frame path regeneration or filters.
+Up to 64 tiles plus a particle system run at 60fps. Animation comes from
+transforms and opacity on existing paths (a settle, a pulse, a squash on clear,
+a blink) — never from per-frame path regeneration or filters.
 
-**2.6 · Respect the existing mechanics.**
-Runs are turn-based volleys. Balls carry an **energy budget** — every bounce
-spends one, every same-colour pierce refunds one, and the ball burns out at
-zero. Gravity pulls blocks *up*. Cascades resolve *after* the volley, not
-during it. Any new block or item you invent must work inside these rules; say
-explicitly how yours does.
-
----
-
-## 3. Deliverable A — the numberless health language
-
-**This is the highest-priority item.** The board currently shows no digits, by
-design: a player should *read* the wall, never *count* it.
-
-The placeholder scheme in `src/game/render.ts` (`drawArmour`) is a base-4
-counter drawn as dark ink over the block face:
-
-- each **stud** (small filled dot) is worth **1**
-- each **plate** (inset rounded-rect frame) is worth **4**
-
-so health 3 is two studs, 5 is one plate, 7 is a plate and two studs, 9 is two
-plates. A hit visibly strips a stud or a plate, which teaches the scheme with no
-tutorial text.
-
-It works, but it is programmer art. **Design the real one.** It must:
-
-- cover **health 1 through 9** (9 is the game's maximum)
-- make the *current* value readable at a glance at 50px — not the maximum
-- **step down visibly on every hit**, so the scheme teaches itself
-- sit in the dark ink layer so it never competes with hue (see §2.1)
-- feel like *material toughness* — armour, crystal, plating, shell — rather than
-  like a number badge. "Certain marks mean a specific number" is the goal:
-  the player should end up thinking *"that one's a tough one"*, not *"that's a 7"*
-
-Deliver: the scheme explained, a table mapping 1–9 to its marks, and SVG paths
-for each mark, plus a one-line rationale for why it reads at 50px.
+**2.6 · Never break "nothing moves unless I move it".**
+This is the promise the game is built on, and the reason it feels fair. An
+earlier version pushed rows down over time; it had to be cut because it shoved
+tiles the player had placed. The replacement, *creep*, only ever fills cells
+that were already empty. Anything you design follows the same rule: you may take
+space away, you may change what a tile is, you may not relocate a tile the
+player put down.
 
 ---
 
-## 4. Deliverable B — block characters
+## 3. Deliverable A — damage by cracking
 
-Give each of the five hues a **character identity** — a face or creature that
-lives on the block. Monopoly Go and Candy Crush both lean on this: a board of
-faces is warmer, more screenshot-able and more marketable than a board of
-squares, and faces reacting to being hit is free game feel.
+**This is the highest-priority item.** The board shows no numbers anywhere, on
+purpose: a player should *read* it, never *count* it.
+
+Obstacles (stone, crates) cannot be covered, so they are worn down by clears
+going off beside them — stone takes two, a crate takes three. Their health is
+shown purely as **damage**: the placeholder in `drawDamage` (`src/game/render.ts`)
+draws procedural cracks that multiply as a tile takes hits, seeded from the tile
+id so a given tile always breaks the same way.
+
+**Design the real one.** It must:
+
+- read as a **material progressively failing** — hairline, split, spiderweb,
+  about to fall apart — not as a meter or a badge
+- make it obvious at a glance which obstacles are nearly gone and which are
+  fresh, at 45px, across a board of them
+- **step visibly on every hit**, so the scheme teaches itself with no tutorial
+- stay in the dark ink layer, so it never competes with hue (§2.1)
+- work over stone grey, crate brown, and all five hues
+
+Cover **two hits and three hits** at minimum, and say how the scheme would
+extend if a later tile needed four or five. Give the final state — the frame
+before it breaks — real weight; that is the one the player is waiting for.
+
+---
+
+## 4. Deliverable B — tile characters
+
+Give each of the five hues a **character identity** — a face or creature living
+on the tile. A board of faces is warmer, more screenshot-able and far more
+marketable than a board of squares, and faces reacting to a clear is free game
+feel.
 
 Requirements:
 
 - **five characters, one per hue**, distinguishable by *silhouette alone* — a
   colour-blind player must still tell them apart
 - drawn in the **dark ink layer** over the hue, plus optional bright highlight;
-  the character must never introduce a competing colour (§2.1)
-- legible at 50px — think bold simple shapes, two eyes and a mouth, not detail
-- **four expression states** each: `idle`, `hit` (just chipped), `scared` (this
-  block is below the danger line), `gleeful` (this block is about to resonate
-  and shatter)
-- a personality line each, so the sticker album and store copy can use them
+  never introducing a competing colour (§2.1)
+- legible at 45px — bold simple shapes, two eyes and a mouth, not detail
+- **four states**: `idle`, `settling` (just placed), `doomed` (part of a clear
+  that is about to go), `crowded` (this tile is in a nearly-full region)
+- a personality line each, for the album and store copy
 
-The characters must also coexist with the health marks from Deliverable A on the
-same block face. Say how the two layers share the space.
+Say how a character shares the tile face with the crack layer from Deliverable A,
+since an obstacle can be both cracked and expressive at once.
 
 ---
 
-## 5. Deliverable C — the block roster
+## 5. Deliverable C — the tile roster
 
-Three special blocks exist today:
+Four special tiles exist today:
 
 | Existing | Behaviour |
 | --- | --- |
-| **Prism** | Resonates with *every* hue and leaves the ball's colour alone. Joins a cascade group but never bridges two different colours together. |
-| **Stone** | Colourless. Never resonates, never cascades. Pure health — the thing that makes a board hard. |
-| **Bomb** | Coloured, 1 health, takes its 3×3 neighbourhood with it, chains into other bombs. |
+| **Stone** | Colourless obstacle. Never joins a colour group. Worn down by two clears going off beside it. |
+| **Crate** | As stone, but takes three. |
+| **Prism** | Counts as every colour when a group is measured — but is never expanded *from*, so it extends a group without welding two colours together. |
+| **Bomb** | Coloured, joins groups normally, and takes its 3×3 with it when cleared. Chains into other bombs. |
 
 **Design 8–10 more.** For each, give me:
 
 - name, one-line fantasy, and the **exact mechanical rule** in the game's own
-  terms (resonance, pierce, repaint, energy, gravity-up, cascade)
+  terms (placement, line clear, group clear, combo, streak, creep)
 - why it creates an interesting *decision*, not just a different number
 - SVG paths and how it animates
-- roughly how often it should spawn, and from which wave
+- which world it should appear in, and how often
 
-Directions worth exploring — the wall currently only ever *resists* the player,
-so blocks that actively change how a volley routes are the gap:
+Directions worth exploring — the board currently only ever *resists* the player,
+so tiles that change how space itself behaves are the gap:
 
-- blocks that **redirect** a ball rather than stopping it (mirrors, ramps)
-- blocks that **repaint** the ball to a colour of *their* choosing, not their own
-- blocks that **move** between turns, or that pull neighbours with them
-- blocks that punish greed — safe to leave alone, dangerous to hit
-- blocks that interact with the *gravity-up* rule specifically, since that rule
-  is unique to this game and currently under-exploited
+- tiles that change what counts as a line, or as a group
+- tiles that are good to keep rather than clear, so clearing is not always right
+- tiles that reward placing a specific *shape* against them, tying the two
+  halves of the game together
+- tiles that interact with **creep** — the only thing on the board that arrives
+  without the player's say-so
 
-Reject any idea that needs the player to read text on the block.
+Reject any idea that needs the player to read text on a tile, or that moves a
+tile the player placed (§2.6).
 
 ---
 
 ## 6. Deliverable D — playable items
 
-Two pickups exist: `+1 Ball` and a shard bundle. They float in the grid, descend
-with the wall, and are collected by a ball touching them.
+There are no power-ups yet. This is open ground.
 
-**Design 8–10 more**, including the ones already asked for — **bombs and
-magnets** — plus your own. For each: name, exact rule, the decision it creates,
-SVG, and how the player understands what it does *without a label*.
+**Design 8–10**, including the ones already asked for — **bombs and magnets** —
+plus your own. For each: name, exact rule, the decision it creates, SVG, and how
+a player understands what it does *without a label*.
 
 Constraints that make or break an item here:
 
-- a volley is **fired and then watched** — an item cannot require input
-  mid-flight, because there is no input mid-flight
-- items that affect the **energy budget** are especially strong, because energy
-  is what limits a volley's length
-- items that affect **ball colour** touch rule 2 directly — the most powerful
-  lever in the game, so handle with care and say why yours is balanced
-- anything that trivially clears the board kills the run's tension
+- the game is turn-based and fully deterministic, and the drag preview shows
+  the outcome of a placement before it is committed. An item must not make
+  that preview a lie
+- an item the player *holds and spends* is a second kind of move, so say
+  clearly how it is triggered by touch alongside dragging a piece
+- **space is the real currency.** Items that give space back (clear a region,
+  remove one tile, swap the tray) are powerful; items that only add score are
+  boring here
+- anything that trivially empties the board kills the level's tension
 
-Split your answer into **collect-on-contact** items (consumed instantly) and
-**held items** (a charge the player spends on a later turn), and say which of
-yours are which.
+Split your answer into **board tiles that act when cleared** and **held items
+the player spends**, and say which of yours are which.
+
+Also propose how items should be *earned* — the game already has Prism Shards,
+a dust economy from duplicate stickers, and per-level star ratings.
 
 ---
 
@@ -214,7 +224,7 @@ interface. Nothing consumes it yet — it is the contract the renderer will be
 rewired to, so hold to it exactly and the wiring is mechanical:
 
 ```ts
-/** Paint roles are resolved at runtime from the block's hue, so art stays
+/** Paint roles are resolved at runtime from the tile's hue, so art stays
  *  hue-agnostic (§2.2). 'core'/'glow' take the hue; 'ink' is the dark overlay
  *  that carries detail; 'rim' is a bright edge highlight. */
 export type Paint = 'core' | 'glow' | 'ink' | 'rim';
@@ -228,7 +238,7 @@ export interface ArtLayer {
   stroke?: { width: number };
 }
 
-export interface BlockArt {
+export interface TileArt {
   id: string;
   label: string;
   layers: ArtLayer[];
@@ -238,19 +248,20 @@ export interface CharacterArt {
   hue: 0 | 1 | 2 | 3 | 4;
   name: string;
   personality: string;
-  states: Record<'idle' | 'hit' | 'scared' | 'gleeful', ArtLayer[]>;
+  states: Record<'idle' | 'settling' | 'doomed' | 'crowded', ArtLayer[]>;
 }
 
-/** Marks for exactly this health value; index 0 is unused. */
-export interface ArmourArt {
-  hp: number;
+/** Crack overlay for a tile that has taken `hits` of `capacity` damage. */
+export interface DamageArt {
+  hits: number;
+  capacity: number;
   layers: ArtLayer[];
 }
 
 export interface PrismBreakArt {
-  blocks: BlockArt[];
+  tiles: TileArt[];
   characters: CharacterArt[];
-  armour: ArmourArt[];
+  damage: DamageArt[];
 }
 ```
 
@@ -258,8 +269,8 @@ Deliver it as a single `src/game/art.ts` exporting
 `export const ART: PrismBreakArt`.
 
 **Do not rewrite the game.** `src/game/` is deliberately DOM-free so the test
-suite can auto-play thousands of waves headlessly; keep it that way. If a design
-of yours needs a change to `grid.ts`, `physics.ts` or `game.ts`, describe the
+suite can auto-play all 24 levels headlessly on every change; keep it that way.
+If a design of yours needs a change to `board.ts` or `game.ts`, describe the
 change in prose and let me make it — do not hand back a rewritten simulation.
 
 If any constraint in §2 makes an idea of yours impossible, say so plainly and

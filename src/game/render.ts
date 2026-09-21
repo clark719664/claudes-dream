@@ -1,32 +1,35 @@
 import { CFG, PALETTE } from './config';
-import { FIELD } from './physics';
 import type { Fx, Game } from './game';
-import { BlockKind, PickupKind, type Block, type Hue } from './types';
+import { ClearKind, TileKind, type Cell, type Hue, type Tile, type TrayItem } from './types';
 
 interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  maxLife: number;
-  size: number;
-  colour: string;
+  x: number; y: number; vx: number; vy: number;
+  life: number; maxLife: number; size: number; colour: string;
 }
 
 interface Floater {
-  x: number;
-  y: number;
-  text: string;
-  life: number;
-  colour: string;
-  size: number;
+  x: number; y: number; text: string; life: number; colour: string; size: number;
 }
 
+/** Where the board and the tray sit, in CSS pixels. */
 export interface Layout {
   cell: number;
   ox: number;
   oy: number;
+  trayY: number;
+  trayBand: number;
+  trayCell: number;
+  traySlot: number;
+}
+
+/** What the player is currently dragging. */
+export interface DragState {
+  item: TrayItem;
+  /** Pointer position in CSS pixels. */
+  px: number;
+  py: number;
+  /** Board cell the shape's top-left would land on, or null when off-board. */
+  target: Cell | null;
 }
 
 export class Renderer {
@@ -49,58 +52,109 @@ export class Renderer {
     this.canvas.height = Math.round(rect.height * this.dpr);
   }
 
+  /**
+   * Board above, tray pinned to the bottom where a thumb reaches it.
+   *
+   * On a phone an 8x8 board is limited by width, so it can never fill the
+   * height — pinning the tray to the bottom and centring the board in what is
+   * left puts the slack between the two, rather than stranding it all above the
+   * board where it just reads as a hole in the screen.
+   */
   layout(): Layout {
     const w = this.canvas.width / this.dpr;
     const h = this.canvas.height / this.dpr;
-    const cell = Math.min(w / FIELD.width, h / FIELD.height);
-    return { cell, ox: (w - cell * FIELD.width) / 2, oy: (h - cell * FIELD.height) / 2 };
+    const gutter = 10;
+    const trayBand = Math.min(168, Math.max(120, h * 0.2));
+
+    const cell = Math.min((w - gutter * 2) / CFG.cols, (h - trayBand - gutter * 2) / CFG.rows);
+    const boardH = cell * CFG.rows;
+    const trayY = h - trayBand;
+    const ox = (w - cell * CFG.cols) / 2;
+    // Biased upward: the slack is more useful between board and tray, where
+    // the drag happens and the lifted piece needs somewhere to be seen.
+    const oy = Math.max(gutter, gutter + (trayY - boardH - gutter) * 0.3);
+
+    return {
+      cell,
+      ox,
+      oy,
+      trayY,
+      trayBand,
+      trayCell: cell * 0.62,
+      traySlot: (w - gutter * 2) / CFG.traySize,
+    };
   }
 
-  /** Convert a pointer position on the canvas into field coordinates. */
-  toField(clientX: number, clientY: number): { x: number; y: number } {
+  /** Pointer position → board cell (may be off-board). */
+  toCell(clientX: number, clientY: number): Cell {
     const rect = this.canvas.getBoundingClientRect();
     const { cell, ox, oy } = this.layout();
-    return { x: (clientX - rect.left - ox) / cell, y: (clientY - rect.top - oy) / cell };
+    return {
+      col: Math.floor((clientX - rect.left - ox) / cell),
+      row: Math.floor((clientY - rect.top - oy) / cell),
+    };
+  }
+
+  toLocal(clientX: number, clientY: number): { x: number; y: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
+
+  /** Which tray slot a pointer is over, or -1. */
+  traySlotAt(clientX: number, clientY: number): number {
+    const { trayY, traySlot } = this.layout();
+    const p = this.toLocal(clientX, clientY);
+    if (p.y < trayY - 8) return -1;
+    const slot = Math.floor((p.x - 10) / traySlot);
+    return slot >= 0 && slot < CFG.traySize ? slot : -1;
+  }
+
+  /**
+   * How big a tray piece is drawn. A long bar has to shrink to fit its slot,
+   * but shrinking every piece to the size of the worst case makes the common
+   * small ones needlessly fiddly to grab, so each piece is scaled to its own
+   * footprint.
+   */
+  private trayScale(L: Layout, item: TrayItem): number {
+    const span = Math.max(item.shape.w, item.shape.h);
+    return Math.min(L.trayCell, (L.traySlot - 22) / span, (L.trayBand - 34) / span);
   }
 
   ingest(events: Fx[]): void {
     for (const fx of events) {
       switch (fx.kind) {
+        case 'place':
+          this.shake = Math.min(5, this.shake + 1.5);
+          break;
         case 'shatter':
-          this.burst(fx.x, fx.y, hueColour(fx.hue), 9 + fx.value * 3);
+          this.burst(fx.x, fx.y, hueColour(fx.hue), 8 + fx.value * 2);
           break;
-        case 'resonate':
-          this.burst(fx.x, fx.y, hueGlow(fx.hue), 6);
-          this.shake = Math.min(9, this.shake + 0.7 + fx.value * 0.35);
-          if (fx.value >= 3) {
-            this.float(fx.x, fx.y, `×${fx.value} PIERCE`, hueGlow(fx.hue), 15);
-          }
+        case 'clearLine':
+          this.shake = Math.min(14, this.shake + 5);
+          this.flash = Math.min(0.4, this.flash + 0.12);
           break;
-        case 'cascade':
-          this.shake = Math.min(16, this.shake + 4 + fx.value * 1.6);
-          this.flash = Math.min(0.5, this.flash + 0.12 * fx.value);
-          if (fx.text) this.float(fx.x, fx.y, fx.text, hueGlow(fx.hue), 20 + fx.value * 2);
+        case 'clearGroup':
+          this.shake = Math.min(16, this.shake + 5);
+          this.flash = Math.min(0.45, this.flash + 0.14);
+          this.float(fx.x, fx.y, `×${fx.value}`, hueGlow(fx.hue), 20);
+          break;
+        case 'combo':
+          if (fx.text) this.float(fx.x, fx.y - 0.6, fx.text, '#ffffff', 26);
+          this.shake = Math.min(20, this.shake + 6);
           break;
         case 'bomb':
-          this.burst(fx.x, fx.y, '#ffd978', 26);
-          this.shake = Math.min(18, this.shake + 7);
+          this.burst(fx.x, fx.y, '#ffd978', 24);
+          this.shake = Math.min(20, this.shake + 7);
           break;
-        case 'pickup':
-          if (fx.text) this.float(fx.x, fx.y, fx.text, '#fff3c4', 18);
-          this.burst(fx.x, fx.y, '#ffe08a', 12);
+        case 'creep':
+          this.shake = Math.min(12, this.shake + 5);
           break;
-        case 'chip':
-          this.burst(fx.x, fx.y, hueColour(fx.hue), 3);
+        case 'win':
+          this.flash = 0.7;
           break;
-        case 'burnout':
-          this.burst(fx.x, fx.y, hueColour(fx.hue), 5);
-          break;
-        case 'wave':
-          if (fx.text) this.float(fx.x, fx.y, fx.text, '#ffffff', 26);
-          break;
-        case 'gameover':
-          this.shake = 20;
-          this.flash = 0.6;
+        case 'lose':
+          this.shake = 18;
+          this.flash = 0.5;
           break;
         default:
           break;
@@ -108,40 +162,39 @@ export class Renderer {
     }
   }
 
-  draw(game: Game): void {
+  draw(game: Game, drag: DragState | null): void {
     const ctx = this.ctx;
-    const { cell, ox, oy } = this.layout();
+    const L = this.layout();
     const w = this.canvas.width / this.dpr;
     const h = this.canvas.height / this.dpr;
     this.t += 1 / 60;
 
     ctx.save();
     ctx.scale(this.dpr, this.dpr);
-    ctx.clearRect(0, 0, w, h);
     this.drawBackground(ctx, w, h);
 
     const sx = (Math.random() - 0.5) * this.shake;
     const sy = (Math.random() - 0.5) * this.shake;
-    ctx.translate(ox + sx, oy + sy);
-    this.shake *= 0.86;
+    this.shake *= 0.85;
     if (this.shake < 0.1) this.shake = 0;
 
-    this.drawField(ctx, cell);
-    this.drawDangerLine(ctx, cell, game);
-    this.drawBlocks(ctx, cell, game);
-    this.drawPickups(ctx, cell, game);
-    this.drawAim(ctx, cell, game);
-    this.drawBalls(ctx, cell, game);
-    this.drawLauncher(ctx, cell, game);
-    this.drawParticles(ctx, cell);
-    this.drawFloaters(ctx, cell);
+    ctx.save();
+    ctx.translate(L.ox + sx, L.oy + sy);
+    this.drawGrid(ctx, L.cell);
+    this.drawTiles(ctx, L.cell, game);
+    if (drag) this.drawDropPreview(ctx, L.cell, game, drag);
+    this.drawParticles(ctx, L.cell);
+    this.drawFloaters(ctx, L.cell);
+    ctx.restore();
 
+    this.drawTray(ctx, L, game, drag);
+    if (drag) this.drawHeldPiece(ctx, L, drag);
     ctx.restore();
 
     if (this.flash > 0.001) {
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
-      ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.25})`;
+      ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.22})`;
       ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.restore();
       this.flash *= 0.85;
@@ -157,74 +210,57 @@ export class Renderer {
     ctx.fillRect(0, 0, w, h);
   }
 
-  private drawField(ctx: CanvasRenderingContext2D, cell: number): void {
+  private drawGrid(ctx: CanvasRenderingContext2D, cell: number): void {
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.045)';
-    ctx.lineWidth = 1;
-    for (let c = 1; c < CFG.cols; c++) {
-      ctx.beginPath();
-      ctx.moveTo(c * cell, 0);
-      ctx.lineTo(c * cell, CFG.rows * cell);
-      ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.035)';
+    for (let row = 0; row < CFG.rows; row++) {
+      for (let col = 0; col < CFG.cols; col++) {
+        const pad = cell * 0.06;
+        roundRect(ctx, col * cell + pad, row * cell + pad, cell - pad * 2, cell - pad * 2, cell * 0.18);
+        ctx.fill();
+      }
     }
-    ctx.strokeStyle = 'rgba(255,255,255,0.09)';
-    ctx.strokeRect(0, 0, CFG.cols * cell, FIELD.height * cell);
     ctx.restore();
   }
 
-  private drawDangerLine(ctx: CanvasRenderingContext2D, cell: number, game: Game): void {
-    const y = (CFG.dangerRow + 1) * cell;
-    const lowest = game.grid.lowestRow();
-    const close = lowest >= CFG.dangerRow - 2;
-    const pulse = close ? 0.35 + Math.sin(this.t * 7) * 0.25 : 0.16;
-
-    ctx.save();
-    ctx.strokeStyle = PALETTE.danger;
-    ctx.globalAlpha = pulse;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([cell * 0.22, cell * 0.16]);
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(CFG.cols * cell, y);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  private drawBlocks(ctx: CanvasRenderingContext2D, cell: number, game: Game): void {
-    const grid = game.grid;
-    for (let row = 0; row < grid.rows; row++) {
-      for (let col = 0; col < grid.cols; col++) {
-        const b = grid.at(col, row);
-        if (b) this.drawBlock(ctx, cell, col, row, b);
+  private drawTiles(ctx: CanvasRenderingContext2D, cell: number, game: Game): void {
+    for (let row = 0; row < game.board.rows; row++) {
+      for (let col = 0; col < game.board.cols; col++) {
+        const t = game.board.at(col, row);
+        if (t) this.drawTile(ctx, cell, col * cell, row * cell, t, t.anim);
       }
     }
   }
 
-  private drawBlock(
+  private drawTile(
     ctx: CanvasRenderingContext2D,
     cell: number,
-    col: number,
-    row: number,
-    b: Block,
+    x0: number,
+    y0: number,
+    tile: Tile,
+    anim = 1,
   ): void {
-    const pad = cell * 0.06;
-    const x = col * cell + pad;
-    const y = row * cell + pad;
+    const grow = 0.86 + 0.14 * anim;
+    const pad = cell * 0.06 + (cell * (1 - grow)) / 2;
+    const x = x0 + pad;
+    const y = y0 + pad;
     const s = cell - pad * 2;
     const radius = cell * 0.18;
 
     let core: string;
     let glow: string;
-    if (b.kind === BlockKind.Stone) {
+    if (tile.kind === TileKind.Stone) {
       core = PALETTE.stone.core;
       glow = PALETTE.stone.glow;
-    } else if (b.kind === BlockKind.Prism) {
-      // Near-white so it never gets mistaken for a hue; the shimmer is a rim.
+    } else if (tile.kind === TileKind.Prism) {
       core = PALETTE.prism.core;
       glow = PALETTE.prism.glow;
+    } else if (tile.kind === TileKind.Crate) {
+      core = PALETTE.crate.core;
+      glow = PALETTE.crate.glow;
     } else {
-      core = hueColour(b.hue);
-      glow = hueGlow(b.hue);
+      core = hueColour(tile.hue);
+      glow = hueGlow(tile.hue);
     }
 
     ctx.save();
@@ -234,208 +270,186 @@ export class Renderer {
     grad.addColorStop(1, core);
     ctx.fillStyle = grad;
     ctx.shadowColor = core;
-    ctx.shadowBlur = cell * 0.3;
+    ctx.shadowBlur = cell * 0.28;
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Inner bevel so the blocks read as solid rather than flat.
-    ctx.globalAlpha = 0.28;
+    ctx.globalAlpha = 0.26;
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = Math.max(1, cell * 0.035);
     roundRect(ctx, x + s * 0.08, y + s * 0.08, s * 0.84, s * 0.84, radius * 0.7);
     ctx.stroke();
     ctx.globalAlpha = 1;
 
-    // A prism gets a rotating spectrum rim, so "matches everything" is legible.
-    if (b.kind === BlockKind.Prism) {
+    if (tile.kind === TileKind.Prism) {
       const rim = ctx.createLinearGradient(x, y, x + s, y + s);
-      const shift = (this.t * 90 + col * 40 + row * 25) % 360;
-      for (let i = 0; i <= 5; i++) {
-        rim.addColorStop(i / 5, `hsl(${(shift + i * 60) % 360}, 95%, 65%)`);
-      }
+      const shift = (this.t * 90 + x * 0.6 + y * 0.4) % 360;
+      for (let i = 0; i <= 5; i++) rim.addColorStop(i / 5, `hsl(${(shift + i * 60) % 360}, 95%, 65%)`);
       ctx.strokeStyle = rim;
       ctx.lineWidth = Math.max(1.5, cell * 0.07);
       roundRect(ctx, x, y, s, s, radius);
       ctx.stroke();
     }
 
-    if (b.kind === BlockKind.Bomb) {
+    if (tile.kind === TileKind.Bomb) {
       ctx.fillStyle = 'rgba(0,0,0,0.75)';
-      ctx.font = `${Math.round(cell * 0.46)}px system-ui, sans-serif`;
+      ctx.font = `${Math.round(cell * 0.44)}px system-ui, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('✦', col * cell + cell / 2, row * cell + cell / 2);
-    } else if (b.kind === BlockKind.Prism) {
-      ctx.fillStyle = 'rgba(30,34,60,0.85)';
-      ctx.font = `${Math.round(cell * 0.4)}px system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('◈', col * cell + cell / 2, row * cell + cell / 2);
+      ctx.fillText('✦', x0 + cell / 2, y0 + cell / 2);
     }
     ctx.restore();
 
-    if (b.hp > 1) this.drawArmour(ctx, cell, col, row, b.hp);
+    this.drawDamage(ctx, cell, x0, y0, tile);
   }
 
   /**
-   * Health without digits. The board is read, never counted:
-   *
-   *   • each stud is worth 1        • a plate frame is worth 4
-   *
-   * so 3 = two studs, 5 = a plate, 7 = a plate and two studs, 9 = two plates.
-   * A hit visibly strips a stud or a plate, which teaches the scheme without
-   * a tutorial line. This is placeholder art — see docs/GEMINI_ART_BRIEF.md
-   * for the spec a designed block set has to satisfy in its place.
+   * Health shown as damage, never as a number. A crate that has taken a hit
+   * splits; nothing on the board asks to be counted, so the player's attention
+   * stays on colour and space, which is what the game is actually about. Crack
+   * geometry comes from the tile id, so a tile always breaks the same way
+   * instead of shimmering frame to frame.
    */
-  private drawArmour(
+  private drawDamage(
     ctx: CanvasRenderingContext2D,
     cell: number,
-    col: number,
-    row: number,
-    hp: number,
+    x0: number,
+    y0: number,
+    tile: Tile,
   ): void {
-    const plates = Math.min(2, Math.floor((hp - 1) / 4));
-    const studs = hp - 1 - plates * 4;
-    const x = col * cell;
-    const y = row * cell;
-    const ink = 'rgba(8,10,24,0.72)';
+    const taken = tile.maxHp - tile.hp;
+    if (taken <= 0) return;
+    const fractures = Math.max(1, Math.round((taken / tile.maxHp) * 4));
 
     ctx.save();
-    ctx.strokeStyle = ink;
-    ctx.fillStyle = ink;
-
-    for (let i = 0; i < plates; i++) {
-      const inset = cell * (0.17 + i * 0.1);
-      ctx.lineWidth = Math.max(1.5, cell * 0.055);
-      roundRect(ctx, x + inset, y + inset, cell - inset * 2, cell - inset * 2, cell * 0.11);
-      ctx.stroke();
-    }
-
-    if (studs > 0) {
-      const r = cell * 0.052;
-      const gap = cell * 0.16;
-      const cx = x + cell / 2;
-      const cy = y + cell * (plates > 0 ? 0.5 : 0.72);
-      const start = cx - ((studs - 1) * gap) / 2;
-      for (let i = 0; i < studs; i++) {
-        ctx.beginPath();
-        ctx.arc(start + i * gap, cy, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    ctx.restore();
-  }
-
-  private drawPickups(ctx: CanvasRenderingContext2D, cell: number, game: Game): void {
-    for (const p of game.pickups) {
-      const cx = (p.col + 0.5) * cell;
-      const cy = (p.row + 0.5) * cell + Math.sin(this.t * 3 + p.id) * cell * 0.06;
-      const r = cell * 0.3 * (0.6 + 0.4 * p.anim);
-
-      ctx.save();
-      ctx.shadowColor = '#ffe08a';
-      ctx.shadowBlur = cell * 0.5;
-      ctx.strokeStyle = '#ffe08a';
-      ctx.lineWidth = Math.max(1.5, cell * 0.05);
+    ctx.strokeStyle = 'rgba(6,8,18,0.8)';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (let i = 0; i < fractures; i++) {
+      ctx.lineWidth = Math.max(1, cell * (0.06 - i * 0.008));
+      const pts = crackPath(tile.id, i);
       ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = '#ffe08a';
-      ctx.font = `700 ${Math.round(cell * 0.3)}px system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(p.kind === PickupKind.ExtraBall ? '+1' : '◆', cx, cy);
-      ctx.restore();
-    }
-  }
-
-  private drawAim(ctx: CanvasRenderingContext2D, cell: number, game: Game): void {
-    if (!game.aiming || !game.canFire) return;
-    const pts = game.aimPreview();
-    ctx.save();
-    ctx.fillStyle = hueGlow(game.nextHue());
-    for (let i = 4; i < pts.length; i += 7) {
-      const fade = 1 - i / pts.length;
-      ctx.globalAlpha = 0.18 + fade * 0.6;
-      ctx.beginPath();
-      ctx.arc(pts[i].x * cell, pts[i].y * cell, cell * 0.055, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    const end = pts[pts.length - 1];
-    if (end) {
-      ctx.globalAlpha = 0.85;
-      ctx.strokeStyle = hueGlow(game.nextHue());
-      ctx.lineWidth = Math.max(1.5, cell * 0.04);
-      ctx.beginPath();
-      ctx.arc(end.x * cell, end.y * cell, cell * 0.17, 0, Math.PI * 2);
+      ctx.moveTo(x0 + pts[0].x * cell, y0 + pts[0].y * cell);
+      for (let p = 1; p < pts.length; p++) ctx.lineTo(x0 + pts[p].x * cell, y0 + pts[p].y * cell);
       ctx.stroke();
     }
     ctx.restore();
   }
 
-  private drawBalls(ctx: CanvasRenderingContext2D, cell: number, game: Game): void {
-    const r = CFG.ball.radius * cell;
-    for (const ball of game.balls) {
-      if (!ball.alive) continue;
-      const colour = hueColour(ball.hue);
-      const glow = hueGlow(ball.hue);
-      const fatigue = Math.max(0.25, Math.min(1, ball.energy / CFG.ball.energy));
+  /**
+   * The drop preview. A ghost of the piece sits in the cells it would occupy,
+   * and anything the placement would clear is outlined right then — so the
+   * consequence of a move is visible before the finger lifts, and a move is a
+   * decision rather than a guess.
+   */
+  private drawDropPreview(
+    ctx: CanvasRenderingContext2D,
+    cell: number,
+    game: Game,
+    drag: DragState,
+  ): void {
+    if (!drag.target) return;
+    const { valid, footprint, clears } = game.previewPlacement(
+      drag.item,
+      drag.target.col,
+      drag.target.row,
+    );
 
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      for (let i = 0; i < ball.trail.length; i++) {
-        const p = ball.trail[i];
-        const a = (i / ball.trail.length) * 0.35 * fatigue;
-        ctx.globalAlpha = a;
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(p.x * cell, p.y * cell, r * (0.35 + (i / ball.trail.length) * 0.8), 0, Math.PI * 2);
+    ctx.save();
+    if (!valid) {
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = PALETTE.danger;
+      for (const c of footprint) {
+        if (!game.board.inBounds(c.col, c.row)) continue;
+        const pad = cell * 0.1;
+        roundRect(ctx, c.col * cell + pad, c.row * cell + pad, cell - pad * 2, cell - pad * 2, cell * 0.16);
         ctx.fill();
       }
       ctx.restore();
-
-      ctx.save();
-      ctx.shadowColor = glow;
-      ctx.shadowBlur = cell * (0.25 + 0.4 * fatigue) * (1 + ball.streak * 0.25);
-      ctx.fillStyle = ball.streak > 0 ? glow : colour;
-      ctx.beginPath();
-      ctx.arc(ball.x * cell, ball.y * cell, r * (1 + ball.streak * 0.06), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      return;
     }
+
+    ctx.globalAlpha = 0.5;
+    for (const c of footprint) {
+      const pad = cell * 0.06;
+      roundRect(ctx, c.col * cell + pad, c.row * cell + pad, cell - pad * 2, cell - pad * 2, cell * 0.18);
+      ctx.fillStyle = hueGlow(drag.item.hue);
+      ctx.fill();
+    }
+
+    // Everything this move takes out, ringed in advance.
+    if (clears.length) {
+      const pulse = 0.6 + Math.sin(this.t * 10) * 0.3;
+      ctx.globalAlpha = pulse;
+      ctx.lineWidth = Math.max(2, cell * 0.07);
+      for (const ev of clears) {
+        ctx.strokeStyle = ev.kind === ClearKind.Group ? hueGlow(ev.hue) : '#ffffff';
+        for (const c of ev.cells) {
+          const pad = cell * 0.1;
+          roundRect(ctx, c.col * cell + pad, c.row * cell + pad, cell - pad * 2, cell - pad * 2, cell * 0.16);
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
   }
 
-  private drawLauncher(ctx: CanvasRenderingContext2D, cell: number, game: Game): void {
-    const x = game.launcherX * cell;
-    const y = game.launcherY * cell;
-
+  private drawTray(
+    ctx: CanvasRenderingContext2D,
+    L: Layout,
+    game: Game,
+    drag: DragState | null,
+  ): void {
+    // A panel under the tray so it reads as a separate place from the board.
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-    ctx.lineWidth = Math.max(1, cell * 0.03);
-    ctx.beginPath();
-    ctx.moveTo(0, y + cell * 0.3);
-    ctx.lineTo(CFG.cols * cell, y + cell * 0.3);
-    ctx.stroke();
-
-    const hues = game.upcomingHues();
-    const spacing = cell * 0.17;
-    const start = x - ((hues.length - 1) * spacing) / 2;
-    for (let i = 0; i < hues.length; i++) {
-      ctx.globalAlpha = game.canFire ? 1 : 0.25;
-      ctx.fillStyle = hueColour(hues[i]);
-      ctx.beginPath();
-      ctx.arc(start + i * spacing, y, cell * 0.06, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.globalAlpha = 1;
-    ctx.shadowColor = hueGlow(game.nextHue());
-    ctx.shadowBlur = cell * 0.5;
-    ctx.fillStyle = hueGlow(game.nextHue());
-    ctx.beginPath();
-    ctx.arc(x, y, cell * 0.13, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.035)';
+    roundRect(ctx, 10, L.trayY, L.traySlot * CFG.traySize, L.trayBand - 10, 18);
     ctx.fill();
+    ctx.restore();
+
+    for (let i = 0; i < game.tray.length; i++) {
+      const item = game.tray[i];
+      if (item.used || drag?.item.id === item.id) continue;
+
+      const cx = 10 + i * L.traySlot + L.traySlot / 2;
+      const cy = L.trayY + (L.trayBand - 10) / 2;
+      const fits = game.board.hasAnyPlacement(item.shape);
+
+      ctx.save();
+      // A piece that no longer fits anywhere goes dim, so a dead tray is
+      // visible before it is fatal.
+      ctx.globalAlpha = fits ? 1 : 0.28;
+      this.drawShape(ctx, item, cx, cy, this.trayScale(L, item));
+      ctx.restore();
+    }
+  }
+
+  /** A shape drawn centred on a point, for the tray and the dragged ghost. */
+  private drawShape(
+    ctx: CanvasRenderingContext2D,
+    item: TrayItem,
+    cx: number,
+    cy: number,
+    cell: number,
+  ): void {
+    const ox = cx - (item.shape.w * cell) / 2;
+    const oy = cy - (item.shape.h * cell) / 2;
+    for (const [dx, dy] of item.shape.cells) {
+      this.drawTile(
+        ctx,
+        cell,
+        ox + dx * cell,
+        oy + dy * cell,
+        { id: item.id * 31 + dx * 7 + dy, kind: TileKind.Colour, hue: item.hue, hp: 1, maxHp: 1, anim: 1, dying: false, preset: false },
+      );
+    }
+  }
+
+  /** The piece under the finger, lifted clear of it so it stays visible. */
+  private drawHeldPiece(ctx: CanvasRenderingContext2D, L: Layout, drag: DragState): void {
+    ctx.save();
+    ctx.globalAlpha = 0.95;
+    this.drawShape(ctx, drag.item, drag.px, drag.py - L.cell * 1.6, L.cell);
     ctx.restore();
   }
 
@@ -446,11 +460,10 @@ export class Renderer {
       const p = this.particles[i];
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.008;
+      p.vy += 0.01;
       p.vx *= 0.97;
       p.vy *= 0.97;
-      p.life--;
-      if (p.life <= 0) {
+      if (--p.life <= 0) {
         this.particles.splice(i, 1);
         continue;
       }
@@ -467,21 +480,18 @@ export class Renderer {
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
     for (let i = this.floaters.length - 1; i >= 0; i--) {
       const f = this.floaters[i];
-      f.y -= 0.012;
-      f.life--;
-      if (f.life <= 0) {
+      f.y -= 0.014;
+      if (--f.life <= 0) {
         this.floaters.splice(i, 1);
         continue;
       }
-      const a = Math.min(1, f.life / 28);
-      ctx.globalAlpha = a;
-      ctx.font = `900 ${Math.round(f.size * (cell / 40))}px system-ui, -apple-system, sans-serif`;
-      // Dark outline first: the field behind these is busy with particles.
+      ctx.globalAlpha = Math.min(1, f.life / 26);
+      ctx.font = `900 ${Math.round(f.size * (cell / 44))}px system-ui, -apple-system, sans-serif`;
       ctx.lineWidth = Math.max(2, cell * 0.09);
       ctx.strokeStyle = 'rgba(4,6,16,0.9)';
-      ctx.lineJoin = 'round';
       ctx.strokeText(f.text, f.x * cell, f.y * cell);
       ctx.fillStyle = f.colour;
       ctx.shadowColor = f.colour;
@@ -492,19 +502,17 @@ export class Renderer {
   }
 
   private burst(x: number, y: number, colour: string, count: number): void {
-    // Cap the pool so a huge cascade can't tank the frame rate on a phone.
+    // Capped so a big combo cannot tank the frame rate on a phone.
     if (this.particles.length > 700) return;
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;
       const sp = 0.02 + Math.random() * 0.07;
       const life = 22 + Math.random() * 26;
       this.particles.push({
-        x,
-        y,
+        x, y,
         vx: Math.cos(a) * sp,
         vy: Math.sin(a) * sp,
-        life,
-        maxLife: life,
+        life, maxLife: life,
         size: 0.02 + Math.random() * 0.045,
         colour,
       });
@@ -512,7 +520,7 @@ export class Renderer {
   }
 
   private float(x: number, y: number, text: string, colour: string, size: number): void {
-    this.floaters.push({ x, y, text, colour, size, life: 60 });
+    this.floaters.push({ x, y, text, colour, size, life: 62 });
   }
 }
 
@@ -524,13 +532,43 @@ export function hueGlow(h: Hue): string {
   return PALETTE.hues[h].glow;
 }
 
+/**
+ * A jagged line across a tile, derived from the tile id so the same tile always
+ * fractures the same way. Points are in 0..1 cell space.
+ */
+function crackPath(id: number, index: number): { x: number; y: number }[] {
+  const a = hash2(id, index * 2 + 1);
+  const b = hash2(id, index * 2 + 2);
+  const angle = (a % 360) * (Math.PI / 180);
+  const cx = 0.5 + ((b % 100) / 100) * 0.3 - 0.15;
+  const cy = 0.5 + ((a % 97) / 97) * 0.3 - 0.15;
+
+  const pts: { x: number; y: number }[] = [];
+  for (let i = 0; i <= 4; i++) {
+    const t = i / 4 - 0.5;
+    const wobble = ((hash2(id, index * 8 + i) % 100) / 100 - 0.5) * 0.22;
+    pts.push({
+      x: clamp01(cx + Math.cos(angle) * t * 0.96 - Math.sin(angle) * wobble),
+      y: clamp01(cy + Math.sin(angle) * t * 0.96 + Math.cos(angle) * wobble),
+    });
+  }
+  return pts;
+}
+
+function hash2(a: number, b: number): number {
+  let h = (a * 374761393 + b * 668265263) >>> 0;
+  h = (h ^ (h >>> 13)) >>> 0;
+  h = Math.imul(h, 1274126177) >>> 0;
+  return (h ^ (h >>> 16)) >>> 0;
+}
+
+function clamp01(v: number): number {
+  return v < 0.06 ? 0.06 : v > 0.94 ? 0.94 : v;
+}
+
 function roundRect(
   ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number,
+  x: number, y: number, w: number, h: number, r: number,
 ): void {
   ctx.beginPath();
   ctx.moveTo(x + r, y);

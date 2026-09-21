@@ -10,8 +10,9 @@ export interface Profile {
   owned: Record<string, number>;
   /** Packs won but not yet opened. */
   unopened: { kind: 'standard' | 'premium'; reason: string }[];
+  /** Per level: best score and best star rating earned. */
+  levels: Record<number, { stars: 0 | 1 | 2 | 3; score: number }>;
   bestScore: number;
-  bestWave: number;
   bestChain: number;
   runs: number;
   blocksBroken: number;
@@ -34,8 +35,8 @@ function fresh(): Profile {
     dust: 0,
     owned: {},
     unopened: [],
+    levels: {},
     bestScore: 0,
-    bestWave: 0,
     bestChain: 0,
     runs: 0,
     blocksBroken: 0,
@@ -164,22 +165,66 @@ export function claimDaily(): DailyReward | null {
   return reward;
 }
 
-export function recordRun(r: {
+export function starsFor(levelId: number): 0 | 1 | 2 | 3 {
+  return profile.levels[levelId]?.stars ?? 0;
+}
+
+export function bestScoreFor(levelId: number): number {
+  return profile.levels[levelId]?.score ?? 0;
+}
+
+export function isCleared(levelId: number): boolean {
+  return starsFor(levelId) > 0;
+}
+
+/** A level opens once the one before it has been cleared. Level 1 is always open. */
+export function isUnlocked(levelId: number): boolean {
+  return levelId <= 1 || isCleared(levelId - 1);
+}
+
+export function totalStars(): number {
+  return Object.values(profile.levels).reduce((a, l) => a + l.stars, 0);
+}
+
+export function highestUnlocked(levelIds: number[]): number {
+  let best = levelIds[0] ?? 1;
+  for (const id of levelIds) if (isUnlocked(id)) best = id;
+  return best;
+}
+
+export interface LevelRecord {
+  levelId: number;
+  won: boolean;
   score: number;
-  wave: number;
+  stars: 0 | 1 | 2 | 3;
   bestChain: number;
   blocksBroken: number;
-  daily: string | null;
-}): { newBest: boolean } {
+}
+
+export function recordLevel(r: LevelRecord): {
+  firstClear: boolean;
+  improvedStars: boolean;
+  newBest: boolean;
+} {
   profile.runs++;
   profile.blocksBroken += r.blocksBroken;
   profile.bestChain = Math.max(profile.bestChain, r.bestChain);
-  profile.bestWave = Math.max(profile.bestWave, r.wave);
-  const newBest = r.score > profile.bestScore;
-  if (newBest) profile.bestScore = r.score;
-  if (r.daily) {
-    profile.dailyBest[r.daily] = Math.max(profile.dailyBest[r.daily] ?? 0, r.score);
+  profile.bestScore = Math.max(profile.bestScore, r.score);
+
+  if (!r.won) {
+    saveProfile();
+    return { firstClear: false, improvedStars: false, newBest: false };
   }
+
+  const prev = profile.levels[r.levelId];
+  const firstClear = !prev;
+  const improvedStars = !!prev && r.stars > prev.stars;
+  const newBest = !prev || r.score > prev.score;
+
+  profile.levels[r.levelId] = {
+    stars: Math.max(prev?.stars ?? 0, r.stars) as 0 | 1 | 2 | 3,
+    score: Math.max(prev?.score ?? 0, r.score),
+  };
   saveProfile();
-  return { newBest };
+  return { firstClear, improvedStars, newBest };
 }

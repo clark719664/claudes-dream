@@ -16,18 +16,18 @@ export interface SetBonus {
 }
 
 export interface Perks {
-  extraBalls: number;
-  cascadeThreshold: number;
-  openingPrismRow: boolean;
+  extraMoves: number;
+  groupThreshold: number;
+  openingPrism: boolean;
   bombRadius: number;
   shardMultiplier: number;
 }
 
 export function basePerks(): Perks {
   return {
-    extraBalls: 0,
-    cascadeThreshold: 5,
-    openingPrismRow: false,
+    extraMoves: 0,
+    groupThreshold: 5,
+    openingPrism: false,
     bombRadius: 1,
     shardMultiplier: 1,
   };
@@ -46,9 +46,9 @@ export const SETS: StickerSet[] = [
     name: 'Neon Menagerie',
     accent: '#4cc9f0',
     bonus: {
-      label: '+1 ball in every volley',
+      label: '+1 move on every level',
       apply: (p) => {
-        p.extraBalls += 1;
+        p.extraMoves += 1;
       },
     },
   },
@@ -57,9 +57,9 @@ export const SETS: StickerSet[] = [
     name: 'Deep Space',
     accent: '#c77dff',
     bonus: {
-      label: 'Cascades trigger at 4 blocks instead of 5',
+      label: 'Colour groups clear at 4 tiles instead of 5',
       apply: (p) => {
-        p.cascadeThreshold = Math.min(p.cascadeThreshold, 4);
+        p.groupThreshold = Math.min(p.groupThreshold, 4);
       },
     },
   },
@@ -68,9 +68,9 @@ export const SETS: StickerSet[] = [
     name: 'Arcade Legends',
     accent: '#b5e848',
     bonus: {
-      label: 'Every run opens with a free Prism row',
+      label: 'Every level opens with a free Prism',
       apply: (p) => {
-        p.openingPrismRow = true;
+        p.openingPrism = true;
       },
     },
   },
@@ -90,7 +90,7 @@ export const SETS: StickerSet[] = [
     name: 'Founders',
     accent: '#ffb703',
     bonus: {
-      label: '+25% Prism Shards from every run',
+      label: '+25% Prism Shards from every level',
       apply: (p) => {
         p.shardMultiplier += 0.25;
       },
