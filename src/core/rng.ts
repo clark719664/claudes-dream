@@ -2,9 +2,16 @@
  *  friend "ghost races" replay from the same seed on every device. */
 export class Rng {
   private s: number;
+  private readonly initial: number;
 
   constructor(seed: number) {
     this.s = seed >>> 0;
+    this.initial = this.s;
+  }
+
+  /** The seed this generator started from, for sharing or replaying a run. */
+  peekSeed(): number {
+    return this.initial;
   }
 
   next(): number {

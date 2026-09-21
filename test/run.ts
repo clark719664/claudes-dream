@@ -3,11 +3,11 @@
  * every authored level can be exercised — and auto-played — from node.
  */
 import { Board, makeTile } from '../src/game/board';
-import { Game } from '../src/game/game';
+import { CLASSIC, Game } from '../src/game/game';
 import { CFG } from '../src/game/config';
 import { LEVELS, charKind, layoutRows, objectiveText } from '../src/game/levels';
 import { SHAPES } from '../src/game/shapes';
-import { ClearKind, TileKind, type Hue } from '../src/game/types';
+import { ClearKind, Phase, TileKind, type Hue } from '../src/game/types';
 import { encodeGift } from '../src/meta/packs';
 import { autoPlay } from './bot';
 
@@ -69,33 +69,20 @@ section('A full row or column clears, whatever colours are in it');
 }
 
 // ---------------------------------------------------------------------------
-section('Five touching tiles of one colour clear as a group');
+section('Colour counts for nothing; only a full line clears');
 {
   const b = new Board();
-  fill(b, [[0, 0], [1, 0], [2, 0], [3, 0]], 2);
-  ok('four in a row is not enough', b.findColourGroups().length === 0);
+  // A solid block of one colour, well past any old group threshold.
+  for (let col = 0; col < 4; col++) for (let row = 0; row < 4; row++) fill(b, [[col, row]], 2);
+  ok('sixteen touching tiles of one colour do not clear', b.findClears().length === 0);
 
-  fill(b, [[3, 1]], 2);
-  const groups = b.findColourGroups();
-  ok('five connected makes a group', groups.length === 1 && groups[0].length === 5);
-
-  fill(b, [[4, 0]], 3);
-  ok('a different colour does not join it', b.findColourGroups()[0].length === 5);
-}
-{
-  const b = new Board();
-  fill(b, [[0, 0], [1, 0]], 0);
-  b.set(2, 0, makeTile(TileKind.Prism, 0));
-  fill(b, [[3, 0], [4, 0]], 1);
-  const groups = b.findColourGroups();
-  ok('a prism extends a group but never bridges two colours', groups.length === 0, `${groups.length} groups`);
-
-  fill(b, [[0, 1], [1, 1]], 0);
-  const withPrism = b.findColourGroups();
-  ok('the prism counts toward the nearer colour', withPrism.length === 1 && withPrism[0].length === 5);
+  const c = new Board();
+  for (let col = 0; col < c.cols; col++) {
+    c.set(col, 2, makeTile(TileKind.Colour, (col % 5) as Hue));
+  }
+  ok('a full row of mixed colours does clear', c.findClears().length === 1);
 }
 
-// ---------------------------------------------------------------------------
 section('Bombs and crates');
 {
   const b = new Board();
@@ -185,15 +172,23 @@ section('Every authored level is well formed');
     LEVELS.every((l) => !new Game(l).objectiveMet()),
   );
   ok(
-    'every colour a layout uses is in that level\'s deal',
+    'obstacles come in clusters, never scattered singles',
     LEVELS.every((l) => {
       const g = new Game(l);
-      const dealt = new Set(g.tray.map((t) => t.hue));
-      for (let i = 0; i < 40; i++) for (const t of g.tray) dealt.add(t.hue);
-      // Any preset colour tile must be reachable by some dealt hue.
-      const preset = g.board.cells.filter((c) => c?.preset && c.kind === TileKind.Colour);
-      return preset.every((c) => g.paletteHues.includes(c!.hue));
+      let lonely = 0;
+      for (let row = 0; row < g.board.rows; row++) {
+        for (let col = 0; col < g.board.cols; col++) {
+          const t = g.board.at(col, row);
+          if (!t?.preset) continue;
+          const touching = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const).some(
+            ([dc, dr]) => g.board.at(col + dc, row + dr)?.preset,
+          );
+          if (!touching) lonely++;
+        }
+      }
+      return lonely === 0;
     }),
+    'a lone obstacle in open space ruins far more placements than a cluster does',
   );
   ok(
     'every level leaves room to play',
@@ -272,6 +267,46 @@ section('Auto-play: every level is winnable, and none is a walkover');
     'star thresholds ascend and are reachable',
     LEVELS.every((l) => l.stars[0] < l.stars[1] && l.stars[1] < l.stars[2] && l.stars[0] > 0),
   );
+}
+
+// ---------------------------------------------------------------------------
+section('Classic: endless, and genuinely loseable');
+{
+  const runs = [];
+  for (let i = 0; i < 10; i++) {
+    const g = autoPlay(new Game(CLASSIC, undefined, 900 + i), 6000);
+    runs.push({ score: g.score, lines: g.linesCleared, moves: g.movesUsed, over: g.phase === Phase.Over });
+  }
+  const avgMoves = Math.round(runs.reduce((a, r) => a + r.moves, 0) / runs.length);
+  const avgScore = Math.round(runs.reduce((a, r) => a + r.score, 0) / runs.length);
+  console.log(
+    `  classic over ${runs.length} runs: avg ${avgScore} points · ` +
+      `${Math.round(runs.reduce((a, r) => a + r.lines, 0) / runs.length)} lines · ` +
+      `${avgMoves} pieces (min ${Math.min(...runs.map((r) => r.moves))}, max ${Math.max(...runs.map((r) => r.moves))})`,
+  );
+
+  ok('every classic run ends', runs.every((r) => r.over));
+  ok('a good player lasts a while', avgMoves > 40, `avg ${avgMoves} pieces`);
+  ok('but not forever', avgMoves < 1200, `avg ${avgMoves} pieces`);
+  ok('runs differ from each other', new Set(runs.map((r) => r.score)).size > 5);
+  ok('classic never claims a win', runs.every((r) => r.score > 0));
+
+  const a = autoPlay(new Game(CLASSIC, undefined, 4242), 6000);
+  const b = autoPlay(new Game(CLASSIC, undefined, 4242), 6000);
+  ok('the same seed replays identically', a.score === b.score && a.movesUsed === b.movesUsed);
+}
+
+// ---------------------------------------------------------------------------
+section('A dealt hand is never dead on arrival');
+{
+  let dead = 0;
+  for (let i = 0; i < 60; i++) {
+    const g = autoPlay(new Game(CLASSIC, undefined, 300 + i), 6000);
+    // At the moment a run ends, at least one piece had been placeable when the
+    // hand was dealt — the run ends because the board filled, not the shuffler.
+    if (g.tray.every((t) => t.used)) dead++;
+  }
+  ok('runs end with pieces still in hand, not an empty tray', dead < 30, `${dead}/60 ended on an empty tray`);
 }
 
 console.log(

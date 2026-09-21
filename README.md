@@ -1,16 +1,24 @@
 # Prism Break
 
-A shape-placement puzzle where **the pieces are coloured**. Drag a piece onto the
-board and you decide two things at once: does it fit, and what colour does it put
-where. A complete row or column clears — and so do five touching tiles of one
-colour. The good moves do both.
+A shape-placement puzzle. You're dealt three pieces at a time and drag them
+anywhere they fit. **A complete row or column clears — that's the only rule.**
+Colour is decoration. All that matters is whether a piece fits.
 
-Nothing falls, nothing bounces, nothing is on a timer, and the board never moves
-on its own. While you drag, it outlines exactly what the placement will clear.
-What you are fighting is space.
+The depth is the second-order move: one piece that finishes two or three lines
+at once is worth far more than clearing them one at a time, and clearing on
+consecutive moves builds a streak on top. Setting those up without leaving a
+hole you can't fill is the game.
 
-24 levels across 3 worlds on a map, with objectives, move limits and stars, and a
-37-sticker album whose completed pages give permanent gameplay perks.
+Nothing falls, nothing is on a timer, and the board never moves on its own.
+While you drag, it outlines exactly what the placement will clear.
+
+| Mode | |
+| --- | --- |
+| **Levels** | 24 authored boards across 3 worlds — objective, move limit, three stars, on a map |
+| **Classic** | Endless. No move limit. Play until nothing fits and chase your own high score. |
+
+Underneath both: a 37-sticker album whose completed pages give permanent
+gameplay perks, packs, duplicate dust, and offline gift codes.
 
 Built as a web app and wrapped with Capacitor, so one codebase ships to the App
 Store and Google Play.
@@ -30,15 +38,14 @@ actually fun is to open it on a real phone rather than in a desktop browser.
 
 ## The rules
 
-1. **Fill a line.** A complete row or column clears, whatever is in it. This is
-   how you get rid of stone, crates and anything else in the way.
-2. **Or gather a colour.** Five or more touching tiles of one colour clear on
-   their own.
-3. **Do both at once** and the combo multiplier makes it worth far more. Clearing
-   on consecutive moves builds a streak on top.
+1. **Fill a row or column** and it clears. That's it.
+2. **Clear more than one at a time** for a combo multiplier; clear on
+   consecutive moves for a streak on top.
+3. **Watch the gaps.** When none of your three pieces fits anywhere, it's over —
+   so single-cell holes are what actually kill you.
 
-Obstacles can't be covered, so they're worn down by clears going off beside them,
-and the damage shows as cracking. The board carries no numbers anywhere.
+Obstacles can't be built over, so they're worn down by clears going off beside
+them, and the damage shows as cracking. The board carries no numbers anywhere.
 
 ## Commands
 
@@ -47,19 +54,21 @@ and the damage shows as cracking. The board carries no numbers anywhere.
 | `npm run dev` | Dev server on your LAN, hot reload |
 | `npm run build` | Typecheck + production build into `dist/` (~23 KB gzipped) |
 | `npm run preview` | Serve the production build |
-| `npm test` | Board rules, level validation, and a bot that plays all 24 levels |
+| `npm test` | Board rules, level validation, and a bot that plays all 24 levels + Classic |
 | `npm run test:browser` | Playwright drags real pieces through a level and the album |
 | `npm run typecheck` | TypeScript across `src/` and `test/` |
 | `npm run bundle` | Packages the whole project for handing to another model |
 
-`npm test` auto-plays **all 24 levels** with a bot that plays the way an attentive
-player would, and fails if any level becomes unbeatable, becomes a walkover, leaves
-over 80% of its moves unused, or starts handing out three stars automatically. It
-currently clears 24/24 with ~40% of the move budget spare and three-stars none of
-them — beatable by thinking, with the top rating still out of reach.
+`npm test` auto-plays **all 24 levels plus Classic** with a bot that plays the way
+an attentive player would. It fails if any level becomes unbeatable, becomes a
+walkover, leaves over 80% of its moves unused, starts handing out three stars
+automatically, or scatters lone obstacles where clusters belong. For Classic it
+asserts every run actually *ends*, that a good player lasts 40+ pieces but under
+1200, and that a seed replays identically.
 
-Star thresholds are generated from measured bot scores rather than hand-picked,
-so ratings track what a level actually plays like.
+It currently clears 24/24 with ~30% of the move budget spare and three-stars none
+of them. Move budgets and star thresholds are both generated from measured bot
+play rather than hand-picked, so they track what a level actually plays like.
 
 ## Handing the project to another model
 
@@ -76,8 +85,8 @@ writes two things into `package/`:
 
 The brief asks for a designed tile set, five tile characters, an expanded tile and
 item roster, and a real cracking language for damage — all against the constraints
-that make art succeed or fail in *this* game, chiefly that colour is the mechanic
-and must never be competed with.
+that make art succeed or fail in *this* game, chiefly that the contrast which must
+never be compromised is **filled against empty**, not one colour against another.
 
 ## Shipping to iOS and Android
 
@@ -110,7 +119,7 @@ docs/        GAME_DESIGN.md · GEMINI_ART_BRIEF.md
 ```
 
 `src/game/` has no DOM or canvas reference anywhere in it, which is what lets
-`npm test` play all 24 levels in a second. Levels are authored as text grids in
+`npm test` play all 24 levels and dozens of Classic runs in a second. Levels are authored as text grids in
 `src/game/levels.ts`; all other tuning lives in `src/game/config.ts`.
 
 ## Prototype limits

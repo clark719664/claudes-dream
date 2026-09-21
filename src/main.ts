@@ -4,6 +4,7 @@ import { Renderer, type DragState } from './game/render';
 import { Phase } from './game/types';
 import { CFG } from './game/config';
 import { LEVELS, levelById, objectiveText } from './game/levels';
+import { CLASSIC } from './game/game';
 import { initAudio, sfx, unlockAudio } from './core/audio';
 import { haptics } from './core/haptics';
 import {
@@ -12,10 +13,12 @@ import {
   loadProfile,
   profile,
   queuePack,
+  recordClassic,
   recordLevel,
   saveProfile,
 } from './meta/profile';
 import {
+  classicResultsScreen,
   closeOverlay,
   helpScreen,
   homeScreen,
@@ -84,12 +87,15 @@ function consumeFx(): void {
         haptics.tap();
         break;
       case 'clearLine':
-        sfx.resonate(Math.min(6, fx.value));
+        sfx.resonate(Math.min(8, fx.value * 2));
         haptics.hit();
         break;
-      case 'clearGroup':
-        sfx.cascade(Math.min(5, Math.floor(fx.value / 2)));
-        haptics.hit();
+      case 'gem':
+        sfx.pickup();
+        haptics.reward();
+        break;
+      case 'discard':
+        sfx.uiTap();
         break;
       case 'combo':
         sfx.pickup();
@@ -122,7 +128,9 @@ function consumeFx(): void {
 function updateHud(): void {
   if (!game) return;
   hudScore.textContent = fmt(game.score);
-  hudShots.textContent = String(Math.max(0, game.movesLeft));
+  hudShots.textContent = Number.isFinite(game.movesLeft)
+    ? String(Math.max(0, game.movesLeft))
+    : '∞';
   hudShots.classList.toggle('low', game.movesLeft <= 3);
   hudGoalBar.style.width = `${Math.round(game.objectiveProgress() * 100)}%`;
   hudGoalCount.textContent = game.objectiveCounter();
@@ -202,11 +210,26 @@ window.addEventListener('orientationchange', () => setTimeout(() => renderer.res
 
 // ------------------------------------------------------------ lifecycle --
 let currentLevelId = 1;
+let classicMode = false;
+
+function startClassic(): void {
+  classicMode = true;
+  resultShown = false;
+  paused = false;
+  drag = null;
+  accumulator = 0;
+  game = new Game(CLASSIC, activePerks());
+  hudGoalText.textContent = 'Classic · lines';
+  hud.hidden = false;
+  closeOverlay();
+  renderer.resize();
+}
 
 function startLevel(levelId: number): void {
   const spec = levelById(levelId);
   if (!spec) return goHome();
 
+  classicMode = false;
   currentLevelId = levelId;
   resultShown = false;
   paused = false;
@@ -225,6 +248,34 @@ function endLevel(): void {
   resultShown = true;
   const r = game.result;
   const level = game.level;
+
+  if (r.endless) {
+    const previousBest = profile.classicBest;
+    const newBest = recordClassic(r.score, r.linesCleared, r.tilesCleared);
+    // Classic feeds the album too, or there would be no reason to play it
+    // once the levels are done.
+    const shards = Math.min(
+      CFG.classic.maxShardsPerRun,
+      Math.round(r.score * CFG.classic.shardsPerPoint * game.perks.shardMultiplier),
+    );
+    addShards(shards);
+    if (newBest && previousBest > 0) queuePack('standard', 'New Classic high score');
+    saveProfile();
+
+    setTimeout(() => {
+      hud.hidden = true;
+      classicResultsScreen({
+        score: r.score,
+        lines: r.linesCleared,
+        bestCombo: r.bestCombo,
+        tiles: r.tilesCleared,
+        newBest,
+        previousBest,
+        shards,
+      });
+    }, 1000);
+    return;
+  }
 
   const { firstClear } = recordLevel({
     levelId: r.levelId,
@@ -296,12 +347,13 @@ function goMap(): void {
 
 initScreens({
   play: (levelId) => startLevel(levelId),
+  classic: startClassic,
   resume: () => {
     paused = false;
     last = performance.now();
     closeOverlay();
   },
-  restart: () => startLevel(currentLevelId),
+  restart: () => (classicMode ? startClassic() : startLevel(currentLevelId)),
   home: goHome,
   map: goMap,
 });

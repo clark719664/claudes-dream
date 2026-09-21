@@ -1,6 +1,6 @@
 import { CFG, PALETTE } from './config';
 import type { Fx, Game } from './game';
-import { ClearKind, TileKind, type Cell, type Hue, type Tile, type TrayItem } from './types';
+import { TileKind, type Cell, type Hue, type Tile, type TrayItem } from './types';
 
 interface Particle {
   x: number; y: number; vx: number; vy: number;
@@ -130,13 +130,13 @@ export class Renderer {
           this.burst(fx.x, fx.y, hueColour(fx.hue), 8 + fx.value * 2);
           break;
         case 'clearLine':
-          this.shake = Math.min(14, this.shake + 5);
-          this.flash = Math.min(0.4, this.flash + 0.12);
+          // More lines at once means more of everything.
+          this.shake = Math.min(20, this.shake + 4 + fx.value * 2);
+          this.flash = Math.min(0.5, this.flash + 0.1 * fx.value);
           break;
-        case 'clearGroup':
-          this.shake = Math.min(16, this.shake + 5);
-          this.flash = Math.min(0.45, this.flash + 0.14);
-          this.float(fx.x, fx.y, `×${fx.value}`, hueGlow(fx.hue), 20);
+        case 'gem':
+          this.burst(fx.x, fx.y, '#ffffff', 22);
+          if (fx.text) this.float(fx.x, fx.y, fx.text, '#ffffff', 20);
           break;
         case 'combo':
           if (fx.text) this.float(fx.x, fx.y - 0.6, fx.text, '#ffffff', 26);
@@ -252,9 +252,9 @@ export class Renderer {
     if (tile.kind === TileKind.Stone) {
       core = PALETTE.stone.core;
       glow = PALETTE.stone.glow;
-    } else if (tile.kind === TileKind.Prism) {
-      core = PALETTE.prism.core;
-      glow = PALETTE.prism.glow;
+    } else if (tile.kind === TileKind.Gem) {
+      core = PALETTE.gem.core;
+      glow = PALETTE.gem.glow;
     } else if (tile.kind === TileKind.Crate) {
       core = PALETTE.crate.core;
       glow = PALETTE.crate.glow;
@@ -281,7 +281,7 @@ export class Renderer {
     ctx.stroke();
     ctx.globalAlpha = 1;
 
-    if (tile.kind === TileKind.Prism) {
+    if (tile.kind === TileKind.Gem) {
       const rim = ctx.createLinearGradient(x, y, x + s, y + s);
       const shift = (this.t * 90 + x * 0.6 + y * 0.4) % 360;
       for (let i = 0; i <= 5; i++) rim.addColorStop(i / 5, `hsl(${(shift + i * 60) % 360}, 95%, 65%)`);
@@ -383,7 +383,7 @@ export class Renderer {
       ctx.globalAlpha = pulse;
       ctx.lineWidth = Math.max(2, cell * 0.07);
       for (const ev of clears) {
-        ctx.strokeStyle = ev.kind === ClearKind.Group ? hueGlow(ev.hue) : '#ffffff';
+        ctx.strokeStyle = '#ffffff';
         for (const c of ev.cells) {
           const pad = cell * 0.1;
           roundRect(ctx, c.col * cell + pad, c.row * cell + pad, cell - pad * 2, cell - pad * 2, cell * 0.16);

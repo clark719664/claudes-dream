@@ -1,43 +1,46 @@
 # Prism Break — Game Design
 
-> Fit the shape. Fill the line. Gather the colour.
+> Fit the shape. Fill the line. Don't run out of room.
 
 ## 1. The pitch
 
-A shape-placement puzzle where **the pieces are coloured**, so every placement
-is two decisions at once: *does it fit*, and *what colour does it put where*.
+A shape-placement puzzle. You are dealt three pieces at a time and drag them
+anywhere they fit. **A complete row or column clears — that is the only rule.**
+Colour is decoration. All that matters is whether a piece fits.
 
-A complete row or column clears, the way it does in every block-fitting game.
-But five touching tiles of one colour also clear — so the board is simultaneously
-a packing problem and a match-3 board, and the best moves satisfy both at once.
+The depth is in the second-order move: a single piece that finishes two or three
+lines at once is worth far more than clearing them one at a time, and clearing on
+consecutive moves builds a streak on top. Setting those up, while never leaving a
+hole you can't fill, is the game.
 
-Three proven loops, welded into one:
+Two modes, and a collection sitting under both:
+
+| Mode | What it is |
+| --- | --- |
+| **Levels** | 24 authored boards across 3 worlds, each with an objective, a move limit and three star thresholds, on a map with unlock progression |
+| **Classic** | Endless. One board, no move limit, play until nothing fits. Chase your own high score. |
 
 | Borrowed from | What it contributes |
 | --- | --- |
-| Block Blast / Woodoku | Drag-to-place polyominoes, line clears, no timer |
-| Candy Crush | Colour matching, levels, objectives, move limits, a world map |
+| Block Blast / Woodoku | Drag-to-place polyominoes, line clears, no timer, endless mode |
+| Candy Crush | Levels, objectives, move limits, stars, a world map |
 | Monopoly Go | Sticker album, packs, duplicates, gifting between friends |
 
 ## 2. What makes it different
 
-### Two clear rules, both live at once
+### One rule, and a second-order move
 
-Every other block-fitting game is colourless: a piece is a shape and nothing
-else. Every match-3 game is placeless: you never choose *where* a piece goes,
-only which two to swap. Prism Break runs both at the same time, and the tension
-between them is the game.
+The rule is trivial to explain and takes a long time to play well. Anyone
+understands "fill a row" in three seconds. What separates a 5,000-point Classic
+run from a 50,000-point one is never the rule — it is whether you are building
+toward *two lines at once*, and whether the gaps you leave behind are fillable.
 
-A piece that fits perfectly in the wrong colour is a wasted move. A piece that
-lands five violet tiles together but leaves a hole you can never fill is a worse
-one. The good moves — a placement that closes a row *and* completes a colour
-group, scoring both with a combo multiplier on top — are the ones you have to go
-looking for.
-
-To keep colour groups achievable, most levels deal from **three of the five
-hues**, chosen by the level id. Across the full palette, five touching
-same-colour tiles almost never happen by accident and the colour half of the
-game quietly stops existing.
+Colour was tried as a second clear rule — five touching tiles of one hue — and
+cut. It made every placement two decisions instead of one, which sounds like
+depth and played as noise: the colour half kept emptying the board before the
+packing half could get interesting. Five hues remain purely so a packed board
+stays readable, because a wall of one colour is much harder to parse than a
+mixed one.
 
 ### Nothing moves unless you move it
 
@@ -58,8 +61,8 @@ player's room away; you cannot move their work.
 ### Obstacles are worn down, not covered
 
 Stone and crates occupy a cell, so they can never be built over. They are
-damaged by clears going off *beside* them — stone takes two, a crate takes
-three — and the damage shows as **cracking**, never as a number.
+damaged by clears going off *beside* them, twice each, and the damage shows as
+**cracking**, never as a number.
 
 The obvious alternative, requiring a full line straight through the obstacle,
 sounds tidier and is unplayable: lines are the rare clear, and objectives built
@@ -75,21 +78,27 @@ colour and space.
 
 | | Behaviour |
 | --- | --- |
-| **Coloured** | The default. Fills lines, joins colour groups. |
-| **Stone** | Colourless obstacle. Never joins a group. Two nearby clears. |
-| **Crate** | As stone, but three. |
-| **Prism** | Counts as every colour when a group is measured — but is never expanded *from*, so it extends a group without welding two colours together. |
-| **Bomb** | Coloured, groups normally, takes its 3×3 with it, chains into other bombs. |
+| **Coloured** | The default. Its colour is decoration; all it does is fill a cell. |
+| **Stone** | Obstacle. Cannot be built over. Two nearby clears. |
+| **Crate** | As stone, visually distinct. |
+| **Gem** | Worth a lot of score, but only a line can reach one. |
+| **Bomb** | Takes its 3×3 with it when a line clears it, chains into other bombs. |
 
 ## 3. Levels
 
 **24 levels across 3 worlds**, each authored as a text grid rather than
 generated, with an objective, a move limit and three star thresholds.
 
-World 1 teaches lines then groups on an open board; world 2 fills the board with
-things in the way; world 3 adds creep. Objectives are `lines`, `groups`,
-`clear-hue`, `clear-stone`, `clear-crates`, `clear-preset` (clear everything the
+World 1 teaches fitting and multi-line clears on an open board; world 2 fills the
+board with things in the way; world 3 adds creep. Objectives are `lines`,
+`clear-stone`, `clear-crates`, `clear-gems`, `clear-preset` (clear everything the
 level started with) and `score`.
+
+One rule governs every layout: **obstacles come in clusters, never scattered or
+striped.** In a game purely about fitting, a lone tile in open space ruins far
+more placements than a 2×2 block against a wall does. A checkerboard of single
+stones looks like a fair puzzle and is unplayable — which is exactly what the
+first two passes at this table were, and what `npm test` now checks for.
 
 A level is seeded by its **id alone**, so the board, the deal and the whole
 puzzle are identical on every attempt and every device. Retrying is retrying the
@@ -113,8 +122,8 @@ player.
 | Page | Completion perk |
 | --- | --- |
 | Neon Menagerie | +1 move on every level |
-| Deep Space | Colour groups trigger at 4 tiles instead of 5 |
-| Arcade Legends | Every level opens with a free Prism |
+| Deep Space | A fourth piece in the tray, always — the strongest perk in the game |
+| Arcade Legends | Throw away one piece you cannot use, every level |
 | Cursed Carnival | Bombs blow a 5×5 hole instead of 3×3 |
 | Founders (chase) | +25% Prism Shards |
 
@@ -126,7 +135,9 @@ stronger than last week. That converts a collection from a chore into a build.
 ### Economy
 
 - **Prism Shards** — earned per level cleared, scaled by stars, with a first-clear
-  bonus so replaying an easy level cannot be farmed. Buys packs.
+  bonus so replaying an easy level cannot be farmed. Classic pays out by score,
+  capped per run, so the endless mode still feeds the album once the levels are
+  done. Buys packs.
 - **Dust** — duplicates melt into 5–300 dust by rarity; dust crafts a *specific*
   missing sticker for 25–1500. The anti-rage valve: the last sticker on a page is
   always reachable by grinding, never purely by luck.
@@ -148,11 +159,12 @@ three-star finish.
 ## 5. Balance, measured
 
 `npm test` auto-plays **all 24 levels** with a bot that plays the way an
-attentive player would: it prizes clears, chases whatever the level's objective
-actually asks for, avoids leaving unfillable single-cell gaps, and builds toward
-colour groups rather than scattering.
+attentive player would: it prizes clearing several lines at once, chases whatever the
+level's objective actually asks for, avoids leaving unfillable single-cell gaps,
+and builds toward
+lines that are nearly complete.
 
-Current state: the bot clears **24/24**, finishing with about **40% of the move
+Current state: the bot clears **24/24**, finishing with about **30% of the move
 budget spare** on average, and three-stars **none** of them. That is the shape
 we want — beatable by a thinking player, with the top rating still out of reach
 of merely competent play. The suite fails if any level becomes unbeatable, if
@@ -163,7 +175,11 @@ Star thresholds are not hand-picked. They are generated from measured bot
 scores — 1★ at 62%, 2★ at 95%, 3★ at 130% — so the ratings track what the level
 actually plays like rather than what it looked like it should.
 
-**Four real faults this harness caught**, none of which were visible by reading
+It also plays Classic: ten runs a suite, asserting every one of them *ends*,
+that a good player lasts more than 40 pieces on average and fewer than 1200, and
+that the same seed replays identically.
+
+**Five real faults this harness caught**, none of which were visible by reading
 the code:
 
 - The deal only fit-checked one of the three pieces, so a nearly empty board
@@ -174,6 +190,10 @@ the code:
   level's own layout used, making those preset tiles literally unclearable.
 - Crates could only be caught by full lines, and lines are far too rare to
   build an objective on.
+- Swapping unplaceable tray pieces out for ones that fit — added to stop unfair
+  deadlocks — made the game effectively **unloseable**: the bot ran 5,000 pieces
+  in Classic without ever being stuck. A hand now stands once dealt. Being able
+  to run out of room *is* the game.
 
 ## 6. Viral loops
 
@@ -186,11 +206,14 @@ re-engagement ping for the sender.
 
 **2 · Comparable scores (built).** Levels are seeded by id, so two players on
 level 14 played the identical puzzle. A shared score is directly comparable,
-which turns the share card into a challenge rather than a boast.
+which turns the share card into a challenge rather than a boast. A Classic run
+carries its own seed for the same reason — a friend can be handed the exact same
+sequence of pieces.
 
 **3 · Race a friend's ghost (designed).** Because a level is fully determined,
-a friend's attempt replays from nothing but the level id and their move list — a
-few hundred bytes, no video, no server-side simulation.
+a friend's attempt replays from nothing but the seed and their move list — a few
+hundred bytes, no video, no server-side simulation. Classic high-score runs
+replay the same way, which makes a disputed score checkable.
 
 **4 · Crews (designed).** Eight-player groups with a shared weekly album page,
 trading spares inside the crew. Collection games live on the social obligation
@@ -215,7 +238,8 @@ tuning an economy nobody has played yet.
 - **Season pass** — a sixth rotating album page with its own perk.
 - **Shard bundles** — accelerate the album; everything in it is reachable free.
 - **Remove ads** — one purchase, permanent.
-- **Rewarded video** — optional extra moves after a loss, never a mid-level gate.
+- **Rewarded video** — optional extra moves after a loss, or one continue in
+  Classic, never a mid-level gate.
 
 The line held everywhere: **you can buy speed, never power a free player cannot
 also reach.** Set bonuses must stay earnable, or the perk system stops being a
@@ -223,10 +247,10 @@ build and becomes a paywall.
 
 ## 9. Build status
 
-**Working end to end:** placement and the full clear resolution (lines, colour
-groups, prism grouping, bomb chains, obstacle wear), the checked deal, creep,
-24 authored levels with objectives and stars, the world map with unlock
-progression, the drag preview, the renderer with particles and screen shake,
+**Working end to end:** placement and the full clear resolution (lines,
+bomb chains, obstacle wear, gems), the checked deal, creep, Classic endless mode
+with its own high score, 24 authored levels with objectives and stars, the world
+map with unlock progression, the drag preview, the renderer with particles and shake,
 procedural audio, native haptics, the album, packs with reveals, dust and
 crafting, gift codes, daily streak, share cards, save/load and the whole screen
 flow.

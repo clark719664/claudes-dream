@@ -17,8 +17,10 @@ export interface SetBonus {
 
 export interface Perks {
   extraMoves: number;
-  groupThreshold: number;
-  openingPrism: boolean;
+  /** A fourth slot in the tray — the strongest thing you can have in a fitting game. */
+  extraTraySlot: boolean;
+  /** Lets a piece you cannot use be thrown away, once per level. */
+  discards: number;
   bombRadius: number;
   shardMultiplier: number;
 }
@@ -26,8 +28,8 @@ export interface Perks {
 export function basePerks(): Perks {
   return {
     extraMoves: 0,
-    groupThreshold: 5,
-    openingPrism: false,
+    extraTraySlot: false,
+    discards: 0,
     bombRadius: 1,
     shardMultiplier: 1,
   };
@@ -57,9 +59,9 @@ export const SETS: StickerSet[] = [
     name: 'Deep Space',
     accent: '#c77dff',
     bonus: {
-      label: 'Colour groups clear at 4 tiles instead of 5',
+      label: 'A fourth piece in the tray, always',
       apply: (p) => {
-        p.groupThreshold = Math.min(p.groupThreshold, 4);
+        p.extraTraySlot = true;
       },
     },
   },
@@ -68,9 +70,9 @@ export const SETS: StickerSet[] = [
     name: 'Arcade Legends',
     accent: '#b5e848',
     bonus: {
-      label: 'Every level opens with a free Prism',
+      label: 'Throw away one piece you cannot use, every level',
       apply: (p) => {
-        p.openingPrism = true;
+        p.discards += 1;
       },
     },
   },

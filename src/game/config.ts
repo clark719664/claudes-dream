@@ -7,20 +7,21 @@ export const CFG = {
   traySize: 3,
 
   clear: {
-    /** Touching same-colour tiles needed to clear as a group. */
-    groupThreshold: 5,
-    /** Extra multiplier per simultaneous clear beyond the first. */
-    comboStep: 0.6,
+    /**
+     * Clearing several lines with one piece is the whole skill of the game, so
+     * the multiplier for doing it is steep.
+     */
+    comboStep: 0.8,
     /** Extra multiplier per consecutive clearing placement. */
     streakStep: 0.25,
-    maxStreakBonus: 2.5,
+    maxStreakBonus: 3,
   },
 
   scoring: {
     perTilePlaced: 2,
     perTileCleared: 14,
-    lineBonus: 120,
-    groupBonus: 90,
+    lineBonus: 140,
+    gemBonus: 250,
     blastBonus: 40,
     movesLeftBonus: 200,
   },
@@ -43,13 +44,17 @@ export const CFG = {
     craftCost: { 1: 25, 2: 60, 3: 150, 4: 450, 5: 1500 } as Record<number, number>,
   },
 
-  /** Rows pushed in from the top on levels that advance. */
-  siege: {
-    hpBase: 1,
-    gapChance: 0.28,
-    stoneChance: 0.14,
-    prismChance: 0.05,
-    bombChance: 0.07,
+  /** Junk that seeps into empty cells on the later levels. */
+  creep: {
+    stoneChance: 0.18,
+    gemChance: 0.06,
+    bombChance: 0.08,
+  },
+
+  classic: {
+    /** Shards earned per point, so an endless run still feeds the album. */
+    shardsPerPoint: 1 / 400,
+    maxShardsPerRun: 400,
   },
 } as const;
 
@@ -62,7 +67,7 @@ export const PALETTE = {
     { core: '#c77dff', glow: '#e2b8ff', name: 'Violet' },
   ],
   stone: { core: '#5a6478', glow: '#8b95a8' },
-  prism: { core: '#e8ecff', glow: '#ffffff' },
+  gem: { core: '#e8ecff', glow: '#ffffff' },
   crate: { core: '#a9743f', glow: '#d19a63' },
   bg: '#080a14',
   danger: '#ff2e63',

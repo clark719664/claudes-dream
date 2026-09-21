@@ -9,7 +9,7 @@
  */
 import { Board, isObstacle, makeTile } from '../src/game/board';
 import type { Game } from '../src/game/game';
-import { ClearKind, Phase, TileKind, type TrayItem } from '../src/game/types';
+import { Phase, TileKind, type TrayItem } from '../src/game/types';
 
 export interface Move {
   item: TrayItem;
@@ -36,6 +36,22 @@ function isolatedHoles(board: Board): number {
   return n;
 }
 
+/** How close the board is to completing lines, summed over rows and columns. */
+function nearlyComplete(board: Board): number {
+  let score = 0;
+  for (let row = 0; row < board.rows; row++) {
+    let filled = 0;
+    for (let col = 0; col < board.cols; col++) if (board.at(col, row)) filled++;
+    if (filled >= board.cols - 2 && filled < board.cols) score += filled;
+  }
+  for (let col = 0; col < board.cols; col++) {
+    let filled = 0;
+    for (let row = 0; row < board.rows; row++) if (board.at(col, row)) filled++;
+    if (filled >= board.rows - 2 && filled < board.rows) score += filled;
+  }
+  return score;
+}
+
 export function evaluate(game: Game, item: TrayItem, col: number, row: number): number {
   const pv = game.previewPlacement(item, col, row);
   if (!pv.valid) return -Infinity;
@@ -46,7 +62,8 @@ export function evaluate(game: Game, item: TrayItem, col: number, row: number): 
   const removed = ghost.applyClears(clears);
 
   let value = 0;
-  for (const ev of clears) value += ev.kind === ClearKind.Group ? 200 : 240;
+  // Clearing several lines with one piece is the thing worth playing for.
+  value += clears.length * 240 + clears.length * clears.length * 90;
   value += removed.length * 14;
 
   // Chase whatever this level actually asks for.
@@ -55,23 +72,29 @@ export function evaluate(game: Game, item: TrayItem, col: number, row: number): 
     if (goal.kind === 'clear-stone' && tile.kind === TileKind.Stone) value += 140;
     if (goal.kind === 'clear-crates' && tile.kind === TileKind.Crate) value += 140;
     if (goal.kind === 'clear-preset' && tile.preset) value += 120;
-    if (goal.kind === 'clear-hue' && tile.hue === goal.hue) value += 30;
+    if (goal.kind === 'clear-gems' && tile.kind === TileKind.Gem) value += 160;
   }
 
   // Space is the real resource: stay empty, and do not leave unfillable gaps.
-  value -= ghost.occupied * 3;
-  value -= isolatedHoles(ghost) * 16;
+  value -= ghost.occupied * 5;
+  value -= isolatedHoles(ghost) * 22;
 
-  // Build toward colour groups rather than scattering, and work next to the
-  // obstacles rather than in the open — a clear only wears down what it touches.
+  // Reward lines that are nearly done, since that is what a player is building
+  // toward when no clear is available this turn.
+  value += nearlyComplete(ghost) * 5;
+
+  // Work next to the obstacles rather than out in the open: a clear only wears
+  // down what it actually touches.
   const chasingObstacles =
-    goal.kind === 'clear-stone' || goal.kind === 'clear-crates' || goal.kind === 'clear-preset';
+    goal.kind === 'clear-stone' ||
+    goal.kind === 'clear-crates' ||
+    goal.kind === 'clear-preset' ||
+    goal.kind === 'clear-gems';
 
   for (const c of pv.footprint) {
     for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
       const n = ghost.at(c.col + dc, c.row + dr);
       if (!n) continue;
-      if (n.kind === TileKind.Colour && n.hue === item.hue) value += 6;
       if (chasingObstacles && isObstacle(n)) value += 10;
     }
   }

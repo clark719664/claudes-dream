@@ -14,6 +14,10 @@ export interface Profile {
   levels: Record<number, { stars: 0 | 1 | 2 | 3; score: number }>;
   bestScore: number;
   bestChain: number;
+  /** Classic mode: the endless high-score run. */
+  classicBest: number;
+  classicBestLines: number;
+  classicRuns: number;
   runs: number;
   blocksBroken: number;
   /** UTC day string of the last claimed daily reward. */
@@ -38,6 +42,9 @@ function fresh(): Profile {
     levels: {},
     bestScore: 0,
     bestChain: 0,
+    classicBest: 0,
+    classicBestLines: 0,
+    classicRuns: 0,
     runs: 0,
     blocksBroken: 0,
     lastDailyClaim: '',
@@ -199,6 +206,17 @@ export interface LevelRecord {
   stars: 0 | 1 | 2 | 3;
   bestChain: number;
   blocksBroken: number;
+}
+
+/** Returns whether this run beat the stored high score. */
+export function recordClassic(score: number, lines: number, tiles: number): boolean {
+  profile.classicRuns++;
+  profile.blocksBroken += tiles;
+  profile.classicBestLines = Math.max(profile.classicBestLines, lines);
+  const best = score > profile.classicBest;
+  if (best) profile.classicBest = score;
+  saveProfile();
+  return best;
 }
 
 export function recordLevel(r: LevelRecord): {

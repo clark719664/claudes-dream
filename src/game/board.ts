@@ -27,22 +27,17 @@ export function countPreset(board: Board): number {
 /**
  * The board. Nothing on it ever moves on its own: there is no gravity and no
  * falling, so a tile stays exactly where it was put until something clears it.
- * That is the point — every move is a placement whose outcome is fully visible
- * before it is committed, and the only thing the player is fighting is space.
+ * Every move is a placement whose outcome is fully visible before it is
+ * committed, and the only thing the player is fighting is space.
  *
- * Two things clear:
- *   • a **line** — a complete row or column, the Tetris half
- *   • a **group** — five or more touching tiles of one colour, the match-3 half
- *
- * One placement can trigger several at once, and that simultaneity is where the
- * scoring lives.
+ * One rule clears: **a complete row or column**. Colour is decoration and
+ * counts for nothing. What a placement is worth comes from how many lines it
+ * completes at once, which is the whole skill of the game.
  */
 export class Board {
   readonly cols = CFG.cols;
   readonly rows = CFG.rows;
   cells: (Tile | null)[];
-  /** Group size needed to clear; lowered by the "Deep Space" set bonus. */
-  groupThreshold: number = CFG.clear.groupThreshold;
   /** Bomb blast reach in cells; 1 is 3x3, raised to 2 by "Cursed Carnival". */
   bombRadius = 1;
 
@@ -151,14 +146,6 @@ export class Board {
         });
       }
     }
-    for (const group of this.findColourGroups()) {
-      events.push({
-        kind: ClearKind.Group,
-        index: 0,
-        hue: this.at(group[0].col, group[0].row)?.hue ?? 0,
-        cells: group,
-      });
-    }
     return events;
   }
 
@@ -189,52 +176,6 @@ export class Board {
     let best: Hue = 0;
     for (const h of HUES) if (counts[h] > counts[best]) best = h;
     return best;
-  }
-
-  /**
-   * Connected same-colour runs at or above the threshold. A Prism joins
-   * whichever group reaches it but is never expanded from, so it can extend a
-   * group without welding two different colours into one.
-   */
-  findColourGroups(): Cell[][] {
-    const seen = new Uint8Array(this.cells.length);
-    const groups: Cell[][] = [];
-
-    for (let row = 0; row < this.rows; row++) {
-      for (let col = 0; col < this.cols; col++) {
-        const start = this.idx(col, row);
-        if (seen[start]) continue;
-        const tile = this.cells[start];
-        if (!tile || !joinsGroup(tile)) continue;
-
-        const hue = tile.hue;
-        const group: Cell[] = [];
-        const queue: Cell[] = [{ col, row }];
-        seen[start] = 1;
-
-        while (queue.length) {
-          const cur = queue.pop()!;
-          group.push(cur);
-          if (this.at(cur.col, cur.row)!.kind === TileKind.Prism) continue;
-          for (const [dc, dr] of NEIGHBOURS) {
-            const nc = cur.col + dc;
-            const nr = cur.row + dr;
-            if (!this.inBounds(nc, nr)) continue;
-            const ni = this.idx(nc, nr);
-            if (seen[ni]) continue;
-            const nt = this.cells[ni];
-            if (!nt) continue;
-            if (nt.kind === TileKind.Prism || (joinsGroup(nt) && nt.hue === hue)) {
-              seen[ni] = 1;
-              queue.push({ col: nc, row: nr });
-            }
-          }
-        }
-
-        if (group.length >= this.groupThreshold) groups.push(group);
-      }
-    }
-    return groups;
   }
 
   /**
@@ -307,7 +248,6 @@ export class Board {
 
   clone(): Board {
     const b = new Board();
-    b.groupThreshold = this.groupThreshold;
     b.bombRadius = this.bombRadius;
     b.cells = this.cells.map((c) => (c ? { ...c } : null));
     return b;
@@ -320,10 +260,6 @@ const NEIGHBOURS: [number, number][] = [
   [0, 1],
   [0, -1],
 ];
-
-function joinsGroup(t: Tile): boolean {
-  return t.kind === TileKind.Colour || t.kind === TileKind.Bomb;
-}
 
 /** Tiles that have to be worn down rather than cleared outright. */
 export function isObstacle(t: Tile): boolean {

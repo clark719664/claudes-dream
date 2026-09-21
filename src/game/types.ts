@@ -5,15 +5,15 @@ export const HUE_COUNT = 5;
 export const HUES: Hue[] = [0, 1, 2, 3, 4];
 
 export const enum TileKind {
-  /** Ordinary coloured tile. Joins colour groups and fills lines. */
+  /** Ordinary tile. Its colour is decoration; all it does is fill a cell. */
   Colour = 0,
-  /** Colourless obstacle. Only a line clear removes it. */
+  /** Obstacle. Cannot be built over; worn down by clears going off beside it. */
   Stone = 1,
-  /** Counts as every colour when a group is measured. */
-  Prism = 2,
+  /** Bonus tile, worth a lot of score when a line takes it. */
+  Gem = 2,
   /** Takes its 3x3 with it when cleared. */
   Bomb = 3,
-  /** Needs to be caught by two separate clears. */
+  /** As stone, but tougher. */
   Crate = 4,
 }
 
@@ -57,7 +57,6 @@ export interface Cell {
 export const enum ClearKind {
   Row = 'row',
   Column = 'column',
-  Group = 'group',
 }
 
 /** One thing that cleared, kept separate so each can be scored and animated. */
@@ -86,6 +85,7 @@ export const enum Phase {
 
 export interface LevelResult {
   levelId: number;
+  endless: boolean;
   won: boolean;
   score: number;
   stars: 0 | 1 | 2 | 3;

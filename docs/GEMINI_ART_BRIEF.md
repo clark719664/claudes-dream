@@ -23,17 +23,14 @@ and drag them anywhere they fit. **Nothing falls, nothing bounces, nothing is on
 a timer, and the board never moves on its own** — the only thing you are
 fighting is space.
 
-Two things clear:
+**One rule clears: a complete row or column.** Clearing two or three lines with
+a single piece is worth far more than clearing them one at a time, and clearing
+on consecutive moves builds a streak on top. That is the whole game.
 
-1. **A line.** A complete row or column clears, whatever colours are in it.
-2. **A group.** Five or more touching tiles of one colour clear on their own.
+There are two modes. **Levels** have an objective, a move limit, stars and a
+world map. **Classic** is endless: one board, no limit, play until nothing fits.
 
-Pieces arrive already coloured, so every placement is two decisions at once:
-does it fit, and what colour does it put where. A placement that finishes a line
-*and* a colour group together scores far more than doing them one at a time,
-and clearing on consecutive moves builds a streak on top of that.
-
-There are five hues, and they are the game's vocabulary:
+There are five hues:
 
 | Index | Name | Core | Glow |
 | --- | --- | --- | --- |
@@ -43,28 +40,33 @@ There are five hues, and they are the game's vocabulary:
 | 3 | Amber | `#ffb703` | `#ffd978` |
 | 4 | Violet | `#c77dff` | `#e2b8ff` |
 
-Most levels deal from only three of the five, so groups are achievable.
+**Colour is decoration.** It has no effect on what clears — five hues are in
+play purely so a packed board stays readable, because a wall of one colour is
+much harder to parse than a mixed one. This is the single most important thing
+to know before you design anything, and it is what gives you room to work.
+
 Background is `#080a14`. Everything is drawn on an HTML5 canvas.
 
-Levels are authored as text grids with objectives, move limits and star
-thresholds, arranged on a world map. A sticker album, packs, duplicates and
-gifting sit on top. None of that needs art from you unless you want to propose
-it — the board is the job.
+A sticker album, packs, duplicates and gifting sit on top of both modes. None of
+that needs art from you unless you want to propose it — the board is the job.
 
 ---
 
 ## 2. Hard constraints — read these twice
 
-**2.1 · Colour is the mechanic, not the decoration.**
-This is the constraint that kills most proposals. A player reads the board by
-hue: *where is the violet, can I reach five of them*. Any character art,
-pattern, texture or outline that competes with hue for attention makes the game
-**unplayable**, however good it looks in isolation.
+**2.1 · Occupied vs. empty is the read that matters.**
+A player is scanning for *space*: which cells are free, which row is one tile
+short, where the single-cell holes are. That read has to survive a board with 50
+tiles on it, in peripheral vision, at speed.
 
-Concretely: every tile you design must stay **instantly sortable by colour at a
-glance, at arm's length, in one frame**. Detail lives in a dark ink layer and in
-the silhouette — never in a second competing colour. No tile type may carry a
-hue that belongs to another tile type.
+So the contrast that must never be compromised is **filled against empty** — not
+one colour against another. Decoration that softens a tile's edge, or that makes
+an empty cell look occupied, breaks the game far more badly than an ugly tile
+would. Keep tile silhouettes crisp and rectangular; keep empty cells quiet.
+
+An earlier version of this brief told you colour was the mechanic. That rule has
+been cut from the game: colour now carries no meaning at all. That frees you —
+characters and skins can be as expressive as you like — provided §2.1 holds.
 
 **2.2 · One shape, five tints.**
 The same tile art is rendered in all five hues. Assets must be **hue-agnostic** —
@@ -105,7 +107,7 @@ player put down.
 purpose: a player should *read* it, never *count* it.
 
 Obstacles (stone, crates) cannot be covered, so they are worn down by clears
-going off beside them — stone takes two, a crate takes three. Their health is
+going off beside them — two hits each. Their health is
 shown purely as **damage**: the placeholder in `drawDamage` (`src/game/render.ts`)
 draws procedural cracks that multiply as a tile takes hits, seeded from the tile
 id so a given tile always breaks the same way.
@@ -120,7 +122,7 @@ id so a given tile always breaks the same way.
 - stay in the dark ink layer, so it never competes with hue (§2.1)
 - work over stone grey, crate brown, and all five hues
 
-Cover **two hits and three hits** at minimum, and say how the scheme would
+Cover **two hits** at minimum, and say how the scheme would
 extend if a later tile needed four or five. Give the final state — the frame
 before it breaks — real weight; that is the one the player is waiting for.
 
@@ -135,13 +137,13 @@ feel.
 
 Requirements:
 
-- **five characters, one per hue**, distinguishable by *silhouette alone* — a
-  colour-blind player must still tell them apart
-- drawn in the **dark ink layer** over the hue, plus optional bright highlight;
-  never introducing a competing colour (§2.1)
+- **five characters, one per hue.** Since colour means nothing mechanically,
+  they exist for warmth and marketing rather than to be told apart at speed —
+  but they must never blur the tile's edge or its read as *occupied* (§2.1)
+- drawn in the **dark ink layer** over the hue, plus optional bright highlight
 - legible at 45px — bold simple shapes, two eyes and a mouth, not detail
-- **four states**: `idle`, `settling` (just placed), `doomed` (part of a clear
-  that is about to go), `crowded` (this tile is in a nearly-full region)
+- **four states**: `idle`, `settling` (just placed), `doomed` (part of a line
+  about to clear), `crowded` (this tile is in a nearly-full region)
 - a personality line each, for the album and store copy
 
 Say how a character shares the tile face with the crack layer from Deliverable A,
@@ -155,10 +157,10 @@ Four special tiles exist today:
 
 | Existing | Behaviour |
 | --- | --- |
-| **Stone** | Colourless obstacle. Never joins a colour group. Worn down by two clears going off beside it. |
-| **Crate** | As stone, but takes three. |
-| **Prism** | Counts as every colour when a group is measured — but is never expanded *from*, so it extends a group without welding two colours together. |
-| **Bomb** | Coloured, joins groups normally, and takes its 3×3 with it when cleared. Chains into other bombs. |
+| **Stone** | Obstacle. Cannot be built over. Worn down by two clears going off beside it. |
+| **Crate** | As stone, and visually distinct — brown rather than grey. |
+| **Gem** | A bonus tile worth a lot of score, but only a line can reach one. |
+| **Bomb** | Takes its 3×3 with it when a line clears it. Chains into other bombs. |
 
 **Design 8–10 more.** For each, give me:
 
@@ -171,12 +173,13 @@ Four special tiles exist today:
 Directions worth exploring — the board currently only ever *resists* the player,
 so tiles that change how space itself behaves are the gap:
 
-- tiles that change what counts as a line, or as a group
+- tiles that change what counts as a line — half-width, wrapping, diagonal
 - tiles that are good to keep rather than clear, so clearing is not always right
-- tiles that reward placing a specific *shape* against them, tying the two
-  halves of the game together
+- tiles that reward placing a specific *shape* against them
 - tiles that interact with **creep** — the only thing on the board that arrives
   without the player's say-so
+- tiles that behave differently in **Classic** than in a level, since Classic
+  has no objective and nothing but survival to play for
 
 Reject any idea that needs the player to read text on a tile, or that moves a
 tile the player placed (§2.6).
@@ -196,6 +199,9 @@ Constraints that make or break an item here:
 - the game is turn-based and fully deterministic, and the drag preview shows
   the outcome of a placement before it is committed. An item must not make
   that preview a lie
+- **space is life.** A run ends when none of the three pieces fits anywhere, so
+  the most valuable thing an item can do is give room back or change what you
+  have been dealt
 - an item the player *holds and spends* is a second kind of move, so say
   clearly how it is triggered by touch alongside dragging a piece
 - **space is the real currency.** Items that give space back (clear a region,
@@ -269,7 +275,8 @@ Deliver it as a single `src/game/art.ts` exporting
 `export const ART: PrismBreakArt`.
 
 **Do not rewrite the game.** `src/game/` is deliberately DOM-free so the test
-suite can auto-play all 24 levels headlessly on every change; keep it that way.
+suite can auto-play all 24 levels and dozens of Classic runs headlessly on every
+change; keep it that way.
 If a design of yours needs a change to `board.ts` or `game.ts`, describe the
 change in prose and let me make it — do not hand back a rewritten simulation.
 

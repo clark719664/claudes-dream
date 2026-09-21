@@ -32,6 +32,17 @@ await page.screenshot({ path: `${out}/03-map.png`, fullPage: true });
 
 await page.locator('[data-act="back"]').click();
 await page.waitForTimeout(250);
+
+// Classic mode: endless, no move limit, no objective.
+await page.locator('[data-act="classic"]').click();
+await page.waitForTimeout(500);
+console.log('classic moves readout:', await page.locator('#hud-shots').textContent());
+await page.screenshot({ path: `${out}/08-classic.png` });
+await page.locator('#hud-pause').click();
+await page.waitForTimeout(300);
+await page.locator('[data-act="home"]').click();
+await page.waitForTimeout(400);
+
 await page.locator('[data-act="play"]').click();
 await page.waitForTimeout(600);
 console.log('hud visible:', await page.locator('#hud').isVisible());

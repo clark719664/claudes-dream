@@ -1,11 +1,10 @@
 import { CFG } from './config';
 import { Board, countPreset, makeTile } from './board';
 import { SHAPES, RESCUE_SHAPES } from './shapes';
-import { Rng } from '../core/rng';
+import { Rng, randomSeed } from '../core/rng';
 import { basePerks, type Perks } from '../meta/stickers';
 import { CHAR_TO_HUE, charKind, layoutRows, type LevelSpec, type Objective } from './levels';
 import {
-  ClearKind,
   HUES,
   Phase,
   TileKind,
@@ -21,7 +20,8 @@ import {
 export type FxKind =
   | 'place'
   | 'clearLine'
-  | 'clearGroup'
+  | 'gem'
+  | 'discard'
   | 'shatter'
   | 'bomb'
   | 'crate'
@@ -66,13 +66,15 @@ export class Game {
   score = 0;
   movesLeft: number;
   movesUsed = 0;
+  /** Pieces the player may throw away, from the Arcade Legends page. */
+  discardsLeft = 0;
+  readonly traySize: number = CFG.traySize;
   bestCombo = 0;
   /** Consecutive placements that cleared something. */
   streak = 0;
   tilesCleared = 0;
   linesCleared = 0;
-  groupsCleared = 0;
-  clearedByHue = [0, 0, 0, 0, 0];
+  gemsCleared = 0;
   cratesBroken = 0;
   won = false;
 
@@ -80,20 +82,26 @@ export class Game {
   private resolveTimer = 0;
   private creepCountdown: number;
 
-  constructor(level: LevelSpec, perks: Perks = basePerks()) {
+  readonly seed: number;
+
+  constructor(level: LevelSpec, perks: Perks = basePerks(), seed?: number) {
     this.level = level;
     this.perks = perks;
-    // Seeded by level id alone: the same puzzle on every attempt, on every
-    // device. That is what makes a level a level rather than a run.
-    this.rng = new Rng(0x9e3779b9 ^ (level.id * 2654435761));
+    // A level is seeded by its id alone, so it is the same puzzle on every
+    // attempt and every device. Classic is a fresh run each time, or a given
+    // seed when one is passed, so a run can be shared and replayed exactly.
+    this.rng = new Rng(
+      level.endless ? (seed ?? randomSeed()) : 0x9e3779b9 ^ (level.id * 2654435761),
+    );
+    this.seed = level.endless ? this.rng.peekSeed() : level.id;
 
-    this.board.groupThreshold = perks.groupThreshold;
     this.board.bombRadius = perks.bombRadius;
-    this.movesLeft = level.moves + perks.extraMoves;
+    this.movesLeft = level.endless ? Infinity : level.moves + perks.extraMoves;
+    this.discardsLeft = perks.discards;
+    this.traySize = CFG.traySize + (perks.extraTraySlot ? 1 : 0);
     this.creepCountdown = level.creepEvery ?? 0;
 
     this.loadLayout();
-    if (perks.openingPrism) this.placeOpeningPrism();
     this.deal();
   }
 
@@ -118,45 +126,15 @@ export class Game {
   }
 
   /**
-   * The hues this level deals from.
-   *
-   * Defaults to three of the five rather than all of them: across the full
-   * palette, five touching tiles of one colour almost never happen by accident
-   * and the colour half of the game stops mattering. Which three is fixed by
-   * the level id, so levels differ from each other but never from themselves.
-   *
-   * Every colour the layout itself uses is always included. Leaving one out
-   * makes the preset tiles of that colour literally unclearable, since nothing
-   * in the deal could ever group with them.
+   * Colour is decoration: it has no effect on what clears, so the deal just
+   * uses the whole palette. Five hues stay in play purely for readability — a
+   * packed board of one colour is far harder to parse than a mixed one, even
+   * when the colours mean nothing at all.
    */
-  /** A free Prism, from the completed Arcade Legends album page. */
-  private placeOpeningPrism(): void {
-    const mid = Math.floor(this.board.cols / 2);
-    for (let row = Math.floor(this.board.rows / 2); row < this.board.rows; row++) {
-      if (!this.board.at(mid, row)) {
-        this.board.set(mid, row, makeTile(TileKind.Prism, 0, 1, true));
-        return;
-      }
-    }
-  }
-
-  get paletteHues(): Hue[] {
-    return this.palette();
-  }
-
   private palette(): Hue[] {
-    if (this.level.hues && this.level.hues.length) {
-      return dedupe([...this.level.hues, ...huesInLayout(this.level.layout)]);
-    }
-    const required = huesInLayout(this.level.layout);
-    const pool = HUES.filter((h) => !required.includes(h));
-    const pick = new Rng(this.level.id * 2246822519);
-    const chosen = [...required];
-    while (chosen.length < 3 && pool.length) {
-      chosen.push(pool.splice(pick.int(pool.length), 1)[0]);
-    }
-    return chosen;
+    return [...HUES];
   }
+
 
   // -- the deal ------------------------------------------------------------
 
@@ -164,16 +142,34 @@ export class Game {
    * Refill the tray.
    *
    * Every piece is checked against the board it is being dealt onto, and the
-   * tighter the board gets the harder the deal leans toward small pieces. A
-   * level should end because the player ran out of room or out of moves, never
-   * because the shuffler handed them three pieces that could never have gone
-   * anywhere — that reads as the game cheating, and it is the single fastest
-   * way to lose a player.
+   * tighter the board gets the more the deal leans toward small pieces — so a
+   * fresh hand is never dead on arrival, which reads as the game cheating.
+   *
+   * That is as far as the help goes. Once a hand is dealt it stands: if you
+   * spend one piece and the other two no longer fit, the run is over. Swapping
+   * those leftovers out for something that fits was tried, and it made the game
+   * effectively unloseable — a bot ran 5,000 pieces without ever being stuck.
+   * Being able to run out of room *is* the game.
    */
   private deal(): void {
     this.tray = [];
-    for (let i = 0; i < CFG.traySize; i++) this.tray.push(this.rollPiece());
+    for (let i = 0; i < this.traySize; i++) this.tray.push(this.rollPiece());
     this.emit('deal', 0, 0, 0, 0);
+  }
+
+  /**
+   * Throw away a piece that has nowhere to go. Limited, and only on a piece
+   * that genuinely does not fit, so it rescues a dead tray without becoming a
+   * way to fish for the piece you want.
+   */
+  discard(item: TrayItem): boolean {
+    if (this.discardsLeft <= 0 || item.used) return false;
+    if (this.board.hasAnyPlacement(item.shape)) return false;
+    this.discardsLeft--;
+    item.used = true;
+    this.emit('discard', 0, 0, item.hue, 0);
+    this.afterMove();
+    return true;
   }
 
   private rollPiece(): TrayItem {
@@ -186,34 +182,14 @@ export class Game {
     const shape = this.rng.weighted(
       usable,
       usable.map((s) => {
-        // On a crowded board, big pieces become much less likely.
+        // On a crowded board, big pieces get less likely — but not so much
+        // less that the squeeze stops being the thing you are playing against.
         const size = s.cells.length;
-        const crowdPenalty = room < 0.45 ? Math.pow(room / 0.45, Math.max(0, size - 2)) : 1;
+        const crowdPenalty = room < 0.35 ? Math.pow(room / 0.35, Math.max(0, size - 3) * 0.6) : 1;
         return s.weight * crowdPenalty + 0.01;
       }),
     );
     return { id: nextTrayId++, shape, hue, used: false };
-  }
-
-  /**
-   * A tray piece that no longer fits is dead weight, and holding two of them
-   * ends a level that still had room in it. Once anything in the tray has been
-   * spent, unplaceable leftovers are swapped for pieces that fit.
-   */
-  private refreshStuckPieces(): void {
-    if (this.tray.every((t) => !t.used)) return;
-    for (let i = 0; i < this.tray.length; i++) {
-      const item = this.tray[i];
-      if (item.used || this.board.hasAnyPlacement(item.shape)) continue;
-      const fits = RESCUE_SHAPES.filter((s) => this.board.hasAnyPlacement(s));
-      if (!fits.length) return;
-      this.tray[i] = {
-        id: nextTrayId++,
-        shape: this.rng.pick(fits),
-        hue: item.hue,
-        used: false,
-      };
-    }
   }
 
   get liveTray(): TrayItem[] {
@@ -277,23 +253,20 @@ export class Game {
     const mult = comboMult * streakMult;
 
     for (const ev of result.clears) {
-      const bonus = ev.kind === ClearKind.Group ? CFG.scoring.groupBonus : CFG.scoring.lineBonus;
-      this.score += Math.round(bonus * mult);
-      if (ev.kind === ClearKind.Group) {
-        this.groupsCleared++;
-        this.emit('clearGroup', centreOf(ev.cells).x, centreOf(ev.cells).y, ev.hue, ev.cells.length);
-      } else {
-        this.linesCleared++;
-        this.emit('clearLine', centreOf(ev.cells).x, centreOf(ev.cells).y, ev.hue, ev.index);
-      }
+      this.score += Math.round(CFG.scoring.lineBonus * mult);
+      this.linesCleared++;
+      const c = centreOf(ev.cells);
+      this.emit('clearLine', c.x, c.y, ev.hue, result.clears.length);
     }
 
     for (const { cell, tile } of result.removed) {
       this.tilesCleared++;
       this.score += Math.round(CFG.scoring.perTileCleared * mult);
       if (tile.kind === TileKind.Crate) this.cratesBroken++;
-      if (tile.kind === TileKind.Colour || tile.kind === TileKind.Bomb) {
-        this.clearedByHue[tile.hue]++;
+      if (tile.kind === TileKind.Gem) {
+        this.gemsCleared++;
+        this.score += CFG.scoring.gemBonus;
+        this.emit('gem', cell.col + 0.5, cell.row + 0.5, tile.hue, 0, '+250');
       }
       if (tile.kind === TileKind.Bomb) {
         this.score += CFG.scoring.blastBonus;
@@ -325,7 +298,7 @@ export class Game {
   }
 
   private afterMove(): void {
-    if (this.objectiveMet()) return this.finish(true);
+    if (!this.level.endless && this.objectiveMet()) return this.finish(true);
 
     if (this.level.creepEvery && --this.creepCountdown <= 0) {
       this.creepCountdown = this.level.creepEvery;
@@ -333,10 +306,19 @@ export class Game {
     }
 
     if (this.liveTray.length === 0) this.deal();
-    else this.refreshStuckPieces();
 
     if (this.movesLeft <= 0) return this.finish(false);
+
+    // The one way an endless run ends: nothing left in the tray fits anywhere.
     if (!this.liveTray.some((t) => this.board.hasAnyPlacement(t.shape))) {
+      // A spare discard buys one more look before it is over.
+      if (this.discardsLeft > 0 && this.liveTray.length > 1) {
+        const dead = this.liveTray[0];
+        this.discardsLeft--;
+        dead.used = true;
+        this.emit('discard', 0, 0, dead.hue, 0);
+        return this.afterMove();
+      }
       return this.finish(false);
     }
     this.phase = Phase.Placing;
@@ -360,14 +342,14 @@ export class Game {
     }
     if (empty.length <= 8) return; // never seal off the last of the room
 
-    const s = CFG.siege;
-    const count = Math.min(this.level.creepCount ?? 2, Math.floor(empty.length / 4));
+    const s = CFG.creep;
+    const count = Math.min(this.level.creepCount ?? 1, Math.floor(empty.length / 6));
     for (let i = 0; i < count; i++) {
       const cell = empty.splice(this.rng.int(empty.length), 1)[0];
       const kind = this.rng.chance(s.stoneChance)
         ? TileKind.Stone
-        : this.rng.chance(s.prismChance)
-          ? TileKind.Prism
+        : this.rng.chance(s.gemChance)
+          ? TileKind.Gem
           : this.rng.chance(s.bombChance)
             ? TileKind.Bomb
             : TileKind.Colour;
@@ -378,7 +360,9 @@ export class Game {
 
   private finish(won: boolean): void {
     this.won = won;
-    if (won) this.score += this.movesLeft * CFG.scoring.movesLeftBonus;
+    if (won && Number.isFinite(this.movesLeft)) {
+      this.score += this.movesLeft * CFG.scoring.movesLeftBonus;
+    }
     this.phase = Phase.Over;
     this.emit(won ? 'win' : 'lose', this.board.cols / 2, this.board.rows / 2, 0, 0);
   }
@@ -403,19 +387,19 @@ export class Game {
         return `${this.board.countKind(TileKind.Stone)} left`;
       case 'clear-crates':
         return `${this.board.countKind(TileKind.Crate)} left`;
-      case 'clear-hue':
-        return `${Math.min(this.clearedByHue[o.hue], o.count)} / ${o.count}`;
+      case 'clear-gems':
+        return `${this.board.countKind( TileKind.Gem)} left`;
       case 'lines':
         return `${Math.min(this.linesCleared, o.count)} / ${o.count}`;
-      case 'groups':
-        return `${Math.min(this.groupsCleared, o.count)} / ${o.count}`;
       case 'score':
         return `${Math.min(this.score, o.target)} / ${o.target}`;
+      case 'endless':
+        return `${this.linesCleared} lines`;
     }
   }
 
   get stars(): 0 | 1 | 2 | 3 {
-    if (!this.won) return 0;
+    if (this.level.endless || !this.won) return 0;
     const [, two, three] = this.level.stars;
     if (this.score >= three) return 3;
     return this.score >= two ? 2 : 1;
@@ -424,12 +408,13 @@ export class Game {
   get result(): LevelResult {
     return {
       levelId: this.level.id,
+      endless: !!this.level.endless,
       won: this.won,
       score: this.score,
       stars: this.stars,
       shards: 0, // filled in by the caller, which knows about first clears
       movesUsed: this.movesUsed,
-      movesLeft: Math.max(0, this.movesLeft),
+      movesLeft: Number.isFinite(this.movesLeft) ? Math.max(0, this.movesLeft) : 0,
       bestCombo: this.bestCombo,
       tilesCleared: this.tilesCleared,
       linesCleared: this.linesCleared,
@@ -455,14 +440,14 @@ function progressOf(o: Objective, g: Game): number {
       return g.board.countKind(TileKind.Stone) === 0 ? 1 : 0;
     case 'clear-crates':
       return g.board.countKind(TileKind.Crate) === 0 ? 1 : 0;
-    case 'clear-hue':
-      return g.clearedByHue[o.hue] / o.count;
+    case 'clear-gems':
+      return g.board.countKind( TileKind.Gem) === 0 ? 1 : 0;
     case 'lines':
       return g.linesCleared / o.count;
-    case 'groups':
-      return g.groupsCleared / o.count;
     case 'score':
       return g.score / o.target;
+    case 'endless':
+      return 0;
   }
 }
 
@@ -473,19 +458,19 @@ function defaultHp(kind: TileKind): number {
   return 1;
 }
 
-/** Colours the level's own layout puts on the board. */
-function huesInLayout(layout: string): Hue[] {
-  const found: Hue[] = [];
-  for (const ch of layout) {
-    const hue = CHAR_TO_HUE[ch];
-    if (hue !== undefined && !found.includes(hue)) found.push(hue);
-  }
-  return found;
-}
+/** The endless mode: no objective, no move limit, plays until nothing fits. */
+export const CLASSIC: LevelSpec = {
+  id: 0,
+  world: 0,
+  name: 'Classic',
+  layout: '........',
+  moves: 0,
+  endless: true,
+  objective: { kind: 'endless' },
+  stars: [0, 0, 0],
+};
 
-function dedupe(hues: Hue[]): Hue[] {
-  return hues.filter((h, i) => hues.indexOf(h) === i);
-}
+
 
 function centreOf(cells: Cell[]): { x: number; y: number } {
   let x = 0;

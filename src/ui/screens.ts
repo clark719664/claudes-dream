@@ -1,4 +1,3 @@
-import { PALETTE } from '../game/config';
 import { sfx, isMuted, setMuted } from '../core/audio';
 import { haptics } from '../core/haptics';
 import {
@@ -48,6 +47,7 @@ import { esc, fmt, mount, on, share, toast, unmount } from './dom';
 
 export interface Nav {
   play: (levelId: number) => void;
+  classic: () => void;
   resume: () => void;
   restart: () => void;
   home: () => void;
@@ -91,6 +91,9 @@ export function homeScreen(): void {
     <button class="btn primary" data-act="play">
       ▶  ${cleared ? `LEVEL ${next}` : 'START'}${level ? ` · ${esc(level.name)}` : ''}
     </button>
+    <button class="btn gold" data-act="classic">
+      ♾️  Classic ${profile.classicBest ? `<span class="badge">best ${fmt(profile.classicBest)}</span>` : '<span class="badge live">new</span>'}
+    </button>
     <button class="btn" data-act="map">
       🗺️  Level Map <span class="badge">${cleared}/${LEVELS.length}</span>
       <span class="badge gold">★ ${totalStars()}</span>
@@ -117,6 +120,9 @@ export function homeScreen(): void {
             break;
           case 'map':
             nav.map();
+            break;
+          case 'classic':
+            nav.classic();
             break;
           case 'daily-claim': {
             const reward = claimDaily();
@@ -614,6 +620,54 @@ function giftCodeScreen(st: Sticker, code: string): void {
 }
 
 // --------------------------------------------------------------- results --
+export interface ClassicPayload {
+  score: number;
+  lines: number;
+  bestCombo: number;
+  tiles: number;
+  newBest: boolean;
+  previousBest: number;
+  shards: number;
+}
+
+/** The endless run's own end screen: one number, and whether it beat the last. */
+export function classicResultsScreen(r: ClassicPayload): void {
+  mount(
+    `
+    <h2 class="screen-title">${r.newBest ? '🏆 New high score!' : 'Run over'}</h2>
+    <p class="sub">${r.newBest ? 'Your best yet.' : `Best so far ${fmt(r.previousBest)}.`}</p>
+    <div class="stats">
+      <div><span>Score</span><b class="${r.newBest ? 'hi' : ''}">${fmt(r.score)}</b></div>
+      <div><span>Lines</span><b>${fmt(r.lines)}</b></div>
+      <div><span>Best combo</span><b>×${r.bestCombo}</b></div>
+      <div><span>Shards earned</span><b class="hi">${fmt(r.shards)}</b></div>
+    </div>
+    <button class="btn primary" data-act="again">↻  Play again</button>
+    ${profile.unopened.length ? '<button class="btn gold" data-act="open">🎴 Open your packs</button>' : ''}
+    <button class="btn" data-act="share">Share your score</button>
+    <button class="btn ghost" data-act="home">← Home</button>
+  `,
+    (root) => {
+      on(root, '[data-act="again"]', () => {
+        sfx.uiTap();
+        nav.classic();
+      });
+      on(root, '[data-act="open"]', () => {
+        sfx.uiTap();
+        shopScreen();
+      });
+      on(root, '[data-act="home"]', () => {
+        sfx.uiTap();
+        nav.home();
+      });
+      on(root, '[data-act="share"]', () => {
+        void share(`Prism Break Classic: ${fmt(r.score)} points, ${r.lines} lines. Beat that.`);
+      });
+    },
+    true,
+  );
+}
+
 export interface ResultPayload {
   level: LevelSpec;
   won: boolean;
@@ -725,8 +779,6 @@ export function pauseScreen(): void {
 
 // ------------------------------------------------------------------ help --
 export function helpScreen(back: () => void = homeScreen): void {
-  const sw = (i: number) => `<i class="swatch" style="background:${PALETTE.hues[i].core}"></i>`;
-
   mount(
     `
     <h2 class="screen-title">How to play</h2>
@@ -734,34 +786,35 @@ export function helpScreen(back: () => void = homeScreen): void {
 
     <div class="hint">
       <b>1 · Fill a line.</b><br />
-      Complete a whole row or column and it clears, whatever colours are in it.
-      This is how you get rid of stone, crates and anything else in your way.
+      Complete a whole row or column and it clears. That is the only rule.
+      Colours are decoration — all that matters is whether a piece fits.
     </div>
     <div class="hint">
-      <b>2 · Or gather a colour.</b><br />
-      Five or more touching tiles of one colour ${sw(0)}${sw(0)}${sw(0)} clear on
-      their own. Pieces arrive already coloured, so where you put a colour matters
-      as much as whether it fits.
+      <b>2 · Clear more than one at a time.</b><br />
+      A single piece that finishes two or three lines at once is worth far more
+      than clearing them one by one, and clearing on consecutive moves builds a
+      streak on top of that. Setting those up is the game.
     </div>
     <div class="hint">
-      <b>Do both at once.</b> A placement that finishes a line <i>and</i> a colour
-      group at the same time scores far more than doing them one after the other,
-      and clearing on consecutive moves builds a streak on top of that.
+      <b>Mind the gaps.</b> Three pieces at a time, and a new three when all of
+      them are down. A piece that no longer fits anywhere goes dim. When none of
+      them fit, it is over — so single-cell holes are what really kill you.
     </div>
     <div class="hint">
       <b>Nothing is hidden.</b> While you drag, the board rings every tile the
       placement would clear. Nothing falls, nothing is on a timer, and nothing
-      moves until you move it — so there is no luck in a move.
+      moves until you move it.
     </div>
     <div class="hint">
-      <b>The pieces.</b> Three at a time; a new three arrives when all of them are
-      down. A piece that no longer fits anywhere goes dim. When none of them fit,
-      the level is over.
+      <b>Two ways to play.</b> <b>Levels</b> have a goal and a move limit, with
+      stars and a map. <b>Classic</b> is endless: one board, no limit, play until
+      nothing fits and chase your own high score.
     </div>
     <div class="hint">
-      <b>◈ Prism</b> counts as whatever colour touches it. <b>✦ Bomb</b> takes its
-      neighbours when something clears it. <b>Crates</b> need two separate clears.
-      <b>Stone</b> never joins a colour group — only a full line shifts it.
+      <b>◆ Gems</b> are worth a lot, but only a line can reach one.
+      <b>✦ Bombs</b> take their neighbours when a line clears them.
+      <b>Stone</b> and <b>crates</b> cannot be built over — clears going off
+      beside them wear them down, and they crack as they go.
     </div>
     <button class="btn primary" data-act="back">Got it</button>
   `,
@@ -786,7 +839,7 @@ export function settingsScreen(): void {
       <div><span>Levels played</span><b>${fmt(profile.runs)}</b></div>
       <div><span>Blocks broken</span><b>${fmt(profile.blocksBroken)}</b></div>
       <div><span>Stars</span><b class="hi">${totalStars()}</b></div>
-      <div><span>Best chain</span><b>×${profile.bestChain}</b></div>
+      <div><span>Classic best</span><b>${fmt(profile.classicBest)}</b></div>
     </div>
     <button class="btn ghost" data-act="reset">Erase all progress</button>
     <button class="btn ghost" data-act="back">← Back</button>
