@@ -47,6 +47,9 @@ import {
   totalStars,
 } from '../meta/profile';
 import { MAX_LEVEL, UNLOCKS, nextUnlock } from '../meta/progression';
+import { circuitScreen, initCircuit } from './circuit';
+import { currentSector, msToNextCharge, regenerateCharges } from '../meta/profile';
+import { MAX_CHARGES, SECTORS } from '../meta/circuit';
 import { esc, fmt, mount, on, share, toast, unmount } from './dom';
 
 export interface Nav {
@@ -62,6 +65,7 @@ let nav: Nav;
 
 export function initScreens(n: Nav): void {
   nav = n;
+  initCircuit(homeScreen);
 }
 
 function wallet(): string {
@@ -99,7 +103,10 @@ export function homeScreen(): void {
   const daily = pendingDaily();
   const album = albumProgress();
   const packs = profile.unopened.length;
+  regenerateCharges();
   const next = highestUnlocked(LEVELS.map((l) => l.id));
+  const sector = profile.sector < SECTORS.length ? currentSector() : null;
+  const chargeMins = Math.ceil(msToNextCharge() / 60000);
   const level = LEVELS.find((l) => l.id === next);
   const cleared = LEVELS.filter((l) => starsFor(l.id) > 0).length;
 
@@ -119,6 +126,22 @@ export function homeScreen(): void {
     <button class="btn primary" data-act="play">
       ▶  ${cleared ? `LEVEL ${next}` : 'START'}${level ? ` · ${esc(level.name)}` : ''}
     </button>
+    <button class="btn" data-act="circuit" style="${sector ? `border-color:${sector.accent}55` : ''}">
+      ⚡  The Circuit
+      <span class="badge ${profile.charges > 0 ? 'gold' : ''}">${profile.charges}/${MAX_CHARGES}</span>
+      ${
+        sector
+          ? `<span class="badge">${esc(sector.name)} ${profile.beacons}/${sector.beacons.length}</span>`
+          : '<span class="badge">complete</span>'
+      }
+    </button>
+    <p class="sub" style="margin:-6px 0 12px;font-size:11px;text-align:center">
+      ${
+        profile.charges >= MAX_CHARGES
+          ? 'Charges full — go spend them.'
+          : `Next Charge in ${chargeMins} min${chargeMins === 1 ? '' : 's'}. Playing earns them faster.`
+      }
+    </p>
     <button class="btn gold" data-act="classic">
       ♾️  Classic ${profile.classicBest ? `<span class="badge">best ${fmt(profile.classicBest)}</span>` : '<span class="badge live">new</span>'}
     </button>
@@ -162,6 +185,9 @@ export function homeScreen(): void {
             break;
           case 'rewards':
             rewardsScreen();
+            break;
+          case 'circuit':
+            circuitScreen();
             break;
           case 'daily-claim': {
             const reward = claimDaily();
@@ -714,6 +740,7 @@ export interface ClassicPayload {
   shards: number;
   xp: number;
   levelledTo: number | null;
+  charges: number;
 }
 
 /** The line that appears when a payout crossed a player level. */
@@ -741,7 +768,9 @@ export function classicResultsScreen(r: ClassicPayload): void {
       ${r.perfectClears ? `<div><span>Board clears</span><b class="hi">${r.perfectClears}</b></div>` : ''}
     </div>
     ${r.xp ? `<div class="hint"><b>+${fmt(r.xp)} XP</b>${levelUpNote(r.levelledTo)}</div>` : ''}
+    ${r.charges ? `<div class="hint"><b>⚡ +${r.charges} Charges</b> — spend them on the Circuit.</div>` : ''}
     <button class="btn primary" data-act="again">↻  Play again</button>
+    <button class="btn" data-act="circuit">⚡ The Circuit</button>
     ${profile.unopened.length ? '<button class="btn gold" data-act="open">🎴 Open your packs</button>' : ''}
     <button class="btn" data-act="share">Share your score</button>
     <button class="btn ghost" data-act="home">← Home</button>
@@ -758,6 +787,10 @@ export function classicResultsScreen(r: ClassicPayload): void {
       on(root, '[data-act="home"]', () => {
         sfx.uiTap();
         nav.home();
+      });
+      on(root, '[data-act="circuit"]', () => {
+        sfx.uiTap();
+        circuitScreen();
       });
       on(root, '[data-act="share"]', () => {
         void share(`Prism Break Classic: ${fmt(r.score)} points, ${r.lines} lines. Beat that.`);
@@ -781,6 +814,7 @@ export interface ResultPayload {
   packsWon: string[];
   xp: number;
   levelledTo: number | null;
+  charges: number;
 }
 
 export function resultsScreen(r: ResultPayload): void {
@@ -806,6 +840,7 @@ export function resultsScreen(r: ResultPayload): void {
     }
     ${r.won && r.shards ? `<div class="hint"><b>+${fmt(r.shards)} Prism Shards</b>${r.firstClear ? ' — first clear bonus included' : ''}</div>` : ''}
     ${r.xp ? `<div class="hint"><b>+${fmt(r.xp)} XP</b>${levelUpNote(r.levelledTo)}</div>` : ''}
+    ${r.charges ? `<div class="hint"><b>⚡ +${r.charges} Charges</b> — spend them on the Circuit.</div>` : ''}
     ${r.packsWon.map((why) => `<div class="hint"><b>🎴 Pack earned</b> — ${esc(why)}</div>`).join('')}
     ${
       r.won && r.nextLevelId

@@ -30,7 +30,14 @@ const CACHE = 'prism-break-${version}';
 const ASSETS = ${JSON.stringify(assets, null, 2)};
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches
+      .open(CACHE)
+      // './' as well as './index.html': launching from a home screen requests
+      // the directory, and a cache holding only the filename misses it.
+      .then((c) => c.addAll(['./', ...ASSETS]))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener('activate', (e) => {
@@ -46,18 +53,39 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
+
+  // Any navigation gets the app shell, whatever path it asked for. This is what
+  // makes launching from a home screen work with no network at all.
+  // ignoreVary matters: the preview and production servers send Vary headers,
+  // and a cached response stored by addAll will not match a later request
+  // without it — which looks exactly like an empty cache.
+  const opts = { ignoreSearch: true, ignoreVary: true };
+
+  // Any navigation gets the app shell, whatever path it asked for. This is what
+  // makes launching from a home screen work with no network at all.
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      caches
+        .match('./index.html', opts)
+        .then((hit) => hit || caches.match('./', opts))
+        .then((hit) => hit || fetch(e.request))
+        .catch(() => fetch(e.request)),
+    );
+    return;
+  }
+
   e.respondWith(
-    caches.match(e.request).then(
-      (hit) =>
-        hit ||
-        fetch(e.request)
-          .then((res) => {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
-            return res;
-          })
-          .catch(() => caches.match('./index.html')),
-    ),
+    caches.match(e.request, opts).then((hit) => {
+      if (hit) return hit;
+      // Deliberately no index.html fallback here. Handing HTML to a request for
+      // a script produces a MIME-type error that looks nothing like the cache
+      // miss it actually is, which is a miserable thing to debug.
+      return fetch(e.request).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+        return res;
+      });
+    }),
   );
 });
 `,

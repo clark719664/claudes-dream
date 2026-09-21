@@ -215,7 +215,49 @@ because the shuffler handed them three pieces that could never have gone
 anywhere. That reads as the game cheating, and it is the fastest way to lose a
 player.
 
-## 5. The collectible layer
+## 5. The Circuit
+
+The puzzle is the engine; the Circuit is what it drives.
+
+Clearing a level or finishing a Classic run earns **Charges**. On the Circuit
+you spend a Charge to surge forward a few nodes around a ring of lights, and
+whatever you land on pays out: **Lumens**, shards, a pack, free Charges, a Relay
+that throws you further on, a Prism that doubles your next landing, or a Drain
+that takes a cut. Lumens raise **Beacons**, and lighting every Beacon in a
+**Sector** opens the next one — three of them, each paying and costing more.
+
+This is the structure that turns a good puzzle into a game people come back to,
+and it is worth being precise about why:
+
+- **The puzzle stops being the whole reward.** A level clear now pays into
+  something that visibly moves, which is far stronger than a number going up.
+- **Two loops on different clocks.** Charges tick back one every 18 minutes to a
+  cap of 30. That is the only timer in the game, and it gates **the Circuit
+  alone** — levels and Classic are always free and unlimited, because they are
+  how you *earn* Charges. A player who wants to keep playing never hits a wall;
+  a player who wants a reason to open the app tomorrow has one.
+- **Payouts are lumpy on purpose.** A Vault after a Prism pays several times a
+  Cache. Lumpy payouts are what make spending a Charge feel like something
+  rather than an increment.
+- **A Drain can never bankrupt you.** It takes a proportion, never a fixed sum,
+  so it is a setback and not a wall.
+
+### On originality
+
+The loop — spend a currency to move round a track, collect where you land, spend
+the proceeds on structures, finish a location, move on — is a mechanic, and
+mechanics are not what copyright and trademark protect. Expression is: names,
+characters, artwork, trade dress.
+
+So none of that is borrowed. The track is a **ring of light nodes**, not a
+square board with corner squares and coloured property bands. There is no
+mascot, no jail, no chance or community chest by any name, no rent between
+players, no houses or hotels. Every currency, Sector and node name is original
+and fits this game's own prism-and-light theme.
+[docs/IP_NOTES.md](IP_NOTES.md) records the full list of what was avoided and
+the rules for keeping it that way. It is not legal advice.
+
+## 6. The collectible layer
 
 **37 stickers across 5 album pages.** Rarity ★1–★5.
 
@@ -256,7 +298,7 @@ Packs — not shards — are what players chase, so they hang off moments worth
 repeating: a first clear every third level, a Prismatic every ninth, and any
 three-star finish.
 
-## 6. Performance
+## 7. Performance
 
 `npm run test:perf` measures frame times under CPU throttling; `npm run profile`
 takes a real CPU profile of a drag on a full board.
@@ -281,7 +323,7 @@ One caveat on the numbers: the test container has **no GPU**, so under heavy
 throttling it is software-rasterising two megapixels a frame and the figures
 there are pessimistic against any real device.
 
-## 7. Balance, measured
+## 8. Balance, measured
 
 `npm test` auto-plays **all 24 levels** with a bot that plays the way an
 attentive player would: it prizes clearing several lines at once, chases whatever the
@@ -333,7 +375,7 @@ the code:
   budgeted on the *worst* observed run rather than the median, so an unlucky
   hand is survivable rather than fatal.
 
-## 8. Viral loops
+## 9. Viral loops
 
 **1 · Gifting duplicates (built).** A duplicate can be spent to mint a code like
 `PB-2KPQ-Y0A`, shared through the native share sheet, redeemed once by whoever
@@ -357,9 +399,11 @@ replay the same way, which makes a disputed score checkable.
 trading spares inside the crew. Collection games live on the social obligation
 of not letting your crew down.
 
-## 9. Retention
+## 10. Retention
 
-- **The player level** — the primary one. Always a next unlock, always close.
+- **The Circuit** — the primary one. Charges regenerate, so there is always
+  something waiting, and spending them is quick and lumpy and satisfying.
+- **The player level** — always a next unlock, always close.
 - **Daily streak** — escalating shards, packs on days 3/6/9, Prismatic on 7.
 - **Album completion** — the long-horizon goal that survives a losing streak.
 - **Perk compounding** — each finished page makes levels more winnable, which
@@ -368,7 +412,7 @@ of not letting your crew down.
 - **Failure is cheap** — no lives, no energy timer. The game never tells you to
   stop playing.
 
-## 10. Monetisation (designed, not implemented)
+## 11. Monetisation (designed, not implemented)
 
 Deliberately not built: shipping payments into a prototype is how you end up
 tuning an economy nobody has played yet.
@@ -384,13 +428,14 @@ The line held everywhere: **you can buy speed, never power a free player cannot
 also reach.** Set bonuses must stay earnable, or the perk system stops being a
 build and becomes a paywall.
 
-## 11. Build status
+## 12. Build status
 
 **Working end to end:** placement and the full clear resolution (lines,
 bomb chains, obstacle wear, gems, pure-line and board-clear bonuses), the random
 deal, creep, the player level and its 13-step unlock track, Classic endless mode
 with its own high score, 24 authored levels with objectives and stars, the world
-map with unlock progression, the drag preview, the renderer with particles and shake,
+map with unlock progression, the Circuit with its three Sectors and Beacons,
+the drag preview, the renderer with particles and shake,
 procedural audio, native haptics, the album, packs with reveals, dust and
 crafting, gift codes, daily streak, share cards, save/load and the whole screen
 flow.

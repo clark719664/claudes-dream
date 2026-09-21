@@ -23,9 +23,16 @@ While you drag, it outlines exactly what the placement will clear.
 | **Levels** | 24 authored boards across 3 worlds — objective, move limit, three stars, on a map |
 | **Classic** | Endless. No move limit. Play until nothing fits and chase your own high score. |
 
-Underneath both: a **player level** that rises from everything you play, with
-features and perks unlocking along a 30-level track — and a 37-sticker album
+Playing earns **Charges**. You spend those on **the Circuit** — a ring of light
+nodes you surge around, collecting **Lumens** to raise **Beacons**, lighting a
+Sector and moving to the next. That is the loop the puzzle feeds.
+
+Underneath it all: a **player level** that rises from everything you play, with
+features and perks unlocking along a 30-level track, and a 37-sticker album
 whose completed pages give a second, parallel set of perks.
+
+Nothing here copies anyone's names, characters or board — see
+[docs/IP_NOTES.md](docs/IP_NOTES.md).
 
 Built as a web app and wrapped with Capacitor, so one codebase ships to the App
 Store and Google Play.

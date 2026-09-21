@@ -16,6 +16,9 @@ import {
   loadProfile,
   profile,
   queuePack,
+  addCharges,
+  classicCharges,
+  levelCharges,
   recordClassic,
   recordLevel,
   saveProfile,
@@ -269,6 +272,8 @@ function endLevel(): void {
     if (newBest && previousBest > 0) queuePack('standard', 'New Classic high score');
     const xp = classicXp(r.score);
     const levelUp = addXp(xp);
+    const charges = classicCharges(r.score);
+    addCharges(charges);
     saveProfile();
 
     setTimeout(() => {
@@ -285,6 +290,7 @@ function endLevel(): void {
         shards,
         xp,
         levelledTo: levelUp.to > levelUp.from ? levelUp.to : null,
+        charges,
       });
     }, 1000);
     return;
@@ -324,6 +330,8 @@ function endLevel(): void {
 
   const xp = r.won ? levelClearXp(r.stars, firstClear) : 10;
   const levelUp = addXp(xp);
+  const charges = r.won ? levelCharges(r.stars, firstClear) : 0;
+  if (charges) addCharges(charges);
   const next = LEVELS.find((l) => l.id === level.id + 1);
 
   setTimeout(() => {
@@ -342,6 +350,7 @@ function endLevel(): void {
       packsWon,
       xp,
       levelledTo: levelUp.to > levelUp.from ? levelUp.to : null,
+      charges,
     });
   }, 1100);
 }

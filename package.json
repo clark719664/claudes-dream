@@ -12,7 +12,7 @@
     "bundle": "npm run build && node scripts/bundle.mjs",
     "icons": "node scripts/make-icons.mjs",
     "test": "tsx test/run.ts",
-    "test:browser": "node test/smoke.mjs ./test/shots && node test/smoke-meta.mjs ./test/shots && node test/pwa.mjs",
+    "test:browser": "node test/smoke.mjs ./test/shots && node test/smoke-meta.mjs ./test/shots && node test/circuit.mjs ./test/shots && node test/pwa.mjs",
     "test:perf": "node test/prof.mjs && node test/perf.mjs",
     "profile": "node test/cpuprof.mjs",
     "cap:sync": "npm run build && cap sync",

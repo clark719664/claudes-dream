@@ -1,5 +1,12 @@
 import * as storage from '../core/storage';
 import {
+  CHARGE_REGEN_MINUTES,
+  MAX_CHARGES,
+  SECTORS,
+  chargesForClassic,
+  chargesForLevel,
+} from './circuit';
+import {
   applyLevelPerks,
   levelFromXp,
   unlockedFeatures,
@@ -19,6 +26,18 @@ export interface Profile {
   unopened: { kind: 'standard' | 'premium'; reason: string }[];
   /** Total experience, which drives the player level and its unlock track. */
   xp: number;
+  /** The Circuit: charges to spend, lumens to build with, and where you are. */
+  charges: number;
+  lumens: number;
+  sector: number;
+  node: number;
+  /** Beacons raised in the current sector. */
+  beacons: number;
+  /** Set when the last landing was a Prism, doubling the next one. */
+  primed: boolean;
+  /** Epoch ms the charge meter was last topped up. */
+  chargedAt: number;
+  sectorsDone: number;
   /** Per level: best score and best star rating earned. */
   levels: Record<number, { stars: 0 | 1 | 2 | 3; score: number }>;
   bestScore: number;
@@ -49,6 +68,14 @@ function fresh(): Profile {
     owned: {},
     unopened: [],
     xp: 0,
+    charges: 10,
+    lumens: 0,
+    sector: 0,
+    node: 0,
+    beacons: 0,
+    primed: false,
+    chargedAt: Date.now(),
+    sectorsDone: 0,
     levels: {},
     bestScore: 0,
     bestChain: 0,
@@ -126,6 +153,53 @@ export function activePerks(): Perks {
     if (isSetComplete(set.id)) set.bonus.apply(perks);
   }
   return perks;
+}
+
+// ---------------------------------------------------------------- circuit --
+
+/**
+ * Charges tick back up over time.
+ *
+ * This is the only timer in the game and it deliberately gates the Circuit
+ * alone. Levels and Classic are always free and unlimited — they are how you
+ * *earn* Charges — so a player who wants to keep playing never hits a wall,
+ * and a player who wants a reason to come back tomorrow has one.
+ */
+export function regenerateCharges(now = Date.now()): void {
+  if (profile.charges >= MAX_CHARGES) {
+    profile.chargedAt = now;
+    return;
+  }
+  const period = CHARGE_REGEN_MINUTES * 60_000;
+  const earned = Math.floor((now - profile.chargedAt) / period);
+  if (earned <= 0) return;
+  profile.charges = Math.min(MAX_CHARGES, profile.charges + earned);
+  profile.chargedAt =
+    profile.charges >= MAX_CHARGES ? now : profile.chargedAt + earned * period;
+  saveProfile();
+}
+
+/** Milliseconds until the next Charge arrives, or 0 when the meter is full. */
+export function msToNextCharge(now = Date.now()): number {
+  if (profile.charges >= MAX_CHARGES) return 0;
+  return Math.max(0, profile.chargedAt + CHARGE_REGEN_MINUTES * 60_000 - now);
+}
+
+export function addCharges(n: number): void {
+  profile.charges = Math.max(0, Math.min(MAX_CHARGES, profile.charges + n));
+  saveProfile();
+}
+
+export function addLumens(n: number): void {
+  profile.lumens = Math.max(0, Math.round(profile.lumens + n));
+}
+
+export function currentSector() {
+  return SECTORS[Math.min(profile.sector, SECTORS.length - 1)];
+}
+
+export function circuitComplete(): boolean {
+  return profile.sector >= SECTORS.length;
 }
 
 export function playerLevel(): number {
@@ -248,6 +322,14 @@ export interface LevelRecord {
 /** Returns whether this run beat the stored high score. */
 export function classicXp(score: number): number {
   return xpForClassic(score);
+}
+
+export function classicCharges(score: number): number {
+  return chargesForClassic(score);
+}
+
+export function levelCharges(stars: number, firstClear: boolean): number {
+  return chargesForLevel(stars, firstClear);
 }
 
 export function levelClearXp(stars: number, firstClear: boolean): number {
