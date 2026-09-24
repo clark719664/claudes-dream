@@ -31,6 +31,14 @@ Optional settings: `REVERIE_MODEL` (default `claude-opus-5`), `REVERIE_EFFORT` (
 
 Reverie needs a browser with WebGPU: current Chrome, Edge and Safari, and recent Firefox on Windows, on both desktop and mobile. There is no build step. The engine is plain ES modules, so the `studio/`, `play/`, `engine/` and `shared/` folders also work from any static host. When no server is present, the offline designer runs in the browser.
 
+## Deploy for phone + PC testing
+
+The repository includes a `render.yaml` Blueprint for a public HTTPS test deployment. In Render, create a new **Blueprint**, select this repository and the `reverie/browser-platform-v2` branch, then deploy. The service binds to `0.0.0.0:$PORT` and exposes `/api/health` for health checks.
+
+No secret is required: without `ANTHROPIC_API_KEY`, Reverie automatically uses its offline designer. Add that environment variable in the host dashboard when you want live Claude generation. Never put API keys in browser code or commit them to the repository.
+
+Once deployed, the same HTTPS URL works on a phone and PC. Open `/studio/` to create/refine games or `/play/?example=golden-grove` for a direct player smoke test.
+
 ## What you can do
 
 - **Generate** a game from a sentence, or pick one of the idea chips.
