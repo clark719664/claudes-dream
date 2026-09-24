@@ -8,6 +8,8 @@
 const manifests = new Map();
 const jobs = new Map();
 
+import { semanticAssetKey, QUALITY_TIERS } from '../shared/assets.js';
+
 export function getAssetManifest(key) {
   return manifests.get(key) ?? null;
 }
@@ -19,6 +21,11 @@ export function putAssetManifest(key, manifest) {
 }
 
 export function requestAssetJob(key, request, quality = 'medium') {
+  if (!request || typeof request !== 'object') throw new Error('Invalid asset request');
+  const { key: suppliedKey, ...unsigned } = request;
+  const computed = semanticAssetKey(unsigned);
+  if (computed !== key || (suppliedKey && suppliedKey !== key)) throw new Error('Asset request key mismatch');
+  quality = QUALITY_TIERS.includes(quality) ? quality : 'medium';
   if (manifests.has(key)) return { status: 'ready', manifest: manifests.get(key) };
   if (!jobs.has(key)) jobs.set(key, {
     key, request, quality, status: 'queued', createdAt: Date.now(),
