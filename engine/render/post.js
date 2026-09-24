@@ -75,7 +75,9 @@ fn fs(in: FsOut) -> @location(0) vec4f {
   }
   let mean = m1 / 9.0;
   let sigma = sqrt(max(m2 / 9.0 - mean * mean, vec3f(0.0)));
-  let cur = toYCoCg(tm(textureSampleLevel(current, linearSampler, uvCur, 0.0).rgb));
+  let curSample = textureSampleLevel(current, linearSampler, uvCur, 0.0);
+  let cur = toYCoCg(tm(curSample.rgb));
+  let reactive = 1.0 - clamp(curSample.a, 0.0, 1.0);
 
   // reproject using camera motion
   let ndc = vec4f(closestUV.x * 2.0 - 1.0, 1.0 - closestUV.y * 2.0, closest, 1.0);
@@ -111,7 +113,8 @@ fn fs(in: FsOut) -> @location(0) vec4f {
     if (maxUnit > 1.0) { hist = c + off / maxUnit; }
     // more history when the scene is stable, less when disoccluded
     let motion = length((prevUV - in.uv) * vec2f(textureDimensions(history)));
-    let feedback = clamp(params.y - motion * 0.01, 0.8, params.y);
+    var feedback = clamp(params.y - motion * 0.01, 0.8, params.y);
+    feedback = mix(feedback, 0.45, reactive);
     result = mix(cur, hist, feedback);
   }
   return vec4f(max(itm(fromYCoCg(result)), vec3f(0.0)), 1.0);

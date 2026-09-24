@@ -216,7 +216,8 @@ fn fsMain(in: VOut, @builtin(front_facing) front: bool) -> @location(0) vec4f {
   col += in.emissive.rgb;
   col = mix(col, vec3f(8.0, 2.0, 2.0), in.params.z);
   col = applyVolumetrics(col, uv, length(in.world - frame.camPos.xyz));
-  return vec4f(col, 1.0);
+  // alpha is a "reactive" mask for TAA: 0 marks moving objects so history is trusted less
+  return vec4f(col, select(1.0, 0.0, in.params.y < 0.0));
 }
 `;
 

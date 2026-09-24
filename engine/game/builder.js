@@ -224,7 +224,7 @@ export function writeInstance(scene, i, pos, yaw, scale, color, emissive, rough,
   mat4.compose(m, 0, pos[0], pos[1], pos[2], 0, yaw, 0, scale[0], scale[1], scale[2]);
   m[16] = color[0]; m[17] = color[1]; m[18] = color[2]; m[19] = metal;
   m[20] = emissive[0]; m[21] = emissive[1]; m[22] = emissive[2]; m[23] = rough;
-  m[24] = kind; m[25] = 0; m[26] = flash;
+  m[24] = kind; m[25] = -1; m[26] = flash; // wind < 0 flags a moving object for the TAA reactive mask
   const visible = m[31] >= 0;
   scene.updateBounds(i);
   if (!visible) m[31] = -Math.abs(m[31]);

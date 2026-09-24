@@ -8,14 +8,14 @@ import { encodeSpec, decodeSpec } from '../shared/share.js';
 
 const $ = (s) => document.querySelector(s);
 const IDEAS = [
-  'A cozy forest at golden hour where you collect glowing mushrooms while avoiding sneaky slimes',
-  'Neon cyberpunk rooftop parkour at midnight in the rain',
-  'Survive the haunted graveyard until dawn, ghosts are hunting you',
-  'Race through the rings across tropical islands before sunset',
-  'Collect star shards on a purple alien planet with crystal forests',
-  'Escape the volcano: jump across lava with fireballs flying',
-  'A peaceful snowy mountain walk collecting lost mittens',
-  'Treasure hunt in ancient desert ruins at dawn',
+  ['🌲 Golden forest', 'A cozy forest at golden hour where you collect glowing mushrooms while avoiding sneaky slimes'],
+  ['🌃 Neon parkour', 'Neon cyberpunk rooftop parkour at midnight in the rain'],
+  ['👻 Haunted night', 'Survive the haunted graveyard until dawn, ghosts are hunting you'],
+  ['🏝️ Island race', 'Race through the rings across tropical islands before sunset'],
+  ['🪐 Alien planet', 'Collect star shards on a purple alien planet with crystal forests'],
+  ['🌋 Volcano escape', 'Escape the volcano: jump across lava with fireballs flying'],
+  ['❄️ Snowy peaks', 'A peaceful snowy mountain walk collecting lost mittens'],
+  ['🏛️ Desert ruins', 'Treasure hunt in ancient desert ruins at dawn'],
 ];
 const TWEAKS = ['Make it night', 'Add more enemies', 'Make it snowy', 'Make it harder', 'Add rain and fog', 'First person', 'More glow', 'Bigger world'];
 const STORE_KEY = 'reverie.studio.spec';
@@ -234,10 +234,10 @@ function renderObjects() {
 // ---------------------------------------------------------------- boot
 
 async function boot() {
-  $('#ideas').append(...IDEAS.map((idea) => {
+  $('#ideas').append(...IDEAS.map(([label, idea]) => {
     const b = document.createElement('button');
     b.className = 'chip';
-    b.textContent = idea.length > 42 ? `${idea.slice(0, 40)}…` : idea;
+    b.textContent = label;
     b.title = idea;
     b.addEventListener('click', () => { $('#prompt').value = idea; generate(idea); });
     return b;
