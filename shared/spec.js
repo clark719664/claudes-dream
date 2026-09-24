@@ -536,7 +536,7 @@ function ensurePlayable(spec, n) {
     n.warn('rules.goal', 'reach goal without a goal object, added a beacon');
     const id = 'auto_goal_beacon';
     spec.prefabs.push({
-      id, shape: 'crystal', color: '#7dfcff', emissive: 4, metallic: 0.2, roughness: 0.2,
+      id, shape: 'crystal', visual: { archetype: 'primitive', description: '', surface: 'painted', detail: 0.5, variation: 0.35 }, color: '#7dfcff', emissive: 4, metallic: 0.2, roughness: 0.2,
       size: [1.6, 3.2, 1.6], solid: false,
       behaviors: [
         { type: 'goal', value: 0, speed: 0, range: 0, axis: 'y' },
