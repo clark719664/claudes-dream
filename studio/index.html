@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reverie Studio</title>
+<meta name="description" content="Describe a game, play it in seconds. A WebGPU engine with cinematic graphics and an AI game designer.">
+<meta name="theme-color" content="#0b0d14">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='28' fill='%23ffb454'/><circle cx='40' cy='26' r='22' fill='%230b0d14'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./studio.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo" aria-hidden="true"></span><span>Reverie <em>Studio</em></span></div>
+  <div class="game-title" id="game-title">No game yet</div>
+  <div class="top-actions">
+    <button class="icon-btn" id="undo" title="Undo (Ctrl+Z)" disabled>↶</button>
+    <button class="icon-btn" id="redo" title="Redo (Ctrl+Shift+Z)" disabled>↷</button>
+    <button class="btn ghost" id="share" title="Copy a link anyone can play">Share</button>
+    <button class="btn ghost" id="export" title="Download the game file">Export</button>
+    <label class="btn ghost" title="Open a game file">Import<input type="file" id="import" accept=".json,application/json" hidden></label>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="panel left" aria-label="Create">
+    <div class="section">
+      <h2>Dream it</h2>
+      <p class="hint">Describe any game. The AI designs the world, rules, look and music.</p>
+      <textarea id="prompt" rows="4" placeholder="A cozy forest at golden hour where you collect glowing mushrooms while avoiding sneaky slimes…"></textarea>
+      <button class="btn primary big" id="generate"><span class="spark">✦</span> Generate game</button>
+      <div class="chips" id="ideas"></div>
+    </div>
+    <div class="section">
+      <h2>Refine</h2>
+      <form id="refine-form" class="row">
+        <input id="refine" type="text" placeholder="Make it night with more enemies…" autocomplete="off">
+        <button class="btn" type="submit" id="refine-btn">Apply</button>
+      </form>
+      <div class="chips" id="tweaks"></div>
+    </div>
+    <div class="section grow">
+      <h2>Designer <span class="badge" id="ai-badge">…</span></h2>
+      <div class="log" id="log" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="viewport-wrap" aria-label="Game view">
+    <div class="viewport" id="viewport">
+      <div class="empty" id="empty">
+        <div class="empty-inner">
+          <div class="orb" aria-hidden="true"></div>
+          <h1>What do you want to play?</h1>
+          <p>Type an idea on the left, or pick one to start.</p>
+        </div>
+      </div>
+      <div class="busy" id="busy" hidden><div class="spinner"></div><span id="busy-text">Designing…</span></div>
+    </div>
+    <div class="transport">
+      <button class="btn primary" id="play">▶ Play</button>
+      <button class="btn" id="stop">■ Title screen</button>
+      <span class="spacer"></span>
+      <label class="select">Quality
+        <select id="quality">
+          <option value="auto">Auto</option>
+          <option value="low">Low (mobile)</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="ultra">Ultra</option>
+        </select>
+      </label>
+      <button class="icon-btn" id="mute" title="Sound">🔊</button>
+      <button class="icon-btn" id="fullscreen" title="Fullscreen">⛶</button>
+      <span class="stats" id="stats"></span>
+    </div>
+  </section>
+
+  <section class="panel right" aria-label="Tweak">
+    <nav class="tabs" role="tablist">
+      <button role="tab" class="tab active" data-tab="world">World</button>
+      <button role="tab" class="tab" data-tab="objects">Objects</button>
+      <button role="tab" class="tab" data-tab="code">Code</button>
+    </nav>
+    <div class="tab-body" data-body="world">
+      <div class="control"><label>Time of day <output id="o-time"></output></label><input type="range" id="c-time" min="0" max="24" step="0.1"></div>
+      <div class="control"><label>Clouds <output id="o-clouds"></output></label><input type="range" id="c-clouds" min="0" max="1" step="0.01"></div>
+      <div class="control"><label>Fog <output id="o-fog"></output></label><input type="range" id="c-fog" min="0" max="1" step="0.01"></div>
+      <div class="control"><label>Wind <output id="o-wind"></output></label><input type="range" id="c-wind" min="0" max="1" step="0.01"></div>
+      <div class="control"><label>Weather</label>
+        <select id="c-particles"><option>none</option><option>fireflies</option><option>snow</option><option>rain</option><option>embers</option><option>dust</option><option>spores</option></select>
+      </div>
+      <div class="control"><label>Sky tint</label><input type="color" id="c-sky"></div>
+      <h3>Camera look</h3>
+      <div class="control"><label>Glow <output id="o-bloom"></output></label><input type="range" id="c-bloom" min="0" max="2" step="0.01"></div>
+      <div class="control"><label>Exposure <output id="o-exposure"></output></label><input type="range" id="c-exposure" min="-2" max="2" step="0.05"></div>
+      <div class="control"><label>Saturation <output id="o-saturation"></output></label><input type="range" id="c-saturation" min="0" max="2" step="0.01"></div>
+      <div class="control"><label>Contrast <output id="o-contrast"></output></label><input type="range" id="c-contrast" min="0.5" max="1.5" step="0.01"></div>
+      <div class="control"><label>Warmth <output id="o-warmth"></output></label><input type="range" id="c-warmth" min="-1" max="1" step="0.01"></div>
+      <div class="control"><label>Vignette <output id="o-vignette"></output></label><input type="range" id="c-vignette" min="0" max="1" step="0.01"></div>
+    </div>
+    <div class="tab-body" data-body="objects" hidden>
+      <p class="hint">Recolour and tune objects. Changes rebuild the world.</p>
+      <div id="objects"></div>
+    </div>
+    <div class="tab-body" data-body="code" hidden>
+      <p class="hint">The whole game is this JSON. Edit and apply.</p>
+      <textarea id="json" spellcheck="false"></textarea>
+      <div class="row"><button class="btn" id="apply-json">Apply JSON</button><span class="hint" id="json-status"></span></div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+<script type="module" src="./studio.js"></script>
+</body>
+</html>

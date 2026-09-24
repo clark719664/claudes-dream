@@ -177,6 +177,9 @@ fn fsMain(in: VOut, @builtin(front_facing) front: bool) -> @location(0) vec4f {
     let leaf = textureSampleGrad(foliageAtlas, repeatSampler, in.uv, duvx, duvy);
     if (leaf.a < 0.5) { discard; }
     albedo *= leaf.rgb;
+    // dissolve foliage right in front of the camera so it never blocks the view
+    let camDist = length(in.world - frame.camPos.xyz);
+    if (camDist < 2.5 && ign(in.pos.xy + frame.time.z * 3.1) > (camDist - 0.8) / 1.7) { discard; }
   }
   var n = normalize(in.normal);
   if (!front && in.card < 0.5) { n = -n; }

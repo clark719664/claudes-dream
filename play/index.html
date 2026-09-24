@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reverie Player</title>
+<meta name="theme-color" content="#0b0d14">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='28' fill='%23ffb454'/><circle cx='40' cy='26' r='22' fill='%230b0d14'/></svg>">
+<style>
+  html, body { margin: 0; height: 100%; background: #0b0d14; color: #fff; overflow: hidden; font-family: Inter, system-ui, sans-serif; }
+  #stage { position: fixed; inset: 0; }
+  #boot { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; }
+  #boot p { opacity: 0.7; }
+  #stats { position: fixed; right: 10px; bottom: 8px; font: 11px/1.3 ui-monospace, monospace; opacity: 0.55; pointer-events: none; }
+  a { color: #ffd38a; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="boot"><div><h2>Loading Reverie…</h2><p id="boot-msg">Waking up the GPU</p></div></div>
+<div id="stats"></div>
+<script type="module" src="./play.js"></script>
+</body>
+</html>

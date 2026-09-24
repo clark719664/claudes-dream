@@ -1,0 +1,102 @@
+// Claude as the game designer.
+//
+// Claude receives the player's idea (and, when refining, the current game
+// spec) and returns a complete Reverie game spec. Structured outputs
+// guarantee the response matches GAME_SPEC_SCHEMA; normalizeSpec() then
+// enforces numeric ranges and the performance budget. Thinking summaries are
+// streamed to the Studio so people can watch the design take shape.
+
+import Anthropic from '@anthropic-ai/sdk';
+import { GAME_SPEC_SCHEMA, normalizeSpec, SHAPES, BEHAVIORS, SCATTER_KINDS, TERRAIN_STYLES, PARTICLES } from '../shared/spec.js';
+
+export const MODEL = process.env.REVERIE_MODEL || 'claude-opus-5';
+export const EFFORT = process.env.REVERIE_EFFORT || 'medium';
+
+export const SYSTEM_PROMPT = `You are the lead game designer for Reverie, a WebGPU game engine that turns a JSON game spec into a fully playable 3D game with cinematic, physically based graphics. You design complete, fun, beautiful games from short player ideas.
+
+# What the engine renders for you
+- A procedural heightfield landscape (styles: ${TERRAIN_STYLES.join(', ')}) coloured by a 4-colour palette (low/beach, mid/grass, high/peaks, cliff/steep rock). The playable square is terrain.size meters wide, centred on the origin; land rises (or sinks into the sea for islands) outside it.
+- A physically based sky and atmosphere: timeOfDay drives the sun and moon, sunsets and starry nights. cloudCover, volumetric fog with light shafts (fogDensity), skyTint for alien skies, wind.
+- Water with reflections, refraction and foam. A hot orange/red water colour becomes glowing lava that hurts the player.
+- Vegetation and props via scatter layers: ${SCATTER_KINDS.join(', ')}. "grass" is a dense field of animated blades on the mid palette colour; trees are detailed leaf-card foliage.
+- Ambient particles: ${PARTICLES.join(', ')}.
+- Prefabs: primitives (${SHAPES.join(', ')}) with PBR materials (color, metallic, roughness, emissive glow with bloom).
+- Behaviours: ${BEHAVIORS.join(', ')}.
+- A third- or first-person player who runs, sprints, jumps, swims, collects, and gets hurt. Generated music and sound effects.
+
+# Coordinates and scale
+- Meters, y up. position/center are [x, heightAboveSurface, z]: y is the height of the object's BASE above the terrain or water surface at (x, z); 0 means standing on the ground. You never need to know the terrain height.
+- Keep x and z within ±(terrain.size / 2 - 5). The player spawns at player.spawn.
+- Sizes: a coin is about [1,1,0.2], a person 1.8 m tall, a platform [4,0.8,4], a tree 8-10 m.
+
+# Design principles
+- Make the idea recognisable within five seconds: pick the terrain style, palette, time of day, fog, particles, sky tint and music to sell the mood. Harmonise colours: collectibles and goals should contrast with the palette and usually glow (emissive 1.5-4) so they read at a distance.
+- Make it fun and winnable. Collect games need 15-60 collectibles spread across the world (spawns with pattern "path" make readable trails). Reach games need a clear goal object with the goal behaviour, ideally with a light. Survive games need a timeLimit and hazards that chase or shoot, plus a few heal pickups. Add landmarks the player can navigate by.
+- Platforming: platforms need solid: true. The player jumps player.jump meters high (2.2 default) and runs player.speed m/s; keep vertical steps under 70% of the jump height and horizontal gaps under 3.5 m (use bounce pads for bigger climbs). Platforms placed with y > 0 float above the ground.
+- Hazards: give them hazard (value 1) plus movement (patrol/chase/orbit) so the player can read and dodge them; keep them at least 15 m from the spawn.
+- Respect the budget: at most 32 prefabs, 400 placements, 32 spawn groups, 900 entities total. Scatter density 0.2-0.6 is plenty; 1.0 is a dense forest.
+- Write a short, vivid title and tagline, a one-line objective, and fun win/lose messages.
+
+# Refining an existing game
+When a current spec is provided, treat the request as an edit: return the complete updated spec, change what was asked (and anything needed to keep it coherent and winnable), and keep everything else as it was, including the seed.
+
+Always respond with a single JSON object matching the provided schema.`;
+
+function userMessage(prompt, baseSpec) {
+  if (!baseSpec) return `Design a game for this idea:\n\n${prompt}`;
+  return `Here is the current game spec:\n\n${JSON.stringify(baseSpec)}\n\nApply this change and return the complete updated spec:\n\n${prompt}`;
+}
+
+/**
+ * Generate or refine a game with Claude.
+ * onEvent(type, data) receives 'status', 'thinking' and 'progress' updates.
+ * Resolves to { spec, warnings, usage, model }.
+ */
+export async function generateWithClaude({ prompt, baseSpec = null, onEvent = () => {}, signal } = {}) {
+  const client = new Anthropic();
+  onEvent('status', { message: baseSpec ? 'Claude is reworking your game…' : 'Claude is designing your game…' });
+  const stream = client.beta.messages.stream({
+    model: MODEL,
+    max_tokens: 64000,
+    betas: ['server-side-fallback-2026-07-01'],
+    fallbacks: 'default',
+    thinking: { type: 'adaptive', display: 'summarized' },
+    output_config: { effort: EFFORT, format: { type: 'json_schema', schema: GAME_SPEC_SCHEMA } },
+    system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+    messages: [{ role: 'user', content: userMessage(prompt, baseSpec) }],
+  }, { signal });
+
+  let chars = 0;
+  let lastProgress = 0;
+  stream.on('thinking', (delta) => onEvent('thinking', { text: delta }));
+  stream.on('text', (delta) => {
+    chars += delta.length;
+    if (chars - lastProgress > 400) {
+      lastProgress = chars;
+      onEvent('progress', { chars });
+    }
+  });
+
+  const message = await stream.finalMessage();
+  if (message.stop_reason === 'refusal') {
+    throw new Error('Claude declined this request. Try describing the game differently.');
+  }
+  if (message.stop_reason === 'max_tokens') {
+    throw new Error('The design was cut off before it finished. Try a simpler idea.');
+  }
+  const text = message.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
+  let raw;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    throw new Error('Claude returned an unreadable design. Please try again.');
+  }
+  if (baseSpec && raw && typeof raw === 'object' && baseSpec.seed && !raw.seed) raw.seed = baseSpec.seed;
+  const { spec, warnings } = normalizeSpec(raw);
+  return { spec, warnings, usage: message.usage, model: message.model };
+}
+
+/** True when some Anthropic credential is configured for this process. */
+export function hasCredentials() {
+  return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_PROFILE);
+}

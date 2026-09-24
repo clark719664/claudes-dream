@@ -464,10 +464,11 @@ function broadleafTree(rng, lod) {
 function conifer(rng, lod) {
   const g = new Geo();
   const H = rng.range(8.5, 11.5);
-  limb(g, [0, -0.3, 0], [0, H * 0.55, 0], 0.32, 0.2, 8);
-  limb(g, [0, H * 0.55, 0], [0, H, 0], 0.2, 0.04, 7);
-  const start = 1.4;
-  const step = lod === 0 ? 0.42 : 0.75;
+  const bark = [0.2, 0.14, 0.1, 0];
+  limb(g, [0, -0.3, 0], [0, H * 0.55, 0], 0.32, 0.2, 8, bark);
+  limb(g, [0, H * 0.55, 0], [0, H, 0], 0.2, 0.04, 7, bark);
+  const start = 1.1;
+  const step = lod === 0 ? 0.4 : 0.62;
   let whorl = 0;
   for (let y = start; y < H - 0.3; y += step * rng.range(0.85, 1.15)) {
     const f = (y - start) / (H - start);
@@ -482,8 +483,8 @@ function conifer(rng, lod) {
       const up = vNorm(vCross(across, dir));
       const tilt = vNorm(vAdd(across, vScale(up, rng.range(-0.25, 0.35))));
       const axis = [0, y + 0.8, 0];
-      card(g, center, dir, tilt, len * 0.52, len * 0.3 + 0.2, 'needles', axis, 0.6, 2, len * 0.12);
-      if (lod === 0 && f < 0.75) card(g, center, dir, vNorm(vAdd(up, vScale(across, 0.3))), len * 0.5, len * 0.18 + 0.12, 'needles', axis, 0.6, 1);
+      card(g, center, dir, tilt, len * 0.55, len * 0.42 + 0.3, 'needles', axis, 0.6, 2, len * 0.12);
+      if (f < 0.8) card(g, center, dir, vNorm(vAdd(up, vScale(across, 0.3))), len * 0.52, len * 0.24 + 0.2, 'needles', axis, 0.6, 1);
     }
     whorl++;
   }
