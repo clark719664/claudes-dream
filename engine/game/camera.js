@@ -27,11 +27,11 @@ export class CameraRig {
     const surface = (x, z) => world.physics.surfaceAt(x, z);
     if (this.mode === 'orbit') {
       this.orbitAngle += dt * 0.05;
-      const r = Math.min(world.hf.playSize * 0.42, 70);
+      const r = Math.min(world.hf.playSize * 0.3, 55);
       const c = world.spawn;
       const x = c[0] + Math.sin(this.orbitAngle) * r;
       const z = c[2] + Math.cos(this.orbitAngle) * r;
-      const y = Math.max(surface(x, z) + 10, c[1] + 14);
+      const y = Math.max(surface(x, z) + 16, c[1] + 18);
       this.position = [x, y, z];
       this.target = [c[0], c[1] + 2, c[2]];
       return this.#out(time);

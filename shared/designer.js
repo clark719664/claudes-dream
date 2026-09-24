@@ -86,13 +86,13 @@ const THEMES = {
   },
   neon: {
     words: ['neon', 'cyber', 'cyberpunk', 'synthwave', 'retro', 'city', 'arcade', 'tron', 'future', 'futuristic', 'rooftop', 'hacker', 'vaporwave'],
-    time: 22.5, clouds: 0.15, fog: 0.35, tint: '#ff9aff', particles: 'rain', music: 'upbeat',
+    time: 22.5, clouds: 0.15, fog: 0.22, tint: '#ffb8ff', particles: 'rain', music: 'upbeat',
     terrain: { style: 'flat', height: 1, roughness: 0.1, palette: { low: '#15101f', mid: '#1c1530', high: '#2a1f40', cliff: '#0e0a16' } },
     water: { enabled: false, level: 0.5, color: '#1a0a3a' },
     scatter: [['pillar', 0.2, '#2a2440']],
     player: '#2fe0ff', accent: '#ff3ad0', danger: '#ff5a1f',
     names: [['Neon', 'Chrome', 'Midnight', 'Pixel', 'Hyper'], ['Runner', 'Grid', 'Drive', 'Circuit', 'Skyline']],
-    post: { bloom: 1.4, saturation: 1.2, contrast: 1.12, vignette: 0.45, warmth: -0.1 },
+    post: { bloom: 1.0, saturation: 1.15, contrast: 1.12, vignette: 0.45, warmth: -0.1 },
     neonTowers: true,
   },
   cave: {
@@ -486,9 +486,9 @@ export function designFromPrompt(prompt, options = {}) {
 
   if (theme.neonTowers) {
     spec.prefabs.push({ id: 'neon_tower', shape: 'box', color: '#1a1528', emissive: 0, metallic: 0.8, roughness: 0.25, size: [5, 18, 5], solid: true, behaviors: [] });
-    spec.prefabs.push({ id: 'neon_sign', shape: 'box', color: theme.accent, emissive: 5, metallic: 0, roughness: 0.5, size: [5.2, 0.4, 5.2], solid: false, behaviors: [B('light', 6, 0, 14)] });
-    spec.spawns.push({ prefab: 'neon_tower', count: 14, pattern: 'ring', center: [0, 0, 0], radius: round(half * 0.75), height: 0 });
-    spec.spawns.push({ prefab: 'neon_sign', count: 14, pattern: 'ring', center: [0, 6, 0], radius: round(half * 0.75), height: 10 });
+    spec.prefabs.push({ id: 'neon_sign', shape: 'box', color: theme.accent, emissive: 4, metallic: 0, roughness: 0.5, size: [5.2, 0.4, 5.2], solid: false, behaviors: [B('light', 3, 0, 12)] });
+    spec.spawns.push({ prefab: 'neon_tower', count: 16, pattern: 'ring', center: [0, 0, 0], radius: round(half * 0.85), height: 0 });
+    spec.spawns.push({ prefab: 'neon_sign', count: 16, pattern: 'ring', center: [0, 6, 0], radius: round(half * 0.85), height: 10 });
   }
   return normalizeSpec(spec).spec;
 }

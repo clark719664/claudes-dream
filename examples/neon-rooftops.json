@@ -7,9 +7,9 @@
     "timeOfDay": 23,
     "sunAzimuth": 274,
     "cloudCover": 0.85,
-    "fogDensity": 0.35,
+    "fogDensity": 0.22,
     "fogColor": "auto",
-    "skyTint": "#ff9aff",
+    "skyTint": "#ffb8ff",
     "particles": "rain",
     "wind": 0.8
   },
@@ -270,7 +270,7 @@
       "id": "neon_sign",
       "shape": "box",
       "color": "#ff3ad0",
-      "emissive": 5,
+      "emissive": 4,
       "metallic": 0,
       "roughness": 0.5,
       "size": [
@@ -282,9 +282,9 @@
       "behaviors": [
         {
           "type": "light",
-          "value": 6,
+          "value": 3,
           "speed": 0,
-          "range": 14,
+          "range": 12,
           "axis": "y"
         }
       ]
@@ -637,26 +637,26 @@
     },
     {
       "prefab": "neon_tower",
-      "count": 14,
+      "count": 16,
       "pattern": "ring",
       "center": [
         0,
         0,
         0
       ],
-      "radius": 52.5,
+      "radius": 59.5,
       "height": 0
     },
     {
       "prefab": "neon_sign",
-      "count": 14,
+      "count": 16,
       "pattern": "ring",
       "center": [
         0,
         6,
         0
       ],
-      "radius": 52.5,
+      "radius": 59.5,
       "height": 10
     }
   ],
@@ -669,9 +669,9 @@
     "loseMessage": "So close! Try again."
   },
   "post": {
-    "bloom": 1.4,
+    "bloom": 1,
     "exposure": 0,
-    "saturation": 1.2,
+    "saturation": 1.15,
     "contrast": 1.12,
     "vignette": 0.45,
     "warmth": -0.1

@@ -86,13 +86,20 @@ fn fs(in: VOut) -> @location(0) vec4f {
   let thickness = max(sceneDist - waterDist, 0.0);
 
   if (water.w > 0.5) {
-    // lava: glowing flow with a cooling crust
+    // lava: dark cooling crust plates separated by glowing, slowly flowing cracks
     let p = in.world.xz;
-    let crust = smoothstep(0.42, 0.72, fbm(p * 0.3 + vec2f(t * 0.04, -t * 0.025), 5));
-    let pulse = 2.2 + 1.6 * sin(t * 1.3 + fbm(p * 0.15, 3) * 9.0);
-    var glow = frame.water.rgb * pulse * (1.0 - crust) * 6.0;
-    let rock = vec3f(0.035, 0.025, 0.02) * (0.4 + 0.6 * max(dot(n, frame.keyDir.xyz), 0.0)) + skyIrradiance(n) * 0.03;
-    var col = glow + rock * crust;
+    let flow = vec2f(t * 0.03, -t * 0.02);
+    let plates = fbm(p * 0.22 + flow, 5);
+    let cells = abs(fbm(p * 0.6 - flow * 1.7, 4) - 0.5) * 2.0;
+    let crack = (1.0 - smoothstep(0.02, 0.16, cells)) * smoothstep(0.35, 0.6, plates);
+    let pool = 1.0 - smoothstep(0.28, 0.42, plates);
+    let heat = clamp(crack + pool, 0.0, 1.0);
+    let pulse = 0.75 + 0.25 * sin(t * 1.3 + plates * 12.0);
+    let hot = mix(frame.water.rgb * vec3f(0.9, 0.35, 0.15), vec3f(1.0, 0.55, 0.12), heat * heat);
+    let glow = hot * heat * pulse * 2.6;
+    let crustN = normalize(n + vec3f(plates - 0.5, 0.0, cells - 0.5) * 0.6);
+    let rock = vec3f(0.05, 0.04, 0.035) * (0.3 + 0.7 * max(dot(crustN, frame.keyDir.xyz), 0.0)) * keyRadiance() * 0.2 + skyIrradiance(crustN) * 0.04;
+    var col = mix(rock, glow, heat) + frame.water.rgb * 0.15 * (1.0 - heat);
     col = applyVolumetrics(col, uv, dist);
     return vec4f(col, 1.0);
   }

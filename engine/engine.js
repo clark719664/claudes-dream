@@ -115,7 +115,7 @@ export class Engine {
     const lava = w.lava;
     this.water.configure({
       enabled: spec.water.enabled, level: w.waterLevel ?? 0, color: hexToLinear(spec.water.color), lava,
-      span: Math.min(1200, w.hf.worldSize * 1.2),
+      span: 3000, // reach the horizon so oceans never end in a visible edge
     });
     const g = w.grassLayer;
     this.grass.enabled = !!g && g.density > 0.02;

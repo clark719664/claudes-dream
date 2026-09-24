@@ -49,7 +49,7 @@ fn respawnAmbient(i: u32, kind: f32, t: f32) -> Particle {
   var gravity = 0.0;
   var drag = 0.0;
   if (kind == 1.0) { // snow
-    pos.y = sim.cam.y + a.y * 22.0 - 4.0; vel = vec3f(0.0, -1.1, 0.0); life = 16.0; color = vec4f(0.95, 0.97, 1.0, 0.045 + a.x * 0.03);
+    pos.y = sim.cam.y + a.y * 22.0 - 4.0; vel = vec3f(0.0, -1.1, 0.0); life = 16.0; color = vec4f(0.95, 0.97, 1.0, 0.018 + a.x * 0.014);
   } else if (kind == 2.0) { // rain
     pos.y = sim.cam.y + a.y * 20.0 + 2.0; vel = vec3f(0.0, -16.0, 0.0); life = 2.0; color = vec4f(0.7, 0.75, 0.85, 0.012);
   } else if (kind == 3.0) { // fireflies

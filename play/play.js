@@ -43,6 +43,8 @@ async function main() {
   if (warnings.length) console.info('Spec adjusted:', warnings);
   boot.remove();
   window.__engine = engine;
+  if (q.get('hud') === '0') { engine.hud.root.style.display = 'none'; document.getElementById('stats').style.display = 'none'; }
+  if (q.has('time')) engine.setEnvironment({ timeOfDay: Number(q.get('time')) });
   const stats = document.getElementById('stats');
   engine.on('frame', (s) => {
     window.__frames++;

@@ -300,7 +300,8 @@ export class Renderer {
     return {
       sun, moon, sunElev,
       sunE: 10 * cloudDim,
-      moonE: 0.09 * night * cloudDim,
+      // artistic moonlight (real moonlight is ~1/400000 of the sun): bright enough to play by
+      moonE: 0.4 * night * cloudDim,
       keyIsMoon: sunElev < -4,
       stars: smoothstep(-2, -12, sunElev) * (1 - e.cloudCover * 0.8),
     };
@@ -496,7 +497,7 @@ export class Renderer {
     const night = smoothstep(-2, -10, L.sunElev);
     this.post.run(encoder, this.context.getCurrentTexture().createView(), this.dt, {
       feedback: 0.9,
-      minEV: -3.2 - night * 2.0,
+      minEV: -3.2 - night * 3.6,
       maxEV: 4,
     });
     d.queue.submit([encoder.finish()]);
