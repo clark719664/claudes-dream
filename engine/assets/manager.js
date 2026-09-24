@@ -1,4 +1,6 @@
 import { qualityBudget } from '../../shared/assets.js';
+import { AssetCache } from './cache.js';
+import { normalizeQualityTier } from './quality.js';
 
 const DEFAULT_MAX_BYTES = 512 * 1024 * 1024;
 
@@ -8,14 +10,15 @@ const DEFAULT_MAX_BYTES = 512 * 1024 * 1024;
  * background when a cached/CDN/generated asset exists.
  */
 export class ProgressiveAssetManager extends EventTarget {
-  constructor({ endpoint = '/api/assets', quality = 'medium', maxCacheBytes = DEFAULT_MAX_BYTES } = {}) {
+  constructor({ endpoint = '/api/assets', quality = null, maxCacheBytes = DEFAULT_MAX_BYTES } = {}) {
     super();
     this.endpoint = endpoint;
-    this.quality = quality;
+    this.quality = normalizeQualityTier(quality);
     this.budget = qualityBudget(quality);
     this.maxCacheBytes = maxCacheBytes;
     this.memory = new Map();
     this.pending = new Map();
+    this.persistent = new AssetCache({ maxBytes: Math.max(maxCacheBytes, this.budget.memoryMB * 1024 * 1024) });
   }
 
   resolve(request, fallback) {
@@ -31,6 +34,12 @@ export class ProgressiveAssetManager extends EventTarget {
   async #upgrade(request) {
     if (this.pending.has(request.key)) return this.pending.get(request.key);
     const job = (async () => {
+      const disk = await this.persistent.get(request.key);
+      if (disk) {
+        this.#remember(request.key, disk, Number(disk.bytes) || 0);
+        this.dispatchEvent(new CustomEvent('upgrade', { detail: { request, manifest: disk, source: 'cache' } }));
+        return disk;
+      }
       const url = `${this.endpoint}/${encodeURIComponent(request.key)}?quality=${this.quality}`;
       const res = await fetch(url, {
         headers: { 'x-reverie-asset': btoa(unescape(encodeURIComponent(JSON.stringify(request)))) },
@@ -39,6 +48,7 @@ export class ProgressiveAssetManager extends EventTarget {
       if (!res.ok) throw new Error(`asset service ${res.status}`);
       const manifest = await res.json();
       this.#remember(request.key, manifest, Number(manifest.bytes) || 0);
+      await this.persistent.put(request.key, manifest, Number(manifest.bytes) || 0);
       this.dispatchEvent(new CustomEvent('upgrade', { detail: { request, manifest } }));
       return manifest;
     })().finally(() => this.pending.delete(request.key));
