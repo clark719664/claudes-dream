@@ -172,6 +172,11 @@ const COLLECTIBLES = [
   { words: ['pumpkin'], id: 'pumpkin', shape: 'sphere', color: '#ff8a1f', metallic: 0, roughness: 0.6, emissive: 1.2, size: [1.2, 0.9, 1.2] },
   { words: ['relic', 'artifact', 'idol', 'rune'], id: 'relic', shape: 'pyramid', color: '#ffd23b', metallic: 0.9, roughness: 0.3, emissive: 1.2, size: [1, 1.2, 1] },
   { words: ['battery', 'data', 'chip', 'cell'], id: 'data_cell', shape: 'capsule', color: null, metallic: 0.6, roughness: 0.2, emissive: 3, size: [0.5, 1.1, 0.5] },
+  { words: ['mushroom', 'shroom', 'fungus', 'fungi'], id: 'glow_mushroom', shape: 'sphere', color: '#7affc4', metallic: 0, roughness: 0.35, emissive: 3, size: [1, 0.55, 1] },
+  { words: ['gift', 'present', 'mitten', 'sock', 'package', 'parcel', 'box'], id: 'gift', shape: 'box', color: '#ff4a5a', metallic: 0, roughness: 0.5, emissive: 0.8, size: [0.8, 0.8, 0.8] },
+  { words: ['apple', 'fruit', 'berry', 'cherry'], id: 'fruit', shape: 'sphere', color: '#ff3a3a', metallic: 0, roughness: 0.35, emissive: 0.6, size: [0.6, 0.6, 0.6] },
+  { words: ['key'], id: 'key', shape: 'torus', color: '#ffd23b', metallic: 1, roughness: 0.25, emissive: 1, size: [0.8, 0.8, 0.2] },
+  { words: ['feather', 'leaf', 'petal'], id: 'feather', shape: 'gem', color: '#b0f0ff', metallic: 0, roughness: 0.4, emissive: 2, size: [0.4, 1, 0.4] },
 ];
 
 const ENEMIES = [
@@ -226,14 +231,15 @@ export function analyzePrompt(prompt) {
   }
 
   let genre = 'collect';
+  const wantsCollect = has(text, ['collect', 'gather', 'find', 'hunt', 'pick up', 'grab', 'treasure hunt']);
   if (has(text, ['platform', 'parkour', 'jump', 'climb', 'tower', 'obby', 'obstacle course', 'mario'])) genre = 'platformer';
-  else if (has(text, ['survive', 'survival', 'dodge', 'avoid', 'escape', 'horde', 'wave', 'run from', 'chased'])) genre = 'survive';
+  else if (has(text, ['survive', 'survival', 'horde', 'until dawn', 'till dawn', 'hold out']) || (!wantsCollect && has(text, ['dodge', 'avoid', 'escape', 'run from', 'chased', 'hunting you']))) genre = 'survive';
   else if (has(text, ['race', 'racing', 'speedrun', 'time trial', 'checkpoint', 'fast as'])) genre = 'race';
-  else if (has(text, ['explore', 'exploration', 'relax', 'peaceful', 'walk', 'wander', 'chill', 'zen', 'meditat', 'cozy'])) genre = 'explore';
+  else if (!wantsCollect && has(text, ['explore', 'exploration', 'relax', 'peaceful', 'walk', 'wander', 'chill', 'zen', 'meditat', 'cozy'])) genre = 'explore';
   else if (has(text, ['arena', 'high score', 'score attack', 'as many as'])) genre = 'arena';
 
   let time = null;
-  if (has(text, ['midnight', 'night', 'nighttime', 'moonlit', 'moonlight', 'starry', 'dark'])) time = 23;
+  if (has(text, ['midnight', 'night', 'nighttime', 'moonlit', 'moonlight', 'starry', 'dark', 'until dawn', 'till dawn', 'before dawn'])) time = 23;
   else if (has(text, ['sunset', 'dusk', 'evening', 'golden hour', 'twilight'])) time = 18.7;
   else if (has(text, ['sunrise', 'dawn', 'morning'])) time = 6.8;
   else if (has(text, ['noon', 'midday', 'sunny', 'bright day', 'daytime'])) time = 12.5;
@@ -475,7 +481,7 @@ export function designFromPrompt(prompt, options = {}) {
     case 'race': layoutRace(spec, ctx); break;
     case 'explore': layoutCollect(spec, ctx, { count: 16, hazards: false }); spec.audio.music = 'calm'; break;
     case 'arena': layoutCollect(spec, ctx, { count: 60, hazards: true, timeLimit: 90, goal: 'score' }); break;
-    default: layoutCollect(spec, ctx, { count: [24, 30, 40][info.difficulty], hazards: info.difficulty > 0 || info.enemies.length > 0 });
+    default: layoutCollect(spec, ctx, { count: [24, 30, 40][info.difficulty], hazards: info.difficulty > 0 || info.enemies.length > 0 || has(info.text, ['avoid', 'dodge', 'enemy', 'enemies']) });
   }
 
   if (theme.neonTowers) {

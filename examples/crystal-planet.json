@@ -1,0 +1,303 @@
+{
+  "version": 1,
+  "title": "Crystal Planet",
+  "tagline": "Collect star shards on a purple alien planet with crystal forests",
+  "seed": 625910926,
+  "environment": {
+    "timeOfDay": 20.5,
+    "sunAzimuth": 328,
+    "cloudCover": 0.2,
+    "fogDensity": 0.3,
+    "fogColor": "auto",
+    "skyTint": "#c7a0ff",
+    "particles": "spores",
+    "wind": 0.35
+  },
+  "terrain": {
+    "style": "canyon",
+    "size": 140,
+    "height": 18,
+    "roughness": 0.6,
+    "palette": {
+      "low": "#3a2a5a",
+      "mid": "#5a3a7a",
+      "high": "#8a6ab0",
+      "cliff": "#2a1f3a"
+    }
+  },
+  "water": {
+    "enabled": true,
+    "level": 1,
+    "color": "#1adfb0"
+  },
+  "scatter": [
+    {
+      "kind": "crystal",
+      "density": 0.3,
+      "color": "#6affd8",
+      "scale": 1
+    },
+    {
+      "kind": "rock",
+      "density": 0.25,
+      "color": "#4a3a6a",
+      "scale": 1
+    },
+    {
+      "kind": "mushroom",
+      "density": 0.2,
+      "color": "#ff5ad8",
+      "scale": 1
+    }
+  ],
+  "player": {
+    "color": "#e8e8ff",
+    "speed": 7,
+    "jump": 2.2,
+    "camera": "third",
+    "lives": 3,
+    "spawn": [
+      0,
+      1,
+      0
+    ]
+  },
+  "prefabs": [
+    {
+      "id": "crystal_shard",
+      "shape": "crystal",
+      "color": "#a35cff",
+      "emissive": 2.2,
+      "metallic": 0.1,
+      "roughness": 0.1,
+      "size": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "collectible",
+          "value": 10,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "spin",
+          "value": 0,
+          "speed": 70,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.6,
+          "range": 0.25,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 1.5,
+          "speed": 0,
+          "range": 4,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "landmark",
+      "shape": "crystal",
+      "color": "#6affd8",
+      "emissive": 3,
+      "metallic": 0.2,
+      "roughness": 0.2,
+      "size": [
+        2.5,
+        6,
+        2.5
+      ],
+      "solid": true,
+      "behaviors": [
+        {
+          "type": "light",
+          "value": 10,
+          "speed": 0,
+          "range": 22,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "slime",
+      "shape": "sphere",
+      "color": "#6aff5a",
+      "emissive": 0.6,
+      "metallic": 0,
+      "roughness": 0.15,
+      "size": [
+        1.4,
+        1.1,
+        1.4
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "hazard",
+          "value": 1,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "chase",
+          "value": 0,
+          "speed": 3.4,
+          "range": 30,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "heart",
+      "shape": "sphere",
+      "color": "#ff4a6a",
+      "emissive": 3,
+      "metallic": 0,
+      "roughness": 0.3,
+      "size": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "heal",
+          "value": 1,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.8,
+          "range": 0.3,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 2,
+          "speed": 0,
+          "range": 5,
+          "axis": "y"
+        }
+      ]
+    }
+  ],
+  "placements": [
+    {
+      "prefab": "landmark",
+      "position": [
+        39.66,
+        0,
+        13.83
+      ],
+      "rotationY": 37,
+      "scale": 1
+    },
+    {
+      "prefab": "landmark",
+      "position": [
+        -24.72,
+        0,
+        33.96
+      ],
+      "rotationY": 233,
+      "scale": 1
+    },
+    {
+      "prefab": "landmark",
+      "position": [
+        5.45,
+        0,
+        -41.64
+      ],
+      "rotationY": 320,
+      "scale": 1
+    }
+  ],
+  "spawns": [
+    {
+      "prefab": "crystal_shard",
+      "count": 18,
+      "pattern": "scatter",
+      "center": [
+        0,
+        0.8,
+        0
+      ],
+      "radius": 59.5,
+      "height": 0
+    },
+    {
+      "prefab": "crystal_shard",
+      "count": 12,
+      "pattern": "path",
+      "center": [
+        35,
+        0.8,
+        -28
+      ],
+      "radius": 2,
+      "height": 0
+    },
+    {
+      "prefab": "slime",
+      "count": 6,
+      "pattern": "scatter",
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "radius": 24.5,
+      "height": 0
+    },
+    {
+      "prefab": "heart",
+      "count": 3,
+      "pattern": "scatter",
+      "center": [
+        0,
+        0.8,
+        0
+      ],
+      "radius": 49,
+      "height": 0
+    }
+  ],
+  "rules": {
+    "goal": "collect",
+    "targetScore": 300,
+    "timeLimit": 0,
+    "objective": "Collect every crystal shard!",
+    "winMessage": "Dream complete!",
+    "loseMessage": "So close! Try again."
+  },
+  "post": {
+    "bloom": 1,
+    "exposure": 0,
+    "saturation": 1.2,
+    "contrast": 1.1,
+    "vignette": 0.4,
+    "warmth": -0.2
+  },
+  "audio": {
+    "music": "mystic",
+    "tempo": 70
+  }
+}

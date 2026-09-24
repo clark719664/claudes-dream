@@ -101,6 +101,14 @@ test('generate falls back to the offline designer without credentials', async ()
     assert.equal(bad.status, 400);
     const traversal = await fetch(`${appUrl}/engine/../package.json`);
     assert.notEqual(traversal.status, 200);
+    const root = await fetch(`${appUrl}/`, { redirect: 'manual' });
+    assert.equal(root.status, 302);
+    assert.equal(root.headers.get('location'), '/studio/');
+    const studio = await fetch(`${appUrl}/studio/`);
+    assert.equal(studio.status, 200);
+    assert.match(await studio.text(), /Reverie Studio/);
+    const example = await (await fetch(`${appUrl}/examples/golden-grove.json`)).json();
+    assert.equal(example.title, 'Golden Grove');
   } finally {
     app.close();
   }

@@ -27,7 +27,14 @@ function send(res, status, body, type = 'application/json; charset=utf-8') {
 }
 
 function serveStatic(req, res, pathname) {
-  if (pathname === '/') pathname = '/studio/index.html';
+  if (pathname === '/' || pathname === '/studio') {
+    res.writeHead(302, { location: '/studio/' });
+    return res.end();
+  }
+  if (pathname === '/play') {
+    res.writeHead(302, { location: '/play/' });
+    return res.end();
+  }
   if (pathname.endsWith('/')) pathname += 'index.html';
   const top = pathname.split('/')[1];
   if (!PUBLIC_DIRS.includes(top)) return send(res, 404, { error: 'Not found' });

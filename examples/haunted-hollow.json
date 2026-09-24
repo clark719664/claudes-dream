@@ -1,0 +1,263 @@
+{
+  "version": 1,
+  "title": "Haunted Hollow",
+  "tagline": "Ghosts drift through the fog. Survive until the sun comes up.",
+  "seed": 1865487893,
+  "environment": {
+    "timeOfDay": 23,
+    "sunAzimuth": 52,
+    "cloudCover": 0.5,
+    "fogDensity": 0.55,
+    "fogColor": "auto",
+    "skyTint": "#9ab0ff",
+    "particles": "fireflies",
+    "wind": 0.35
+  },
+  "terrain": {
+    "style": "hills",
+    "size": 140,
+    "height": 8,
+    "roughness": 0.5,
+    "palette": {
+      "low": "#2d2a26",
+      "mid": "#34402a",
+      "high": "#4a4a44",
+      "cliff": "#2a241f"
+    }
+  },
+  "water": {
+    "enabled": true,
+    "level": 0.8,
+    "color": "#1a2a1f"
+  },
+  "scatter": [
+    {
+      "kind": "oak",
+      "density": 0.3,
+      "color": "#3a3a22",
+      "scale": 1
+    },
+    {
+      "kind": "rock",
+      "density": 0.2,
+      "color": "#5a5a5a",
+      "scale": 1
+    },
+    {
+      "kind": "pillar",
+      "density": 0.06,
+      "color": "#6a6a6a",
+      "scale": 1
+    },
+    {
+      "kind": "mushroom",
+      "density": 0.12,
+      "color": "#7aff5a",
+      "scale": 1
+    },
+    {
+      "kind": "grass",
+      "density": 0.6,
+      "color": "#4a5a2a",
+      "scale": 1
+    }
+  ],
+  "player": {
+    "color": "#ffb03a",
+    "speed": 8,
+    "jump": 2.2,
+    "camera": "third",
+    "lives": 3,
+    "spawn": [
+      0,
+      1,
+      0
+    ]
+  },
+  "prefabs": [
+    {
+      "id": "ghost",
+      "shape": "capsule",
+      "color": "#cfe0ff",
+      "emissive": 2,
+      "metallic": 0,
+      "roughness": 0.4,
+      "size": [
+        1,
+        1.8,
+        1
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "hazard",
+          "value": 1,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "chase",
+          "value": 0,
+          "speed": 3.4,
+          "range": 30,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.5,
+          "range": 0.35,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 3,
+          "speed": 0,
+          "range": 8,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "heart",
+      "shape": "sphere",
+      "color": "#ff4a6a",
+      "emissive": 3,
+      "metallic": 0,
+      "roughness": 0.3,
+      "size": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "heal",
+          "value": 1,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.8,
+          "range": 0.3,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 2,
+          "speed": 0,
+          "range": 5,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "pumpkin",
+      "shape": "sphere",
+      "color": "#ff8a1f",
+      "emissive": 1.2,
+      "metallic": 0,
+      "roughness": 0.6,
+      "size": [
+        1.2,
+        0.9,
+        1.2
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "collectible",
+          "value": 10,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "spin",
+          "value": 0,
+          "speed": 70,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.6,
+          "range": 0.25,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 1.5,
+          "speed": 0,
+          "range": 4,
+          "axis": "y"
+        }
+      ]
+    }
+  ],
+  "placements": [],
+  "spawns": [
+    {
+      "prefab": "ghost",
+      "count": 10,
+      "pattern": "scatter",
+      "center": [
+        0,
+        1.2,
+        0
+      ],
+      "radius": 24.5,
+      "height": 0
+    },
+    {
+      "prefab": "heart",
+      "count": 3,
+      "pattern": "scatter",
+      "center": [
+        0,
+        0.8,
+        0
+      ],
+      "radius": 49,
+      "height": 0
+    },
+    {
+      "prefab": "pumpkin",
+      "count": 20,
+      "pattern": "scatter",
+      "center": [
+        0,
+        0.8,
+        0
+      ],
+      "radius": 56,
+      "height": 0
+    }
+  ],
+  "rules": {
+    "goal": "survive",
+    "targetScore": 0,
+    "timeLimit": 90,
+    "objective": "Survive for 90 seconds! Grab pickups for points.",
+    "winMessage": "You did it!",
+    "loseMessage": "The dream fades... try again!"
+  },
+  "post": {
+    "bloom": 0.9,
+    "exposure": 0,
+    "saturation": 0.85,
+    "contrast": 1.15,
+    "vignette": 0.6,
+    "warmth": -0.35
+  },
+  "audio": {
+    "music": "tense",
+    "tempo": 132
+  }
+}

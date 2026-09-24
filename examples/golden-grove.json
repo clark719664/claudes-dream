@@ -1,0 +1,266 @@
+{
+  "version": 1,
+  "title": "Golden Grove",
+  "tagline": "Sunbeams, fireflies and glowing mushrooms deep in an ancient forest.",
+  "seed": 1147889913,
+  "environment": {
+    "timeOfDay": 18.4,
+    "sunAzimuth": 95,
+    "cloudCover": 0.25,
+    "fogDensity": 0.42,
+    "fogColor": "auto",
+    "skyTint": "#ffffff",
+    "particles": "fireflies",
+    "wind": 0.35
+  },
+  "terrain": {
+    "style": "hills",
+    "size": 140,
+    "height": 12,
+    "roughness": 0.5,
+    "palette": {
+      "low": "#6f6a3e",
+      "mid": "#3f6b2a",
+      "high": "#5b6b4a",
+      "cliff": "#5a4c3e"
+    }
+  },
+  "water": {
+    "enabled": true,
+    "level": 1.2,
+    "color": "#1d4a45"
+  },
+  "scatter": [
+    {
+      "kind": "pine",
+      "density": 0.5,
+      "color": "#24502c",
+      "scale": 1
+    },
+    {
+      "kind": "oak",
+      "density": 0.35,
+      "color": "#3d7a2a",
+      "scale": 1
+    },
+    {
+      "kind": "grass",
+      "density": 0.9,
+      "color": "#5c8a33",
+      "scale": 1
+    },
+    {
+      "kind": "mushroom",
+      "density": 0.15,
+      "color": "#d8452f",
+      "scale": 1
+    },
+    {
+      "kind": "rock",
+      "density": 0.15,
+      "color": "#7d7a70",
+      "scale": 1
+    }
+  ],
+  "player": {
+    "color": "#ff8c42",
+    "speed": 7,
+    "jump": 2.2,
+    "camera": "third",
+    "lives": 5,
+    "spawn": [
+      0,
+      1,
+      0
+    ]
+  },
+  "prefabs": [
+    {
+      "id": "glow_mushroom",
+      "shape": "sphere",
+      "color": "#ffc526",
+      "emissive": 3,
+      "metallic": 0,
+      "roughness": 0.35,
+      "size": [
+        1,
+        0.55,
+        1
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "collectible",
+          "value": 10,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "spin",
+          "value": 0,
+          "speed": 70,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.6,
+          "range": 0.25,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 1.5,
+          "speed": 0,
+          "range": 4,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "landmark",
+      "shape": "crystal",
+      "color": "#9dff6a",
+      "emissive": 3,
+      "metallic": 0.2,
+      "roughness": 0.2,
+      "size": [
+        2.5,
+        6,
+        2.5
+      ],
+      "solid": true,
+      "behaviors": [
+        {
+          "type": "light",
+          "value": 10,
+          "speed": 0,
+          "range": 22,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "slime",
+      "shape": "sphere",
+      "color": "#6aff5a",
+      "emissive": 0.6,
+      "metallic": 0,
+      "roughness": 0.15,
+      "size": [
+        1.4,
+        1.1,
+        1.4
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "hazard",
+          "value": 1,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "chase",
+          "value": 0,
+          "speed": 2.2,
+          "range": 22,
+          "axis": "y"
+        }
+      ]
+    }
+  ],
+  "placements": [
+    {
+      "prefab": "landmark",
+      "position": [
+        41.17,
+        0,
+        8.29
+      ],
+      "rotationY": 338,
+      "scale": 1
+    },
+    {
+      "prefab": "landmark",
+      "position": [
+        -40.08,
+        0,
+        12.55
+      ],
+      "rotationY": 98,
+      "scale": 1
+    },
+    {
+      "prefab": "landmark",
+      "position": [
+        -4.29,
+        0,
+        -41.78
+      ],
+      "rotationY": 60,
+      "scale": 1
+    }
+  ],
+  "spawns": [
+    {
+      "prefab": "glow_mushroom",
+      "count": 14,
+      "pattern": "scatter",
+      "center": [
+        0,
+        0.8,
+        0
+      ],
+      "radius": 59.5,
+      "height": 0
+    },
+    {
+      "prefab": "glow_mushroom",
+      "count": 10,
+      "pattern": "path",
+      "center": [
+        35,
+        0.8,
+        -28
+      ],
+      "radius": 2,
+      "height": 0
+    },
+    {
+      "prefab": "slime",
+      "count": 3,
+      "pattern": "scatter",
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "radius": 24.5,
+      "height": 0
+    }
+  ],
+  "rules": {
+    "goal": "collect",
+    "targetScore": 240,
+    "timeLimit": 0,
+    "objective": "Collect every glow mushroom!",
+    "winMessage": "Victory!",
+    "loseMessage": "The dream fades... try again!"
+  },
+  "post": {
+    "bloom": 0.9,
+    "exposure": 0,
+    "saturation": 1.08,
+    "contrast": 1.08,
+    "vignette": 0.35,
+    "warmth": 0.35
+  },
+  "audio": {
+    "music": "mystic",
+    "tempo": 70
+  }
+}

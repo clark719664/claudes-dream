@@ -1,0 +1,212 @@
+{
+  "version": 1,
+  "title": "Frostpeak",
+  "tagline": "Wander the quiet peaks and gather what the wind scattered.",
+  "seed": 1999451712,
+  "environment": {
+    "timeOfDay": 9.5,
+    "sunAzimuth": 129,
+    "cloudCover": 0.5,
+    "fogDensity": 0.35,
+    "fogColor": "auto",
+    "skyTint": "#eef6ff",
+    "particles": "snow",
+    "wind": 0.35
+  },
+  "terrain": {
+    "style": "mountains",
+    "size": 140,
+    "height": 22,
+    "roughness": 0.55,
+    "palette": {
+      "low": "#e8eef5",
+      "mid": "#f4f8fc",
+      "high": "#ffffff",
+      "cliff": "#7d8792"
+    }
+  },
+  "water": {
+    "enabled": true,
+    "level": 1,
+    "color": "#2b5f82"
+  },
+  "scatter": [
+    {
+      "kind": "pine",
+      "density": 0.45,
+      "color": "#2c4f3a",
+      "scale": 1
+    },
+    {
+      "kind": "rock",
+      "density": 0.2,
+      "color": "#8e97a3",
+      "scale": 1
+    },
+    {
+      "kind": "crystal",
+      "density": 0.05,
+      "color": "#aee8ff",
+      "scale": 1
+    }
+  ],
+  "player": {
+    "color": "#e2433b",
+    "speed": 7,
+    "jump": 2.2,
+    "camera": "third",
+    "lives": 5,
+    "spawn": [
+      0,
+      1,
+      0
+    ]
+  },
+  "prefabs": [
+    {
+      "id": "gift",
+      "shape": "box",
+      "color": "#ff4a5a",
+      "emissive": 0.8,
+      "metallic": 0,
+      "roughness": 0.5,
+      "size": [
+        0.8,
+        0.8,
+        0.8
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "collectible",
+          "value": 10,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "spin",
+          "value": 0,
+          "speed": 70,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.6,
+          "range": 0.25,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 1.5,
+          "speed": 0,
+          "range": 4,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "landmark",
+      "shape": "crystal",
+      "color": "#7fe3ff",
+      "emissive": 3,
+      "metallic": 0.2,
+      "roughness": 0.2,
+      "size": [
+        2.5,
+        6,
+        2.5
+      ],
+      "solid": true,
+      "behaviors": [
+        {
+          "type": "light",
+          "value": 10,
+          "speed": 0,
+          "range": 22,
+          "axis": "y"
+        }
+      ]
+    }
+  ],
+  "placements": [
+    {
+      "prefab": "landmark",
+      "position": [
+        38.57,
+        0,
+        16.63
+      ],
+      "rotationY": 207,
+      "scale": 1
+    },
+    {
+      "prefab": "landmark",
+      "position": [
+        -40.21,
+        0,
+        12.12
+      ],
+      "rotationY": 285,
+      "scale": 1
+    },
+    {
+      "prefab": "landmark",
+      "position": [
+        9.02,
+        0,
+        -41.02
+      ],
+      "rotationY": 198,
+      "scale": 1
+    }
+  ],
+  "spawns": [
+    {
+      "prefab": "gift",
+      "count": 14,
+      "pattern": "scatter",
+      "center": [
+        0,
+        0.8,
+        0
+      ],
+      "radius": 59.5,
+      "height": 0
+    },
+    {
+      "prefab": "gift",
+      "count": 10,
+      "pattern": "path",
+      "center": [
+        35,
+        0.8,
+        -28
+      ],
+      "radius": 2,
+      "height": 0
+    }
+  ],
+  "rules": {
+    "goal": "collect",
+    "targetScore": 240,
+    "timeLimit": 0,
+    "objective": "Collect every gift!",
+    "winMessage": "Legendary!",
+    "loseMessage": "Game over!"
+  },
+  "post": {
+    "bloom": 0.6,
+    "exposure": 0,
+    "saturation": 0.95,
+    "contrast": 1.05,
+    "vignette": 0.3,
+    "warmth": -0.3
+  },
+  "audio": {
+    "music": "calm",
+    "tempo": 76
+  }
+}

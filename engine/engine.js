@@ -238,6 +238,7 @@ export class Engine {
     if (!this.game) return;
     this.input.update();
     const paused = this.game.state === 'paused';
+    this.renderer.adaptive = this.game.state === 'playing';
     const cam = this.game.update(paused ? 0 : dt, this.input);
     const f = this.renderer.flash;
     f[3] *= Math.exp(-dt * 6);

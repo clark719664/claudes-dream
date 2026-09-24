@@ -1,0 +1,633 @@
+{
+  "version": 1,
+  "title": "Molten Caldera",
+  "tagline": "Escape the volcano: jump across lava with fireballs flying",
+  "seed": 1783941644,
+  "environment": {
+    "timeOfDay": 19.200000000000003,
+    "sunAzimuth": 70,
+    "cloudCover": 0.6,
+    "fogDensity": 0.45,
+    "fogColor": "auto",
+    "skyTint": "#ffb08a",
+    "particles": "embers",
+    "wind": 0.35
+  },
+  "terrain": {
+    "style": "flat",
+    "size": 140,
+    "height": 2,
+    "roughness": 0.7,
+    "palette": {
+      "low": "#2a1e1a",
+      "mid": "#3a2b26",
+      "high": "#1f1a18",
+      "cliff": "#4a2a1c"
+    }
+  },
+  "water": {
+    "enabled": true,
+    "level": 1.5,
+    "color": "#ff4a0a"
+  },
+  "scatter": [
+    {
+      "kind": "rock",
+      "density": 0.35,
+      "color": "#3b302b",
+      "scale": 1
+    },
+    {
+      "kind": "crystal",
+      "density": 0.12,
+      "color": "#ff5a1f",
+      "scale": 1
+    },
+    {
+      "kind": "pillar",
+      "density": 0.04,
+      "color": "#40302a",
+      "scale": 1
+    }
+  ],
+  "player": {
+    "color": "#3fd0ff",
+    "speed": 7,
+    "jump": 2.6,
+    "camera": "third",
+    "lives": 3,
+    "spawn": [
+      0,
+      1,
+      0
+    ]
+  },
+  "prefabs": [
+    {
+      "id": "platform",
+      "shape": "box",
+      "color": "#e8e2d4",
+      "emissive": 0,
+      "metallic": 0.1,
+      "roughness": 0.6,
+      "size": [
+        4,
+        0.8,
+        4
+      ],
+      "solid": true,
+      "behaviors": []
+    },
+    {
+      "id": "moving_platform",
+      "shape": "box",
+      "color": "#ffcf4a",
+      "emissive": 0,
+      "metallic": 0.1,
+      "roughness": 0.6,
+      "size": [
+        3.5,
+        0.6,
+        3.5
+      ],
+      "solid": true,
+      "behaviors": [
+        {
+          "type": "patrol",
+          "value": 0,
+          "speed": 3,
+          "range": 5,
+          "axis": "x"
+        }
+      ]
+    },
+    {
+      "id": "bounce_pad",
+      "shape": "cylinder",
+      "color": "#5aff8a",
+      "emissive": 2,
+      "metallic": 0.2,
+      "roughness": 0.4,
+      "size": [
+        2.2,
+        0.4,
+        2.2
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "bounce",
+          "value": 16,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 2,
+          "speed": 0,
+          "range": 6,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "crystal_shard",
+      "shape": "crystal",
+      "color": "#ffcf4a",
+      "emissive": 2.2,
+      "metallic": 0.1,
+      "roughness": 0.1,
+      "size": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "collectible",
+          "value": 10,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "spin",
+          "value": 0,
+          "speed": 70,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.6,
+          "range": 0.25,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 1.5,
+          "speed": 0,
+          "range": 4,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "goal_beacon",
+      "shape": "crystal",
+      "color": "#ffcf4a",
+      "emissive": 4,
+      "metallic": 0.2,
+      "roughness": 0.15,
+      "size": [
+        1.8,
+        3.6,
+        1.8
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "goal",
+          "value": 0,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "spin",
+          "value": 0,
+          "speed": 40,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.4,
+          "range": 0.3,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 8,
+          "speed": 0,
+          "range": 16,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "fire_orb",
+      "shape": "sphere",
+      "color": "#ff5a1a",
+      "emissive": 5,
+      "metallic": 0,
+      "roughness": 0.5,
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "hazard",
+          "value": 1,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "orbit",
+          "value": 0,
+          "speed": 1.2000000000000002,
+          "range": 5,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.5,
+          "range": 0.35,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 3,
+          "speed": 0,
+          "range": 8,
+          "axis": "y"
+        }
+      ]
+    }
+  ],
+  "placements": [
+    {
+      "prefab": "platform",
+      "position": [
+        15,
+        2.15,
+        5.58
+      ],
+      "rotationY": -20.41,
+      "scale": 1
+    },
+    {
+      "prefab": "crystal_shard",
+      "position": [
+        15,
+        3.75,
+        5.58
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        13.57,
+        3.55,
+        11.72
+      ],
+      "rotationY": -40.82,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        9.12,
+        4.58,
+        16.62
+      ],
+      "rotationY": -61.23,
+      "scale": 1
+    },
+    {
+      "prefab": "crystal_shard",
+      "position": [
+        9.12,
+        6.18,
+        16.62
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "moving_platform",
+      "position": [
+        2.7,
+        5.77,
+        18.39
+      ],
+      "rotationY": -81.65,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -3.55,
+        6.47,
+        16.63
+      ],
+      "rotationY": -102.06,
+      "scale": 1
+    },
+    {
+      "prefab": "crystal_shard",
+      "position": [
+        -3.55,
+        8.07,
+        16.63
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -8.02,
+        7.7,
+        12.61
+      ],
+      "rotationY": -122.47,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -10.67,
+        8.85,
+        8.08
+      ],
+      "rotationY": -142.88,
+      "scale": 1
+    },
+    {
+      "prefab": "crystal_shard",
+      "position": [
+        -10.67,
+        10.45,
+        8.08
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -12.5,
+        9.75,
+        3.75
+      ],
+      "rotationY": -163.29,
+      "scale": 1
+    },
+    {
+      "prefab": "moving_platform",
+      "position": [
+        -14.08,
+        10.39,
+        -0.91
+      ],
+      "rotationY": -183.7,
+      "scale": 1
+    },
+    {
+      "prefab": "crystal_shard",
+      "position": [
+        -14.08,
+        11.99,
+        -0.91
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -14.65,
+        11.52,
+        -6.56
+      ],
+      "rotationY": -204.12,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -12.81,
+        12.95,
+        -12.6
+      ],
+      "rotationY": -224.53,
+      "scale": 1
+    },
+    {
+      "prefab": "crystal_shard",
+      "position": [
+        -12.81,
+        14.55,
+        -12.6
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "bounce_pad",
+      "position": [
+        -12.81,
+        13.75,
+        -12.6
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -8.03,
+        17.81,
+        -17.18
+      ],
+      "rotationY": -244.94,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -1.5,
+        19.01,
+        -18.5
+      ],
+      "rotationY": -265.35,
+      "scale": 1
+    },
+    {
+      "prefab": "crystal_shard",
+      "position": [
+        -1.5,
+        20.61,
+        -18.5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "moving_platform",
+      "position": [
+        4.61,
+        20.43,
+        -16.32
+      ],
+      "rotationY": -285.76,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        8.79,
+        21.2,
+        -12.03
+      ],
+      "rotationY": -306.17,
+      "scale": 1
+    },
+    {
+      "prefab": "crystal_shard",
+      "position": [
+        8.79,
+        22.8,
+        -12.03
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        11.15,
+        22.07,
+        -7.36
+      ],
+      "rotationY": -326.59,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        12.73,
+        23.3,
+        -2.94
+      ],
+      "rotationY": -347,
+      "scale": 1
+    },
+    {
+      "prefab": "crystal_shard",
+      "position": [
+        12.73,
+        24.9,
+        -2.94
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        14.03,
+        24.57,
+        1.82
+      ],
+      "rotationY": -367.41,
+      "scale": 1
+    },
+    {
+      "prefab": "moving_platform",
+      "position": [
+        14.24,
+        25.44,
+        7.51
+      ],
+      "rotationY": -387.82,
+      "scale": 1
+    },
+    {
+      "prefab": "crystal_shard",
+      "position": [
+        14.24,
+        27.04,
+        7.51
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        12,
+        26.63,
+        13.43
+      ],
+      "rotationY": -408.23,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        0,
+        27.63,
+        0
+      ],
+      "rotationY": 0,
+      "scale": 1.6
+    },
+    {
+      "prefab": "goal_beacon",
+      "position": [
+        0,
+        29.83,
+        0
+      ],
+      "rotationY": 0,
+      "scale": 1
+    }
+  ],
+  "spawns": [
+    {
+      "prefab": "fire_orb",
+      "count": 5,
+      "pattern": "ring",
+      "center": [
+        0,
+        13.31,
+        0
+      ],
+      "radius": 12,
+      "height": 10.65
+    }
+  ],
+  "rules": {
+    "goal": "reach",
+    "targetScore": 0,
+    "timeLimit": 0,
+    "objective": "Climb the spiral and touch the beacon at the top!",
+    "winMessage": "Dream complete!",
+    "loseMessage": "Game over!"
+  },
+  "post": {
+    "bloom": 1.1,
+    "exposure": 0,
+    "saturation": 1.12,
+    "contrast": 1.15,
+    "vignette": 0.45,
+    "warmth": 0.5
+  },
+  "audio": {
+    "music": "tense",
+    "tempo": 132
+  }
+}

@@ -1,0 +1,373 @@
+{
+  "version": 1,
+  "title": "Coral Cove Rush",
+  "tagline": "Race through the rings across tropical islands before sunset",
+  "seed": 102682528,
+  "environment": {
+    "timeOfDay": 17.6,
+    "sunAzimuth": 47,
+    "cloudCover": 0.3,
+    "fogDensity": 0.1,
+    "fogColor": "auto",
+    "skyTint": "#ffffff",
+    "particles": "none",
+    "wind": 0.35
+  },
+  "terrain": {
+    "style": "islands",
+    "size": 140,
+    "height": 14,
+    "roughness": 0.4,
+    "palette": {
+      "low": "#f0dca8",
+      "mid": "#5aa03c",
+      "high": "#6c8a4a",
+      "cliff": "#8a735a"
+    }
+  },
+  "water": {
+    "enabled": true,
+    "level": 3.5,
+    "color": "#127a8f"
+  },
+  "scatter": [
+    {
+      "kind": "palm",
+      "density": 0.35,
+      "color": "#3f8f2c",
+      "scale": 1
+    },
+    {
+      "kind": "grass",
+      "density": 0.6,
+      "color": "#6cb040",
+      "scale": 1
+    },
+    {
+      "kind": "rock",
+      "density": 0.12,
+      "color": "#a09683",
+      "scale": 1
+    },
+    {
+      "kind": "flower",
+      "density": 0.2,
+      "color": "#ff5a8a",
+      "scale": 1
+    }
+  ],
+  "player": {
+    "color": "#ff5a5a",
+    "speed": 10,
+    "jump": 2.2,
+    "camera": "third",
+    "lives": 3,
+    "spawn": [
+      0,
+      1,
+      0
+    ]
+  },
+  "prefabs": [
+    {
+      "id": "checkpoint",
+      "shape": "torus",
+      "color": "#ffd23b",
+      "emissive": 3,
+      "metallic": 0.5,
+      "roughness": 0.3,
+      "size": [
+        4,
+        4,
+        0.5
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "checkpoint",
+          "value": 0,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "spin",
+          "value": 0,
+          "speed": 30,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 4,
+          "speed": 0,
+          "range": 10,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "booster",
+      "shape": "cylinder",
+      "color": "#5aff8a",
+      "emissive": 2.5,
+      "metallic": 0.2,
+      "roughness": 0.4,
+      "size": [
+        2.5,
+        0.3,
+        2.5
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "bounce",
+          "value": 14,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "goal_beacon",
+      "shape": "crystal",
+      "color": "#ffd23b",
+      "emissive": 4,
+      "metallic": 0.2,
+      "roughness": 0.15,
+      "size": [
+        1.8,
+        3.6,
+        1.8
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "goal",
+          "value": 0,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "spin",
+          "value": 0,
+          "speed": 40,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.4,
+          "range": 0.3,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 8,
+          "speed": 0,
+          "range": 16,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "slime",
+      "shape": "sphere",
+      "color": "#6aff5a",
+      "emissive": 0.6,
+      "metallic": 0,
+      "roughness": 0.15,
+      "size": [
+        1.4,
+        1.1,
+        1.4
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "hazard",
+          "value": 1,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "chase",
+          "value": 0,
+          "speed": 2.2,
+          "range": 22,
+          "axis": "y"
+        }
+      ]
+    }
+  ],
+  "placements": [
+    {
+      "prefab": "checkpoint",
+      "position": [
+        18.01,
+        0.3,
+        15.74
+      ],
+      "rotationY": -41.14,
+      "scale": 1
+    },
+    {
+      "prefab": "booster",
+      "position": [
+        19.77,
+        0,
+        13.47
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "checkpoint",
+      "position": [
+        4.07,
+        0.3,
+        30.06
+      ],
+      "rotationY": -82.29,
+      "scale": 1
+    },
+    {
+      "prefab": "booster",
+      "position": [
+        7.64,
+        0,
+        29.36
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "checkpoint",
+      "position": [
+        -20.25,
+        0.3,
+        30.67
+      ],
+      "rotationY": -123.43,
+      "scale": 1
+    },
+    {
+      "prefab": "booster",
+      "position": [
+        -16.43,
+        0,
+        32.87
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "checkpoint",
+      "position": [
+        -41.61,
+        0.3,
+        11.48
+      ],
+      "rotationY": -164.57,
+      "scale": 1
+    },
+    {
+      "prefab": "booster",
+      "position": [
+        -39.94,
+        0,
+        16.38
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "checkpoint",
+      "position": [
+        -44.67,
+        0.3,
+        -21.51
+      ],
+      "rotationY": -205.71,
+      "scale": 1
+    },
+    {
+      "prefab": "booster",
+      "position": [
+        -46.93,
+        0,
+        -16.01
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "checkpoint",
+      "position": [
+        -22.01,
+        0.3,
+        -51.49
+      ],
+      "rotationY": -246.86,
+      "scale": 1
+    },
+    {
+      "prefab": "booster",
+      "position": [
+        -28.02,
+        0,
+        -48.49
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "goal_beacon",
+      "position": [
+        18.39,
+        0.5,
+        -56.59
+      ],
+      "rotationY": 0,
+      "scale": 1
+    }
+  ],
+  "spawns": [
+    {
+      "prefab": "slime",
+      "count": 3,
+      "pattern": "scatter",
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "radius": 24.5,
+      "height": 0
+    }
+  ],
+  "rules": {
+    "goal": "reach",
+    "targetScore": 0,
+    "timeLimit": 110,
+    "objective": "Race through the rings to the beacon before time runs out!",
+    "winMessage": "Dream complete!",
+    "loseMessage": "Game over!"
+  },
+  "post": {
+    "bloom": 0.55,
+    "exposure": 0,
+    "saturation": 1.15,
+    "contrast": 1.06,
+    "vignette": 0.2,
+    "warmth": 0.15
+  },
+  "audio": {
+    "music": "upbeat",
+    "tempo": 116
+  }
+}

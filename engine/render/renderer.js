@@ -260,7 +260,8 @@ export class Renderer {
     const ms = dt * 1000;
     this.frameMsAvg += (ms - this.frameMsAvg) * 0.05;
     this.stats.fps = 1000 / Math.max(this.frameMsAvg, 1);
-    if (this.fixedScale !== null) return;
+    // only adapt while the frame rate is uncapped (the title screen runs at 30 fps on purpose)
+    if (this.fixedScale !== null || this.adaptive === false) return;
     this.scaleCooldown -= dt;
     if (this.scaleCooldown > 0) return;
     const [lo, hi] = this.tier.renderScale;

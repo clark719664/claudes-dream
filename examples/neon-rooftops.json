@@ -1,0 +1,683 @@
+{
+  "version": 1,
+  "title": "Neon Rooftops",
+  "tagline": "Climb the spiral of rain-soaked platforms to the beacon above the city.",
+  "seed": 1745093221,
+  "environment": {
+    "timeOfDay": 23,
+    "sunAzimuth": 274,
+    "cloudCover": 0.85,
+    "fogDensity": 0.35,
+    "fogColor": "auto",
+    "skyTint": "#ff9aff",
+    "particles": "rain",
+    "wind": 0.8
+  },
+  "terrain": {
+    "style": "flat",
+    "size": 140,
+    "height": 2,
+    "roughness": 0.1,
+    "palette": {
+      "low": "#15101f",
+      "mid": "#1c1530",
+      "high": "#2a1f40",
+      "cliff": "#0e0a16"
+    }
+  },
+  "water": {
+    "enabled": true,
+    "level": 1.5,
+    "color": "#1a0a3a"
+  },
+  "scatter": [
+    {
+      "kind": "pillar",
+      "density": 0.2,
+      "color": "#2a2440",
+      "scale": 1
+    }
+  ],
+  "player": {
+    "color": "#2fe0ff",
+    "speed": 7,
+    "jump": 2.6,
+    "camera": "third",
+    "lives": 3,
+    "spawn": [
+      0,
+      1,
+      0
+    ]
+  },
+  "prefabs": [
+    {
+      "id": "platform",
+      "shape": "box",
+      "color": "#2a2440",
+      "emissive": 0,
+      "metallic": 0.1,
+      "roughness": 0.6,
+      "size": [
+        4,
+        0.8,
+        4
+      ],
+      "solid": true,
+      "behaviors": []
+    },
+    {
+      "id": "moving_platform",
+      "shape": "box",
+      "color": "#ff3ad0",
+      "emissive": 0,
+      "metallic": 0.1,
+      "roughness": 0.6,
+      "size": [
+        3.5,
+        0.6,
+        3.5
+      ],
+      "solid": true,
+      "behaviors": [
+        {
+          "type": "patrol",
+          "value": 0,
+          "speed": 3,
+          "range": 5,
+          "axis": "x"
+        }
+      ]
+    },
+    {
+      "id": "bounce_pad",
+      "shape": "cylinder",
+      "color": "#5aff8a",
+      "emissive": 2,
+      "metallic": 0.2,
+      "roughness": 0.4,
+      "size": [
+        2.2,
+        0.4,
+        2.2
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "bounce",
+          "value": 16,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 2,
+          "speed": 0,
+          "range": 6,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "data_cell",
+      "shape": "capsule",
+      "color": "#ff3ad0",
+      "emissive": 3,
+      "metallic": 0.6,
+      "roughness": 0.2,
+      "size": [
+        0.5,
+        1.1,
+        0.5
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "collectible",
+          "value": 10,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "spin",
+          "value": 0,
+          "speed": 70,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.6,
+          "range": 0.25,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 1.5,
+          "speed": 0,
+          "range": 4,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "goal_beacon",
+      "shape": "crystal",
+      "color": "#ff3ad0",
+      "emissive": 4,
+      "metallic": 0.2,
+      "roughness": 0.15,
+      "size": [
+        1.8,
+        3.6,
+        1.8
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "goal",
+          "value": 0,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "spin",
+          "value": 0,
+          "speed": 40,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.4,
+          "range": 0.3,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 8,
+          "speed": 0,
+          "range": 16,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "fire_orb",
+      "shape": "sphere",
+      "color": "#ff5a1a",
+      "emissive": 5,
+      "metallic": 0,
+      "roughness": 0.5,
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "hazard",
+          "value": 1,
+          "speed": 0,
+          "range": 0,
+          "axis": "y"
+        },
+        {
+          "type": "orbit",
+          "value": 0,
+          "speed": 1.2000000000000002,
+          "range": 5,
+          "axis": "y"
+        },
+        {
+          "type": "bob",
+          "value": 0,
+          "speed": 0.5,
+          "range": 0.35,
+          "axis": "y"
+        },
+        {
+          "type": "light",
+          "value": 3,
+          "speed": 0,
+          "range": 8,
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "id": "neon_tower",
+      "shape": "box",
+      "color": "#1a1528",
+      "emissive": 0,
+      "metallic": 0.8,
+      "roughness": 0.25,
+      "size": [
+        5,
+        18,
+        5
+      ],
+      "solid": true,
+      "behaviors": []
+    },
+    {
+      "id": "neon_sign",
+      "shape": "box",
+      "color": "#ff3ad0",
+      "emissive": 5,
+      "metallic": 0,
+      "roughness": 0.5,
+      "size": [
+        5.2,
+        0.4,
+        5.2
+      ],
+      "solid": false,
+      "behaviors": [
+        {
+          "type": "light",
+          "value": 6,
+          "speed": 0,
+          "range": 14,
+          "axis": "y"
+        }
+      ]
+    }
+  ],
+  "placements": [
+    {
+      "prefab": "platform",
+      "position": [
+        15,
+        2.57,
+        5.58
+      ],
+      "rotationY": -20.41,
+      "scale": 1
+    },
+    {
+      "prefab": "data_cell",
+      "position": [
+        15,
+        4.17,
+        5.58
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        13.57,
+        3.66,
+        11.72
+      ],
+      "rotationY": -40.82,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        9.12,
+        5.03,
+        16.62
+      ],
+      "rotationY": -61.23,
+      "scale": 1
+    },
+    {
+      "prefab": "data_cell",
+      "position": [
+        9.12,
+        6.63,
+        16.62
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "moving_platform",
+      "position": [
+        2.7,
+        6.12,
+        18.39
+      ],
+      "rotationY": -81.65,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -3.55,
+        7.26,
+        16.63
+      ],
+      "rotationY": -102.06,
+      "scale": 1
+    },
+    {
+      "prefab": "data_cell",
+      "position": [
+        -3.55,
+        8.86,
+        16.63
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -8.02,
+        8.16,
+        12.61
+      ],
+      "rotationY": -122.47,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -10.67,
+        9.04,
+        8.08
+      ],
+      "rotationY": -142.88,
+      "scale": 1
+    },
+    {
+      "prefab": "data_cell",
+      "position": [
+        -10.67,
+        10.64,
+        8.08
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -12.5,
+        9.98,
+        3.75
+      ],
+      "rotationY": -163.29,
+      "scale": 1
+    },
+    {
+      "prefab": "moving_platform",
+      "position": [
+        -14.08,
+        10.65,
+        -0.91
+      ],
+      "rotationY": -183.7,
+      "scale": 1
+    },
+    {
+      "prefab": "data_cell",
+      "position": [
+        -14.08,
+        12.25,
+        -0.91
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -14.65,
+        11.72,
+        -6.56
+      ],
+      "rotationY": -204.12,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -12.81,
+        12.75,
+        -12.6
+      ],
+      "rotationY": -224.53,
+      "scale": 1
+    },
+    {
+      "prefab": "data_cell",
+      "position": [
+        -12.81,
+        14.35,
+        -12.6
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "bounce_pad",
+      "position": [
+        -12.81,
+        13.55,
+        -12.6
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -8.03,
+        18.19,
+        -17.18
+      ],
+      "rotationY": -244.94,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        -1.5,
+        19.04,
+        -18.5
+      ],
+      "rotationY": -265.35,
+      "scale": 1
+    },
+    {
+      "prefab": "data_cell",
+      "position": [
+        -1.5,
+        20.64,
+        -18.5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "moving_platform",
+      "position": [
+        4.61,
+        19.87,
+        -16.32
+      ],
+      "rotationY": -285.76,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        8.79,
+        20.47,
+        -12.03
+      ],
+      "rotationY": -306.17,
+      "scale": 1
+    },
+    {
+      "prefab": "data_cell",
+      "position": [
+        8.79,
+        22.07,
+        -12.03
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        11.15,
+        21.49,
+        -7.36
+      ],
+      "rotationY": -326.59,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        12.73,
+        22.47,
+        -2.94
+      ],
+      "rotationY": -347,
+      "scale": 1
+    },
+    {
+      "prefab": "data_cell",
+      "position": [
+        12.73,
+        24.07,
+        -2.94
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        14.03,
+        23.18,
+        1.82
+      ],
+      "rotationY": -367.41,
+      "scale": 1
+    },
+    {
+      "prefab": "moving_platform",
+      "position": [
+        14.24,
+        24.43,
+        7.51
+      ],
+      "rotationY": -387.82,
+      "scale": 1
+    },
+    {
+      "prefab": "data_cell",
+      "position": [
+        14.24,
+        26.03,
+        7.51
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        12,
+        25.13,
+        13.43
+      ],
+      "rotationY": -408.23,
+      "scale": 1
+    },
+    {
+      "prefab": "platform",
+      "position": [
+        0,
+        26.13,
+        0
+      ],
+      "rotationY": 0,
+      "scale": 1.6
+    },
+    {
+      "prefab": "goal_beacon",
+      "position": [
+        0,
+        28.33,
+        0
+      ],
+      "rotationY": 0,
+      "scale": 1
+    }
+  ],
+  "spawns": [
+    {
+      "prefab": "fire_orb",
+      "count": 5,
+      "pattern": "ring",
+      "center": [
+        0,
+        12.56,
+        0
+      ],
+      "radius": 12,
+      "height": 10.05
+    },
+    {
+      "prefab": "neon_tower",
+      "count": 14,
+      "pattern": "ring",
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "radius": 52.5,
+      "height": 0
+    },
+    {
+      "prefab": "neon_sign",
+      "count": 14,
+      "pattern": "ring",
+      "center": [
+        0,
+        6,
+        0
+      ],
+      "radius": 52.5,
+      "height": 10
+    }
+  ],
+  "rules": {
+    "goal": "reach",
+    "targetScore": 0,
+    "timeLimit": 0,
+    "objective": "Climb the spiral and touch the beacon at the top!",
+    "winMessage": "You did it!",
+    "loseMessage": "So close! Try again."
+  },
+  "post": {
+    "bloom": 1.4,
+    "exposure": 0,
+    "saturation": 1.2,
+    "contrast": 1.12,
+    "vignette": 0.45,
+    "warmth": -0.1
+  },
+  "audio": {
+    "music": "upbeat",
+    "tempo": 116
+  }
+}

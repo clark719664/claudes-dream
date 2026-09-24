@@ -175,6 +175,18 @@ export function buildWorld(renderer, spec, { tier = 'high' } = {}) {
     projectiles.push({ instance: i, alive: false, pos: [0, -100, 0], vel: [0, 0, 0], life: 0, color: [4, 1, 0.3] });
   }
 
+  // spawn pad (stone disc) when the spawn point is under water or lava
+  const [px, , pz] = spec.player.spawn;
+  if (waterLevel !== null && hf.heightAt(px, pz) < waterLevel - 0.3) {
+    const pad = shapeMesh('cylinder', [5, 1, 5]);
+    if (!scene.hasMesh(pad.key)) scene.addMesh(pad.key, pad.build());
+    const b = scene.addBatch(pad.key, { shadows: true });
+    const i = scene.addInstance(b);
+    const bottom = hf.heightAt(px, pz) - 1, top = waterLevel + 0.4;
+    writeInstance(scene, i, [px, (bottom + top) / 2, pz], 0, [5, top - bottom, 5], [0.3, 0.28, 0.26], [0, 0, 0], 0.8, 0, 0, KIND.rock);
+    physics.addStatic({ min: [px - 2.5, bottom, pz - 2.5], max: [px + 2.5, top, pz + 2.5] });
+  }
+
   // write initial transforms, then upload everything once
   for (const e of entities) writeEntity(scene, e);
   writeInstance(scene, avatar, [0, -100, 0], 0, [1, 1, 1], hexToLinear(spec.player.color), [0, 0, 0], 0.45, 0.1);
@@ -182,7 +194,8 @@ export function buildWorld(renderer, spec, { tier = 'high' } = {}) {
   scene.build();
   renderer.setScene(scene);
 
-  const spawnY = surface(spec.player.spawn[0], spec.player.spawn[2]) + Math.max(0.1, spec.player.spawn[1] - 1);
+  const [sx, , sz] = spec.player.spawn;
+  const spawnY = Math.max(surface(sx, sz), waterLevel !== null && hf.heightAt(sx, sz) < waterLevel - 0.3 ? waterLevel + 0.4 : -Infinity) + Math.max(0.1, spec.player.spawn[1] - 1);
   return {
     spec, hf, physics, scene, entities, avatar, projectiles, projectileScale: projMesh.scale,
     waterLevel, lava, grassLayer,

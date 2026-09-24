@@ -18,7 +18,9 @@ async function loadSpec() {
     if (!res.ok) throw new Error(`Example "${q.get('example')}" not found`);
     return res.json();
   }
-  return designFromPrompt(q.get('prompt') ?? 'A cozy forest at golden hour with glowing crystals to collect');
+  if (q.get('prompt')) return designFromPrompt(q.get('prompt'));
+  const res = await fetch('../examples/golden-grove.json');
+  return res.ok ? res.json() : designFromPrompt('A cozy forest at golden hour with glowing mushrooms to collect');
 }
 
 async function main() {

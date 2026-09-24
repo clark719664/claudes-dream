@@ -337,7 +337,13 @@ async function boot() {
   let initial = null;
   if (hash) { try { initial = await decodeSpec(hash); } catch { toast('That share link looks broken'); } }
   if (!initial) { try { initial = JSON.parse(localStorage.getItem(STORE_KEY) ?? 'null'); } catch { initial = null; } }
+  if (!initial) {
+    // first visit: open a showcase world so there is something to explore right away
+    try { initial = await (await fetch('../examples/golden-grove.json')).json(); } catch { initial = null; }
+    if (initial) log('Welcome! This is an example world. Press Play to explore it, or describe your own game above.');
+  }
   if (initial) applySpec(initial, { record: false });
+  $('#prompt').focus();
 }
 
 function undo() {
