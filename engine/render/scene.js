@@ -93,12 +93,12 @@ export class GpuScene {
    * minDist/maxDist select LODs (a mesh can have several batches with
    * disjoint ranges); shadows toggles shadow casting.
    */
-  addBatch(meshKey, { minDist = 0, maxDist = 1e9, shadows = true, label = meshKey } = {}) {
+  addBatch(meshKey, { minDist = 0, maxDist = 1e9, shadows = true, alpha = false, label = meshKey } = {}) {
     if (this.built) throw new Error('Scene already built');
     const mesh = this.meshes.get(meshKey);
     if (!mesh) throw new Error(`Unknown mesh ${meshKey}`);
     const id = this.batches.length;
-    this.batches.push({ id, mesh, minDist, maxDist, shadows, label, count: 0 });
+    this.batches.push({ id, mesh, minDist, maxDist, shadows, alpha, label, count: 0 });
     return id;
   }
 

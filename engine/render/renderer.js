@@ -23,6 +23,7 @@ import { PostProcess } from './post.js';
 import { GpuScene } from './scene.js';
 import { computeCascades } from './shadows.js';
 import { VERTEX_STRIDE } from './meshes.js';
+import { createFoliageAtlas } from './foliageAtlas.js';
 import { mat4, frustumPlanes, halton, hexToLinear, DEG, clamp, smoothstep } from '../core/math.js';
 
 const VERTEX_LAYOUT = [{
@@ -31,8 +32,11 @@ const VERTEX_LAYOUT = [{
     { shaderLocation: 0, offset: 0, format: 'float32x3' },
     { shaderLocation: 1, offset: 12, format: 'float32x3' },
     { shaderLocation: 2, offset: 24, format: 'unorm8x4' },
+    { shaderLocation: 3, offset: 28, format: 'unorm16x2' },
   ],
 }];
+const OPAQUE = (b) => !b.alpha;
+const ALPHA = (b) => b.alpha;
 
 const LIGHT_FLOATS = 8;
 
@@ -103,6 +107,7 @@ export class Renderer {
     this.dummyAO = texture2D(d, { width: 1, height: 1, format: 'rgba8unorm', usage: U.TEX | U.CDST, label: 'ao-dummy' });
     d.queue.writeTexture({ texture: this.dummyAO }, new Uint8Array([255, 255, 255, 255]), { bytesPerRow: 4 }, { width: 1, height: 1 });
     this.dummyVolume = d.createTexture({ size: [1, 1, 1], dimension: '3d', format: 'rgba16float', usage: U.TEX | U.CDST, label: 'volume-dummy' });
+    this.foliageAtlas = createFoliageAtlas(d);
     this.aoView = this.dummyAO.createView();
     this.volumeView = this.dummyVolume.createView({ dimension: '3d' });
     this.volumeEnabled = false;
@@ -113,42 +118,40 @@ export class Renderer {
     const d = this.device;
     this.globalLayout = bindLayout(d, 'globals', GLOBAL_LAYOUT);
     this.drawLayout = GpuScene.drawLayout(d);
-    this.shadowGlobalLayout = bindLayout(d, 'shadow-globals', [['V', 'uniform', 0], ['V', 'utexture', 13]]);
+    this.shadowGlobalLayout = bindLayout(d, 'shadow-globals', [['V', 'uniform', 0], ['F', 'sampler', 2], ['V', 'utexture', 13], ['F', 'texture', 15]]);
     this.cascadeLayout = bindLayout(d, 'cascade', [['V', 'uniform-dyn']]);
     this.cascadeGroup = bindGroup(d, this.cascadeLayout, [{ buffer: this.cascadeBuffer, size: 64 }]);
 
     const meshModule = createShader(d, MESH_WGSL, 'mesh');
-    const layout = d.createPipelineLayout({ bindGroupLayouts: [this.globalLayout, this.drawLayout] });
-    this.pipes = {};
-    this.pipes.mesh = d.createRenderPipeline({
-      label: 'mesh-main', layout,
-      vertex: { module: meshModule, entryPoint: 'vs', buffers: VERTEX_LAYOUT },
-      fragment: { module: meshModule, entryPoint: 'fsMain', targets: [{ format: 'rgba16float' }] },
-      primitive: { topology: 'triangle-list', cullMode: 'back' },
-      depthStencil: { format: 'depth32float', depthWriteEnabled: true, depthCompare: 'greater' },
-    });
-    this.pipes.meshAfterPrepass = d.createRenderPipeline({
-      label: 'mesh-main-eq', layout,
-      vertex: { module: meshModule, entryPoint: 'vs', buffers: VERTEX_LAYOUT },
-      fragment: { module: meshModule, entryPoint: 'fsMain', targets: [{ format: 'rgba16float' }] },
-      primitive: { topology: 'triangle-list', cullMode: 'back' },
-      depthStencil: { format: 'depth32float', depthWriteEnabled: false, depthCompare: 'equal' },
-    });
     const depthModule = createShader(d, MESH_DEPTH_WGSL, 'mesh-depth');
-    this.pipes.prepass = d.createRenderPipeline({
-      label: 'mesh-prepass', layout,
-      vertex: { module: depthModule, entryPoint: 'vs', buffers: VERTEX_LAYOUT },
-      primitive: { topology: 'triangle-list', cullMode: 'back' },
-      depthStencil: { format: 'depth32float', depthWriteEnabled: true, depthCompare: 'greater' },
-    });
     const shadowModule = createShader(d, MESH_SHADOW_WGSL, 'mesh-shadow');
-    this.pipes.shadow = d.createRenderPipeline({
-      label: 'mesh-shadow',
-      layout: d.createPipelineLayout({ bindGroupLayouts: [this.shadowGlobalLayout, this.drawLayout, this.cascadeLayout] }),
-      vertex: { module: shadowModule, entryPoint: 'vs', buffers: VERTEX_LAYOUT },
-      primitive: { topology: 'triangle-list', cullMode: 'none' },
-      depthStencil: { format: 'depth32float', depthWriteEnabled: true, depthCompare: 'less', depthBias: 2, depthBiasSlopeScale: 2.0, depthBiasClamp: 0.01 },
+    const layout = d.createPipelineLayout({ bindGroupLayouts: [this.globalLayout, this.drawLayout] });
+    const shadowLayout = d.createPipelineLayout({ bindGroupLayouts: [this.shadowGlobalLayout, this.drawLayout, this.cascadeLayout] });
+    const vertex = (module) => ({ module, entryPoint: 'vs', buffers: VERTEX_LAYOUT });
+    const main = (label, cullMode, depthCompare, depthWriteEnabled) => d.createRenderPipeline({
+      label, layout, vertex: vertex(meshModule),
+      fragment: { module: meshModule, entryPoint: 'fsMain', targets: [{ format: 'rgba16float' }] },
+      primitive: { topology: 'triangle-list', cullMode },
+      depthStencil: { format: 'depth32float', depthWriteEnabled, depthCompare },
     });
+    const depthOnly = (label, alpha, pipelineLayout, module, depthStencil) => d.createRenderPipeline({
+      label, layout: pipelineLayout, vertex: vertex(module),
+      fragment: alpha ? { module, entryPoint: 'fsAlpha', targets: [] } : undefined,
+      primitive: { topology: 'triangle-list', cullMode: alpha || depthStencil.depthCompare === 'less' ? 'none' : 'back' },
+      depthStencil,
+    });
+    const pre = { format: 'depth32float', depthWriteEnabled: true, depthCompare: 'greater' };
+    const shadow = { format: 'depth32float', depthWriteEnabled: true, depthCompare: 'less', depthBias: 2, depthBiasSlopeScale: 2.0, depthBiasClamp: 0.01 };
+    this.pipes = {
+      mesh: main('mesh', 'back', 'greater', true),
+      meshAlpha: main('mesh-alpha', 'none', 'greater', true),
+      meshEq: main('mesh-eq', 'back', 'equal', false),
+      meshAlphaEq: main('mesh-alpha-eq', 'none', 'equal', false),
+      prepass: depthOnly('prepass', false, layout, depthModule, pre),
+      prepassAlpha: depthOnly('prepass-alpha', true, layout, depthModule, pre),
+      shadow: depthOnly('shadow', false, shadowLayout, shadowModule, shadow),
+      shadowAlpha: depthOnly('shadow-alpha', true, shadowLayout, shadowModule, shadow),
+    };
     this.pipes.sky = fullscreenPipeline(d, {
       label: 'sky', module: createShader(d, SKY_WGSL, 'sky'), layouts: [this.globalLayout], format: 'rgba16float',
       depth: { format: 'depth32float', depthWriteEnabled: false, depthCompare: 'greater-equal' },
@@ -212,10 +215,11 @@ export class Renderer {
       this.frameBuffer, this.samplers.linear, this.samplers.repeat, this.samplers.shadow,
       a.transmittance.createView(), a.multiscatter.createView(), a.skyview.createView(), this.volumeView,
       a.envView, a.shBuffer, a.brdf.createView(), this.shadowArrayView, this.lightBuffer,
-      this.heightmap.createView(), this.aoView,
+      this.heightmap.createView(), this.aoView, this.foliageAtlas.createView(),
     ], 'globals');
     this.shadowGlobalGroup = bindGroup(d, this.shadowGlobalLayout, [
-      { binding: 0, resource: this.frameBuffer }, { binding: 13, resource: this.heightmap.createView() },
+      { binding: 0, resource: this.frameBuffer }, { binding: 2, resource: this.samplers.repeat },
+      { binding: 13, resource: this.heightmap.createView() }, { binding: 15, resource: this.foliageAtlas.createView() },
     ]);
   }
 
@@ -438,10 +442,12 @@ export class Renderer {
         depthStencilAttachment: { view: this.shadowLayerViews[i], depthClearValue: 1, depthLoadOp: 'clear', depthStoreOp: 'store' },
       });
       if (scene?.built) {
-        pass.setPipeline(this.pipes.shadow);
         pass.setBindGroup(0, this.shadowGlobalGroup);
         pass.setBindGroup(2, this.cascadeGroup, [i * 256]);
-        scene.draw(pass, i + 1);
+        pass.setPipeline(this.pipes.shadow);
+        scene.draw(pass, i + 1, OPAQUE);
+        pass.setPipeline(this.pipes.shadowAlpha);
+        scene.draw(pass, i + 1, ALPHA);
       }
       for (const f of this.features_ ?? []) f.shadow?.(pass, this, i);
       pass.end();
@@ -456,9 +462,11 @@ export class Renderer {
         label: 'prepass', colorAttachments: [],
         depthStencilAttachment: { view: this.depthView, depthClearValue: 0, depthLoadOp: 'clear', depthStoreOp: 'store' },
       });
-      pass.setPipeline(this.pipes.prepass);
       pass.setBindGroup(0, this.globalGroup);
-      scene.draw(pass, 0);
+      pass.setPipeline(this.pipes.prepass);
+      scene.draw(pass, 0, OPAQUE);
+      pass.setPipeline(this.pipes.prepassAlpha);
+      scene.draw(pass, 0, ALPHA);
       pass.end();
       for (const f of this.features_ ?? []) f.afterPrepass?.(encoder, this);
     }
@@ -470,8 +478,10 @@ export class Renderer {
     });
     main.setBindGroup(0, this.globalGroup);
     if (scene?.built) {
-      main.setPipeline(prepass ? this.pipes.meshAfterPrepass : this.pipes.mesh);
-      scene.draw(main, 0);
+      main.setPipeline(prepass ? this.pipes.meshEq : this.pipes.mesh);
+      scene.draw(main, 0, OPAQUE);
+      main.setPipeline(prepass ? this.pipes.meshAlphaEq : this.pipes.meshAlpha);
+      scene.draw(main, 0, ALPHA);
     }
     for (const f of this.features_ ?? []) f.main?.(main, this);
     main.setPipeline(this.pipes.sky);

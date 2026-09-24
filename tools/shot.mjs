@@ -31,7 +31,7 @@ try {
   await tab.waitForFunction((n) => window.__frames >= n || (window.__errors && window.__errors.length), Number(frames), { timeout: 240000, polling: 250 });
 } catch (e) { logs.push(`[timeout] ${e.message.split('\n')[0]}`); }
 await tab.waitForTimeout(300);
-await tab.screenshot({ path: out });
+await tab.screenshot({ path: out, timeout: 240000 });
 const info = await tab.evaluate(() => ({ frames: window.__frames, errors: [...new Set(window.__errors)].slice(0, 6), stats: document.getElementById('stats')?.textContent }));
 console.log(JSON.stringify({ ...info, ms: Date.now() - t0 }, null, 1));
 for (const l of [...new Set(logs)].filter((l) => !l.startsWith('[warning]')).slice(0, 12)) console.log(l.slice(0, 1500));

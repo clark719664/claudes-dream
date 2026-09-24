@@ -3,9 +3,14 @@
 import { Renderer } from '../engine/render/renderer.js';
 import { Heightfield } from '../engine/world/terrain.js';
 import { addTerrain } from '../engine/render/terrainBatches.js';
-import { scatterMesh, shapeMesh, SCATTER_VARIANTS } from '../engine/render/meshes.js';
+import { scatterMesh, shapeMesh, SCATTER } from '../engine/render/meshes.js';
 import { mat4, hexToLinear } from '../engine/core/math.js';
 import { Rng } from '../shared/rng.js';
+import { Volumetrics } from '../engine/render/volumetrics.js';
+import { GTAO } from '../engine/render/gtao.js';
+import { Grass } from '../engine/render/grass.js';
+import { Water } from '../engine/render/water.js';
+import { Particles } from '../engine/render/particles.js';
 
 const q = new URLSearchParams(location.search);
 const num = (k, d) => (q.has(k) ? Number(q.get(k)) : d);
@@ -22,6 +27,19 @@ async function main() {
   const water = q.has('water') ? num('water', 2) : null;
   renderer.setTerrain(hf, { waterLevel: water });
   renderer.setPalette({ low: '#c9b98a', mid: '#4f7a2e', high: '#eef2f5', cliff: '#6b5d52' });
+  const vol = new Volumetrics(renderer);
+  vol.setMaxDistance(hf.worldSize * 1.1);
+  if (!q.has('novol')) renderer.addFeature(vol);
+  if (renderer.tier.gtao && !q.has('noao')) renderer.addFeature(new GTAO(renderer));
+  if (!q.has('nograss')) renderer.addFeature(new Grass(renderer, { color: hexToLinear('#6f9a3c').map((c) => c * 0.9) }));
+  renderer.player = [0, hf.heightAt(0, 8), 8, 1.2];
+  const waterFx = new Water(renderer);
+  renderer.addFeature(waterFx);
+  waterFx.configure({ enabled: water !== null, level: water ?? 0, color: hexToLinear(q.get('watercolor') ? '#' + q.get('watercolor') : '#1b5d6b'), lava: q.has('lava'), span: hf.worldSize });
+  const particles = new Particles(renderer);
+  renderer.addFeature(particles);
+  particles.setAmbient(q.get('particles') ?? 'none');
+  window.__particles = particles;
   renderer.setEnvironment({ timeOfDay: num('time', 16.5), sunAzimuth: num('az', 210), cloudCover: num('clouds', 0.35), fogDensity: num('fog', 0.2), wind: 0.4 });
 
   const scene = renderer.createScene();
@@ -39,25 +57,34 @@ async function main() {
     scene.updateBounds(i);
     return i;
   };
-  const kinds = ['pine', 'oak', 'rock'];
+  const kinds = ['pine', 'oak', 'rock', 'flower'];
+  const lodBatches = {};
   for (const kind of kinds) {
-    for (let v = 0; v < SCATTER_VARIANTS[kind]; v++) {
-      scene.addMesh(`${kind}:${v}`, scatterMesh(kind, v));
+    const def = SCATTER[kind];
+    for (let v = 0; v < def.variants; v++) {
+      lodBatches[`${kind}:${v}`] = def.lods.map((min, lod) => {
+        const key = `${kind}:${v}:${lod}`;
+        scene.addMesh(key, scatterMesh(kind, v, lod));
+        const max = def.lods[lod + 1] ?? 450;
+        return scene.addBatch(key, { minDist: min, maxDist: max, alpha: def.alpha, shadows: true });
+      });
     }
   }
-  const batches = {};
-  for (const kind of kinds) for (let v = 0; v < SCATTER_VARIANTS[kind]; v++) batches[`${kind}:${v}`] = scene.addBatch(`${kind}:${v}`, { maxDist: 400 });
+  const colors = { pine: '#2d5a33', oak: '#4f8a2f', rock: '#8a8680', flower: '#ff8fb8' };
   for (let n = 0; n < num('trees', 900); n++) {
     const x = rng.range(-110, 110), z = rng.range(-110, 110);
     if (Math.hypot(x, z) < 10) continue;
     const nrm = hf.normalAt(x, z);
     if (nrm[1] < 0.8) continue;
     if (water !== null && hf.heightAt(x, z) < water + 0.5) continue;
-    const kind = rng.float() < 0.55 ? 'pine' : rng.float() < 0.6 ? 'oak' : 'rock';
-    const v = rng.int(0, SCATTER_VARIANTS[kind] - 1);
-    const s = kind === 'rock' ? rng.range(0.6, 1.8) : rng.range(1.4, 2.4);
-    const leaf = kind === 'pine' ? hexToLinear('#2d5a33') : kind === 'oak' ? hexToLinear('#3f7a2a') : hexToLinear('#8a8680');
-    put(batches[`${kind}:${v}`], x, z, [s, s, s], rng.range(0, 6.28), leaf, 0, kind === 'rock' ? 0.85 : 0.75, kind === 'rock' ? 0 : 3, 1);
+    const r = rng.float();
+    const kind = r < 0.45 ? 'pine' : r < 0.75 ? 'oak' : r < 0.88 ? 'rock' : 'flower';
+    const def = SCATTER[kind];
+    const v = rng.int(0, def.variants - 1);
+    const sc = rng.range(def.scale[0], def.scale[1]);
+    const tint = hexToLinear(colors[kind]).map((c) => c * rng.range(0.85, 1.15));
+    const ry = rng.range(0, 6.28);
+    for (const b of lodBatches[`${kind}:${v}`]) put(b, x, z, [sc, sc, sc], ry, tint, 0, kind === 'rock' ? 0.85 : 0.7, def.kind, def.wind);
   }
   // hero objects near the camera
   const shapes = [['sphere', [1.6, 1.6, 1.6], '#ffd23b', 1, 0.2], ['gem', [1.2, 1.8, 1.2], '#7dfcff', 0.1, 0.1], ['box', [2, 2, 2], '#e8e2d4', 0, 0.6], ['torus', [2, 2, 0.5], '#ff5ab0', 0.3, 0.3], ['sphere', [1.6, 1.6, 1.6], '#dde3ea', 1, 0.05], ['capsule', [1, 1.8, 1], '#ff7a3d', 0, 0.45]];

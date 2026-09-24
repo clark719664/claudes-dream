@@ -57,6 +57,7 @@ export const GLOBAL_LAYOUT = [
   ['F', 'read'],             // 12 point lights
   ['VF', 'utexture'],        // 13 terrain heightmap (r32float)
   ['F', 'texture'],          // 14 ambient occlusion
+  ['F', 'texture'],          // 15 foliage atlas
 ];
 
 export const GLOBALS_WGSL = /* wgsl */ `
@@ -77,6 +78,7 @@ struct Light { posRadius: vec4f, color: vec4f };
 @group(0) @binding(12) var<storage, read> lights: array<Light>;
 @group(0) @binding(13) var heightmap: texture_2d<f32>;
 @group(0) @binding(14) var aoTex: texture_2d<f32>;
+@group(0) @binding(15) var foliageAtlas: texture_2d<f32>;
 `;
 
 // ---------------------------------------------------------------- pure functions
@@ -225,7 +227,7 @@ fn skyviewUV(r: f32, viewZenithCos: f32, lightViewCos: f32, intersectsGround: bo
 
 // ---------------------------------------------------------------- shading library (needs globals)
 
-export const SHADING_WGSL = /* wgsl */ `
+export const LIGHTING_WGSL = /* wgsl */ `
 fn sampleTransmittance(r: f32, mu: f32) -> vec3f {
   return textureSampleLevel(transmittanceLUT, linearSampler, transmittanceUV(r, mu), 0.0).rgb;
 }
@@ -321,6 +323,9 @@ fn shadowAt(worldPos: vec3f, n: vec3f, fragXY: vec2f) -> f32 {
   return s;
 }
 
+`;
+
+export const SURFACE_WGSL = /* wgsl */ `
 // ------------------------------------------------ BRDF
 fn D_GGX(NoH: f32, a: f32) -> f32 {
   let a2 = a * a;
@@ -413,6 +418,8 @@ fn applyVolumetrics(color: vec3f, uv: vec2f, dist: f32) -> vec3f {
   return color * v.a + v.rgb;
 }
 `;
+
+export const SHADING_WGSL = LIGHTING_WGSL + SURFACE_WGSL;
 
 /** Reconstruct world position from a depth-buffer value (reversed-Z) and screen uv. */
 export const RECONSTRUCT_WGSL = /* wgsl */ `

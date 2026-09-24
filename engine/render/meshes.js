@@ -9,16 +9,17 @@ import { Rng } from '../../shared/rng.js';
 import { createNoise2D } from '../../shared/noise.js';
 
 const TINT = [1, 1, 1, 1];
-export const VERTEX_STRIDE = 28; // position f32x3, normal f32x3, color unorm8x4
+export const VERTEX_STRIDE = 32; // position f32x3, normal f32x3, color unorm8x4, uv unorm16x2
 
 export class Geo {
-  constructor() { this.positions = []; this.normals = []; this.colors = []; this.indices = []; }
+  constructor() { this.positions = []; this.normals = []; this.colors = []; this.uvs = []; this.indices = []; }
   get vertexCount() { return this.positions.length / 3; }
 
-  vertex(x, y, z, nx, ny, nz, c = TINT) {
+  vertex(x, y, z, nx, ny, nz, c = TINT, u = 0, v = 0) {
     this.positions.push(x, y, z);
     this.normals.push(nx, ny, nz);
     this.colors.push(c[0], c[1], c[2], c[3] ?? 1);
+    this.uvs.push(u, v);
     return this.vertexCount - 1;
   }
   tri(a, b, c) { this.indices.push(a, b, c); }
@@ -34,7 +35,7 @@ export class Geo {
       if (transform) transform(p, n);
       const l = Math.hypot(n[0], n[1], n[2]) || 1;
       const c = color ?? g.colors.slice(i * 4, i * 4 + 4);
-      this.vertex(p[0], p[1], p[2], n[0] / l, n[1] / l, n[2] / l, c);
+      this.vertex(p[0], p[1], p[2], n[0] / l, n[1] / l, n[2] / l, c, g.uvs[i * 2], g.uvs[i * 2 + 1]);
     }
     for (const idx of g.indices) this.indices.push(idx + base);
     return this;
@@ -68,7 +69,7 @@ export class Geo {
       const l = Math.hypot(n[0], n[1], n[2]);
       if (l < 1e-12) continue;
       n = n.map((v) => v / l);
-      const v = ids.map((i, k) => out.vertex(...[a, b, c][k], ...n, C.slice(i * 4, i * 4 + 4)));
+      const v = ids.map((i, k) => out.vertex(...[a, b, c][k], ...n, C.slice(i * 4, i * 4 + 4), this.uvs[i * 2], this.uvs[i * 2 + 1]));
       out.tri(v[0], v[1], v[2]);
     }
     return out;
@@ -81,13 +82,16 @@ export class Geo {
     const buf = new ArrayBuffer(n * VERTEX_STRIDE);
     const f = new Float32Array(buf);
     const u8 = new Uint8Array(buf);
+    const u16 = new Uint16Array(buf);
     let radius = 0;
     for (let i = 0; i < n; i++) {
-      const o = i * 7;
+      const o = i * 8;
       const x = this.positions[i * 3], y = this.positions[i * 3 + 1], z = this.positions[i * 3 + 2];
       f[o] = x; f[o + 1] = y; f[o + 2] = z;
       f[o + 3] = this.normals[i * 3]; f[o + 4] = this.normals[i * 3 + 1]; f[o + 5] = this.normals[i * 3 + 2];
       for (let k = 0; k < 4; k++) u8[i * VERTEX_STRIDE + 24 + k] = Math.round(Math.min(1, Math.max(0, this.colors[i * 4 + k])) * 255);
+      u16[i * 16 + 14] = Math.round(Math.min(1, Math.max(0, this.uvs[i * 2] ?? 0)) * 65535);
+      u16[i * 16 + 15] = Math.round(Math.min(1, Math.max(0, this.uvs[i * 2 + 1] ?? 0)) * 65535);
       radius = Math.max(radius, Math.hypot(x, y, z));
     }
     return { vertices: buf, indices: n > 65535 ? new Uint32Array(this.indices) : new Uint16Array(this.indices), vertexCount: n, radius };
@@ -355,89 +359,212 @@ export function terrainChunk(quads = 32, step = 1) {
 
 // ---------------------------------------------------------------- scatter props (stand on y = 0)
 
-const BARK = [0.26, 0.17, 0.1, 0];
+const BARK = [0.24, 0.17, 0.11, 0];
 const STEM = [0.22, 0.42, 0.14, 0];
+const ATLAS = { broadleaf: [0, 0], needles: [0.5, 0], palm: [0, 0.5], shrub: [0.5, 0.5] };
 
-function pine(rng) {
-  const g = new Geo();
-  g.merge(cylinder(BARK, 8), T.chain(T.scale(0.26, 1.0, 0.26), T.translate(0, 0.5, 0)));
-  const tiers = 4 + (rng.float() < 0.5 ? 1 : 0);
-  for (let i = 0; i < tiers; i++) {
-    const r = 2.0 - i * 0.36, h = 1.5 - i * 0.12, y = 0.8 + i * 0.8;
-    const shade = 0.7 + i * 0.07;
-    const skirt = lathe([[0, 0], [0.5, 0], [0.5, 0], [0.42, 0.12], [0.2, 0.55], [0, 1]], 11, [shade, shade, shade, 1], rng.range(0, 6));
-    g.merge(skirt, T.chain(T.scale(r, h, r), T.translate(0, y, 0)));
+const vAdd = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const vSub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const vScale = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const vNorm = (a) => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+const vCross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const vMix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+
+/** Tapered branch/trunk segment from p0 to p1 (smooth, bark coloured). */
+function limb(g, p0, p1, r0, r1, sides = 7, color = BARK) {
+  const axis = vNorm(vSub(p1, p0));
+  const ref = Math.abs(axis[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0];
+  const t1 = vNorm(vCross(axis, ref));
+  const t2 = vCross(axis, t1);
+  const base = g.vertexCount;
+  for (const [p, r] of [[p0, r0], [p1, r1]]) {
+    for (let i = 0; i <= sides; i++) {
+      const a = (i / sides) * Math.PI * 2;
+      const n = vAdd(vScale(t1, Math.cos(a)), vScale(t2, Math.sin(a)));
+      const q = vAdd(p, vScale(n, r));
+      g.vertex(q[0], q[1], q[2], n[0], n[1], n[2], color, 0, 0);
+    }
   }
-  return g.flat();
+  for (let i = 0; i < sides; i++) g.quad(base + i, base + i + 1, base + sides + 2 + i, base + sides + 1 + i);
 }
 
-function oak(rng, noise) {
-  const g = new Geo();
-  g.merge(cylinder(BARK, 9), T.chain(T.scale(0.34, 2.2, 0.34), T.translate(0, 1.1, 0)));
-  g.merge(cylinder(BARK, 7), T.chain(T.scale(0.16, 1.2, 0.16), T.rotZ(0.7), T.translate(0.38, 2.0, 0)));
-  g.merge(cylinder(BARK, 7), T.chain(T.scale(0.14, 1.1, 0.14), T.rotZ(-0.6), T.rotY(2.2), T.translate(-0.25, 2.1, 0.2)));
-  const blobs = [[0, 3.1, 0, 1.45], [0.9, 2.7, 0.3, 1.0], [-0.8, 2.8, -0.2, 1.05], [0.1, 3.8, -0.5, 0.95], [0.2, 2.8, 0.9, 0.9], [-0.4, 3.4, 0.6, 0.85]];
-  for (const [x, y, z, r] of blobs) {
-    const shade = 0.75 + rng.range(0, 0.25);
-    g.merge(icosphere(2, [shade, shade, shade, 1]), (p) => {
-      const d = 1 + noise(p[0] * 3 + x, p[2] * 3 + y + p[1]) * 0.22;
-      p[0] = p[0] * 2 * r * d + x; p[1] = p[1] * 2 * r * d * 0.85 + y; p[2] = p[2] * 2 * r * d + z;
-    });
+/**
+ * Alpha-tested foliage card. `normalFrom` is the crown centre: card normals are
+ * bent away from it so the whole canopy shades like one soft volume.
+ */
+function card(g, center, uAxis, vAxis, halfU, halfV, tile, normalFrom, bend = 0.75, segments = 1, droop = 0) {
+  const [tu, tv] = ATLAS[tile];
+  const face = vNorm(vCross(uAxis, vAxis));
+  const base = g.vertexCount;
+  for (let s = 0; s <= segments; s++) {
+    const f = segments === 1 ? s : s / segments;
+    const along = (f * 2 - 1) * halfU;
+    const sag = droop * f * f;
+    for (const side of [-1, 1]) {
+      const p = vAdd(vAdd(center, vScale(uAxis, along)), vAdd(vScale(vAxis, side * halfV), [0, -sag, 0]));
+      const radial = vNorm(vSub(p, normalFrom));
+      const n = vNorm(vMix(face, radial, bend));
+      g.vertex(p[0], p[1], p[2], n[0], n[1], n[2], [1, 1, 1, 1], tu + f * 0.5, tv + (side < 0 ? 0 : 0.5));
+    }
   }
-  return g.flat();
+  for (let s = 0; s < segments; s++) {
+    const i = base + s * 2;
+    g.indices.push(i, i + 2, i + 3, i, i + 3, i + 1);
+  }
 }
 
-function palm(rng) {
+function randomUnit(rng) {
+  const z = rng.range(-1, 1), a = rng.range(0, Math.PI * 2), r = Math.sqrt(1 - z * z);
+  return [r * Math.cos(a), z, r * Math.sin(a)];
+}
+
+function broadleafTree(rng, lod) {
+  const g = new Geo();
+  const H = rng.range(4.2, 5.6);
+  const lean = [rng.range(-0.25, 0.25), 1, rng.range(-0.25, 0.25)];
+  const top = vScale(vNorm(lean), H);
+  limb(g, [0, -0.3, 0], [top[0] * 0.5, H * 0.5, top[2] * 0.5], 0.36, 0.27, 9);
+  limb(g, [top[0] * 0.5, H * 0.5, top[2] * 0.5], top, 0.27, 0.16, 8);
+  const crown = [top[0], H + 1.7, top[2]];
+  const clusters = [];
+  const branches = 6 + rng.int(0, 2);
+  for (let b = 0; b < branches; b++) {
+    const a = (b / branches) * Math.PI * 2 + rng.range(-0.3, 0.3);
+    const elev = rng.range(0.45, 1.0);
+    const dir = vNorm([Math.cos(a) * Math.cos(elev), Math.sin(elev), Math.sin(a) * Math.cos(elev)]);
+    const start = vMix([0, 0, 0], top, rng.range(0.6, 0.95));
+    const len = rng.range(2.0, 2.9);
+    const end = vAdd(start, vScale(dir, len));
+    limb(g, start, end, 0.13, 0.05, 6);
+    clusters.push(end, vMix(start, end, 0.6));
+    for (let k = 0; k < 2; k++) {
+      const sub = vNorm(vAdd(dir, vScale(randomUnit(rng), 0.8)));
+      const s0 = vMix(start, end, rng.range(0.45, 0.8));
+      const s1 = vAdd(s0, vScale(sub, rng.range(0.9, 1.5)));
+      if (lod === 0) limb(g, s0, s1, 0.05, 0.02, 5);
+      clusters.push(s1);
+    }
+  }
+  clusters.push(vAdd(crown, [0, 1.2, 0]), crown);
+  const perCluster = lod === 0 ? 7 : 3;
+  const size = lod === 0 ? 1.0 : 1.45;
+  for (const c of clusters) {
+    for (let k = 0; k < perCluster; k++) {
+      const p = vAdd(c, vScale(randomUnit(rng), 0.55));
+      const n = vNorm(vAdd(vNorm(vSub(p, crown)), vScale(randomUnit(rng), 0.9)));
+      const u = vNorm(vCross(n, Math.abs(n[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0]));
+      const v = vCross(n, u);
+      const sc = size * rng.range(0.8, 1.2);
+      card(g, p, u, v, sc, sc, 'broadleaf', crown);
+    }
+  }
+  return g;
+}
+
+function conifer(rng, lod) {
+  const g = new Geo();
+  const H = rng.range(8.5, 11.5);
+  limb(g, [0, -0.3, 0], [0, H * 0.55, 0], 0.32, 0.2, 8);
+  limb(g, [0, H * 0.55, 0], [0, H, 0], 0.2, 0.04, 7);
+  const start = 1.4;
+  const step = lod === 0 ? 0.42 : 0.75;
+  let whorl = 0;
+  for (let y = start; y < H - 0.3; y += step * rng.range(0.85, 1.15)) {
+    const f = (y - start) / (H - start);
+    const len = Math.pow(1 - f, 0.9) * 3.1 + 0.35;
+    const n = lod === 0 ? 6 : 4;
+    for (let b = 0; b < n; b++) {
+      const a = (b / n) * Math.PI * 2 + whorl * 0.7 + rng.range(-0.25, 0.25);
+      const droop = rng.range(0.12, 0.35);
+      const dir = vNorm([Math.cos(a), -droop, Math.sin(a)]);
+      const center = vAdd([0, y, 0], vScale(dir, len * 0.5));
+      const across = vNorm(vCross(dir, [0, 1, 0]));
+      const up = vNorm(vCross(across, dir));
+      const tilt = vNorm(vAdd(across, vScale(up, rng.range(-0.25, 0.35))));
+      const axis = [0, y + 0.8, 0];
+      card(g, center, dir, tilt, len * 0.52, len * 0.3 + 0.2, 'needles', axis, 0.6, 2, len * 0.12);
+      if (lod === 0 && f < 0.75) card(g, center, dir, vNorm(vAdd(up, vScale(across, 0.3))), len * 0.5, len * 0.18 + 0.12, 'needles', axis, 0.6, 1);
+    }
+    whorl++;
+  }
+  for (let k = 0; k < 3; k++) {
+    const a = (k / 3) * Math.PI;
+    card(g, [0, H - 0.2, 0], [0, 1, 0], [Math.cos(a), 0, Math.sin(a)], 0.7, 0.35, 'needles', [0, H - 1, 0], 0.4);
+  }
+  return g;
+}
+
+function palmTree(rng, lod) {
   const g = new Geo();
   let x = 0, y = 0;
-  const lean = rng.range(0.15, 0.35);
+  const lean = rng.range(0.15, 0.4);
   const segs = 7;
+  let prev = [0, -0.3, 0];
   for (let i = 0; i < segs; i++) {
-    const h = 0.7;
-    const r = 0.22 - i * 0.012;
-    const shade = i % 2 ? 1 : 0.82;
-    g.merge(lathe([[0, 0], [r * 1.15, 0], [r * 1.15, 0], [r, h], [r, h], [0, h]], 8, [BARK[0] * 1.6 * shade, BARK[1] * 1.6 * shade, BARK[2] * 1.5 * shade, 0]),
-      T.chain(T.rotZ(-lean * (i / segs)), T.translate(x, y, 0)));
+    const h = 0.95;
     x += Math.sin(lean * (i / segs)) * h;
     y += Math.cos(lean * (i / segs)) * h * 0.97;
+    const shade = i % 2 ? 1 : 0.85;
+    limb(g, prev, [x, y, 0], 0.26 - i * 0.012, 0.24 - i * 0.012, 8, [0.42 * shade, 0.33 * shade, 0.22 * shade, 0]);
+    prev = [x, y, 0];
   }
-  const leaves = 8;
-  for (let i = 0; i < leaves; i++) {
-    const a = (i / leaves) * Math.PI * 2 + rng.range(0, 0.4);
-    const leaf = new Geo();
-    const len = rng.range(2.0, 2.6);
-    const pts = 8;
-    for (let k = 0; k <= pts; k++) {
-      const t = k / pts;
-      const w = Math.sin(t * Math.PI) * 0.38 + 0.02;
-      const ly = 0.45 * Math.sin(t * Math.PI * 0.8) - t * t * 1.2;
-      const shade = 0.72 + 0.28 * t;
-      leaf.vertex(t * len, ly, w, 0, 1, 0, [shade, shade, shade, 1]);
-      leaf.vertex(t * len, ly + 0.08, 0, 0, 1, 0, [shade, shade, shade, 1]);
-      leaf.vertex(t * len, ly, -w, 0, 1, 0, [shade, shade, shade, 1]);
-    }
-    for (let k = 0; k < pts; k++) {
-      const a0 = k * 3;
-      leaf.quad(a0, a0 + 1, a0 + 4, a0 + 3);
-      leaf.quad(a0 + 1, a0 + 2, a0 + 5, a0 + 4);
-    }
-    const back = new Geo().merge(leaf, (p, n) => { n[1] = -1; });
-    leaf.merge(back);
-    g.merge(leaf, T.chain(T.rotY(a), T.translate(x, y, 0)));
+  const crown = [x, y + 0.3, 0];
+  const fronds = lod === 0 ? 11 : 7;
+  for (let i = 0; i < fronds; i++) {
+    const a = (i / fronds) * Math.PI * 2 + rng.range(-0.2, 0.2);
+    const up = rng.range(0.05, 0.45);
+    const dir = vNorm([Math.cos(a), up, Math.sin(a)]);
+    const len = rng.range(2.6, 3.4);
+    const center = vAdd(crown, vScale(dir, len * 0.5));
+    const across = vNorm(vCross(dir, [0, 1, 0]));
+    const flat = vNorm(vAdd(across, [0, 0.15, 0]));
+    card(g, center, dir, flat, len * 0.5, 0.75, 'palm', vAdd(crown, [0, -0.6, 0]), 0.5, 4, len * 0.45);
   }
-  return g.flat();
+  return g;
 }
 
-function rock(rng, noise) {
+function shrub(rng, lod) {
+  const g = new Geo();
+  const center = [0, 0.55, 0];
+  const n = lod === 0 ? 14 : 6;
+  for (let k = 0; k < n; k++) {
+    const d = randomUnit(rng);
+    const p = vAdd(center, [d[0] * 0.45, Math.abs(d[1]) * 0.35, d[2] * 0.45]);
+    const nrm = vNorm(vAdd(vNorm(vSub(p, [0, 0, 0])), vScale(randomUnit(rng), 0.6)));
+    const u = vNorm(vCross(nrm, [0, 1, 0]));
+    const v = vCross(nrm, u);
+    const sc = rng.range(0.45, 0.65) * (lod === 0 ? 1 : 1.4);
+    card(g, p, u, v, sc, sc, 'shrub', [0, 0.2, 0], 0.7);
+  }
+  return g;
+}
+
+function rock(rng, _lod, noise) {
   const g = icosphere(3);
   const sx = rng.range(0.8, 1.3), sy = rng.range(0.5, 0.9), sz = rng.range(0.8, 1.3);
   const off = rng.range(0, 100);
-  const out = new Geo().merge(g, (p) => {
+  const shaped = new Geo().merge(g, (p) => {
     const d = 1 + noise(p[0] * 2.2 + off, p[2] * 2.2 + p[1] * 1.7) * 0.25 + noise(p[0] * 7 + off, p[1] * 7 - p[2] * 3) * 0.06;
     p[0] *= sx * d * 2; p[1] = Math.max(p[1] * sy * d * 2, -0.25); p[2] *= sz * d * 2;
     p[1] += 0.2;
   });
-  return out.flat();
+  // recompute smooth normals from the displaced surface
+  const N = new Array(shaped.normals.length).fill(0);
+  const P = shaped.positions, I = shaped.indices;
+  for (let t = 0; t < I.length; t += 3) {
+    const [a, b, c] = [I[t], I[t + 1], I[t + 2]];
+    const e1 = [P[b * 3] - P[a * 3], P[b * 3 + 1] - P[a * 3 + 1], P[b * 3 + 2] - P[a * 3 + 2]];
+    const e2 = [P[c * 3] - P[a * 3], P[c * 3 + 1] - P[a * 3 + 1], P[c * 3 + 2] - P[a * 3 + 2]];
+    let fn = vCross(e1, e2);
+    const outward = [P[a * 3], P[a * 3 + 1] - 0.2, P[a * 3 + 2]];
+    if (fn[0] * outward[0] + fn[1] * outward[1] + fn[2] * outward[2] < 0) fn = vScale(fn, -1);
+    for (const v of [a, b, c]) { N[v * 3] += fn[0]; N[v * 3 + 1] += fn[1]; N[v * 3 + 2] += fn[2]; }
+  }
+  for (let v = 0; v < N.length; v += 3) {
+    const l = Math.hypot(N[v], N[v + 1], N[v + 2]) || 1;
+    shaped.normals[v] = N[v] / l; shaped.normals[v + 1] = N[v + 1] / l; shaped.normals[v + 2] = N[v + 2] / l;
+  }
+  return shaped;
 }
 
 function crystalCluster(rng) {
@@ -495,27 +622,28 @@ function pillar(rng) {
   return g;
 }
 
-function flower(rng) {
-  const g = new Geo();
-  const h = rng.range(0.35, 0.6);
-  g.merge(cylinder(STEM, 5), T.chain(T.scale(0.04, h, 0.04), T.translate(0, h / 2, 0)));
-  const petals = 6;
-  for (let i = 0; i < petals; i++) {
-    const a = (i / petals) * Math.PI * 2;
-    g.merge(sphere(TINT, 8, 5), T.chain(T.scale(0.17, 0.04, 0.09), T.translate(0.1, 0, 0), T.rotZ(0.25), T.rotY(a), T.translate(0, h, 0)));
-  }
-  g.merge(sphere([1, 0.82, 0.2, 0], 8, 5), T.chain(T.scale(0.09, 0.07, 0.09), T.translate(0, h + 0.02, 0)));
-  return g;
-}
+/**
+ * Scatter catalogue. `kind` is the shading model (see mesh.js), `lods` lists
+ * distance bands, `alpha` marks alpha-tested double-sided foliage cards.
+ */
+export const SCATTER = {
+  oak: { variants: 3, lods: [0, 55], kind: 4, alpha: true, wind: 1, scale: [0.85, 1.25], build: broadleafTree },
+  pine: { variants: 3, lods: [0, 60], kind: 4, alpha: true, wind: 0.7, scale: [0.8, 1.3], build: conifer },
+  palm: { variants: 3, lods: [0, 60], kind: 4, alpha: true, wind: 1.2, scale: [0.85, 1.2], build: palmTree },
+  flower: { variants: 2, lods: [0, 30], kind: 4, alpha: true, wind: 1.5, scale: [0.7, 1.3], build: shrub },
+  rock: { variants: 4, lods: [0], kind: 5, alpha: false, wind: 0, scale: [0.5, 1.9], build: rock },
+  crystal: { variants: 3, lods: [0], kind: 0, alpha: false, wind: 0, scale: [0.7, 1.4], build: crystalCluster },
+  cactus: { variants: 3, lods: [0], kind: 3, alpha: false, wind: 0.15, scale: [0.8, 1.3], build: cactus },
+  mushroom: { variants: 3, lods: [0], kind: 3, alpha: false, wind: 0.2, scale: [0.6, 1.8], build: mushroom },
+  pillar: { variants: 3, lods: [0], kind: 5, alpha: false, wind: 0, scale: [0.8, 1.2], build: pillar },
+};
+export const SCATTER_VARIANTS = Object.fromEntries(Object.entries(SCATTER).map(([k, v]) => [k, v.variants]));
 
-const SCATTER_BUILDERS = { pine, oak, palm, rock, crystal: crystalCluster, cactus, mushroom, pillar, flower };
-/** Visual variations built per scatter kind (grass is rendered by the GPU grass system). */
-export const SCATTER_VARIANTS = { pine: 3, oak: 3, palm: 3, rock: 4, crystal: 3, cactus: 3, mushroom: 3, pillar: 3, flower: 2 };
-
-export function scatterMesh(kind, variant) {
+export function scatterMesh(kind, variant, lod = 0) {
   const rng = new Rng(1000 + variant * 7919 + kind.length * 31);
   const noise = createNoise2D(77 + variant);
-  return SCATTER_BUILDERS[kind](rng, noise).finish();
+  const g = SCATTER[kind].build(rng, lod, noise);
+  return g.finish();
 }
 
 // ---------------------------------------------------------------- shapes for prefabs
