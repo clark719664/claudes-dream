@@ -55,17 +55,48 @@ function userMessage(prompt, baseSpec) {
 export async function generateWithClaude({ prompt, baseSpec = null, onEvent = () => {}, signal } = {}) {
   const client = new Anthropic();
   onEvent('status', { message: baseSpec ? 'Claude is reworking your game…' : 'Claude is designing your game…' });
-  const stream = client.beta.messages.stream({
+  const request = (structured) => ({
     model: MODEL,
     max_tokens: 64000,
     betas: ['server-side-fallback-2026-07-01'],
     fallbacks: 'default',
     thinking: { type: 'adaptive', display: 'summarized' },
-    output_config: { effort: EFFORT, format: { type: 'json_schema', schema: GAME_SPEC_SCHEMA } },
+    output_config: structured
+      ? { effort: EFFORT, format: { type: 'json_schema', schema: GAME_SPEC_SCHEMA } }
+      : { effort: EFFORT },
     system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-    messages: [{ role: 'user', content: userMessage(prompt, baseSpec) }],
-  }, { signal });
+    messages: [{
+      role: 'user',
+      content: structured ? userMessage(prompt, baseSpec)
+        : `${userMessage(prompt, baseSpec)}\n\nReply with only the JSON object (no prose, no code fences) following this JSON Schema:\n${JSON.stringify(GAME_SPEC_SCHEMA)}`,
+    }],
+  });
 
+  let message;
+  try {
+    message = await streamOnce(client, request(true), onEvent, signal);
+  } catch (err) {
+    // If the API ever rejects the schema, retry with plain JSON instructions instead.
+    if (!(err instanceof Anthropic.BadRequestError) || !/schema|output_config|format/i.test(err.message)) throw err;
+    onEvent('status', { message: 'Retrying without structured output…' });
+    message = await streamOnce(client, request(false), onEvent, signal);
+  }
+
+  if (message.stop_reason === 'refusal') {
+    throw new Error('Claude declined this request. Try describing the game differently.');
+  }
+  if (message.stop_reason === 'max_tokens') {
+    throw new Error('The design was cut off before it finished. Try a simpler idea.');
+  }
+  const text = message.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
+  const raw = parseJSON(text);
+  if (baseSpec && raw && typeof raw === 'object' && baseSpec.seed && !raw.seed) raw.seed = baseSpec.seed;
+  const { spec, warnings } = normalizeSpec(raw);
+  return { spec, warnings, usage: message.usage, model: message.model };
+}
+
+async function streamOnce(client, params, onEvent, signal) {
+  const stream = client.beta.messages.stream(params, { signal });
   let chars = 0;
   let lastProgress = 0;
   stream.on('thinking', (delta) => onEvent('thinking', { text: delta }));
@@ -76,24 +107,20 @@ export async function generateWithClaude({ prompt, baseSpec = null, onEvent = ()
       onEvent('progress', { chars });
     }
   });
+  return stream.finalMessage();
+}
 
-  const message = await stream.finalMessage();
-  if (message.stop_reason === 'refusal') {
-    throw new Error('Claude declined this request. Try describing the game differently.');
-  }
-  if (message.stop_reason === 'max_tokens') {
-    throw new Error('The design was cut off before it finished. Try a simpler idea.');
-  }
-  const text = message.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
-  let raw;
+function parseJSON(text) {
   try {
-    raw = JSON.parse(text);
+    return JSON.parse(text);
   } catch {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start >= 0 && end > start) {
+      try { return JSON.parse(text.slice(start, end + 1)); } catch { /* fall through */ }
+    }
     throw new Error('Claude returned an unreadable design. Please try again.');
   }
-  if (baseSpec && raw && typeof raw === 'object' && baseSpec.seed && !raw.seed) raw.seed = baseSpec.seed;
-  const { spec, warnings } = normalizeSpec(raw);
-  return { spec, warnings, usage: message.usage, model: message.model };
 }
 
 /** True when some Anthropic credential is configured for this process. */

@@ -20,7 +20,12 @@ const browser = await chromium.launch({
   headless: true,
   args: ['--enable-unsafe-webgpu', '--enable-features=Vulkan', '--use-vulkan=swiftshader', '--use-webgpu-adapter=swiftshader', '--use-angle=swiftshader'],
 });
-const tab = await browser.newPage({ viewport: { width: Number(width), height: Number(height) } });
+// MOBILE=1 emulates a phone (touch, coarse pointer, mobile user agent => low tier)
+const mobile = process.env.MOBILE === '1' ? {
+  isMobile: true, hasTouch: true, deviceScaleFactor: 1,
+  userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Mobile Safari/537.36',
+} : {};
+const tab = await browser.newPage({ viewport: { width: Number(width), height: Number(height) }, ...mobile });
 const logs = [];
 tab.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') logs.push(`[${m.type()}] ${m.text()}`); });
 tab.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`));

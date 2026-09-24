@@ -113,3 +113,48 @@ test('generate falls back to the offline designer without credentials', async ()
     app.close();
   }
 });
+
+test('a rejected schema is retried without structured outputs', async () => {
+  const designed = designFromPrompt('snowy mountain walk');
+  designed.title = 'Retry Peaks';
+  const bodies = [];
+  const mock = http.createServer((req, res) => {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', () => {
+      const parsed = JSON.parse(body);
+      bodies.push(parsed);
+      if (parsed.output_config.format) {
+        res.writeHead(400, { 'content-type': 'application/json' });
+        return res.end(JSON.stringify({ type: 'error', error: { type: 'invalid_request_error', message: 'output_config.format: schema is too complex' } }));
+      }
+      sse(res, [
+        ['message_start', { type: 'message_start', message: { id: 'msg_2', type: 'message', role: 'assistant', model: 'claude-opus-5', content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 1 } } }],
+        ['content_block_start', { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } }],
+        ['content_block_delta', { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: `Here you go:\n${JSON.stringify(designed)}` } }],
+        ['content_block_stop', { type: 'content_block_stop', index: 0 }],
+        ['message_delta', { type: 'message_delta', delta: { stop_reason: 'end_turn', stop_sequence: null }, usage: { output_tokens: 900 } }],
+        ['message_stop', { type: 'message_stop' }],
+      ]);
+    });
+  });
+  const mockUrl = await listen(mock);
+  process.env.ANTHROPIC_API_KEY = 'test-key';
+  process.env.ANTHROPIC_BASE_URL = mockUrl;
+  const { createServer } = await import('../server/index.js');
+  const app = createServer();
+  const appUrl = await listen(app);
+  try {
+    const res = await fetch(`${appUrl}/api/generate`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt: 'snowy walk' }) });
+    const spec = (await readEvents(res)).find((e) => e.type === 'spec');
+    assert.equal(spec.data.source, 'claude');
+    assert.equal(spec.data.spec.title, 'Retry Peaks');
+    assert.equal(bodies.length, 2);
+    assert.ok(!bodies[1].output_config.format);
+  } finally {
+    app.close();
+    mock.close();
+    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.ANTHROPIC_BASE_URL;
+  }
+});
