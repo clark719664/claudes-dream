@@ -156,7 +156,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   if (kind == 4.0) { col *= 0.6 + 0.4 * sin(frame.time.x * 9.0 + p.misc.y * 30.0); }
   if (kind == 1.0 || kind == 2.0 || kind == 5.0) {
     mode = 1.0;
-    let lit = keyRadiance() * 0.25 * cloudShadow(p.pos.xyz) + skyIrradiance(vec3f(0.0, 1.0, 0.0)) * 1.2;
+    let lit = keyRadiance() * 0.25 * cloudShadow(p.pos.xyz) + ambientIrradiance(p.pos.xyz, vec3f(0.0, 1.0, 0.0)) * 1.2;
     col *= lit;
   }
   if (kind >= 10.0) { size = p.color.a; fade = smoothstep(0.0, 0.35, lifeFrac); }

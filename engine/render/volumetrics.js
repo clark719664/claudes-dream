@@ -19,6 +19,7 @@ struct Light { posRadius: vec4f, color: vec4f };
 @group(0) @binding(6) var<storage, read> lights: array<Light>;
 @group(0) @binding(7) var repeatSampler: sampler;
 @group(0) @binding(8) var weatherTex: texture_2d<f32>;
+@group(0) @binding(9) var giTex: texture_2d_array<f32>;
 `;
 
 const SCATTER_CS = /* wgsl */ `
@@ -66,7 +67,8 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
   // lighting
   let key = keyRadiance() * volumeShadow(p, viewDist) * cloudShadow(p);
   let cosT = dot(dir, frame.keyDir.xyz);
-  let ambient = skyIrradiance(vec3f(0.0, 1.0, 0.0)) * 0.9 + skyIrradiance(vec3f(0.0, -1.0, 0.0)) * 0.1;
+  // ambient from the irradiance field: fog in a canyon is darker, fog over lava glows
+  let ambient = ambientIrradiance(p, vec3f(0.0, 1.0, 0.0)) * 0.8 + ambientIrradiance(p, vec3f(0.0, -1.0, 0.0)) * 0.2;
   var S = fogScatter * (key * phaseHG(cosT, frame.fog.w) + ambient * 0.5)
         + rayleigh * (key * phaseRayleigh(cosT) + ambient)
         + mie * (key * phaseMie(cosT, MIE_G) + ambient);
@@ -127,13 +129,13 @@ export class Volumetrics {
     this.scatter = make('froxel-scatter');
     this.volume = make('froxel-volume');
     this.params = d.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-    const globals = bindLayout(d, 'vol-globals', [['C', 'uniform'], ['C', 'sampler'], ['C', 'csampler'], ['C', 'texture'], ['C', 'read'], ['C', 'depth-array'], ['C', 'read'], ['C', 'sampler'], ['C', 'texture']]);
+    const globals = bindLayout(d, 'vol-globals', [['C', 'uniform'], ['C', 'sampler'], ['C', 'csampler'], ['C', 'texture'], ['C', 'read'], ['C', 'depth-array'], ['C', 'read'], ['C', 'sampler'], ['C', 'texture'], ['C', 'texture-array']]);
     const outL = bindLayout(d, 'vol-out', [['C', 'storage-texture:rgba16float:3d'], ['C', 'uniform']]);
     const intL = bindLayout(d, 'vol-int', [['C', 'uniform'], ['C', 'texture3d'], ['C', 'storage-texture:rgba16float:3d']]);
     this.scatterPipe = d.createComputePipeline({ label: 'froxel-scatter', layout: d.createPipelineLayout({ bindGroupLayouts: [globals, outL] }), compute: { module: createShader(d, SCATTER_CS, 'froxel-scatter'), entryPoint: 'main' } });
     this.integratePipe = d.createComputePipeline({ label: 'froxel-integrate', layout: d.createPipelineLayout({ bindGroupLayouts: [intL] }), compute: { module: createShader(d, INTEGRATE_CS, 'froxel-integrate'), entryPoint: 'main' } });
     const a = renderer.atmosphere;
-    this.globalGroup = bindGroup(d, globals, [renderer.frameBuffer, renderer.samplers.linear, renderer.samplers.shadow, a.transmittance.createView(), a.shBuffer, renderer.shadowArrayView, renderer.lightBuffer, renderer.samplers.repeat, renderer.weatherView]);
+    this.globalGroup = bindGroup(d, globals, [renderer.frameBuffer, renderer.samplers.linear, renderer.samplers.shadow, a.transmittance.createView(), a.shBuffer, renderer.shadowArrayView, renderer.lightBuffer, renderer.samplers.repeat, renderer.weatherView, renderer.giView]);
     this.outGroup = bindGroup(d, outL, [this.scatter.createView(), this.params]);
     this.intGroup = bindGroup(d, intL, [renderer.frameBuffer, this.scatter.createView(), this.volume.createView()]);
     this.frame = 0;

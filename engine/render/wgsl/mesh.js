@@ -212,7 +212,7 @@ fn fsMain(in: VOut, @builtin(front_facing) front: bool) -> @location(0) vec4f {
     col += albedo * key * shadow * (back * 0.9 + wrap * 0.18) * vec3f(0.9, 1.0, 0.55);
   }
   col += pointLights(s, in.world);
-  col += ambientLight(s, ao, ao);
+  col += ambientLight(s, in.world, ao, ao);
   col += in.emissive.rgb;
   col = mix(col, vec3f(8.0, 2.0, 2.0), in.params.z);
   col = applyVolumetrics(col, uv, length(in.world - frame.camPos.xyz));

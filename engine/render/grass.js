@@ -139,7 +139,7 @@ fn fs(in: VOut, @builtin(front_facing) front: bool) -> @location(0) vec4f {
   let back = pow(clamp(dot(-frame.keyDir.xyz, v), 0.0, 1.0), 3.0);
   col += in.color * key * shadow * (back * 0.7 + 0.1) * in.t * vec3f(0.9, 1.0, 0.55);
   col += pointLights(s, in.world);
-  col += ambientLight(s, mix(0.45, 1.0, in.t), 1.0);
+  col += ambientLight(s, in.world, mix(0.45, 1.0, in.t), 1.0);
   col = applyVolumetrics(col, uv, length(in.world - frame.camPos.xyz));
   return vec4f(col, 1.0);
 }

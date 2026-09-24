@@ -513,7 +513,7 @@ export class Atmosphere {
     this.envRaw = texture2D(device, { width: this.envSize, height: this.envSize, layers: 6, format: 'rgba16float', usage: S, label: 'env-raw' });
     this.env = texture2D(device, { width: this.envSize, height: this.envSize, layers: 6, mips: this.envMips, format: 'rgba16float', usage: S, label: 'env-prefiltered' });
     this.envView = this.env.createView({ dimension: 'cube' });
-    this.shBuffer = createBuffer(device, 9 * 16, GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, 'sh');
+    this.shBuffer = createBuffer(device, 9 * 16, GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC, 'sh');
     this.sampler = device.createSampler({ magFilter: 'linear', minFilter: 'linear', mipmapFilter: 'linear', addressModeU: 'clamp-to-edge', addressModeV: 'clamp-to-edge' });
     this.paramsBuffer = createBuffer(device, 16, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 'atmos-params');
     this.prefilterParams = [];

@@ -113,7 +113,7 @@ fn fs(in: VOut) -> @location(0) vec4f {
   var refr = textureSampleLevel(sceneColor, linearSampler, ruv, 0.0).rgb;
   let absorb = (1.0 - frame.water.rgb) * 0.45 + vec3f(0.05, 0.02, 0.01);
   let trans = exp(-absorb * refrDist);
-  let irr = skyIrradiance(vec3f(0.0, 1.0, 0.0)) + keyRadiance() * max(frame.keyDir.y, 0.0) * 0.12;
+  let irr = ambientIrradiance(in.world, vec3f(0.0, 1.0, 0.0)) + keyRadiance() * max(frame.keyDir.y, 0.0) * 0.12;
   let inscatter = frame.water.rgb * irr * 0.9;
   refr = refr * trans + inscatter * (1.0 - trans);
 

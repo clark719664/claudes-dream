@@ -8,6 +8,7 @@ import { mat4, hexToLinear } from '../engine/core/math.js';
 import { Rng } from '../shared/rng.js';
 import { Volumetrics } from '../engine/render/volumetrics.js';
 import { Clouds } from '../engine/render/clouds.js';
+import { GI } from '../engine/render/gi.js';
 import { GTAO } from '../engine/render/gtao.js';
 import { Grass } from '../engine/render/grass.js';
 import { Water } from '../engine/render/water.js';
@@ -29,6 +30,7 @@ async function main() {
   renderer.setTerrain(hf, { waterLevel: water });
   renderer.setPalette({ low: '#c9b98a', mid: '#4f7a2e', high: '#eef2f5', cliff: '#6b5d52' });
   if (renderer.tier.clouds && !q.has('noclouds')) renderer.addFeature(new Clouds(renderer));
+  if (!q.has('nogi')) renderer.addFeature(new GI(renderer));
   const vol = new Volumetrics(renderer);
   vol.setMaxDistance(hf.worldSize * 1.1);
   if (!q.has('novol')) renderer.addFeature(vol);
@@ -42,6 +44,7 @@ async function main() {
   renderer.addFeature(particles);
   particles.setAmbient(q.get('particles') ?? 'none');
   window.__particles = particles;
+  window.__renderer = renderer;
   renderer.setEnvironment({ timeOfDay: num('time', 16.5), sunAzimuth: num('az', 210), cloudCover: num('clouds', 0.35), fogDensity: num('fog', 0.2), wind: 0.4 });
 
   const scene = renderer.createScene();

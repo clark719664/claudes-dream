@@ -10,25 +10,25 @@ export const TIERS = {
     name: 'low', renderScale: [0.5, 0.75], maxOutputPixels: 1280 * 720, targetMs: 33.3,
     shadowSize: 1024, cascades: 2, shadowDistance: 60, gtao: false,
     froxels: [64, 36, 32], volShadows: false, grassRadius: 24, grassDensity: 5, particles: 4096,
-    envSize: 32, bloomMips: 5, lights: 8, drawDistance: 0.6, clouds: 0, cloudPano: [1, 1], cloudSteps: [0, 0],
+    envSize: 32, bloomMips: 5, lights: 8, drawDistance: 0.6, clouds: 0, cloudPano: [1, 1], cloudSteps: [0, 0], giProbes: 48, giRays: 8,
   },
   medium: {
     name: 'medium', renderScale: [0.6, 0.85], maxOutputPixels: 1920 * 1080, targetMs: 16.7,
     shadowSize: 2048, cascades: 3, shadowDistance: 100, gtao: false,
     froxels: [96, 54, 48], volShadows: true, grassRadius: 38, grassDensity: 8, particles: 12288,
-    envSize: 64, bloomMips: 6, lights: 16, drawDistance: 0.85, clouds: 1, cloudPano: [1536, 384], cloudSteps: [40, 72],
+    envSize: 64, bloomMips: 6, lights: 16, drawDistance: 0.85, clouds: 1, cloudPano: [1536, 384], cloudSteps: [40, 72], giProbes: 64, giRays: 16,
   },
   high: {
     name: 'high', renderScale: [0.67, 1.0], maxOutputPixels: 2560 * 1440, targetMs: 16.7,
     shadowSize: 2048, cascades: 4, shadowDistance: 150, gtao: true,
     froxels: [160, 90, 64], volShadows: true, grassRadius: 55, grassDensity: 11, particles: 24576,
-    envSize: 64, bloomMips: 6, lights: 32, drawDistance: 1.0, clouds: 1, cloudPano: [2560, 640], cloudSteps: [56, 96],
+    envSize: 64, bloomMips: 6, lights: 32, drawDistance: 1.0, clouds: 1, cloudPano: [2560, 640], cloudSteps: [56, 96], giProbes: 96, giRays: 16,
   },
   ultra: {
     name: 'ultra', renderScale: [0.8, 1.0], maxOutputPixels: 3840 * 2160, targetMs: 16.7,
     shadowSize: 4096, cascades: 4, shadowDistance: 220, gtao: true,
     froxels: [192, 108, 96], volShadows: true, grassRadius: 75, grassDensity: 15, particles: 49152,
-    envSize: 128, bloomMips: 7, lights: 32, drawDistance: 1.3, clouds: 1, cloudPano: [4096, 1024], cloudSteps: [72, 128],
+    envSize: 128, bloomMips: 7, lights: 32, drawDistance: 1.3, clouds: 1, cloudPano: [4096, 1024], cloudSteps: [72, 128], giProbes: 128, giRays: 16,
   },
 };
 

@@ -42,6 +42,7 @@ export const FRAME = defineStruct('Frame', [
   ['cloudPano', 'vec4'],      // cloud panorama width, height, -, -
   ['weatherFx', 'vec4'],      // surface wetness, rain intensity, lightning flash, aurora strength
   ['flashPos', 'vec4'],       // lightning bolt position xz (camera relative), strike brightness, -
+  ['gi', 'vec4'],             // irradiance field origin x, z, extent m, enabled
 ]);
 
 /** Group 0 for every shading pipeline (mesh, grass, sky, water, particles). */
@@ -64,6 +65,7 @@ export const GLOBAL_LAYOUT = [
   ['F', 'texture'],          // 15 foliage atlas
   ['VFC', 'texture'],        // 16 weather map (cloud coverage, type, detail)
   ['F', 'read'],             // 17 volumetric cloud panorama
+  ['VFC', 'texture-array'],  // 18 heightfield irradiance field (GI)
 ];
 
 export const GLOBALS_WGSL = /* wgsl */ `
@@ -87,6 +89,7 @@ struct Light { posRadius: vec4f, color: vec4f };
 @group(0) @binding(15) var foliageAtlas: texture_2d<f32>;
 @group(0) @binding(16) var weatherTex: texture_2d<f32>;
 @group(0) @binding(17) var<storage, read> cloudPano: array<vec2u>;
+@group(0) @binding(18) var giTex: texture_2d_array<f32>;
 `;
 
 // ---------------------------------------------------------------- pure functions
@@ -317,9 +320,8 @@ fn cloudsAt(d: vec3f) -> vec4f {
 }
 `;
 
-// ---------------------------------------------------------------- shading library (needs globals)
-
-export const LIGHTING_WGSL = /* wgsl */ `
+/** Key light (sun or moon) after the atmosphere. Needs frame, transmittanceLUT, linearSampler. */
+export const KEY_WGSL = /* wgsl */ `
 fn sampleTransmittance(r: f32, mu: f32) -> vec3f {
   return textureSampleLevel(transmittanceLUT, linearSampler, transmittanceUV(r, mu), 0.0).rgb;
 }
@@ -333,8 +335,52 @@ fn keyRadiance() -> vec3f {
   if (frame.keyDir.w > 0.5) { return t * frame.moonDir.w * vec3f(0.75, 0.85, 1.0) * horizon; }
   return t * frame.sunDir.w * horizon;
 }
+`;
 
+/**
+ * Heightfield irradiance field: a 2.5D grid of SH probes floating over the
+ * terrain (see render/gi.js). Surfaces near the ground read bounce light and
+ * sky occlusion from it; things high above the terrain fade back to the open
+ * sky. Needs frame, giTex, linearSampler and SH_WGSL.
+ */
+export const GI_WGSL = /* wgsl */ `
+struct GiProbe { r: vec4f, g: vec4f, b: vec4f, info: vec4f, weight: f32 };
+
+fn giFetch(p: vec3f) -> GiProbe {
+  var g: GiProbe;
+  g.weight = 0.0;
+  if (frame.gi.w < 0.5) { return g; }
+  let uv = (p.xz - frame.gi.xy) / frame.gi.z;
+  if (any(uv <= vec2f(0.0)) || any(uv >= vec2f(1.0))) { return g; }
+  g.r = textureSampleLevel(giTex, linearSampler, uv, 0, 0.0);
+  g.g = textureSampleLevel(giTex, linearSampler, uv, 1, 0.0);
+  g.b = textureSampleLevel(giTex, linearSampler, uv, 2, 0.0);
+  g.info = textureSampleLevel(giTex, linearSampler, uv, 3, 0.0);
+  let edge = smoothstep(0.0, 0.04, min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y)));
+  g.weight = edge * (1.0 - smoothstep(4.0, 45.0, p.y - g.info.x));
+  return g;
+}
+/** Irradiance / PI from an L1 SH probe (cosine lobe applied). */
+fn giEval(g: GiProbe, n: vec3f) -> vec3f {
+  let k = 0.488603 * 0.6666667;
+  let sh = vec4f(0.282095, k * n.y, k * n.z, k * n.x);
+  return max(vec3f(dot(g.r, sh), dot(g.g, sh), dot(g.b, sh)), vec3f(0.0));
+}
+/** Diffuse irradiance / PI at p: bounce light and terrain occlusion near the ground, open sky above. */
+fn ambientIrradiance(p: vec3f, n: vec3f) -> vec3f {
+  let sky = skyIrradiance(n);
+  let g = giFetch(p);
+  if (g.weight <= 0.0) { return sky; }
+  return mix(sky, max(giEval(g, n), sky * 0.1), g.weight);
+}
+`;
+
+// ---------------------------------------------------------------- shading library (needs globals)
+
+export const LIGHTING_WGSL = /* wgsl */ `
+${KEY_WGSL}
 ${SH_WGSL}
+${GI_WGSL}
 ${CLOUD_WGSL}
 var<private> POISSON: array<vec2f, 12> = array<vec2f, 12>(
   vec2f(-0.326, -0.406), vec2f(-0.840, -0.074), vec2f(-0.696, 0.457), vec2f(-0.203, 0.621),
@@ -461,18 +507,31 @@ fn pointLights(s: Surface, worldPos: vec3f) -> vec3f {
   return c;
 }
 
-/** Image based lighting from the live sky: SH diffuse + prefiltered GGX specular (split sum). */
-fn ambientLight(s: Surface, ao: f32, specOcclusion: f32) -> vec3f {
+/**
+ * Image based lighting: diffuse from the heightfield irradiance field (or the
+ * sky's SH far from the ground) + prefiltered GGX specular (split sum).
+ */
+fn ambientLight(s: Surface, p: vec3f, ao: f32, specOcclusion: f32) -> vec3f {
   let NoV = max(dot(s.n, s.v), 1e-4);
   let ab = textureSampleLevel(brdfLUT, linearSampler, vec2f(NoV, s.roughness), 0.0).rg;
   let specColor = (s.f0 * ab.x + ab.y) * s.energyComp;
   let r = reflect(-s.v, s.n);
   let maxMip = f32(textureNumLevels(envCube) - 1u);
   let env = textureSampleLevel(envCube, linearSampler, r, s.roughness * maxMip).rgb;
-  let diffuse = skyIrradiance(s.n) * s.albedo * (1.0 - s.metallic) * (1.0 - specColor);
+  let sky = skyIrradiance(s.n);
+  var irr = sky;
+  var reflOcc = 1.0;
+  let g = giFetch(p);
+  if (g.weight > 0.0) {
+    irr = mix(sky, max(giEval(g, s.n), sky * 0.1), g.weight);
+    // reflections that would see the valley wall instead of the sky are dimmed
+    let skyR = luminance(skyIrradiance(r));
+    reflOcc = mix(1.0, clamp(luminance(giEval(g, r)) / max(skyR, 1e-4), 0.0, 1.0), g.weight);
+  }
+  let diffuse = irr * s.albedo * (1.0 - s.metallic) * (1.0 - specColor);
   // horizon occlusion: reflections pointing below the surface are blocked by it
   let horizon = clamp(1.0 + dot(r, s.n), 0.0, 1.0);
-  return diffuse * ao + env * specColor * specOcclusion * horizon * horizon;
+  return diffuse * ao + env * specColor * specOcclusion * horizon * horizon * reflOcc;
 }
 
 /** Apply the froxel volume: aerial perspective + volumetric fog with light shafts. */
