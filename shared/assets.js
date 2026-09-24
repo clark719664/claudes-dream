@@ -8,7 +8,8 @@ export const ASSET_SOURCES = ['procedural', 'cache', 'cdn', 'generated'];
 export const QUALITY_TIERS = ['low', 'medium', 'high', 'ultra'];
 
 export function semanticAssetKey(request = {}) {
-  const stable = JSON.stringify(sortObject(request));
+  const { fallback: _fallback, key: _key, ...identity } = request;
+  const stable = JSON.stringify(sortObject(identity));
   let h = 2166136261;
   for (let i = 0; i < stable.length; i++) {
     h ^= stable.charCodeAt(i);
