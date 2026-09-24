@@ -22,7 +22,7 @@
 // Anything far above the terrain fades back to the open-sky irradiance.
 
 import { bindLayout, bindGroup, createShader, createBuffer, texture2D, U } from '../gpu/gpu.js';
-import { FRAME, MATH_WGSL, ATMOSPHERE_WGSL, KEY_WGSL, SH_WGSL, CLOUD_WGSL, GI_WGSL } from './wgsl/common.js';
+import { FRAME, MATH_WGSL, ATMOSPHERE_WGSL, KEY_WGSL, SH_WGSL, CLOUD_WGSL, WEATHER_WGSL, GI_WGSL } from './wgsl/common.js';
 
 const PROBE_HEIGHT = 1.5;
 
@@ -45,6 +45,7 @@ ${ATMOSPHERE_WGSL}
 ${KEY_WGSL}
 ${SH_WGSL}
 ${CLOUD_WGSL}
+${WEATHER_WGSL}
 ${GI_WGSL}
 
 var<workgroup> partial: array<array<vec4f, 3>, 64>;
@@ -105,13 +106,21 @@ fn surfaceRadiance(p: vec3f, n: vec3f, albedo: vec3f) -> vec3f {
   let l = frame.keyDir.xyz;
   let direct = keyRadiance() * max(dot(n, l), 0.0) * sunVisibility(p + n * 0.3, l) * cloudShadow(p) / PI;
   // the field's previous value at the hit carries the earlier bounces
-  return albedo * (direct + ambientIrradiance(p, n));
+  return albedo * (direct + fieldIrradiance(p, n));
+}
+
+/** The previous irradiance field without transient weather light (flashes would smear through the history). */
+fn fieldIrradiance(p: vec3f, n: vec3f) -> vec3f {
+  let sky = skyIrradiance(n);
+  let g = giFetch(p);
+  if (g.weight <= 0.0) { return sky; }
+  return mix(sky, max(giEval(g, n), sky * 0.1), g.weight);
 }
 
 fn waterRadiance(p: vec3f, d: vec3f) -> vec3f {
   if (frame.water.w > 0.5) { return frame.water.rgb * 3.0; } // lava glows
   let fresnel = 0.02 + 0.98 * pow(1.0 - abs(d.y), 5.0);
-  return frame.water.rgb * ambientIrradiance(p, vec3f(0.0, 1.0, 0.0)) * 0.8 + skyRadiance(reflect(d, vec3f(0.0, 1.0, 0.0))) * fresnel;
+  return frame.water.rgb * fieldIrradiance(p, vec3f(0.0, 1.0, 0.0)) * 0.8 + skyRadiance(reflect(d, vec3f(0.0, 1.0, 0.0))) * fresnel;
 }
 
 /** Radiance arriving at o from direction d, traced against the heightfield. */

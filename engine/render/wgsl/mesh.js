@@ -171,6 +171,10 @@ fn fsMain(in: VOut, @builtin(front_facing) front: bool) -> @location(0) vec4f {
   // derivatives in uniform control flow, used by the alpha-tested foliage below
   let duvx = dpdx(in.uv);
   let duvy = dpdy(in.uv);
+  // specular anti-aliasing: widen the highlight where the normal changes quickly across the pixel
+  let dndx = dpdx(in.normal);
+  let dndy = dpdy(in.normal);
+  let normalVariance = min(2.0 * (dot(dndx, dndx) + dot(dndy, dndy)), 0.18);
   let kind = in.params.x;
   var albedo = in.color.rgb;
   if (in.card > 0.5) {
@@ -198,6 +202,16 @@ fn fsMain(in: VOut, @builtin(front_facing) front: bool) -> @location(0) vec4f {
     rough = m.rough;
     n = m.n;
   }
+  // rain soaks the world: darker, glossier materials and rippling puddles on the ground
+  if (frame.weatherFx.x > 0.01 && in.card < 0.5) {
+    var geo = normalize(in.normal);
+    if (!front) { geo = -geo; }
+    let w = wetSurface(albedo, rough, n, geo, in.world, metallic, kind == 1.0);
+    albedo = w.albedo;
+    rough = w.rough;
+    n = w.n;
+  }
+  rough = sqrt(rough * rough + normalVariance);
   let s = makeSurface(albedo, metallic, rough, n, v);
   let uv = in.pos.xy * frame.resolution.zw;
   let shadow = shadowAt(in.world, normalize(in.normal) * select(-1.0, 1.0, front), in.pos.xy) * cloudShadow(in.world);

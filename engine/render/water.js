@@ -77,8 +77,14 @@ fn fs(in: VOut) -> @location(0) vec4f {
   let w = waves(in.world.xz, t);
   let dist = length(in.world - frame.camPos.xyz);
   let detail = detailNormal(in.world.xz, t) * mix(0.35, 0.08, clamp(dist / 80.0, 0.0, 1.0)) * (0.4 + frame.time.w);
-  let n = normalize(vec3f(-w.y - detail.x, 1.0, -w.z - detail.y));
+  // raindrops ring the surface near the camera
+  let rip = rainRipples(in.world.xz, frame.weatherFx.y) * (1.0 - smoothstep(20.0, 40.0, dist)) * (1.0 - water.w);
+  let n = normalize(vec3f(-w.y - detail.x + rip.x, 1.0, -w.z - detail.y + rip.y));
   let v = normalize(frame.camPos.xyz - in.world);
+  // specular anti-aliasing: ripples smaller than a pixel widen the highlights instead of sparkling
+  let dnx = dpdx(n);
+  let dny = dpdy(n);
+  let normalVariance = min(2.0 * (dot(dnx, dnx) + dot(dny, dny)), 0.3);
 
   let sceneD = textureLoad(sceneDepth, vec2i(in.pos.xy), 0);
   let sceneDist = linearDepth(sceneD);
@@ -145,9 +151,10 @@ fn fs(in: VOut) -> @location(0) vec4f {
   var col = mix(refr, refl, fres);
   // sun / moon glint
   let h = normalize(v + frame.keyDir.xyz);
-  let spec = D_GGX(max(dot(n, h), 0.0), 0.012) * 0.25;
+  let glintA = sqrt(0.012 * 0.012 + normalVariance);
+  let spec = D_GGX(max(dot(n, h), 0.0), glintA) * 0.25 * (0.012 / glintA);
   col += keyRadiance() * spec * shadowAt(in.world, vec3f(0.0, 1.0, 0.0), in.pos.xy) * fres * 4.0;
-  col += pointLights(makeSurface(vec3f(0.0), 0.0, 0.08, n, v), in.world);
+  col += pointLights(makeSurface(vec3f(0.0), 0.0, sqrt(sqrt(0.08 * 0.08 * 0.08 * 0.08 + normalVariance)), n, v), in.world);
   // shoreline foam
   let foamNoise = fbm(in.world.xz * 1.6 + vec2f(t * 0.3, t * 0.1), 3);
   let foam = (1.0 - smoothstep(0.0, 0.7, thickness)) * smoothstep(0.35, 0.65, foamNoise + 0.25 * sin(t * 1.5 + thickness * 6.0));

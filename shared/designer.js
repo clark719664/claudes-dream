@@ -76,7 +76,7 @@ const THEMES = {
   },
   alien: {
     words: ['alien', 'space', 'planet', 'moon', 'mars', 'cosmic', 'galaxy', 'star', 'ufo', 'sci-fi', 'scifi', 'extraterrestrial', 'asteroid', 'nebula'],
-    time: 20.5, clouds: 0.2, fog: 0.3, tint: '#c7a0ff', particles: 'spores', music: 'mystic',
+    time: 20.5, clouds: 0.2, fog: 0.3, tint: '#c7a0ff', particles: 'spores', music: 'mystic', aurora: 0.7,
     terrain: { style: 'canyon', height: 18, roughness: 0.6, palette: { low: '#3a2a5a', mid: '#5a3a7a', high: '#8a6ab0', cliff: '#2a1f3a' } },
     water: { enabled: true, level: 1.0, color: '#1adfb0' },
     scatter: [['crystal', 0.3, '#6affd8'], ['rock', 0.25, '#4a3a6a'], ['mushroom', 0.2, '#ff5ad8']],
@@ -86,7 +86,7 @@ const THEMES = {
   },
   neon: {
     words: ['neon', 'cyber', 'cyberpunk', 'synthwave', 'retro', 'city', 'arcade', 'tron', 'future', 'futuristic', 'rooftop', 'hacker', 'vaporwave'],
-    time: 22.5, clouds: 0.15, fog: 0.22, tint: '#ffb8ff', particles: 'rain', music: 'upbeat',
+    time: 22.5, clouds: 0.15, fog: 0.22, tint: '#ffb8ff', particles: 'rain', music: 'upbeat', rain: 0.55,
     terrain: { style: 'flat', height: 1, roughness: 0.1, palette: { low: '#15101f', mid: '#1c1530', high: '#2a1f40', cliff: '#0e0a16' } },
     water: { enabled: false, level: 0.5, color: '#1a0a3a' },
     scatter: [['pillar', 0.2, '#2a2440']],
@@ -117,7 +117,7 @@ const THEMES = {
   },
   spooky: {
     words: ['spooky', 'haunted', 'halloween', 'ghost', 'graveyard', 'zombie', 'horror', 'vampire', 'witch', 'creepy', 'scary', 'cursed', 'undead'],
-    time: 23.2, clouds: 0.5, fog: 0.55, tint: '#9ab0ff', particles: 'fireflies', music: 'tense',
+    time: 23.2, clouds: 0.5, fog: 0.55, tint: '#9ab0ff', particles: 'fireflies', music: 'tense', lightning: 0.3,
     terrain: { style: 'hills', height: 8, roughness: 0.5, palette: { low: '#2d2a26', mid: '#34402a', high: '#4a4a44', cliff: '#2a241f' } },
     water: { enabled: true, level: 0.8, color: '#1a2a1f' },
     scatter: [['oak', 0.3, '#3a3a22'], ['rock', 0.2, '#5a5a5a'], ['pillar', 0.06, '#6a6a6a'], ['mushroom', 0.12, '#7aff5a'], ['grass', 0.6, '#4a5a2a']],
@@ -254,14 +254,21 @@ export function analyzePrompt(prompt) {
 
   const collectible = COLLECTIBLES.find((c) => has(text, c.words)) ?? null;
   const enemies = ENEMIES.filter((e) => has(text, e.words));
-  const weather = has(text, ['storm', 'rain', 'thunder']) ? 'rain' : has(text, ['snowing', 'blizzard']) ? 'snow' : null;
+  const stormy = has(text, ['storm', 'stormy', 'thunder', 'thunderstorm', 'lightning', 'tempest', 'hurricane', 'monsoon']);
+  const rainy = stormy || has(text, ['rain', 'rainy', 'raining', 'drizzle', 'downpour', 'showers', 'wet', 'puddle', 'puddles']);
+  const weather = rainy && !has(text, ['lightning only', 'dry storm']) ? 'rain' : has(text, ['snowing', 'blizzard']) ? 'snow' : null;
+  const rain = weather === 'rain' ? (has(text, ['downpour', 'monsoon', 'hurricane', 'torrential', 'heavy rain']) ? 0.95 : stormy ? 0.8 : has(text, ['drizzle', 'light rain']) ? 0.35 : 0.6) : 0;
+  const lightning = stormy ? (has(text, ['lightning', 'thunderstorm', 'electric']) ? 0.8 : 0.55) : 0;
+  const aurora = has(text, ['aurora', 'auroras', 'northern lights', 'southern lights', 'borealis', 'australis']) ? 0.9 : 0;
   const foggy = has(text, ['fog', 'mist', 'haze']);
   const firstPerson = has(text, ['first person', 'first-person', 'fps', 'pov']);
   let accent = null;
   for (const [word, hex] of Object.entries(COLOR_WORDS)) {
     if (tokens(text).includes(word)) { accent = hex; break; }
   }
-  return { text, theme, genre, time, difficulty, size, collectible, enemies, weather, foggy, firstPerson, accent };
+  // the northern lights only show at night
+  if (aurora && time === null) time = 23;
+  return { text, theme, genre, time, difficulty, size, collectible, enemies, weather, rain, lightning, aurora, foggy, firstPerson, accent };
 }
 
 // ---------------------------------------------------------------------------
@@ -463,6 +470,10 @@ export function designFromPrompt(prompt, options = {}) {
     skyTint: theme.tint,
     particles: info.weather ?? theme.particles,
     wind: info.weather ? 0.8 : 0.35,
+    // wet neon streets, stormy spooky nights, alien skies with ribbons of light
+    rain: info.rain || theme.rain || 0,
+    lightning: info.lightning || theme.lightning || 0,
+    aurora: info.aurora || theme.aurora || 0,
   };
   if (info.time === 23 && spec.environment.particles === 'none') spec.environment.particles = 'fireflies';
   spec.terrain = { ...structuredClone(theme.terrain), size };
@@ -521,7 +532,23 @@ export function refineSpec(input, request) {
     changes.push(`restyled the world as ${themeHit[0]}`);
   }
   if (info.time !== null) { spec.environment.timeOfDay = info.time; changes.push(`set the time of day to ${info.time}:00`); }
-  if (info.weather) { spec.environment.particles = info.weather; spec.environment.cloudCover = 0.85; spec.environment.wind = 0.8; changes.push(`added ${info.weather}`); }
+  // weather can be stopped as well as started
+  const calm = less || has(text, ['stop', 'end the', 'dry', 'clear up', 'no more', 'calm']);
+  if (info.weather && !calm) { spec.environment.particles = info.weather; spec.environment.cloudCover = 0.85; spec.environment.wind = 0.8; changes.push(`added ${info.weather}`); }
+  if (info.rain || (calm && has(text, ['rain', 'storm', 'wet']))) {
+    spec.environment.rain = calm ? 0 : info.rain;
+    if (calm && spec.environment.particles === 'rain') spec.environment.particles = 'none';
+    if (calm) changes.push('stopped the rain');
+  }
+  if (info.lightning || (calm && has(text, ['lightning', 'thunder', 'storm']))) {
+    spec.environment.lightning = calm ? 0 : info.lightning;
+    changes.push(calm ? 'calmed the storm' : 'brewed a thunderstorm');
+  }
+  if (info.aurora) {
+    spec.environment.aurora = calm ? 0 : info.aurora;
+    if (!calm && info.time === 23 && (spec.environment.timeOfDay > 5 && spec.environment.timeOfDay < 20)) spec.environment.timeOfDay = 23;
+    changes.push(calm ? 'hid the northern lights' : 'lit the sky with the northern lights');
+  }
   if (info.foggy) { spec.environment.fogDensity = less ? 0.05 : Math.min(1, spec.environment.fogDensity + 0.35); changes.push(less ? 'cleared the fog' : 'thickened the fog'); }
   if (has(text, ['cloud', 'cloudy', 'overcast'])) { spec.environment.cloudCover = less ? 0.05 : 0.8; changes.push('adjusted the clouds'); }
 

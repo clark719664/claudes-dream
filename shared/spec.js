@@ -69,6 +69,9 @@ export const GAME_SPEC_SCHEMA = obj('A complete Reverie game.', {
     skyTint: color('Multiplies the sky. "#ffffff" is a natural Earth sky; purple/green for alien worlds.'),
     particles: oneOf(PARTICLES, 'Ambient particle effect filling the air.'),
     wind: num('0 still to 1 stormy; sways foliage, grass, water and particles.'),
+    rain: num('0 dry to 1 downpour. Rain comes in passing showers, soaks the ground (darker, glossy surfaces, puddles with ripples) and needs cloud cover.'),
+    lightning: num('0 none to 1 frequent strikes. Bolts light up the clouds and the world, followed by thunder. Works with or without rain.'),
+    aurora: num('0 none to 1 vivid. Northern-lights curtains that dance across the night sky (only visible at night).'),
   }),
   terrain: obj('Procedural landscape. The playable area is centred on the origin.', {
     style: oneOf(TERRAIN_STYLES, 'Landform generator.'),
@@ -167,6 +170,7 @@ export function defaultSpec() {
     environment: {
       timeOfDay: 16.5, sunAzimuth: 210, cloudCover: 0.35, fogDensity: 0.2,
       fogColor: 'auto', skyTint: '#ffffff', particles: 'none', wind: 0.3,
+      rain: 0, lightning: 0, aurora: 0,
     },
     terrain: {
       style: 'hills', size: 140, height: 10, roughness: 0.45,
@@ -291,6 +295,10 @@ export function normalizeSpec(input) {
       skyTint: n.color(env.skyTint, d.environment.skyTint, 'environment.skyTint'),
       particles: n.oneOf(env.particles, PARTICLES, 'none', 'environment.particles'),
       wind: n.num(env.wind, d.environment.wind, 0, 1, 'environment.wind'),
+      // older specs only had rain particles: treat them as a steady shower
+      rain: n.num(env.rain, env.particles === 'rain' ? 0.6 : 0, 0, 1, 'environment.rain'),
+      lightning: n.num(env.lightning, 0, 0, 1, 'environment.lightning'),
+      aurora: n.num(env.aurora, 0, 0, 1, 'environment.aurora'),
     },
     terrain: {
       style: n.oneOf(ter.style, TERRAIN_STYLES, d.terrain.style, 'terrain.style'),

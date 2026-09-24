@@ -23,6 +23,20 @@ export function isLava(hex) {
   return r > 0.6 && g < 0.55 && b < 0.35 && r > g * 1.4;
 }
 
+/**
+ * Clouds that match the weather: rain needs a sky full of low, heavy clouds,
+ * and storms build darker, denser ones. Returns renderer environment fields.
+ */
+export function skyForWeather({ cloudCover = 0.3, rain = 0, lightning = 0 }) {
+  const storm = Math.max(rain, lightning * 0.8);
+  return {
+    cloudCover: rain > 0 ? Math.max(cloudCover, 0.55 + rain * 0.4) : Math.max(cloudCover, lightning * 0.6),
+    cloudBase: 1100 - storm * 350,
+    cloudTop: 3000 + lightning * 1500,
+    cloudDensity: 0.035 * (1 + storm * 1.4),
+  };
+}
+
 export function buildWorld(renderer, spec, { tier = 'high' } = {}) {
   const rng = new Rng(spec.seed);
   const spawnXZ = [spec.player.spawn[0], spec.player.spawn[2]];
@@ -37,9 +51,10 @@ export function buildWorld(renderer, spec, { tier = 'high' } = {}) {
   renderer.setPalette(spec.terrain.palette);
   const env = spec.environment;
   renderer.setEnvironment({
-    timeOfDay: env.timeOfDay, sunAzimuth: env.sunAzimuth, cloudCover: env.cloudCover, fogDensity: env.fogDensity,
+    timeOfDay: env.timeOfDay, sunAzimuth: env.sunAzimuth, fogDensity: env.fogDensity,
     fogColor: env.fogColor, skyTint: env.skyTint, wind: env.wind,
     windDir: [Math.cos(spec.seed % 6.28), Math.sin(spec.seed % 6.28)],
+    ...skyForWeather(env),
   });
   renderer.setGrade({ ...spec.post });
 

@@ -142,6 +142,9 @@ const ENV_CONTROLS = [
   ['clouds', 'cloudCover', (v) => `${Math.round(v * 100)}%`],
   ['fog', 'fogDensity', (v) => `${Math.round(v * 100)}%`],
   ['wind', 'wind', (v) => `${Math.round(v * 100)}%`],
+  ['rain', 'rain', (v) => `${Math.round(v * 100)}%`],
+  ['lightning', 'lightning', (v) => `${Math.round(v * 100)}%`],
+  ['aurora', 'aurora', (v) => `${Math.round(v * 100)}%`],
 ];
 const POST_CONTROLS = [
   ['bloom', 'bloom', (v) => v.toFixed(2)],

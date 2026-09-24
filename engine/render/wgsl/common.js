@@ -370,8 +370,81 @@ fn giEval(g: GiProbe, n: vec3f) -> vec3f {
 fn ambientIrradiance(p: vec3f, n: vec3f) -> vec3f {
   let sky = skyIrradiance(n);
   let g = giFetch(p);
-  if (g.weight <= 0.0) { return sky; }
-  return mix(sky, max(giEval(g, n), sky * 0.1), g.weight);
+  if (g.weight <= 0.0) { return sky + weatherLight(n); }
+  return mix(sky, max(giEval(g, n), sky * 0.1), g.weight) + weatherLight(n);
+}
+`;
+
+/**
+ * Living weather on surfaces: rain ripples, puddles, soaked materials and the
+ * light of lightning flashes and auroras. Needs frame and MATH_WGSL.
+ */
+export const WEATHER_WGSL = /* wgsl */ `
+/** One layer of rain drops: expanding rings inside a grid of cells. Returns a normal offset (xz). */
+fn rippleLayer(p: vec2f, t: f32, seed: f32, rate: f32) -> vec2f {
+  let cell = floor(p);
+  let h = hash22(cell + seed);
+  let cycle = t * (0.9 + h.y * 0.5) + h.x;
+  // only some cells get a drop this cycle: fewer drops in a drizzle
+  if (hash12(cell + floor(cycle) * 17.31 + seed) > rate) { return vec2f(0.0); }
+  let phase = fract(cycle);
+  let d = p - cell - (0.25 + 0.5 * hash22(cell + floor(cycle) + seed * 3.1));
+  let r = length(d);
+  let x = (r - phase * 0.5) * 22.0;
+  let wave = cos(x * 2.4) * exp(-x * x * 0.35) * (1.0 - phase) * (1.0 - phase);
+  return d / max(r, 1e-3) * wave;
+}
+fn rainRipples(xz: vec2f, intensity: f32) -> vec2f {
+  if (intensity <= 0.01) { return vec2f(0.0); }
+  let t = frame.time.x;
+  let rate = 0.25 + 0.75 * intensity;
+  return (rippleLayer(xz * 2.6, t * 1.2, 0.0, rate) + rippleLayer(xz * 2.6 + 0.5, t * 1.35, 7.3, rate)) * 0.4 * intensity;
+}
+/** Where water pools on flat, low-lying ground as it gets wetter. */
+fn puddleMask(xz: vec2f, n: vec3f) -> f32 {
+  let wet = frame.weatherFx.x;
+  if (wet <= 0.02) { return 0.0; }
+  let flatness = smoothstep(0.94, 0.99, n.y);
+  let noise = fbm(xz * 0.11 + 3.7, 3) * 0.8 + vnoise(xz * 0.9) * 0.2;
+  let threshold = mix(0.86, 0.56, wet);
+  return smoothstep(threshold, threshold + 0.035, noise) * flatness;
+}
+
+struct WetSurface { albedo: vec3f, rough: f32, n: vec3f };
+/**
+ * Soak a dielectric material: darker (water fills the pores), glossier with a
+ * water film that smooths out fine bumps, and puddles with ripples on flat
+ * ground. n is the detailed normal, geo the smooth geometric one.
+ */
+fn wetSurface(albedo: vec3f, rough: f32, n: vec3f, geo: vec3f, world: vec3f, metallic: f32, puddles: bool) -> WetSurface {
+  var w: WetSurface;
+  w.albedo = albedo;
+  w.rough = rough;
+  w.n = n;
+  let wet = frame.weatherFx.x;
+  if (wet <= 0.01) { return w; }
+  let level = wet * (0.55 + 0.45 * clamp(geo.y, 0.0, 1.0));
+  w.albedo = albedo * mix(1.0, mix(0.5, 1.0, metallic), level);
+  w.rough = mix(rough, min(rough, 0.24), level);
+  w.n = normalize(mix(n, geo, level * 0.6));
+  if (puddles) {
+    let pud = puddleMask(world.xz, geo);
+    if (pud > 0.0) {
+      let fade = 1.0 - smoothstep(15.0, 30.0, length(world - frame.camPos.xyz));
+      let rip = rainRipples(world.xz, frame.weatherFx.y) * fade * 0.6;
+      w.n = normalize(mix(w.n, normalize(vec3f(rip.x, 1.0, rip.y)), pud));
+      w.albedo = w.albedo * mix(1.0, 0.4, pud);
+      w.rough = mix(w.rough, 0.07, pud);
+    }
+  }
+  return w;
+}
+
+/** Extra ambient light (irradiance / PI) from the weather: lightning flashes and the aurora's glow. */
+fn weatherLight(n: vec3f) -> vec3f {
+  let flash = frame.weatherFx.z * vec3f(0.62, 0.68, 0.9) * (0.55 + 0.45 * n.y) * 0.05;
+  let aurora = frame.weatherFx.w * frame.atmos.w * vec3f(0.006, 0.03, 0.018) * (0.5 + 0.5 * n.y);
+  return flash + aurora;
 }
 `;
 
@@ -380,6 +453,7 @@ fn ambientIrradiance(p: vec3f, n: vec3f) -> vec3f {
 export const LIGHTING_WGSL = /* wgsl */ `
 ${KEY_WGSL}
 ${SH_WGSL}
+${WEATHER_WGSL}
 ${GI_WGSL}
 ${CLOUD_WGSL}
 var<private> POISSON: array<vec2f, 12> = array<vec2f, 12>(
@@ -528,6 +602,7 @@ fn ambientLight(s: Surface, p: vec3f, ao: f32, specOcclusion: f32) -> vec3f {
     let skyR = luminance(skyIrradiance(r));
     reflOcc = mix(1.0, clamp(luminance(giEval(g, r)) / max(skyR, 1e-4), 0.0, 1.0), g.weight);
   }
+  irr += weatherLight(s.n);
   let diffuse = irr * s.albedo * (1.0 - s.metallic) * (1.0 - specColor);
   // horizon occlusion: reflections pointing below the surface are blocked by it
   let horizon = clamp(1.0 + dot(r, s.n), 0.0, 1.0);

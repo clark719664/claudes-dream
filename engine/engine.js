@@ -16,7 +16,8 @@ import { Water } from './render/water.js';
 import { Particles } from './render/particles.js';
 import { Clouds } from './render/clouds.js';
 import { GI } from './render/gi.js';
-import { buildWorld, isLava } from './game/builder.js';
+import { buildWorld, isLava, skyForWeather } from './game/builder.js';
+import { Weather } from './game/weather.js';
 import { Game } from './game/game.js';
 import { CameraRig } from './game/camera.js';
 import { Input } from './core/input.js';
@@ -67,6 +68,7 @@ export class Engine {
     this.input.attachTouchControls(this.hud.root);
     this.audio = new Audio();
     this.camera = new CameraRig();
+    this.weather = new Weather();
     this.hud.onPlay = () => this.play();
 
     canvas.addEventListener('click', () => {
@@ -133,16 +135,25 @@ export class Engine {
       const pal = { ...spec.terrain.palette };
       this.renderer.setPalette(pal);
     }
-    this.particles.setAmbient(spec.environment.particles, 1);
+    this.#configureWeather(spec.environment, true);
     this.volumetrics.setMaxDistance(Math.min(900, w.hf.worldSize * 1.1));
+  }
+
+  #configureWeather(env, reset) {
+    if (reset) this.weather.configure(env, this.spec?.seed ?? 1);
+    else Object.assign(this.weather, { rain: env.rain, lightning: env.lightning, aurora: env.aurora });
+    // rain replaces the ambient particles (a snowstorm stays a snowstorm)
+    this.rainParticles = env.rain > 0 && env.particles !== 'snow';
+    this.particles.setAmbient(this.rainParticles ? 'rain' : env.particles, 1);
   }
 
   /** Live-edit environment (Studio sliders): { timeOfDay, cloudCover, fogDensity, wind, particles, ... } */
   setEnvironment(env) {
-    const { particles, ...rest } = env;
-    this.renderer.setEnvironment(rest);
-    if (particles) this.particles.setAmbient(particles, 1);
+    const { particles, rain, lightning, aurora, ...rest } = env;
     if (this.spec) Object.assign(this.spec.environment, env);
+    const merged = this.spec?.environment ?? env;
+    this.renderer.setEnvironment({ ...rest, ...skyForWeather(merged) });
+    if (particles !== undefined || rain !== undefined || lightning !== undefined || aurora !== undefined) this.#configureWeather(merged, false);
   }
 
   setGrade(post) {
@@ -250,9 +261,21 @@ export class Engine {
     const cam = this.game.update(paused ? 0 : dt, this.input);
     const f = this.renderer.flash;
     f[3] *= Math.exp(-dt * 6);
+    this.#updateWeather(paused ? 0 : dt, cam);
     this.renderer.render(cam, paused ? 0.0001 : dt);
     this.input.endFrame();
     this.emit('frame', this.renderer.stats);
+  }
+
+  #updateWeather(dt, cam) {
+    const fwd = [cam.target[0] - cam.position[0], cam.target[1] - cam.position[1], cam.target[2] - cam.position[2]];
+    const w = this.weather.update(dt, fwd);
+    this.renderer.weatherFx = w.fx;
+    this.renderer.flashPos = w.flashDir;
+    for (const e of w.events) if (e.type === 'thunder') this.audio.thunder(e);
+    const rain = w.fx[1];
+    this.audio.setRain(this.rainParticles ? rain : 0);
+    if (this.rainParticles) this.particles.setAmbient('rain', Math.min(1, 0.15 + rain * 1.1));
   }
 
   stopLoop() {

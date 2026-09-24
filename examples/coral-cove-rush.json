@@ -11,7 +11,10 @@
     "fogColor": "auto",
     "skyTint": "#ffffff",
     "particles": "none",
-    "wind": 0.35
+    "wind": 0.35,
+    "rain": 0,
+    "lightning": 0,
+    "aurora": 0
   },
   "terrain": {
     "style": "islands",

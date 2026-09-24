@@ -45,6 +45,8 @@ async function main() {
   window.__engine = engine;
   if (q.get('hud') === '0') { engine.hud.root.style.display = 'none'; document.getElementById('stats').style.display = 'none'; }
   if (q.has('time')) engine.setEnvironment({ timeOfDay: Number(q.get('time')) });
+  // capture helper: make lightning strike after N frames
+  if (q.has('strike')) engine.weather.nextStrike = Number(q.get('strike')) / 60;
   const stats = document.getElementById('stats');
   engine.on('frame', (s) => {
     window.__frames++;

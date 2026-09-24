@@ -45,6 +45,9 @@ async function main() {
   particles.setAmbient(q.get('particles') ?? 'none');
   window.__particles = particles;
   window.__renderer = renderer;
+  // weather inputs for testing: fx = wetness, rain, flash, aurora; flash = direction x, y, z, seed
+  if (q.has('fx')) renderer.weatherFx = vec('fx', [0, 0, 0, 0]);
+  if (q.has('flash')) renderer.flashPos = vec('flash', [0, 0, 0, 0]);
   renderer.setEnvironment({ timeOfDay: num('time', 16.5), sunAzimuth: num('az', 210), cloudCover: num('clouds', 0.35), fogDensity: num('fog', 0.2), wind: 0.4 });
 
   const scene = renderer.createScene();

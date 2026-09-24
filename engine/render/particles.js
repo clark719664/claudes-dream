@@ -142,11 +142,18 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   var size = p.color.a * 4.0;
   var up = camUp;
   var right = camRight;
+  var streak = 1.0;
   if (kind == 2.0) {
-    // rain: stretch along velocity
-    up = normalize(p.vel.xyz) * 0.45;
-    right = normalize(cross(up, frame.camPos.xyz - p.pos.xyz)) * 0.12;
+    // rain: thin streaks stretched along the velocity, never thinner than about a pixel (TAA resolves the rest)
+    let toCam = frame.camPos.xyz - p.pos.xyz;
+    let camDist = length(toCam);
+    let pixel = camDist * frame.camFwd.w * 2.0 * frame.resolution.w;
+    let width = max(0.006, pixel * 0.7);
+    up = normalize(p.vel.xyz) * 0.5;
+    right = normalize(cross(up, toCam)) * width;
     size = 1.0;
+    // a thin drop covers only part of a wide streak's area; drops right at the lens are skipped
+    streak = clamp(0.012 / width, 0.12, 1.0) * smoothstep(1.2, 3.5, camDist) * 0.45;
   }
   let lifeFrac = clamp(p.pos.w / max(p.vel.w, 1e-3), 0.0, 1.0);
   var fade = smoothstep(0.0, 0.15, lifeFrac) * smoothstep(1.0, 0.85, lifeFrac);
@@ -160,6 +167,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
     col *= lit;
   }
   if (kind >= 10.0) { size = p.color.a; fade = smoothstep(0.0, 0.35, lifeFrac); }
+  fade *= streak;
   o.world = p.pos.xyz + (right * c.x + up * c.y) * size;
   o.pos = frame.viewProj * vec4f(o.world, 1.0);
   o.color = vec4f(col, fade);

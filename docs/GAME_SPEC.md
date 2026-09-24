@@ -53,6 +53,9 @@ Sky, lighting and atmosphere.
 | `environment.skyTint` | string | Multiplies the sky. "#ffffff" is a natural Earth sky; purple/green for alien worlds. Hex color, e.g. "#ffaa33". |
 | `environment.particles` | `none` \| `fireflies` \| `snow` \| `embers` \| `dust` \| `rain` \| `spores` | Ambient particle effect filling the air. |
 | `environment.wind` | number | 0 still to 1 stormy; sways foliage, grass, water and particles. |
+| `environment.rain` | number | 0 dry to 1 downpour. Rain comes in passing showers, soaks the ground (darker, glossy surfaces, puddles with ripples) and needs cloud cover. |
+| `environment.lightning` | number | 0 none to 1 frequent strikes. Bolts light up the clouds and the world, followed by thunder. Works with or without rain. |
+| `environment.aurora` | number | 0 none to 1 vivid. Northern-lights curtains that dance across the night sky (only visible at night). |
 
 #### `terrain`
 

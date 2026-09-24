@@ -11,7 +11,10 @@
     "fogColor": "auto",
     "skyTint": "#9ab0ff",
     "particles": "fireflies",
-    "wind": 0.35
+    "wind": 0.35,
+    "rain": 0,
+    "lightning": 0.35,
+    "aurora": 0
   },
   "terrain": {
     "style": "hills",

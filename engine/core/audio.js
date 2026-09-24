@@ -98,6 +98,67 @@ export class Audio {
     s.stop(t + dur + 0.05);
   }
 
+  /**
+   * Thunder after a lightning strike: a sharp crack for close strikes, then a
+   * long low rumble that rolls in waves. Distant strikes are quieter and duller.
+   */
+  thunder({ delay = 0, distance = 2000 } = {}) {
+    if (!this.ctx || this.muted) return;
+    const c = this.ctx;
+    const t0 = c.currentTime + delay;
+    const near = Math.max(0, Math.min(1, 1 - (distance - 800) / 4000));
+    const rumble = (when, dur, gain, freq) => {
+      const s = c.createBufferSource();
+      s.buffer = this.noise;
+      s.loop = true;
+      s.playbackRate.value = 0.5 + Math.random() * 0.2;
+      const f = c.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = freq;
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.exponentialRampToValueAtTime(gain, when + 0.08 + (1 - near) * 0.5);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+      s.connect(f).connect(g).connect(this.sfxBus);
+      s.start(when, Math.random());
+      s.stop(when + dur + 0.1);
+    };
+    if (near > 0.3) this.#noise({ dur: 0.35, gain: 0.35 * near, freq: 2400, q: 0.4, when: delay });
+    const waves = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < waves; i++) {
+      rumble(t0 + i * (0.35 + Math.random() * 0.6), 2.2 + Math.random() * 2, (0.28 + near * 0.3) / (1 + i * 0.35), 120 + near * 260);
+    }
+  }
+
+  /** Continuous rain ambience, 0 (off) to 1 (downpour). */
+  setRain(level) {
+    if (!this.ctx) return;
+    if (!this.rainGain) {
+      const c = this.ctx;
+      const s = c.createBufferSource();
+      s.buffer = this.noise;
+      s.loop = true;
+      const hiss = c.createBiquadFilter();
+      hiss.type = 'bandpass';
+      hiss.frequency.value = 2600;
+      hiss.Q.value = 0.35;
+      const body = c.createBiquadFilter();
+      body.type = 'lowpass';
+      body.frequency.value = 700;
+      this.rainGain = c.createGain();
+      this.rainGain.gain.value = 0;
+      s.connect(hiss).connect(this.rainGain);
+      s.connect(body).connect(this.rainGain);
+      this.rainGain.connect(this.sfxBus);
+      s.start();
+    }
+    const target = Math.max(0, Math.min(1, level)) * 0.16;
+    if (Math.abs(target - (this.rainLevel ?? -1)) > 0.004) {
+      this.rainLevel = target;
+      this.rainGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.6);
+    }
+  }
+
   play(name, opts = {}) {
     if (!this.ctx || this.muted) return;
     const p = opts.pitch ?? 1;
