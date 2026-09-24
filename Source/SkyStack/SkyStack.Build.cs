@@ -13,6 +13,7 @@ public class SkyStack : ModuleRules
 			"Engine",
 			"InputCore",
 			"ApplicationCore", // clipboard for the share code
+			"Slate",
 			"SlateCore",
 			"AudioMixer",
 			"AudioMixerCore"

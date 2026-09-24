@@ -10,9 +10,15 @@ class UAudioComponent;
 class UCameraComponent;
 class UDirectionalLightComponent;
 class UExponentialHeightFogComponent;
+class UInstancedStaticMeshComponent;
+class UMaterialInstanceDynamic;
+class UMaterialInterface;
 class UPostProcessComponent;
+class USkyAtmosphereComponent;
+class USkyLightComponent;
 class USkyStackSave;
 class USkySynth;
+class UVolumetricCloudComponent;
 
 enum class EStackState : uint8
 {
@@ -45,17 +51,35 @@ struct FStackToast
 	float Life = 1.1f;
 };
 
+/** A glowing streak rendered through an instanced mesh; used for sparks, dust and bursts. */
+struct FStackSpark
+{
+	FVector Position = FVector::ZeroVector;
+	FVector Velocity = FVector::ZeroVector;
+	FLinearColor Color = FLinearColor::White;
+	float Life = 0.f;
+	float MaxLife = 1.f;
+	float Size = 10.f;
+	float Drag = 1.f;
+	float Gravity = 900.f;
+};
+
 /**
- * The whole game lives here. The director is the player's pawn: it owns the camera, lights,
- * fog, post-processing and synth, builds the world out of ASkyStackBlocks, reads input and
- * runs the stacking rules. ASkyStackHUD draws the UI from its state.
+ * The whole game lives here. The director is the player's pawn: it owns the camera, the sky
+ * (atmosphere, volumetric clouds, sun, moon, sky light, fog), post-processing, particles and
+ * the synth; it builds the tower out of ASkyStackBlocks, reads input and runs the rules.
+ *
+ * Climbing is also a journey: every floor raises a virtual altitude, and the planet (atmosphere,
+ * clouds and fog) sinks away beneath the tower until you are stacking in orbit.
+ *
+ * SSkyStackOverlay (the Slate UI) reads state from here and calls the Request* functions.
  */
 UCLASS()
 class SKYSTACK_API ASkyStackDirector : public APawn
 {
 	GENERATED_BODY()
 
-	friend class ASkyStackHUD;
+	friend class SSkyStackOverlay;
 
 public:
 	ASkyStackDirector();
@@ -64,17 +88,21 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
+	// Commands used by both key bindings and the UI buttons.
+	void RequestPrimary();
+	void RequestRetry();
+	void RequestMenu();
+	void RequestMode(EStackMode NewMode);
+	void RequestShare();
+	void RequestToggleMute();
+
 private:
 	// Input
-	void OnPrimary();
 	void OnTouchPressed(ETouchIndex::Type FingerIndex, FVector Location);
-	void OnRetry();
 	void OnBack();
-	void OnSelectDaily();
-	void OnSelectEndless();
-	void OnToggleMode();
-	void OnCopyShare();
-	void OnToggleMute();
+	void OnSelectDaily() { RequestMode(EStackMode::Daily); }
+	void OnSelectEndless() { RequestMode(EStackMode::Endless); }
+	void OnToggleMode() { RequestMode(Mode == EStackMode::Daily ? EStackMode::Endless : EStackMode::Daily); }
 
 	// Flow
 	void EnterTitle();
@@ -85,14 +113,15 @@ private:
 	void CollapseTower();
 	void ClearTower();
 	void BuildDemoTower();
-	void BuildEnvironment();
+	void BuildWorld();
+	void BuildStars();
 	void RefreshBestMarker();
 
 	// Per frame
 	void UpdateSlider(float GameDt);
 	void UpdateCamera(float RealDt);
-	void UpdateAtmosphere(float RealDt);
-	void UpdateClouds(float GameDt);
+	void UpdateSky(float RealDt);
+	void UpdateSparks(float GameDt);
 	void UpdateToasts(float RealDt);
 	void UpdateMusic();
 
@@ -101,7 +130,8 @@ private:
 	void AddTrauma(float Amount);
 	void StartSlowMo(float Dilation, float RealDuration);
 	void SpawnPerfectHalo(const FVector& Center, const FVector2D& Footprint);
-	void SpawnConfetti(const FVector& Origin, int32 Count);
+	void BurstEdgeSparks(const FVector& Center, const FVector2D& Footprint, const FLinearColor& Color, int32 Count, float Speed);
+	void BurstSparks(const FVector& Origin, const FLinearColor& Color, int32 Count, float Speed, float Size, float Life, float Gravity);
 
 	// Helpers
 	ASkyStackBlock* SpawnBlock(const FVector& Center, const FVector& Size, const FLinearColor& Color);
@@ -110,13 +140,15 @@ private:
 	int32 GetBest() const;
 	int32 ZoneForFloor(int32 FloorIndex) const;
 	FString GetZoneName() const;
+	FString GetPaletteName() const;
 	FString GetTaunt() const;
+	FString GetAltitudeText() const;
 	FString BuildShareText() const;
-	FVector GetBestMarkerLocation() const;
 	float GetDanger() const;
+	static double AltitudeMetersForFloor(double FloorValue);
 	void SaveProgress();
 
-	// Components
+	// Camera and post
 	UPROPERTY(VisibleAnywhere, Category = "SkyStack")
 	TObjectPtr<USceneComponent> Root;
 
@@ -124,16 +156,39 @@ private:
 	TObjectPtr<UCameraComponent> Camera;
 
 	UPROPERTY(VisibleAnywhere, Category = "SkyStack")
-	TObjectPtr<UDirectionalLightComponent> KeyLight;
+	TObjectPtr<UPostProcessComponent> PostFX;
+
+	// Sky
+	UPROPERTY(VisibleAnywhere, Category = "SkyStack")
+	TObjectPtr<UDirectionalLightComponent> Sun;
 
 	UPROPERTY(VisibleAnywhere, Category = "SkyStack")
-	TObjectPtr<UDirectionalLightComponent> FillLight;
+	TObjectPtr<UDirectionalLightComponent> Moon;
+
+	UPROPERTY(VisibleAnywhere, Category = "SkyStack")
+	TObjectPtr<USkyLightComponent> SkyLight;
+
+	UPROPERTY(VisibleAnywhere, Category = "SkyStack")
+	TObjectPtr<USkyAtmosphereComponent> Atmosphere;
+
+	UPROPERTY(VisibleAnywhere, Category = "SkyStack")
+	TObjectPtr<UVolumetricCloudComponent> CloudLayer;
 
 	UPROPERTY(VisibleAnywhere, Category = "SkyStack")
 	TObjectPtr<UExponentialHeightFogComponent> Fog;
 
+	UPROPERTY()
+	TObjectPtr<UMaterialInterface> CloudMaterial;
+
+	// Effects
 	UPROPERTY(VisibleAnywhere, Category = "SkyStack")
-	TObjectPtr<UPostProcessComponent> PostFX;
+	TObjectPtr<UInstancedStaticMeshComponent> SparkMesh;
+
+	UPROPERTY(VisibleAnywhere, Category = "SkyStack")
+	TObjectPtr<UInstancedStaticMeshComponent> StarMesh;
+
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> StarMaterial;
 
 	UPROPERTY(VisibleAnywhere, Category = "SkyStack")
 	TObjectPtr<UAudioComponent> Audio;
@@ -155,16 +210,11 @@ private:
 	TArray<TObjectPtr<ASkyStackBlock>> Tower;
 
 	UPROPERTY()
-	TArray<TObjectPtr<ASkyStackBlock>> Clouds;
-
-	UPROPERTY()
-	TArray<TObjectPtr<ASkyStackBlock>> Backdrop;
-
-	UPROPERTY()
 	TArray<TObjectPtr<ASkyStackBlock>> BestMarker;
 
 	TArray<TWeakObjectPtr<ASkyStackBlock>> Debris;
-	TArray<float> CloudSpeeds;
+	TArray<FStackSpark> Sparks;
+	int32 SparkPoolSize = 0;
 
 	// Run state
 	EStackState State = EStackState::Title;
@@ -177,6 +227,7 @@ private:
 	int32 Perfects = 0;
 	int32 BestAtStart = 0;
 	int32 Zone = 0;
+	int32 PaletteIndex = 0;
 	bool bNewBest = false;
 	bool bPassedBest = false;
 	bool bCollapsed = false;
@@ -184,7 +235,6 @@ private:
 	FVector2D TopCenter = FVector2D::ZeroVector;
 	FVector2D TopSize = FVector2D::ZeroVector;
 	double RunHeight = 0.0;
-	float HueBase = 0.f;
 
 	// Moving block
 	bool bSliderAlongX = true;
@@ -194,6 +244,7 @@ private:
 	float SliderSpeed = 300.f;
 
 	// Presentation
+	bool bConfiguredController = false;
 	float RealTime = 0.f;
 	float StateTime = 0.f;
 	float LastPrimaryTime = -1.f;
@@ -201,14 +252,24 @@ private:
 	float Trauma = 0.f;
 	float ScorePop = 0.f;
 	float FringePulse = 0.f;
+	float FovKick = 0.f;
 	float CopiedTimer = 0.f;
 	FVector CamTarget = FVector::ZeroVector;
-	float CamDist = 1400.f;
+	float CamDist = 1500.f;
 	float CamYaw = 225.f;
-	float CamPitch = -24.f;
-	FLinearColor FogColor = FLinearColor::Black;
+	float CamPitch = -20.f;
+
+	// Sky state (interpolated toward the current zone)
+	double AltitudeMeters = 0.0;
+	double AppliedAltitudeMeters = -1.0;
+	float SunElevation = 7.f;
+	float SunYaw = 150.f;
 	FLinearColor SunColor = FLinearColor::White;
-	float SunIntensity = 4.f;
-	float SunPitch = -50.f;
+	float MoonIntensity = 0.f;
+	float EdgeGlow = 1.f;
+	float AppliedEdgeGlow = -1.f;
+	float StarFade = 0.f;
+	float ExposureBias = 0.f;
+
 	TArray<FStackToast> Toasts;
 };
