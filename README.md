@@ -9,9 +9,10 @@ A block slides back and forth: tap to drop it. The overhang shears off and tumbl
 under physics. Land it dead-on for a **PERFECT**: the block flashes, sparks fly off its rim
 and the note climbs a musical scale.
 
-Every floor also takes you higher into the sky. You start on a sea cliff at sunrise, rise
-through a layer of volumetric clouds, stack above them in golden hour, keep going through a
-neon-lit night, and finish in orbit with the planet curving below you.
+Every floor also takes you higher into the sky, with a new zone every 15 floors. You start on
+a sea cliff at sunrise, rise through a layer of volumetric clouds, stack above them in golden
+hour, keep going through a neon-lit night, and reach orbit around floor 90 with the planet
+curving below you.
 
 ---
 
@@ -21,7 +22,7 @@ neon-lit night, and finish in orbit with the planet curving below you.
 |---|---|
 | **Lighting** | Lumen global illumination and reflections, virtual shadow maps, TSR anti-aliasing. |
 | **Sky** | A physically based sky atmosphere with a sun and moon, real-time sky light, volumetric clouds, and volumetric fog with light shafts. |
-| **Altitude** | The planet (atmosphere, clouds, fog) sinks as you climb. At 6 km the clouds are far below; past floor 120 the sky turns black, stars appear and the horizon curves. |
+| **Altitude** | The planet (atmosphere, clouds, fog) sinks as you climb. You pass through the cloud layer around floor 20; from floor 90 the sky turns black, stars appear and the horizon curves. |
 | **Blocks** | Glossy clear-coat material with glowing bevel seams. The seams brighten at night, so the tower turns neon. Each run uses one of six curated gradient palettes (Lagoon, Candy, Aurora, Ember, Blossom, Coastal). |
 | **Effects** | Glowing streak sparks rendered as instanced meshes, rim bursts on perfects, a glowing halo, a gold ring hanging at your record height, and a 1,400-star sky. |
 | **Camera** | Cinematic depth of field focused on the tower top, a gentle handheld drift, trauma-based shake, and a field-of-view kick on hits. The camera opens up toward the horizon as the sky gets more dramatic. |
@@ -94,8 +95,48 @@ The `SkyStackTuning` namespace and the `GZones` / `GPalettes` tables at the top 
 - per-zone sun angle, colour, moon, seam glow, camera pitch, stars and exposure;
 - the gradient palettes.
 
+## Testing without Unreal
+
+Everything that can be checked without the engine is covered here and runs on any machine with `g++`:
+
+| Check | Command | What it proves |
+|---|---|---|
+| Unit tests | `Tests/run.sh` | ~12,000 checks on the game rules (drop geometry, speeds, altitude, zones, music levels) and the synth (no clipping, every effect audible, voices always released), built with strict warnings as errors. |
+| Audio render | `Tests/run.sh render` | Writes the game's real audio to `Tests/out/`: a bot-played run (`run_demo.wav`), every effect (`sfx_sheet.wav`) and the adaptive music (`music_layers.wav`). |
+| Difficulty | `Tests/run.sh simulate` | 100,000 bot runs through the real rules at five skill levels. |
+| Material script | `Tests/validate_material_script.py` (see its header) | Runs `init_unreal.py` against a fake `unreal` module built from the real UE 5.5 Python API, so every class, property and enum it uses is verified. |
+| Compile check | `Tests/compile_check.sh` | Every game `.cpp` compiled against a mock engine (`Tests/MockUE`) whose API was checked against UE 5.5. This catches typos, scoping, argument types and Slate lambda return types. |
+
+The game rules (`SkyStackRules.h`) and the synth (`SkySynthCore.*`) contain no engine types, so the
+game and these tests run exactly the same code.
+
+### Difficulty curve (from `Tests/run.sh simulate`)
+
+Players are modelled by how precisely they time a tap (standard deviation of press timing):
+
+| Player | Median floors | Median run | Reach Cloud Line (15) | Sea of Clouds (30) | Golden Hour (45) | Nightfall (60) | Orbit (90) |
+|---|---|---|---|---|---|---|---|
+| First-timer (70 ms) | 20 | ~25 s | 93% | 1% | - | - | - |
+| Casual (50 ms) | 28 | ~32 s | 100% | 36% | 0.4% | - | - |
+| Regular (38 ms) | 37 | ~41 s | 100% | 90% | 16% | 0.2% | - |
+| Good (28 ms) | 54 | ~54 s | 100% | 100% | 86% | 29% | - |
+| Expert (20 ms) | 81 | ~73 s | 100% | 100% | 100% | 98% | 22% |
+
+Every skill level sees new sky, and orbit stays a rare, clip-worthy flex.
+
 ## Status
 
-Written by Claude in a cloud container that has **no Unreal Engine install**. That means it
-has **not been compiled or seen running yet**. Expect a few small compile fixes and a round
-of visual tuning. Screenshots from the first launch are the fastest way to get there.
+Written by Claude in a cloud container with **no Unreal Engine install**. This is what has been
+verified without the engine:
+
+- The material script **runs to completion** against a fake `unreal` module built from the real
+  UE 5.5 Python API: every class, property, enum and function it uses exists. Re-running it
+  correctly skips the rebuild.
+- Engine API names in the C++ were cross-checked against the UE 5.5 API and open-source UE5
+  plugins that use the same calls (Cesium, UnLua, UnrealImGui, RuntimeAudioImporter).
+- All game code passes the mock compile check with zero warnings, and the engine-free code passes
+  its unit tests.
+
+What only a real build can confirm: the actual Unreal compile (a few small fixes are still
+possible), the look (exposure, clouds, colours) and performance. Screenshots and any compiler
+output from the first launch are the fastest way to finish it.

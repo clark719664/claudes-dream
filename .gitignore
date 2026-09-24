@@ -12,3 +12,8 @@ DerivedDataCache/
 *.VC.db
 *.VC.opendb
 .DS_Store
+
+# Local test outputs (rendered audio, compile logs)
+Tests/out/
+Tests/MockUE/include/
+__pycache__/

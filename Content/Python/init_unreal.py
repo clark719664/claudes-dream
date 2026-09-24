@@ -17,7 +17,7 @@ Commit the generated .uasset files so packaged builds and teammates get them.
 import unreal
 
 ROOT = "/Game/SkyStack"
-MATERIAL_VERSION = "3"
+MATERIAL_VERSION = "4"
 VERSION_TAG = "SkyStackMaterialVersion"
 
 mel = unreal.MaterialEditingLibrary
@@ -79,14 +79,38 @@ def custom(material, x, y, code, inputs, output_type):
 
 
 def link(source, target, input_name, source_output=""):
-    if not mel.connect_material_expressions(source, source_output, target, input_name):
-        unreal.log_warning(f"[SkyStack] could not connect into input '{input_name}'")
+    """Connects source -> target.input_name. Single-input nodes name their pin "" or "Input"
+    depending on engine version, so both spellings are tried for those."""
+    candidates = [input_name]
+    if input_name in ("", "Input"):
+        candidates = ["", "Input"]
+    for candidate in candidates:
+        if mel.connect_material_expressions(source, source_output, target, candidate):
+            return True
+    unreal.log_warning(f"[SkyStack] could not connect into input '{input_name}'")
+    return False
+
+
+def local_position(material, x, y):
+    """Object-space position (the engine cube spans -50..50). Uses the Local Position node
+    where available (UE 5.1+), otherwise transforms absolute world position into local space."""
+    if hasattr(unreal, "MaterialExpressionLocalPosition"):
+        return node(material, unreal.MaterialExpressionLocalPosition, x, y)
+    world_position = node(material, unreal.MaterialExpressionWorldPosition, x - 200, y)
+    transformed = node(material, unreal.MaterialExpressionTransformPosition, x, y,
+                       transform_source_type=unreal.MaterialPositionTransformSource.TRANSFORMPOSSOURCE_WORLD,
+                       transform_type=unreal.MaterialPositionTransformSource.TRANSFORMPOSSOURCE_LOCAL)
+    link(world_position, transformed, "Input")
+    return transformed
 
 
 def build_block():
     material, needs_build = get_or_create_material("M_SkyBlock")
     if not needs_build:
         return
+    # Clear coat with its pins left unconnected uses the engine defaults: full-strength coat
+    # (1.0) at roughness 0.1, i.e. a lacquered candy finish. (Those pins are not reachable
+    # from Python anyway: MP_CustomData0/1 are hidden from the MaterialProperty enum.)
     material.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_CLEAR_COAT)
 
     color = vector_param(material, "Color", (0.8, 0.45, 0.9, 1.0), -900, -300)
@@ -95,14 +119,7 @@ def build_block():
     edge_glow = scalar_param(material, "EdgeGlow", 1.2, -900, 250)
     glow = scalar_param(material, "Glow", 0.0, -900, 350)
     roughness = scalar_param(material, "Roughness", 0.32, -900, 450)
-    clear_coat = scalar_param(material, "ClearCoat", 1.0, -900, 550)
-    clear_coat_roughness = scalar_param(material, "ClearCoatRoughness", 0.06, -900, 650)
-
-    world_position = node(material, unreal.MaterialExpressionWorldPosition, -1300, 0)
-    local_position = node(material, unreal.MaterialExpressionTransformPosition, -1100, 0,
-                          transform_source_type=unreal.MaterialPositionTransformSource.TRANSFORMPOSSOURCE_WORLD,
-                          transform_type=unreal.MaterialPositionTransformSource.TRANSFORMPOSSOURCE_LOCAL)
-    link(world_position, local_position, "Input")
+    position = local_position(material, -1100, 0)
 
     # Distance (in world units) from this pixel to the nearest edge of the scaled box,
     # turned into a soft glowing seam. Works for any block size via the Size parameter.
@@ -112,7 +129,7 @@ def build_block():
         "float M = saturate(1.0 - E / max(W, 0.001));",
         "return M * M;",
     ]), ["P", "S", "W"], unreal.CustomMaterialOutputType.CMOT_FLOAT1)
-    link(local_position, edge, "P")
+    link(position, edge, "P")
     link(size, edge, "S")
     link(edge_width, edge, "W")
 
@@ -132,8 +149,6 @@ def build_block():
     mel.connect_material_property(color, "", unreal.MaterialProperty.MP_BASE_COLOR)
     mel.connect_material_property(emissive, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
     mel.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
-    mel.connect_material_property(clear_coat, "", unreal.MaterialProperty.MP_CUSTOM_DATA0)
-    mel.connect_material_property(clear_coat_roughness, "", unreal.MaterialProperty.MP_CUSTOM_DATA1)
     finish(material)
 
 

@@ -1,6 +1,7 @@
 #include "SkyStackDirector.h"
 
 #include "SkyStackBlock.h"
+#include "SkyStackRules.h"
 #include "SkyStackSave.h"
 #include "SkySynth.h"
 
@@ -24,24 +25,9 @@
 #include "Misc/App.h"
 #include "UObject/ConstructorHelpers.h"
 
-namespace SkyStackTuning
+namespace SkyStackPresentation
 {
-	constexpr double BlockHeight = 36.0;
-	constexpr double BaseSize = 320.0;
-	constexpr double PerfectTolerance = 8.0;
-	/** The perfect window also widens with speed so it stays ~28ms of timing, not a fixed distance. */
-	constexpr double PerfectWindowSeconds = 0.028;
-	constexpr double TravelRange = 480.0;
-	constexpr double GrowAmount = 16.0;
-	constexpr float BaseSpeed = 320.f;
-	constexpr float SpeedPerFloor = 6.5f;
-	constexpr float MaxSpeed = 900.f;
-	constexpr int32 ComboToGrow = 4;
-	constexpr int32 FloorsPerZone = 20;
-	constexpr double ClutchRatio = 0.3;
 	constexpr float CameraFov = 55.f;
-	/** The tower starts on a sea cliff this high, then every floor climbs further. */
-	constexpr double StartAltitudeMeters = 300.0;
 	constexpr int32 SparkPool = 700;
 	constexpr int32 StarCount = 1400;
 	static const TCHAR* const SaveSlot = TEXT("SkyStack");
@@ -140,9 +126,9 @@ namespace
 		Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		Component->SetGenerateOverlapEvents(false);
 		Component->SetCastShadow(false);
-		Component->bAffectDistanceFieldLighting = false;
-		Component->bAffectDynamicIndirectLighting = false;
-		Component->NumCustomDataFloats = 4;
+		Component->SetAffectDistanceFieldLighting(false);
+		Component->SetAffectDynamicIndirectLighting(false);
+		Component->SetNumCustomDataFloats(4);
 		if (Mesh)
 		{
 			Component->SetStaticMesh(Mesh);
@@ -170,7 +156,7 @@ ASkyStackDirector::ASkyStackDirector()
 	Camera->SetupAttachment(Root);
 	Camera->SetUsingAbsoluteLocation(true);
 	Camera->SetUsingAbsoluteRotation(true);
-	Camera->SetFieldOfView(SkyStackTuning::CameraFov);
+	Camera->SetFieldOfView(SkyStackPresentation::CameraFov);
 	Camera->bConstrainAspectRatio = false;
 	Camera->PostProcessBlendWeight = 1.f;
 	Camera->PostProcessSettings.bOverride_DepthOfFieldFstop = true;
@@ -184,35 +170,35 @@ ASkyStackDirector::ASkyStackDirector()
 	Sun->SetMobility(EComponentMobility::Movable);
 	Sun->SetUsingAbsoluteRotation(true);
 	Sun->SetRelativeRotation(FRotator(-7.f, 150.f, 0.f));
-	Sun->Intensity = 10.f;
-	Sun->LightSourceAngle = 0.8f;
-	Sun->bAtmosphereSunLight = true;
-	Sun->AtmosphereSunLightIndex = 0;
+	Sun->SetIntensity(10.f);
+	Sun->SetLightSourceAngle(0.8f);
+	Sun->SetAtmosphereSunLight(true);
+	Sun->SetAtmosphereSunLightIndex(0);
 
 	Moon = CreateDefaultSubobject<UDirectionalLightComponent>(TEXT("Moon"));
 	Moon->SetupAttachment(Root);
 	Moon->SetMobility(EComponentMobility::Movable);
 	Moon->SetUsingAbsoluteRotation(true);
 	Moon->SetRelativeRotation(FRotator(-38.f, 250.f, 0.f));
-	Moon->Intensity = 0.f;
-	Moon->LightColor = FColor(160, 185, 255);
-	Moon->LightSourceAngle = 0.5f;
-	Moon->bAtmosphereSunLight = true;
-	Moon->AtmosphereSunLightIndex = 1;
+	Moon->SetIntensity(0.f);
+	Moon->SetLightColor(FLinearColor(FColor(160, 185, 255)));
+	Moon->SetLightSourceAngle(0.5f);
+	Moon->SetAtmosphereSunLight(true);
+	Moon->SetAtmosphereSunLightIndex(1);
 
 	SkyLight = CreateDefaultSubobject<USkyLightComponent>(TEXT("SkyLight"));
 	SkyLight->SetupAttachment(Root);
 	SkyLight->SetMobility(EComponentMobility::Movable);
 	SkyLight->SourceType = SLS_CapturedScene;
 	SkyLight->bRealTimeCapture = true;
-	SkyLight->Intensity = 1.f;
+	SkyLight->SetIntensity(1.f);
 
 	// The planet. Its top sits at the component, which we sink as the tower climbs.
 	Atmosphere = CreateDefaultSubobject<USkyAtmosphereComponent>(TEXT("Atmosphere"));
 	Atmosphere->SetupAttachment(Root);
 	Atmosphere->SetUsingAbsoluteLocation(true);
 	Atmosphere->TransformMode = ESkyAtmosphereTransformMode::PlanetTopAtComponentTransform;
-	Atmosphere->GroundAlbedo = FColor(18, 46, 72); // deep ocean, so orbit shows a blue planet
+	Atmosphere->SetGroundAlbedo(FColor(18, 46, 72)); // deep ocean, so orbit shows a blue planet
 
 	CloudLayer = CreateDefaultSubobject<UVolumetricCloudComponent>(TEXT("Clouds"));
 	CloudLayer->SetupAttachment(Root);
@@ -275,7 +261,7 @@ void ASkyStackDirector::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Save = Cast<USkyStackSave>(UGameplayStatics::LoadGameFromSlot(SkyStackTuning::SaveSlot, 0));
+	Save = Cast<USkyStackSave>(UGameplayStatics::LoadGameFromSlot(SkyStackPresentation::SaveSlot, 0));
 	if (!Save)
 	{
 		Save = Cast<USkyStackSave>(UGameplayStatics::CreateSaveGameObject(USkyStackSave::StaticClass()));
@@ -519,12 +505,13 @@ void ASkyStackDirector::SpawnSlider()
 	SliderDir = Rng.FRand() < 0.5f ? 1.f : -1.f;
 	SliderOffset = -SliderDir * TravelRange;
 
-	float Speed = FMath::Min(BaseSpeed + SpeedPerFloor * Floor, MaxSpeed) * Rng.FRandRange(0.9f, 1.12f);
-	bSliderWobble = Floor >= 12 && Rng.FRand() < 0.18f;
-	const bool bRush = Floor >= 25 && !bSliderWobble && Rng.FRand() < 0.12f;
+	// Keep this roll order stable: the daily challenge depends on it.
+	float Speed = SkyStackRules::BaseSliderSpeed(Floor) * Rng.FRandRange(SpeedJitterMin, SpeedJitterMax);
+	bSliderWobble = Floor >= WobbleFromFloor && Rng.FRand() < WobbleChance;
+	const bool bRush = Floor >= RushFromFloor && !bSliderWobble && Rng.FRand() < RushChance;
 	if (bRush)
 	{
-		Speed *= 1.35f;
+		Speed *= RushMultiplier;
 	}
 	SliderSpeed = Speed;
 
@@ -572,9 +559,8 @@ void ASkyStackDirector::DropSlider()
 	}
 
 	const double Extent = bSliderAlongX ? TopSize.X : TopSize.Y;
-	const double Offset = SliderOffset;
-	const double Error = FMath::Abs(Offset);
-	if (Error >= Extent)
+	const SkyStackRules::FDropOutcome Outcome = SkyStackRules::ResolveDrop(SliderOffset, Extent, SliderSpeed);
+	if (Outcome.Kind == SkyStackRules::EDropKind::Miss)
 	{
 		MissAndEndRun();
 		return;
@@ -586,7 +572,7 @@ void ASkyStackDirector::DropSlider()
 	EDropGrade Grade = EDropGrade::Perfect;
 	FVector CutPoint = FVector::ZeroVector;
 
-	if (Error <= FMath::Max(PerfectTolerance, SliderSpeed * PerfectWindowSeconds))
+	if (Outcome.Kind == SkyStackRules::EDropKind::Perfect)
 	{
 		++Combo;
 		++Perfects;
@@ -595,37 +581,24 @@ void ASkyStackDirector::DropSlider()
 	else
 	{
 		Combo = 0;
-		const double Kept = Extent - Error;
-		const double Side = Offset > 0.0 ? 1.0 : -1.0;
-		FVector2D ChipCenter = TopCenter;
-		FVector2D ChipSize = TopSize;
-		if (bSliderAlongX)
-		{
-			NewSize.X = Kept;
-			NewCenter.X += Offset * 0.5;
-			ChipSize.X = Error;
-			ChipCenter.X += Offset * 0.5 + Side * Extent * 0.5;
-		}
-		else
-		{
-			NewSize.Y = Kept;
-			NewCenter.Y += Offset * 0.5;
-			ChipSize.Y = Error;
-			ChipCenter.Y += Offset * 0.5 + Side * Extent * 0.5;
-		}
+		// Everything along the slide axis comes from the rules; map it onto X or Y.
+		const FVector2D Axis = bSliderAlongX ? FVector2D(1.0, 0.0) : FVector2D(0.0, 1.0);
+		const FVector2D Across = FVector2D(1.0, 1.0) - Axis;
+		NewSize = TopSize * Across + Axis * Outcome.Kept;
+		NewCenter = TopCenter + Axis * Outcome.CenterShift;
+		const FVector2D ChipSize = TopSize * Across + Axis * Outcome.Chip;
+		const FVector2D ChipCenter = TopCenter + Axis * Outcome.ChipShift;
 
-		// The overhang breaks off and tumbles away under real physics.
-		CutPoint = FVector(ChipCenter, Z);
-		const FVector2D CutOffset = bSliderAlongX ? FVector2D(-Side * Error * 0.5, 0.0) : FVector2D(0.0, -Side * Error * 0.5);
-		CutPoint += FVector(CutOffset, 0.0);
+		// The overhang breaks off and tumbles away under real physics; sparks fly from the cut.
+		const double Side = SliderOffset > 0.0 ? 1.0 : -1.0;
+		CutPoint = FVector(ChipCenter - Axis * (Side * Outcome.Chip * 0.5), Z);
 		if (ASkyStackBlock* Chip = SpawnBlock(FVector(ChipCenter, Z), FVector(ChipSize, BlockHeight), Slider->GetColor()))
 		{
-			const FVector Push = bSliderAlongX ? FVector(Side, 0.0, 0.0) : FVector(0.0, Side, 0.0);
-			Chip->MakeDebris(Push * 140.0 + FVector(0.0, 0.0, 60.0), RandomSpin(160.f));
+			Chip->MakeDebris(FVector(Axis * Side * 140.0, 60.0), RandomSpin(160.f));
 			Chip->SetLifeSpan(6.f);
 			Debris.Add(Chip);
 		}
-		Grade = Kept / Extent < ClutchRatio ? EDropGrade::Clutch : EDropGrade::Good;
+		Grade = Outcome.Kind == SkyStackRules::EDropKind::Clutch ? EDropGrade::Clutch : EDropGrade::Good;
 	}
 
 	ASkyStackBlock* Placed = Slider;
@@ -657,11 +630,11 @@ void ASkyStackDirector::DropSlider()
 		FringePulse = FMath::Max(FringePulse, 0.5f);
 		const FString Label = Combo > 1 ? FString::Printf(TEXT("PERFECT  x%d"), Combo) : FString(TEXT("PERFECT"));
 		AddToast(Label, FLinearColor(1.f, 0.85f, 0.35f), 56.f + FMath::Min(Combo, 10) * 4.f);
-		if (Combo >= ComboToGrow && (TopSize.X < BaseSize || TopSize.Y < BaseSize))
+		if (SkyStackRules::EarnsGrowth(Combo) && (TopSize.X < BaseSize || TopSize.Y < BaseSize))
 		{
 			// Streaks earn width back.
-			TopSize.X = FMath::Min(TopSize.X + GrowAmount, BaseSize);
-			TopSize.Y = FMath::Min(TopSize.Y + GrowAmount, BaseSize);
+			TopSize.X = SkyStackRules::Grow(TopSize.X);
+			TopSize.Y = SkyStackRules::Grow(TopSize.Y);
 			Placed->TweenSize(FVector(TopSize, BlockHeight), 0.3f);
 			Synth->PlayGrow();
 			AddToast(TEXT("+ WIDER"), FLinearColor(0.45f, 1.f, 0.75f), 36.f, 0.9f);
@@ -724,7 +697,7 @@ void ASkyStackDirector::MissAndEndRun()
 		BurstSparks(Slider->GetActorLocation(), Slider->GetColor(), 24, 300.f, 8.f, 0.8f, 900.f);
 		Slider->MakeDebris(Push * 250.0, RandomSpin(90.f));
 		Slider->SetLifeSpan(8.f);
-		Debris.Add(Slider);
+		Debris.Add(Slider.Get());
 		Slider = nullptr;
 	}
 
@@ -866,7 +839,7 @@ void ASkyStackDirector::BuildWorld()
 		StarMesh->SetVisibility(false);
 	}
 
-	SparkPoolSize = SparkPool;
+	SparkPoolSize = SkyStackPresentation::SparkPool;
 	TArray<FTransform> Hidden;
 	Hidden.Init(HiddenInstance(), SparkPoolSize);
 	SparkMesh->AddInstances(Hidden, false, true);
@@ -880,8 +853,8 @@ void ASkyStackDirector::BuildStars()
 	FRandomStream StarRng(90210);
 	constexpr double Radius = 1400000.0;
 	TArray<FTransform> Transforms;
-	Transforms.Reserve(SkyStackTuning::StarCount);
-	for (int32 Index = 0; Index < SkyStackTuning::StarCount; ++Index)
+	Transforms.Reserve(SkyStackPresentation::StarCount);
+	for (int32 Index = 0; Index < SkyStackPresentation::StarCount; ++Index)
 	{
 		const double Yaw = StarRng.FRandRange(0.f, 360.f);
 		const double SinElevation = StarRng.FRandRange(-0.08f, 1.f);
@@ -892,7 +865,7 @@ void ASkyStackDirector::BuildStars()
 	}
 	StarMesh->AddInstances(Transforms, false, false);
 
-	for (int32 Index = 0; Index < SkyStackTuning::StarCount; ++Index)
+	for (int32 Index = 0; Index < SkyStackPresentation::StarCount; ++Index)
 	{
 		const float Tint = StarRng.FRand();
 		const FLinearColor Color = Tint < 0.15f ? FLinearColor(1.f, 0.85f, 0.6f) : (Tint < 0.35f ? FLinearColor(0.7f, 0.8f, 1.f) : FLinearColor::White);
@@ -961,7 +934,7 @@ void ASkyStackDirector::Tick(float DeltaSeconds)
 			InputMode.SetHideCursorDuringCapture(false);
 			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 			PC->SetInputMode(InputMode);
-			PC->SetShowMouseCursor(true);
+			PC->bShowMouseCursor = true;
 			bConfiguredController = true;
 		}
 	}
@@ -1015,22 +988,8 @@ void ASkyStackDirector::UpdateSlider(float GameDt)
 		return;
 	}
 
-	float Speed = SliderSpeed;
-	if (bSliderWobble)
-	{
-		Speed *= 1.f + 0.6f * FMath::Sin(StateTime * 4.2f);
-	}
-	SliderOffset += SliderDir * Speed * GameDt;
-	if (SliderOffset > TravelRange)
-	{
-		SliderOffset = TravelRange;
-		SliderDir = -1.f;
-	}
-	else if (SliderOffset < -TravelRange)
-	{
-		SliderOffset = -TravelRange;
-		SliderDir = 1.f;
-	}
+	const float Speed = SliderSpeed * (bSliderWobble ? SkyStackRules::WobbleFactor(StateTime) : 1.f);
+	SkyStackRules::AdvanceSlider(SliderOffset, SliderDir, static_cast<double>(Speed * GameDt));
 	Slider->SetActorLocation(GetSliderLocation());
 }
 
@@ -1087,7 +1046,7 @@ void ASkyStackDirector::UpdateCamera(float RealDt)
 	Camera->SetWorldLocationAndRotation(Location, ViewRotation + ShakeRotation);
 
 	FovKick = FMath::FInterpTo(FovKick, 0.f, RealDt, 5.f);
-	Camera->SetFieldOfView(CameraFov + FovKick);
+	Camera->SetFieldOfView(SkyStackPresentation::CameraFov + FovKick);
 	Camera->PostProcessSettings.DepthOfFieldFocalDistance = CamDist;
 }
 
@@ -1108,6 +1067,9 @@ void ASkyStackDirector::UpdateSky(float RealDt)
 
 	Sun->SetWorldRotation(FRotator(-SunElevation, SunYaw, 0.f));
 	Sun->SetLightColor(SunColor);
+	// Below the horizon the sun must not light the tower from underneath; keep a sliver so the
+	// sky atmosphere still paints a twilight glow.
+	Sun->SetIntensity(10.f * FMath::Max(0.03f, FMath::SmoothStep(-4.f, 2.f, SunElevation)));
 	Moon->SetIntensity(MoonIntensity);
 
 	// Altitude eases in log space so the drop from orbit back to the sea feels like a dive.
@@ -1125,6 +1087,7 @@ void ASkyStackDirector::UpdateSky(float RealDt)
 		CloudLayer->SetWorldLocation(FVector(0.0, 0.0, GroundZ));
 		CloudLayer->MarkRenderStateDirty();
 		Fog->SetWorldLocation(FVector(0.0, 0.0, GroundZ));
+		Fog->MarkRenderStateDirty();
 		if (Pillar)
 		{
 			const double Length = FMath::Min(-GroundZ, 2000000.0) + 2000.0;
@@ -1232,23 +1195,8 @@ void ASkyStackDirector::UpdateToasts(float RealDt)
 
 void ASkyStackDirector::UpdateMusic()
 {
-	int32 Level = 0;
-	switch (State)
-	{
-	case EStackState::Title:
-		Level = 0;
-		break;
-	case EStackState::Playing:
-		// The beat builds as you climb and as your streak grows.
-		Level = 1;
-		Level += (Combo >= 3 || Floor >= 20) ? 1 : 0;
-		Level += (Combo >= 6 || Floor >= 60) ? 1 : 0;
-		break;
-	default:
-		Level = -1;
-		break;
-	}
-	Synth->SetMusicLevel(Level);
+	// The beat builds as you climb and as your streak grows; it ducks when you fall.
+	Synth->SetMusicLevel(SkyStackRules::MusicLevel(State == EStackState::Playing, State == EStackState::Title, Combo, Floor));
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1383,7 +1331,7 @@ int32 ASkyStackDirector::GetBest() const
 
 int32 ASkyStackDirector::ZoneForFloor(int32 FloorIndex) const
 {
-	return FMath::Clamp(FloorIndex / SkyStackTuning::FloorsPerZone, 0, NumZones - 1);
+	return SkyStackRules::ZoneForFloor(FloorIndex, NumZones);
 }
 
 FString ASkyStackDirector::GetZoneName() const
@@ -1398,13 +1346,7 @@ FString ASkyStackDirector::GetPaletteName() const
 
 double ASkyStackDirector::AltitudeMetersForFloor(double FloorValue)
 {
-	using namespace SkyStackTuning;
-	// Linear through the weather, then exponential into space: 6 km at floor 100, orbit by ~140.
-	if (FloorValue <= 100.0)
-	{
-		return StartAltitudeMeters + FloorValue * 57.0;
-	}
-	return FMath::Min((StartAltitudeMeters + 5700.0) * FMath::Exp((FloorValue - 100.0) / 14.0), 140000.0);
+	return SkyStackRules::AltitudeMetersForFloor(FloorValue);
 }
 
 FString ASkyStackDirector::GetAltitudeText() const
@@ -1418,15 +1360,16 @@ FString ASkyStackDirector::GetAltitudeText() const
 
 FString ASkyStackDirector::GetTaunt() const
 {
+	// One line per stage of the journey (zones change every 15 floors).
 	if (Floor == 0)   return TEXT("The first block is free. You missed it anyway.");
 	if (Floor < 5)    return TEXT("Gravity 1, you 0.");
 	if (Floor < 10)   return TEXT("Warming up. Surely.");
-	if (Floor < 20)   return TEXT("Mid tower energy.");
-	if (Floor < 40)   return TEXT("Okay, architect.");
-	if (Floor < 60)   return TEXT("Above the clouds. Your friends are not.");
-	if (Floor < 80)   return TEXT("Built different.");
-	if (Floor < 100)  return TEXT("The stars are watching.");
-	if (Floor < 120)  return TEXT("Airliners are below you.");
+	if (Floor < 15)   return TEXT("The clouds were right there.");
+	if (Floor < 30)   return TEXT("Head in the clouds. Literally.");
+	if (Floor < 45)   return TEXT("Above the clouds. Your friends are not.");
+	if (Floor < 60)   return TEXT("Golden hour. Golden hands.");
+	if (Floor < 75)   return TEXT("The stars are watching.");
+	if (Floor < 90)   return TEXT("Airliners are below you.");
 	return TEXT("Touch grass. From orbit.");
 }
 
@@ -1475,18 +1418,13 @@ FString ASkyStackDirector::BuildShareText() const
 
 float ASkyStackDirector::GetDanger() const
 {
-	if (State != EStackState::Playing)
-	{
-		return 0.f;
-	}
-	const double Narrowest = FMath::Min(TopSize.X, TopSize.Y);
-	return FMath::Clamp(static_cast<float>(1.0 - Narrowest / (SkyStackTuning::BaseSize * 0.3)), 0.f, 1.f);
+	return State == EStackState::Playing ? SkyStackRules::Danger(FMath::Min(TopSize.X, TopSize.Y)) : 0.f;
 }
 
 void ASkyStackDirector::SaveProgress()
 {
 	if (Save)
 	{
-		UGameplayStatics::SaveGameToSlot(Save, SkyStackTuning::SaveSlot, 0);
+		UGameplayStatics::SaveGameToSlot(Save, SkyStackPresentation::SaveSlot, 0);
 	}
 }
