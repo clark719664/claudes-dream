@@ -210,6 +210,9 @@ function friendly(err) {
 export function createServer() {
   return http.createServer((req, res) => {
     const url = new URL(req.url, 'http://localhost');
+    if (url.pathname === '/api/health' && req.method === 'GET') {
+      return send(res, 200, { ok: true, service: 'reverie', ai: hasCredentials() ? 'claude' : 'offline' });
+    }
     if (url.pathname === '/api/status' && req.method === 'GET') {
       return send(res, 200, { ai: hasCredentials() ? 'claude' : 'offline', model: hasCredentials() ? MODEL : null });
     }
@@ -239,7 +242,7 @@ export function createServer() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT) || 5173;
-  createServer().listen(port, () => {
+  createServer().listen(port, '0.0.0.0', () => {
     const mode = hasCredentials() ? `Claude (${MODEL})` : 'offline designer (set ANTHROPIC_API_KEY to use Claude)';
     console.log(`\n  Reverie Studio  →  http://localhost:${port}\n  AI designer     →  ${mode}\n`);
   });
