@@ -14,11 +14,11 @@ export class ProgressiveAssetManager extends EventTarget {
     super();
     this.endpoint = endpoint;
     this.quality = normalizeQualityTier(quality);
-    this.budget = qualityBudget(quality);
+    this.budget = qualityBudget(this.quality);
     this.maxCacheBytes = maxCacheBytes;
     this.memory = new Map();
     this.pending = new Map();
-    this.persistent = new AssetCache({ maxBytes: Math.max(maxCacheBytes, this.budget.memoryMB * 1024 * 1024) });
+    this.persistent = new AssetCache({ maxBytes: Math.min(maxCacheBytes, this.budget.memoryMB * 1024 * 1024) });
   }
 
   resolve(request, fallback) {
@@ -42,7 +42,7 @@ export class ProgressiveAssetManager extends EventTarget {
       }
       const url = `${this.endpoint}/${encodeURIComponent(request.key)}?quality=${this.quality}`;
       const res = await fetch(url, {
-        headers: { 'x-reverie-asset': btoa(unescape(encodeURIComponent(JSON.stringify(request)))) },
+        headers: { 'x-reverie-asset': utf8Base64(JSON.stringify(request)) },
       });
       if (res.status === 404 || res.status === 204) return null;
       if (!res.ok) throw new Error(`asset service ${res.status}`);
@@ -67,4 +67,11 @@ export class ProgressiveAssetManager extends EventTarget {
       if (total <= this.maxCacheBytes) break;
     }
   }
+}
+
+function utf8Base64(value) {
+  const bytes = new TextEncoder().encode(value);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
 }
