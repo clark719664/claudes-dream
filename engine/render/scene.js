@@ -89,6 +89,29 @@ export class GpuScene {
   hasMesh(key) { return this.meshes.has(key); }
 
   /**
+   * Replace a batch's mesh after build without changing entity identity,
+   * transforms, physics or behaviours. This is the core progressive hot-swap:
+   * procedural geometry stays playable until the enhanced mesh is ready.
+   */
+  replaceBatchMesh(batchId, meshKey) {
+    const batch = this.batches[batchId];
+    const mesh = this.meshes.get(meshKey);
+    if (!batch || !mesh) return false;
+    batch.mesh = mesh;
+    if (this.built) {
+      const template = new Uint32Array([mesh.indexCount, 0, 0, 0, 0]);
+      this.device.queue.writeBuffer(this.indirectTemplate, batchId * 20, template);
+      for (let i = 0; i < this.count; i++) {
+        if (this.data[i * INSTANCE_FLOATS + 27] === batchId) {
+          this.updateBounds(i);
+          this.markDirty(i);
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
    * A batch = one mesh drawn with one indirect call per view.
    * minDist/maxDist select LODs (a mesh can have several batches with
    * disjoint ranges); shadows toggles shadow casting.
