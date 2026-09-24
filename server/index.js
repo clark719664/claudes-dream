@@ -15,6 +15,7 @@ import { talkToCharacter } from './npc.js';
 import { offlineReply } from '../shared/npc.js';
 import { artDirect, nextLevel } from './director.js';
 import { planNextLevel } from '../shared/gamemaster.js';
+import { getAssetManifest, requestAssetJob } from './assets.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC_DIRS = ['studio', 'engine', 'shared', 'play', 'examples', 'docs', 'tools'];
@@ -213,6 +214,21 @@ export function createServer() {
       return send(res, 200, { ai: hasCredentials() ? 'claude' : 'offline', model: hasCredentials() ? MODEL : null });
     }
     if (url.pathname === '/api/generate' && req.method === 'POST') return void generate(req, res);
+    const assetMatch = /^\/api\/assets\/([a-zA-Z0-9_-]+)$/.exec(url.pathname);
+    if (assetMatch && req.method === 'GET') {
+      const key = assetMatch[1];
+      const ready = getAssetManifest(key);
+      if (ready) return send(res, 200, ready);
+      let request = null;
+      try {
+        const encoded = req.headers['x-reverie-asset'];
+        if (encoded) request = JSON.parse(Buffer.from(String(encoded), 'base64').toString('utf8'));
+      } catch {}
+      if (request?.key === key) requestAssetJob(key, request, url.searchParams.get('quality') ?? 'medium');
+      // 204 means: use the procedural fallback; an enhanced asset is not ready.
+      res.writeHead(204, { 'cache-control': 'no-store' });
+      return res.end();
+    }
     if (url.pathname === '/api/npc' && req.method === 'POST') return void npc(req, res);
     if (url.pathname === '/api/art-director' && req.method === 'POST') return void artDirector(req, res);
     if (url.pathname === '/api/next-level' && req.method === 'POST') return void nextLevelEndpoint(req, res);
