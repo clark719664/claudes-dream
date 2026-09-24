@@ -29,7 +29,7 @@ export class AssetRuntime extends EventTarget {
   async #install({ request, manifest }) {
     manifest = normalizeAssetManifest(manifest, request.key);
     if (!manifest.url) return;
-    const geo = await loadGLB(manifest.url);
+    const geo = await loadGLB(manifest.url, { maxTriangles: this.manager.budget.triangles });
     const key = `asset:${request.key}`;
     if (!this.scene.hasMesh(key)) this.scene.addMesh(key, geo);
     let swaps = 0;
