@@ -17,7 +17,7 @@ export function prefabAssetRequest(prefab, seed = 1) {
       roughness: prefab.roughness,
       variation: v.variation,
     },
-    seed: seed + String(prefab.id ?? '').length * 101,
+    seed: seed + stableIdNumber(String(prefab.id ?? '')),
     importance: v.detail,
     fallback: { shape: prefab.shape, size: prefab.size },
   });
@@ -25,4 +25,10 @@ export function prefabAssetRequest(prefab, seed = 1) {
 
 export function collectAssetRequests(spec) {
   return (spec?.prefabs ?? []).map((p) => prefabAssetRequest(p, spec.seed)).filter(Boolean);
+}
+
+function stableIdNumber(value) {
+  let h = 0;
+  for (let i = 0; i < value.length; i++) h = (Math.imul(h, 31) + value.charCodeAt(i)) >>> 0;
+  return h;
 }
