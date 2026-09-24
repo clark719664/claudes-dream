@@ -12,6 +12,8 @@
 
 export const SPEC_VERSION = 1;
 
+export const VISUAL_ARCHETYPES = ['primitive', 'prop', 'architecture', 'creature', 'character', 'vehicle', 'vegetation', 'weapon', 'resource'];
+export const SURFACES = ['painted', 'wood', 'stone', 'metal', 'glass', 'cloth', 'leather', 'skin', 'fur', 'scales', 'crystal', 'organic', 'ceramic'];
 export const SHAPES = ['box', 'sphere', 'cylinder', 'cone', 'torus', 'capsule', 'gem', 'coin', 'star', 'pyramid', 'crystal'];
 export const BEHAVIORS = ['spin', 'bob', 'collectible', 'hazard', 'goal', 'checkpoint', 'bounce', 'patrol', 'chase', 'orbit', 'light', 'shooter', 'heal'];
 export const AXES = ['x', 'y', 'z'];
@@ -109,7 +111,14 @@ export const GAME_SPEC_SCHEMA = obj('A complete Reverie game.', {
   }),
   prefabs: list('Reusable object templates (max 32).', obj('A template.', {
     id: str('Unique identifier, lowercase letters/digits/underscores, e.g. "gold_coin".'),
-    shape: oneOf(SHAPES, 'Visual primitive.'),
+    shape: oneOf(SHAPES, 'Immediate procedural fallback primitive.'),
+    visual: obj('Semantic visual identity used for progressive high-fidelity assets. Keep description concrete and art-directable.', {
+      archetype: oneOf(VISUAL_ARCHETYPES, 'Broad asset family. primitive keeps the procedural fallback only.'),
+      description: str('Concise physical description: silhouette, construction, distinctive details and age/wear. Empty string disables enhancement.'),
+      surface: oneOf(SURFACES, 'Dominant surface/material family.'),
+      detail: num('Desired visual complexity 0-1. Hero objects should be near 1; repeated background props lower.'),
+      variation: num('Allowed procedural variation 0-1. Use low values for signature objects.'),
+    }),
     color: color('Base color.'),
     emissive: num('Glow strength 0-8. 0 is not glowing; 2-4 glows with bloom.'),
     metallic: num('0 dielectric to 1 metal.'),
@@ -407,6 +416,13 @@ export function normalizeSpec(input) {
     spec.prefabs.push({
       id,
       shape: n.oneOf(p.shape, SHAPES, 'box', `${path}.shape`),
+      visual: {
+        archetype: n.oneOf(p.visual?.archetype, VISUAL_ARCHETYPES, 'primitive', `${path}.visual.archetype`),
+        description: n.str(p.visual?.description, '', 500),
+        surface: n.oneOf(p.visual?.surface, SURFACES, 'painted', `${path}.visual.surface`),
+        detail: n.num(p.visual?.detail, 0.5, 0, 1, `${path}.visual.detail`),
+        variation: n.num(p.visual?.variation, 0.35, 0, 1, `${path}.visual.variation`),
+      },
       color: n.color(p.color, '#cccccc', `${path}.color`),
       emissive: n.num(p.emissive, 0, 0, 8, `${path}.emissive`),
       metallic: n.num(p.metallic, 0, 0, 1, `${path}.metallic`),
