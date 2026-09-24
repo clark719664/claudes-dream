@@ -97,6 +97,11 @@ test('generate falls back to the offline designer without credentials', async ()
     assert.equal(refined.data.spec.environment.particles, 'snow');
     const status = await (await fetch(`${appUrl}/api/status`)).json();
     assert.equal(status.ai, 'offline');
+    const healthRes = await fetch(`${appUrl}/api/health`);
+    assert.equal(healthRes.status, 200);
+    const health = await healthRes.json();
+    assert.equal(health.ok, true);
+    assert.equal(health.service, 'reverie');
     const bad = await fetch(`${appUrl}/api/generate`, { method: 'POST', body: '{}' });
     assert.equal(bad.status, 400);
     const traversal = await fetch(`${appUrl}/engine/../package.json`);
