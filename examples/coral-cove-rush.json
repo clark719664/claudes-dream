@@ -353,6 +353,28 @@
       "height": 0
     }
   ],
+  "characters": [
+    {
+      "name": "Captain Coco",
+      "role": "a retired pirate parrot who knows where the treasure is buried",
+      "personality": "Loud, boastful and funny. Speaks like a pirate. Will trade secrets for good company.",
+      "greeting": "Squawk! Ahoy there, landlubber! Looking for treasure? Everybody is.",
+      "color": "#35c27a",
+      "position": [
+        -1.51,
+        0,
+        6.84
+      ],
+      "powers": [
+        "reveal_goal",
+        "heal",
+        "give_points",
+        "spawn_gift",
+        "grant_ability",
+        "follow_player"
+      ]
+    }
+  ],
   "rules": {
     "goal": "reach",
     "targetScore": 0,

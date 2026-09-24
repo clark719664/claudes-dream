@@ -5,7 +5,7 @@
 // the CPU and drawn with two geometric LODs.
 
 import { bindLayout, bindGroup, createShader, createBuffer } from '../gpu/gpu.js';
-import { GLOBALS_WGSL, MATH_WGSL, ATMOSPHERE_WGSL, SHADING_WGSL } from './wgsl/common.js';
+import { GLOBALS_WGSL, MATH_WGSL, ATMOSPHERE_WGSL, SHADING_WGSL, INTERACT_WGSL } from './wgsl/common.js';
 import { sphereInFrustum } from '../core/math.js';
 
 const TILE = 8;
@@ -15,6 +15,7 @@ ${GLOBALS_WGSL}
 ${MATH_WGSL}
 ${ATMOSPHERE_WGSL}
 ${SHADING_WGSL}
+${INTERACT_WGSL}
 
 struct GrassParams {
   origin: vec4f,     // grid origin x, z, tile size, tiles per row
@@ -107,11 +108,14 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   let pd = length(toPlayer);
   let push = (1.0 - smoothstep(0.2, frame.player.w, pd)) * select(0.0, 1.0, abs(y - frame.player.y) < 2.0);
   bend += normalize(toPlayer + vec2f(1e-4)) * push * 1.6;
+  // trampled: blades walked over stay flattened for a while
+  let trampled = clamp(interactAt(base).r * 1.3, 0.0, 1.0);
+  bend += facing * trampled * 1.4;
   let curve = t * t;
   var p = vec3f(base.x, y, base.y);
   p += vec3f(across.x, 0.0, across.y) * width * side;
   p += vec3f(bend.x, 0.0, bend.y) * curve * heightScale * 0.6;
-  p.y += h * (1.0 - 0.25 * curve * min(length(bend), 1.5));
+  p.y += h * (1.0 - 0.25 * curve * min(length(bend), 1.5)) * (1.0 - trampled * 0.7);
 
   // rounded normal: lean the blade normal outwards so the clump shades like a volume
   let bladeN = normalize(vec3f(facing.x, 0.4, facing.y) + vec3f(across.x, 0.0, across.y) * side * 0.6);

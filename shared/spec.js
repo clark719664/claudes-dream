@@ -15,6 +15,8 @@ export const SPEC_VERSION = 1;
 export const SHAPES = ['box', 'sphere', 'cylinder', 'cone', 'torus', 'capsule', 'gem', 'coin', 'star', 'pyramid', 'crystal'];
 export const BEHAVIORS = ['spin', 'bob', 'collectible', 'hazard', 'goal', 'checkpoint', 'bounce', 'patrol', 'chase', 'orbit', 'light', 'shooter', 'heal'];
 export const AXES = ['x', 'y', 'z'];
+/** What a character may do to the world when the conversation calls for it (see shared/npc.js). */
+export const NPC_POWERS = ['give_points', 'heal', 'reveal_goal', 'spawn_gift', 'change_weather', 'change_time', 'grant_ability', 'follow_player'];
 export const SCATTER_KINDS = ['pine', 'oak', 'palm', 'rock', 'grass', 'crystal', 'cactus', 'mushroom', 'pillar', 'flower'];
 export const TERRAIN_STYLES = ['hills', 'mountains', 'islands', 'canyon', 'dunes', 'flat', 'terraces'];
 export const PARTICLES = ['none', 'fireflies', 'snow', 'embers', 'dust', 'rain', 'spores'];
@@ -32,6 +34,7 @@ export const LIMITS = {
   entities: 900,
   scatter: 8,
   behaviorsPerPrefab: 5,
+  characters: 6,
 };
 
 // ---------------------------------------------------------------------------
@@ -135,6 +138,15 @@ export const GAME_SPEC_SCHEMA = obj('A complete Reverie game.', {
     radius: num('Radius / half-extent in meters.'),
     height: num('Extra random height variation in meters (0 = all at center height).'),
   })),
+  characters: list('Characters the player can walk up to and talk with (max 6). Claude plays them live, in character, and they can use their powers on the world.', obj('A talking character.', {
+    name: str('Display name, e.g. "Old Mossbeard" (max 30 chars).'),
+    role: str('Who they are in one line, e.g. "a grumpy mushroom hermit who guards the grove".'),
+    personality: str('How they talk, what they want, what they know about this world (hints, secrets, a small quest). 1-4 sentences.'),
+    greeting: str('The first thing they say when the player walks up.'),
+    color: color('Main color of the character.'),
+    position: vec3('[x, heightAboveGround, z] where they stand.'),
+    powers: list('What they may do when it makes sense in conversation: give_points (reward), heal (restore lives), reveal_goal (light the way to the goal or treasure), spawn_gift (conjure collectibles nearby), change_weather, change_time, grant_ability (temporary speed or jump boost), follow_player (become a companion).', oneOf(NPC_POWERS, 'A power.')),
+  })),
   rules: obj('Win/lose logic.', {
     goal: oneOf(GOALS, 'collect: reach targetScore by collecting. reach: touch a goal object. survive: stay alive until timeLimit. score: highest score before timeLimit ends.'),
     targetScore: int('Points needed for collect (0 = collect everything).'),
@@ -186,6 +198,7 @@ export function defaultSpec() {
     prefabs: [],
     placements: [],
     spawns: [],
+    characters: [],
     rules: {
       goal: 'score', targetScore: 0, timeLimit: 0,
       objective: 'Explore the world.', winMessage: 'You did it!', loseMessage: 'Try again!',
@@ -329,6 +342,7 @@ export function normalizeSpec(input) {
     prefabs: [],
     placements: [],
     spawns: [],
+    characters: [],
     rules: {
       goal: n.oneOf(rul.goal, GOALS, d.rules.goal, 'rules.goal'),
       targetScore: n.int(rul.targetScore, 0, 0, 100000, 'rules.targetScore'),
@@ -440,6 +454,26 @@ export function normalizeSpec(input) {
       center: n.vec3(s.center, [0, 1, 0], -400, 400, `spawns[${i}].center`),
       radius: n.num(s.radius, 20, 0, 400, `spawns[${i}].radius`),
       height: n.num(s.height, 0, 0, 60, `spawns[${i}].height`),
+    });
+  });
+
+  n.list(src.characters, LIMITS.characters, 'characters').forEach((c, i) => {
+    if (!c || typeof c !== 'object') return;
+    const path = `characters[${i}]`;
+    const pos = n.vec3(c.position, [0, 0, 6], -400, 400, `${path}.position`);
+    pos[0] = clamp(pos[0], -half, half);
+    pos[2] = clamp(pos[2], -half, half);
+    pos[1] = clamp(pos[1], 0, 60);
+    const powers = [];
+    for (const p of Array.isArray(c.powers) ? c.powers : []) if (NPC_POWERS.includes(p) && !powers.includes(p)) powers.push(p);
+    spec.characters.push({
+      name: n.str(c.name, `Stranger ${i + 1}`, 30),
+      role: n.str(c.role, 'a curious wanderer', 160),
+      personality: n.str(c.personality, 'Friendly and a little mysterious.', 700),
+      greeting: n.str(c.greeting, 'Well met, traveller!', 240),
+      color: n.color(c.color, '#8fd4ff', `${path}.color`),
+      position: pos,
+      powers,
     });
   });
 

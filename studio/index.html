@@ -30,7 +30,10 @@
     <div class="section">
       <h2>Dream it</h2>
       <p class="hint">Describe any game. The AI designs the world, rules, look and music.</p>
-      <textarea id="prompt" rows="4" placeholder="A cozy forest at golden hour where you collect glowing mushrooms while avoiding sneaky slimes…"></textarea>
+      <div class="prompt-wrap">
+        <textarea id="prompt" rows="4" placeholder="A cozy forest at golden hour where you collect glowing mushrooms while avoiding sneaky slimes…"></textarea>
+        <button class="mic" id="mic-prompt" type="button" title="Describe your game out loud" hidden>🎤</button>
+      </div>
       <button class="btn primary big" id="generate"><span class="spark">✦</span> Generate game</button>
       <div class="chips" id="ideas"></div>
     </div>
@@ -38,9 +41,11 @@
       <h2>Refine</h2>
       <form id="refine-form" class="row">
         <input id="refine" type="text" placeholder="Make it night with more enemies…" autocomplete="off">
+        <button class="btn icon-btn mic-inline" type="button" id="mic-refine" title="Say a change out loud" hidden>🎤</button>
         <button class="btn" type="submit" id="refine-btn">Apply</button>
       </form>
       <div class="chips" id="tweaks"></div>
+      <button class="btn big director" id="art-director" title="Claude renders screenshots of your game, critiques them like an art director and improves the look">🎨 Art director: polish the look</button>
     </div>
     <div class="section grow">
       <h2>Designer <span class="badge" id="ai-badge">…</span></h2>

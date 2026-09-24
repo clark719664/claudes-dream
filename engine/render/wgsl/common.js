@@ -43,6 +43,7 @@ export const FRAME = defineStruct('Frame', [
   ['weatherFx', 'vec4'],      // surface wetness, rain intensity, lightning flash, aurora strength
   ['flashPos', 'vec4'],       // lightning bolt position xz (camera relative), strike brightness, -
   ['gi', 'vec4'],             // irradiance field origin x, z, extent m, enabled
+  ['interact', 'vec4'],       // interaction map origin x, z, size m, enabled
 ]);
 
 /** Group 0 for every shading pipeline (mesh, grass, sky, water, particles). */
@@ -66,6 +67,7 @@ export const GLOBAL_LAYOUT = [
   ['VFC', 'texture'],        // 16 weather map (cloud coverage, type, detail)
   ['F', 'read'],             // 17 volumetric cloud panorama
   ['VFC', 'texture-array'],  // 18 heightfield irradiance field (GI)
+  ['VF', 'texture'],         // 19 interaction map (trails, water waves)
 ];
 
 export const GLOBALS_WGSL = /* wgsl */ `
@@ -90,6 +92,7 @@ struct Light { posRadius: vec4f, color: vec4f };
 @group(0) @binding(16) var weatherTex: texture_2d<f32>;
 @group(0) @binding(17) var<storage, read> cloudPano: array<vec2u>;
 @group(0) @binding(18) var giTex: texture_2d_array<f32>;
+@group(0) @binding(19) var interactTex: texture_2d<f32>;
 `;
 
 // ---------------------------------------------------------------- pure functions
@@ -445,6 +448,29 @@ fn weatherLight(n: vec3f) -> vec3f {
   let flash = frame.weatherFx.z * vec3f(0.62, 0.68, 0.9) * (0.55 + 0.45 * n.y) * 0.05;
   let aurora = frame.weatherFx.w * frame.atmos.w * vec3f(0.006, 0.03, 0.018) * (0.5 + 0.5 * n.y);
   return flash + aurora;
+}
+`;
+
+/**
+ * The interaction map around the player (see render/interaction.js):
+ * r trail depth, g water height, a foam. Needs the globals.
+ */
+export const INTERACT_WGSL = /* wgsl */ `
+fn interactAt(xz: vec2f) -> vec4f {
+  if (frame.interact.w < 0.5) { return vec4f(0.0); }
+  let uv = (xz - frame.interact.xy) / frame.interact.z;
+  if (any(uv <= vec2f(0.0)) || any(uv >= vec2f(1.0))) { return vec4f(0.0); }
+  return textureSampleLevel(interactTex, linearSampler, uv, 0.0);
+}
+/** A channel and its gradient per meter: (value, d/dx, d/dz). */
+fn interactGrad(xz: vec2f, channel: u32) -> vec3f {
+  if (frame.interact.w < 0.5) { return vec3f(0.0); }
+  let e = frame.interact.z / f32(textureDimensions(interactTex).x);
+  let px = interactAt(xz + vec2f(e, 0.0))[channel];
+  let nx = interactAt(xz - vec2f(e, 0.0))[channel];
+  let pz = interactAt(xz + vec2f(0.0, e))[channel];
+  let nz = interactAt(xz - vec2f(0.0, e))[channel];
+  return vec3f((px + nx + pz + nz) * 0.25, (px - nx) / (2.0 * e), (pz - nz) / (2.0 * e));
 }
 `;
 

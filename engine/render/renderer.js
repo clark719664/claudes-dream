@@ -105,6 +105,11 @@ export class Renderer {
     this.giTexture = texture2D(d, { width: n, height: n, layers: 4, format: 'rgba16float', usage: U.TEX | U.CDST | U.CSRC, label: 'gi-probes' });
     this.giView = this.giTexture.createView({ dimension: '2d-array' });
     this.giEnabled = false;
+    // interaction map around the player (trails, water waves), written by render/interaction.js
+    const ir = this.tier.interactRes;
+    this.interactTexture = texture2D(d, { width: ir, height: ir, format: 'rgba16float', usage: U.TEX | U.CDST | U.CSRC, label: 'interaction' });
+    this.interactView = this.interactTexture.createView();
+    this.interactParams = [0, 0, 1, 0];
     this.atmosphere = new Atmosphere(d, this.frameBuffer, this.tier, { weatherView: this.weatherView, repeatSampler: this.samplers.repeat, panorama: this.cloudPanorama });
     this.atmosphere.setGroundAlbedo(this.env.groundAlbedo);
     this.post = new PostProcess(d, this.format, this.features, this.tier);
@@ -231,7 +236,7 @@ export class Renderer {
       this.frameBuffer, this.samplers.linear, this.samplers.repeat, this.samplers.shadow,
       a.transmittance.createView(), a.multiscatter.createView(), a.skyview.createView(), this.volumeView,
       a.envView, a.shBuffer, a.brdf.createView(), this.shadowArrayView, this.lightBuffer,
-      this.heightmap.createView(), this.aoView, this.foliageAtlas.createView(), this.weatherView, this.cloudPanorama, this.giView,
+      this.heightmap.createView(), this.aoView, this.foliageAtlas.createView(), this.weatherView, this.cloudPanorama, this.giView, this.interactView,
     ], 'globals');
     this.shadowGlobalGroup = bindGroup(d, this.shadowGlobalLayout, [
       { binding: 0, resource: this.frameBuffer }, { binding: 2, resource: this.samplers.repeat },
@@ -371,6 +376,7 @@ export class Renderer {
     put('weatherFx', this.weatherFx);
     put('flashPos', this.flashPos);
     const hf = this.heightfield;
+    put('interact', this.interactParams);
     put('gi', hf ? [hf.origin, hf.origin, (hf.res - 1) * hf.spacing, this.giEnabled ? 1 : 0] : [0, 0, 1, 0]);
     this.device.queue.writeBuffer(this.frameBuffer, 0, f);
   }

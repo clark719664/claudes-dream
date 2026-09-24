@@ -17,6 +17,7 @@ const SCATTER_CAP = { low: 1600, medium: 3500, high: 6000, ultra: 9000 };
 const PROP_COLLIDER = { pine: [0.3, 4], oak: [0.35, 3], palm: [0.3, 3], rock: [0.85, 0.75], pillar: [0.5, 4], cactus: [0.35, 2.5], crystal: [0.45, 1.6] };
 
 export const PROJECTILES = 48;
+const GIFT_POOL = 8;
 
 export function isLava(hex) {
   const [r, g, b] = hexToRgb(hex);
@@ -190,6 +191,32 @@ export function buildWorld(renderer, spec, { tier = 'high' } = {}) {
     projectiles.push({ instance: i, alive: false, pos: [0, -100, 0], vel: [0, 0, 0], life: 0, color: [4, 1, 0.3] });
   }
 
+  // ---------------------------------------------------------------- talking characters
+  const characters = spec.characters.map((c, index) => {
+    const [x, yAbove, z] = c.position;
+    return {
+      index, spec: c, name: c.name,
+      home: [x, surface(x, z) + yAbove, z],
+      pos: [x, surface(x, z) + yAbove, z],
+      yaw: Math.atan2(spec.player.spawn[0] - x, spec.player.spawn[2] - z) || 0,
+      color: hexToLinear(c.color),
+      instance: scene.addInstance(avatarBatch),
+      following: false,
+      blink: 0,
+    };
+  });
+  // a hidden pool of treasures characters can conjure: copies of the first collectible
+  const gifts = [];
+  const giftPrefab = spec.prefabs.find((p) => p.behaviors.some((b) => b.type === 'collectible'));
+  if (giftPrefab && spec.characters.some((c) => c.powers.includes('spawn_gift'))) {
+    for (let k = 0; k < GIFT_POOL; k++) {
+      const e = addEntity(giftPrefab.id, 0, 0, 0, 0, 1);
+      e.gift = true;
+      e.alive = false;
+      gifts.push(e);
+    }
+  }
+
   // spawn pad (stone disc) when the spawn point is under water or lava
   const [px, , pz] = spec.player.spawn;
   if (waterLevel !== null && hf.heightAt(px, pz) < waterLevel - 0.3) {
@@ -204,6 +231,8 @@ export function buildWorld(renderer, spec, { tier = 'high' } = {}) {
 
   // write initial transforms, then upload everything once
   for (const e of entities) writeEntity(scene, e);
+  for (const e of gifts) scene.setVisible(e.instance, false);
+  for (const c of characters) writeCharacter(scene, c, 0);
   writeInstance(scene, avatar, [0, -100, 0], 0, [1, 1, 1], hexToLinear(spec.player.color), [0, 0, 0], 0.45, 0.1);
   for (const pr of projectiles) { writeInstance(scene, pr.instance, pr.pos, 0, projMesh.scale, [1, 0.3, 0.1], [6, 1.5, 0.3], 0.4, 0); scene.setVisible(pr.instance, false); }
   scene.build();
@@ -212,7 +241,7 @@ export function buildWorld(renderer, spec, { tier = 'high' } = {}) {
   const [sx, , sz] = spec.player.spawn;
   const spawnY = Math.max(surface(sx, sz), waterLevel !== null && hf.heightAt(sx, sz) < waterLevel - 0.3 ? waterLevel + 0.4 : -Infinity) + Math.max(0.1, spec.player.spawn[1] - 1);
   return {
-    spec, hf, physics, scene, entities, avatar, projectiles, projectileScale: projMesh.scale,
+    spec, hf, physics, scene, entities, avatar, projectiles, projectileScale: projMesh.scale, characters, gifts,
     waterLevel, lava, grassLayer,
     spawn: [spec.player.spawn[0], spawnY, spec.player.spawn[2]],
     center: [0, hf.heightAt(0, 0), 0],
@@ -222,6 +251,13 @@ export function buildWorld(renderer, spec, { tier = 'high' } = {}) {
 function clump(x, z, seed) {
   const s = Math.sin(x * 0.045 + seed) * Math.cos(z * 0.05 - seed * 0.7) + Math.sin((x + z) * 0.021 + seed * 1.3) * 0.6;
   return Math.min(1, Math.max(0, s * 0.5 + 0.5));
+}
+
+/** Characters use the avatar mesh in their own colour, breathing gently in place. */
+export function writeCharacter(scene, c, time) {
+  const breathe = 1 + Math.sin(time * 2.1 + c.index * 1.7) * 0.02;
+  const glow = c.color.map((v) => v * (0.06 + c.blink * 0.6));
+  writeInstance(scene, c.instance, c.pos, c.yaw, [1.05, 1.05 * breathe, 1.05], c.color, glow, 0.5, 0.05);
 }
 
 export function updateBox(e) {

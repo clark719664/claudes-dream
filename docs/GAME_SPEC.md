@@ -15,6 +15,7 @@ A Reverie game is one JSON document. The AI designer (Claude or the offline desi
 | entities | 900 |
 | scatter | 8 |
 | behaviorsPerPrefab | 5 |
+| characters | 6 |
 
 ## Fields
 
@@ -35,6 +36,7 @@ A complete Reverie game.
 | `prefabs` | array of objects | Reusable object templates (max 32). |
 | `placements` | array of objects | Hand-placed instances (max 400). |
 | `spawns` | array of objects | Procedural groups of instances (max 32). |
+| `characters` | array of objects | Characters the player can walk up to and talk with (max 6). Claude plays them live, in character, and they can use their powers on the world. |
 | `rules` | object | Win/lose logic. |
 | `post` | object | Cinematic post-processing / color grading. |
 | `audio` | object | Procedural soundtrack. |
@@ -165,6 +167,20 @@ A spawn group.
 | `spawns[].center` | array of number | [x, heightAboveGround, z] center of the group; y is the base height above the surface (0 = on the ground). Exactly 3 numbers. |
 | `spawns[].radius` | number | Radius / half-extent in meters. |
 | `spawns[].height` | number | Extra random height variation in meters (0 = all at center height). |
+
+#### `characters[]`
+
+A talking character.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `characters[].name` | string | Display name, e.g. "Old Mossbeard" (max 30 chars). |
+| `characters[].role` | string | Who they are in one line, e.g. "a grumpy mushroom hermit who guards the grove". |
+| `characters[].personality` | string | How they talk, what they want, what they know about this world (hints, secrets, a small quest). 1-4 sentences. |
+| `characters[].greeting` | string | The first thing they say when the player walks up. |
+| `characters[].color` | string | Main color of the character. Hex color, e.g. "#ffaa33". |
+| `characters[].position` | array of number | [x, heightAboveGround, z] where they stand. Exactly 3 numbers. |
+| `characters[].powers` | array of string | What they may do when it makes sense in conversation: give_points (reward), heal (restore lives), reveal_goal (light the way to the goal or treasure), spawn_gift (conjure collectibles nearby), change_weather, change_time, grant_ability (temporary speed or jump boost), follow_player (become a companion). |
 
 #### `rules`
 

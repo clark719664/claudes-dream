@@ -192,6 +192,29 @@
       "height": 0
     }
   ],
+  "characters": [
+    {
+      "name": "Yuki",
+      "role": "a bundled-up mountain guide with frosted eyebrows",
+      "personality": "Hardy, upbeat and practical. Tells tall tales about the peaks and knows how the weather turns. Can call the northern lights on a clear night.",
+      "greeting": "Brr! Fine day for a climb, eh? Keep moving and your toes will thank you.",
+      "color": "#8fc6ff",
+      "position": [
+        1.23,
+        0,
+        6.89
+      ],
+      "powers": [
+        "reveal_goal",
+        "heal",
+        "give_points",
+        "spawn_gift",
+        "grant_ability",
+        "follow_player",
+        "change_weather"
+      ]
+    }
+  ],
   "rules": {
     "goal": "collect",
     "targetScore": 240,

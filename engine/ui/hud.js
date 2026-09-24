@@ -23,6 +23,8 @@ const CSS = `
 .rv-card .rv-meta { font-size: 13px; opacity: 0.7; margin-top: 12px; }
 .rv-btn-play { pointer-events: auto; cursor: pointer; border: 0; border-radius: 999px; padding: 13px 30px; font: 750 16px/1 inherit; font-family: inherit; color: #111; background: linear-gradient(135deg, #fff, #ffe7b0); box-shadow: 0 8px 30px rgba(255, 200, 120, 0.35); transition: transform .15s; }
 .rv-btn-play:hover { transform: translateY(-1px) scale(1.03); }
+.rv-btn-next { margin-left: 8px; background: linear-gradient(135deg, #d8f0ff, #b9a8ff); box-shadow: 0 8px 30px rgba(160, 140, 255, 0.35); }
+.rv-btn-play:disabled { opacity: 0.6; cursor: default; transform: none; }
 .rv-crosshair { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: rgba(255,255,255,0.8); box-shadow: 0 0 6px rgba(0,0,0,.6); display: none; }
 .rv-touch { position: absolute; inset: 0; pointer-events: none; display: none; }
 @media (pointer: coarse) { .rv-touch { display: block; } }
@@ -59,6 +61,7 @@ export class HUD {
       <div class="rv-card rv-title">
         <h1></h1><p></p>
         <button class="rv-btn-play">▶ Play</button>
+        <button class="rv-btn-play rv-btn-next" hidden>✨ Next level</button>
         <div class="rv-meta"></div>
       </div>
       <div class="rv-flash-hint" hidden>WASD move · Space jump · Shift sprint · Mouse look · Esc pause</div>`;
@@ -66,9 +69,11 @@ export class HUD {
     this.$ = (s) => this.root.querySelector(s);
     this.onPlay = null;
     this.$('.rv-btn-play').addEventListener('click', (e) => { e.stopPropagation(); this.onPlay?.(); });
+    this.$('.rv-btn-next').addEventListener('click', (e) => { e.stopPropagation(); this.onNext?.(); });
   }
 
   titleCard(spec, { button = '▶ Play', meta = '' } = {}) {
+    this.$('.rv-btn-next').hidden = true;
     this.$('.rv-title h1').textContent = spec.title;
     this.$('.rv-title p').textContent = spec.tagline;
     this.$('.rv-btn-play').textContent = button;
@@ -79,15 +84,27 @@ export class HUD {
     this.$('.rv-crosshair').style.display = 'none';
   }
 
-  endCard(title, message, meta, button = '↻ Play again') {
+  endCard(title, message, meta, button = '↻ Play again', next = false) {
     this.$('.rv-title h1').textContent = title;
     this.$('.rv-title p').textContent = message;
     this.$('.rv-btn-play').textContent = button;
+    const n = this.$('.rv-btn-next');
+    n.hidden = !next;
+    n.disabled = false;
+    n.textContent = '✨ Next level';
     this.$('.rv-title .rv-meta').textContent = meta;
     this.$('.rv-title').classList.remove('hidden');
   }
 
   hideCard() { this.$('.rv-title').classList.add('hidden'); }
+
+  /** While the game master works: disable the button and show progress in the card. */
+  nextLevelBusy(text) {
+    const n = this.$('.rv-btn-next');
+    n.disabled = true;
+    n.textContent = '✨ Designing…';
+    this.$('.rv-title .rv-meta').textContent = text;
+  }
 
   playing(data, firstPerson) {
     this.hideCard();

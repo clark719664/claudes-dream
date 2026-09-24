@@ -24,7 +24,8 @@ export const SYSTEM_PROMPT = `You are the lead game designer for Reverie, a WebG
 - Ambient particles: ${PARTICLES.join(', ')}.
 - Prefabs: primitives (${SHAPES.join(', ')}) with PBR materials (color, metallic, roughness, emissive glow with bloom).
 - Behaviours: ${BEHAVIORS.join(', ')}.
-- A third- or first-person player who runs, sprints, jumps, swims, collects, and gets hurt. Generated music and sound effects.
+- A third- or first-person player who runs, sprints, jumps, swims, collects, and gets hurt. Generated music and sound effects. Footprints in snow and sand, trampled grass, and wakes in water.
+- Talking characters (characters): people and creatures the player walks up to and talks with. You (Claude) play them live during the game, so give each a vivid voice tied to this world: a role, a personality with hints, a secret or a small quest, a greeting, and powers that fit them (give_points, heal, reveal_goal, spawn_gift, change_weather, change_time, grant_ability, follow_player). Most games are better with one guide standing a few meters from the player's spawn; add more for stories, villages and quests.
 
 # Coordinates and scale
 - Meters, y up. position/center are [x, heightAboveSurface, z]: y is the height of the object's BASE above the terrain or water surface at (x, z); 0 means standing on the ground. You never need to know the terrain height.
@@ -55,8 +56,19 @@ function userMessage(prompt, baseSpec) {
  * Resolves to { spec, warnings, usage, model }.
  */
 export async function generateWithClaude({ prompt, baseSpec = null, onEvent = () => {}, signal } = {}) {
-  const client = new Anthropic();
   onEvent('status', { message: baseSpec ? 'Claude is reworking your game…' : 'Claude is designing your game…' });
+  return designSpec({ content: userMessage(prompt, baseSpec), baseSpec, onEvent, signal });
+}
+
+/**
+ * Ask Claude for a complete game spec. content is the user turn: a string,
+ * or content blocks (text and images) for the art director. Structured
+ * outputs guarantee the schema; normalizeSpec() enforces ranges and budgets.
+ */
+export async function designSpec({ content, baseSpec = null, onEvent = () => {}, signal, effort = EFFORT } = {}) {
+  const client = new Anthropic();
+  const schemaNote = `\n\nReply with only the JSON object (no prose, no code fences) following this JSON Schema:\n${JSON.stringify(GAME_SPEC_SCHEMA)}`;
+  const withNote = typeof content === 'string' ? `${content}${schemaNote}` : [...content, { type: 'text', text: schemaNote.trim() }];
   const request = (structured) => ({
     model: MODEL,
     max_tokens: 64000,
@@ -64,14 +76,10 @@ export async function generateWithClaude({ prompt, baseSpec = null, onEvent = ()
     fallbacks: 'default',
     thinking: { type: 'adaptive', display: 'summarized' },
     output_config: structured
-      ? { effort: EFFORT, format: { type: 'json_schema', schema: GAME_SPEC_SCHEMA } }
-      : { effort: EFFORT },
+      ? { effort, format: { type: 'json_schema', schema: GAME_SPEC_SCHEMA } }
+      : { effort },
     system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-    messages: [{
-      role: 'user',
-      content: structured ? userMessage(prompt, baseSpec)
-        : `${userMessage(prompt, baseSpec)}\n\nReply with only the JSON object (no prose, no code fences) following this JSON Schema:\n${JSON.stringify(GAME_SPEC_SCHEMA)}`,
-    }],
+    messages: [{ role: 'user', content: structured ? content : withNote }],
   });
 
   let message;

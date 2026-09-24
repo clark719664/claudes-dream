@@ -243,6 +243,30 @@
       "height": 0
     }
   ],
+  "characters": [
+    {
+      "name": "The Lantern Lady",
+      "role": "a melancholy ghost who haunts the old graveyard",
+      "personality": "Theatrical, gloomy and secretly lonely. Speaks in a Victorian manner. Commands the storm clouds.",
+      "greeting": "Oooh... a living soul, at this hour? How delightfully morbid of you.",
+      "color": "#b0c4ff",
+      "position": [
+        -3.28,
+        0,
+        6.18
+      ],
+      "powers": [
+        "reveal_goal",
+        "heal",
+        "give_points",
+        "spawn_gift",
+        "grant_ability",
+        "follow_player",
+        "change_weather",
+        "change_time"
+      ]
+    }
+  ],
   "rules": {
     "goal": "survive",
     "targetScore": 0,

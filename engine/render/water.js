@@ -4,7 +4,7 @@
 // emissive, crusting surface.
 
 import { bindLayout, bindGroup, createShader, createBuffer, texture2D, U } from '../gpu/gpu.js';
-import { GLOBALS_WGSL, MATH_WGSL, ATMOSPHERE_WGSL, SHADING_WGSL, RECONSTRUCT_WGSL } from './wgsl/common.js';
+import { GLOBALS_WGSL, MATH_WGSL, ATMOSPHERE_WGSL, SHADING_WGSL, RECONSTRUCT_WGSL, INTERACT_WGSL } from './wgsl/common.js';
 import { SKY_FUNCTIONS_WGSL } from './atmosphere.js';
 
 const WATER_WGSL = /* wgsl */ `
@@ -17,6 +17,7 @@ ${ATMOSPHERE_WGSL}
 ${SHADING_WGSL}
 ${RECONSTRUCT_WGSL}
 ${SKY_FUNCTIONS_WGSL}
+${INTERACT_WGSL}
 
 struct VOut { @builtin(position) pos: vec4f, @location(0) world: vec3f };
 
@@ -79,7 +80,10 @@ fn fs(in: VOut) -> @location(0) vec4f {
   let detail = detailNormal(in.world.xz, t) * mix(0.35, 0.08, clamp(dist / 80.0, 0.0, 1.0)) * (0.4 + frame.time.w);
   // raindrops ring the surface near the camera
   let rip = rainRipples(in.world.xz, frame.weatherFx.y) * (1.0 - smoothstep(20.0, 40.0, dist)) * (1.0 - water.w);
-  let n = normalize(vec3f(-w.y - detail.x + rip.x, 1.0, -w.z - detail.y + rip.y));
+  // wakes and rings from the player (simulated waves)
+  let wave = interactGrad(in.world.xz, 1u) * (1.0 - water.w);
+  let wakeFoam = interactAt(in.world.xz).a * (1.0 - water.w);
+  let n = normalize(vec3f(-w.y - detail.x + rip.x - wave.y * 0.35, 1.0, -w.z - detail.y + rip.y - wave.z * 0.35));
   let v = normalize(frame.camPos.xyz - in.world);
   // specular anti-aliasing: ripples smaller than a pixel widen the highlights instead of sparkling
   let dnx = dpdx(n);
@@ -157,7 +161,8 @@ fn fs(in: VOut) -> @location(0) vec4f {
   col += pointLights(makeSurface(vec3f(0.0), 0.0, sqrt(sqrt(0.08 * 0.08 * 0.08 * 0.08 + normalVariance)), n, v), in.world);
   // shoreline foam
   let foamNoise = fbm(in.world.xz * 1.6 + vec2f(t * 0.3, t * 0.1), 3);
-  let foam = (1.0 - smoothstep(0.0, 0.7, thickness)) * smoothstep(0.35, 0.65, foamNoise + 0.25 * sin(t * 1.5 + thickness * 6.0));
+  var foam = (1.0 - smoothstep(0.0, 0.7, thickness)) * smoothstep(0.35, 0.65, foamNoise + 0.25 * sin(t * 1.5 + thickness * 6.0));
+  foam = max(foam, wakeFoam * smoothstep(0.5, 0.75, foamNoise + 0.1) * 0.6);
   col = mix(col, vec3f(0.9) * (irr + keyRadiance() * max(frame.keyDir.y, 0.0) * 0.3), foam * 0.8);
   // soft edge where water meets the shore
   col = mix(textureSampleLevel(sceneColor, linearSampler, uv, 0.0).rgb, col, smoothstep(0.0, 0.08, thickness));

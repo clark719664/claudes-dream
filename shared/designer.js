@@ -445,6 +445,55 @@ function layoutRace(spec, ctx) {
 }
 
 // ---------------------------------------------------------------------------
+// Talking characters
+// ---------------------------------------------------------------------------
+
+// One guide per theme: [names, role, personality, greeting, color]
+const GUIDES = {
+  meadow: [['Bramble', 'Clover', 'Old Tam'], 'a cheerful hedgehog ranger who tends the meadow', 'Warm, chatty and a little forgetful. Loves bees and bad puns. Knows every path in the meadow and worries about the creatures that have been causing trouble.', 'Oh! A visitor! Mind the flowers, they bite back. Only joking. Mostly.', '#c98d5a'],
+  forest: [['Old Mossbeard', 'Fern', 'Hollowroot'], 'an ancient tree spirit who has watched the forest for a thousand years', 'Slow, gentle and cryptic; speaks in nature metaphors and riddles. Protective of the forest. Rewards patience and kindness.', 'Mmm... footsteps. Young ones always hurry. What brings you beneath my branches?', '#6f9a4a'],
+  desert: [['Zahra', 'Old Dune', 'Sirocco'], 'a sun-weathered caravan scout who reads the dunes like a map', 'Dry humour, sharp eyes, few words. Trades in stories and water. Knows where the ruins hide their treasures.', 'You look thirsty, stranger. Sit a moment in the shade and tell me what you seek.', '#d9a441'],
+  snow: [['Pip', 'Grandmother Frost', 'Yuki'], 'a bundled-up mountain guide with frosted eyebrows', 'Hardy, upbeat and practical. Tells tall tales about the peaks and knows how the weather turns. Can call the northern lights on a clear night.', 'Brr! Fine day for a climb, eh? Keep moving and your toes will thank you.', '#8fc6ff'],
+  volcano: [['Cinder', 'Magmar', 'Ashka'], 'a fire salamander who bathes in the lava pools', 'Hot-headed, dramatic and proud, but secretly kind. Respects courage and hates cowardice.', 'Hsss! Few walk this close to the fire and live. You have spirit!', '#ff6a2a'],
+  tropical: [['Captain Coco', 'Marina', 'Old Gull'], 'a retired pirate parrot who knows where the treasure is buried', 'Loud, boastful and funny. Speaks like a pirate. Will trade secrets for good company.', 'Squawk! Ahoy there, landlubber! Looking for treasure? Everybody is.', '#35c27a'],
+  alien: [['Zyx', 'Nova-7', 'Quill'], 'a curious alien scholar studying visitors to this planet', 'Polite, precise and fascinated by everything the player does. Speaks slightly oddly. Controls the strange lights in the sky.', 'Greetings, specimen! Apologies. Greetings, *visitor*. Your arrival was predicted with 71% confidence.', '#b58cff'],
+  neon: [['Glitch', 'Vex', 'Neon Nell'], 'a street-smart hacker who runs the rooftops', 'Fast-talking, sarcastic, loyal to friends. Knows the city and its secrets; can bend the rules a little.', 'Yo, new face. The city eats newbies alive. Lucky for you, I like you already.', '#2fe0ff'],
+  cave: [['Glimmer', 'Old Pick', 'Echo'], 'a lantern-carrying miner who lost their way years ago and stayed', 'Whispery, kind and a bit spooked. Knows the tunnels and the glowing things that live in them.', 'Shh! Did you hear that? ...Oh, it is only you. Welcome to the deep dark.', '#ffd27a'],
+  candy: [['Sprinkles', 'Taffy', 'Duke Gumdrop'], 'a sugar-crazed gingerbread knight', 'Bouncy, excitable and easily distracted by sweets. Loves games and gives sweet rewards to good players.', 'Hi hi hi! Are you here to play? Say you are here to play!', '#ff8fc8'],
+  spooky: [['Mortimer', 'The Lantern Lady', 'Grimsby'], 'a melancholy ghost who haunts the old graveyard', 'Theatrical, gloomy and secretly lonely. Speaks in a Victorian manner. Commands the storm clouds.', 'Oooh... a living soul, at this hour? How delightfully morbid of you.', '#b0c4ff'],
+  swamp: [['Grub', 'Auntie Bog', 'Croak'], 'a wise old toad who sees the future in the swamp water', 'Slow, mumbling and oddly wise; prophecies are vague but helpful. Likes flies and flattery.', 'Hrrrm. The water told me you would come. It did not say you would be this short.', '#7aa35a'],
+  ruins: [['Keeper Anu', 'Sable', 'The Stone Scribe'], 'the last keeper of the ancient temple', 'Solemn, scholarly and fair. Speaks of the old kingdom with reverence. Tests visitors with questions before helping.', 'Few seek the old temple now. Tell me, traveller, do you come for gold or for truth?', '#d6c08a'],
+  mountain: [['Hawk', 'Old Summit', 'Edda'], 'a mountain hermit who talks to the eagles', 'Quiet, wry and strong. Values effort. Knows every ledge and the fastest way to the top.', 'Hm. Most turn back before this point. You have good legs, at least.', '#a0b8c8'],
+};
+
+export function makeGuide(themeName, spec, rng) {
+  const [names, role, personality, greeting, color] = GUIDES[themeName] ?? GUIDES.meadow;
+  const [sx, , sz] = spec.player.spawn;
+  const a = rng.range(-0.6, 0.6);
+  const powers = ['reveal_goal', 'heal', 'give_points', 'spawn_gift', 'grant_ability', 'follow_player'];
+  if (['snow', 'alien', 'spooky', 'swamp', 'mountain', 'desert', 'forest'].includes(themeName)) powers.push('change_weather');
+  if (['spooky', 'alien', 'forest', 'ruins'].includes(themeName)) powers.push('change_time');
+  return {
+    name: rng.pick(names), role, personality, greeting, color,
+    position: [round(sx + Math.sin(a) * 7), 0, round(sz + Math.cos(a) * 7)],
+    powers,
+  };
+}
+
+function makeWanderer(spec, rng) {
+  const half = spec.terrain.size / 2;
+  return {
+    name: rng.pick(['Wren the Wanderer', 'Tobias Quill', 'Marigold']),
+    role: 'a travelling merchant with a cart full of curiosities',
+    personality: 'Friendly, nosy and a born haggler. Trades hints and trinkets for a good story or a completed errand. Has heard rumours about everything in this world.',
+    greeting: 'Well met! Care to trade? I have hints, trinkets, and a very good hat.',
+    color: '#e0a060',
+    position: [round(rng.range(-half * 0.5, half * 0.5)), 0, round(rng.range(-half * 0.5, half * 0.5))],
+    powers: ['give_points', 'spawn_gift', 'reveal_goal', 'grant_ability'],
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -493,6 +542,11 @@ export function designFromPrompt(prompt, options = {}) {
     case 'explore': layoutCollect(spec, ctx, { count: 16, hazards: false }); spec.audio.music = 'calm'; break;
     case 'arena': layoutCollect(spec, ctx, { count: 60, hazards: true, timeLimit: 90, goal: 'score' }); break;
     default: layoutCollect(spec, ctx, { count: [24, 30, 40][info.difficulty], hazards: info.difficulty > 0 || info.enemies.length > 0 || has(info.text, ['avoid', 'dodge', 'enemy', 'enemies']) });
+  }
+
+  spec.characters = [makeGuide(info.theme, spec, rng)];
+  if (has(info.text, ['villager', 'villagers', 'npc', 'npcs', 'characters', 'people', 'town', 'village', 'talk', 'quest', 'merchant', 'wizard', 'companion'])) {
+    spec.characters.push(makeWanderer(spec, rng));
   }
 
   if (theme.neonTowers) {

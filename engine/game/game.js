@@ -3,7 +3,7 @@
 
 import { BEHAVIOR_IMPL } from './behaviors.js';
 import { Player } from './player.js';
-import { writeEntity, writeInstance, updateBox } from './builder.js';
+import { writeEntity, writeInstance, updateBox, writeCharacter } from './builder.js';
 import { hexToLinear } from '../core/math.js';
 
 export class Game {
@@ -20,6 +20,12 @@ export class Game {
     this.player = new Player(this.spec, world.spawn);
     this.playerColor = hexToLinear(this.spec.player.color);
     this.surface = (x, z) => world.physics.surfaceAt(x, z);
+    this.characters = world.characters ?? [];
+    this.boosts = { speed: 0, jump: 0 };
+    this.beacon = null;
+    this.nearCharacter = null;
+    this.baseSpeed = this.player.speed;
+    this.baseJump = this.player.jumpVel;
     for (const e of world.entities) {
       for (const b of e.behaviors) BEHAVIOR_IMPL[b.type]?.init?.(e, b, this);
       this.#settle(e);
@@ -43,11 +49,26 @@ export class Game {
     this.elapsed = 0;
     this.checkpointPos = [...this.world.spawn];
     this.collected = 0;
-    this.totalCollectibles = this.world.entities.filter((e) => e.behaviors.some((b) => b.type === 'collectible')).length;
+    this.totalCollectibles = this.world.entities.filter((e) => !e.gift && e.behaviors.some((b) => b.type === 'collectible')).length;
+    this.boosts = { speed: 0, jump: 0 };
+    this.beacon = null;
+    // telemetry for the game master
+    this.stats = { hurts: {}, falls: 0, distance: 0, jumps: 0 };
+  }
+
+  /** How this level went, for the game master (see shared/gamemaster.js). */
+  telemetry() {
+    return {
+      outcome: this.state === 'won' ? 'won' : this.state === 'lost' ? 'lost' : 'unfinished',
+      time: Math.round(this.elapsed), score: this.score, target: this.spec.rules.targetScore,
+      collected: this.collected, total: this.totalCollectibles, lives: Math.max(0, this.lives), maxLives: this.spec.player.lives,
+      hurts: { ...this.stats.hurts }, falls: this.stats.falls, distance: Math.round(this.stats.distance), jumps: this.stats.jumps,
+    };
   }
 
   start() {
     for (const e of this.world.entities) {
+      if (e.gift) { this.#despawn(e); continue; }
       e.alive = true;
       e.base = [...e.home];
       e.pos = [...e.home];
@@ -58,6 +79,7 @@ export class Game {
     }
     for (const p of this.world.projectiles) this.#killProjectile(p);
     this.#resetStats();
+    for (const c of this.characters) { c.pos = [...c.home]; c.following = false; }
     this.player.reset(this.world.spawn);
     this.player.yaw = Math.atan2(this.world.center[0] - this.world.spawn[0], this.world.center[2] - this.world.spawn[2]) || 0;
     this.camera.mode = this.spec.player.camera === 'first' ? 'first' : 'third';
@@ -113,6 +135,8 @@ export class Game {
   hurt(amount, source = null) {
     const p = this.player;
     if (this.state !== 'playing' || p.invulnerable > 0 || p.dead) return;
+    const cause = source?.prefab?.id ?? (source ? 'projectile' : 'fall or lava');
+    this.stats.hurts[cause] = (this.stats.hurts[cause] ?? 0) + 1;
     this.lives -= amount;
     p.invulnerable = 1.5;
     this.audio?.play('hurt');
@@ -230,14 +254,34 @@ export class Game {
       e.flash = Math.max(0, e.flash - dt * 2);
     }
 
+    this.#updateCharacters(dt);
+    // temporary boons from characters
+    for (const k of ['speed', 'jump']) this.boosts[k] = Math.max(0, this.boosts[k] - dt);
+    this.player.speed = this.baseSpeed * (this.boosts.speed > 0 ? 1.6 : 1);
+    this.player.jumpVel = this.baseJump * (this.boosts.jump > 0 ? 1.45 : 1);
+    if (this.beacon) {
+      this.beacon.time -= dt;
+      this.beacon.puff -= dt;
+      if (this.beacon.puff <= 0) {
+        this.beacon.puff = 0.12;
+        const b = this.beacon.pos;
+        this.particles?.burst({ position: [b[0], b[1] + 0.5, b[2]], color: [1.2, 2.6, 4], count: 6, speed: 1.2, size: 0.16, gravity: -9, life: 1.8, up: 7, drag: 0.4 });
+      }
+      if (this.beacon.time <= 0 || (this.beacon.entity && !this.beacon.entity.alive)) this.beacon = null;
+    }
+
     // player
     if (playing) {
       const p = this.player;
       const camYaw = this.camera.yaw;
+      const was = [p.pos[0], p.pos[2]];
+      const wasGrounded = p.grounded;
       p.update(dt, input, camYaw, w.physics, this.audio, true);
+      this.stats.distance += Math.hypot(p.pos[0] - was[0], p.pos[2] - was[2]);
+      if (wasGrounded && !p.grounded && p.vel[1] > 1) this.stats.jumps++;
       // hazards: falling out of the world, drowning in lava
-      if (p.inLava) { this.hurt(1); if (this.state === 'playing') { p.reset(this.checkpointPos); } }
-      if (p.pos[1] < w.hf.minHeight - 30) { this.hurt(1); if (this.state === 'playing') p.reset(this.checkpointPos); }
+      if (p.inLava) { this.stats.falls++; this.hurt(1); if (this.state === 'playing') { p.reset(this.checkpointPos); } }
+      if (p.pos[1] < w.hf.minHeight - 30) { this.stats.falls++; this.hurt(1); if (this.state === 'playing') p.reset(this.checkpointPos); }
       // triggers
       const pc = [p.pos[0], p.pos[1] + p.height * 0.5, p.pos[2]];
       for (const e of w.entities) {
@@ -274,10 +318,113 @@ export class Game {
     return camOut;
   }
 
+  #updateCharacters(dt) {
+    const p = this.player.pos;
+    let near = null;
+    let nearD = 3.4;
+    for (const c of this.characters) {
+      const dx = p[0] - c.pos[0], dz = p[2] - c.pos[2];
+      const d = Math.hypot(dx, dz);
+      if (c.following && this.state === 'playing' && d > 2.6) {
+        // companions trot after the player, keeping a friendly distance
+        const speed = Math.min(this.baseSpeed * 1.1, (d - 2.2) * 3);
+        c.pos[0] += (dx / d) * speed * dt;
+        c.pos[2] += (dz / d) * speed * dt;
+        if (d > 40) { c.pos[0] = p[0] - (dx / d) * 3; c.pos[2] = p[2] - (dz / d) * 3; }
+      }
+      c.pos[1] = this.surface(c.pos[0], c.pos[2]);
+      // turn to face the player when they come close
+      if (d < 12 || c.following) {
+        const want = Math.atan2(dx, dz);
+        let diff = want - c.yaw;
+        diff -= Math.round(diff / (Math.PI * 2)) * Math.PI * 2;
+        c.yaw += diff * Math.min(1, dt * 5);
+      }
+      c.blink = Math.max(0, c.blink - dt * 1.5);
+      if (d < nearD && Math.abs(p[1] - c.pos[1]) < 3) { near = c; nearD = d; }
+    }
+    this.nearCharacter = this.state === 'playing' ? near : null;
+  }
+
+  /**
+   * Apply a character's power to the world (see shared/npc.js). Returns a
+   * short line for the HUD. World-level changes (weather, time) are emitted
+   * for the engine to apply.
+   */
+  applyAction(name, input, character) {
+    const at = character ? [character.pos[0], character.pos[1] + 2, character.pos[2]] : this.player.pos;
+    if (character) character.blink = 1;
+    switch (name) {
+      case 'give_points':
+        this.score += input.amount;
+        this.audio?.play('collect', { pitch: 1.3 });
+        this.emit('score', { ...this.#hud(), delta: input.amount, at });
+        this.#checkWin();
+        return `+${input.amount} ${input.reason ? `· ${input.reason}` : ''}`.trim();
+      case 'heal': {
+        const before = this.lives;
+        this.lives = Math.min(this.spec.player.lives, this.lives + input.amount);
+        this.audio?.play('heal');
+        const p = this.player.pos;
+        this.particles?.burst({ position: [p[0], p[1] + 1, p[2]], color: [4, 1, 1.5], count: 30, speed: 3, size: 0.1, gravity: -1, life: 1.2 });
+        this.emit('lives', { ...this.#hud(), delta: this.lives - before });
+        return 'Healed ♥';
+      }
+      case 'reveal_goal': {
+        const alive = this.world.entities.filter((e) => e.alive);
+        const goal = input.target === 'goal' ? alive.find((e) => e.behaviors.some((b) => b.type === 'goal')) : null;
+        const p = this.player.pos;
+        let target = goal;
+        if (!target) {
+          let best = Infinity;
+          for (const e of alive) {
+            if (!e.behaviors.some((b) => b.type === 'collectible')) continue;
+            const d = Math.hypot(e.pos[0] - p[0], e.pos[2] - p[2]);
+            if (d < best) { best = d; target = e; }
+          }
+        }
+        if (!target) return 'Nothing left to find';
+        this.beacon = { pos: [...target.pos], entity: target, time: 30, puff: 0 };
+        this.audio?.play('checkpoint');
+        return goal ? 'The way to the goal is lit' : 'A treasure is marked';
+      }
+      case 'spawn_gift': {
+        const free = this.world.gifts.filter((g) => !g.alive).slice(0, input.count);
+        const p = this.player.pos;
+        free.forEach((g, i) => {
+          const a = (i / Math.max(free.length, 1)) * Math.PI * 2 + this.time;
+          const x = p[0] + Math.cos(a) * 3.2, z = p[2] + Math.sin(a) * 3.2;
+          const y = this.surface(x, z) + g.size[1] / 2 + 0.3;
+          g.home = [x, y, z]; g.base = [x, y, z]; g.pos = [x, y, z]; g.prev = [x, y, z];
+          for (const b of g.behaviors) { b.state = {}; BEHAVIOR_IMPL[b.type]?.init?.(g, b, this); }
+          g.alive = true;
+          this.world.scene.setVisible(g.instance, true);
+          this.particles?.burst({ position: [x, y, z], color: g.color.map((c) => c * 5 + 0.5), count: 18, speed: 2.5, size: 0.08, gravity: -2, life: 0.9 });
+        });
+        this.audio?.play('bounce');
+        return free.length ? `${free.length} treasures appeared!` : 'The magic fizzled';
+      }
+      case 'grant_ability':
+        this.boosts[input.ability] = input.seconds;
+        this.audio?.play('checkpoint');
+        return input.ability === 'speed' ? `Swift feet for ${input.seconds}s` : `Spring step for ${input.seconds}s`;
+      case 'follow_player':
+        if (character) character.following = input.follow;
+        return input.follow ? `${character?.name ?? 'They'} joins you` : `${character?.name ?? 'They'} stays behind`;
+      case 'change_weather':
+      case 'change_time':
+        this.emit('world', { name, input });
+        return name === 'change_time' ? 'The sun moves…' : 'The sky shifts…';
+      default:
+        return '';
+    }
+  }
+
   #writeVisuals() {
     const w = this.world;
     const scene = w.scene;
     for (const e of w.entities) if (e.alive) writeEntity(scene, e);
+    for (const c of this.characters) writeCharacter(scene, c, this.time);
     const v = this.player.visual(this.time);
     const showAvatar = this.state !== 'attract' && this.camera.mode !== 'first' && !v.hidden;
     writeInstance(scene, w.avatar, v.pos, v.yaw, v.scale, this.playerColor, this.playerColor.map((c) => c * 0.05), 0.45, 0.1);

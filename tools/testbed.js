@@ -9,6 +9,7 @@ import { Rng } from '../shared/rng.js';
 import { Volumetrics } from '../engine/render/volumetrics.js';
 import { Clouds } from '../engine/render/clouds.js';
 import { GI } from '../engine/render/gi.js';
+import { Interaction } from '../engine/render/interaction.js';
 import { GTAO } from '../engine/render/gtao.js';
 import { Grass } from '../engine/render/grass.js';
 import { Water } from '../engine/render/water.js';
@@ -28,9 +29,14 @@ async function main() {
   const hf = new Heightfield(terrainSpec, 42, [0, 0]);
   const water = q.has('water') ? num('water', 2) : null;
   renderer.setTerrain(hf, { waterLevel: water });
-  renderer.setPalette({ low: '#c9b98a', mid: '#4f7a2e', high: '#eef2f5', cliff: '#6b5d52' });
+  renderer.setPalette(q.get('palette') === 'snow'
+    ? { low: '#e8eef5', mid: '#f4f8fc', high: '#ffffff', cliff: '#7d8792' }
+    : q.get('palette') === 'sand' ? { low: '#e2c48f', mid: '#d9b77e', high: '#c9a06a', cliff: '#9a6b45' }
+      : { low: '#c9b98a', mid: '#4f7a2e', high: '#eef2f5', cliff: '#6b5d52' });
   if (renderer.tier.clouds && !q.has('noclouds')) renderer.addFeature(new Clouds(renderer));
   if (!q.has('nogi')) renderer.addFeature(new GI(renderer));
+  const interaction = new Interaction(renderer);
+  renderer.addFeature(interaction);
   const vol = new Volumetrics(renderer);
   vol.setMaxDistance(hf.worldSize * 1.1);
   if (!q.has('novol')) renderer.addFeature(vol);
@@ -123,6 +129,19 @@ async function main() {
     if (orbit) {
       const a = renderer.time * 0.1;
       position = [Math.sin(a) * 30, camY + 8, Math.cos(a) * 30];
+    }
+    // walk=1: a scripted walker leaves footprints (and wakes in water) in front of the camera
+    if (q.has('walk')) {
+      const ff = num('ff', 5); // fast-forward so a short capture shows a long trail
+      const t = window.__frames * dt * ff;
+      const speed = 3;
+      const s = -8 + ((t * speed) % 22);
+      const wx = Math.sin(s * 0.25) * 3, wz = 4 + s;
+      const pos = [wx, hf.heightAt(wx, wz), wz];
+      const inWater = water !== null && pos[1] < water - 0.4;
+      if (inWater) pos[1] = water;
+      interaction.trackPlayer({ pos, vel: [Math.cos(s * 0.25) * 0.75 * speed, 0, speed], grounded: !inWater, inWater }, dt * ff, (x, z) => hf.heightAt(x, z), water);
+      renderer.player = [pos[0], pos[1], pos[2], 1.1];
     }
     renderer.render({ position, target: [look[0], lookY, look[2]], fovY: 60 * Math.PI / 180, near: 0.1 }, dt);
     window.__frames++;

@@ -663,6 +663,28 @@
       "height": 10
     }
   ],
+  "characters": [
+    {
+      "name": "Neon Nell",
+      "role": "a street-smart hacker who runs the rooftops",
+      "personality": "Fast-talking, sarcastic, loyal to friends. Knows the city and its secrets; can bend the rules a little.",
+      "greeting": "Yo, new face. The city eats newbies alive. Lucky for you, I like you already.",
+      "color": "#2fe0ff",
+      "position": [
+        2.04,
+        0,
+        6.7
+      ],
+      "powers": [
+        "reveal_goal",
+        "heal",
+        "give_points",
+        "spawn_gift",
+        "grant_ability",
+        "follow_player"
+      ]
+    }
+  ],
   "rules": {
     "goal": "reach",
     "targetScore": 0,

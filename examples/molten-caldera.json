@@ -613,6 +613,28 @@
       "height": 10.65
     }
   ],
+  "characters": [
+    {
+      "name": "Magmar",
+      "role": "a fire salamander who bathes in the lava pools",
+      "personality": "Hot-headed, dramatic and proud, but secretly kind. Respects courage and hates cowardice.",
+      "greeting": "Hsss! Few walk this close to the fire and live. You have spirit!",
+      "color": "#ff6a2a",
+      "position": [
+        3.69,
+        0,
+        5.95
+      ],
+      "powers": [
+        "reveal_goal",
+        "heal",
+        "give_points",
+        "spawn_gift",
+        "grant_ability",
+        "follow_player"
+      ]
+    }
+  ],
   "rules": {
     "goal": "reach",
     "targetScore": 0,

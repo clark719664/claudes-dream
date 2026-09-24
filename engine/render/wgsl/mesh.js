@@ -1,6 +1,6 @@
 // Mesh shaders: GPU-displaced terrain chunks, wind-animated foliage and PBR
 // props, drawn through the GPU-culled instance lists.
-import { GLOBALS_WGSL, MATH_WGSL, ATMOSPHERE_WGSL, SHADING_WGSL } from './common.js';
+import { GLOBALS_WGSL, MATH_WGSL, ATMOSPHERE_WGSL, SHADING_WGSL, INTERACT_WGSL } from './common.js';
 import { INSTANCE_WGSL } from '../scene.js';
 
 const VERTEX_COMMON = /* wgsl */ `
@@ -81,6 +81,7 @@ ${INSTANCE_WGSL}
 ${MATH_WGSL}
 ${ATMOSPHERE_WGSL}
 ${SHADING_WGSL}
+${INTERACT_WGSL}
 ${VERTEX_COMMON}
 
 @vertex
@@ -101,7 +102,7 @@ fn vs(v: VIn) -> VOut {
   return o;
 }
 
-struct TerrainMat { albedo: vec3f, rough: f32, n: vec3f };
+struct TerrainMat { albedo: vec3f, rough: f32, n: vec3f, soft: f32, snow: f32 };
 
 fn terrainMaterial(world: vec3f, nIn: vec3f) -> TerrainMat {
   var m: TerrainMat;
@@ -142,6 +143,9 @@ fn terrainMaterial(world: vec3f, nIn: vec3f) -> TerrainMat {
   m.albedo = c;
   m.rough = rough;
   m.n = n;
+  // how deeply feet sink in: snow most, then sand and soil, bare rock not at all
+  m.snow = snow;
+  m.soft = mix(mix(0.45, 0.75, low), 1.0, snow) * (1.0 - rock);
   return m;
 }
 
@@ -196,6 +200,18 @@ fn fsMain(in: VOut, @builtin(front_facing) front: bool) -> @location(0) vec4f {
     rough = m.rough;
     n = m.n;
     metallic = 0.0;
+    // footprints and trenches: grooves in the normal, compressed (darker, bluish in snow) where pressed
+    let trail = interactGrad(in.world.xz, 0u);
+    if (trail.x > 0.002 || abs(trail.y) + abs(trail.z) > 0.01) {
+      let depth = 0.22 * m.soft;
+      n = normalize(n + vec3f(trail.y, 0.0, trail.z) * depth);
+      // packed down and in shadow at the bottom, with a slightly raised, lighter rim
+      let pressed = clamp(trail.x, 0.0, 1.0) * m.soft;
+      let rim = clamp(length(trail.yz) * 0.12, 0.0, 1.0) * (1.0 - pressed) * m.soft;
+      albedo *= mix(vec3f(1.0), mix(vec3f(0.62), vec3f(0.6, 0.72, 0.92), max(m.snow, 0.5 * step(0.8, luminance(albedo)))), pressed);
+      albedo *= 1.0 + rim * 0.15;
+      rough = mix(rough, 0.6, pressed * 0.5);
+    }
   } else if (kind == 5.0) {
     let m = rockMaterial(in.world, in.local, n, albedo);
     albedo = m.albedo;

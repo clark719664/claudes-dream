@@ -5,6 +5,7 @@ import { Engine } from '../engine/engine.js';
 import { designFromPrompt, refineSpec } from '../shared/designer.js';
 import { normalizeSpec } from '../shared/spec.js';
 import { encodeSpec, decodeSpec } from '../shared/share.js';
+import { artDirect } from '../engine/ai/director.js';
 
 const $ = (s) => document.querySelector(s);
 const IDEAS = [
@@ -27,6 +28,7 @@ const state = {
   future: [],
   busy: false,
   aiMode: 'offline',
+  intent: '',
 };
 
 // ---------------------------------------------------------------- helpers
@@ -54,6 +56,7 @@ function setBusy(on, text = 'Designing…') {
   $('#busy-text').textContent = text;
   $('#generate').disabled = on;
   $('#refine-btn').disabled = on;
+  $('#art-director').disabled = on;
 }
 
 function save() {
@@ -79,8 +82,111 @@ function applySpec(spec, { record = true } = {}) {
   return clean;
 }
 
+/** Take a spec the engine already loaded (e.g. the game master's next level) into the Studio. */
+function adoptSpec(spec) {
+  if (state.spec) { state.history.push(state.spec); state.future = []; }
+  state.spec = spec;
+  $('#game-title').textContent = spec.title;
+  syncControls();
+  renderObjects();
+  $('#json').value = JSON.stringify(spec, null, 2);
+  $('#undo').disabled = !state.history.length;
+  $('#redo').disabled = true;
+  save();
+}
+
+/** Human-readable list of what changed in the look between two specs. */
+function lookChanges(a, b) {
+  const out = [];
+  const num = (label, x, y, digits = 2) => { if (Math.abs(x - y) > 1e-3) out.push(`${label} ${x.toFixed(digits)} → ${y.toFixed(digits)}`); };
+  num('time', a.environment.timeOfDay, b.environment.timeOfDay, 1);
+  num('clouds', a.environment.cloudCover, b.environment.cloudCover);
+  num('fog', a.environment.fogDensity, b.environment.fogDensity);
+  num('rain', a.environment.rain, b.environment.rain);
+  if (a.environment.skyTint !== b.environment.skyTint) out.push(`sky tint ${b.environment.skyTint}`);
+  if (a.environment.particles !== b.environment.particles) out.push(`particles ${b.environment.particles}`);
+  for (const k of ['low', 'mid', 'high', 'cliff']) if (a.terrain.palette[k] !== b.terrain.palette[k]) out.push(`${k} ground ${b.terrain.palette[k]}`);
+  for (const k of ['bloom', 'exposure', 'saturation', 'contrast', 'warmth', 'vignette']) num(k, a.post[k], b.post[k]);
+  const prefabColors = b.prefabs.filter((p) => { const o = a.prefabs.find((q) => q.id === p.id); return o && (o.color !== p.color || o.emissive !== p.emissive); });
+  if (prefabColors.length) out.push(`recoloured ${prefabColors.map((p) => p.id).join(', ')}`);
+  if (JSON.stringify(a.scatter) !== JSON.stringify(b.scatter)) out.push('reworked the vegetation');
+  if (a.audio.music !== b.audio.music) out.push(`music ${b.audio.music}`);
+  return out;
+}
+
+async function runArtDirector() {
+  if (state.busy || !state.spec || !state.engine) return toast('Generate a game first');
+  setBusy(true, 'The art director is reviewing your game…');
+  log('🎨 Art director: rendering screenshots of your game…');
+  let thinking = null;
+  try {
+    const before = state.spec;
+    const r = await artDirect({
+      engine: state.engine, intent: state.intent || before.tagline,
+      onEvent: (type, data) => {
+        if (type === 'status') log(data.message);
+        if (type === 'thinking') {
+          thinking ??= log('', 'think');
+          thinking.textContent += data.text;
+          $('#log').scrollTop = $('#log').scrollHeight;
+        }
+      },
+    });
+    const shots = log('');
+    shots.classList.add('shots');
+    for (const img of r.images) {
+      const el = document.createElement('img');
+      el.src = img.data;
+      el.alt = img.label;
+      el.title = img.label;
+      shots.appendChild(el);
+    }
+    const changes = lookChanges(before, r.spec);
+    if (r.source === 'claude') {
+      applySpec(r.spec);
+      log(`✓ Claude polished the look${changes.length ? `: ${changes.slice(0, 8).join(', ')}` : ''}.`, 'ok');
+    } else {
+      if (changes.length) applySpec(r.spec);
+      log(`✓ Offline grading from the screenshots: ${(r.notes ?? []).join(', ')}.`, 'ok');
+    }
+  } catch (err) {
+    log(`The art director could not finish: ${err.message}`, 'err');
+  } finally {
+    setBusy(false);
+  }
+}
+
+/** Speech-to-text into a field, then run a callback with the words. */
+function bindMic(button, field, onDone) {
+  const SR = globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition;
+  if (!SR) return;
+  button.hidden = false;
+  let rec = null;
+  button.addEventListener('click', () => {
+    if (rec) { rec.stop(); return; }
+    rec = new SR();
+    rec.lang = navigator.language || 'en-US';
+    rec.interimResults = true;
+    let final = '';
+    const prefix = field.value.trim() ? `${field.value.trim()} ` : '';
+    rec.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      field.value = prefix + (final + interim).trim();
+    };
+    rec.onend = () => { button.classList.remove('listening'); rec = null; if (final.trim()) onDone(field.value); };
+    rec.onerror = (e) => { if (e.error === 'not-allowed') toast('Microphone access was blocked'); };
+    button.classList.add('listening');
+    rec.start();
+  });
+}
+
 async function generate(prompt, base = null) {
   if (state.busy || !prompt.trim()) return;
+  if (!base) state.intent = prompt.trim();
   setBusy(true, base ? 'Reworking your game…' : 'Designing your game…');
   log(base ? `✎ ${prompt}` : `✦ ${prompt}`);
   let thinking = null;
@@ -262,6 +368,9 @@ async function boot() {
     $('#refine').value = '';
     generate(text, state.spec);
   });
+  $('#art-director').addEventListener('click', runArtDirector);
+  bindMic($('#mic-prompt'), $('#prompt'), (text) => generate(text));
+  bindMic($('#mic-refine'), $('#refine'), (text) => { if (state.spec) { $('#refine').value = ''; generate(text, state.spec); } });
   $('#play').addEventListener('click', () => state.engine?.play());
   $('#stop').addEventListener('click', () => state.engine?.stop());
   $('#undo').addEventListener('click', undo);
@@ -325,6 +434,10 @@ async function boot() {
   try {
     state.engine = await Engine.create($('#viewport'), { tier: quality });
     state.engine.start();
+    state.engine.on('level', ({ spec, source, level, notes }) => {
+      adoptSpec(spec);
+      log(`✦ Level ${level}: "${spec.title}", designed by ${source === 'claude' ? 'the Claude game master' : 'the offline game master'}${notes?.length ? ` (${notes.join('; ')})` : ''}.`, 'ok');
+    });
     let n = 0;
     state.engine.on('frame', (s) => {
       if (++n % 20) return;

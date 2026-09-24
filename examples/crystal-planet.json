@@ -283,6 +283,30 @@
       "height": 0
     }
   ],
+  "characters": [
+    {
+      "name": "Quill",
+      "role": "a curious alien scholar studying visitors to this planet",
+      "personality": "Polite, precise and fascinated by everything the player does. Speaks slightly oddly. Controls the strange lights in the sky.",
+      "greeting": "Greetings, specimen! Apologies. Greetings, *visitor*. Your arrival was predicted with 71% confidence.",
+      "color": "#b58cff",
+      "position": [
+        1.91,
+        0,
+        6.74
+      ],
+      "powers": [
+        "reveal_goal",
+        "heal",
+        "give_points",
+        "spawn_gift",
+        "grant_ability",
+        "follow_player",
+        "change_weather",
+        "change_time"
+      ]
+    }
+  ],
   "rules": {
     "goal": "collect",
     "targetScore": 300,

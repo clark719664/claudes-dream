@@ -246,6 +246,30 @@
       "height": 0
     }
   ],
+  "characters": [
+    {
+      "name": "Hollowroot",
+      "role": "an ancient tree spirit who has watched the forest for a thousand years",
+      "personality": "Slow, gentle and cryptic; speaks in nature metaphors and riddles. Protective of the forest. Rewards patience and kindness.",
+      "greeting": "Mmm... footsteps. Young ones always hurry. What brings you beneath my branches?",
+      "color": "#6f9a4a",
+      "position": [
+        1.95,
+        0,
+        6.72
+      ],
+      "powers": [
+        "reveal_goal",
+        "heal",
+        "give_points",
+        "spawn_gift",
+        "grant_ability",
+        "follow_player",
+        "change_weather",
+        "change_time"
+      ]
+    }
+  ],
   "rules": {
     "goal": "collect",
     "targetScore": 240,
