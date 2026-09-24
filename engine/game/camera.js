@@ -19,7 +19,7 @@ export class CameraRig {
   /** Point the camera behind the player's facing direction. */
   snapBehind(player) {
     this.yaw = player.yaw;
-    this.pitch = 0.28;
+    this.pitch = this.mode === 'first' ? 0.04 : 0.28;
     this.position = null;
   }
 
