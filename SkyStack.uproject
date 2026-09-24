@@ -1,0 +1,13 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "5.4",
+	"Category": "",
+	"Description": "SKYSTACK - stack to the sky, don't miss.",
+	"Modules": [
+		{
+			"Name": "SkyStack",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
