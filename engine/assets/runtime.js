@@ -1,5 +1,6 @@
 import { ProgressiveAssetManager } from './manager.js';
 import { loadGLB } from './gltf.js';
+import { normalizeAssetManifest } from './manifest.js';
 
 /**
  * Bridges cloud manifests to a live GpuScene. A request may be bound to one
@@ -26,7 +27,8 @@ export class AssetRuntime extends EventTarget {
   }
 
   async #install({ request, manifest }) {
-    if (manifest?.format !== 'glb' || !manifest.url) return;
+    manifest = normalizeAssetManifest(manifest, request.key);
+    if (!manifest.url) return;
     const geo = await loadGLB(manifest.url);
     const key = `asset:${request.key}`;
     if (!this.scene.hasMesh(key)) this.scene.addMesh(key, geo);
@@ -34,6 +36,6 @@ export class AssetRuntime extends EventTarget {
     for (const batchId of this.bindings.get(request.key) ?? []) {
       if (this.scene.replaceBatchMesh(batchId, key)) swaps++;
     }
-    this.dispatchEvent(new CustomEvent('ready', { detail: { request, manifest, meshKey: key, swaps } }));
+    this.dispatchEvent(new CustomEvent('ready', { detail: { request, manifest, material: manifest.material, meshKey: key, swaps } }));
   }
 }
