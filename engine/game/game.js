@@ -20,8 +20,19 @@ export class Game {
     this.player = new Player(this.spec, world.spawn);
     this.playerColor = hexToLinear(this.spec.player.color);
     this.surface = (x, z) => world.physics.surfaceAt(x, z);
-    for (const e of world.entities) for (const b of e.behaviors) BEHAVIOR_IMPL[b.type]?.init?.(e, b, this);
+    for (const e of world.entities) {
+      for (const b of e.behaviors) BEHAVIOR_IMPL[b.type]?.init?.(e, b, this);
+      this.#settle(e);
+    }
     this.#resetStats();
+  }
+
+  /** Resolve an entity's starting pose (patrol/orbit phase) so nothing jumps on the first frame. */
+  #settle(e) {
+    for (const b of e.behaviors) if (b.type === 'patrol' || b.type === 'orbit') BEHAVIOR_IMPL[b.type].update(e, b, 0, this);
+    e.pos = [...e.base];
+    e.prev = [...e.base];
+    if (e.box) updateBox(e);
   }
 
   #resetStats() {
@@ -41,6 +52,7 @@ export class Game {
       e.base = [...e.home];
       e.pos = [...e.home];
       for (const b of e.behaviors) { b.state = {}; BEHAVIOR_IMPL[b.type]?.init?.(e, b, this); }
+      this.#settle(e);
       this.world.scene.setVisible(e.instance, true);
       if (e.box) e.box.active = true;
     }
