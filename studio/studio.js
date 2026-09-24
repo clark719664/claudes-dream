@@ -434,6 +434,7 @@ async function boot() {
   try {
     state.engine = await Engine.create($('#viewport'), { tier: quality });
     state.engine.start();
+    window.__reverie = state.engine; // handy for the console and automated checks
     state.engine.on('level', ({ spec, source, level, notes }) => {
       adoptSpec(spec);
       log(`✦ Level ${level}: "${spec.title}", designed by ${source === 'claude' ? 'the Claude game master' : 'the offline game master'}${notes?.length ? ` (${notes.join('; ')})` : ''}.`, 'ok');

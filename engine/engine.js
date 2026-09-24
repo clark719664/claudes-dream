@@ -121,6 +121,7 @@ export class Engine {
     this.game?.stop?.();
     this.conversations?.reset();
     this.timeTween = null;
+    this.renderer.flash = [0, 0, 0, 0];
     const old = this.world?.scene;
     this.world = buildWorld(this.renderer, spec, { tier: this.renderer.tierName });
     old?.destroy();
@@ -331,7 +332,7 @@ export class Engine {
     let luma = 0, sat = 0, contrast = 0;
     for (const v of views) {
       // a few frames let temporal AA, exposure and the clouds settle
-      for (let i = 0; i < 6; i++) this.renderer.render({ position: v.position, target: v.target, fovY: this.camera.fov, near: 0.1 }, 1 / 60);
+      for (let i = 0; i < 4; i++) this.renderer.render({ position: v.position, target: v.target, fovY: this.camera.fov, near: 0.1 }, 1 / 60);
       ctx.drawImage(this.canvas, 0, 0, width, h);
       images.push({ label: v.label, data: canvas2d.toDataURL('image/jpeg', 0.82) });
       const px = ctx.getImageData(0, 0, width, h).data;
