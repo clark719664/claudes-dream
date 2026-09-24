@@ -89,15 +89,24 @@ export class Heightfield {
     }
 
     // Flatten a comfortable start area around the spawn point.
+    // The target is the average height around the spawn, and the blend is wide
+    // and gentle so mountains don't turn into a flat-topped mesa.
     const [sx, sz] = spawn;
-    const target = this.#bilinear(sx, sz);
-    const radius = 7;
+    const radius = 7, falloff = radius * 4;
+    let sum = 0, n = 0;
+    for (let a = 0; a < 16; a++) {
+      for (const r of [0, radius * 0.5, radius, radius * 2]) {
+        sum += this.#bilinear(sx + Math.cos((a / 16) * Math.PI * 2) * r, sz + Math.sin((a / 16) * Math.PI * 2) * r);
+        n++;
+      }
+    }
+    const target = sum / n;
     for (let j = 0; j < this.res; j++) {
       for (let i = 0; i < this.res; i++) {
         const x = this.origin + i * this.spacing, z = this.origin + j * this.spacing;
         const d = Math.hypot(x - sx, z - sz);
-        if (d < radius * 2) {
-          const k = 1 - smooth(radius, radius * 2, d);
+        if (d < falloff) {
+          const k = 1 - smooth(radius, falloff, d);
           const idx = j * this.res + i;
           this.heights[idx] = this.heights[idx] * (1 - k) + target * k;
         }

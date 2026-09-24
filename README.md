@@ -4,6 +4,16 @@
 
 Reverie is a WebGPU game engine for the browser with a physically based, GPU-driven renderer and an AI game designer. Type an idea such as *"a cozy forest at golden hour where you collect glowing mushrooms while avoiding sneaky slimes"*. Claude designs the world, rules, look and music as a small JSON game spec, and the engine turns it into a playable 3D game on phones and PCs, with nothing to install and no asset downloads.
 
+| | |
+| --- | --- |
+| ![Golden Grove: light shafts through a forest at golden hour](docs/media/golden-grove.jpg) | ![Coral Cove: palm islands and an ocean to the horizon](docs/media/coral-cove-rush.jpg) |
+| ![Frostpeak: snowy mountains with falling snow](docs/media/frostpeak.jpg) | ![Crystal Planet: glowing crystals on an alien night](docs/media/crystal-planet.jpg) |
+| ![Haunted Hollow: moonlit fog and drifting ghosts](docs/media/haunted-hollow.jpg) | ![Molten Caldera: platforms over a lava lake](docs/media/molten-caldera.jpg) |
+
+*Example worlds from [`examples/`](examples/), each generated from a one-line prompt. These were captured in headless Chromium using a software renderer.*
+
+![The Reverie Studio](docs/media/studio.jpg)
+
 ## Quick start
 
 ```bash
