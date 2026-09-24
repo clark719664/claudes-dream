@@ -119,9 +119,8 @@ fn fs(in: VOut) -> @location(0) vec4f {
 
   // reflections: screen-space march, falling back to the physical sky
   let r = reflect(-v, n);
-  var refl = skyLUT(vec3f(r.x, max(r.y, 0.01), r.z));
-  let cl = cloudLayerAt(normalize(vec3f(r.x, max(r.y, 0.01), r.z)), refl);
-  refl = mix(refl, cl.rgb, cl.a);
+  let rsky = normalize(vec3f(r.x, max(r.y, 0.01), r.z));
+  var refl = applyClouds(skyLUT(rsky), rsky);
   var hit = 0.0;
   var stepLen = 0.6;
   var pos = in.world + r * 0.3;

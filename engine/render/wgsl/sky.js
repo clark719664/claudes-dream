@@ -58,8 +58,7 @@ fn fs(in: FsOut) -> @location(0) vec4f {
     let dark = clamp(1.0 - luminance(sky) * 60.0, 0.0, 1.0);
     sky += stars(d) * frame.atmos.w * dark * viewT;
   }
-  let cl = cloudLayerAt(d, sky);
-  sky = mix(sky, cl.rgb, cl.a);
+  sky = applyClouds(sky, d);
   sky = applyVolumetrics(sky, in.uv, frame.lightInfo.w * 4.0);
   return vec4f(sky, 1.0);
 }

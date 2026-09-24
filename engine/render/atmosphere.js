@@ -4,7 +4,7 @@
 // time of day, sunsets and night skies relight the whole world for free.
 
 import { bindLayout, bindGroup, createShader, createBuffer, texture2D, U } from '../gpu/gpu.js';
-import { FRAME, MATH_WGSL, ATMOSPHERE_WGSL } from './wgsl/common.js';
+import { FRAME, MATH_WGSL, ATMOSPHERE_WGSL, CLOUD_WGSL, PANO_WGSL } from './wgsl/common.js';
 
 const TRANSMITTANCE_SIZE = [256, 64];
 const MULTISCATTER_SIZE = [32, 32];
@@ -101,19 +101,8 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
 }
 `;
 
-/** Resources and helpers shared by the sky-view LUT, the sky pass and the env-map pass. */
-export const SKY_FUNCTIONS_WGSL = /* wgsl */ `
-fn multiscatterAt(pos: vec3f, dir: vec3f) -> vec3f {
-  let r = length(pos);
-  let uv = vec2f(dot(pos / r, dir) * 0.5 + 0.5, clamp((r - R_BOTTOM) / (R_TOP - R_BOTTOM), 0.0, 1.0));
-  return textureSampleLevel(multiscatterLUT, linearSampler, uv, 0.0).rgb;
-}
-fn transmittanceTo(pos: vec3f, dir: vec3f) -> vec3f {
-  let r = length(pos);
-  return textureSampleLevel(transmittanceLUT, linearSampler, transmittanceUV(r, dot(pos / r, dir)), 0.0).rgb;
-}
-
-/** Sky radiance from the sky-view LUT for a world direction. */
+/** Sky radiance from the sky-view LUT for a world direction. Needs frame, skyviewLUT, linearSampler. */
+export const SKY_LUT_WGSL = /* wgsl */ `
 fn skyLUT(d: vec3f) -> vec3f {
   let r = R_BOTTOM + frame.atmos.y;
   let sunH = frame.sunDir.xz;
@@ -125,20 +114,40 @@ fn skyLUT(d: vec3f) -> vec3f {
   let uv = skyviewUV(r, d.y, lightViewCos, d.y < groundCos);
   return textureSampleLevel(skyviewLUT, linearSampler, uv, 0.0).rgb;
 }
+`;
 
-/** Cloud layer: a procedural deck lit by the key light, with silver lining and self shadowing. */
+/**
+ * Helpers shared by the sky pass, water reflections and the env-map pass.
+ * Needs the global names (frame, LUTs, weatherTex, cloudPano, samplers) and CLOUD_WGSL.
+ */
+export const SKY_FUNCTIONS_WGSL = /* wgsl */ `
+${SKY_LUT_WGSL}
+${PANO_WGSL}
+fn multiscatterAt(pos: vec3f, dir: vec3f) -> vec3f {
+  let r = length(pos);
+  let uv = vec2f(dot(pos / r, dir) * 0.5 + 0.5, clamp((r - R_BOTTOM) / (R_TOP - R_BOTTOM), 0.0, 1.0));
+  return textureSampleLevel(multiscatterLUT, linearSampler, uv, 0.0).rgb;
+}
+fn transmittanceTo(pos: vec3f, dir: vec3f) -> vec3f {
+  let r = length(pos);
+  return textureSampleLevel(transmittanceLUT, linearSampler, transmittanceUV(r, dot(pos / r, dir)), 0.0).rgb;
+}
+
+/** Fallback cloud layer (low tier): the weather map projected onto a plane, lit with silver lining and self shadowing. */
 fn cloudLayer(d: vec3f, sky: vec3f, keyL: vec3f, ambient: vec3f) -> vec4f {
   if (d.y <= 0.0 || frame.atmos.z < 0.01) { return vec4f(0.0); }
-  let t = 1.0 / (d.y + 0.06);
-  let uv = d.xz * t * 0.55 + frame.wind.zw * 1.6;
-  let c = cloudCoverage(uv);
+  let alt = mix(frame.clouds.x, frame.clouds.y, 0.3);
+  let t = (alt - frame.camPos.y) / (d.y + 0.035);
+  let xz = frame.camPos.xz + d.xz * t;
+  let w = weatherAt(xz);
+  let c = coverageFrom(w.r);
   if (c < 0.002) { return vec4f(0.0); }
   let k = frame.keyDir.xyz;
-  let towards = cloudCoverage(uv + k.xz * 0.06);
+  let towards = cloudCoverage(xz + k.xz * 400.0);
   let lit = clamp(1.0 - towards * 0.85, 0.0, 1.0);
   let cosT = dot(d, k);
   let phase = phaseHG(cosT, 0.6) * 2.5 + 0.35;
-  let thick = c * (0.6 + 0.4 * fbm(uv * 2.7, 3));
+  let thick = c * (0.6 + 0.4 * w.b);
   var col = ambient * (0.65 + 0.35 * lit) * (1.0 - thick * 0.35) + keyL * lit * phase * 0.12 * (1.0 - thick * 0.5);
   let horizonFade = smoothstep(0.0, 0.16, d.y);
   let alpha = clamp(c * 1.3, 0.0, 1.0) * horizonFade;
@@ -154,6 +163,16 @@ fn cloudLayerAt(d: vec3f, sky: vec3f) -> vec4f {
   keyL *= select(frame.sunDir.w, frame.moonDir.w, frame.keyDir.w > 0.5) * smoothstep(-0.05, 0.05, k.y);
   let ambient = skyLUT(normalize(vec3f(0.3, 1.0, 0.2))) * 1.8 + skyLUT(normalize(vec3f(-k.x, 0.2, -k.z))) * 0.6;
   return cloudLayer(d, sky, keyL, ambient);
+}
+
+/** Composite clouds over sky radiance: the volumetric panorama when available, else the 2D layer. */
+fn applyClouds(sky: vec3f, d: vec3f) -> vec3f {
+  if (frame.clouds.w > 0.5) {
+    let c = cloudsAt(d);
+    return sky * c.a + c.rgb;
+  }
+  let cl = cloudLayerAt(d, sky);
+  return mix(sky, cl.rgb, cl.a);
 }
 `;
 
@@ -260,12 +279,10 @@ ${ATMOSPHERE_WGSL}
 @group(0) @binding(3) var multiscatterLUT: texture_2d<f32>;
 @group(0) @binding(4) var skyviewLUT: texture_2d<f32>;
 @group(0) @binding(5) var linearSampler: sampler;
-
-fn cloudCoverage(p: vec2f) -> f32 {
-  let cover = frame.atmos.z;
-  let n = fbm(p, 5) * 0.8 + vnoise(p * 6.3) * 0.2;
-  return smoothstep(0.62 - cover * 0.5, 0.92 - cover * 0.42, n);
-}
+@group(0) @binding(6) var weatherTex: texture_2d<f32>;
+@group(0) @binding(7) var repeatSampler: sampler;
+@group(0) @binding(8) var<storage, read> cloudPano: array<vec2u>;
+${CLOUD_WGSL}
 ${SKY_FUNCTIONS_WGSL}
 
 fn cubeDir(face: u32, uv: vec2f) -> vec3f {
@@ -292,8 +309,7 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
     let ground = skyLUT(normalize(vec3f(d.x, 0.02, d.z)));
     sky = mix(ground, ground * frame.skyTint.w * 1.2, smoothstep(0.0, -0.25, d.y));
   }
-  let cl = cloudLayerAt(d, sky);
-  sky = mix(sky, cl.rgb, cl.a);
+  sky = applyClouds(sky, d);
   textureStore(outTex, id.xy, id.z, vec4f(sky, 1.0));
 }
 `;
@@ -482,9 +498,11 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
 // ---------------------------------------------------------------- class
 
 export class Atmosphere {
-  constructor(device, frameBuffer, tier) {
+  /** clouds: { weatherView, repeatSampler, panorama } shared with the cloud renderer. */
+  constructor(device, frameBuffer, tier, clouds) {
     this.device = device;
     this.frameBuffer = frameBuffer;
+    this.clouds = clouds;
     this.envSize = tier.envSize;
     this.envMips = Math.max(1, Math.log2(this.envSize) - 1);
     const S = U.STO | U.TEX;
@@ -525,7 +543,7 @@ export class Atmosphere {
       trans: bindLayout(d, 'trans', [['C', st('rgba16float')]]),
       ms: bindLayout(d, 'ms', [['C', st('rgba16float')], ['C', 'texture'], ['C', 'sampler'], ['C', 'uniform']]),
       sv: bindLayout(d, 'sv', [['C', st('rgba16float')], ['C', 'uniform'], ['C', 'texture'], ['C', 'texture'], ['C', 'sampler']]),
-      env: bindLayout(d, 'env', [['C', st('rgba16float', '2d-array')], ['C', 'uniform'], ['C', 'texture'], ['C', 'texture'], ['C', 'texture'], ['C', 'sampler']]),
+      env: bindLayout(d, 'env', [['C', st('rgba16float', '2d-array')], ['C', 'uniform'], ['C', 'texture'], ['C', 'texture'], ['C', 'texture'], ['C', 'sampler'], ['C', 'texture'], ['C', 'sampler'], ['C', 'read']]),
       sh: bindLayout(d, 'sh', [['C', 'texture-array'], ['C', 'storage']]),
       pre: bindLayout(d, 'pre', [['C', st('rgba16float', '2d-array')], ['C', 'cube'], ['C', 'sampler'], ['C', 'uniform']]),
       brdf: bindLayout(d, 'brdf', [['C', st('rgba16float')]]),
@@ -544,7 +562,10 @@ export class Atmosphere {
       trans: bindGroup(d, L.trans, [v(this.transmittance)]),
       ms: bindGroup(d, L.ms, [v(this.multiscatter), v(this.transmittance), this.sampler, this.paramsBuffer]),
       sv: bindGroup(d, L.sv, [v(this.skyview), this.frameBuffer, v(this.transmittance), v(this.multiscatter), this.sampler]),
-      env: bindGroup(d, L.env, [this.envRaw.createView({ dimension: '2d-array' }), this.frameBuffer, v(this.transmittance), v(this.multiscatter), v(this.skyview), this.sampler]),
+      env: bindGroup(d, L.env, [
+        this.envRaw.createView({ dimension: '2d-array' }), this.frameBuffer, v(this.transmittance), v(this.multiscatter), v(this.skyview), this.sampler,
+        this.clouds.weatherView, this.clouds.repeatSampler, this.clouds.panorama,
+      ]),
       sh: bindGroup(d, L.sh, [this.envRaw.createView({ dimension: '2d-array' }), this.shBuffer]),
       pre: this.prefilterParams.map((p, m) => bindGroup(d, L.pre, [
         this.env.createView({ dimension: '2d-array', baseMipLevel: m, mipLevelCount: 1 }),

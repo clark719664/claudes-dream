@@ -113,5 +113,4 @@ The headless tools run Chromium with SwiftShader's software WebGPU, so they chec
 - WebGPU is required. There is no WebGL fallback yet, so older browsers show a message instead of the game.
 - Everything is procedural. Characters are stylised primitives, and there is no skeletal animation or imported-model pipeline yet.
 - Moving objects are handled by TAA through neighbourhood clamping, without per-object motion vectors, so fast-moving objects can ghost slightly.
-- Clouds are a lit procedural layer, not raymarched volumetric clouds.
 - Gameplay covers the 13 built-in behaviours and 4 rule sets. There is no scripting API yet.

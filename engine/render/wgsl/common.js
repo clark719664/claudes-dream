@@ -38,6 +38,10 @@ export const FRAME = defineStruct('Frame', [
   ['shadowInfo', 'vec4'],     // cascade count, map size, enabled, softness
   ['lightInfo', 'vec4'],      // light count, ao enabled, volumetrics enabled, volume max distance
   ['volInfo', 'vec4'],        // froxel dims xyz, depth exponent
+  ['clouds', 'vec4'],         // cloud layer bottom m, top m, extinction /m, volumetric clouds enabled
+  ['cloudPano', 'vec4'],      // cloud panorama width, height, -, -
+  ['weatherFx', 'vec4'],      // surface wetness, rain intensity, lightning flash, aurora strength
+  ['flashPos', 'vec4'],       // lightning bolt position xz (camera relative), strike brightness, -
 ]);
 
 /** Group 0 for every shading pipeline (mesh, grass, sky, water, particles). */
@@ -58,6 +62,8 @@ export const GLOBAL_LAYOUT = [
   ['VF', 'utexture'],        // 13 terrain heightmap (r32float)
   ['F', 'texture'],          // 14 ambient occlusion
   ['F', 'texture'],          // 15 foliage atlas
+  ['VFC', 'texture'],        // 16 weather map (cloud coverage, type, detail)
+  ['F', 'read'],             // 17 volumetric cloud panorama
 ];
 
 export const GLOBALS_WGSL = /* wgsl */ `
@@ -79,6 +85,8 @@ struct Light { posRadius: vec4f, color: vec4f };
 @group(0) @binding(13) var heightmap: texture_2d<f32>;
 @group(0) @binding(14) var aoTex: texture_2d<f32>;
 @group(0) @binding(15) var foliageAtlas: texture_2d<f32>;
+@group(0) @binding(16) var weatherTex: texture_2d<f32>;
+@group(0) @binding(17) var<storage, read> cloudPano: array<vec2u>;
 `;
 
 // ---------------------------------------------------------------- pure functions
@@ -225,6 +233,90 @@ fn skyviewUV(r: f32, viewZenithCos: f32, lightViewCos: f32, intersectsGround: bo
 }
 `;
 
+/** Needs shCoeffs. */
+export const SH_WGSL = /* wgsl */ `
+/** Diffuse irradiance / PI from the sky's spherical harmonics. */
+fn skyIrradiance(n: vec3f) -> vec3f {
+  var r = shCoeffs[0].rgb * 0.282095;
+  r += shCoeffs[1].rgb * 0.488603 * n.y;
+  r += shCoeffs[2].rgb * 0.488603 * n.z;
+  r += shCoeffs[3].rgb * 0.488603 * n.x;
+  r += shCoeffs[4].rgb * 1.092548 * n.x * n.y;
+  r += shCoeffs[5].rgb * 1.092548 * n.y * n.z;
+  r += shCoeffs[6].rgb * 0.315392 * (3.0 * n.z * n.z - 1.0);
+  r += shCoeffs[7].rgb * 1.092548 * n.x * n.z;
+  r += shCoeffs[8].rgb * 0.546274 * (n.x * n.x - n.y * n.y);
+  return max(r, vec3f(0.0));
+}
+`;
+
+/**
+ * The weather map drives every cloud effect: the volumetric clouds, the 2D
+ * fallback layer, the cloud shadows on the ground and the god rays through
+ * the fog. It tiles every CLOUD_TILE meters and drifts with the wind
+ * (frame.wind.zw, in meters). Needs frame, weatherTex and repeatSampler.
+ */
+export const CLOUD_WGSL = /* wgsl */ `
+const CLOUD_TILE = 32000.0;
+
+fn weatherAt(xz: vec2f) -> vec4f {
+  return textureSampleLevel(weatherTex, repeatSampler, (xz + frame.wind.zw) / CLOUD_TILE, 0.0);
+}
+/** Cloud coverage 0..1 from the weather map's coverage channel and the spec's cloud cover. */
+fn coverageFrom(w: f32) -> f32 {
+  let cover = frame.atmos.z;
+  if (cover < 0.01) { return 0.0; }
+  let threshold = mix(0.74, 0.12, cover);
+  return clamp((w - threshold) / 0.2, 0.0, 1.0);
+}
+fn cloudCoverage(xz: vec2f) -> f32 { return coverageFrom(weatherAt(xz).r); }
+
+/** Soft moving shadows cast by the clouds onto the world (sampled where the key light crosses the cloud layer). */
+fn cloudShadow(worldPos: vec3f) -> f32 {
+  if (frame.atmos.z < 0.02) { return 1.0; }
+  let d = frame.keyDir.xyz;
+  let alt = mix(frame.clouds.x, frame.clouds.y, 0.3);
+  let t = (alt - worldPos.y) / max(d.y, 0.08);
+  let c = cloudCoverage(worldPos.xz + d.xz * t);
+  return 1.0 - 0.82 * smoothstep(0.0, 0.75, c);
+}
+`;
+
+/**
+ * Lookups into the volumetric cloud panorama: a sky-dome cache of the
+ * raymarched clouds (rgb in-scattered light, a transmittance), refreshed a few
+ * texels at a time. Rows are spaced by sqrt(elevation) so the horizon, where
+ * clouds are thin slivers, gets the most resolution. Needs frame and cloudPano.
+ */
+export const PANO_WGSL = /* wgsl */ `
+fn panoUV(d: vec3f) -> vec2f {
+  let az = atan2(d.x, d.z) / TAU + 0.5;
+  let el = asin(clamp(d.y, 0.0, 1.0));
+  return vec2f(az, sqrt(el / (PI * 0.5)));
+}
+fn panoDir(uv: vec2f) -> vec3f {
+  let az = (uv.x - 0.5) * TAU;
+  let el = uv.y * uv.y * PI * 0.5;
+  return vec3f(sin(az) * cos(el), sin(el), cos(az) * cos(el));
+}
+fn panoLoad(x: i32, y: i32) -> vec4f {
+  let w = i32(frame.cloudPano.x);
+  let h = i32(frame.cloudPano.y);
+  let p = cloudPano[clamp(y, 0, h - 1) * w + ((x % w) + w) % w];
+  return vec4f(unpack2x16float(p.x), unpack2x16float(p.y));
+}
+/** Volumetric clouds seen in direction d: rgb light added, a = sky transmittance. */
+fn cloudsAt(d: vec3f) -> vec4f {
+  if (frame.clouds.w < 0.5 || d.y < 0.0) { return vec4f(0.0, 0.0, 0.0, 1.0); }
+  let uv = panoUV(d) * frame.cloudPano.xy - 0.5;
+  let i = vec2i(floor(uv));
+  let f = uv - floor(uv);
+  let a = mix(panoLoad(i.x, i.y), panoLoad(i.x + 1, i.y), f.x);
+  let b = mix(panoLoad(i.x, i.y + 1), panoLoad(i.x + 1, i.y + 1), f.x);
+  return mix(a, b, f.y);
+}
+`;
+
 // ---------------------------------------------------------------- shading library (needs globals)
 
 export const LIGHTING_WGSL = /* wgsl */ `
@@ -242,35 +334,8 @@ fn keyRadiance() -> vec3f {
   return t * frame.sunDir.w * horizon;
 }
 
-/** Diffuse irradiance / PI from the sky's spherical harmonics. */
-fn skyIrradiance(n: vec3f) -> vec3f {
-  var r = shCoeffs[0].rgb * 0.282095;
-  r += shCoeffs[1].rgb * 0.488603 * n.y;
-  r += shCoeffs[2].rgb * 0.488603 * n.z;
-  r += shCoeffs[3].rgb * 0.488603 * n.x;
-  r += shCoeffs[4].rgb * 1.092548 * n.x * n.y;
-  r += shCoeffs[5].rgb * 1.092548 * n.y * n.z;
-  r += shCoeffs[6].rgb * 0.315392 * (3.0 * n.z * n.z - 1.0);
-  r += shCoeffs[7].rgb * 1.092548 * n.x * n.z;
-  r += shCoeffs[8].rgb * 0.546274 * (n.x * n.x - n.y * n.y);
-  return max(r, vec3f(0.0));
-}
-
-fn cloudCoverage(p: vec2f) -> f32 {
-  let cover = frame.atmos.z;
-  let n = fbm(p, 5) * 0.8 + vnoise(p * 6.3) * 0.2;
-  return smoothstep(0.62 - cover * 0.5, 0.92 - cover * 0.42, n);
-}
-
-/** Soft moving shadows cast by the cloud layer onto the world. */
-fn cloudShadow(worldPos: vec3f) -> f32 {
-  if (frame.atmos.z < 0.02) { return 1.0; }
-  let d = frame.keyDir.xyz;
-  let t = (1500.0 - worldPos.y) / max(d.y, 0.05);
-  let p = (worldPos.xz + d.xz * t) * 0.00045 + frame.wind.zw;
-  return 1.0 - 0.75 * cloudCoverage(p);
-}
-
+${SH_WGSL}
+${CLOUD_WGSL}
 var<private> POISSON: array<vec2f, 12> = array<vec2f, 12>(
   vec2f(-0.326, -0.406), vec2f(-0.840, -0.074), vec2f(-0.696, 0.457), vec2f(-0.203, 0.621),
   vec2f(0.962, -0.195), vec2f(0.473, -0.480), vec2f(0.519, 0.767), vec2f(0.185, -0.893),

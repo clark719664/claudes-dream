@@ -24,6 +24,7 @@ import { GpuScene } from './scene.js';
 import { computeCascades } from './shadows.js';
 import { VERTEX_STRIDE } from './meshes.js';
 import { createFoliageAtlas } from './foliageAtlas.js';
+import { createWeatherMap, createCloudPanorama } from './clouds.js';
 import { mat4, frustumPlanes, halton, hexToLinear, DEG, clamp, smoothstep } from '../core/math.js';
 
 const VERTEX_LAYOUT = [{
@@ -69,7 +70,10 @@ export class Renderer {
     this.env = {
       timeOfDay: 16, sunAzimuth: 210, cloudCover: 0.3, fogDensity: 0.2, fogColor: null, skyTint: [1, 1, 1],
       wind: 0.3, windDir: [0.8, 0.6], aerialScale: 22, groundAlbedo: 0.3,
+      cloudBase: 1100, cloudTop: 3000, cloudDensity: 0.035,
     };
+    this.weatherFx = [0, 0, 0, 0];
+    this.flashPos = [0, 0, 0, 0];
     this.grade = { bloom: 0.6, saturation: 1, contrast: 1, vignette: 0.3, warmth: 0, sharpen: 0.5, grain: 0.12, exposure: 0 };
     this.flash = [0, 0, 0, 0];
     this.cloudOffset = [0, 0];
@@ -91,7 +95,12 @@ export class Renderer {
       repeat: d.createSampler({ magFilter: 'linear', minFilter: 'linear', mipmapFilter: 'linear', addressModeU: 'repeat', addressModeV: 'repeat' }),
       shadow: d.createSampler({ compare: 'less', magFilter: 'linear', minFilter: 'linear' }),
     };
-    this.atmosphere = new Atmosphere(d, this.frameBuffer, this.tier);
+    // clouds: the weather map drives every cloud effect; the panorama caches volumetric clouds (medium tier and up)
+    this.weatherMap = createWeatherMap(d);
+    this.weatherView = this.weatherMap.createView();
+    this.cloudPanorama = createCloudPanorama(d, ...this.tier.cloudPano);
+    this.cloudsEnabled = false;
+    this.atmosphere = new Atmosphere(d, this.frameBuffer, this.tier, { weatherView: this.weatherView, repeatSampler: this.samplers.repeat, panorama: this.cloudPanorama });
     this.atmosphere.setGroundAlbedo(this.env.groundAlbedo);
     this.post = new PostProcess(d, this.format, this.features, this.tier);
 
@@ -184,6 +193,7 @@ export class Renderer {
     if (env.skyTint && typeof env.skyTint === 'string') this.env.skyTint = hexToLinear(env.skyTint).map((c) => Math.pow(c, 0.45));
     if (env.fogColor && typeof env.fogColor === 'string') this.env.fogColor = env.fogColor === 'auto' ? null : hexToLinear(env.fogColor);
     this.atmosphere.invalidate();
+    for (const f of this.features_ ?? []) f.onEnvironment?.(this.env);
   }
 
   setGrade(grade) { Object.assign(this.grade, grade); }
@@ -215,7 +225,7 @@ export class Renderer {
       this.frameBuffer, this.samplers.linear, this.samplers.repeat, this.samplers.shadow,
       a.transmittance.createView(), a.multiscatter.createView(), a.skyview.createView(), this.volumeView,
       a.envView, a.shBuffer, a.brdf.createView(), this.shadowArrayView, this.lightBuffer,
-      this.heightmap.createView(), this.aoView, this.foliageAtlas.createView(),
+      this.heightmap.createView(), this.aoView, this.foliageAtlas.createView(), this.weatherView, this.cloudPanorama,
     ], 'globals');
     this.shadowGlobalGroup = bindGroup(d, this.shadowGlobalLayout, [
       { binding: 0, resource: this.frameBuffer }, { binding: 2, resource: this.samplers.repeat },
@@ -350,6 +360,10 @@ export class Renderer {
     put('shadowInfo', [cascades.length, this.tier.shadowSize, cascades.length ? 1 : 0, 2.4]);
     put('lightInfo', [this.lightCount ?? 0, this.aoEnabled ? 1 : 0, this.volumeEnabled ? 1 : 0, this.volumeDistance ?? 600]);
     put('volInfo', [...(this.froxelDims ?? [1, 1, 1]), 2.0]);
+    put('clouds', [this.env.cloudBase, this.env.cloudTop, this.env.cloudDensity, this.cloudsEnabled ? 1 : 0]);
+    put('cloudPano', [...this.tier.cloudPano, 0, 0]);
+    put('weatherFx', this.weatherFx);
+    put('flashPos', this.flashPos);
     this.device.queue.writeBuffer(this.frameBuffer, 0, f);
   }
 
@@ -408,8 +422,10 @@ export class Renderer {
     frustumPlanes(this.cameraPlanes, this.cullVP);
 
     const L = this.#lighting();
-    this.cloudOffset[0] += this.env.windDir[0] * this.env.wind * this.dt * 0.004;
-    this.cloudOffset[1] += this.env.windDir[1] * this.env.wind * this.dt * 0.004;
+    // clouds drift with the wind (meters, wrapped to the weather map's 32 km tile)
+    const wl = Math.hypot(...this.env.windDir) || 1;
+    const cloudSpeed = 3 + this.env.wind * 16;
+    for (let i = 0; i < 2; i++) this.cloudOffset[i] = (this.cloudOffset[i] + (this.env.windDir[i] / wl) * cloudSpeed * this.dt) % 32000;
     const keyDir = L.keyIsMoon ? L.moon : L.sun;
     const shadowsOn = keyDir[1] > 0.02;
     this.cascades = shadowsOn ? computeCascades(cam, keyDir, this.tier.cascades, this.tier.shadowDistance, this.tier.shadowSize, this.cascades) : [];

@@ -7,6 +7,7 @@ import { scatterMesh, shapeMesh, SCATTER } from '../engine/render/meshes.js';
 import { mat4, hexToLinear } from '../engine/core/math.js';
 import { Rng } from '../shared/rng.js';
 import { Volumetrics } from '../engine/render/volumetrics.js';
+import { Clouds } from '../engine/render/clouds.js';
 import { GTAO } from '../engine/render/gtao.js';
 import { Grass } from '../engine/render/grass.js';
 import { Water } from '../engine/render/water.js';
@@ -27,6 +28,7 @@ async function main() {
   const water = q.has('water') ? num('water', 2) : null;
   renderer.setTerrain(hf, { waterLevel: water });
   renderer.setPalette({ low: '#c9b98a', mid: '#4f7a2e', high: '#eef2f5', cliff: '#6b5d52' });
+  if (renderer.tier.clouds && !q.has('noclouds')) renderer.addFeature(new Clouds(renderer));
   const vol = new Volumetrics(renderer);
   vol.setMaxDistance(hf.worldSize * 1.1);
   if (!q.has('novol')) renderer.addFeature(vol);

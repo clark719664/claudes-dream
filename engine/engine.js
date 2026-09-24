@@ -14,6 +14,7 @@ import { GTAO } from './render/gtao.js';
 import { Grass } from './render/grass.js';
 import { Water } from './render/water.js';
 import { Particles } from './render/particles.js';
+import { Clouds } from './render/clouds.js';
 import { buildWorld, isLava } from './game/builder.js';
 import { Game } from './game/game.js';
 import { CameraRig } from './game/camera.js';
@@ -44,6 +45,10 @@ export class Engine {
     this.running = false;
     this.menuFps = options.menuFps ?? 30;
 
+    if (renderer.tier.clouds) {
+      this.clouds = new Clouds(renderer);
+      renderer.addFeature(this.clouds);
+    }
     this.volumetrics = new Volumetrics(renderer);
     renderer.addFeature(this.volumetrics);
     if (renderer.tier.gtao) renderer.addFeature(new GTAO(renderer));
