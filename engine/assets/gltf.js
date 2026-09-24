@@ -12,13 +12,13 @@ const COMPONENT = {
 };
 const WIDTH = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 };
 
-export async function loadGLB(url, { signal } = {}) {
+export async function loadGLB(url, { signal, maxTriangles = 120000 } = {}) {
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`GLB fetch failed: ${res.status}`);
-  return parseGLB(await res.arrayBuffer());
+  return parseGLB(await res.arrayBuffer(), { maxTriangles });
 }
 
-export function parseGLB(buffer) {
+export function parseGLB(buffer, { maxTriangles = 120000 } = {}) {
   const dv = new DataView(buffer);
   if (dv.byteLength < 20 || dv.getUint32(0, true) !== 0x46546c67) throw new Error('Not a GLB file');
   if (dv.getUint32(4, true) !== 2) throw new Error('Only glTF 2.0 is supported');
@@ -30,16 +30,18 @@ export function parseGLB(buffer) {
     if (type === 0x004e4942) bin = chunk;
   }
   if (!json || !bin) throw new Error('GLB must contain JSON and BIN chunks');
-  return gltfToGeo(json, bin);
+  return gltfToGeo(json, bin, { maxTriangles });
 }
 
-export function gltfToGeo(gltf, bin) {
+export function gltfToGeo(gltf, bin, { maxTriangles = 120000 } = {}) {
   const primitive = gltf.meshes?.flatMap((m) => m.primitives ?? []).find((p) => (p.mode ?? 4) === 4);
   if (!primitive || primitive.attributes?.POSITION === undefined) throw new Error('GLB has no triangle POSITION primitive');
   const pos = accessor(gltf, bin, primitive.attributes.POSITION);
   const normal = primitive.attributes.NORMAL === undefined ? null : accessor(gltf, bin, primitive.attributes.NORMAL);
   const uv = primitive.attributes.TEXCOORD_0 === undefined ? null : accessor(gltf, bin, primitive.attributes.TEXCOORD_0);
   const idx = primitive.indices === undefined ? null : accessor(gltf, bin, primitive.indices);
+  const triangleCount = (idx ? idx.length : pos.length / 3) / 3;
+  if (triangleCount > maxTriangles) throw new Error('GLB exceeds triangle budget');
   const g = new Geo();
   const count = pos.length / 3;
   for (let i = 0; i < count; i++) {
