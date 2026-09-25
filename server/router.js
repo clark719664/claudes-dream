@@ -10,10 +10,11 @@ Do not include markdown blocks, prose, or anything other than the JSON object.`;
 function getProviders() {
   const p = [];
   if (process.env.GROQ_API_KEY) {
+    const model = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
     p.push({
       id: 'groq',
-      name: `Groq (${process.env.GROQ_MODEL || 'gpt-oss-120b'})`,
-      model: process.env.GROQ_MODEL || 'gpt-oss-120b',
+      name: `Groq (${model.split('/').pop()})`,
+      model,
       url: 'https://api.groq.com/openai/v1/chat/completions',
       headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}` }
     });
