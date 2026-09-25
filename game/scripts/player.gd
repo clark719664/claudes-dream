@@ -83,6 +83,7 @@ func _physics_process(delta: float) -> void:
 	var speed := SPRINT if Input.is_action_pressed("sprint") else WALK
 	if Game.has_buff("haste"):
 		speed *= 1.3
+	max_hp = 130 if Inventory.has("backpack") else 100
 	var glow := Inventory.has("lantern") and Game.darkness() > 0.3
 	_lantern.enabled = glow
 	_lantern.energy = Game.darkness() * 1.1 if glow else 0.0

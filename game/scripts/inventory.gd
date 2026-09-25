@@ -20,7 +20,7 @@ const NAMES := {
 	"cauliflower": "Cauliflower", "broccoli": "Broccoli", "garlic": "Garlic",
 	"sword_wood": "Wooden Sword", "sword_bone": "Bone Blade", "sword_iron": "Iron Sword", "sword_steel": "Steel Sword",
 	"axe": "Stone Axe", "axe_iron": "Iron Axe", "pickaxe": "Stone Pickaxe", "pickaxe_iron": "Iron Pickaxe",
-	"shield": "Buckler", "shield_iron": "Iron Shield", "lantern": "Lantern",
+	"shield": "Buckler", "shield_iron": "Iron Shield", "lantern": "Lantern", "backpack": "Explorer's Pack",
 	"poultice": "Herb Poultice", "cooked_meat": "Roast Meat", "stew": "Veggie Stew", "skewer": "Mushroom Skewer",
 	"bread": "Hearth Bread", "hearty_meal": "Hearty Meal",
 	"tonic_health": "Healing Tonic", "tonic_strength": "Tonic of Might", "tonic_swift": "Tonic of Haste",
@@ -33,11 +33,12 @@ const WEAPONS := {"sword_steel": 20, "sword_iron": 14, "sword_bone": 10, "sword_
 const AXES := {"axe_iron": 5, "axe": 3}
 const PICKAXES := {"pickaxe_iron": 5, "pickaxe": 3}
 const FIST_DAMAGE := 3
-const GEAR := ["sword_wood", "sword_bone", "sword_iron", "sword_steel", "axe", "axe_iron", "pickaxe", "pickaxe_iron", "shield", "shield_iron", "lantern"]
+const GEAR := ["sword_wood", "sword_bone", "sword_iron", "sword_steel", "axe", "axe_iron", "pickaxe", "pickaxe_iron", "shield", "shield_iron", "lantern", "backpack"]
 const TINTS := {"sword_iron": Color(0.8, 0.86, 1.0), "sword_steel": Color(0.62, 0.95, 1.0), "axe_iron": Color(0.8, 0.86, 1.0),
 	"pickaxe_iron": Color(0.8, 0.86, 1.0), "shield_iron": Color(0.8, 0.86, 1.0)}
 
-## station -> recipes: out, n (default 1), cost, lv (crafting level needed), desc
+## station -> recipes: out, n (a number, or one per station tier), cost, lv (crafting level),
+## st (station tier needed), desc
 const RECIPES := {
 	"hands": [
 		{"out": "stick", "n": 2, "cost": {"wood": 1}, "lv": 1, "desc": "Snap a log into handles and hafts."},
@@ -45,40 +46,43 @@ const RECIPES := {
 		{"out": "poultice", "cost": {"herb": 2, "fiber": 1}, "lv": 1, "desc": "Heals 25. Wild herbs grow by bushes."},
 	],
 	"workbench": [
-		{"out": "sword_wood", "cost": {"plank": 2, "stick": 1}, "lv": 1, "desc": "6 damage. Better than fists."},
-		{"out": "axe", "cost": {"stick": 1, "stone": 3, "twine": 1}, "lv": 1, "desc": "Chops 3x faster than bare hands."},
-		{"out": "pickaxe", "cost": {"stick": 1, "stone": 4, "twine": 1}, "lv": 1, "desc": "Mines 3x faster. Needed for iron ore."},
-		{"out": "cloth", "cost": {"twine": 3}, "lv": 2, "desc": "Woven twine. Bandages, sacks, curtains."},
-		{"out": "shield", "cost": {"plank": 3, "twine": 2}, "lv": 3, "desc": "Take a quarter less damage."},
-		{"out": "lantern", "cost": {"iron_bar": 1, "glass": 1, "resin": 2}, "lv": 4, "desc": "Lights your way at night."},
+		{"out": "sword_wood", "cost": {"plank": 2, "stick": 1}, "lv": 1, "st": 1, "desc": "6 damage. Better than fists."},
+		{"out": "axe", "cost": {"stick": 1, "stone": 3, "twine": 1}, "lv": 1, "st": 1, "desc": "Chops 3x faster than bare hands."},
+		{"out": "pickaxe", "cost": {"stick": 1, "stone": 4, "twine": 1}, "lv": 1, "st": 1, "desc": "Mines 3x faster. Needed for iron ore."},
+		{"out": "cloth", "cost": {"twine": 3}, "lv": 2, "st": 1, "desc": "Woven twine. Bandages, sacks, curtains."},
+		{"out": "shield", "cost": {"plank": 3, "twine": 2, "nails": 2}, "lv": 3, "st": 2, "desc": "Take a quarter less damage."},
+		{"out": "lantern", "cost": {"iron_bar": 1, "glass": 1, "resin": 2}, "lv": 4, "st": 2, "desc": "Lights your way at night."},
+		{"out": "backpack", "cost": {"cloth": 4, "twine": 4, "nails": 4, "resin": 2}, "lv": 5, "st": 3, "desc": "+30 max health. You carry yourself better."},
 	],
 	"sawmill": [
-		{"out": "plank", "n": 2, "cost": {"wood": 1}, "lv": 1, "desc": "Sawn boards for building and gear."},
-		{"out": "stick", "n": 4, "cost": {"wood": 1}, "lv": 1, "desc": "Clean hafts, four to a log."},
+		{"out": "plank", "n": [1, 2, 3], "cost": {"wood": 1}, "lv": 1, "st": 1, "desc": "Boards. The chopping block splits one per log; the mills saw more."},
+		{"out": "stick", "n": [3, 5, 8], "cost": {"wood": 1}, "lv": 1, "st": 1, "desc": "Clean hafts."},
 	],
 	"furnace": [
-		{"out": "coal", "cost": {"wood": 3}, "lv": 1, "desc": "Char wood into fuel."},
-		{"out": "iron_bar", "cost": {"iron_ore": 2, "coal": 1}, "lv": 2, "desc": "Smelt ore into a bar."},
-		{"out": "brick", "n": 2, "cost": {"stone": 3, "coal": 1}, "lv": 2, "desc": "Fired stone blocks for building."},
-		{"out": "glass", "n": 2, "cost": {"crystal": 1, "coal": 1}, "lv": 3, "desc": "Melted crystal, poured flat."},
-		{"out": "steel_bar", "cost": {"iron_bar": 2, "coal": 2}, "lv": 5, "desc": "Iron folded with carbon. Hard and bright."},
+		{"out": "coal", "n": [1, 1, 2], "cost": {"wood": 3}, "lv": 1, "st": 1, "desc": "Char wood into fuel."},
+		{"out": "iron_bar", "n": [1, 1, 2], "cost": {"iron_ore": 2, "coal": 1}, "lv": 2, "st": 1, "desc": "Smelt ore into a bar."},
+		{"out": "brick", "n": [2, 2, 3], "cost": {"stone": 3, "coal": 1}, "lv": 2, "st": 2, "desc": "Fired stone blocks. Needs a proper furnace."},
+		{"out": "glass", "n": [2, 2, 3], "cost": {"crystal": 1, "coal": 1}, "lv": 3, "st": 2, "desc": "Melted crystal, poured flat."},
+		{"out": "steel_bar", "cost": {"iron_bar": 2, "coal": 2}, "lv": 5, "st": 3, "desc": "Iron folded with carbon. Only a foundry runs hot enough."},
 	],
 	"anvil": [
-		{"out": "nails", "n": 6, "cost": {"iron_bar": 1}, "lv": 2, "desc": "Every good house is held together by these."},
-		{"out": "sword_bone", "cost": {"bone": 3, "twine": 1}, "lv": 2, "desc": "10 damage. Skeletons drop bones."},
-		{"out": "axe_iron", "cost": {"iron_bar": 2, "stick": 1, "twine": 1}, "lv": 3, "desc": "Chops 5x faster."},
-		{"out": "pickaxe_iron", "cost": {"iron_bar": 3, "stick": 1, "twine": 1}, "lv": 3, "desc": "Mines 5x faster. Can split crystal."},
-		{"out": "sword_iron", "cost": {"iron_bar": 3, "plank": 1, "cloth": 1}, "lv": 4, "desc": "14 damage."},
-		{"out": "shield_iron", "cost": {"iron_bar": 3, "plank": 2, "nails": 4}, "lv": 5, "desc": "Take 40% less damage."},
-		{"out": "sword_steel", "cost": {"steel_bar": 3, "cloth": 1, "gem": 1}, "lv": 6, "desc": "20 damage. A blade worth naming."},
+		{"out": "nails", "n": [4, 6, 8], "cost": {"iron_bar": 1}, "lv": 2, "st": 1, "desc": "Every good house is held together by these."},
+		{"out": "sword_bone", "cost": {"bone": 3, "twine": 1}, "lv": 2, "st": 1, "desc": "10 damage. Skeletons drop bones."},
+		{"out": "axe_iron", "cost": {"iron_bar": 2, "stick": 1, "twine": 1}, "lv": 3, "st": 1, "desc": "Chops 5x faster."},
+		{"out": "pickaxe_iron", "cost": {"iron_bar": 3, "stick": 1, "twine": 1}, "lv": 3, "st": 2, "desc": "Mines 5x faster. Can split crystal."},
+		{"out": "sword_iron", "cost": {"iron_bar": 3, "plank": 1, "cloth": 1}, "lv": 4, "st": 2, "desc": "14 damage."},
+		{"out": "shield_iron", "cost": {"iron_bar": 3, "plank": 2, "nails": 4}, "lv": 5, "st": 2, "desc": "Take 40% less damage."},
+		{"out": "sword_steel", "cost": {"steel_bar": 3, "cloth": 1, "gem": 1}, "lv": 6, "st": 3, "desc": "20 damage. A blade worth naming."},
 	],
 	"cookpot": [
-		{"out": "cooked_meat", "cost": {"meat": 1, "wood": 1}, "lv": 1, "desc": "Heals 45."},
-		{"out": "skewer", "cost": {"mushroom": 3, "stick": 1}, "lv": 1, "desc": "Heals 28. Mushrooms grow in the woods."},
-		{"out": "stew", "cost": {"any_veg": 2, "wood": 1}, "lv": 1, "desc": "Heals 35. Any two vegetables."},
+		{"out": "cooked_meat", "cost": {"meat": 1, "wood": 1}, "lv": 1, "st": 1, "desc": "Heals 45."},
+		{"out": "skewer", "cost": {"mushroom": 3, "stick": 1}, "lv": 1, "st": 1, "desc": "Heals 28. Mushrooms grow in the woods."},
+		{"out": "stew", "cost": {"any_veg": 2, "wood": 1}, "lv": 1, "st": 2, "desc": "Heals 35. Any two vegetables."},
+		{"out": "hearty_meal", "cost": {"cooked_meat": 1, "any_veg": 2, "mushroom": 2}, "lv": 3, "st": 3, "desc": "Heals 90 and quickens your step."},
 	],
 	"kitchen": [
 		{"out": "bread", "cost": {"any_veg": 1, "herb": 1, "coal": 1}, "lv": 2, "desc": "Heals 40."},
+		{"out": "stew", "n": 2, "cost": {"any_veg": 2, "wood": 1}, "lv": 1, "desc": "Heals 35. The stove makes two bowls."},
 		{"out": "hearty_meal", "cost": {"cooked_meat": 1, "any_veg": 2, "mushroom": 2}, "lv": 3, "desc": "Heals 90 and quickens your step."},
 	],
 	"alchemy": [
@@ -86,6 +90,14 @@ const RECIPES := {
 		{"out": "tonic_strength", "cost": {"bone": 2, "resin": 1, "glass": 1}, "lv": 5, "desc": "Hit 50% harder for two minutes."},
 		{"out": "tonic_swift", "cost": {"mushroom": 2, "herb": 2, "glass": 1}, "lv": 5, "desc": "Move 30% faster for two minutes."},
 	],
+}
+## What it takes to raise each station to tier 2 and tier 3.
+const STATION_UPGRADES := {
+	"workbench": [{}, {}, {"plank": 8, "nails": 6, "twine": 4}, {"iron_bar": 4, "steel_bar": 2, "plank": 10, "nails": 10}],
+	"sawmill": [{}, {}, {"plank": 6, "iron_bar": 2, "nails": 6}, {"steel_bar": 2, "iron_bar": 4, "plank": 12, "twine": 6}],
+	"furnace": [{}, {}, {"stone": 24, "coal": 6, "plank": 4}, {"iron_bar": 8, "brick": 16, "nails": 10}],
+	"anvil": [{}, {}, {"iron_bar": 5, "plank": 6, "nails": 8}, {"steel_bar": 3, "iron_bar": 6, "brick": 10}],
+	"cookpot": [{}, {}, {"iron_bar": 2, "stick": 6, "stone": 8}, {"iron_bar": 4, "brick": 8, "plank": 6}],
 }
 const STATION_NAMES := {"hands": "Hand Crafting", "workbench": "Workbench", "sawmill": "Sawmill", "furnace": "Furnace", "anvil": "Anvil",
 	"cookpot": "Cooking Pot", "kitchen": "Kitchen", "alchemy": "Alchemy Table"}
@@ -149,8 +161,18 @@ func take_all(cost: Dictionary) -> void:
 		take(k, cost[k])
 
 
+## How many a recipe makes at a station tier.
+static func yield_of(recipe: Dictionary, tier: int) -> int:
+	var n = recipe.get("n", 1)
+	if n is Array:
+		return int(n[clampi(tier, 1, n.size()) - 1])
+	return int(n)
+
+
 ## "" if the recipe can be made right now, otherwise the reason it can't.
-func blocker(recipe: Dictionary) -> String:
+func blocker(recipe: Dictionary, station_tier := 3) -> String:
+	if station_tier < int(recipe.get("st", 1)):
+		return "Needs a tier %d station" % recipe.st
 	if level < int(recipe.get("lv", 1)):
 		return "Needs crafting level %d" % recipe.lv
 	if recipe.out in GEAR and count(recipe.out) > 0:
@@ -160,16 +182,17 @@ func blocker(recipe: Dictionary) -> String:
 	return ""
 
 
-func craft(recipe: Dictionary) -> bool:
-	if blocker(recipe) != "":
-		return false
+func craft(recipe: Dictionary, station_tier := 3) -> int:
+	if blocker(recipe, station_tier) != "":
+		return 0
 	take_all(recipe.cost)
-	add(recipe.out, recipe.get("n", 1))
+	var made := yield_of(recipe, station_tier)
+	add(recipe.out, made)
 	var gained := 0
 	for k in recipe.cost:
 		gained += int(recipe.cost[k])
 	gain_xp(3 + gained)
-	return true
+	return made
 
 
 func gain_xp(n: int) -> void:

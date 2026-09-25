@@ -68,6 +68,11 @@ func rebuild(style_name: String) -> void:
 	var win: Rect2 = s.window
 	_piece(FURN, win, o + Vector2(20, 104))
 	_piece(FURN, win, o + Vector2(108 - win.size.x, 104))
+	if s.chimney:
+		var smoke := Pack.anim_node("smoke")
+		smoke.position = o + Vector2(100, -14)
+		smoke.modulate.a = 0.75
+		_parts.add_child(smoke)
 
 
 func _piece(sheet: String, region: Rect2, at: Vector2) -> void:

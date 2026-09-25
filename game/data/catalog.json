@@ -2493,7 +2493,10 @@
      18,
      15
     ],
-    "solid": 0
+    "block": [
+     36,
+     6
+    ]
    }
   ],
   "fence_post": [
@@ -2509,7 +2512,10 @@
      5,
      47
     ],
-    "solid": 0
+    "block": [
+     8,
+     44
+    ]
    },
    {
     "sheet": "Environment/Structures/Buildings/Props.png",
@@ -2523,7 +2529,10 @@
      5,
      47
     ],
-    "solid": 0
+    "block": [
+     8,
+     44
+    ]
    }
   ],
   "workbench": [
@@ -3712,6 +3721,44 @@
     ]
    }
   ],
+  "palisade": [
+   {
+    "sheet": "Environment/Structures/Buildings/Walls.png",
+    "region": [
+     0,
+     192,
+     96,
+     240
+    ],
+    "anchor": [
+     48,
+     47
+    ],
+    "block": [
+     96,
+     12
+    ]
+   }
+  ],
+  "palisade_side": [
+   {
+    "sheet": "Environment/Structures/Buildings/Walls.png",
+    "region": [
+     0,
+     23,
+     16,
+     96
+    ],
+    "anchor": [
+     4,
+     72
+    ],
+    "block": [
+     14,
+     76
+    ]
+   }
+  ],
   "mine_carts": [
    {
     "sheet": "Environment/Props/Static/Dungeon_Props.png",
@@ -3830,6 +3877,7 @@
      32
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -3844,6 +3892,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": true,
     "anchor": [
@@ -3858,6 +3907,7 @@
      32
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": false,
     "anchor": [
@@ -3874,6 +3924,7 @@
      32
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -3888,6 +3939,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": true,
     "anchor": [
@@ -3902,6 +3954,7 @@
      32
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": false,
     "anchor": [
@@ -3918,6 +3971,7 @@
      32
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -3932,6 +3986,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": true,
     "anchor": [
@@ -3946,6 +4001,7 @@
      32
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": false,
     "anchor": [
@@ -3962,6 +4018,7 @@
      32
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -3976,6 +4033,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": true,
     "anchor": [
@@ -3990,6 +4048,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": false,
     "anchor": [
@@ -4006,6 +4065,7 @@
      32
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -4020,6 +4080,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": true,
     "anchor": [
@@ -4034,6 +4095,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": false,
     "anchor": [
@@ -4050,6 +4112,7 @@
      32
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -4064,6 +4127,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": true,
     "anchor": [
@@ -4078,6 +4142,7 @@
      64
     ],
     "frames": 7,
+    "cols": 7,
     "fps": 10,
     "loop": false,
     "anchor": [
@@ -4094,6 +4159,7 @@
      32
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -4108,6 +4174,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": true,
     "anchor": [
@@ -4122,6 +4189,7 @@
      80
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": false,
     "anchor": [
@@ -4138,6 +4206,7 @@
      32
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -4152,6 +4221,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": true,
     "anchor": [
@@ -4166,6 +4236,7 @@
      64
     ],
     "frames": 8,
+    "cols": 8,
     "fps": 10,
     "loop": false,
     "anchor": [
@@ -4182,6 +4253,7 @@
      32
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -4196,6 +4268,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": true,
     "anchor": [
@@ -4210,6 +4283,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": false,
     "anchor": [
@@ -4226,6 +4300,7 @@
      32
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -4240,6 +4315,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": true,
     "anchor": [
@@ -4254,6 +4330,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": false,
     "anchor": [
@@ -4270,6 +4347,7 @@
      32
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -4284,6 +4362,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": true,
     "anchor": [
@@ -4298,6 +4377,7 @@
      48
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 10,
     "loop": false,
     "anchor": [
@@ -4314,6 +4394,7 @@
      64
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -4328,6 +4409,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 8,
     "loop": true,
     "anchor": [
@@ -4344,6 +4426,7 @@
      64
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -4358,6 +4441,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 8,
     "loop": true,
     "anchor": [
@@ -4374,6 +4458,7 @@
      64
     ],
     "frames": 4,
+    "cols": 4,
     "fps": 6,
     "loop": true,
     "anchor": [
@@ -4388,6 +4473,7 @@
      64
     ],
     "frames": 6,
+    "cols": 6,
     "fps": 8,
     "loop": true,
     "anchor": [
@@ -4708,6 +4794,19 @@
    "anchor": [
     8,
     12
+   ]
+  },
+  "backpack": {
+   "sheet": "Environment/Props/Static/Farm.png",
+   "region": [
+    256,
+    16,
+    271,
+    32
+   ],
+   "anchor": [
+    7,
+    8
    ]
   },
   "stone": {
@@ -5036,6 +5135,311 @@
    ]
   }
  },
+ "stations": {
+  "workbench": [
+   {
+    "sheet": "Environment/Structures/Stations/Workbench/Workbench.png",
+    "region": [
+     48,
+     72,
+     96,
+     112
+    ],
+    "anchor": [
+     24,
+     39
+    ],
+    "name": "Workbench",
+    "solid": 18
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Workbench/Workbench.png",
+    "region": [
+     103,
+     64,
+     176,
+     112
+    ],
+    "anchor": [
+     41,
+     47
+    ],
+    "name": "Carpenter's Bench",
+    "solid": 32
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Workbench/Workbench.png",
+    "region": [
+     112,
+     115,
+     192,
+     176
+    ],
+    "anchor": [
+     56,
+     60
+    ],
+    "name": "Steel Workbench",
+    "solid": 34
+   }
+  ],
+  "sawmill": [
+   {
+    "sheet": "Environment/Structures/Stations/Sawmill/Level_1.png",
+    "region": [
+     0,
+     6,
+     31,
+     32
+    ],
+    "anchor": [
+     14,
+     25
+    ],
+    "name": "Chopping Block",
+    "solid": 10
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Sawmill/Level_2-Sheet.png",
+    "frame": [
+     80,
+     64
+    ],
+    "frames": 60,
+    "cols": 8,
+    "fps": 12,
+    "loop": true,
+    "anchor": [
+     40,
+     62
+    ],
+    "name": "Sawmill",
+    "solid": 30
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Sawmill/Level_3-Sheet.png",
+    "frame": [
+     112,
+     80
+    ],
+    "frames": 60,
+    "cols": 8,
+    "fps": 12,
+    "loop": true,
+    "anchor": [
+     56,
+     75
+    ],
+    "name": "Lumber Mill",
+    "solid": 44
+   }
+  ],
+  "furnace": [
+   {
+    "sheet": "Environment/Structures/Stations/Furnace/Stone_02-Sheet.png",
+    "frame": [
+     48,
+     64
+    ],
+    "frames": 4,
+    "cols": 2,
+    "fps": 8,
+    "loop": true,
+    "anchor": [
+     22,
+     63
+    ],
+    "name": "Stone Kiln",
+    "solid": 16,
+    "fire": [
+     0,
+     -12
+    ]
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Furnace/Bricks_03-Sheet.png",
+    "frame": [
+     48,
+     64
+    ],
+    "frames": 4,
+    "cols": 2,
+    "fps": 8,
+    "loop": true,
+    "anchor": [
+     24,
+     63
+    ],
+    "name": "Brick Furnace",
+    "solid": 20,
+    "fire": [
+     0,
+     -14
+    ],
+    "smoke": [
+     [
+      -12,
+      -60
+     ],
+     [
+      12,
+      -60
+     ]
+    ]
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Furnace/Iron_03-Sheet.png",
+    "frame": [
+     48,
+     64
+    ],
+    "frames": 4,
+    "cols": 2,
+    "fps": 8,
+    "loop": true,
+    "anchor": [
+     24,
+     63
+    ],
+    "name": "Iron Foundry",
+    "solid": 20,
+    "fire": [
+     0,
+     -14
+    ],
+    "smoke": [
+     [
+      0,
+      -62
+     ]
+    ]
+   }
+  ],
+  "anvil": [
+   {
+    "sheet": "Environment/Structures/Stations/Anvil/Anvil_01-Sheet.png",
+    "frame": [
+     64,
+     80
+    ],
+    "frames": 35,
+    "cols": 8,
+    "fps": 10,
+    "loop": true,
+    "anchor": [
+     32,
+     77
+    ],
+    "name": "Anvil",
+    "solid": 22
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Anvil/Anvil_02-Sheet.png",
+    "frame": [
+     80,
+     80
+    ],
+    "frames": 35,
+    "cols": 6,
+    "fps": 10,
+    "loop": true,
+    "anchor": [
+     40,
+     75
+    ],
+    "name": "Smithy",
+    "solid": 32
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Anvil/Anvil_03-Sheet.png",
+    "frame": [
+     96,
+     112
+    ],
+    "frames": 35,
+    "cols": 8,
+    "fps": 10,
+    "loop": true,
+    "anchor": [
+     48,
+     110
+    ],
+    "name": "Forge",
+    "solid": 40,
+    "fire": [
+     0,
+     -20
+    ]
+   }
+  ],
+  "cookpot": [
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Cooking Station.png",
+    "region": [
+     11,
+     67,
+     53,
+     120
+    ],
+    "anchor": [
+     19,
+     52
+    ],
+    "name": "Cooking Pot",
+    "solid": 12,
+    "fire": [
+     0,
+     -8
+    ],
+    "flames": [
+     0,
+     -2
+    ]
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Grill/Grill_02-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 8,
+    "loop": true,
+    "anchor": [
+     30,
+     60
+    ],
+    "name": "Spit Grill",
+    "solid": 22,
+    "fire": [
+     0,
+     -10
+    ]
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Grill/Grill_04-Sheet.png",
+    "frame": [
+     80,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 8,
+    "loop": true,
+    "anchor": [
+     39,
+     51
+    ],
+    "name": "Butcher's Grill",
+    "solid": 30,
+    "fire": [
+     0,
+     -10
+    ]
+   }
+  ]
+ },
  "anims": {
   "campfire": {
    "sheet": "Environment/Structures/Stations/Bonfire/Bonfire_01-Sheet.png",
@@ -5044,6 +5448,7 @@
     32
    ],
    "frames": 4,
+   "cols": 4,
    "fps": 10,
    "loop": true,
    "anchor": [
@@ -5058,11 +5463,117 @@
     48
    ],
    "frames": 4,
+   "cols": 4,
    "fps": 10,
    "loop": true,
    "anchor": [
     16,
     42
+   ]
+  },
+  "flames_small": {
+   "sheet": "Environment/Structures/Stations/Bonfire/Fire_02-Sheet.png",
+   "frame": [
+    32,
+    48
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 10,
+   "loop": true,
+   "anchor": [
+    16,
+    32
+   ]
+  },
+  "smoke": {
+   "sheet": "Environment/Structures/Stations/Bonfire/Smoke-Sheet.png",
+   "frame": [
+    32,
+    48
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 6,
+   "loop": true,
+   "anchor": [
+    16,
+    31
+   ]
+  },
+  "fire_pit": {
+   "sheet": "Environment/Structures/Stations/Bonfire/Bonfire_09-Sheet.png",
+   "frame": [
+    80,
+    32
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 8,
+   "loop": true,
+   "anchor": [
+    38,
+    31
+   ]
+  },
+  "fire_logs": {
+   "sheet": "Environment/Structures/Stations/Bonfire/Bonfire_05-Sheet.png",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 8,
+   "loop": true,
+   "anchor": [
+    16,
+    24
+   ]
+  },
+  "fire_ring": {
+   "sheet": "Environment/Structures/Stations/Bonfire/Bonfire_02-Sheet.png",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 8,
+   "loop": true,
+   "anchor": [
+    15,
+    31
+   ]
+  },
+  "grill_camp": {
+   "sheet": "Environment/Structures/Stations/Cooking Station/Grill/Grill_01-Sheet.png",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 8,
+   "loop": true,
+   "anchor": [
+    32,
+    60
+   ]
+  },
+  "alchemy": {
+   "sheet": "Environment/Structures/Stations/Alchemy/Alchemy_Table_02-Sheet.png",
+   "frame": [
+    48,
+    64
+   ],
+   "frames": 51,
+   "cols": 11,
+   "fps": 10,
+   "loop": true,
+   "anchor": [
+    24,
+    63
    ]
   },
   "water": {

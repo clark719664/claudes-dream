@@ -16,6 +16,7 @@ const GOALS := [
 	["planks", "Saw planks at the sawmill"],
 	["iron", "Mine iron ore and smelt a bar at the furnace"],
 	["nails", "Forge nails at the anvil"],
+	["furnace2", "Upgrade the kiln into a brick furnace"],
 	["cabin2", "Ask Tilda in Brindle to rebuild your cabin"],
 	["graveyard", "Clear the skeletons from the old graveyard"],
 	["warlord", "Defeat the orc warlord in the east"],
@@ -37,6 +38,7 @@ var goal := 0
 var stats := {"gathered": {}, "crafted": {}, "kills": {}}
 var opened := {}           # chests already looted, by id
 var buffs := {}            # name -> seconds left
+var station_tiers := {}    # station -> 1..3
 var _last_hour := -1
 var _goal_timer := 0.0
 var _sleeping := false
@@ -129,6 +131,10 @@ func say(text: String) -> void:
 	message.emit(text)
 
 
+func station_tier(station: String) -> int:
+	return int(station_tiers.get(station, 1))
+
+
 func has_buff(name: String) -> bool:
 	return buffs.has(name)
 
@@ -187,6 +193,7 @@ func _goal_done(id: String) -> bool:
 		"planks": return stats.crafted.has("plank")
 		"iron": return stats.crafted.has("iron_bar")
 		"nails": return stats.crafted.has("nails")
+		"furnace2": return station_tier("furnace") >= 2
 		"cabin2": return cabin_tier >= 2 or (upgrade_pending and cabin_tier == 1)
 		"graveyard": return _kills("skeleton") >= 5
 		"warlord": return stats.kills.get("orc_warrior", 0) >= 1
@@ -263,6 +270,7 @@ func save_game() -> void:
 	var data := {
 		"day": day, "time": time_of_day, "cabin_tier": cabin_tier, "upgrade_pending": upgrade_pending,
 		"goal": goal, "stats": stats, "opened": opened.keys(), "inventory": Inventory.save_data(),
+		"stations": station_tiers,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -287,5 +295,8 @@ func load_game() -> bool:
 	opened = {}
 	for id in data.get("opened", []):
 		opened[id] = true
+	station_tiers = {}
+	for k in data.get("stations", {}):
+		station_tiers[k] = int(data.stations[k])
 	Inventory.load_data(data.get("inventory", {}))
 	return true

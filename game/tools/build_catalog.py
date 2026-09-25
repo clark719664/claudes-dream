@@ -72,24 +72,28 @@ def composite(path, main, parts, **extra):
     d['parts'] = out
     return d
 
-def anim(path, frame_w, frame_h, frames=None, fps=10, loop=True, centre=False):
+def anim(path, frame_w, frame_h, frames=None, fps=10, loop=True, centre=False, cols=None):
+    """An animation laid out left to right, top to bottom, on a grid of frames."""
     im = img(path)
-    n = frames or im.width // frame_w
-    # union of opaque pixels over all frames gives a stable feet anchor
+    cols = cols or im.width // frame_w
+    rows = im.height // frame_h
+    n = frames or cols * rows
+    def cell(i):
+        x, y = (i % cols) * frame_w, (i // cols) * frame_h
+        return im.crop((x, y, x + frame_w, y + frame_h))
     box = None
     for i in range(n):
-        bb = im.crop((i * frame_w, 0, (i + 1) * frame_w, frame_h)).getchannel('A').getbbox()
+        bb = cell(i).getchannel('A').getbbox()
         if bb:
             box = bb if box is None else (min(box[0], bb[0]), min(box[1], bb[1]), max(box[2], bb[2]), max(box[3], bb[3]))
-    # horizontal anchor from the first frame's feet so idle and run line up
-    first = im.crop((0, 0, frame_w, frame_h)).getchannel('A')
+    first = cell(0).getchannel('A')
     fb = first.getbbox()
     a = first.load()
     xs = [x for y in range(fb[3] - 3, fb[3]) for x in range(frame_w) if a[x, y] > 0]
     ax = round((min(xs) + max(xs) + 1) / 2)
     if centre:
         ax = round((box[0] + box[2]) / 2)
-    return {'sheet': path, 'frame': [frame_w, frame_h], 'frames': n, 'fps': fps, 'loop': loop, 'anchor': [ax, box[3] - 1]}
+    return {'sheet': path, 'frame': [frame_w, frame_h], 'frames': n, 'cols': cols, 'fps': fps, 'loop': loop, 'anchor': [ax, box[3] - 1]}
 
 def actor(folder, idle=(32, 32), run=(64, 64), death=(64, 64)):
     return {
@@ -142,8 +146,8 @@ for k, crop in enumerate(crops):
 S['soil'] = variants(FARM, [[352, 112, 368, 128]], anchor='centre')
 S['crate_crops'] = variants(FARM, [[160, 32 * k, 176, 32 * k + 32] for k in range(len(crops))], solid=6, shadow='shadow_small')
 S['sack'] = variants(FARM, [[256, 0, 272, 16], [256, 16, 272, 32]], solid=4, shadow='shadow_small')
-S['fence'] = variants(BPROPS, [[16, 176, 64, 192]], solid=0)
-S['fence_post'] = variants(BPROPS, [[0, 192, 16, 240], [48, 192, 64, 240]], solid=0)
+S['fence'] = variants(BPROPS, [[16, 176, 64, 192]], block=[36, 6])
+S['fence_post'] = variants(BPROPS, [[0, 192, 16, 240], [48, 192, 64, 240]], block=[8, 44])
 # ---- camp and crafting stations (solid = half width of the blocking footprint)
 S['workbench'] = variants(ST + 'Workbench/Workbench.png', [[48, 64, 96, 112]], solid=18, shadow='shadow_tree', station='workbench')
 S['anvil'] = variants(ST + 'Anvil/Anvil.png', [[0, 32, 64, 80]], solid=16, shadow='shadow_tree', station='anvil')
@@ -191,6 +195,8 @@ S['chimney'] = variants(FURN, [[0, 320, 32, 384]], solid=8)
 S['window'] = variants(FURN, [[64, 320, 96, 352], [32, 352, 64, 384], [128, 352, 160, 384]])
 S['ruin_back'] = variants(WALLS, [[0, 0, 96, 96], [96, 0, 192, 96], [288, 0, 384, 80]])
 S['ruin_front'] = variants(WALLS, [[0, 96, 96, 176], [96, 96, 192, 176], [288, 96, 384, 176]])
+S['palisade'] = variants(WALLS, [[0, 192, 96, 240]], block=[96, 12])
+S['palisade_side'] = variants(WALLS, [[0, 16, 16, 96]], block=[14, 76])
 S['mine_carts'] = variants(DPROPS, [[0, 0, 56, 32], [72, 8, 96, 32]], solid=10, shadow='shadow_small')
 S['tombstone'] = variants(DPROPS, [[96, 0, 112, 24]], solid=5)
 # ---- shadows (drawn under objects, black at low alpha in the pack)
@@ -199,9 +205,43 @@ S['shadow_tree'] = variants(SHADOWS, [[0, 49, 80, 80]], anchor='centre')
 S['shadow_small'] = variants(SHADOWS, [[0, 80, 48, 97]], anchor='centre')
 S['shadow_actor'] = variants(SHADOWS, [[0, 104, 32, 120]], anchor='centre')
 # ---- animated props
+cat['stations'] = {
+    'workbench': [
+        dict(sprite(ST + 'Workbench/Workbench.png', [48, 64, 96, 112]), name='Workbench', solid=18),
+        dict(sprite(ST + 'Workbench/Workbench.png', [96, 64, 176, 112]), name="Carpenter's Bench", solid=32),
+        dict(sprite(ST + 'Workbench/Workbench.png', [112, 112, 192, 176]), name='Steel Workbench', solid=34),
+    ],
+    'sawmill': [
+        dict(sprite(ST + 'Sawmill/Level_1.png', [0, 0, 32, 32]), name='Chopping Block', solid=10),
+        dict(anim(ST + 'Sawmill/Level_2-Sheet.png', 80, 64, cols=8, frames=60, fps=12, centre=True), name='Sawmill', solid=30),
+        dict(anim(ST + 'Sawmill/Level_3-Sheet.png', 112, 80, cols=8, frames=60, fps=12, centre=True), name='Lumber Mill', solid=44),
+    ],
+    'furnace': [
+        dict(anim(ST + 'Furnace/Stone_02-Sheet.png', 48, 64, cols=2, frames=4, fps=8, centre=True), name='Stone Kiln', solid=16, fire=[0, -12]),
+        dict(anim(ST + 'Furnace/Bricks_03-Sheet.png', 48, 64, cols=2, frames=4, fps=8, centre=True), name='Brick Furnace', solid=20, fire=[0, -14], smoke=[[-12, -60], [12, -60]]),
+        dict(anim(ST + 'Furnace/Iron_03-Sheet.png', 48, 64, cols=2, frames=4, fps=8, centre=True), name='Iron Foundry', solid=20, fire=[0, -14], smoke=[[0, -62]]),
+    ],
+    'anvil': [
+        dict(anim(ST + 'Anvil/Anvil_01-Sheet.png', 64, 80, cols=8, frames=35, fps=10, centre=True), name='Anvil', solid=22),
+        dict(anim(ST + 'Anvil/Anvil_02-Sheet.png', 80, 80, cols=6, frames=35, fps=10, centre=True), name='Smithy', solid=32),
+        dict(anim(ST + 'Anvil/Anvil_03-Sheet.png', 96, 112, cols=8, frames=35, fps=10, centre=True), name='Forge', solid=40, fire=[0, -20]),
+    ],
+    'cookpot': [
+        dict(sprite(ST + 'Cooking Station/Cooking Station.png', [0, 64, 64, 120]), name='Cooking Pot', solid=12, fire=[0, -8], flames=[0, -2]),
+        dict(anim(ST + 'Cooking Station/Grill/Grill_02-Sheet.png', 64, 64, fps=8, centre=True), name='Spit Grill', solid=22, fire=[0, -10]),
+        dict(anim(ST + 'Cooking Station/Grill/Grill_04-Sheet.png', 80, 64, fps=8, centre=True), name="Butcher's Grill", solid=30, fire=[0, -10]),
+    ],
+}
 cat['anims'] = {
     'campfire': anim(ST + 'Bonfire/Bonfire_01-Sheet.png', 32, 32, fps=10, centre=True),
     'flames': anim(ST + 'Bonfire/Fire_01-Sheet.png', 32, 48, fps=10, centre=True),
+    'flames_small': anim(ST + 'Bonfire/Fire_02-Sheet.png', 32, 48, fps=10, centre=True),
+    'smoke': anim(ST + 'Bonfire/Smoke-Sheet.png', 32, 48, fps=6, centre=True),
+    'fire_pit': anim(ST + 'Bonfire/Bonfire_09-Sheet.png', 80, 32, fps=8, centre=True),
+    'fire_logs': anim(ST + 'Bonfire/Bonfire_05-Sheet.png', 32, 32, fps=8, centre=True),
+    'fire_ring': anim(ST + 'Bonfire/Bonfire_02-Sheet.png', 32, 32, fps=8, centre=True),
+    'grill_camp': anim(ST + 'Cooking Station/Grill/Grill_01-Sheet.png', 64, 64, fps=8, centre=True),
+    'alchemy': anim(ST + 'Alchemy/Alchemy_Table_02-Sheet.png', 48, 64, cols=11, frames=51, fps=10, centre=True),
     'water': {'fps': 10},
 }
 # ---- characters
@@ -258,6 +298,7 @@ I['axe_iron'] = icon(WOOD, [48, 16, 64, 48])
 I['pickaxe_iron'] = icon(WOOD, [0, 48, 16, 80])
 I['sword_steel'] = icon(WOOD, [0, 16, 16, 48])
 I['shield_iron'] = icon(WOOD, [112, 16, 144, 48])
+I['backpack'] = icon(FARM, [256, 16, 272, 32])
 I['stone'] = icon(ROCKS, [48, 48, 64, 64])
 I['fiber'] = icon(VEG, [16, 144, 32, 160])
 I['iron_ore'] = icon(ROCKS, [160, 16, 176, 32])

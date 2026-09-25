@@ -35,6 +35,7 @@ var black: ColorRect
 var _toast_t := 0.0
 var _mode := ""                 # "", "craft", "inventory", "upgrade"
 var _station := ""
+var _station_node: Node = null
 var _selected := 0
 var _confirm: Callable
 
@@ -307,7 +308,8 @@ func _build_menu() -> void:
 	root.add_child(menu)
 
 
-func open_crafting(station: String) -> void:
+func open_crafting(station: String, node: Node = null) -> void:
+	_station_node = node
 	_open("craft", station)
 
 
@@ -358,10 +360,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("cancel") or (_mode == "inventory" and event.is_action_pressed("inventory")) or (_mode == "craft" and _station == "hands" and event.is_action_pressed("craft")):
 		close_menu()
 	elif _mode == "craft" and event.is_action_pressed("move_up"):
-		_selected = (_selected - 1 + _recipes().size()) % _recipes().size()
+		_selected = (_selected - 1 + _row_count()) % _row_count()
 		_refresh_menu()
 	elif _mode == "craft" and event.is_action_pressed("move_down"):
-		_selected = (_selected + 1) % _recipes().size()
+		_selected = (_selected + 1) % _row_count()
 		_refresh_menu()
 	elif event.is_action_pressed("interact") or (event is InputEventKey and event.is_action_pressed("attack")):
 		if _mode == "craft":
@@ -377,15 +379,48 @@ func _recipes() -> Array:
 	return Inventory.RECIPES[_station]
 
 
+func _tier() -> int:
+	return Game.station_tier(_station) if Inventory.STATION_UPGRADES.has(_station) else 3
+
+
+func _can_upgrade() -> bool:
+	return Inventory.STATION_UPGRADES.has(_station) and _tier() < 3
+
+
+func _row_count() -> int:
+	return _recipes().size() + (1 if _can_upgrade() else 0)
+
+
 func _craft_selected() -> void:
+	if _selected >= _recipes().size():
+		_upgrade_station()
+		return
 	var recipe: Dictionary = _recipes()[_selected]
-	var why := Inventory.blocker(recipe)
+	var why := Inventory.blocker(recipe, _tier())
 	if why == "":
-		Inventory.craft(recipe)
-		Game.note_craft(recipe.out, recipe.get("n", 1))
-		say("Made %s%s" % [Inventory.display_name(recipe.out), (" x%d" % recipe.n) if recipe.has("n") else ""])
+		var made := Inventory.craft(recipe, _tier())
+		Game.note_craft(recipe.out, made)
+		say("Made %s%s" % [Inventory.display_name(recipe.out), (" x%d" % made) if made > 1 else ""])
 	else:
 		say(why + ".")
+	_refresh_menu()
+
+
+func _upgrade_station() -> void:
+	var next := _tier() + 1
+	var cost: Dictionary = Inventory.STATION_UPGRADES[_station][next]
+	if not Inventory.has_all(cost):
+		say("Not enough materials for the upgrade.")
+		return
+	Inventory.take_all(cost)
+	if _station_node and _station_node.has_method("upgrade"):
+		_station_node.upgrade()
+	else:
+		Game.station_tiers[_station] = next
+	Inventory.gain_xp(15 * next)
+	say("Built the %s!" % Pack.station_spec(_station, next).name)
+	Game._check_goal()
+	_selected = 0
 	_refresh_menu()
 
 
@@ -438,7 +473,11 @@ func _costs(h: HBoxContainer, cost: Dictionary) -> void:
 
 
 func _fill_craft() -> void:
-	_title("%s     crafting LV %d" % [Inventory.STATION_NAMES[_station].to_upper(), Inventory.level])
+	var tier := _tier()
+	var title: String = Inventory.STATION_NAMES[_station]
+	if Inventory.STATION_UPGRADES.has(_station):
+		title = "%s  (tier %d)" % [Pack.station_spec(_station, tier).name, tier]
+	_title("%s     crafting LV %d" % [title.to_upper(), Inventory.level])
 	var recipes := _recipes()
 	for i in recipes.size():
 		var r: Dictionary = recipes[i]
@@ -447,21 +486,40 @@ func _fill_craft() -> void:
 		var h: HBoxContainer = parts[1]
 		row.mouse_filter = Control.MOUSE_FILTER_STOP
 		row.gui_input.connect(_on_row_input.bind(i))
-		var why := Inventory.blocker(r)
-		var locked := Inventory.level < int(r.get("lv", 1))
+		var why := Inventory.blocker(r, tier)
 		h.add_child(_icon(r.out, 16))
-		var name_text: String = Inventory.display_name(r.out) + ((" x%d" % r.n) if r.has("n") else "")
+		var made := Inventory.yield_of(r, tier)
+		var name_text: String = Inventory.display_name(r.out) + ((" x%d" % made) if made > 1 else "")
 		var nl := _label(name_text, DIM if why != "" else TEXT)
 		nl.custom_minimum_size = Vector2(112, 0)
 		h.add_child(nl)
-		if locked:
+		if tier < int(r.get("st", 1)):
+			h.add_child(_label("TIER %d STATION" % r.st, BAD))
+		elif Inventory.level < int(r.get("lv", 1)):
 			h.add_child(_label("LV %d" % r.lv, BAD))
 		else:
 			_costs(h, r.cost)
-	var sel: Dictionary = recipes[_selected]
-	var d := _label(sel.desc + ("   " + Inventory.blocker(sel) if Inventory.blocker(sel) != "" else ""), DIM)
+	if _can_upgrade():
+		var next := tier + 1
+		var parts := _row(_selected == recipes.size())
+		var row: PanelContainer = parts[0]
+		var h: HBoxContainer = parts[1]
+		row.mouse_filter = Control.MOUSE_FILTER_STOP
+		row.gui_input.connect(_on_row_input.bind(recipes.size()))
+		var nl := _label("UPGRADE: " + String(Pack.station_spec(_station, next).name).to_upper(), GOLD)
+		nl.custom_minimum_size = Vector2(128, 0)
+		h.add_child(nl)
+		_costs(h, Inventory.STATION_UPGRADES[_station][next])
+	var desc := ""
+	if _selected < recipes.size():
+		var sel: Dictionary = recipes[_selected]
+		var why := Inventory.blocker(sel, tier)
+		desc = sel.desc + ("   " + why if why != "" else "")
+	else:
+		desc = "Rebuild this station. Better stations make more per batch and unlock new recipes."
+	var d := _label(desc, DIM)
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	d.custom_minimum_size = Vector2(290, 18)
+	d.custom_minimum_size = Vector2(300, 18)
 	menu_box.add_child(d)
 	menu_box.add_child(_label("W/S choose    E craft    ESC close", DIM))
 

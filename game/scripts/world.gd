@@ -72,7 +72,11 @@ func spawn(o: Dictionary) -> Node2D:
 		"crop":
 			node = Crop.new(o.kind, int(o.stage))
 		"campfire":
-			node = Campfire.new()
+			node = Campfire.new(o.get("style", "bonfire"))
+		"station":
+			node = Station.new(o.station)
+		"anim":
+			node = anim_prop(o.name, float(o.get("solid", 0)))
 		"mine_entrance":
 			node = Interactable.new("mine", o)
 		"house":
@@ -90,8 +94,8 @@ func spawn(o: Dictionary) -> Node2D:
 			elif s.has("sign") or s.has("chest"):
 				node = Interactable.new("sign" if s.has("sign") else "chest", o)
 			elif s.has("station"):
-				node = Station.new(t, v)
-			elif s.has("hp"):
+				node = Station.new(s.station)
+			elif s.has("hp") and not o.get("wall", 0):
 				node = Harvestable.new(t, v)
 			elif t in FLAT_DECOR or t.begins_with("flower_") or t == "soil":
 				var sprite := Pack.sprite(t, v)
@@ -159,6 +163,32 @@ func prop(t: String, v := 0) -> Node2D:
 	var s := Pack.spec(t, v)
 	var root: Node2D
 	var solid := float(s.get("solid", 0))
+	if solid > 0 or s.has("block"):
+		var body := StaticBody2D.new()
+		body.collision_layer = WORLD_LAYER
+		body.collision_mask = 0
+		if s.has("block"):
+			# fences and walls: a box over the sprite's footprint, centred on the art
+			var r: Array = s.region
+			var shape := CollisionShape2D.new()
+			var box := RectangleShape2D.new()
+			box.size = Vector2(s.block[0], s.block[1])
+			shape.shape = box
+			shape.position = Vector2((r[2] - r[0]) / 2.0 - s.anchor[0], -s.block[1] / 2.0)
+			body.add_child(shape)
+		else:
+			body.add_child(foot_shape(solid))
+		root = body
+	else:
+		root = Node2D.new()
+	add_shadow(root, s)
+	root.add_child(Pack.sprite(t, v))
+	return root
+
+
+## An animated prop from the catalog's anims (a camp grill, a bubbling alchemy table).
+func anim_prop(anim_name: String, solid := 0.0) -> Node2D:
+	var root: Node2D
 	if solid > 0:
 		var body := StaticBody2D.new()
 		body.collision_layer = WORLD_LAYER
@@ -167,8 +197,13 @@ func prop(t: String, v := 0) -> Node2D:
 		root = body
 	else:
 		root = Node2D.new()
-	add_shadow(root, s)
-	root.add_child(Pack.sprite(t, v))
+	var sh := Pack.sprite("shadow_tree")
+	sh.z_index = -1
+	sh.position = Vector2(0, -2)
+	root.add_child(sh)
+	root.add_child(Pack.anim_node(anim_name))
+	if anim_name.begins_with("grill") or anim_name.begins_with("fire"):
+		root.add_child(make_light(Color(1.0, 0.58, 0.28), 0.9, Vector2(0, -10), 80))
 	return root
 
 

@@ -93,6 +93,50 @@ func anim_frames(anim_name: String) -> SpriteFrames:
 	return _frames[key]
 
 
+func station_spec(station: String, tier: int) -> Dictionary:
+	var tiers: Array = catalog.stations[station]
+	return tiers[clampi(tier, 1, tiers.size()) - 1]
+
+
+func station_tiers(station: String) -> int:
+	return catalog.stations[station].size() if catalog.stations.has(station) else 1
+
+
+## A node showing a station at a tier: animated if the pack animates it.
+func station_visual(station: String, tier: int) -> Node2D:
+	var s := station_spec(station, tier)
+	if s.has("frames"):
+		var key := "station:%s:%d" % [station, tier]
+		if not _frames.has(key):
+			var sf := SpriteFrames.new()
+			sf.remove_animation("default")
+			_add_anim(sf, "default", s)
+			_frames[key] = sf
+		var a := AnimatedSprite2D.new()
+		a.sprite_frames = _frames[key]
+		a.centered = false
+		a.offset = -Vector2(s.anchor[0], s.anchor[1])
+		a.play("default")
+		a.frame = randi() % int(s.frames)
+		return a
+	var sp := Sprite2D.new()
+	sp.texture = atlas(s)
+	sp.centered = false
+	sp.offset = -Vector2(s.anchor[0], s.anchor[1])
+	return sp
+
+
+## Any looping animation from catalog.anims as a ready-to-add node.
+func anim_node(anim_name: String) -> AnimatedSprite2D:
+	var a := AnimatedSprite2D.new()
+	a.sprite_frames = anim_frames(anim_name)
+	a.centered = false
+	a.offset = -anim_anchor(anim_name)
+	a.play("default")
+	a.frame = randi() % a.sprite_frames.get_frame_count("default")
+	return a
+
+
 func anchor(actor: String, anim_name: String) -> Vector2:
 	var a: Array = catalog.actors[actor][anim_name].anchor
 	return Vector2(a[0], a[1])
@@ -119,10 +163,11 @@ func _add_anim(sf: SpriteFrames, anim_name: String, a: Dictionary) -> void:
 	var tex := texture(a.sheet)
 	var fw: int = a.frame[0]
 	var fh: int = a.frame[1]
+	var cols := int(a.get("cols", a.frames))
 	for i in int(a.frames):
 		var t := AtlasTexture.new()
 		t.atlas = tex
-		t.region = Rect2(i * fw, 0, fw, fh)
+		t.region = Rect2((i % cols) * fw, (i / cols) * fh, fw, fh)
 		sf.add_frame(anim_name, t)
 
 
