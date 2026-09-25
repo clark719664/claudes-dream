@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "da359d30-1eae-4765-8832-40bd7a9ab128",
+    "name": "seraphine",
+    "prompt": "Seraphine, an ethereal Covenant high priestess in flowing white and void robes with a halo of dark light, imposing tragic villain, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "seraphine.png",
+    "cell_size": {
+      "width": 92,
+      "height": 92
+    },
+    "sheet_size": {
+      "width": 736,
+      "height": 828
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "bc7f9a88-9c04-4951-baed-23ef781fed6c",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "bc7f9a88-9c04-4951-baed-23ef781fed6c",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "bc7f9a88-9c04-4951-baed-23ef781fed6c",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "bc7f9a88-9c04-4951-baed-23ef781fed6c",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "bc7f9a88-9c04-4951-baed-23ef781fed6c",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "bc7f9a88-9c04-4951-baed-23ef781fed6c",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "bc7f9a88-9c04-4951-baed-23ef781fed6c",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "bc7f9a88-9c04-4951-baed-23ef781fed6c",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:52:58.154108+00:00"
+}

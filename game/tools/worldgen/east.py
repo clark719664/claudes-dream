@@ -69,10 +69,10 @@ def gen_badlands(a):
     road = a.trail([w, (20, w[1] - 1), (46, 40), (74, 46), (100, e[1] + 1), e], 3.0, ':', 3.0, k=82)
     a.trail([(74, 46), (88, 36), (92, 31)], 2.0, ':', 1.6, k=83)
     a.trail([(46, 40), (40, 56), (30, 70), (22, 74)], 1.6, ':', 2.2, k=84)
-    stockade(a, 78, 8, 106, 30, 'grimtusk', ['orc', 'orc_rogue', 'orc', 'orc_shaman', 'orc_rogue', 'orc'], boss='orc_warrior')
+    stockade(a, 78, 8, 106, 30, 'grimtusk', ['orc', 'orc_rogue', 'berserker_m', 'orc_shaman', 'zealot_m', 'orc'], boss='garrick')
     B.sign(a, 70, 44, 'Beyond this point: ORCS. Turn back, friend.')
     for (x, y) in [(66, 30), (70, 20), (60, 38), (96, 44), (104, 52)]:
-        N.enemy(a, a.rng.choice(['orc', 'orc_rogue']), x, y)
+        N.enemy(a, a.rng.choice(['orc', 'orc_rogue', 'berserker_m', 'zealot_m']), x, y)
     # the old farmstead
     fx, fy = 18, 70
     a.paint(a.blob(fx, fy + 3, 7, 0.3, 85, 5), ':', (fx - 10, fy - 6, fx + 10, fy + 12))

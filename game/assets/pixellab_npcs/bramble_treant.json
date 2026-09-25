@@ -1,0 +1,15 @@
+{
+  "id": "29da762e-b332-43c5-b24e-ce03e25bed7c",
+  "name": "bramble_treant",
+  "rotations": [
+    "south",
+    "west",
+    "east",
+    "north",
+    "south-east",
+    "north-east",
+    "north-west",
+    "south-west"
+  ],
+  "animations": 0
+}

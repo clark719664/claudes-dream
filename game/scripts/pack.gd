@@ -25,7 +25,11 @@ func _ready() -> void:
 
 func texture(sheet: String) -> Texture2D:
 	if not _textures.has(sheet):
-		_textures[sheet] = load(PACK_DIR + sheet)
+		var custom_path := "res://assets/" + sheet
+		if ResourceLoader.exists(custom_path):
+			_textures[sheet] = load(custom_path)
+		else:
+			_textures[sheet] = load(PACK_DIR + sheet)
 	return _textures[sheet]
 
 
@@ -137,14 +141,30 @@ func anim_node(anim_name: String) -> AnimatedSprite2D:
 	return a
 
 
+func _norm_anim(v: Variant) -> Dictionary:
+	if v is Dictionary:
+		return v
+	var arr: Array = v
+	var fw := int(arr[1])
+	var fh := int(arr[2])
+	return {
+		"sheet": String(arr[0]),
+		"frame": [fw, fh],
+		"frames": int(arr[3]),
+		"fps": 8,
+		"loop": true,
+		"anchor": [fw / 2, fh - 2]
+	}
+
+
 func anchor(actor: String, anim_name: String) -> Vector2:
-	var a: Array = catalog.actors[actor][anim_name].anchor
-	return Vector2(a[0], a[1])
+	var a := _norm_anim(catalog.actors[actor][anim_name])
+	return Vector2(a.anchor[0], a.anchor[1])
 
 
 ## Sprite offset that keeps the feet on the node origin, also when mirrored.
 func actor_offset(actor: String, anim_name: String, flipped: bool) -> Vector2:
-	var a: Dictionary = catalog.actors[actor][anim_name]
+	var a := _norm_anim(catalog.actors[actor][anim_name])
 	var ax: float = a.anchor[0]
 	if flipped:
 		ax = a.frame[0] - ax
@@ -156,7 +176,8 @@ func anim_anchor(anim_name: String) -> Vector2:
 	return Vector2(a[0], a[1])
 
 
-func _add_anim(sf: SpriteFrames, anim_name: String, a: Dictionary) -> void:
+func _add_anim(sf: SpriteFrames, anim_name: String, raw_a: Variant) -> void:
+	var a := _norm_anim(raw_a)
 	sf.add_animation(anim_name)
 	sf.set_animation_speed(anim_name, a.fps)
 	sf.set_animation_loop(anim_name, a.loop)

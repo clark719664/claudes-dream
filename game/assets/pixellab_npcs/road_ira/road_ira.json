@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "ce360dc5-4529-4721-8145-2d5e9d9ca252",
+    "name": "road_ira",
+    "prompt": "a wandering road witch in a patched green traveling cloak with herb pouches, mysterious but friendly townsperson, gothic, full body",
+    "size": {
+      "width": 128,
+      "height": 128
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "road_ira.png",
+    "cell_size": {
+      "width": 128,
+      "height": 128
+    },
+    "sheet_size": {
+      "width": 1024,
+      "height": 1152
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "3b0f3b00-ff8e-43be-b1d4-a367d0556e59",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "3b0f3b00-ff8e-43be-b1d4-a367d0556e59",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "3b0f3b00-ff8e-43be-b1d4-a367d0556e59",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "3b0f3b00-ff8e-43be-b1d4-a367d0556e59",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "3b0f3b00-ff8e-43be-b1d4-a367d0556e59",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "3b0f3b00-ff8e-43be-b1d4-a367d0556e59",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "3b0f3b00-ff8e-43be-b1d4-a367d0556e59",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "3b0f3b00-ff8e-43be-b1d4-a367d0556e59",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:52:27.692359+00:00"
+}

@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "dfdd9cbe-af50-45e6-bbfa-68c578365df8",
+    "name": "berserker_f",
+    "prompt": "female Covenant berserker in spiked black armor wielding a massive cleaver, fierce villain, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "berserker_f.png",
+    "cell_size": {
+      "width": 96,
+      "height": 96
+    },
+    "sheet_size": {
+      "width": 768,
+      "height": 864
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "f5bb2947-cbb5-4a00-8368-74245882d203",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "f5bb2947-cbb5-4a00-8368-74245882d203",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "f5bb2947-cbb5-4a00-8368-74245882d203",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "f5bb2947-cbb5-4a00-8368-74245882d203",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "f5bb2947-cbb5-4a00-8368-74245882d203",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "f5bb2947-cbb5-4a00-8368-74245882d203",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "f5bb2947-cbb5-4a00-8368-74245882d203",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "f5bb2947-cbb5-4a00-8368-74245882d203",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:52:47.430925+00:00"
+}

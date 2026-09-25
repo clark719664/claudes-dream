@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "56bdbe72-b7ed-4cdc-9594-a08305c9635d",
+    "name": "reaper_m",
+    "prompt": "male Covenant reaper in a black tattered shroud wielding a void scythe, menacing villain, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "reaper_m.png",
+    "cell_size": {
+      "width": 92,
+      "height": 92
+    },
+    "sheet_size": {
+      "width": 736,
+      "height": 828
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "148b99e8-aab7-435d-bec4-c471ffb21301",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "148b99e8-aab7-435d-bec4-c471ffb21301",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "148b99e8-aab7-435d-bec4-c471ffb21301",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "148b99e8-aab7-435d-bec4-c471ffb21301",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "148b99e8-aab7-435d-bec4-c471ffb21301",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "148b99e8-aab7-435d-bec4-c471ffb21301",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "148b99e8-aab7-435d-bec4-c471ffb21301",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "148b99e8-aab7-435d-bec4-c471ffb21301",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:52:36.811867+00:00"
+}

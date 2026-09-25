@@ -1,0 +1,101 @@
+{
+  "character": {
+    "id": "ec0d19af-0754-44ca-8e64-e24b551747e6",
+    "name": "pella",
+    "prompt": "Carpenter Pella, sturdy carpenter with a leather tool belt, rolled-up sleeves and sawdust-dusted overalls, cozy stardew-style RPG villager, gothic-punk world, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "pella.png",
+    "cell_size": {
+      "width": 96,
+      "height": 96
+    },
+    "sheet_size": {
+      "width": 768,
+      "height": 768
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "ac442ef5-f8f0-45c0-9ccc-45f45e699980",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "ac442ef5-f8f0-45c0-9ccc-45f45e699980",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "ac442ef5-f8f0-45c0-9ccc-45f45e699980",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "ac442ef5-f8f0-45c0-9ccc-45f45e699980",
+        "direction": "north"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "ac442ef5-f8f0-45c0-9ccc-45f45e699980",
+        "direction": "north-west"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "ac442ef5-f8f0-45c0-9ccc-45f45e699980",
+        "direction": "west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "ac442ef5-f8f0-45c0-9ccc-45f45e699980",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:53:27.958739+00:00"
+}

@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "5be865a7-93e1-4ad7-8210-86898ddfe487",
+    "name": "ranch_pen",
+    "prompt": "Pen Ridge, ranch hand in a wide cowboy hat, leather vest and boots with a coiled lasso, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "ranch_pen.png",
+    "cell_size": {
+      "width": 88,
+      "height": 88
+    },
+    "sheet_size": {
+      "width": 704,
+      "height": 792
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2d598382-f10c-4943-9a8b-ac7fa10e2a51",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2d598382-f10c-4943-9a8b-ac7fa10e2a51",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2d598382-f10c-4943-9a8b-ac7fa10e2a51",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2d598382-f10c-4943-9a8b-ac7fa10e2a51",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2d598382-f10c-4943-9a8b-ac7fa10e2a51",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2d598382-f10c-4943-9a8b-ac7fa10e2a51",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2d598382-f10c-4943-9a8b-ac7fa10e2a51",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2d598382-f10c-4943-9a8b-ac7fa10e2a51",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:53:14.797846+00:00"
+}

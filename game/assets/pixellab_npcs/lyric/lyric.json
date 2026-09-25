@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "3d32026d-2bb4-4682-a04c-395e1aaa3d6c",
+    "name": "lyric",
+    "prompt": "a stylish synthwave DJ with neon headphones and a glowing visor, friendly cool townsperson, gothic-punk neon, full body",
+    "size": {
+      "width": 120,
+      "height": 120
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "lyric.png",
+    "cell_size": {
+      "width": 120,
+      "height": 120
+    },
+    "sheet_size": {
+      "width": 960,
+      "height": 1080
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "650a6ff4-ccb3-4d30-81e6-011e1a284681",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "650a6ff4-ccb3-4d30-81e6-011e1a284681",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "650a6ff4-ccb3-4d30-81e6-011e1a284681",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "650a6ff4-ccb3-4d30-81e6-011e1a284681",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "650a6ff4-ccb3-4d30-81e6-011e1a284681",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "650a6ff4-ccb3-4d30-81e6-011e1a284681",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "650a6ff4-ccb3-4d30-81e6-011e1a284681",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "650a6ff4-ccb3-4d30-81e6-011e1a284681",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:52:28.171018+00:00"
+}

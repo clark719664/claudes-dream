@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "284b1a14-2196-4b62-9e5e-d477e3581439",
+    "name": "goat",
+    "prompt": "small white nanny goat with back-curved horns and a short beard, cloven hooves, friendly farm livestock",
+    "size": {
+      "width": 68,
+      "height": 68
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "goat.png",
+    "cell_size": {
+      "width": 68,
+      "height": 68
+    },
+    "sheet_size": {
+      "width": 544,
+      "height": 612
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "walking forward calmly on four legs",
+        "animation_group_id": "c879ffd8-c5a9-4324-bbaa-22c46bb1b9ad",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "walking forward calmly on four legs",
+        "animation_group_id": "c879ffd8-c5a9-4324-bbaa-22c46bb1b9ad",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "walking forward calmly on four legs",
+        "animation_group_id": "c879ffd8-c5a9-4324-bbaa-22c46bb1b9ad",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "walking forward calmly on four legs",
+        "animation_group_id": "c879ffd8-c5a9-4324-bbaa-22c46bb1b9ad",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "walking forward calmly on four legs",
+        "animation_group_id": "c879ffd8-c5a9-4324-bbaa-22c46bb1b9ad",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "walking forward calmly on four legs",
+        "animation_group_id": "c879ffd8-c5a9-4324-bbaa-22c46bb1b9ad",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "walking forward calmly on four legs",
+        "animation_group_id": "c879ffd8-c5a9-4324-bbaa-22c46bb1b9ad",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "walking forward calmly on four legs",
+        "animation_group_id": "c879ffd8-c5a9-4324-bbaa-22c46bb1b9ad",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:52:31.913954+00:00"
+}

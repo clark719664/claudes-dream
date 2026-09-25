@@ -1,0 +1,15 @@
+{
+  "id": "ee137e93-bfeb-478c-80f7-43c4e73d80f3",
+  "name": "emerald_slime",
+  "rotations": [
+    "south",
+    "west",
+    "east",
+    "north",
+    "south-east",
+    "north-east",
+    "north-west",
+    "south-west"
+  ],
+  "animations": 1
+}

@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "d58856df-78f7-42fc-b6cc-f1752fbbf017",
+    "name": "sable",
+    "prompt": "a friendly free-diver woman in a teal wetsuit with goggles pushed up on her forehead, warm townsperson, gothic-punk, full body",
+    "size": {
+      "width": 128,
+      "height": 128
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "sable.png",
+    "cell_size": {
+      "width": 128,
+      "height": 128
+    },
+    "sheet_size": {
+      "width": 1024,
+      "height": 1152
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "swimming, treading water with steady arm strokes",
+        "animation_group_id": "4b15138f-55fe-4a28-9d7b-4094b62b3a2a",
+        "direction": "east"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "swimming, treading water with steady arm strokes_2",
+        "animation_group_id": "c65b4b80-94cc-4900-a580-8a8120a1abcb",
+        "direction": "south"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "swimming, treading water with steady arm strokes_2",
+        "animation_group_id": "c65b4b80-94cc-4900-a580-8a8120a1abcb",
+        "direction": "south-east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "swimming, treading water with steady arm strokes_2",
+        "animation_group_id": "c65b4b80-94cc-4900-a580-8a8120a1abcb",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "swimming, treading water with steady arm strokes_2",
+        "animation_group_id": "c65b4b80-94cc-4900-a580-8a8120a1abcb",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "swimming, treading water with steady arm strokes_2",
+        "animation_group_id": "c65b4b80-94cc-4900-a580-8a8120a1abcb",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "swimming, treading water with steady arm strokes_2",
+        "animation_group_id": "c65b4b80-94cc-4900-a580-8a8120a1abcb",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "swimming, treading water with steady arm strokes_2",
+        "animation_group_id": "c65b4b80-94cc-4900-a580-8a8120a1abcb",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:52:26.990647+00:00"
+}

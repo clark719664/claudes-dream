@@ -4,3 +4,8 @@
 # The art pack is licensed to you, not redistributable: unzip it here locally (see assets/README.md)
 assets/*
 !assets/README.md
+!assets/pixellab_npcs/
+!assets/expansion/
+!assets/pixellab_tilesets/
+!assets/pixellab_objects/
+!assets/pixellab_items/

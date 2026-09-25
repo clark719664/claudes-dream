@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "9f7c9014-89cb-4d33-a070-449fa643c28d",
+    "name": "hao",
+    "prompt": "Captain Hao, stern ranger captain in a green military uniform with a peaked cap and badge, cozy stardew-style RPG villager, gothic-punk world, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "hao.png",
+    "cell_size": {
+      "width": 88,
+      "height": 88
+    },
+    "sheet_size": {
+      "width": 704,
+      "height": 792
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "36372c2a-fc16-47c9-89c3-f1911d82c264",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_2",
+        "animation_group_id": "d1cd7706-f131-4839-9795-1209fa8ceba5",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_2",
+        "animation_group_id": "d1cd7706-f131-4839-9795-1209fa8ceba5",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_2",
+        "animation_group_id": "d1cd7706-f131-4839-9795-1209fa8ceba5",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_2",
+        "animation_group_id": "d1cd7706-f131-4839-9795-1209fa8ceba5",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_2",
+        "animation_group_id": "d1cd7706-f131-4839-9795-1209fa8ceba5",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_2",
+        "animation_group_id": "d1cd7706-f131-4839-9795-1209fa8ceba5",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_2",
+        "animation_group_id": "d1cd7706-f131-4839-9795-1209fa8ceba5",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:53:23.796661+00:00"
+}
