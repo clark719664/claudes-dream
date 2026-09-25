@@ -1,7 +1,8 @@
 class_name Hud
 extends CanvasLayer
-## Health, level, clock, goal, carried items, messages, dialogue, the crafting menu,
-## the inventory screen, Tilda's cabin plans and the fade used for doors and sleep.
+## Health and energy, level, the date, clock, weather and gold, the goal, the toolbar, messages,
+## dialogue, and the menus: crafting, the pack, shops, the shipping crate, the map. Also the fade
+## used for doors, area changes and sleep.
 
 signal faded
 signal answered(yes: bool)
@@ -18,6 +19,10 @@ const STRIP_MAX := 10
 var root: Control
 var hp_bar: ColorRect
 var hp_label: Label
+var en_bar: ColorRect
+var en_label: Label
+var date_label: Label
+var gold_label: Label
 var xp_bar: ColorRect
 var lv_label: Label
 var clock: Label
@@ -33,7 +38,11 @@ var menu: PanelContainer        # crafting, inventory and upgrade screens share 
 var menu_box: VBoxContainer
 var black: ColorRect
 var _toast_t := 0.0
-var _mode := ""                 # "", "craft", "inventory", "upgrade", "travel", "map"
+var _mode := ""                 # "", "craft", "inventory", "shop", "ship", "travel", "map"
+var _shop := ""
+var _shop_owner := ""
+var _goods: Array = []
+var _ship_items: Array = []
 var _station := ""
 var _station_node: Node = null
 var _selected := 0
@@ -79,12 +88,17 @@ func _process(delta: float) -> void:
 		hp_bar.size.x = 56.0 * clampf(float(p.hp) / p.max_hp, 0.0, 1.0)
 		hp_bar.color = GOOD if p.hp > 50 else (Color(0.95, 0.75, 0.3) if p.hp > 25 else BAD)
 		hp_label.text = "%d" % p.hp
+	en_bar.size.x = 56.0 * clampf(float(Game.energy) / Game.MAX_ENERGY, 0.0, 1.0)
+	en_bar.color = Color(0.45, 0.8, 1.0) if Game.energy > 60 else (Color(0.95, 0.75, 0.3) if Game.energy > 20 else BAD)
+	en_label.text = "%d" % Game.energy
+	date_label.text = "%s   %s" % [Game.date_text(), {"sun": "Sunny", "rain": "Rain", "storm": "Storm", "wind": "Windy", "snow": "Snow"}.get(Game.weather, "")]
+	gold_label.text = "%dg" % Game.gold
 	var lv := Inventory.level
 	var lo := Inventory.xp_for(lv)
 	var hi := Inventory.xp_for(lv + 1)
 	xp_bar.size.x = 56.0 * clampf(float(Inventory.xp - lo) / maxf(hi - lo, 1), 0.0, 1.0)
 	lv_label.text = "LV %d" % lv
-	clock.text = Game.clock_text() + ("  NIGHT" if Game.is_night() else "")
+	clock.text = Game.clock_text()
 	var b := ""
 	for k in Game.buffs:
 		b += "%s %ds  " % [k.to_upper(), int(Game.buffs[k])]
@@ -170,6 +184,15 @@ func _build_status() -> void:
 	hp_bar = hp[1]
 	hp_label = _label("100")
 	row.add_child(hp_label)
+	var row_e := HBoxContainer.new()
+	row_e.add_theme_constant_override("separation", 4)
+	v.add_child(row_e)
+	row_e.add_child(_label("EN", Color(0.45, 0.8, 1.0)))
+	var en := _bar(56, Color(0.45, 0.8, 1.0))
+	row_e.add_child(en[0])
+	en_bar = en[1]
+	en_label = _label("270")
+	row_e.add_child(en_label)
 	var row2 := HBoxContainer.new()
 	row2.add_theme_constant_override("separation", 4)
 	v.add_child(row2)
@@ -191,9 +214,17 @@ func _build_clock() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 2)
 	box.add_child(v)
-	clock = _label("Day 1")
-	clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(clock)
+	date_label = _label("Spring 1")
+	date_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(date_label)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 14)
+	v.add_child(row)
+	clock = _label("6:00am")
+	row.add_child(clock)
+	gold_label = _label("0g", GOLD)
+	row.add_child(gold_label)
 	buff_label = _label("", GOOD)
 	buff_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(buff_label)
@@ -208,7 +239,7 @@ func _build_strip() -> void:
 	box.name = "Items"
 	root.add_child(box)
 	strip = HBoxContainer.new()
-	strip.add_theme_constant_override("separation", 3)
+	strip.add_theme_constant_override("separation", 1)
 	box.add_child(strip)
 	box.resized.connect(func(): box.position = Vector2(roundf((480 - box.size.x) / 2.0), 270 - box.size.y - 3))
 
@@ -225,8 +256,8 @@ func _build_toast() -> void:
 
 func _build_hint() -> void:
 	hint = _panel()
-	hint.position = Vector2(4, 52)
-	hint.add_child(_label("WASD move   SHIFT run\nJ / SPACE / CLICK swing\nE use - talk - harvest\nC craft   I inventory\nQ eat   ESC close", DIM))
+	hint.position = Vector2(4, 62)
+	hint.add_child(_label("WASD move   SHIFT run\n1-0 / WHEEL pick a tool\nSPACE / CLICK use it\nE talk - open - harvest\nC craft  I pack  M map\nQ eat   ESC close", DIM))
 	root.add_child(hint)
 	var tw := hint.create_tween()
 	tw.tween_interval(18.0)
@@ -236,27 +267,45 @@ func _build_hint() -> void:
 func _refresh_items() -> void:
 	_clear(strip)
 	_clear(gear)
-	var shown := 0
-	var extra := 0
-	for item in Inventory.items:
-		if item in Inventory.GEAR:
-			gear.add_child(_icon(item, 12))
-			continue
-		if shown >= STRIP_MAX:
-			extra += 1
-			continue
-		shown += 1
-		var slot := HBoxContainer.new()
-		slot.add_theme_constant_override("separation", 1)
-		slot.add_child(_icon(item, 14))
-		slot.add_child(_label(str(Inventory.count(item))))
-		strip.add_child(slot)
-	if shown == 0:
-		strip.add_child(_label("Your pack is empty. Chop a tree!", DIM))
-	elif extra > 0:
-		strip.add_child(_label("+%d  (I)" % extra, DIM))
-	if gear.get_child_count() == 0:
-		gear.add_child(_label("Fists", DIM))
+	var p := Game.player as Player
+	var sel := p.slot if p else 0
+	for i in 10:
+		var item := Inventory.slot(i)
+		var cell := PanelContainer.new()
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.36, 0.24, 0.14, 0.95) if i == sel else Color(0.1, 0.07, 0.05, 0.6)
+		sb.border_color = GOLD if i == sel else Color(0.35, 0.25, 0.16)
+		sb.set_border_width_all(1)
+		sb.set_content_margin_all(1)
+		cell.add_theme_stylebox_override("panel", sb)
+		cell.custom_minimum_size = Vector2(22, 22)
+		var holder := Control.new()
+		holder.custom_minimum_size = Vector2(20, 20)
+		cell.add_child(holder)
+		if item != "":
+			var ic := _icon(item, 16)
+			ic.position = Vector2(2, 1)
+			holder.add_child(ic)
+			var n := Inventory.count(item)
+			if n > 1:
+				var l := _label(str(n))
+				l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
+				l.add_theme_constant_override("outline_size", 2)
+				l.position = Vector2(10 if n < 10 else 6, 11)
+				holder.add_child(l)
+			if item == "watering_can":
+				var back := ColorRect.new()
+				back.color = Color(0.05, 0.05, 0.1)
+				back.position = Vector2(2, 18)
+				back.size = Vector2(16, 2)
+				holder.add_child(back)
+				var bar := ColorRect.new()
+				bar.color = Color(0.4, 0.65, 1.0)
+				bar.size = Vector2(16.0 * Inventory.water / Inventory.CAN_SIZE, 2)
+				back.add_child(bar)
+		strip.add_child(cell)
+	var name_text := Inventory.display_name(Inventory.slot(sel)) if Inventory.slot(sel) != "" else ""
+	gear.add_child(_label(name_text, DIM))
 	strip.get_parent().reset_size()
 	gear.get_parent().get_parent().reset_size()
 	if _mode != "":
@@ -322,8 +371,25 @@ func toggle_inventory() -> void:
 		_open("inventory", "")
 
 
-func open_upgrades() -> void:
-	_open("upgrade", "")
+func open_shop(shop: String, owner: String) -> void:
+	_shop = shop
+	_shop_owner = owner
+	_goods = Inventory.shop_goods(shop, Game.season())
+	_open("shop", "")
+
+
+func open_shipping() -> void:
+	_open("ship", "")
+
+
+## A new area: say where you are.
+func area_changed() -> void:
+	var w = Game.world
+	if w.area_id == "house":
+		return
+	var name: String = w.data.get("name", "") if w.data else ""
+	if name != "":
+		say(name)
 
 
 func open_travel(from_id: String) -> void:
@@ -376,17 +442,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("cancel") or (_mode == "inventory" and event.is_action_pressed("inventory")) or (_mode == "craft" and _station == "hands" and event.is_action_pressed("craft")) or (_mode == "map" and event.is_action_pressed("map")):
 		close_menu()
-	elif _mode in ["craft", "travel"] and event.is_action_pressed("move_up"):
+	elif _mode in ["craft", "travel", "shop", "ship"] and event.is_action_pressed("move_up"):
 		_selected = (_selected - 1 + _row_count()) % _row_count()
 		_refresh_menu()
-	elif _mode in ["craft", "travel"] and event.is_action_pressed("move_down"):
+	elif _mode in ["craft", "travel", "shop", "ship"] and event.is_action_pressed("move_down"):
 		_selected = (_selected + 1) % _row_count()
 		_refresh_menu()
 	elif event.is_action_pressed("interact") or (event is InputEventKey and event.is_action_pressed("attack")):
 		if _mode == "craft":
 			_craft_selected()
-		elif _mode == "upgrade":
-			_build_selected()
+		elif _mode == "shop":
+			_buy_selected()
+		elif _mode == "ship":
+			_ship_selected(Input.is_action_pressed("sprint"))
 		elif _mode == "travel":
 			_ride_selected()
 	else:
@@ -409,6 +477,10 @@ func _can_upgrade() -> bool:
 func _row_count() -> int:
 	if _mode == "travel":
 		return maxi(1, _stops.size())
+	if _mode == "shop":
+		return maxi(1, _goods.size())
+	if _mode == "ship":
+		return maxi(1, _ship_items.size())
 	return _recipes().size() + (1 if _can_upgrade() else 0)
 
 
@@ -445,13 +517,38 @@ func _upgrade_station() -> void:
 	_refresh_menu()
 
 
-func _build_selected() -> void:
-	if Game.upgrade_pending:
-		say("Tilda is already working on it. Sleep, and it'll be done by morning.")
-	elif Game.request_upgrade():
-		say("Tilda: \"Leave it to me. It'll be ready when you wake up.\"")
+func _buy_selected() -> void:
+	if _goods.is_empty():
+		return
+	var g: Dictionary = _goods[_selected]
+	if g.has("house"):
+		say(Game.request_upgrade())
+		_refresh_menu()
+		return
+	var cost: Dictionary = g.get("cost", {})
+	if Game.gold < int(g.gold):
+		say("Not enough gold.")
+	elif not Inventory.has_all(cost):
+		say("You need the materials too.")
+	elif g.item in Inventory.GEAR and Inventory.has(g.item):
+		say("You already have one.")
 	else:
-		say("Tilda: \"Not enough materials yet.\"")
+		Game.pay(int(g.gold))
+		Inventory.take_all(cost)
+		Inventory.add(g.item, int(g.get("n", 1)))
+		say("Bought %s%s." % [Inventory.display_name(g.item), (" x%d" % int(g.n)) if int(g.get("n", 1)) > 1 else ""])
+	_refresh_menu()
+
+
+func _ship_selected(all: bool) -> void:
+	if _ship_items.is_empty():
+		return
+	var item: String = _ship_items[_selected]
+	var n := Inventory.count(item) if all else 1
+	Inventory.take(item, n)
+	Game.shipped[item] = int(Game.shipped.get(item, 0)) + n
+	Game.note("shipped", n)
+	_selected = mini(_selected, maxi(0, _row_count() - 1))
 	_refresh_menu()
 
 
@@ -460,7 +557,8 @@ func _refresh_menu() -> void:
 	match _mode:
 		"craft": _fill_craft()
 		"inventory": _fill_inventory()
-		"upgrade": _fill_upgrade()
+		"shop": _fill_shop()
+		"ship": _fill_ship()
 		"travel": _fill_travel()
 		"map": _fill_map()
 	menu.reset_size()
@@ -552,6 +650,10 @@ func _on_row_input(event: InputEvent, i: int) -> void:
 		if _selected == i:
 			if _mode == "travel":
 				_ride_selected()
+			elif _mode == "shop":
+				_buy_selected()
+			elif _mode == "ship":
+				_ship_selected(false)
 			else:
 				_craft_selected()
 		else:
@@ -561,8 +663,8 @@ func _on_row_input(event: InputEvent, i: int) -> void:
 
 func _fill_inventory() -> void:
 	_title("PACK")
-	var stats := "Crafting LV %d   XP %d / %d\nDamage %d   Chop x%d   Mine x%d   Armour %d%%\nHome: %s%s" % [
-		Inventory.level, Inventory.xp, Inventory.xp_for(Inventory.level + 1),
+	var stats := "Crafting LV %d   XP %d / %d   Gold %dg\nDamage %d   Chop x%d   Mine x%d   Armour %d%%\nHome: %s%s" % [
+		Inventory.level, Inventory.xp, Inventory.xp_for(Inventory.level + 1), Game.gold,
 		Inventory.damage(), Inventory.tool_power(Inventory.AXES), Inventory.tool_power(Inventory.PICKAXES),
 		int(round((1.0 - Inventory.damage_taken_factor()) * 100)),
 		Inventory.CABIN_TIERS[Game.cabin_tier].name, "  (upgrade tonight)" if Game.upgrade_pending else ""]
@@ -611,12 +713,13 @@ func _ride_selected() -> void:
 		Game.world.travel_to(id)
 
 
-## The whole valley, with the towns, what you've found and where you are.
+## The area you're in, with its places and where you are.
 func _fill_map() -> void:
-	_title("THE VALLEY OF BRINDLE")
-	var img: Image = Game.world.map_image
+	var w = Game.world
+	_title(String(w.data.get("name", "Home")).to_upper() if w.data else "HOME")
+	var img: Image = w.map_image
 	if img == null:
-		menu_box.add_child(_label("No map yet.", DIM))
+		menu_box.add_child(_label("You're indoors.", DIM))
 		return
 	var holder := Control.new()
 	var scale := minf(440.0 / img.get_width(), 200.0 / img.get_height())
@@ -627,58 +730,122 @@ func _fill_map() -> void:
 	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	tex.stretch_mode = TextureRect.STRETCH_SCALE
 	tex.size = sz
-	tex.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	holder.add_child(tex)
-	# the map image has one pixel per `px` tiles
-	var tiles_per_px: float = Game.world.size.x / 16.0 / img.get_width()
-	var to_map := func(tile: Vector2) -> Vector2: return tile / tiles_per_px * scale
-	for p in Game.world.pois:
-		if p.get("kind", "") not in ["town", "home"]:
-			continue
-		var l := _label(p.name, GOLD if p.kind == "home" else TEXT)
+	var to_map := func(tile: Vector2) -> Vector2: return tile * scale
+	for p in w.pois:
+		var l := _label(p.name, GOLD if p.get("kind", "") == "home" else TEXT)
 		l.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.05))
 		l.add_theme_constant_override("outline_size", 2)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.size = Vector2(80, 10)
-		l.position = to_map.call(Vector2(p.x, p.y)) - Vector2(40, 5)
+		l.size = Vector2(90, 10)
+		l.position = to_map.call(Vector2(p.x, p.y)) - Vector2(45, 5)
 		holder.add_child(l)
-	for m in Game.world.get_tree().get_nodes_in_group("minecarts"):
-		if Game.stations_found.has(m.id):
-			var dot := ColorRect.new()
-			dot.color = Color(0.45, 0.75, 1.0)
-			dot.size = Vector2(3, 3)
-			dot.position = to_map.call(m.global_position / 16.0) - Vector2(1, 1)
-			holder.add_child(dot)
+	for e in w.data.get("exits", []):
+		var l := _label(_area_name(e.to), DIM)
+		l.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.05))
+		l.add_theme_constant_override("outline_size", 2)
+		l.size = Vector2(80, 10)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var at: Vector2 = to_map.call(Vector2(e.x + e.w / 2.0, e.y + e.h / 2.0))
+		l.position = Vector2(clampf(at.x - 40, 0, sz.x - 80), clampf(at.y - 5, 0, sz.y - 10))
+		holder.add_child(l)
 	var me := ColorRect.new()
 	me.color = Color(1.0, 0.25, 0.2)
 	me.size = Vector2(4, 4)
-	var pp: Vector2 = Game.player.global_position / 16.0 if Game.area == "world" else Game.world.cabin.global_position / 16.0
-	me.position = to_map.call(pp) - Vector2(2, 2)
+	me.position = to_map.call(Game.player.global_position / 16.0) - Vector2(2, 2)
 	holder.add_child(me)
 	menu_box.add_child(holder)
-	menu_box.add_child(_label("Red: you.  Blue: minecart stops you've used.     M / ESC  close", DIM))
+	menu_box.add_child(_label("Red: you.  Grey names: where each path leads.     M / ESC  close", DIM))
 
 
-func _fill_upgrade() -> void:
-	_title("TILDA'S CABIN PLANS")
-	var next := Game.cabin_tier + 1
-	menu_box.add_child(_label("Your home now: %s" % Inventory.CABIN_TIERS[Game.cabin_tier].name, DIM))
-	if next >= Inventory.CABIN_TIERS.size():
-		menu_box.add_child(_label("\"That's the finest house in Brindle. Nothing left to build!\"", GOOD))
-	else:
-		var t: Dictionary = Inventory.CABIN_TIERS[next]
-		var parts := _row(true)
+static func _area_name(id: String) -> String:
+	return {"farm": "Your farm", "town": "Brindle", "pinewood": "The Pinewood", "oldwood": "The Oldwood", "riverlands": "Riverlands",
+		"mountain": "The Mountain", "summit": "The Summit", "badlands": "Badlands", "stonegate": "Stonegate"}.get(id, id)
+
+
+func _fill_shop() -> void:
+	_title(Inventory.SHOPS[_shop].title)
+	menu_box.add_child(_label("%s: \"%s\"" % [_shop_owner, Inventory.SHOPS[_shop].greet], DIM))
+	for i in _goods.size():
+		var g: Dictionary = _goods[i]
+		var parts := _row(i == _selected)
+		var row: PanelContainer = parts[0]
 		var h: HBoxContainer = parts[1]
-		h.add_child(_label(t.name.to_upper(), GOLD))
-		var d := _label(t.desc, TEXT)
-		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		d.custom_minimum_size = Vector2(290, 0)
-		menu_box.add_child(d)
-		var cost_row := HBoxContainer.new()
-		cost_row.add_theme_constant_override("separation", 3)
-		menu_box.add_child(cost_row)
-		_costs(cost_row, t.cost)
-		if Game.upgrade_pending:
-			menu_box.add_child(_label("Under construction - sleep and it'll be done by morning.", GOOD))
-		else:
-			menu_box.add_child(_label("E  build     ESC  close", DIM))
+		row.mouse_filter = Control.MOUSE_FILTER_STOP
+		row.gui_input.connect(_on_row_input.bind(i))
+		if g.has("house"):
+			var next := Game.cabin_tier + 1
+			if next >= Inventory.CABIN_TIERS.size():
+				h.add_child(_label("YOUR HOUSE: nothing left to build", DIM))
+				continue
+			var t: Dictionary = Inventory.CABIN_TIERS[next]
+			var nl := _label("BUILD: " + String(t.name).to_upper(), GOLD)
+			nl.custom_minimum_size = Vector2(118, 0)
+			h.add_child(nl)
+			h.add_child(_label("%dg" % int(t.gold), GOOD if Game.gold >= int(t.gold) else BAD))
+			_costs(h, t.cost)
+			continue
+		h.add_child(_icon(g.item, 14))
+		var n := int(g.get("n", 1))
+		var name_l := _label(Inventory.display_name(g.item) + (" x%d" % n if n > 1 else ""))
+		name_l.custom_minimum_size = Vector2(104, 0)
+		h.add_child(name_l)
+		h.add_child(_label("%dg" % int(g.gold), GOOD if Game.gold >= int(g.gold) else BAD))
+		_costs(h, g.get("cost", {}))
+	var desc := ""
+	if not _goods.is_empty():
+		var g: Dictionary = _goods[_selected]
+		if g.has("house"):
+			var next := Game.cabin_tier + 1
+			desc = Inventory.CABIN_TIERS[next].desc if next < Inventory.CABIN_TIERS.size() else ""
+			if Game.upgrade_pending:
+				desc = "Under construction - sleep and it'll be done by morning."
+		elif g.item.ends_with("_seeds"):
+			var c: Dictionary = Inventory.CROPS[g.item.trim_suffix("_seeds")]
+			desc = "Ripens in %d days. Sells for %dg. Grows in %s." % [int(c.days), int(c.sell), ", ".join(c.seasons.map(func(x): return Game.SEASONS[x]))]
+		elif g.item.begins_with("kit_"):
+			desc = "Set it up anywhere on your farm: select it in the toolbar and use it on an empty spot."
+		elif g.item == "fence":
+			desc = "A section of wooden fence. Put it up on your farm; an axe takes it down again."
+	var d := _label(desc, DIM)
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	d.custom_minimum_size = Vector2(300, 18)
+	menu_box.add_child(d)
+	menu_box.add_child(_label("Gold: %dg        W/S choose    E buy    ESC leave" % Game.gold, DIM))
+
+
+func _fill_ship() -> void:
+	_title("SHIPPING CRATE")
+	menu_box.add_child(_label("The carter collects overnight and pays at dawn.", DIM))
+	_ship_items = []
+	for item in Inventory.slots:
+		if item != "" and Inventory.sell_price(item) > 0 and not item in Inventory.GEAR:
+			_ship_items.append(item)
+	_selected = mini(_selected, maxi(0, _ship_items.size() - 1))
+	var shown := 0
+	var first := maxi(0, _selected - 6)
+	for i in range(first, mini(_ship_items.size(), first + 8)):
+		var item: String = _ship_items[i]
+		var parts := _row(i == _selected)
+		var row: PanelContainer = parts[0]
+		var h: HBoxContainer = parts[1]
+		row.mouse_filter = Control.MOUSE_FILTER_STOP
+		row.gui_input.connect(_on_row_input.bind(i))
+		h.add_child(_icon(item, 14))
+		var nl := _label("%d %s" % [Inventory.count(item), Inventory.display_name(item)])
+		nl.custom_minimum_size = Vector2(150, 0)
+		h.add_child(nl)
+		h.add_child(_label("%dg each" % Inventory.sell_price(item), GOLD))
+		shown += 1
+	if shown == 0:
+		menu_box.add_child(_label("Nothing to ship. Crops, forage, ore and goods all sell.", DIM))
+	var total := 0
+	var in_crate := []
+	for item in Game.shipped:
+		total += Inventory.sell_price(item) * int(Game.shipped[item])
+		in_crate.append("%d %s" % [Game.shipped[item], Inventory.display_name(item)])
+	var c := _label("In the crate: " + (", ".join(in_crate) if not in_crate.is_empty() else "nothing yet") + ("   (%dg)" % total if total > 0 else ""), GOOD if total > 0 else DIM)
+	c.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	c.custom_minimum_size = Vector2(300, 0)
+	menu_box.add_child(c)
+	menu_box.add_child(_label("W/S choose    E ship one    SHIFT+E ship all    ESC close", DIM))

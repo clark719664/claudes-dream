@@ -1554,7 +1554,8 @@
     "solid": 9,
     "shadow": "shadow_tree",
     "hp": 6,
-    "drop": "stone"
+    "drop": "stone",
+    "needs": "pickaxe"
    },
    {
     "sheet": "Environment/Props/Static/Rocks.png",
@@ -1571,7 +1572,8 @@
     "solid": 9,
     "shadow": "shadow_tree",
     "hp": 6,
-    "drop": "stone"
+    "drop": "stone",
+    "needs": "pickaxe"
    }
   ],
   "boulder_brown": [
@@ -1590,7 +1592,8 @@
     "solid": 9,
     "shadow": "shadow_tree",
     "hp": 6,
-    "drop": "stone"
+    "drop": "stone",
+    "needs": "pickaxe"
    },
    {
     "sheet": "Environment/Props/Static/Rocks.png",
@@ -1607,7 +1610,8 @@
     "solid": 9,
     "shadow": "shadow_tree",
     "hp": 6,
-    "drop": "stone"
+    "drop": "stone",
+    "needs": "pickaxe"
    }
   ],
   "rock": [
@@ -3007,13 +3011,13 @@
    {
     "sheet": "Environment/Props/Static/Furniture.png",
     "region": [
-     147,
+     150,
      448,
-     174,
+     154,
      494
     ],
     "anchor": [
-     5,
+     2,
      45
     ],
     "solid": 3,
@@ -3028,7 +3032,7 @@
        471
       ],
       "at": [
-       25,
+       4,
        3
       ]
      }
@@ -5552,6 +5556,441 @@
     "shadow": "shadow_small"
    }
   ],
+  "weed": [
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     64,
+     144,
+     80,
+     160
+    ],
+    "anchor": [
+     8,
+     15
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "fiber",
+    "regrow_spot": 1
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     80,
+     147,
+     111,
+     172
+    ],
+    "anchor": [
+     14,
+     24
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "fiber",
+    "regrow_spot": 1
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     64,
+     192,
+     80,
+     208
+    ],
+    "anchor": [
+     8,
+     15
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "fiber",
+    "regrow_spot": 1
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     80,
+     195,
+     111,
+     220
+    ],
+    "anchor": [
+     14,
+     24
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "fiber",
+    "regrow_spot": 1
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     5,
+     165,
+     12,
+     174
+    ],
+    "anchor": [
+     4,
+     8
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "fiber",
+    "regrow_spot": 1
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     21,
+     164,
+     28,
+     174
+    ],
+    "anchor": [
+     4,
+     9
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "fiber",
+    "regrow_spot": 1
+   }
+  ],
+  "weed_dry": [
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     64,
+     240,
+     80,
+     256
+    ],
+    "anchor": [
+     8,
+     15
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "fiber"
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     80,
+     243,
+     111,
+     268
+    ],
+    "anchor": [
+     14,
+     24
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "fiber"
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     5,
+     261,
+     12,
+     270
+    ],
+    "anchor": [
+     4,
+     8
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "fiber"
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     21,
+     260,
+     28,
+     270
+    ],
+    "anchor": [
+     4,
+     9
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "fiber"
+   }
+  ],
+  "branch": [
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     243,
+     2,
+     252,
+     13
+    ],
+    "anchor": [
+     8,
+     10
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "wood"
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     260,
+     0,
+     269,
+     16
+    ],
+    "anchor": [
+     4,
+     15
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "wood"
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     276,
+     0,
+     287,
+     14
+    ],
+    "anchor": [
+     2,
+     13
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "wood"
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     290,
+     19,
+     303,
+     28
+    ],
+    "anchor": [
+     4,
+     8
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "wood"
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     306,
+     20,
+     317,
+     28
+    ],
+    "anchor": [
+     7,
+     7
+    ],
+    "solid": 3,
+    "hp": 1,
+    "drop": "wood"
+   }
+  ],
+  "stone": [
+   {
+    "sheet": "Environment/Props/Static/Rocks.png",
+    "region": [
+     65,
+     19,
+     79,
+     30
+    ],
+    "anchor": [
+     7,
+     10
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor",
+    "hp": 1,
+    "drop": "stone"
+   },
+   {
+    "sheet": "Environment/Props/Static/Rocks.png",
+    "region": [
+     80,
+     17,
+     96,
+     31
+    ],
+    "anchor": [
+     8,
+     13
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor",
+    "hp": 1,
+    "drop": "stone"
+   },
+   {
+    "sheet": "Environment/Props/Static/Rocks.png",
+    "region": [
+     131,
+     53,
+     141,
+     60
+    ],
+    "anchor": [
+     5,
+     6
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor",
+    "hp": 1,
+    "drop": "stone"
+   },
+   {
+    "sheet": "Environment/Props/Static/Rocks.png",
+    "region": [
+     144,
+     51,
+     159,
+     61
+    ],
+    "anchor": [
+     7,
+     9
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor",
+    "hp": 1,
+    "drop": "stone"
+   }
+  ],
+  "stump": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_04.png",
+    "region": [
+     328,
+     9,
+     356,
+     32
+    ],
+    "anchor": [
+     16,
+     22
+    ],
+    "solid": 8,
+    "shadow": "shadow_small",
+    "hp": 5,
+    "drop": "wood",
+    "needs": "axe"
+   }
+  ],
+  "stump_big": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_05.png",
+    "region": [
+     359,
+     326,
+     420,
+     368
+    ],
+    "anchor": [
+     29,
+     41
+    ],
+    "solid": 11,
+    "shadow": "shadow_tree",
+    "hp": 10,
+    "drop": "wood",
+    "needs": "axe_iron"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_05.png",
+    "region": [
+     23,
+     326,
+     84,
+     368
+    ],
+    "anchor": [
+     29,
+     41
+    ],
+    "solid": 11,
+    "shadow": "shadow_tree",
+    "hp": 10,
+    "drop": "wood",
+    "needs": "axe_iron"
+   }
+  ],
+  "fallen_log": [
+   {
+    "sheet": "Environment/Structures/Stations/Bonfire/Bonfire.png",
+    "region": [
+     1,
+     123,
+     31,
+     134
+    ],
+    "anchor": [
+     15,
+     10
+    ],
+    "solid": 10,
+    "shadow": "shadow_small",
+    "hp": 8,
+    "drop": "wood",
+    "needs": "axe_iron"
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Bonfire/Bonfire.png",
+    "region": [
+     33,
+     125,
+     63,
+     134
+    ],
+    "anchor": [
+     15,
+     8
+    ],
+    "solid": 10,
+    "shadow": "shadow_small",
+    "hp": 8,
+    "drop": "wood",
+    "needs": "axe_iron"
+   }
+  ],
+  "ship_crate": [
+   {
+    "sheet": "Environment/Props/Static/Farm.png",
+    "region": [
+     288,
+     9,
+     320,
+     32
+    ],
+    "anchor": [
+     16,
+     22
+    ],
+    "solid": 14,
+    "shadow": "shadow_small"
+   }
+  ],
   "shadow_big": [
    {
     "sheet": "Environment/Props/Static/Shadows.png",
@@ -6877,6 +7316,214 @@
    "anchor": [
     11,
     7
+   ]
+  },
+  "hoe": {
+   "sheet": "Weapons/Wood/Wood.png",
+   "region": [
+    19,
+    48,
+    29,
+    80
+   ],
+   "anchor": [
+    5,
+    16
+   ]
+  },
+  "watering_can": {
+   "sheet": "Entities/Characters/Body_A/Animations/Watering_Base/Watering_Side-Sheet.png",
+   "region": [
+    157,
+    35,
+    171,
+    47
+   ],
+   "anchor": [
+    7,
+    6
+   ]
+  },
+  "scythe": {
+   "sheet": "Weapons/Wood/Wood.png",
+   "region": [
+    32,
+    49,
+    48,
+    80
+   ],
+   "anchor": [
+    8,
+    15
+   ]
+  },
+  "carrot_seeds": {
+   "sheet": "Environment/Props/Static/Farm.png",
+   "region": [
+    0,
+    2,
+    16,
+    14
+   ],
+   "anchor": [
+    8,
+    6
+   ]
+  },
+  "beet_seeds": {
+   "sheet": "Environment/Props/Static/Farm.png",
+   "region": [
+    0,
+    34,
+    16,
+    46
+   ],
+   "anchor": [
+    8,
+    6
+   ]
+  },
+  "cabbage_seeds": {
+   "sheet": "Environment/Props/Static/Farm.png",
+   "region": [
+    0,
+    66,
+    16,
+    78
+   ],
+   "anchor": [
+    8,
+    6
+   ]
+  },
+  "lettuce_seeds": {
+   "sheet": "Environment/Props/Static/Farm.png",
+   "region": [
+    0,
+    98,
+    16,
+    110
+   ],
+   "anchor": [
+    8,
+    6
+   ]
+  },
+  "cauliflower_seeds": {
+   "sheet": "Environment/Props/Static/Farm.png",
+   "region": [
+    0,
+    130,
+    16,
+    142
+   ],
+   "anchor": [
+    8,
+    6
+   ]
+  },
+  "broccoli_seeds": {
+   "sheet": "Environment/Props/Static/Farm.png",
+   "region": [
+    0,
+    162,
+    16,
+    174
+   ],
+   "anchor": [
+    8,
+    6
+   ]
+  },
+  "garlic_seeds": {
+   "sheet": "Environment/Props/Static/Farm.png",
+   "region": [
+    0,
+    194,
+    16,
+    206
+   ],
+   "anchor": [
+    8,
+    6
+   ]
+  },
+  "fence": {
+   "sheet": "Environment/Props/Static/Farm.png",
+   "region": [
+    284,
+    32,
+    316,
+    56
+   ],
+   "anchor": [
+    16,
+    12
+   ]
+  },
+  "kit_workbench": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    0,
+    157,
+    15,
+    176
+   ],
+   "anchor": [
+    7,
+    9
+   ]
+  },
+  "kit_sawmill": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    0,
+    157,
+    15,
+    176
+   ],
+   "anchor": [
+    7,
+    9
+   ]
+  },
+  "kit_furnace": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    0,
+    157,
+    15,
+    176
+   ],
+   "anchor": [
+    7,
+    9
+   ]
+  },
+  "kit_anvil": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    0,
+    157,
+    15,
+    176
+   ],
+   "anchor": [
+    7,
+    9
+   ]
+  },
+  "kit_cookpot": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    0,
+    157,
+    15,
+    176
+   ],
+   "anchor": [
+    7,
+    9
    ]
   }
  },

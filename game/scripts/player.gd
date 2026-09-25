@@ -1,6 +1,7 @@
 class_name Player
 extends CharacterBody2D
-## The hooded rogue: walks, swings whatever it holds, gathers, crafts, eats.
+## The hooded rogue: walks, uses whatever is selected in the toolbar (a sword, an axe, a hoe, the
+## watering can, seeds, a kit to set up), gathers, crafts, eats.
 
 const WALK := 72.0
 const SPRINT := 112.0
@@ -25,6 +26,9 @@ var _anim := ""
 var _struck := false
 var _held := ""
 var _lantern: PointLight2D
+var slot := 0                       # the selected toolbar slot
+var _action := Callable()           # what the current swing does when it lands (tools)
+var _cursor: Node2D
 
 
 func _ready() -> void:
@@ -59,15 +63,15 @@ func _ready() -> void:
 	camera.position_smoothing_speed = 7.0
 	camera.offset = Vector2(0, -12)
 	add_child(camera)
-	var world := get_parent().get_parent() as Node2D
-	if world and "size" in world:
-		set_room(Rect2(Vector2.ZERO, world.size))
 	_lantern = World.make_light(Color(1.0, 0.85, 0.55), 0.0, Vector2(0, -10), 90)
 	_lantern.remove_from_group("night_lights")
 	add_child(_lantern)
 	Inventory.changed.connect(_refresh_weapon)
 	_refresh_weapon()
 	_play("idle")
+	_cursor = TileCursor.new()
+	_cursor.top_level = true
+	add_child(_cursor)
 
 
 func _physics_process(delta: float) -> void:
@@ -83,6 +87,8 @@ func _physics_process(delta: float) -> void:
 	var speed := SPRINT if Input.is_action_pressed("sprint") else WALK
 	if Game.has_buff("haste"):
 		speed *= 1.3
+	if Game.energy <= 0:
+		speed *= 0.6
 	max_hp = 130 if Inventory.has("backpack") else 100
 	var glow := Inventory.has("lantern") and Game.darkness() > 0.3
 	_lantern.enabled = glow
@@ -99,13 +105,22 @@ func _physics_process(delta: float) -> void:
 		body.offset = Pack.actor_offset(actor, _anim, body.flip_h)
 	_play("run" if input.length() > 0.1 else "idle")
 	body.speed_scale = 1.4 if speed == SPRINT and input.length() > 0.1 else 1.0
+	_update_cursor()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if dead or get_tree().paused:
 		return
-	if event.is_action_pressed("attack") and _attack_t <= 0.0:
-		_start_attack()
+	for i in 10:
+		if event.is_action_pressed("slot_%d" % i):
+			select(i)
+			return
+	if event.is_action_pressed("slot_next"):
+		select((slot + 1) % 10)
+	elif event.is_action_pressed("slot_prev"):
+		select((slot + 9) % 10)
+	elif event.is_action_pressed("attack") and _attack_t <= 0.0:
+		use_selected()
 	elif event.is_action_pressed("interact"):
 		_interact()
 	elif event.is_action_pressed("eat"):
@@ -118,18 +133,148 @@ func _unhandled_input(event: InputEvent) -> void:
 		Game.hud.toggle_map()
 
 
-func _start_attack() -> void:
-	var target := _target_in_front()
-	_held = Inventory.weapon()
-	if target is Harvestable:
-		if target.kind == "wood" and Inventory.best(Inventory.AXES) != "":
-			_held = Inventory.best(Inventory.AXES)
-		elif target.kind == "stone" and Inventory.best(Inventory.PICKAXES) != "":
-			_held = Inventory.best(Inventory.PICKAXES)
+func select(i: int) -> void:
+	slot = i
+	_refresh_weapon()
+	Inventory.changed.emit()
+
+
+func selected() -> String:
+	return Inventory.slot(slot)
+
+
+## The cell in front of you (the one the hoe, the can and seeds work on).
+func facing_cell() -> Vector2i:
+	var d := Vector2(signf(facing.x), 0) if absf(facing.x) > absf(facing.y) else Vector2(0, signf(facing.y))
+	var p := global_position + Vector2(0, -4) + d * 13.0
+	return Vector2i(floori(p.x / 16.0), floori(p.y / 16.0))
+
+
+## Use what's selected in the toolbar.
+func use_selected() -> void:
+	var item := selected()
+	var cell := facing_cell()
+	var w := Game.world
+	if item == "hoe":
+		_swing(item, func(): _till(cell), 2)
+	elif item == "watering_can":
+		_swing(item, func(): _water(cell), 2)
+	elif item == "scythe":
+		_swing(item, _scythe, 1)
+	elif Inventory.is_seed(item):
+		_plant(cell, item)
+	elif item.begins_with("kit_") or item == "fence":
+		if w.place(item, cell):
+			Inventory.take(item)
+			Game.say("Set up the %s." % Inventory.display_name(item).replace(" Kit", "").to_lower() if item != "fence" else "")
+		elif w.area_id != "farm":
+			Game.say("You can only build on your farm.")
+		else:
+			Game.say("There's no room there.")
+	elif Inventory.FOOD.has(item):
+		eat_item(item)
+	elif item in Inventory.AXES and w.area_id == "farm" and w.remove_fence(cell):
+		_swing(item, Callable(), 1)
+	elif item in Inventory.PICKAXES and w.soil and w.soil.clear(cell):
+		_swing(item, Callable(), 1)
+	else:
+		_start_attack()
+
+
+func _swing(item: String, action: Callable, cost: int) -> void:
+	if cost > 0 and not Game.use_energy(cost):
+		return
+	_held = item
 	_set_weapon_texture(_held)
 	_attack_t = ATTACK_TIME
 	_struck = false
+	_action = action
+
+
+func _till(cell: Vector2i) -> void:
+	var w := Game.world
+	if w.soil == null or not w.farmable(cell):
+		Game.say("The ground here is too hard to dig." if w.area_id == "farm" else "You can only farm on your farm.")
+		return
+	if w.soil.has_soil(cell):
+		return
+	if w.cell_blocked(cell):
+		Game.say("Clear that away first.")
+		return
+	w.soil.till(cell)
+	w.clear_decor(cell)
+	FX.chips(w.entities, Vector2(cell) * 16 + Vector2(8, 10), Color(0.5, 0.36, 0.22), 6)
+
+
+func _water(cell: Vector2i) -> void:
+	var w := Game.world
+	for c in [cell, facing_cell() + Vector2i(signi(int(facing.x)), 0)]:
+		if w.ground_at(c) == "~":
+			Inventory.water = Inventory.CAN_SIZE
+			Inventory.changed.emit()
+			Game.say("Filled the watering can.")
+			FX.chips(w.entities, Vector2(c) * 16 + Vector2(8, 8), Color(0.5, 0.7, 1.0), 8)
+			return
+	if Inventory.water <= 0:
+		Game.say("The can is empty. Fill it at the pond.")
+		return
+	Inventory.water -= 1
+	Inventory.changed.emit()
+	FX.chips(w.entities, Vector2(cell) * 16 + Vector2(8, 10), Color(0.5, 0.7, 1.0), 6)
+	if w.soil and w.soil.water(cell):
+		Game.note("watered")
+
+
+func _scythe() -> void:
+	var point := global_position + Vector2(0, -6) + facing * 12.0
+	for n in get_tree().get_nodes_in_group("hittable"):
+		if n is Harvestable and n.kind == "fiber" and n.hit_centre().distance_to(point) < 22.0:
+			n.hit(3, facing, self)
+
+
+func _plant(cell: Vector2i, seed: String) -> void:
+	var w := Game.world
+	var kind := seed.trim_suffix("_seeds")
+	if w.soil == null or not w.soil.has_soil(cell):
+		Game.say("Seeds go in tilled soil. Dig with the hoe first.")
+		return
+	if not (Game.season() in Inventory.CROPS[kind].seasons):
+		Game.say("%s won't grow in %s." % [Inventory.display_name(kind), Game.SEASONS[Game.season()]])
+		return
+	if w.soil.plant(cell, kind):
+		Inventory.take(seed)
+		Game.note("planted")
+
+
+func _start_attack() -> void:
+	var target := _target_in_front()
+	_held = Inventory.weapon()
+	var sel := selected()
+	if sel in Inventory.WEAPONS or sel in Inventory.AXES or sel in Inventory.PICKAXES:
+		_held = sel
+	var tool := false
+	if target is Harvestable:
+		if target.kind == "wood" and Inventory.best(Inventory.AXES) != "":
+			_held = Inventory.best(Inventory.AXES)
+			tool = true
+		elif target.kind == "stone" and Inventory.best(Inventory.PICKAXES) != "":
+			_held = Inventory.best(Inventory.PICKAXES)
+			tool = true
+	if tool and not Game.use_energy(2):
+		return
+	_set_weapon_texture(_held)
+	_attack_t = ATTACK_TIME
+	_struck = false
+	_action = Callable()
 	FX.slash(get_parent(), global_position + Vector2(0, -9) + facing * 12.0, facing, Color(1, 1, 1, 0.85))
+
+
+func _update_cursor() -> void:
+	var item := selected()
+	var show := item in ["hoe", "watering_can"] or Inventory.is_seed(item) or item.begins_with("kit_") or item == "fence"
+	_cursor.visible = show and Game.world.soil != null
+	if _cursor.visible:
+		_cursor.global_position = Vector2(facing_cell()) * 16
 
 
 func _update_swing() -> void:
@@ -139,7 +284,10 @@ func _update_swing() -> void:
 	weapon.rotation_degrees = ang
 	if t > 0.22 and not _struck:
 		_struck = true
-		_strike()
+		if _action.is_valid():
+			_action.call()
+		elif not (_held in ["hoe", "watering_can", "scythe"]):
+			_strike()
 	if _attack_t <= 0.0:
 		_refresh_weapon()
 
@@ -152,7 +300,7 @@ func _strike() -> void:
 			continue
 		var centre: Vector2 = n.hit_centre()
 		if centre.distance_to(point) <= REACH + n.hit_radius():
-			var dmg := Inventory.damage()
+			var dmg: int = Inventory.WEAPONS.get(_held, Inventory.FIST_DAMAGE if _held == "" else 4)
 			if Game.has_buff("might"):
 				dmg = int(dmg * 1.5)
 			n.hit(dmg, facing, self)
@@ -187,16 +335,22 @@ func _interact() -> void:
 
 
 func eat() -> void:
-	if hp >= max_hp:
+	if hp >= max_hp and Game.energy >= Game.MAX_ENERGY:
 		Game.say("You're not hungry.")
 		return
 	var food := Inventory.best_food(max_hp - hp)
 	if food == "":
 		Game.say("Nothing to eat. Cook at the pot or harvest the farm.")
 		return
-	Inventory.take(food)
+	eat_item(food)
+
+
+func eat_item(food: String) -> void:
+	if not Inventory.take(food):
+		return
 	heal(Inventory.FOOD[food])
-	Game.say("Ate %s." % Inventory.display_name(food))
+	Game.restore_energy(Inventory.energy_of(food))
+	Game.say("Ate %s. (+%d energy)" % [Inventory.display_name(food), Inventory.energy_of(food)])
 	if Inventory.BUFFS.has(food):
 		Game.add_buff(Inventory.BUFFS[food][0], Inventory.BUFFS[food][1])
 
@@ -228,16 +382,13 @@ func _die() -> void:
 	_play("death")
 	Game.say("You black out...")
 	await get_tree().create_timer(2.5).timeout
-	if Game.area != "world":
-		Game.area = "world"
-		set_room(Rect2(Vector2.ZERO, Game.world.size))
-	position = Game.world.cabin.global_position + Vector2(0, 14) if Game.world.cabin else start
-	Game.world.stream_now()
 	hp = max_hp
+	Game.energy = mini(Game.energy, Game.MAX_ENERGY / 2)
 	dead = false
 	weapon.visible = true
 	_invuln = 1.5
-	Game.say("You wake up outside your cabin.")
+	await Game.world.go_to("house", "bed")
+	Game.say("You wake up at home, aching all over.")
 
 
 ## Keep the camera inside an area; rooms smaller than the screen are centred.
@@ -270,7 +421,8 @@ func _play(anim: String) -> void:
 func _refresh_weapon() -> void:
 	if _attack_t > 0.0:
 		return
-	_held = Inventory.weapon()
+	var sel := selected()
+	_held = sel if sel in Inventory.TOOLS else Inventory.weapon()
 	_set_weapon_texture(_held)
 	weapon.rotation_degrees = 35.0
 
@@ -284,3 +436,13 @@ func _set_weapon_texture(item: String) -> void:
 	var sz := t.get_size()
 	weapon.offset = Vector2(-sz.x * 0.5, -sz.y + 3)
 	weapon.modulate = Inventory.tint(item)
+
+
+## The outline of the cell you're working on, shown while holding a hoe, the can, seeds or a kit.
+class TileCursor extends Node2D:
+	func _ready() -> void:
+		z_index = 40
+
+	func _draw() -> void:
+		var c := Color(1, 1, 1, 0.55)
+		draw_rect(Rect2(0.5, 0.5, 15, 15), c, false, 1.0)

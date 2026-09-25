@@ -131,8 +131,8 @@ S['leaves'] = variants(VEG, [[64, 352, 96, 368], [96, 352, 112, 368]])
 for i, colour in enumerate(['orange', 'white', 'blue', 'yellow']):
     S['flower_' + colour] = variants(VEG, [[x * 16, 368 + i * 16, x * 16 + 16, 384 + i * 16] for x in range(3, 11)])
 # ---- rocks, ore and crystals
-S['boulder'] = variants(ROCKS, [[96, 16, 128, 64], [128, 16, 160, 48]], solid=9, shadow='shadow_tree', hp=6, drop='stone')
-S['boulder_brown'] = variants(ROCKS, [[0, 16, 32, 64], [32, 16, 64, 48]], solid=9, shadow='shadow_tree', hp=6, drop='stone')
+S['boulder'] = variants(ROCKS, [[96, 16, 128, 64], [128, 16, 160, 48]], solid=9, shadow='shadow_tree', hp=6, drop='stone', needs='pickaxe')
+S['boulder_brown'] = variants(ROCKS, [[0, 16, 32, 64], [32, 16, 64, 48]], solid=9, shadow='shadow_tree', hp=6, drop='stone', needs='pickaxe')
 S['rock'] = variants(ROCKS, [[64, 16, 80, 32], [80, 16, 96, 32], [160, 16, 176, 32], [176, 16, 192, 32]], solid=5, shadow='shadow_actor', hp=3, drop='stone')
 S['ore_rock'] = variants(ROCKS, [[160, 16, 176, 32], [176, 16, 192, 32]], solid=6, shadow='shadow_actor', hp=5, drop='iron_ore', overlay='ore_bits')
 S['pebble'] = variants(ROCKS, [[32, 48, 48, 64], [48, 48, 64, 64], [128, 48, 144, 64], [144, 48, 160, 64], [64, 64, 80, 80], [80, 64, 96, 80], [160, 64, 176, 80], [176, 64, 192, 80]])
@@ -171,7 +171,7 @@ S['stump_frozen'] = variants(T1_4, [[320, 64, 360, 96]], solid=6, shadow='shadow
 S['stump_mossy'] = variants(T1_5, [[352, 320, 432, 368]], solid=9, shadow='shadow_tree')
 S['pine_tall'] = variants(T3_3, [[0, 0, 64, 144], [64, 0, 128, 144], [0, 144, 64, 288], [64, 144, 128, 288]], solid=5, shadow='shadow_tree', hp=5, drop='wood', stump='pine_stump')
 # ---- v2: village, camp, ruin and mine props
-S['lamp_post'] = [composite(FURN, [144, 448, 176, 496], [([176, 448, 192, 480], [25, 3])], solid=3, shadow='shadow_actor', light=1)]
+S['lamp_post'] = [composite(FURN, [150, 446, 154, 496], [([176, 448, 192, 480], [4, 3])], solid=3, shadow='shadow_actor', light=1)]
 S['signpost'] = [composite(FURN, [144, 448, 176, 496], [([96, 528, 144, 560], [-6, 5])], solid=3, shadow='shadow_actor', sign=1)]
 S['lantern'] = variants(FURN, [[176, 480, 192, 496]], light=1)
 S['bench'] = variants(FURN, [[80, 432, 144, 464], [16, 384, 48, 400]], solid=10, shadow='shadow_small')
@@ -262,6 +262,15 @@ S['minecart'] = variants(DPROPS, [[0, 8, 19, 32]], solid=8, shadow='shadow_small
 S['rail_h'] = variants(FURN_, [[32, 624, 48, 640]], anchor='centre')
 S['rail_v'] = variants(FURN_, [[0, 656, 16, 672]], anchor='centre')
 S['cart_tipped'] = variants(DPROPS, [[74, 12, 96, 30]], solid=8, shadow='shadow_small')
+# ---- v5: things to clear on the farm and in the wild
+S['weed'] = variants(VEG, [[64, 144, 80, 160], [80, 144, 112, 176], [64, 192, 80, 208], [80, 192, 112, 224], [0, 160, 16, 176], [16, 160, 32, 176]], solid=3, hp=1, drop='fiber', regrow_spot=1)
+S['weed_dry'] = variants(VEG, [[64, 240, 80, 256], [80, 240, 112, 272], [0, 256, 16, 272], [16, 256, 32, 272]], solid=3, hp=1, drop='fiber')
+S['branch'] = variants(VEG, [[240, 0, 256, 16], [256, 0, 272, 16], [272, 0, 288, 16], [288, 16, 304, 32], [304, 16, 320, 32]], solid=3, hp=1, drop='wood')
+S['stone'] = variants(ROCKS, [[64, 16, 80, 32], [80, 16, 96, 32], [128, 48, 144, 64], [144, 48, 160, 64]], solid=4, shadow='shadow_actor', hp=1, drop='stone')
+S['stump'] = variants(T1_4, [[320, 0, 360, 32]], solid=8, shadow='shadow_small', hp=5, drop='wood', needs='axe')
+S['stump_big'] = variants(T1_5, [[352, 320, 432, 368], [16, 320, 96, 368]], solid=11, shadow='shadow_tree', hp=10, drop='wood', needs='axe_iron')
+S['fallen_log'] = variants(ST + 'Bonfire/Bonfire.png', [[0, 112, 32, 144], [32, 112, 64, 144]], solid=10, shadow='shadow_small', hp=8, drop='wood', needs='axe_iron')
+S['ship_crate'] = variants(FARM, [[288, 8, 320, 32]], solid=14, shadow='shadow_small')
 # ---- shadows (drawn under objects, black at low alpha in the pack)
 S['shadow_big'] = variants(SHADOWS, [[0, 0, 112, 48]], anchor='centre')
 S['shadow_tree'] = variants(SHADOWS, [[0, 49, 80, 80]], anchor='centre')
@@ -391,6 +400,14 @@ I['shield'] = icon(WOOD, [128, 0, 144, 16])
 I['poultice'] = icon(VEG, [64, 144, 80, 160])
 I['stew'] = icon('Environment/Props/Static/Pan.png', [80, 112, 96, 128])
 I['cooked_meat'] = icon(MEAT, [32, 64, 64, 80])
+I['hoe'] = icon(WOOD, [16, 48, 32, 80])
+I['watering_can'] = icon('Entities/Characters/Body_A/Animations/Watering_Base/Watering_Side-Sheet.png', [157, 35, 174, 47])
+I['scythe'] = icon(WOOD, [32, 48, 48, 80])
+for k, crop in enumerate(crops):
+    I[crop + '_seeds'] = icon(FARM, [0, 32 * k, 16, 32 * k + 16])
+I['fence'] = icon(FARM, [284, 32, 316, 56])
+for st in ['workbench', 'sawmill', 'furnace', 'anvil', 'cookpot']:
+    I['kit_' + st] = icon(RES, [0, 157, 15, 176])
 
 # ---- floor tile edges (opaque pixels along each side as a 16-bit mask: top, right, bottom,
 # left), so tools/make_world.py can pick stamp variants whose rims line up with their neighbours

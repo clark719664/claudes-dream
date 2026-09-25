@@ -24,6 +24,9 @@ const NAMES := {
 	"poultice": "Herb Poultice", "cooked_meat": "Roast Meat", "stew": "Veggie Stew", "skewer": "Mushroom Skewer",
 	"bread": "Hearth Bread", "hearty_meal": "Hearty Meal",
 	"tonic_health": "Healing Tonic", "tonic_strength": "Tonic of Might", "tonic_swift": "Tonic of Haste",
+	"hoe": "Hoe", "watering_can": "Watering Can", "scythe": "Scythe", "fence": "Wood Fence",
+	"kit_workbench": "Workbench Kit", "kit_sawmill": "Sawmill Kit", "kit_furnace": "Furnace Kit", "kit_anvil": "Anvil Kit",
+	"kit_cookpot": "Cooking Pot Kit",
 }
 const VEGGIES := ["carrot", "beet", "cabbage", "lettuce", "cauliflower", "broccoli", "garlic"]
 const FOOD := {"hearty_meal": 90, "tonic_health": 70, "cooked_meat": 45, "bread": 40, "stew": 35, "skewer": 28, "poultice": 25,
@@ -33,7 +36,55 @@ const WEAPONS := {"sword_steel": 20, "sword_iron": 14, "sword_bone": 10, "sword_
 const AXES := {"axe_iron": 5, "axe": 3}
 const PICKAXES := {"pickaxe_iron": 5, "pickaxe": 3}
 const FIST_DAMAGE := 3
-const GEAR := ["sword_wood", "sword_bone", "sword_iron", "sword_steel", "axe", "axe_iron", "pickaxe", "pickaxe_iron", "shield", "shield_iron", "lantern", "backpack"]
+const GEAR := ["sword_wood", "sword_bone", "sword_iron", "sword_steel", "axe", "axe_iron", "pickaxe", "pickaxe_iron", "shield", "shield_iron", "lantern", "backpack",
+	"hoe", "watering_can", "scythe"]
+## Things you hold and use: everything else in the toolbar is material, food or something to place.
+const TOOLS := ["sword_wood", "sword_bone", "sword_iron", "sword_steel", "axe", "axe_iron", "pickaxe", "pickaxe_iron", "hoe", "watering_can", "scythe"]
+const STARTER := {"axe": 1, "pickaxe": 1, "hoe": 1, "watering_can": 1, "scythe": 1, "sword_wood": 1, "carrot_seeds": 15}
+const START_GOLD := 500
+const CAN_SIZE := 40
+
+## Crops: the seasons they grow in (0 spring, 1 summer, 2 fall, 3 winter), days to ripen, what
+## the seeds cost and what the crop sells for.
+const CROPS := {
+	"carrot": {"seasons": [0], "days": 4, "seed": 20, "sell": 35},
+	"lettuce": {"seasons": [0], "days": 5, "seed": 30, "sell": 55},
+	"garlic": {"seasons": [0, 2], "days": 5, "seed": 35, "sell": 65},
+	"cauliflower": {"seasons": [0], "days": 9, "seed": 80, "sell": 180},
+	"beet": {"seasons": [1, 2], "days": 6, "seed": 40, "sell": 90},
+	"broccoli": {"seasons": [1], "days": 7, "seed": 60, "sell": 135},
+	"cabbage": {"seasons": [2], "days": 8, "seed": 70, "sell": 165},
+}
+## What the shipping crate pays. Anything missing can't be shipped.
+const PRICES := {
+	"wood": 2, "stone": 2, "fiber": 1, "iron_ore": 10, "coal": 15, "crystal": 50, "resin": 8, "herb": 14,
+	"mushroom": 20, "bone": 6, "meat": 18, "gem": 140, "ring": 220, "stick": 1, "twine": 4, "cloth": 22,
+	"plank": 6, "iron_bar": 60, "steel_bar": 190, "nails": 8, "brick": 12, "glass": 40,
+	"cooked_meat": 55, "stew": 75, "skewer": 60, "bread": 70, "hearty_meal": 200, "poultice": 30,
+	"tonic_health": 150, "tonic_strength": 160, "tonic_swift": 160,
+}
+## Shops. goods: item, gold, optional material cost and how many you get.
+const SHOPS := {
+	"general": {"title": "GENERAL STORE", "greet": "Seeds for the season, bread for the road.", "goods": [
+		{"item": "bread", "gold": 110}, {"item": "poultice", "gold": 70}, {"item": "cloth", "gold": 60},
+	]},
+	"carpenter": {"title": "TILDA'S CARPENTRY", "greet": "Kits for the farm, fences, and your house when you're ready.", "goods": [
+		{"item": "kit_workbench", "gold": 350, "cost": {"wood": 20}},
+		{"item": "kit_cookpot", "gold": 700, "cost": {"stone": 20}},
+		{"item": "kit_sawmill", "gold": 1200, "cost": {"wood": 40, "stone": 10}},
+		{"item": "kit_furnace", "gold": 1500, "cost": {"stone": 40}},
+		{"item": "kit_anvil", "gold": 2500, "cost": {"iron_bar": 4}},
+		{"item": "fence", "gold": 8, "n": 1},
+		{"item": "fence", "gold": 70, "n": 10},
+		{"house": true},
+	]},
+	"smith": {"title": "BROM'S SMITHY", "greet": "Coal, ore, and better tools if you bring me bars.", "goods": [
+		{"item": "coal", "gold": 30}, {"item": "iron_ore", "gold": 55},
+		{"item": "axe_iron", "gold": 1500, "cost": {"iron_bar": 5}},
+		{"item": "pickaxe_iron", "gold": 1500, "cost": {"iron_bar": 5}},
+		{"item": "sword_iron", "gold": 1200, "cost": {"iron_bar": 3}},
+	]},
+}
 const TINTS := {"sword_iron": Color(0.8, 0.86, 1.0), "sword_steel": Color(0.62, 0.95, 1.0), "axe_iron": Color(0.8, 0.86, 1.0),
 	"pickaxe_iron": Color(0.8, 0.86, 1.0), "shield_iron": Color(0.8, 0.86, 1.0)}
 
@@ -102,19 +153,21 @@ const STATION_UPGRADES := {
 const STATION_NAMES := {"hands": "Hand Crafting", "workbench": "Workbench", "sawmill": "Sawmill", "furnace": "Furnace", "anvil": "Anvil",
 	"cookpot": "Cooking Pot", "kitchen": "Kitchen", "alchemy": "Alchemy Table"}
 
-## Tilda's rebuilds of the cabin. Index = the tier you upgrade to.
+## Tilda's rebuilds of your house. Index = the tier you upgrade to.
 const CABIN_TIERS := [
 	{},
-	{"name": "Log Shack", "style": "log", "desc": "One room, a bed and a draughty door."},
-	{"name": "Timber Cabin", "style": "plank", "desc": "Bigger room, a kitchen stove and a fireplace. Unlocks kitchen recipes.",
-		"cost": {"plank": 30, "nails": 18, "brick": 10, "glass": 2}},
+	{"name": "Log Cabin", "style": "log", "desc": "One room, a bed, a table and a draughty door."},
+	{"name": "Timber Cabin", "style": "plank", "desc": "A bigger room with a kitchen stove and a fireplace. Unlocks kitchen recipes.",
+		"gold": 3000, "cost": {"wood": 150, "stone": 50}},
 	{"name": "Farmhouse", "style": "plaster", "desc": "Plaster walls, a green tile roof, a bath and an alchemy table. Unlocks tonics.",
-		"cost": {"plank": 50, "nails": 30, "brick": 24, "glass": 8, "steel_bar": 4, "cloth": 6}},
+		"gold": 10000, "cost": {"plank": 60, "brick": 30, "iron_bar": 10}},
 ]
 
 var items := {}
+var slots: Array = []     # item names in the order they were picked up: the first ten are the toolbar
 var xp := 0
 var level := 1
+var water := CAN_SIZE     # left in the watering can
 
 
 func count(item: String) -> int:
@@ -128,6 +181,12 @@ func count(item: String) -> int:
 
 func add(item: String, n := 1) -> void:
 	items[item] = count(item) + n
+	if not item in slots:
+		var gap := slots.find("")
+		if gap >= 0:
+			slots[gap] = item
+		else:
+			slots.append(item)
 	changed.emit()
 
 
@@ -145,8 +204,52 @@ func take(item: String, n := 1) -> bool:
 	for k in items.keys():
 		if items[k] <= 0:
 			items.erase(k)
+			var i := slots.find(k)
+			if i >= 0:
+				# keep the toolbar steady: leave a hole instead of shifting everything left
+				if i < 10:
+					slots[i] = ""
+				else:
+					slots.remove_at(i)
+	_trim_slots()
 	changed.emit()
 	return true
+
+
+func _trim_slots() -> void:
+	for i in range(slots.size() - 1, 9, -1):
+		if slots[i] == "":
+			slots.remove_at(i)
+
+
+## The item in toolbar slot i ("" if empty).
+func slot(i: int) -> String:
+	return slots[i] if i < slots.size() else ""
+
+
+func is_seed(item: String) -> bool:
+	return item.ends_with("_seeds")
+
+
+func sell_price(item: String) -> int:
+	if CROPS.has(item):
+		return int(CROPS[item].sell)
+	return int(PRICES.get(item, 0))
+
+
+## Everything a shop has today (the general store's seeds change with the season).
+func shop_goods(shop: String, season: int) -> Array:
+	var goods: Array = []
+	if shop == "general":
+		for c in CROPS:
+			if season in CROPS[c].seasons:
+				goods.append({"item": c + "_seeds", "gold": int(CROPS[c].seed)})
+	goods.append_array(SHOPS[shop].goods)
+	return goods
+
+
+func energy_of(food: String) -> int:
+	return int(FOOD.get(food, 0) * 2)
 
 
 func has_all(cost: Dictionary) -> bool:
@@ -261,13 +364,28 @@ func tint(item: String) -> Color:
 
 
 func save_data() -> Dictionary:
-	return {"items": items, "xp": xp, "level": level}
+	return {"items": items, "slots": slots, "xp": xp, "level": level, "water": water}
 
 
 func load_data(d: Dictionary) -> void:
 	items = {}
 	for k in d.get("items", {}):
 		items[k] = int(d.items[k])
+	slots = d.get("slots", items.keys())
+	for k in items:
+		if not k in slots:
+			slots.append(k)
 	xp = int(d.get("xp", 0))
 	level = int(d.get("level", 1))
+	water = int(d.get("water", CAN_SIZE))
 	changed.emit()
+
+
+func start_new() -> void:
+	items = {}
+	slots = []
+	xp = 0
+	level = 1
+	water = CAN_SIZE
+	for k in STARTER:
+		add(k, STARTER[k])

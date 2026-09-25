@@ -1,11 +1,11 @@
 class_name Interior
 extends Node2D
-## The inside of the player's cabin, rebuilt for each tier. It lives far off the map; the door
-## teleports you here. Walls and floors come from Interior_Walls_01, furniture from Interior_Props_01.
+## The inside of your house, one of the areas: rebuilt for each tier Tilda builds. Walls and
+## floors come from Interior_Walls_01, furniture from Interior_Props_01.
 
 const WALLS := "Environment/Structures/Buildings/Interior/Interior_Walls_01.png"
 const PROPS := "Environment/Structures/Buildings/Interior/Interior_Props_01.png"
-const ORIGIN := Vector2(-3200, 0)
+const ORIGIN := Vector2.ZERO
 
 ## wall style column in Interior_Walls_01, floor column, floor size in tiles, then furniture:
 ## [region, feet tile x, feet tile y, solid width in px, role]
@@ -79,6 +79,14 @@ func _ready() -> void:
 ## Floor area in global coordinates, handy for the camera.
 func room_rect() -> Rect2:
 	return Rect2(ORIGIN, Vector2((w + 2) * 16, (h + 6) * 16))
+
+
+## Where you wake up: beside the bed.
+func bed_spot() -> Vector2:
+	for p in LAYOUTS[tier].props:
+		if p[4] == "bed":
+			return ORIGIN + Vector2(p[1] + 1.9, p[2] - 0.3) * 16.0
+	return door_inside() + Vector2(0, -40)
 
 
 func door_inside() -> Vector2:

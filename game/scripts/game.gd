@@ -1,45 +1,59 @@
 extends Node
-## Global game state: controls, the clock, the cabin, goals, buffs, sleeping and saving.
+## Global game state: controls, the clock and the calendar, weather, gold and energy, what has
+## changed in each area, goals, sleeping and saving.
 
 signal message(text: String)
 signal hour_changed(hour: int)
 signal goal_changed(text: String)
+signal day_started
 
-const DAY_LENGTH := 600.0  # real seconds for a full day
+const DAY_LENGTH := 840.0  # real seconds for a full day
 const SAVE_PATH := "user://hearthwild_save.json"
+const SEASONS := ["Spring", "Summer", "Fall", "Winter"]
+const DAYS_PER_SEASON := 28
+const MAX_ENERGY := 270
+## season index, day of the season -> festival id (the town dresses up for it)
+const FESTIVALS := {"0-13": "spring", "1-11": "summer", "2-16": "fall", "3-25": "winter"}
+const FESTIVAL_NAMES := {"spring": "the Blossom Fair", "summer": "the Midsummer Bonfire", "fall": "the Harvest Fair", "winter": "the Night of Lanterns"}
 
-## The story so far, one step at a time. Each has a check in _goal_done().
+## What to do next, one step at a time. Each has a check in _goal_done().
 const GOALS := [
-	["gather", "Gather wood and fiber (swing at trees and bushes)"],
-	["twine", "Twist twine: press C for hand crafting"],
-	["axe", "Make a stone axe at the workbench"],
-	["planks", "Saw planks at the sawmill"],
-	["iron", "Mine iron ore and smelt a bar at the furnace"],
-	["nails", "Forge nails at the anvil"],
-	["furnace2", "Upgrade the kiln into a brick furnace"],
-	["cabin2", "Ask Tilda in Brindle to rebuild your cabin"],
-	["graveyard", "Clear the skeletons from the old graveyard"],
-	["warlord", "Defeat the orc warlord in the east"],
-	["glass", "Fire glass from crystal at the furnace"],
+	["clear", "Clear your overgrown farm: cut weeds, break stones, chop stumps (10)"],
+	["plant", "Till soil with the hoe and plant your carrot seeds"],
+	["water", "Water your crops (refill the can at the pond)"],
+	["ship", "Harvest something and put it in the shipping crate by your door"],
+	["gold", "Earn 1,000 gold from shipping"],
+	["workbench", "Buy a workbench kit from Tilda in Brindle and set it up on your farm"],
+	["spring", "Find one of the hidden springs deep in the woods"],
+	["furnace", "Set up a furnace and smelt an iron bar (ore on the mountain)"],
+	["cabin2", "Have Tilda rebuild your cabin"],
+	["warlord", "Defeat the orc warlord in the badlands"],
+	["frost", "Plunder the Frost Shrine on the summit"],
 	["cabin3", "Have Tilda build you a farmhouse"],
-	["steel", "Forge a steel sword"],
-	["frost", "Plunder the Frostvale shrine"],
 ]
 
 var player: Node2D
 var world: Node2D
 var hud: CanvasLayer
 var day := 1
-var time_of_day := 0.3     # 0 = midnight, 0.5 = noon
-var area := "world"
+var time_of_day := 0.25    # 0 = midnight, 0.5 = noon
+var area := "house"        # the area you're in
 var cabin_tier := 1
 var upgrade_pending := false
 var goal := 0
-var stats := {"gathered": {}, "crafted": {}, "kills": {}}
+var gold := 0
+var energy := MAX_ENERGY
+var weather := "sun"       # sun, rain, storm, wind, snow
+var shipped := {}          # item -> count, paid out overnight
+var earned := 0            # all gold ever made from shipping
+var areas := {}            # area id -> {"removed": {id: day}, "placed": [], "soil": {}, "crops": {}}
+var springs := {}          # spring name -> last day you drank
+var stats := {"gathered": {}, "crafted": {}, "kills": {}, "cleared": 0}
 var opened := {}           # chests already looted, by id
 var buffs := {}            # name -> seconds left
 var station_tiers := {}    # station -> 1..3
-var stations_found := {}   # minecart stop id -> name
+var stations_found := {}   # minecart stop id -> name (unused since v5; kept for old saves)
+var report := ""           # the morning report, shown after waking
 var _last_hour := -1
 var _goal_timer := 0.0
 var _sleeping := false
@@ -59,6 +73,10 @@ func _ready() -> void:
 	_bind("inventory", [KEY_I, KEY_TAB], -1, 0.0, -1, JOY_BUTTON_BACK)
 	_bind("map", [KEY_M], -1, 0.0, -1, JOY_BUTTON_START)
 	_bind("cancel", [KEY_ESCAPE], -1, 0.0, -1, JOY_BUTTON_B)
+	_bind("slot_next", [], -1, 0.0, MOUSE_BUTTON_WHEEL_DOWN, JOY_BUTTON_DPAD_RIGHT)
+	_bind("slot_prev", [], -1, 0.0, MOUSE_BUTTON_WHEEL_UP, JOY_BUTTON_DPAD_LEFT)
+	for i in 10:
+		_bind("slot_%d" % i, [KEY_1 + i if i < 9 else KEY_0])
 	Inventory.changed.connect(_check_goal)
 	Inventory.leveled.connect(func(lv): say("Crafting level %d! New recipes unlocked." % lv))
 
@@ -92,7 +110,6 @@ func _process(delta: float) -> void:
 	time_of_day += delta / DAY_LENGTH
 	if time_of_day >= 1.0:
 		time_of_day -= 1.0
-		day += 1
 	var h := hour()
 	if h != _last_hour:
 		_last_hour = h
@@ -110,13 +127,55 @@ func _process(delta: float) -> void:
 		_check_goal()
 
 
+# ---------------------------------------------------------------- calendar and weather
 func hour() -> int:
 	return int(time_of_day * 24.0)
 
 
+func season() -> int:
+	return int((day - 1) / DAYS_PER_SEASON) % 4
+
+
+func day_of_season() -> int:
+	return (day - 1) % DAYS_PER_SEASON + 1
+
+
+func year() -> int:
+	return int((day - 1) / (DAYS_PER_SEASON * 4)) + 1
+
+
+func date_text() -> String:
+	return "%s %d" % [SEASONS[season()], day_of_season()] + ("  Y%d" % year() if year() > 1 else "")
+
+
 func clock_text() -> String:
 	var minutes := int(time_of_day * 24.0 * 60.0)
-	return "Day %d  %02d:%02d" % [day, minutes / 60, (minutes % 60) / 10 * 10]
+	var h := minutes / 60
+	var ap := "am" if h < 12 else "pm"
+	return "%d:%02d%s" % [(h + 11) % 12 + 1, (minutes % 60) / 10 * 10, ap]
+
+
+## The festival on today's date ("" if none): "spring", "summer", "fall" or "winter".
+func festival() -> String:
+	return FESTIVALS.get("%d-%d" % [season(), day_of_season()], "")
+
+
+## Tomorrow's weather is decided by the date, so it's the same on every playthrough.
+func roll_weather(d: int) -> String:
+	var s := int((d - 1) / DAYS_PER_SEASON) % 4
+	var dos := (d - 1) % DAYS_PER_SEASON + 1
+	if d <= 2 or FESTIVALS.has("%d-%d" % [s, dos]):
+		return "sun"
+	var r := float(hash(d * 7919 + 13) % 1000) / 1000.0
+	match s:
+		0: return "rain" if r < 0.26 else ("storm" if r < 0.31 else ("wind" if r < 0.4 else "sun"))
+		1: return "rain" if r < 0.12 else ("storm" if r < 0.25 else "sun")
+		2: return "rain" if r < 0.24 else ("wind" if r < 0.5 else "sun")
+		_: return "snow" if r < 0.45 else "sun"
+
+
+func raining() -> bool:
+	return weather in ["rain", "storm"]
 
 
 ## 0 in daylight, 1 in the middle of the night.
@@ -127,6 +186,10 @@ func darkness() -> float:
 
 func is_night() -> bool:
 	return darkness() > 0.6
+
+
+func indoors() -> bool:
+	return area == "house" or area.begins_with("mine")
 
 
 func say(text: String) -> void:
@@ -158,6 +221,36 @@ func shake(amount := 2.0) -> void:
 		player.shake(amount)
 
 
+# ---------------------------------------------------------------- energy and gold
+## Spend energy on a tool swing. false (and a message) if you're too tired.
+func use_energy(n: int) -> bool:
+	if energy <= 0:
+		say("You're too exhausted. Eat something or go to bed.")
+		return false
+	energy = maxi(0, energy - n)
+	if energy == 0:
+		say("You're exhausted...")
+	return true
+
+
+func restore_energy(n: int) -> void:
+	energy = mini(MAX_ENERGY, energy + n)
+
+
+func pay(n: int) -> bool:
+	if gold < n:
+		return false
+	gold -= n
+	return true
+
+
+# ---------------------------------------------------------------- what's changed in each area
+func area_state(id: String) -> Dictionary:
+	if not areas.has(id):
+		areas[id] = {"removed": {}, "placed": [], "soil": {}, "crops": {}}
+	return areas[id]
+
+
 # ---------------------------------------------------------------- stats and goals
 func note_gather(item: String, n := 1) -> void:
 	stats.gathered[item] = stats.gathered.get(item, 0) + n
@@ -175,34 +268,29 @@ func note_kill(actor: String) -> void:
 	_check_goal()
 
 
+func note(key: String, n := 1) -> void:
+	stats[key] = int(stats.get(key, 0)) + n
+	_check_goal()
+
+
 func goal_text() -> String:
-	return GOALS[goal][1] if goal < GOALS.size() else "Brindle is safe. Make yourself at home."
-
-
-func _kills(prefix: String) -> int:
-	var n := 0
-	for k in stats.kills:
-		if k.begins_with(prefix):
-			n += stats.kills[k]
-	return n
+	return GOALS[goal][1] if goal < GOALS.size() else "Your farm is thriving. Make yourself at home."
 
 
 func _goal_done(id: String) -> bool:
 	match id:
-		"gather": return stats.gathered.get("wood", 0) >= 3 and stats.gathered.get("fiber", 0) >= 2
-		"twine": return stats.crafted.has("twine")
-		"axe": return Inventory.has("axe") or Inventory.has("axe_iron")
-		"planks": return stats.crafted.has("plank")
-		"iron": return stats.crafted.has("iron_bar")
-		"nails": return stats.crafted.has("nails")
-		"furnace2": return station_tier("furnace") >= 2
+		"clear": return int(stats.get("cleared", 0)) >= 10
+		"plant": return int(stats.get("planted", 0)) >= 1
+		"water": return int(stats.get("watered", 0)) >= 1
+		"ship": return int(stats.get("shipped", 0)) >= 1
+		"gold": return earned >= 1000
+		"workbench": return int(stats.get("placed_workbench", 0)) >= 1
+		"spring": return not springs.is_empty()
+		"furnace": return stats.crafted.has("iron_bar")
 		"cabin2": return cabin_tier >= 2 or (upgrade_pending and cabin_tier == 1)
-		"graveyard": return _kills("skeleton") >= 5
 		"warlord": return stats.kills.get("orc_warrior", 0) >= 1
-		"glass": return stats.crafted.has("glass")
-		"cabin3": return cabin_tier >= 3 or (upgrade_pending and cabin_tier == 2)
-		"steel": return Inventory.has("sword_steel")
 		"frost": return opened.has("frost")
+		"cabin3": return cabin_tier >= 3 or (upgrade_pending and cabin_tier == 2)
 	return false
 
 
@@ -217,21 +305,25 @@ func _check_goal() -> void:
 		goal_changed.emit(goal_text())
 
 
-# ---------------------------------------------------------------- cabin, sleep, save
-func request_upgrade() -> bool:
+# ---------------------------------------------------------------- the house, sleep, save
+## Tilda starts on the next house. Paid with gold and materials; done by morning.
+func request_upgrade() -> String:
 	var next := cabin_tier + 1
-	if upgrade_pending or next >= Inventory.CABIN_TIERS.size():
-		return false
-	var cost: Dictionary = Inventory.CABIN_TIERS[next].cost
-	if not Inventory.has_all(cost):
-		return false
-	Inventory.take_all(cost)
+	if upgrade_pending:
+		return "Tilda is already working on it. Sleep, and it'll be done by morning."
+	if next >= Inventory.CABIN_TIERS.size():
+		return "That's the finest house in the valley. Nothing left to build!"
+	var t: Dictionary = Inventory.CABIN_TIERS[next]
+	if gold < int(t.gold) or not Inventory.has_all(t.cost):
+		return "Tilda: \"Not enough gold or materials yet.\""
+	gold -= int(t.gold)
+	Inventory.take_all(t.cost)
 	upgrade_pending = true
 	_check_goal()
-	return true
+	return "Tilda: \"Leave it to me. It'll be ready when you wake up.\""
 
 
-func sleep() -> void:
+func sleep(passed_out := false) -> void:
 	if _sleeping:
 		return
 	_sleeping = true
@@ -240,22 +332,49 @@ func sleep() -> void:
 		day += 1
 	time_of_day = 0.25
 	player.hp = player.max_hp
+	energy = MAX_ENERGY if not passed_out else MAX_ENERGY / 2
 	buffs.clear()
+	var lines: Array[String] = []
+	# the carter came by in the night for whatever you shipped
+	var total := 0
+	var parts: Array[String] = []
+	for item in shipped:
+		var n: int = shipped[item]
+		var v := Inventory.sell_price(item) * n
+		total += v
+		parts.append("%d %s" % [n, Inventory.display_name(item)])
+	if total > 0:
+		gold += total
+		earned += total
+		lines.append("Shipped %s: +%dg" % [", ".join(parts), total])
+	shipped = {}
 	var upgraded := false
 	if upgrade_pending:
 		upgrade_pending = false
 		cabin_tier += 1
 		upgraded = true
+		lines.append("Tilda finished your %s overnight!" % Inventory.CABIN_TIERS[cabin_tier].name)
+	weather = roll_weather(day)
+	var died: int = world.new_day()
+	if died > 0:
+		lines.append("%d crop%s withered out of season." % [died, "s" if died > 1 else ""])
+	if passed_out:
+		lines.append("You passed out. Someone carried you home.")
+	var fest := festival()
+	if fest != "":
+		lines.append("Today is %s in Brindle!" % FESTIVAL_NAMES[fest])
+	lines.append({"sun": "Clear skies today.", "rain": "Rain today: your crops are watered.", "storm": "A storm is coming in.",
+		"wind": "A windy day.", "snow": "Snow is falling."}[weather])
+	report = "%s, Day %d.\n%s" % [SEASONS[season()], day_of_season(), "\n".join(lines)]
+	if upgraded:
 		world.rebuild_cabin()
-	world.new_day()
+	world.wake_up()
 	save_game()
-	await get_tree().create_timer(0.6).timeout
+	await get_tree().create_timer(0.5).timeout
 	await hud.fade(false)
 	_sleeping = false
-	if upgraded:
-		say("Day %d. Tilda and the villagers finished your %s overnight!" % [day, Inventory.CABIN_TIERS[cabin_tier].name])
-	else:
-		say("Day %d. You feel rested. (Saved)" % day)
+	hud.show_dialog("Morning", report)
+	day_started.emit()
 	_check_goal()
 
 
@@ -264,15 +383,15 @@ func pass_out() -> void:
 		return
 	say("It's 2 AM... you collapse from exhaustion.")
 	await get_tree().create_timer(1.2).timeout
-	world.enter_cabin(true)
-	sleep()
+	sleep(true)
 
 
 func save_game() -> void:
 	var data := {
-		"day": day, "time": time_of_day, "cabin_tier": cabin_tier, "upgrade_pending": upgrade_pending,
+		"version": 5, "day": day, "time": time_of_day, "cabin_tier": cabin_tier, "upgrade_pending": upgrade_pending,
 		"goal": goal, "stats": stats, "opened": opened.keys(), "inventory": Inventory.save_data(),
-		"stations": station_tiers, "minecarts": stations_found,
+		"stations": station_tiers, "gold": gold, "energy": energy, "weather": weather, "shipped": shipped,
+		"earned": earned, "areas": areas, "springs": springs,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -283,10 +402,10 @@ func load_game() -> bool:
 	if "--new" in OS.get_cmdline_user_args() or not FileAccess.file_exists(SAVE_PATH):
 		return false
 	var data = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
-	if typeof(data) != TYPE_DICTIONARY:
+	if typeof(data) != TYPE_DICTIONARY or int(data.get("version", 0)) < 5:
 		return false
 	day = int(data.get("day", 1))
-	time_of_day = float(data.get("time", 0.25))
+	time_of_day = 0.25
 	cabin_tier = int(data.get("cabin_tier", 1))
 	upgrade_pending = bool(data.get("upgrade_pending", false))
 	goal = int(data.get("goal", 0))
@@ -300,6 +419,21 @@ func load_game() -> bool:
 	station_tiers = {}
 	for k in data.get("stations", {}):
 		station_tiers[k] = int(data.stations[k])
-	stations_found = data.get("minecarts", {})
+	gold = int(data.get("gold", 0))
+	energy = int(data.get("energy", MAX_ENERGY))
+	weather = str(data.get("weather", "sun"))
+	shipped = data.get("shipped", {})
+	earned = int(data.get("earned", 0))
+	areas = data.get("areas", {})
+	springs = data.get("springs", {})
 	Inventory.load_data(data.get("inventory", {}))
 	return true
+
+
+func new_game() -> void:
+	day = 1
+	time_of_day = 0.25
+	gold = Inventory.START_GOLD
+	energy = MAX_ENERGY
+	weather = "sun"
+	Inventory.start_new()

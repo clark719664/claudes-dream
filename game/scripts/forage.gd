@@ -34,6 +34,7 @@ func interact(_player: Node) -> void:
 	remove_from_group("interactable")
 	Inventory.add(item)
 	Game.note_gather(item)
+	Game.world.note_removed(self)
 	Game.world.float_text("+1 " + Inventory.display_name(item), global_position, Color(0.8, 1.0, 0.6))
 
 

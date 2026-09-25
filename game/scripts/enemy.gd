@@ -180,16 +180,15 @@ func _die(dir: Vector2) -> void:
 	Game.hitstop(0.07)
 	Game.shake(2.5)
 	Game.note_kill(actor)
-	Game.world.note_depleted(self)
+	Game.world.note_removed(self)
 	for item in stats.loot:
 		Game.world.drop(item, stats.loot[item], global_position + dir * 4.0)
 	await get_tree().create_timer(4.0).timeout
 	var tw := create_tween()
 	tw.tween_property(self, "modulate:a", 0.0, 0.8)
 	await tw.finished
-	visible = false
-	await get_tree().create_timer(RESPAWN).timeout
-	_respawn()
+	# gone until tomorrow (the area remembers)
+	queue_free()
 
 
 func _respawn() -> void:

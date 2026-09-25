@@ -1,8 +1,9 @@
 class_name Harvestable
 extends StaticBody2D
-## Trees, rocks, ore, crystals and bushes: hit them for materials, they grow back.
-
-const REGROW := 180.0
+## Trees, rocks, ore, crystals, bushes, weeds, stumps and logs: hit them for materials. A felled
+## tree leaves its stump to be cleared too. Some need a better tool: big stumps and fallen logs an
+## iron axe, boulders a pickaxe. What you clear is remembered by the area (see World.note_removed)
+## and grows back after the area's regrow days, or never on your farm.
 
 var sprite_name: String
 var variant := 0
@@ -12,6 +13,7 @@ var hp := 1
 var sprite: Sprite2D
 var shadow: Sprite2D
 var stump: Node2D
+var stumped := false
 var _tall := false
 
 
@@ -43,13 +45,6 @@ func _ready() -> void:
 
 func _grow() -> void:
 	hp = int(spec.hp)
-	sprite.visible = true
-	if shadow:
-		shadow.visible = true
-	if stump:
-		stump.queue_free()
-		stump = null
-	collision_layer = 1
 	add_to_group("hittable")
 
 
@@ -61,9 +56,29 @@ func hit_radius() -> float:
 	return float(spec.get("solid", 4)) + 2.0
 
 
+## The tool this needs and doesn't have, or "".
+func missing_tool() -> String:
+	var needs: String = spec.get("needs", "")
+	if needs == "" or stumped:
+		return ""
+	if needs == "axe" and Inventory.best(Inventory.AXES) == "":
+		return "an axe"
+	if needs == "axe_iron" and not Inventory.has("axe_iron"):
+		return "an iron axe (Brom the smith sells them)"
+	if needs == "pickaxe" and Inventory.best(Inventory.PICKAXES) == "":
+		return "a pickaxe"
+	return ""
+
+
 func hit(damage: int, dir: Vector2, _by: Node) -> void:
 	var power := 1
 	var drop: String = spec.drop
+	var missing := missing_tool()
+	if missing != "":
+		Game.say("Too big to shift by hand. You need %s." % missing)
+		FX.chips(get_parent(), hit_centre(), Color(0.6, 0.5, 0.4), 2)
+		_wobble(dir)
+		return
 	if kind == "wood":
 		power = Inventory.tool_power(Inventory.AXES)
 	elif kind == "stone":
@@ -102,43 +117,56 @@ func _wobble(dir: Vector2) -> void:
 
 
 func _break(dir: Vector2) -> void:
-	remove_from_group("hittable")
-	Game.world.note_depleted(self)
 	var drop: String = spec.drop
+	var at := global_position + Vector2(0, -4) + dir * 6.0
+	Game.shake(2.0)
+	if stumped:
+		# the stump of a felled tree: a last log, and it's gone
+		Game.world.drop("wood", 1, at)
+		_gone()
+		return
+	remove_from_group("hittable")
 	var n := 1
 	match sprite_name:
-		"oak_big", "pine_big", "oak_big_frozen", "oak_big_dead": n = 5
+		"oak_big", "pine_big", "oak_big_frozen", "oak_big_dead", "pine_grand", "pine_giant": n = 5
 		"oak", "pine", "pine_tall", "oak_frozen": n = 3
 		"boulder", "boulder_brown": n = 4
+		"stump_big", "fallen_log": n = 6
+		"stump": n = 2
 		"ore_rock": n = 2
 		"bush_big": n = 3
 		"crate", "barrel", "pot": n = 1 + randi() % 2
+		"weed", "weed_dry", "branch", "stone": n = 1
 		_: n = 2 if drop != "crystal" else 1
-	var at := global_position + Vector2(0, -4) + dir * 6.0
 	Game.world.drop(drop, n, at)
 	# side products make the crafting tree go round
 	if sprite_name.begins_with("pine") and randf() < 0.6:
 		Game.world.drop("resin", 1, at)
 	if kind == "wood" and not sprite_name.begins_with("pine") and randf() < 0.3:
 		Game.world.drop("stick", 1 + randi() % 2, at)
-	if kind == "fiber" and randf() < 0.55:
+	if kind == "fiber" and randf() < (0.15 if sprite_name.begins_with("weed") else 0.55):
 		Game.world.drop("herb", 1, at)
-	if kind == "stone" and drop == "stone" and randf() < 0.35:
+	if kind == "stone" and drop == "stone" and randf() < 0.25:
 		Game.world.drop("coal", 1, at)
 	if drop == "crystal" and randf() < 0.2:
 		Game.world.drop("gem", 1, at)
-	Game.shake(2.0)
-	sprite.visible = false
 	if spec.has("stump"):
+		# the tree comes down; its stump stays to be cleared
+		stumped = true
+		sprite.visible = false
 		stump = Pack.sprite(spec.stump)
 		add_child(stump)
-	else:
-		collision_layer = 0
-		if shadow:
-			shadow.visible = false
-	await get_tree().create_timer(REGROW * randf_range(0.8, 1.3)).timeout
-	# don't pop back on top of the player
-	while Game.player and Game.player.global_position.distance_to(global_position) < 30.0:
-		await get_tree().create_timer(2.0).timeout
-	_grow()
+		hp = 2
+		_tall = false
+		add_to_group("hittable")
+		return
+	_gone()
 
+
+func _gone() -> void:
+	remove_from_group("hittable")
+	Game.world.note_removed(self)
+	collision_layer = 0
+	var tw := create_tween()
+	tw.tween_property(self, "modulate:a", 0.0, 0.2)
+	tw.tween_callback(queue_free)

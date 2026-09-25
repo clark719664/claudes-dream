@@ -43,8 +43,8 @@ func interact(_player: Node) -> void:
 				Game.say("It's empty.")
 				return
 			opened = true
-			if data.has("id"):
-				Game.opened[str(data.id)] = true
+			if data.has("cid"):
+				Game.opened[str(data.cid)] = true
 				Game._check_goal()
 			sprite.queue_free()
 			sprite = Pack.sprite("chest_open")
@@ -54,4 +54,7 @@ func interact(_player: Node) -> void:
 				Game.world.drop(item, loot[item], global_position + Vector2(0, 4))
 			Game.say("The chest creaks open.")
 		"mine":
-			Game.hud.show_dialog("Old Mine", data.get("text", "Cold air breathes out of the dark. The tunnels are blocked by rubble, for now."))
+			if ResourceLoader.exists("res://scripts/mine.gd"):
+				Game.world.go_to("mine_1", "top")
+			else:
+				Game.hud.show_dialog("Old Mine", "Cold air breathes out of the dark. The tunnels are blocked by rubble, for now.")

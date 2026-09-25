@@ -1,12 +1,15 @@
 extends Node
 ## Scripted tour used for automated checks and trailers:
-##   godot --path game -- --demo --shots=/tmp/shots
-## Walks through chopping, crafting, fighting and night time, saving screenshots on the way.
+##   godot --path game -- --demo --new --shots=/tmp/shots
+##   godot --path game -- --demo --new --area=farm --mapshot=/tmp/farm.png [--region=x,y,w,h] [--mapscale=2] [--day=N]
+## The tour wakes up at home, clears and plants a bit of the farm, ships, shops in Brindle, sets
+## up a workbench and walks through every area, saving screenshots on the way.
 
 var shots_dir := ""
 var mapshot := ""
-var region := Rect2i()      # tiles; empty = the whole map, scaled down
-var map_scale := 4
+var area := "farm"
+var region := Rect2i()      # tiles; empty = the whole area, scaled down
+var map_scale := 2
 var _n := 0
 
 
@@ -17,40 +20,48 @@ func _ready() -> void:
 			shots_dir = a.substr(8)
 		elif a.begins_with("--mapshot="):
 			mapshot = a.substr(10)
+		elif a.begins_with("--area="):
+			area = a.substr(7)
 		elif a.begins_with("--region="):
 			var r := a.substr(9).split(",")
 			region = Rect2i(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
 		elif a.begins_with("--mapscale="):
 			map_scale = int(a.substr(11))
+		elif a.begins_with("--day="):
+			Game.day = int(a.substr(6))
+		elif a.begins_with("--weather="):
+			Game.weather = a.substr(10)
 	if shots_dir != "":
 		DirAccess.make_dir_recursive_absolute(shots_dir)
+	Game.hud.dialog.visible = false
 	if mapshot != "":
 		_map()
 	else:
 		_run()
 
 
-## Render the map by stepping a camera across it, then quit. With --region=x,y,w,h (tiles) the
-## region comes out at 1:1; otherwise the whole map, shrunk by --mapscale (default 4).
+## Render an area by stepping a camera across it, then quit. With --region=x,y,w,h (tiles) the
+## region comes out at 1:1; otherwise the whole area, shrunk by --mapscale.
 func _map() -> void:
 	Game.time_of_day = 0.5
 	Game.hud.visible = false
+	Game.world.load_area(area, "")
 	await _wait(0.5)
 	var cam := Camera2D.new()
 	cam.anchor_mode = Camera2D.ANCHOR_MODE_FIXED_TOP_LEFT
 	Game.world.add_child(cam)
 	cam.make_current()
 	Game.player.visible = false
-	var area := Rect2i(Vector2i.ZERO, Vector2i(Game.world.size))
+	var rect := Rect2i(Vector2i.ZERO, Vector2i(Game.world.size))
 	var k := map_scale
 	if region.has_area():
-		area = Rect2i(region.position * 16, region.size * 16)
+		rect = Rect2i(region.position * 16, region.size * 16)
 		k = 1
-	var full := Image.create(area.size.x / k, area.size.y / k, false, Image.FORMAT_RGBA8)
-	var y := area.position.y
-	while y < area.end.y:
-		var x := area.position.x
-		while x < area.end.x:
+	var full := Image.create(rect.size.x / k, rect.size.y / k, false, Image.FORMAT_RGBA8)
+	var y := rect.position.y
+	while y < rect.end.y:
+		var x := rect.position.x
+		while x < rect.end.x:
 			cam.position = Vector2(x, y)
 			Game.world.focus = Vector2(x + 240, y + 135)
 			Game.world.stream_around(Game.world.focus, true)
@@ -58,12 +69,12 @@ func _map() -> void:
 			await RenderingServer.frame_post_draw
 			var img := get_viewport().get_texture().get_image()
 			img.convert(Image.FORMAT_RGBA8)
-			var w := mini(480, area.end.x - x)
-			var h := mini(270, area.end.y - y)
+			var w := mini(480, rect.end.x - x)
+			var h := mini(270, rect.end.y - y)
 			img = img.get_region(Rect2i(0, 0, w, h))
 			if k > 1:
 				img.resize(maxi(1, w / k), maxi(1, h / k), Image.INTERPOLATE_BILINEAR)
-			full.blit_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), Vector2i((x - area.position.x) / k, (y - area.position.y) / k))
+			full.blit_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), Vector2i((x - rect.position.x) / k, (y - rect.position.y) / k))
 			x += 480
 		y += 270
 	full.save_png(mapshot)
@@ -72,144 +83,182 @@ func _map() -> void:
 
 func _run() -> void:
 	var p: Player = Game.player
-	await _wait(1.2)
-	await _shot("homestead")
-	# inside the log shack
-	Game.world.enter_cabin(true)
+	await _wait(1.0)
+	await _shot("wake_up")
+	# out of the door onto the farm
+	await _go("farm", "door")
+	p.global_position += Vector2(0, 30)
 	await _wait(0.8)
-	await _shot("cabin_1")
-	Game.world.exit_cabin()
-	await _wait(1.2)
-	# chop a tree, then hand-craft
-	var tree := _nearest(func(n): return n is Harvestable and n.kind == "wood" and n.sprite_name in ["oak", "pine", "oak_young"], p.global_position)
-	if tree:
-		p.global_position = tree.global_position + Vector2(-16, 2)
-		p.facing = Vector2.RIGHT
-		await _wait(0.6)
-		for i in 5:
-			await _swing(p)
-			if i == 1:
-				await _shot("chop")
-		p.global_position = tree.global_position + Vector2(-6, 6)
-		await _wait(1.0)
-	Inventory.add("fiber", 6)
-	Game.hud.open_crafting("hands")
-	_press("move_down")
+	await _shot("farm_door")
+	# clear a patch: cut weeds, break stones, then till, plant and water a few rows
+	var spot := p.global_position + Vector2(-60, 60)
+	for n in Game.world.entities.get_children():
+		if n is Harvestable and n.global_position.distance_to(spot) < 40:
+			n._gone()
+	await _wait(0.3)
+	p.global_position = spot
+	p.facing = Vector2.RIGHT
+	await _wait(0.3)
+	_select("hoe")
+	for i in 6:
+		p.global_position = spot + Vector2(i * 16, 0)
+		await _use(p)
+	_select("carrot_seeds")
+	for i in 6:
+		p.global_position = spot + Vector2(i * 16, 0)
+		await _use(p)
+	_select("watering_can")
+	for i in 3:
+		p.global_position = spot + Vector2(i * 16, 0)
+		await _use(p)
+	await _shot("planted")
+	# a few days later: ripe carrots, harvest, ship
+	for key in Game.area_state("farm").crops:
+		Game.area_state("farm").crops[key].age = 9
+	await _go("farm", "door")
+	p.global_position = spot + Vector2(-16, 0)
+	await _wait(0.6)
+	await _shot("ripe")
+	for c in Game.world.soil.crops.values():
+		c.interact(p)
+	var crate := _nearest(func(n): return n is ShipCrate, p.global_position)
+	p.global_position = crate.global_position + Vector2(0, 18)
+	p.facing = Vector2.UP
+	await _wait(0.5)
+	crate.interact(p)
 	await _wait(0.2)
-	_press("interact")
-	await _wait(0.2)
-	await _shot("hand_crafting")
+	await _shot("shipping")
+	Game.hud._ship_selected(true)
 	Game.hud.close_menu()
-	# stations
-	for k in {"wood": 30, "stone": 20, "iron_ore": 10, "coal": 8, "crystal": 3, "twine": 4}:
-		pass
-	Inventory.add("wood", 30)
-	Inventory.add("stone", 20)
-	Inventory.add("iron_ore", 10)
-	Inventory.add("coal", 8)
-	Inventory.add("twine", 4)
-	Inventory.gain_xp(120)
-	var bench := _nearest(func(n): return n is Station and n.station == "workbench", p.global_position)
-	if bench:
-		p.global_position = bench.global_position + Vector2(0, 18)
-		await _wait(0.6)
-		bench.interact(p)
-		await _wait(0.3)
-		await _shot("workbench")
-		Game.hud.close_menu()
-		var anvil := _nearest(func(n): return n is Station and n.station == "anvil", p.global_position)
-		anvil.interact(p)
-		await _wait(0.3)
-		await _shot("anvil")
-		Game.hud.close_menu()
-	# Tilda rebuilds the cabin, twice
-	for tier in [2, 3]:
-		var cost: Dictionary = Inventory.CABIN_TIERS[tier].cost
-		for k in cost:
-			Inventory.add(k, cost[k])
-		var tilda := _nearest(func(n): return n is Npc and n.display_name == "Tilda", p.global_position)
-		p.global_position = tilda.global_position + Vector2(0, 16)
-		Game.world.stream_now()
-		await _wait(1.0)
-		tilda.interact(p)
-		await _wait(0.3)
-		if tier == 2:
-			await _shot("tilda")
-		_press("interact")
-		await _wait(0.3)
-		Game.hud.close_menu()
-		Game.world.enter_cabin(true)
-		await _wait(0.4)
-		await Game.sleep()
-		await _wait(0.6)
-		await _shot("cabin_%d" % tier)
-		Game.world.exit_cabin()
-		await _wait(1.2)
-		p.global_position = Game.world.cabin.global_position + Vector2(0, 40)
-		Game.world.stream_now()
-		await _wait(1.0)
-		await _shot("home_%d" % tier)
-	# around the valley: every town and a few wild places
-	for spot in ["Brindle", "Reedwater", "Ironridge", "The quarry", "Frosthold", "The Frost Shrine", "Millbrook", "Stonegate", "The old graveyard", "The stone circle", "The witch's hut", "Harrow farm"]:
-		var at := _poi(spot)
-		if at == Vector2.ZERO:
+	# into town: shops
+	Game.gold += 3000
+	Inventory.add("wood", 60)
+	Inventory.add("stone", 40)
+	await _go("town", "from_farm")
+	await _wait(0.6)
+	await _shot("town_gate")
+	for who in ["Pell", "Tilda", "Brom"]:
+		var k := _nearest(func(n): return n is Npc and n.display_name == who, p.global_position)
+		if k == null:
 			continue
-		p.hp = p.max_hp
-		p.global_position = at + Vector2(0, 40)
-		Game.world.stream_now()
-		await _wait(1.2)
-		await _shot(spot.to_lower().replace(" ", "_").replace("'", ""))
-	# the minecart menu and the world map
-	for m in get_tree().get_nodes_in_group("minecarts"):
-		Game.stations_found[m.id] = m.label
-	var cart := _nearest(func(n): return n is Minecart, _poi("Brindle"))
-	if cart:
-		p.global_position = cart.global_position + Vector2(0, 22)
+		p.global_position = k.global_position + Vector2(0, 18)
 		Game.world.stream_now()
 		await _wait(0.8)
-		cart.interact(p)
+		if who == "Tilda":
+			await _shot("carpentry")
+		k.interact(p)
 		await _wait(0.3)
-		await _shot("minecart")
+		await _shot("shop_" + who.to_lower())
+		if who == "Tilda":
+			_press("interact")
+			await _wait(0.2)
 		Game.hud.close_menu()
+	for spot_name in ["Brindle", "Brindle churchyard"]:
+		p.global_position = _poi(spot_name) + Vector2(0, 48)
+		Game.world.stream_now()
+		await _wait(1.0)
+		await _shot(spot_name.to_lower().replace(" ", "_"))
+	# back home: set up the workbench
+	await _go("farm", "from_town")
+	p.global_position = Game.world.cabin.global_position + Vector2(90, 40)
+	p.facing = Vector2.RIGHT
+	for n in Game.world.entities.get_children():
+		if n is Harvestable and n.global_position.distance_to(p.global_position + Vector2(20, 0)) < 40:
+			n._gone()
+	await _wait(0.3)
+	_select("kit_workbench")
+	await _use(p)
+	await _wait(0.4)
+	await _shot("workbench")
 	Game.hud.toggle_map()
 	await _wait(0.3)
-	await _shot("map")
+	await _shot("map_farm")
 	Game.hud.close_menu()
-	# fight at Grimtusk's stockade with a real sword
+	# every other area
+	for a in [["pinewood", "from_farm"], ["oldwood", "from_farm"], ["riverlands", "from_town"], ["mountain", "from_town"], ["summit", "from_mountain"],
+			["badlands", "from_town"], ["stonegate", "from_badlands"]]:
+		await _go(a[0], a[1])
+		p.hp = p.max_hp
+		await _wait(0.8)
+		await _shot(a[0])
+		for q in Game.world.pois:
+			if q.get("kind", "") == "town":
+				continue
+			p.global_position = Vector2(q.x, q.y) * 16.0 + Vector2(0, 56)
+			Game.world.stream_now()
+			await _wait(0.9)
+			await _shot(String(q.name).to_lower().replace(" ", "_").replace("'", ""))
+			break
+	# a fight at the stockade
+	await _go("badlands", "from_town")
 	Inventory.add("sword_iron")
-	p.global_position = _poi("Grimtusk stockade") + Vector2(-240, 0)
-	Game.world.stream_now()
-	await _wait(0.5)
-	var orc := _nearest(func(n): return n is Enemy and n.actor.begins_with("orc"), _poi("Grimtusk stockade"))
+	var orc := _nearest(func(n): return n is Enemy, _poi("Grimtusk stockade") * 1.0)
 	if orc:
-		p.global_position = orc.global_position + Vector2(-60, 10)
+		p.global_position = orc.global_position + Vector2(-50, 10)
 		Game.world.stream_now()
-		await _wait(1.6)
-		for i in 8:
+		_select("sword_iron")
+		await _wait(1.4)
+		for i in 6:
 			var e := _nearest(func(n): return n is Enemy and n.state != Enemy.State.DEAD, p.global_position)
 			if e:
 				p.facing = (e.global_position - p.global_position).normalized()
-			await _swing(p)
+			await _use(p)
 			if i == 3:
 				await _shot("combat")
-	# nightfall at home, then the lantern in the pinewood
+	# the seasons: fall woods, a rainy day, winter on the farm
 	p.hp = p.max_hp
-	Game.time_of_day = 0.9
-	p.global_position = Game.world.cabin.global_position + Vector2(0, 60)
+	Game.day = 2 * 28 + 5
+	await _go("pinewood", "from_farm")
+	p.global_position += Vector2(0, -200)
 	Game.world.stream_now()
-	await _wait(1.5)
-	await _shot("night")
-	Inventory.add("lantern")
-	p.global_position = _poi("Brindle") + Vector2(0, 40)
+	await _wait(1.0)
+	await _shot("fall_woods")
+	Game.weather = "rain"
+	await _go("town", "from_farm")
+	p.global_position = _poi("Brindle") * 1.0 + Vector2(0, 40)
 	Game.world.stream_now()
 	await _wait(1.2)
-	await _shot("night_village")
+	await _shot("rain_town")
+	Game.weather = "snow"
+	Game.day = 3 * 28 + 5
+	await _go("farm", "door")
+	await _wait(1.2)
+	await _shot("winter_farm")
+	Game.weather = "sun"
+	Game.day = 13
+	await _go("town", "from_farm")
+	p.global_position = _poi("Brindle") * 1.0 + Vector2(0, 60)
+	Game.world.stream_now()
+	await _wait(1.0)
+	await _shot("blossom_fair")
+	Game.time_of_day = 0.9
+	await _wait(1.2)
+	await _shot("night_town")
 	if shots_dir != "":
 		get_tree().quit()
 
 
-func _swing(_p: Player) -> void:
-	_press("attack")
+func _go(id: String, at: String) -> void:
+	await Game.world.go_to(id, at)
+	await _wait(0.3)
+
+
+func _select(item: String) -> void:
+	var i := Inventory.slots.find(item)
+	if i < 0:
+		return
+	if i >= 10:
+		# move it into the toolbar's last slot
+		Inventory.slots.remove_at(i)
+		var old: String = Inventory.slots[9]
+		Inventory.slots[9] = item
+		Inventory.slots.append(old)
+		i = 9
+	Game.player.select(i)
+
+
+func _use(p: Player) -> void:
+	p.use_selected()
 	await _wait(0.4)
 
 

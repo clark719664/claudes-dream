@@ -1,51 +1,50 @@
 class_name Crop
 extends Node2D
-## A crop in tilled soil. Grows through four stages; harvest the last one with E.
+## A crop growing in tilled soil. It grows a day each morning after a day it was watered, through
+## four looks (seed, sprout, growing, ripe), and is picked with E once ripe. Crops out of season
+## wither overnight (see World.new_day).
 
-const GROW_TIME := 45.0  # seconds per stage
-
-var kind: String
-var stage := 0
+var info: Dictionary     # {kind, age} - shared with the area's saved state
+var cell := Vector2i.ZERO
+var kind := "carrot"
 var sprite: Sprite2D
-var _t := 0.0
 
 
-func _init(kind_name := "carrot", start_stage := 0) -> void:
-	kind = kind_name
-	stage = start_stage
+func _init(info_: Dictionary, cell_: Vector2i) -> void:
+	info = info_
+	cell = cell_
+	kind = info.kind
 
 
 func _ready() -> void:
 	add_to_group("interactable")
-	_t = randf() * GROW_TIME
-	_refresh()
+	refresh()
 
 
-func _process(delta: float) -> void:
-	if stage >= 3:
-		return
-	_t += delta
-	if _t >= GROW_TIME:
-		_t = 0.0
-		stage += 1
-		_refresh()
+static func stage_of(c: Dictionary) -> int:
+	var days := int(Inventory.CROPS.get(c.kind, {"days": 4}).days)
+	var age := int(c.age)
+	if age >= days:
+		return 3
+	return mini(2, int(age * 3.0 / days))
+
+
+func refresh() -> void:
+	if sprite:
+		sprite.queue_free()
+	sprite = Pack.sprite("crop_" + kind, stage_of(info))
+	add_child(sprite)
 
 
 func interact(_player: Node) -> void:
-	if stage < 3:
-		Game.say("The %s isn't ready yet." % Inventory.display_name(kind).to_lower())
+	if stage_of(info) < 3:
+		var days := int(Inventory.CROPS[kind].days) - int(info.age)
+		Game.say("The %s needs %d more day%s%s." % [Inventory.display_name(kind).to_lower(), days, "s" if days != 1 else "",
+			"" if Game.world.soil.state.soil.get(Soil.key_of(cell), 0) == 1 else " (and water)"])
 		return
-	var n := 1 + int(randf() < 0.4)
-	for i in n:
-		Inventory.add(kind)
+	var n: int = Game.world.soil.harvest(cell)
+	if n <= 0:
+		return
+	Inventory.add(kind, n)
+	Game.note_gather(kind, n)
 	Game.world.float_text("+%d %s" % [n, Inventory.display_name(kind)], global_position, Color(0.8, 1.0, 0.6))
-	stage = 0
-	_t = 0.0
-	_refresh()
-
-
-func _refresh() -> void:
-	if sprite:
-		sprite.queue_free()
-	sprite = Pack.sprite("crop_" + kind, stage)
-	add_child(sprite)

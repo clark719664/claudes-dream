@@ -5,26 +5,26 @@ extends Node2D
 
 const LINES := {
 	"merlo": [
-		"Welcome to Brindle, traveller. That cabin south-west of the square is yours now - the old owner left it to whoever would mend it.",
-		"Everything worth having is made from something smaller. Planks from logs, nails from iron, rope from fiber. Check each station to see what it can make.",
-		"Smelt ore at the furnace with coal. Bars become nails and blades at the anvil.",
-		"Tilda the carpenter can rebuild your cabin, if you bring her the materials. Bigger home, better workshop.",
-		"Sleep in your bed to end the day. The world saves while you dream.",
-		"Skeletons guard the graveyard in the north-west, and worse things haunt Frostvale. Orcs hold the east.",
+		"Ah, you're the one who took on the old farm west of town. It'll take a season to clear, but the soil there is good.",
+		"Pell at the general store sells seeds for whatever season it is. Crops out of season wither overnight, so mind the calendar.",
+		"Tilda sells kits for a workbench, a sawmill, a furnace. Set them up on your farm and you'll be making your own tools.",
+		"There are springs hidden deep in the woods. A drink from one and you'll feel you could work another whole day.",
+		"The Old Mine is up the mountain road north of here. Iron, coal, crystal - and things that don't like visitors.",
+		"Orcs hold the badlands to the east. Stonegate beyond them keeps its gate shut at the first sign of trouble.",
 	],
 	"guard": [
-		"Captain Brann, Brindle watch. Orcs have been raiding the east road - if you're heading that way, bring iron.",
+		"Brindle watch. Orcs have been raiding the east road - if you're heading that way, bring iron.",
 		"Watch their shoulders. An orc flashes right before it lunges. Step aside, then strike.",
-		"The mine's been shut since the collapse. Iron ore still pokes out of the hills and the quarry.",
+		"Iron ore pokes out of the mountain and the quarry up there. The Old Mine has more, deeper down.",
 	],
 	"hunter": [
-		"Shh. The forest is full of game... and worse. Skeletons wander from the graveyard at night.",
+		"Rook. I cut wood in the Pinewood. Skeletons walk around the old ruin up north - I keep clear.",
 		"Pine trees drip resin when you chop them. Good for torches and glue.",
 		"Fiber from bushes twists into rope. Rope ties a stone to a stick, and you've got an axe.",
 	],
 	"fisher": [
-		"Old Fenn. I've fished this lake for forty years. There's a chest on the island nobody's dared swim for.",
-		"The river comes down from Frostvale. Cold enough to stop your heart.",
+		"Old Fenn. I've fished Mirror Lake for forty years. The river feeding it comes all the way down from Brindle.",
+		"There's a spring in the woods east of the lake. Drink from it and you'll walk home lighter.",
 	],
 	"carpenter": [
 		"Tilda, carpenter. Show me materials and I'll show you a house.",
@@ -41,6 +41,7 @@ var actor: String
 var display_name: String
 var lines_key: String
 var custom: Array = []      # lines of its own, instead of a shared set
+var shop := ""              # a shopkeeper: talking opens their shop
 var span := 0.0
 var body: AnimatedSprite2D
 var _line := 0
@@ -114,8 +115,8 @@ func _play(anim: String) -> void:
 
 
 func interact(_player: Node) -> void:
-	if lines_key == "carpenter":
-		Game.hud.open_upgrades()
+	if shop != "":
+		Game.hud.open_shop(shop, display_name)
 		return
 	var lines: Array = custom if not custom.is_empty() else LINES.get(lines_key, LINES.villager)
 	Game.hud.show_dialog(display_name, lines[_line % lines.size()])
