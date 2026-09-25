@@ -302,3 +302,12 @@ def graveyard(a, x0, y0, w, h, name='Brindle churchyard'):
     weeds_along(a, [(x, y0 + 1) for x in range(x0 + 1, x1)] + [(x0 + 1, y) for y in range(y0, y1)] + [(x1 - 1, y) for y in range(y0, y1)], 0.35)
     a.poi(name, x0 + w / 2, y0 + h / 2)
     return stones
+
+
+def shaft_house(a, door_x, feet_y, style='dark'):
+    """The winding house over a Deepways shaft: go in and you climb down to the station."""
+    o = house(a, door_x, feet_y, style, 'Deepways shaft')
+    o['door_to'] = 'deepways'
+    a.spawn('deepways', door_x, feet_y + 1.2)
+    a.rect(door_x - 1, feet_y, door_x + 1, feet_y + 2, ':')
+    return o

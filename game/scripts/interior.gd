@@ -14,7 +14,7 @@ const LAYOUTS := {
 	1: {"wall": 0, "floor": 0, "w": 9, "h": 5, "props": [
 		[Rect2(64, 176, 32, 32), 3.0, 3.4, 0, ""],             # window
 		[Rect2(0, 288, 32, 64), 1.5, 8.6, 26, "bed"],
-		[Rect2(272, 0, 48, 48), 7.0, 5.9, 40, ""],             # wardrobe
+		[Rect2(272, 0, 48, 48), 7.0, 5.9, 40, "wardrobe"],
 		[Rect2(80, 0, 32, 32), 5.6, 7.6, 24, ""],              # round table
 		[Rect2(64, 0, 16, 32), 4.3, 7.4, 0, ""],               # chair
 		[Rect2(432, 304, 80, 80), 5.2, 10.1, 0, "rug"],
@@ -33,7 +33,7 @@ const LAYOUTS := {
 		[Rect2(64, 0, 16, 32), 10.2, 9.2, 0, ""],
 		[Rect2(0, 160, 48, 32), 8.0, 11.4, 0, "rug"],
 		[Rect2(48, 96, 48, 48), 3.6, 5.9, 44, ""],             # bookshelf
-		[Rect2(64, 352, 16, 32), 13.2, 11.2, 10, ""],
+		[Rect2(272, 0, 48, 48), 11.8, 11.0, 40, "wardrobe"],
 		[Rect2(16, 352, 16, 32), 1.4, 11.2, 10, ""],
 		[Rect2(96, 256, 32, 16), 8.0, 2.6, 0, ""],             # sword on the wall
 	]},
@@ -59,7 +59,7 @@ const LAYOUTS := {
 		[Rect2(64, 352, 16, 32), 17.2, 11.9, 10, ""],
 		[Rect2(48, 352, 16, 32), 16.2, 12.0, 10, ""],
 		[Rect2(16, 352, 16, 32), 4.4, 12.0, 10, ""],
-		[Rect2(272, 0, 48, 48), 15.6, 5.9, 40, ""],
+		[Rect2(272, 0, 48, 48), 15.6, 5.9, 40, "wardrobe"],
 	]},
 }
 const POTIONS := [Rect2(528, 288, 16, 16), Rect2(560, 304, 16, 16), Rect2(576, 320, 16, 16)]
@@ -154,7 +154,7 @@ func build(tier_: int, sorted_parent: Node2D) -> void:
 
 func _furniture(region: Rect2, feet: Vector2, solid: float, role: String) -> void:
 	var node: Node2D
-	if role in ["bed", "kitchen", "alchemy"]:
+	if role in ["bed", "kitchen", "alchemy", "wardrobe"]:
 		node = CabinFixture.new(role)
 	else:
 		node = Node2D.new()

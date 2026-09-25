@@ -44,7 +44,9 @@ def gen_pinewood(a):
             a.put(int(x), int(y), ':')
         a.path[int(y) * W + int(x)] = 1 if a.inside(int(x), int(y)) else 0
     N.camp(a, *camp)
-    B.villager(a, camp[0] + 1.5, camp[1] + 3.2, 'peasant', 'Rook the woodcutter', 20, lines='hunter')
+    B.villager(a, camp[0] + 1.5, camp[1] + 3.2, 'rook', 'Rook the woodcutter', 20, lines='hunter')
+    B.villager(a, s[0] + 2, 86, 'ranger_cole', 'Ranger Cole', 20,
+               say=['Keep to the trails. The thickets are walls of trees nobody has cut in a hundred years.', 'Treants look like old stumps until they get up.'])
     N.spring(a, 17, 11, 'The Pine Spring')
     N.ruin(a, 72, 13, 2)
     for (x, y) in [(69, 20), (76, 21), (73, 25)]:
@@ -102,6 +104,11 @@ def gen_oldwood(a):
     N.enemy(a, 'reaper_m', hx + 7, hy + 11)
     N.enemy(a, 'necro_m', hx + 14, hy + 7)
     N.enemy(a, 'hexer_f', hx - 4, hy + 10)
+    N.enemy(a, 'reaper_f', hx + 18, hy + 3)
+    N.enemy(a, 'necro_f', hx + 1, hy + 14)
+    N.enemy(a, 'hexer_m', hx + 20, hy + 11)
+    N.enemy(a, 'wiccan_f', hx - 8, hy + 2)
+    N.enemy(a, 'wiccan_m', hx + 8, hy - 4)
     N.enemy(a, 'thorn_vale', 48, 72)
     for (x, y) in [(54, 32), (88, 28)]:
         N.enemy(a, 'bramble_treant', x, y)
@@ -109,6 +116,10 @@ def gen_oldwood(a):
         N.enemy(a, 'myconid', x, y)
     N.hidden_chest(a, hx + 12.5, hy + 2.2, 'hollow', 3)
     N.spring(a, 14, 40, 'The Wellspring')
+    B.villager(a, 60, 28, 'wren', 'Wren', 20, lines='herbalist')
+    B.villager(a, 24, 50, 'road_ira', 'Old Ira', 0,
+               say=['Ira. I keep the Wellspring. Drink - it will do you good.', 'The Hollow was a village once. Something down in it still keeps the dead walking.'])
+    B.villager(a, 71, 36, 'mire_lotus', 'Lotus', 16, say=['I follow the brook. It knows the way out of the Oldwood better than any path.'])
     N.hidden_chest(a, 104, 14, 'oldwood_thicket', 2)
     # woods: old oaks, dead trees towards the Hollow
     hollow = lambda x, y: max(0.0, 1 - math.hypot(x - hx - 4, (y - hy - 4) * 1.2) / 26)
@@ -151,9 +162,19 @@ def gen_riverlands(a):
     a.trail([(46, 40), (24, 44), (10, w[1]), w], 2.0, ':', 2.5, k=52)
     a.bridges(a.trail([(36, 26), (56, 24), (66, 22), (84, 18), (100, 22)], 1.6, ':', 2.0, k=53))
     B.street(a, street_y, 40, 64, ':', rows=2)
+    B.shaft_house(a, 30, street_y - 3, 'plank')
+    a.trail([(30, street_y - 1.5), (35, street_y + 0.5), (40, street_y + 0.8)], 1.8, ':', 0.4, k=54)
     B.lot(a, 38, street_y, 12, 'log', "Fenn's house", 'woodpile', back=False)
     B.lot(a, 51, street_y, 12, 'plank', 'The Tulls', 'laundry', back=False)
-    B.villager(a, 70, street_y + 4, 'peasant', 'Old Fenn', 0, lines='fisher')
+    B.villager(a, 70, street_y + 4, 'fenn', 'Old Fenn', 0, lines='fisher')
+    B.villager(a, 47, street_y + 3.4, 'diver_f', 'Nell', 20, say=['I dive for mussels off the jetty. Cold work.'])
+    B.villager(a, 54, street_y + 3.6, 'diver_m', 'Tam', 16, say=['There are old rails at the bottom of the lake. Someone laid track down there once.'])
+    # the farms along the river, and Pen with the goats
+    B.villager(a, 36, 72, 'farmer_dell', 'Farmer Dell', 30, lines='farmer')
+    B.villager(a, 22, 66, 'farmer_skim', 'Skim', 24, say=['Skim. I grow for the Reedwater folk. Beets in summer, cabbages in fall.'])
+    B.villager(a, 60, 74, 'ranch_pen', 'Pen', 20, lines='rancher')
+    for i, (gx, gy) in enumerate([(56, 77), (64, 78), (60, 80.5)]):
+        B.villager(a, gx, gy, 'goat', 'Goat', 24, say=['Maaa.', 'The goat chews something that is probably not grass.'])
     _jetty(a, street_y + 1)
     for (x, y) in [(60, street_y + 3.5), (63, street_y + 4.2)]:
         a.add('drying_rack', x, y, a.rng.randrange(4), 1.2)

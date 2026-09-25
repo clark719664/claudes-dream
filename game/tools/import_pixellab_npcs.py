@@ -1,9 +1,8 @@
-"""Downloads all completed characters/NPCs from the user's PixelLab account,
-extracts their full 8-directional sprite sheets + JSON metadata into:
+"""Downloads all completed characters/NPCs from the user's PixelLab account (PIXELLAB_API_KEY in
+the environment) and extracts their full 8-directional sprite sheets + JSON metadata into:
     game/assets/pixellab_npcs/<slug>/
-builds Hearthwild-compatible Idle-Sheet.png & Walk-Sheet.png (scaled cleanly to fit
-Hearthwild's 16x16 tile / 32x40 doorway scale while keeping the full-res sheet too),
-registers all of them in game/data/catalog.json, and generates a visual roster sheet.
+then runs tools/pixellab/import_actors.py, which turns them into the game's atlases and catalog
+entries, and writes a roster preview.
 """
 import concurrent.futures
 import io
@@ -140,15 +139,13 @@ def download_one(char_summary: dict) -> dict | None:
         with open(full_json, "r", encoding="utf-8") as f:
             meta = json.load(f)
         im = Image.open(full_png).convert("RGBA")
-        info = make_game_sheets(im, meta, dest_dir)
+        cw = meta.get("spritesheet", {}).get("cell_size", {}).get("width", 92)
         return {
             "slug": slug,
             "name": raw_name,
             "id": cid,
             "prompt": char_summary.get("prompt") or meta.get("character", {}).get("prompt", ""),
-            "idle_frames": info["idle_frames"],
-            "walk_frames": info["walk_frames"],
-            "thumb": info["south_thumb"],
+            "thumb": im.crop((0, 0, cw, cw)).resize((64, 64), Image.Resampling.NEAREST),
         }
     except Exception as e:
         print(f"  [WARN] Failed {slug} ({cid}): {e}")
@@ -186,38 +183,11 @@ def main():
     results.sort(key=lambda r: r["slug"])
     print(f"Successfully imported {len(results)} PixelLab characters into {OUT_ROOT}!")
 
-    # Register all imported PixelLab characters in game/data/catalog.json
-    with open(CATALOG_PATH, "r", encoding="utf-8") as f:
-        cat = json.load(f)
-
-    actors = cat.setdefault("actors", {})
-    for r in results:
-        slug = r["slug"]
-        actors_key = f"pl_{slug}" if slug in ("rogue", "knight", "wizard", "orc", "skeleton", "peasant") else slug
-        actors[actors_key] = {
-            "idle": {
-                "sheet": f"pixellab_npcs/{slug}/Idle-Sheet.png",
-                "frame": [64, 64],
-                "frames": r["idle_frames"],
-                "cols": r["idle_frames"],
-                "fps": 6,
-                "loop": True,
-                "anchor": [32, 62],
-            },
-            "run": {
-                "sheet": f"pixellab_npcs/{slug}/Walk-Sheet.png",
-                "frame": [64, 64],
-                "frames": r["walk_frames"],
-                "cols": r["walk_frames"],
-                "fps": 9,
-                "loop": True,
-                "anchor": [32, 62],
-            },
-        }
-
-    with open(CATALOG_PATH, "w", encoding="utf-8") as f:
-        json.dump(cat, f, indent=1)
-    print(f"Updated {CATALOG_PATH} with {len(results)} PixelLab actors!")
+    # Turn the exports into game atlases and catalog entries (real walks, no invented frames)
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pixellab"))
+    import import_actors
+    import_actors.main()
 
     # Build a visual Roster Preview Sheet showing all imported PixelLab NPCs
     cols = 9

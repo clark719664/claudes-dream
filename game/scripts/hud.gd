@@ -301,7 +301,7 @@ func _refresh_items() -> void:
 				holder.add_child(back)
 				var bar := ColorRect.new()
 				bar.color = Color(0.4, 0.65, 1.0)
-				bar.size = Vector2(16.0 * Inventory.water / Inventory.CAN_SIZE, 2)
+				bar.size = Vector2(16.0 * Inventory.water / float(Inventory.can().size), 2)
 				back.add_child(bar)
 		strip.add_child(cell)
 	var name_text := Inventory.display_name(Inventory.slot(sel)) if Inventory.slot(sel) != "" else ""
@@ -536,6 +536,22 @@ func _buy_selected() -> void:
 		_refresh_menu()
 		return
 	var cost: Dictionary = g.get("cost", {})
+	if g.has("can"):
+		if Game.can_tier >= int(g.can):
+			say("Your can is already that good.")
+		elif Game.can_tier < int(g.can) - 1:
+			say("One step at a time: the %s first." % Inventory.CANS[int(g.can) - 1].name)
+		elif Game.gold < int(g.gold) or not Inventory.has_all(cost):
+			say("Not enough gold or materials.")
+		else:
+			Game.pay(int(g.gold))
+			Inventory.take_all(cost)
+			Game.can_tier = int(g.can)
+			Inventory.water = Inventory.can().size
+			Inventory.changed.emit()
+			say("Brom hands you the %s." % Inventory.can().name)
+		_refresh_menu()
+		return
 	if Game.gold < int(g.gold):
 		say("Not enough gold.")
 	elif not Inventory.has_all(cost):
@@ -712,8 +728,8 @@ func _fill_travel() -> void:
 			row.gui_input.connect(_on_row_input.bind(i))
 		menu_box.add_child(_label("W/S  choose     E  ride     ESC  stay", DIM))
 		return
-	_title("MINECART")
-	menu_box.add_child(_label("Ride the old mine railway to any stop you've found.", DIM))
+	_title("THE DEEPWAYS RAILWAY")
+	menu_box.add_child(_label("Ride to any station whose cart is running.", DIM))
 	for i in _stops.size():
 		var parts := _row(i == _selected)
 		var row: PanelContainer = parts[0]
@@ -722,7 +738,7 @@ func _fill_travel() -> void:
 		h.add_child(_label(Game.stations_found[_stops[i]] + ("   (you are here)" if here else ""), DIM if here else TEXT))
 		row.mouse_filter = Control.MOUSE_FILTER_STOP
 		row.gui_input.connect(_on_row_input.bind(i))
-	menu_box.add_child(_label("Stops you haven't used yet stay off the list.", DIM))
+	menu_box.add_child(_label("Stations with broken carts aren't listed until you fix them.", DIM))
 	menu_box.add_child(_label("W/S  choose     E  ride     ESC  stay", DIM))
 
 
@@ -783,9 +799,14 @@ func _fill_map() -> void:
 	menu_box.add_child(_label("Red: you.  Grey names: where each path leads.     M / ESC  close", DIM))
 
 
+static func actor_label(a: String) -> String:
+	return {"emerald_slime": "the slimes", "venn": "Venn, the Deep Company's boss"}.get(a, a.capitalize())
+
+
 static func _area_name(id: String) -> String:
 	return {"farm": "Your farm", "town": "Brindle", "pinewood": "The Pinewood", "oldwood": "The Oldwood", "riverlands": "Riverlands",
-		"mountain": "The Mountain", "summit": "The Summit", "badlands": "Badlands", "stonegate": "Stonegate"}.get(id, id)
+		"mountain": "The Mountain", "summit": "The Summit", "badlands": "Badlands", "stonegate": "Stonegate",
+		"deepways": "The Deepways"}.get(id, id)
 
 
 func _fill_shop() -> void:
@@ -810,6 +831,17 @@ func _fill_shop() -> void:
 			h.add_child(_label("%dg" % int(t.gold), GOOD if Game.gold >= int(t.gold) else BAD))
 			_costs(h, t.cost)
 			continue
+		if g.has("can"):
+			var c: Dictionary = Inventory.CANS[int(g.can)]
+			var ic := _icon("watering_can", 14)
+			ic.modulate = c.tint
+			h.add_child(ic)
+			var cl := _label(("UPGRADE: " + String(c.name)) if Game.can_tier < int(g.can) else String(c.name) + " (done)", GOLD if Game.can_tier < int(g.can) else DIM)
+			cl.custom_minimum_size = Vector2(104, 0)
+			h.add_child(cl)
+			h.add_child(_label("%dg" % int(g.gold), GOOD if Game.gold >= int(g.gold) else BAD))
+			_costs(h, g.get("cost", {}))
+			continue
 		h.add_child(_icon(g.item, 14))
 		var n := int(g.get("n", 1))
 		var name_l := _label(Inventory.display_name(g.item) + (" x%d" % n if n > 1 else ""))
@@ -825,6 +857,9 @@ func _fill_shop() -> void:
 			desc = Inventory.CABIN_TIERS[next].desc if next < Inventory.CABIN_TIERS.size() else ""
 			if Game.upgrade_pending:
 				desc = "Under construction - sleep and it'll be done by morning."
+		elif g.has("can"):
+			var c: Dictionary = Inventory.CANS[int(g.can)]
+			desc = "Holds %d. One pour waters %d tile%s." % [int(c.size), int(c.reach), "s" if int(c.reach) > 1 else ""]
 		elif g.item.ends_with("_seeds"):
 			var c: Dictionary = Inventory.CROPS[g.item.trim_suffix("_seeds")]
 			desc = "Ripens in %d days. Sells for %dg. Grows in %s." % [int(c.days), int(c.sell), ", ".join(c.seasons.map(func(x): return Game.SEASONS[x]))]

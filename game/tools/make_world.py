@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(HERE, 'worldgen'))
 sys.path.insert(0, HERE)
 
 import export
-import farm, town, wilds, heights, east
+import farm, town, wilds, heights, east, deeps
 
 
 class _M:
@@ -28,6 +28,7 @@ MODULES = {
     'summit': _M(heights.make_summit, heights.gen_summit),
     'badlands': _M(east.make_badlands, east.gen_badlands),
     'stonegate': _M(east.make_stonegate, east.gen_stonegate),
+    'deepways': deeps,
 }
 
 # how the areas join up: (area, side, from, to) <-> (area, side, from, to), rows or columns of

@@ -99,7 +99,7 @@ func _cliff(layer: TileMapLayer, cl: Dictionary, out: Dictionary) -> void:
 		for dx in 3:
 			for dy in 4:
 				_put(layer, Vector2i(x0 + k + dx, y0 + h - 4 + dy), SRC_CLIFF_VARIANTS, Vector2i(12 + dx, 6 + dy + colour * 10))
-		out.mines.append(Vector2((x0 + k + 1.5) * 16, (y0 + h) * 16 - 6))
+		out.mines.append({"at": Vector2((x0 + k + 1.5) * 16, (y0 + h) * 16 - 6), "to": cl.get("to", "")})
 	var body := StaticBody2D.new()
 	body.collision_layer = 1
 	var shape := CollisionShape2D.new()

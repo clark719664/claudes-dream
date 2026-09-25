@@ -1,6 +1,12 @@
 class_name Enemy
 extends CharacterBody2D
-## Orcs and skeletons: wander near home, chase, telegraph, lunge, flinch, die, come back later.
+## Everything that fights you: wander near home, chase, telegraph, lunge, flinch, die.
+##
+## The Pixel Crawler monsters (orcs, skeletons) animate from the pack; the PixelLab cast turns to
+## face four ways and walks with PixelLab's own walk cycles. Nobody has drawn attack or death
+## frames for the PixelLab cast, so those are acted out in code rather than faked: the body leans
+## back to wind up, throws itself forward with a slash, recoils when hit and topples when it dies.
+## Creatures with only a turnaround waddle as they move.
 
 const STATS := {
 	"orc": {"hp": 26, "dmg": 8, "speed": 36, "aggro": 90, "loot": {"meat": 1}},
@@ -27,6 +33,32 @@ const STATS := {
 	"cave_goblin": {"hp": 28, "dmg": 9, "speed": 46, "aggro": 100, "loot": {"iron_ore": 2, "coal": 1}},
 	"magma_golem": {"hp": 72, "dmg": 16, "speed": 28, "aggro": 95, "loot": {"iron_bar": 2, "coal": 3, "gem": 1}},
 	"bramble_treant": {"hp": 55, "dmg": 13, "speed": 28, "aggro": 90, "loot": {"wood": 4, "resin": 2}},
+	"berserker_f": {"hp": 44, "dmg": 13, "speed": 44, "aggro": 100, "loot": {"meat": 1, "iron_ore": 2}},
+	"zealot_f": {"hp": 32, "dmg": 10, "speed": 40, "aggro": 105, "loot": {"cloth": 1, "coal": 1}},
+	"acolyte_m": {"hp": 26, "dmg": 9, "speed": 40, "aggro": 105, "loot": {"cloth": 1, "herb": 1}},
+	"acolyte_f": {"hp": 24, "dmg": 9, "speed": 42, "aggro": 105, "loot": {"cloth": 1, "herb": 1}},
+	"inquisitor_m": {"hp": 40, "dmg": 12, "speed": 36, "aggro": 110, "loot": {"iron_bar": 1, "cloth": 1}},
+	"inquisitor_f": {"hp": 38, "dmg": 12, "speed": 38, "aggro": 110, "loot": {"iron_bar": 1, "cloth": 1}},
+	"reaper_f": {"hp": 42, "dmg": 13, "speed": 46, "aggro": 115, "loot": {"bone": 2, "cloth": 1}},
+	"necro_f": {"hp": 34, "dmg": 12, "speed": 36, "aggro": 120, "loot": {"crystal": 1, "bone": 2}},
+	"hexer_m": {"hp": 34, "dmg": 11, "speed": 36, "aggro": 115, "loot": {"herb": 2, "crystal": 1}},
+	"wiccan_f": {"hp": 28, "dmg": 10, "speed": 38, "aggro": 110, "loot": {"herb": 2, "mushroom": 1}},
+	"wiccan_m": {"hp": 30, "dmg": 10, "speed": 36, "aggro": 110, "loot": {"herb": 2, "mushroom": 1}},
+	"mirelle": {"hp": 46, "dmg": 13, "speed": 40, "aggro": 110, "loot": {"crystal": 2}},
+	"nyx": {"hp": 40, "dmg": 13, "speed": 48, "aggro": 115, "loot": {"gem": 1, "cloth": 1}},
+	# the Deep Company: scavengers and tinkerers who live in the old tunnels
+	"rust_juno": {"hp": 36, "dmg": 11, "speed": 40, "aggro": 105, "loot": {"iron_ore": 2, "nails": 3}},
+	"scrap_yadi": {"hp": 30, "dmg": 10, "speed": 46, "aggro": 105, "loot": {"iron_ore": 1, "nails": 4}},
+	"hacker_rem": {"hp": 28, "dmg": 10, "speed": 44, "aggro": 110, "loot": {"glass": 1, "crystal": 1}},
+	"neon_pix": {"hp": 30, "dmg": 11, "speed": 46, "aggro": 110, "loot": {"crystal": 2}},
+	"technomancer_m": {"hp": 44, "dmg": 14, "speed": 34, "aggro": 120, "loot": {"crystal": 2, "steel_bar": 1}},
+	"technomancer_f": {"hp": 42, "dmg": 14, "speed": 36, "aggro": 120, "loot": {"crystal": 2, "steel_bar": 1}},
+	"scientist_m": {"hp": 26, "dmg": 9, "speed": 36, "aggro": 100, "loot": {"glass": 2}},
+	"scientist_f": {"hp": 26, "dmg": 9, "speed": 38, "aggro": 100, "loot": {"glass": 2}},
+	"venn": {"hp": 50, "dmg": 14, "speed": 38, "aggro": 110, "loot": {"iron_bar": 2, "gem": 1}},
+	"vale": {"hp": 38, "dmg": 12, "speed": 44, "aggro": 110, "loot": {"crystal": 1, "cloth": 1}},
+	"jax": {"hp": 34, "dmg": 12, "speed": 48, "aggro": 110, "loot": {"bone": 1, "iron_ore": 1}},
+	"lyric": {"hp": 110, "dmg": 20, "speed": 30, "aggro": 120, "loot": {"steel_bar": 3, "gem": 2}},
 }
 const RESPAWN := 120.0
 
@@ -46,6 +78,10 @@ var _anim := ""
 var _hit_player := false
 var _atk_count := 0
 var _is_heavy := false
+var _lean := 0.0          # degrees, acted-out attacks and hits
+var _waddle := false      # no walk frames: sway instead
+var _walk_t := 0.0
+var _slashed := false
 
 
 func _init(actor_name := "orc") -> void:
@@ -74,10 +110,11 @@ func _ready() -> void:
 	body.centered = false
 	body.material = FX.flash_material()
 	add_child(body)
+	_waddle = not (Pack.has_anim(actor, "walk_down") or Pack.has_anim(actor, "run"))
 	var back := ColorRect.new()
 	back.color = Color(0.1, 0.05, 0.05, 0.8)
 	back.size = Vector2(16, 2)
-	back.position = Vector2(-8, -30)
+	back.position = Vector2(-8, -Pack.actor_height(actor) - 3)
 	back.visible = false
 	add_child(back)
 	bar = ColorRect.new()
@@ -171,8 +208,13 @@ func _physics_process(delta: float) -> void:
 				state = State.LUNGE
 				_t = 0.24 if _is_heavy else 0.18
 				_hit_player = false
+				_slashed = false
 		State.LUNGE:
 			velocity = _dir * speed * (4.8 if _is_heavy else 4.2)
+			if not _slashed and not Pack.has_anim(actor, "attack_" + _facing):
+				_slashed = true
+				FX.slash(get_parent(), global_position + Vector2(0, -Pack.actor_height(actor) * 0.45) + _dir * 12.0, _dir,
+					Color(1.0, 0.75, 0.55, 0.9) if _is_heavy else Color(1, 1, 1, 0.8))
 			var reach := 16.5 if _is_heavy else 13.0
 			if not _hit_player and player and dist < reach:
 				_hit_player = true
@@ -191,6 +233,32 @@ func _physics_process(delta: float) -> void:
 			if _t <= 0.0:
 				state = State.CHASE
 	move_and_slide()
+	_act(delta)
+
+
+## The acted-out part: leaning into attacks and away from hits, and a waddle for creatures that
+## have no walk cycle. The body pivots on its feet.
+func _act(delta: float) -> void:
+	var side := 1.0 if _dir.x >= 0.0 else -1.0
+	var want := 0.0
+	match state:
+		State.WINDUP:
+			want = -9.0 * side
+		State.LUNGE:
+			want = 13.0 * side
+		State.HURT:
+			want = 12.0 * (1.0 if velocity.x >= 0.0 else -1.0)
+	_lean = move_toward(_lean, want, delta * 160.0)
+	var sway := 0.0
+	var bob := 0.0
+	if _waddle and velocity.length() > 4.0 and state in [State.WANDER, State.CHASE]:
+		_walk_t += delta * (9.0 if state == State.CHASE else 6.0)
+		sway = sin(_walk_t) * 6.0
+		bob = -absf(sin(_walk_t)) * 1.5
+	else:
+		_walk_t = 0.0
+	body.rotation_degrees = _lean + sway
+	body.position.y = bob
 
 
 func _die(dir: Vector2) -> void:
@@ -199,14 +267,24 @@ func _die(dir: Vector2) -> void:
 	remove_from_group("hittable")
 	bar.get_parent().visible = false
 	collision_layer = 0
-	_play_dir("death", -dir if dir.length() > 0.1 else _dir)
+	var drawn_death := Pack.has_anim(actor, "death_" + _dir_name(-dir if dir.length() > 0.1 else _dir)) or Pack.has_anim(actor, "death")
+	if drawn_death:
+		_play_dir("death", -dir if dir.length() > 0.1 else _dir)
+	else:
+		# topple away from the blow, then lie still
+		_play_dir("idle", _dir)
+		var fall := 90.0 if dir.x >= 0.0 else -90.0
+		var tw0 := create_tween()
+		tw0.tween_property(body, "rotation_degrees", fall, 0.32).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+		tw0.parallel().tween_property(body, "position", Vector2(dir.x * 3.0, 1.0), 0.32)
+		tw0.tween_property(body, "modulate", Color(0.7, 0.7, 0.75), 0.4)
 	Game.hitstop(0.07)
 	Game.shake(2.5)
 	Game.note_kill(actor)
 	Game.world.note_removed(self)
 	for item in stats.loot:
 		Game.world.drop(item, stats.loot[item], global_position + dir * 4.0)
-	await get_tree().create_timer(4.0).timeout
+	await get_tree().create_timer(4.0 if drawn_death else 1.6).timeout
 	var tw := create_tween()
 	tw.tween_property(self, "modulate:a", 0.0, 0.8)
 	await tw.finished
@@ -236,23 +314,32 @@ func _dir_name(v: Vector2) -> String:
 	return _facing
 
 
+## Play the best animation this actor has for what it's doing, facing `v`.
 func _play_dir(base_anim: String, v: Vector2) -> void:
 	var d := _dir_name(v)
-	var directional := "%s_%s" % [base_anim, d]
-	if body.sprite_frames.has_animation(directional):
-		body.flip_h = false
-		_play(directional)
-		return
-	# Fallback for base Pixel Crawler actors (orc, skeleton) that only have idle/run/death
-	if absf(v.x) > 0.1:
-		body.flip_h = v.x < 0.0
-	var fallback := base_anim
-	if not body.sprite_frames.has_animation(fallback):
-		if base_anim in ["walk", "attack", "heavy_attack"]:
-			fallback = "run" if body.sprite_frames.has_animation("run") else "idle"
-		else:
-			fallback = "idle"
-	_play(fallback)
+	var tries: Array = []
+	match base_anim:
+		"walk":
+			tries = ["walk_" + d, "run_" + d, "run", "idle_" + d, "idle"]
+		"run":
+			tries = ["run_" + d, "walk_" + d, "run", "idle_" + d, "idle"]
+		"attack", "heavy_attack", "hit":
+			tries = [base_anim + "_" + d, "idle_" + d, "idle"]
+		"death":
+			tries = ["death_" + d, "death", "idle_" + d, "idle"]
+		_:
+			tries = [base_anim + "_" + d, base_anim, "idle_" + d, "idle"]
+	for anim in tries:
+		if body.sprite_frames.has_animation(anim):
+			# single-direction animations (the pack's) face left by mirroring
+			var flip := false
+			if not anim.ends_with("_" + d):
+				flip = d == "left" or (d in ["up", "down"] and body.flip_h)
+			if flip != body.flip_h:
+				body.flip_h = flip
+				_anim = ""
+			_play(anim)
+			return
 
 
 func _play(anim: String) -> void:

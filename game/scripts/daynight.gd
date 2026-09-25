@@ -15,7 +15,7 @@ const GREY := {"rain": Color(0.74, 0.78, 0.86), "storm": Color(0.6, 0.64, 0.74),
 func _process(_delta: float) -> void:
 	var d := Game.darkness()
 	var indoors := Game.indoors()
-	if Game.area.begins_with("mine"):
+	if Game.underground():
 		color = MINE
 		d = 1.0
 	elif indoors:

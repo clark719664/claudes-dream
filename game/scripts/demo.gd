@@ -10,6 +10,8 @@ var mapshot := ""
 var area := "farm"
 var region := Rect2i()      # tiles; empty = the whole area, scaled down
 var map_scale := 2
+var gallery := ""
+var only := ""
 var _n := 0
 
 
@@ -31,11 +33,17 @@ func _ready() -> void:
 			Game.day = int(a.substr(6))
 		elif a.begins_with("--weather="):
 			Game.weather = a.substr(10)
+		elif a.begins_with("--gallery="):
+			gallery = a.substr(10)
+		elif a.begins_with("--only="):
+			only = a.substr(7)
 	if shots_dir != "":
 		DirAccess.make_dir_recursive_absolute(shots_dir)
 	Game.hud.dialog.visible = false
 	if mapshot != "":
 		_map()
+	elif gallery != "":
+		_gallery()
 	else:
 		_run()
 
@@ -137,7 +145,7 @@ func _run() -> void:
 	await _go("town", "from_farm")
 	await _wait(0.6)
 	await _shot("town_gate")
-	for who in ["Pell", "Tilda", "Brom"]:
+	for who in ["Pella", "Tilda", "Brom"]:
 		var k := _nearest(func(n): return n is Npc and n.display_name == who, p.global_position)
 		if k == null:
 			continue
@@ -205,6 +213,37 @@ func _run() -> void:
 				r._gone()
 				await _wait(0.6)
 				await _shot("mine_ladder")
+	# the Deepways: down the shaft in Brindle, a broken cart, the quest, the ride east
+	await _go("town", "from_farm")
+	var shaft := _nearest(func(n): return n is House and n.door_to != "", p.global_position)
+	if shaft:
+		p.global_position = shaft.global_position + Vector2(0, 24)
+		Game.world.stream_now()
+		await _wait(0.8)
+		await _shot("deepways_shaft")
+		shaft.interact(p)
+		await _wait(1.4)
+		await _shot("deepways_station")
+		var cart := _nearest(func(n): return n is Minecart, p.global_position)
+		if cart:
+			cart.interact(p)
+			await _wait(0.3)
+			await _shot("cart_quest")
+			Game.hud.dialog.visible = false
+			for m in get_tree().get_nodes_in_group("minecarts"):
+				Game.stations_found[m.id] = m.label
+			cart._refresh()
+			cart.interact(p)
+			await _wait(0.3)
+			await _shot("cart_ride")
+			Game.hud.close_menu()
+			await Game.world.travel_to("dw_stonegate")
+			await _wait(0.6)
+			await _shot("deepways_stonegate")
+		p.global_position = Vector2(108, 30) * 16.0
+		Game.world.stream_now()
+		await _wait(1.0)
+		await _shot("deep_company_camp")
 	# a fight at the stockade
 	await _go("badlands", "from_town")
 	Inventory.add("sword_iron")
@@ -221,6 +260,36 @@ func _run() -> void:
 			await _use(p)
 			if i == 3:
 				await _shot("combat")
+	# the bow, the spore staff and a better watering can
+	Inventory.add("bow_hunter")
+	Inventory.add("staff_spore")
+	await _go("pinewood", "from_farm")
+	var mob := _nearest(func(n): return n is Enemy, p.global_position)
+	if mob:
+		p.global_position = mob.global_position + Vector2(-70, 0)
+		p.facing = Vector2.RIGHT
+		Game.world.stream_now()
+		await _wait(0.6)
+		_select("bow_hunter")
+		p.use_selected()
+		await _wait(0.12)
+		await _shot("bow")
+		_select("staff_spore")
+		p.use_selected()
+		await _wait(0.15)
+		await _shot("spore_staff")
+	Game.can_tier = 3
+	Inventory.changed.emit()
+	await _go("house", "bed")
+	var wardrobe: Node2D = null
+	for n in get_tree().get_nodes_in_group("interactable"):
+		if n is CabinFixture and n.role == "wardrobe":
+			wardrobe = n
+	if wardrobe:
+		p.global_position = wardrobe.global_position + Vector2(0, 16)
+		wardrobe.interact(p)
+		await _wait(0.4)
+		await _shot("wardrobe")
 	# the seasons: fall woods, a rainy day, winter on the farm
 	p.hp = p.max_hp
 	Game.day = 2 * 28 + 5
@@ -252,6 +321,94 @@ func _run() -> void:
 	await _shot("night_town")
 	if shots_dir != "":
 		get_tree().quit()
+
+
+## Film every character: villagers walking four ways, fighters winding up, lunging, flinching and
+## falling. One strip per actor in --gallery=DIR, for checking the animations by eye.
+func _gallery() -> void:
+	DirAccess.make_dir_recursive_absolute(gallery)
+	Game.hud.visible = false
+	Game.time_of_day = 0.5
+	await _go("farm", "door")
+	var p: Player = Game.player
+	p.visible = false
+	var spot: Vector2 = Game.world.cabin.global_position + Vector2(-40, 70)
+	for n in Game.world.entities.get_children():
+		if (n is Harvestable or n is Enemy or n is Node2D and n.get_script() == null and n.has_meta("oid")) and n.global_position.distance_to(spot) < 120:
+			n.queue_free()
+	for dy in range(-4, 5):
+		for dx in range(-5, 6):
+			Game.world.clear_decor(Vector2i(floori(spot.x / 16) + dx, floori(spot.y / 16) + dy))
+	var cam := Camera2D.new()
+	Game.world.add_child(cam)
+	cam.global_position = spot + Vector2(0, -14)
+	cam.zoom = Vector2(4, 4)
+	cam.make_current()
+	var names: Array = Pack.catalog.actors.keys()
+	names.sort()
+	for actor in names:
+		if not Pack.has_anim(actor, "idle_down") and not Pack.has_anim(actor, "idle"):
+			continue
+		if only != "" and not actor in only.split(","):
+			continue
+		var frames: Array[Image] = []
+		var body := AnimatedSprite2D.new()
+		body.sprite_frames = Pack.frames(actor)
+		body.centered = false
+		body.position = spot
+		Game.world.entities.add_child(body)
+		for anim in ["idle_down", "walk_down", "walk_right", "walk_up", "walk_left", "idle", "run", "attack_right", "death"]:
+			if not body.sprite_frames.has_animation(anim):
+				continue
+			body.play(anim)
+			body.offset = Pack.actor_offset(actor, anim, false)
+			var count := mini(body.sprite_frames.get_frame_count(anim), 8)
+			for f in count:
+				body.frame = f
+				body.pause()
+				await RenderingServer.frame_post_draw
+				await RenderingServer.frame_post_draw
+				var img := get_viewport().get_texture().get_image()
+				img.convert(Image.FORMAT_RGBA8)
+				frames.append(img.get_region(Rect2i(160, 30, 160, 160)))
+		# an acted-out fight: spawn the actor as an enemy, wind up, lunge, flinch, fall
+		body.queue_free()
+		var e := Enemy.new(actor)
+		e.stats = e.stats.duplicate()
+		e.stats.loot = {}
+		e.position = spot
+		Game.world.entities.add_child(e)
+		await RenderingServer.frame_post_draw
+		e.set_physics_process(false)
+		e._dir = Vector2.RIGHT
+		for st in [Enemy.State.WINDUP, Enemy.State.LUNGE, Enemy.State.HURT]:
+			e.state = st
+			for i in 3:
+				e._act(0.06)
+				await RenderingServer.frame_post_draw
+				var img := get_viewport().get_texture().get_image()
+				img.convert(Image.FORMAT_RGBA8)
+				frames.append(img.get_region(Rect2i(160, 30, 160, 160)))
+		e.state = Enemy.State.IDLE
+		e._die(Vector2.RIGHT)
+		for i in 4:
+			await get_tree().create_timer(0.12).timeout
+			var img := get_viewport().get_texture().get_image()
+			img.convert(Image.FORMAT_RGBA8)
+			frames.append(img.get_region(Rect2i(160, 30, 160, 160)))
+		e.queue_free()
+		for n in Game.world.entities.get_children():
+			if n is Pickup:
+				n.queue_free()
+		var cols := 12
+		var sheet := Image.create(cols * 80, ((frames.size() + cols - 1) / cols) * 80, false, Image.FORMAT_RGBA8)
+		for i in frames.size():
+			var f := frames[i]
+			f.resize(80, 80, Image.INTERPOLATE_NEAREST)
+			sheet.blit_rect(f, Rect2i(0, 0, 80, 80), Vector2i((i % cols) * 80, (i / cols) * 80))
+		sheet.save_png("%s/%s.png" % [gallery, actor])
+		await get_tree().process_frame
+	get_tree().quit()
 
 
 func _go(id: String, at: String) -> void:

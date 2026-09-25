@@ -69,10 +69,10 @@ def gen_badlands(a):
     road = a.trail([w, (20, w[1] - 1), (46, 40), (74, 46), (100, e[1] + 1), e], 3.0, ':', 3.0, k=82)
     a.trail([(74, 46), (88, 36), (92, 31)], 2.0, ':', 1.6, k=83)
     a.trail([(46, 40), (40, 56), (30, 70), (22, 74)], 1.6, ':', 2.2, k=84)
-    stockade(a, 78, 8, 106, 30, 'grimtusk', ['orc', 'orc_rogue', 'berserker_m', 'orc_shaman', 'zealot_m', 'orc'], boss='garrick')
+    stockade(a, 78, 8, 106, 30, 'grimtusk', ['orc', 'berserker_m', 'orc_shaman', 'zealot_m', 'berserker_f', 'zealot_f'], boss='garrick')
     B.sign(a, 70, 44, 'Beyond this point: ORCS. Turn back, friend.')
     for (x, y) in [(66, 30), (70, 20), (60, 38), (96, 44), (104, 52)]:
-        N.enemy(a, a.rng.choice(['orc', 'orc_rogue', 'berserker_m', 'zealot_m']), x, y)
+        N.enemy(a, a.rng.choice(['orc_rogue', 'acolyte_m', 'acolyte_f', 'inquisitor_m', 'inquisitor_f']), x, y)
     # the old farmstead
     fx, fy = 18, 70
     a.paint(a.blob(fx, fy + 3, 7, 0.3, 85, 5), ':', (fx - 10, fy - 6, fx + 10, fy + 12))
@@ -129,7 +129,7 @@ def gen_stonegate(a):
     a.reserve(x1 - 1, y0, x1 + 2, y1)
     for (bx, by) in [(x0 - 1.6, gate_y - 2.2), (x0 - 1.6, gate_y + 3.4)]:
         a.add('banner', bx, by, 1, 0.3)
-    B.villager(a, x0 + 2.5, gate_y + 3.2, 'knight', 'Gate warden Hale', 0,
+    B.villager(a, x0 + 2.5, gate_y + 3.2, 'enforcer_m', 'Gate warden Hale', 0,
                say=['Stonegate. State your business - or don\'t, you look harmless.', 'The orcs haven\'t tried the wall in years. The wall is why.'])
     # streets: the high street from the gate, two cross streets
     hs = gate_y - 1
@@ -145,6 +145,9 @@ def gen_stonegate(a):
     B.lot(a, x0 + 16, ss, 12, 'log', 'The Pikes', 'orchard', depth=14)
     B.lot(a, 58, ss, 20, 'brick', 'The Iron Kettle', 'flowers', gables=2, depth=14)
     B.lot(a, 79, ss, 11, 'plaster', 'The Reeves', 'wild', depth=14)
+    # the Deepways shaft in the north of the town, up the lane between the lots
+    B.shaft_house(a, 55, hs - 17, 'brick')
+    a.trail([(55, hs - 15.5), (55, hs + 0.5)], 2.0, ':', 0.0, k=92)
     # the market between the high street and the southern lots
     mx0, my0, mx1, my1 = 22, hs + 4, 51, ss - 14
     a.rect(mx0, my0, mx1, my1, '=')
@@ -155,9 +158,12 @@ def gen_stonegate(a):
         B.stall(a, mx0 + 5 + i * 8, my0 + 4, goods)
     a.add('water_bucket', mx1 - 2.5, my0 + 2.5, 3, 0.4)
     a.add('bench', mx1 - 4.5, my1 - 1.2, 0, 1.0)
-    B.shopkeeper(a, mx0 + 15.4, my0 + 5.8, 'tavern_a', 'Marta', 'general')
-    B.villager(a, mx0 + 6, my1 - 1.5, 'peasant', 'Nim', 40)
-    B.villager(a, 66, hs + 1.6, 'knight', 'Sergeant Voss', 30, lines='guard')
+    B.shopkeeper(a, mx0 + 15.4, my0 + 5.8, 'seraphine', 'Marta', 'general')
+    B.villager(a, mx0 + 6, my1 - 1.5, 'samuel', 'Nim', 40)
+    B.villager(a, mx0 + 22, my1 - 1.5, 'defector_lace', 'Lace', 30, say=['I came in from the badlands last month. I am not going back out there.'])
+    B.villager(a, 40, ss + 1.6, 'grunt_f', 'Watchwoman Ley', 30, lines='guard')
+    B.villager(a, 76, ss + 1.6, 'grunt_m', 'Watchman Dobb', 30, lines='guard')
+    B.villager(a, 66, hs + 1.6, 'enforcer_f', 'Sergeant Voss', 30, lines='guard')
     B.lamps_along(a, hs + 3, x0 + 2, x1 - 2, 12)
     B.lamps_along(a, ss + 3, x0 + 4, x1 - 4, 12)
     # outside the walls: fields and scrub, woods round the rim

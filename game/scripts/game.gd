@@ -26,6 +26,7 @@ const GOALS := [
 	["workbench", "Buy a workbench kit from Tilda in Brindle and set it up on your farm"],
 	["spring", "Find one of the hidden springs deep in the woods"],
 	["furnace", "Set up a furnace and smelt an iron bar (ore on the mountain)"],
+	["deepways", "Find the Deepways shaft in Brindle and get a cart running"],
 	["cabin2", "Have Tilda rebuild your cabin"],
 	["warlord", "Defeat the orc warlord in the badlands"],
 	["frost", "Plunder the Frost Shrine on the summit"],
@@ -54,6 +55,8 @@ var buffs := {}            # name -> seconds left
 var station_tiers := {}    # station -> 1..3
 var stations_found := {}   # minecart stop id -> name (unused since v5; kept for old saves)
 var report := ""           # the morning report, shown after waking
+var look := "player_male"  # which character you are (the wardrobe changes it)
+var can_tier := 0          # the watering can: 0 plain, 1 copper, 2 iron, 3 gold
 var _last_hour := -1
 var _goal_timer := 0.0
 var _sleeping := false
@@ -189,7 +192,11 @@ func is_night() -> bool:
 
 
 func indoors() -> bool:
-	return area == "house" or area.begins_with("mine")
+	return area == "house" or underground()
+
+
+func underground() -> bool:
+	return area.begins_with("mine") or area == "deepways"
 
 
 func say(text: String) -> void:
@@ -287,6 +294,7 @@ func _goal_done(id: String) -> bool:
 		"workbench": return int(stats.get("placed_workbench", 0)) >= 1
 		"spring": return not springs.is_empty()
 		"furnace": return stats.crafted.has("iron_bar")
+		"deepways": return not stations_found.is_empty()
 		"cabin2": return cabin_tier >= 2 or (upgrade_pending and cabin_tier == 1)
 		"warlord": return stats.kills.get("orc_warrior", 0) >= 1
 		"frost": return opened.has("frost")
@@ -391,7 +399,7 @@ func save_game() -> void:
 		"version": 5, "day": day, "time": time_of_day, "cabin_tier": cabin_tier, "upgrade_pending": upgrade_pending,
 		"goal": goal, "stats": stats, "opened": opened.keys(), "inventory": Inventory.save_data(),
 		"stations": station_tiers, "gold": gold, "energy": energy, "weather": weather, "shipped": shipped,
-		"earned": earned, "areas": areas, "springs": springs,
+		"earned": earned, "areas": areas, "springs": springs, "look": look, "can_tier": can_tier, "carts": stations_found,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -426,6 +434,9 @@ func load_game() -> bool:
 	earned = int(data.get("earned", 0))
 	areas = data.get("areas", {})
 	springs = data.get("springs", {})
+	look = str(data.get("look", "player_male"))
+	can_tier = int(data.get("can_tier", 0))
+	stations_found = data.get("carts", {})
 	Inventory.load_data(data.get("inventory", {}))
 	return true
 

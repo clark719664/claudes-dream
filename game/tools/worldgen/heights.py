@@ -30,7 +30,9 @@ def gen_mountain(a):
     a.cliff(3, 2, 32, top=6, face=2, base='snow')
     mine = a.cliff(38, 5, 18, top=6, face=2, base='snow', mine=7)
     a.cliff(70, 1, 36, top=7, face=2, base='snow')
-    a.cliff(80, 30, 22, top=5, face=1, base='grass')
+    deep = a.cliff(80, 30, 22, top=5, face=1, base='grass', mine=10)
+    deep['to'] = 'deepways'      # this mouth goes down to the Deepways station, not the Old Mine
+    a.spawn('deepways', 80 + 10 + 1.5, 30 + 5 + 1 + 4 + 1.2)
     mx, my = 38 + 7 + 1.5, 5 + 6 + 2 + 4 + 1          # the mine mouth (the game finds it from the cliff)
     # the tarn
     a.lake(22, 38, 6.0, 4.2, 0.32, k=61)
@@ -44,6 +46,7 @@ def gen_mountain(a):
     qx, qy = 82, 58
     a.paint(a.blob(qx, qy, 12, 0.35, 66, 8), ':', (qx - 16, qy - 12, qx + 16, qy + 12), keep='.*')
     a.trail([(46, 58), (60, 60), (qx - 8, qy)], 2.2, ':', 1.6, k=67)
+    a.trail([(qx - 8, qy - 1), (84, 50), (91.5, 41)], 2.0, ':', 1.4, k=68)
     a.reserve(qx - 4, qy - 3, qx + 4, qy + 3)
     a.add('mine_carts', qx - 1, qy, 0, 1.6)
     a.add('tripod', qx + 3.5, qy - 1.5, 0, 1.0)
@@ -54,7 +57,7 @@ def gen_mountain(a):
     for (x, y) in [(qx + 6, qy - 4), (qx - 6, qy + 5)]:
         N.enemy(a, 'cave_goblin', x, y)
     N.enemy(a, 'magma_golem', qx + 9, qy + 2)
-    B.villager(a, mx + 3.5, my + 2.0, 'peasant', 'Gorran the miner', 0,
+    B.villager(a, mx + 3.5, my + 2.0, 'marlow', 'Gorran the miner', 0,
                say=['The Old Mine goes down a long way. Every fifth level there is a ladder shaft - get that far and you can ride straight back down.',
                     'Iron below the first few floors, coal all the way, and crystal deeper still. Bring a pickaxe - and bring food.'])
     B.sign(a, mx - 3.2, my + 2.6, 'THE OLD MINE\nEnter at your own risk.')
@@ -100,7 +103,7 @@ def gen_summit(a):
     a.trail([s, (s[0], 60), (52, 48), (58, 38), (58, 24), (sx, sy + 7)], 2.0, ':', 2.2, k=73)
     N.ruin(a, sx, sy, 1)
     N.hidden_chest(a, sx + 0.5, sy + 2.5, 'frost', 0)
-    for (x, y, actor) in [(sx - 5, sy + 9, 'skeleton_mage'), (sx + 6, sy + 9, 'spark_kael'), (sx, sy + 12, 'archon_vex'), (24, 24, 'frost_yeti'), (68, 22, 'frost_yeti')]:
+    for (x, y, actor) in [(sx - 5, sy + 9, 'skeleton_mage'), (sx + 6, sy + 9, 'spark_kael'), (sx, sy + 12, 'archon_vex'), (24, 24, 'frost_yeti'), (68, 22, 'frost_yeti'), (30, 50, 'mirelle'), (62, 58, 'nyx')]:
         N.enemy(a, actor, x, y)
     for (x, y) in [(sx - 4.5, sy + 6.8), (sx + 4.5, sy + 6.8)]:
         a.add('banner', x, y, 2, 0.3)

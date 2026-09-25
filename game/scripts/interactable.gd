@@ -54,7 +54,9 @@ func interact(_player: Node) -> void:
 				Game.world.drop(item, loot[item], global_position + Vector2(0, 4))
 			Game.say("The chest creaks open.")
 		"mine":
-			if int(Game.stats.get("mine_lift", 0)) >= 5:
+			if str(data.get("to", "")) == "deepways":
+				Game.world.go_to("deepways", Game.world.area_id)
+			elif int(Game.stats.get("mine_lift", 0)) >= 5:
 				Game.hud.open_lift()
 			else:
 				Game.world.go_to("mine_1", "top")

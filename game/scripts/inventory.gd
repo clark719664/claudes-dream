@@ -27,19 +27,38 @@ const NAMES := {
 	"hoe": "Hoe", "watering_can": "Watering Can", "scythe": "Scythe", "fence": "Wood Fence",
 	"kit_workbench": "Workbench Kit", "kit_sawmill": "Sawmill Kit", "kit_furnace": "Furnace Kit", "kit_anvil": "Anvil Kit",
 	"kit_cookpot": "Cooking Pot Kit",
+	"sword_copper": "Copper Sword", "sword_mythril": "Mythril Sword", "sword_obsidian": "Obsidian Blade", "sword_sunforged": "Sunforged Sword",
+	"axe_mythril": "Mythril Axe", "pickaxe_mythril": "Mythril Pickaxe", "bow_hunter": "Hunter's Bow", "staff_spore": "Spore Staff",
+	"shield_sunforged": "Sunforged Shield", "helm_iron": "Iron Helm", "chest_iron": "Iron Breastplate", "chest_mythril": "Mythril Breastplate",
 }
 const VEGGIES := ["carrot", "beet", "cabbage", "lettuce", "cauliflower", "broccoli", "garlic"]
 const FOOD := {"hearty_meal": 90, "tonic_health": 70, "cooked_meat": 45, "bread": 40, "stew": 35, "skewer": 28, "poultice": 25,
 	"mushroom": 4, "carrot": 6, "beet": 6, "cabbage": 8, "lettuce": 5, "cauliflower": 8, "broccoli": 8, "garlic": 4}
 const BUFFS := {"tonic_strength": ["might", 120.0], "tonic_swift": ["haste", 120.0], "hearty_meal": ["haste", 60.0]}
-const WEAPONS := {"sword_steel": 20, "sword_iron": 14, "sword_bone": 10, "sword_wood": 6}
-const AXES := {"axe_iron": 5, "axe": 3}
-const PICKAXES := {"pickaxe_iron": 5, "pickaxe": 3}
+## best first: the one you swing is the best you carry (or the one selected in the toolbar)
+const WEAPONS := {"sword_sunforged": 32, "sword_obsidian": 27, "sword_mythril": 23, "sword_steel": 20, "sword_iron": 14,
+	"sword_bone": 10, "sword_copper": 9, "sword_wood": 6}
+## ranged: what each fires and how hard it hits
+const RANGED := {"bow_hunter": {"dmg": 11, "shot": "arrow", "cost": 0}, "staff_spore": {"dmg": 16, "shot": "spore", "cost": 4}}
+const AXES := {"axe_mythril": 8, "axe_iron": 5, "axe": 3}
+const PICKAXES := {"pickaxe_mythril": 8, "pickaxe_iron": 5, "pickaxe": 3}
+## armour: one piece per slot counts, the best you carry; the factor is what gets through
+const ARMOUR := {"shield": {"shield_sunforged": 0.55, "shield_iron": 0.7, "shield": 0.82},
+	"helm": {"helm_iron": 0.88}, "body": {"chest_mythril": 0.72, "chest_iron": 0.85}}
+## the watering can, as the smith improves it: capacity, the cells one pour covers, its colour
+const CANS := [
+	{"name": "Watering Can", "size": 40, "reach": 1, "tint": Color(1, 1, 1)},
+	{"name": "Copper Watering Can", "size": 55, "reach": 3, "tint": Color(1.0, 0.66, 0.42)},
+	{"name": "Iron Watering Can", "size": 70, "reach": 5, "tint": Color(0.78, 0.86, 1.0)},
+	{"name": "Gold Watering Can", "size": 100, "reach": 9, "tint": Color(1.0, 0.85, 0.3)},
+]
 const FIST_DAMAGE := 3
 const GEAR := ["sword_wood", "sword_bone", "sword_iron", "sword_steel", "axe", "axe_iron", "pickaxe", "pickaxe_iron", "shield", "shield_iron", "lantern", "backpack",
-	"hoe", "watering_can", "scythe"]
+	"hoe", "watering_can", "scythe", "sword_copper", "sword_mythril", "sword_obsidian", "sword_sunforged", "axe_mythril", "pickaxe_mythril",
+	"bow_hunter", "staff_spore", "shield_sunforged", "helm_iron", "chest_iron", "chest_mythril"]
 ## Things you hold and use: everything else in the toolbar is material, food or something to place.
-const TOOLS := ["sword_wood", "sword_bone", "sword_iron", "sword_steel", "axe", "axe_iron", "pickaxe", "pickaxe_iron", "hoe", "watering_can", "scythe"]
+const TOOLS := ["sword_wood", "sword_bone", "sword_iron", "sword_steel", "axe", "axe_iron", "pickaxe", "pickaxe_iron", "hoe", "watering_can", "scythe",
+	"sword_copper", "sword_mythril", "sword_obsidian", "sword_sunforged", "axe_mythril", "pickaxe_mythril", "bow_hunter", "staff_spore"]
 const STARTER := {"axe": 1, "pickaxe": 1, "hoe": 1, "watering_can": 1, "scythe": 1, "sword_wood": 1, "carrot_seeds": 15}
 const START_GOLD := 500
 const CAN_SIZE := 40
@@ -78,8 +97,14 @@ const SHOPS := {
 		{"item": "fence", "gold": 70, "n": 10},
 		{"house": true},
 	]},
-	"smith": {"title": "BROM'S SMITHY", "greet": "Coal, ore, and better tools if you bring me bars.", "goods": [
+	"smith": {"title": "BROM'S SMITHY", "greet": "Coal, ore, better tools and a stronger can, if you bring me bars.", "goods": [
 		{"item": "coal", "gold": 30}, {"item": "iron_ore", "gold": 55},
+		{"can": 1, "gold": 600, "cost": {"stone": 20, "coal": 5}},
+		{"can": 2, "gold": 1500, "cost": {"iron_bar": 5}},
+		{"can": 3, "gold": 4000, "cost": {"steel_bar": 3, "gem": 1}},
+		{"item": "sword_copper", "gold": 350},
+		{"item": "helm_iron", "gold": 900, "cost": {"iron_bar": 3}},
+		{"item": "chest_iron", "gold": 1400, "cost": {"iron_bar": 5}},
 		{"item": "axe_iron", "gold": 1500, "cost": {"iron_bar": 5}},
 		{"item": "pickaxe_iron", "gold": 1500, "cost": {"iron_bar": 5}},
 		{"item": "sword_iron", "gold": 1200, "cost": {"iron_bar": 3}},
@@ -97,6 +122,8 @@ const RECIPES := {
 		{"out": "poultice", "cost": {"herb": 2, "fiber": 1}, "lv": 1, "desc": "Heals 25. Wild herbs grow by bushes."},
 	],
 	"workbench": [
+		{"out": "bow_hunter", "cost": {"plank": 3, "twine": 4}, "lv": 2, "st": 1, "desc": "Shoots arrows: 11 damage from a distance."},
+		{"out": "staff_spore", "cost": {"stick": 2, "mushroom": 8, "crystal": 2}, "lv": 4, "st": 2, "desc": "Throws spore bolts: 16 damage, costs a little energy."},
 		{"out": "sword_wood", "cost": {"plank": 2, "stick": 1}, "lv": 1, "st": 1, "desc": "6 damage. Better than fists."},
 		{"out": "axe", "cost": {"stick": 1, "stone": 3, "twine": 1}, "lv": 1, "st": 1, "desc": "Chops 3x faster than bare hands."},
 		{"out": "pickaxe", "cost": {"stick": 1, "stone": 4, "twine": 1}, "lv": 1, "st": 1, "desc": "Mines 3x faster. Needed for iron ore."},
@@ -124,6 +151,13 @@ const RECIPES := {
 		{"out": "sword_iron", "cost": {"iron_bar": 3, "plank": 1, "cloth": 1}, "lv": 4, "st": 2, "desc": "14 damage."},
 		{"out": "shield_iron", "cost": {"iron_bar": 3, "plank": 2, "nails": 4}, "lv": 5, "st": 2, "desc": "Take 40% less damage."},
 		{"out": "sword_steel", "cost": {"steel_bar": 3, "cloth": 1, "gem": 1}, "lv": 6, "st": 3, "desc": "20 damage. A blade worth naming."},
+		{"out": "sword_mythril", "cost": {"steel_bar": 2, "crystal": 3}, "lv": 6, "st": 3, "desc": "23 damage. Steel folded with crystal, light as a feather."},
+		{"out": "axe_mythril", "cost": {"steel_bar": 2, "crystal": 2, "plank": 1}, "lv": 6, "st": 3, "desc": "Chops 8x faster."},
+		{"out": "pickaxe_mythril", "cost": {"steel_bar": 2, "crystal": 2, "plank": 1}, "lv": 6, "st": 3, "desc": "Mines 8x faster."},
+		{"out": "chest_mythril", "cost": {"steel_bar": 5, "crystal": 4, "cloth": 2}, "lv": 7, "st": 3, "desc": "Take 28% less damage."},
+		{"out": "sword_obsidian", "cost": {"steel_bar": 3, "gem": 2, "coal": 10}, "lv": 7, "st": 3, "desc": "27 damage. Forged hot enough to glass the coal."},
+		{"out": "shield_sunforged", "cost": {"steel_bar": 3, "gem": 2, "glass": 1}, "lv": 8, "st": 3, "desc": "Take 45% less damage."},
+		{"out": "sword_sunforged", "cost": {"steel_bar": 4, "gem": 3, "glass": 2}, "lv": 8, "st": 3, "desc": "32 damage. It hums in the dark."},
 	],
 	"cookpot": [
 		{"out": "cooked_meat", "cost": {"meat": 1, "wood": 1}, "lv": 1, "st": 1, "desc": "Heals 45."},
@@ -144,7 +178,9 @@ const RECIPES := {
 }
 ## What it takes to raise each station to tier 2 and tier 3.
 const STATION_UPGRADES := {
-	"workbench": [{}, {}, {"plank": 8, "nails": 6, "twine": 4}, {"iron_bar": 4, "steel_bar": 2, "plank": 10, "nails": 10}],
+	"workbench": [
+		{"out": "bow_hunter", "cost": {"plank": 3, "twine": 4}, "lv": 2, "st": 1, "desc": "Shoots arrows: 11 damage from a distance."},
+		{"out": "staff_spore", "cost": {"stick": 2, "mushroom": 8, "crystal": 2}, "lv": 4, "st": 2, "desc": "Throws spore bolts: 16 damage, costs a little energy."},{}, {}, {"plank": 8, "nails": 6, "twine": 4}, {"iron_bar": 4, "steel_bar": 2, "plank": 10, "nails": 10}],
 	"sawmill": [{}, {}, {"plank": 6, "iron_bar": 2, "nails": 6}, {"steel_bar": 2, "iron_bar": 4, "plank": 12, "twine": 6}],
 	"furnace": [{}, {}, {"stone": 24, "coal": 6, "plank": 4}, {"iron_bar": 8, "brick": 16, "nails": 10}],
 	"anvil": [{}, {}, {"iron_bar": 5, "plank": 6, "nails": 8}, {"steel_bar": 3, "iron_bar": 6, "brick": 10}],
@@ -167,7 +203,7 @@ var items := {}
 var slots: Array = []     # item names in the order they were picked up: the first ten are the toolbar
 var xp := 0
 var level := 1
-var water := CAN_SIZE     # left in the watering can
+var water := CAN_SIZE     # left in the watering can (up to can().size)
 
 
 func count(item: String) -> int:
@@ -336,11 +372,19 @@ func tool_power(tools: Dictionary) -> int:
 
 
 func damage_taken_factor() -> float:
-	if has("shield_iron"):
-		return 0.6
-	if has("shield"):
-		return 0.75
-	return 1.0
+	var f := 1.0
+	for slot in ARMOUR:
+		var best := 1.0
+		for item in ARMOUR[slot]:
+			if has(item):
+				best = minf(best, float(ARMOUR[slot][item]))
+		f *= best
+	return f
+
+
+## Watering can: how much it holds and how far one pour reaches, at the tier the smith made it.
+func can() -> Dictionary:
+	return CANS[clampi(Game.can_tier, 0, CANS.size() - 1)]
 
 
 func has(item: String) -> bool:
@@ -356,10 +400,14 @@ func best_food(missing_hp: int) -> String:
 
 
 func display_name(item: String) -> String:
+	if item == "watering_can":
+		return can().name
 	return NAMES.get(item, item.capitalize())
 
 
 func tint(item: String) -> Color:
+	if item == "watering_can":
+		return can().tint
 	return TINTS.get(item, Color.WHITE)
 
 

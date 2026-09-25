@@ -35,6 +35,7 @@ signal entered
 var style := "log"
 var label := ""
 var is_cabin := false
+var door_to := ""         # a door that leads somewhere (the Deepways shafts)
 var gables := 1
 var _parts: Node2D
 
@@ -104,7 +105,7 @@ func _process(_delta: float) -> void:
 
 
 func interact(_player: Node) -> void:
-	if is_cabin:
+	if is_cabin or door_to != "":
 		entered.emit()
 	else:
 		Game.hud.show_dialog(label if label != "" else "House", "The door is locked. Someone's home - you can hear a kettle.")

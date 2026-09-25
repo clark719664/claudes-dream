@@ -14,7 +14,7 @@ Reverie is a WebGPU game engine for the browser with a physically based, GPU-dri
 
 ![The Reverie Studio](docs/media/studio.jpg)
 
-> **Also in this repo: [Hearthwild](game/)**, a 2D Godot game in the spirit of Stardew Valley, with Ark-style layered crafting and real combat. It's built on the Pixel Crawler art pack. The valley is 600×500 tiles and holds seven planned settlements with fenced house lots, farms, rivers and bridges, forests and snowfields, linked by roads and a minecart railway. You upgrade your cabin inside and out, work through an eight-station crafting tree, and fight orcs and skeletons. See [`game/README.md`](game/README.md).
+> **Also in this repo: [Hearthwild](game/)**, a 2D Godot farming game in the spirit of Stardew Valley. You start on an overgrown plot with a one-room cabin and work your way up: clear the land, grow and ship crops through the seasons, buy and set up crafting stations, rebuild the house, and explore nine areas of towns, woods, mountains and badlands, plus a daily-changing mine and the Deepways railway under the valley. The world art is the Pixel Crawler pack; the people and monsters are 93 PixelLab characters with real walk cycles. See [`game/README.md`](game/README.md).
 
 ## Quick start
 

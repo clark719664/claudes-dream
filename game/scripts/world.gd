@@ -177,9 +177,21 @@ func _build_outdoor(id: String, at: String) -> Vector2:
 	size = Vector2(data.width, data.height) * 16
 	ground = data.get("ground", "")
 	pois = data.get("pois", [])
-	var winter: bool = Game.season() == 3 and not data.get("snowy", false)
-	var tiles := "res://data/areas/%s%s.bin" % [id, "_winter" if winter else ""]
-	var built := Terrain.new().build(root, entities, data, tiles)
+	var built := {"bodies": [], "mines": []}
+	if data.get("cave", false):
+		# underground: rock and floor drawn from the terrain string
+		var cells := PackedByteArray()
+		cells.resize(ground.length())
+		for i in ground.length():
+			var ch := ground[i]
+			cells[i] = 0 if ch == "#" else (2 if ch == "=" else 1)
+		var rock := CaveRock.new()
+		rock.setup(int(data.width), int(data.height), cells, "brown", int(data.get("seed", 1)))
+		root.add_child(rock)
+	else:
+		var winter: bool = Game.season() == 3 and not data.get("snowy", false)
+		var tiles := "res://data/areas/%s%s.bin" % [id, "_winter" if winter else ""]
+		built = Terrain.new().build(root, entities, data, tiles)
 	root.add_child(decor)
 	root.add_child(entities)
 	for body in built.bodies:
@@ -193,7 +205,7 @@ func _build_outdoor(id: String, at: String) -> Vector2:
 		gate.position = Vector2(g.x, g.y) * 16
 		entities.add_child(gate)
 	for m in built.mines:
-		spawn({"t": "mine_entrance", "x": m.x, "y": m.y})
+		spawn({"t": "mine_entrance", "x": m.at.x, "y": m.at.y, "to": m.to})
 	for o in data.persistent:
 		if _should_spawn(o):
 			var node := spawn(o)
@@ -246,6 +258,24 @@ func _build_mine(id: String, at: String) -> Vector2:
 	mine = script.new(int(id.substr(5)) if id.length() > 5 else 1)
 	root.add_child(mine)
 	return mine.build(self, at)
+
+
+## Ride the Deepways cart to another working stop (all stops live in the Deepways area).
+func travel_to(id: String) -> void:
+	if _busy:
+		return
+	for m in get_tree().get_nodes_in_group("minecarts"):
+		if m.id == id:
+			_busy = true
+			await Game.hud.fade(true)
+			player.global_position = m.global_position + Vector2(0, 22)
+			player.facing = Vector2.DOWN
+			stream_now()
+			await get_tree().create_timer(0.35).timeout
+			await Game.hud.fade(false)
+			_busy = false
+			Game.say("The cart rattles into %s." % m.label)
+			return
 
 
 ## Wake up at home.
@@ -444,9 +474,12 @@ func _fade(delta: float) -> void:
 			if not _tall.has(c):
 				continue
 			for entry in _tall[c]:
+				# chopped trees are freed while still listed here
+				if not is_instance_valid(entry[0]) or not is_instance_valid(entry[1]):
+					continue
 				var n: Node2D = entry[0]
 				var sp: Sprite2D = entry[1]
-				if not is_instance_valid(n) or not sp.visible:
+				if not sp.visible:
 					continue
 				var sz := sp.texture.get_size()
 				var q := n.global_position
@@ -584,7 +617,14 @@ func spawn(o: Dictionary) -> Node2D:
 		"deck":
 			node = Deck.new(o.kind, int(o.w), int(o.h))
 		"house":
-			node = House.new(o.get("style", "log"), o.get("name", ""), false, int(o.get("gables", 1)))
+			var h := House.new(o.get("style", "log"), o.get("name", ""), false, int(o.get("gables", 1)))
+			if o.has("door_to"):
+				h.door_to = o.door_to
+				var here := area_id
+				h.entered.connect(func(): go_to(h.door_to, here))
+			node = h
+		"ladder":
+			node = Ladder.new(false, str(o.get("to", "")), str(o.get("at", "")))
 		"cabin":
 			cabin = House.new(Inventory.CABIN_TIERS[Game.cabin_tier].style, "Your cabin", true)
 			cabin.entered.connect(func(): go_to("house", "door"))

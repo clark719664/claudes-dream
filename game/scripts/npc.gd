@@ -108,7 +108,7 @@ func _ready() -> void:
 	body.sprite_frames = Pack.frames(actor)
 	body.centered = false
 	add_child(body)
-	_play("idle")
+	_show("idle", Vector2.DOWN)
 	if span <= 0.0:
 		var blocker := StaticBody2D.new()
 		blocker.collision_layer = 1
@@ -123,7 +123,7 @@ func _process(delta: float) -> void:
 	if span > 0.0 and not close:
 		if _wait > 0.0:
 			_wait -= delta
-			_play("idle")
+			_show("idle", Vector2.ZERO)
 		else:
 			var goal := _home.x + _target
 			var dx := goal - position.x
@@ -132,18 +132,36 @@ func _process(delta: float) -> void:
 				_target = randf_range(-span, span) * 0.5
 			else:
 				position.x += signf(dx) * minf(absf(dx), 22.0 * delta)
-				_face(dx < 0)
-				_play("run")
+				_show("walk", Vector2(dx, 0))
 	else:
-		_play("idle")
-		if p:
-			_face(p.global_position.x < global_position.x)
+		_show("idle", (p.global_position - global_position) if p else Vector2.ZERO)
 
 
-func _face(left: bool) -> void:
+var _facing := "down"
+
+
+## Idle or walk, facing along `v` (or the way we already face). The PixelLab cast turns four
+## ways; the pack's characters face left by mirroring.
+func _show(what: String, v: Vector2) -> void:
+	if v.length_squared() > 0.5:
+		if absf(v.x) >= absf(v.y) * 0.8:
+			_facing = "right" if v.x > 0.0 else "left"
+		else:
+			_facing = "down" if v.y > 0.0 else "up"
+	var d := what + "_" + _facing
+	if what == "walk" and not body.sprite_frames.has_animation(d):
+		d = "run_" + _facing
+	if body.sprite_frames.has_animation(d):
+		if body.flip_h:
+			body.flip_h = false
+			_anim = ""
+		_play(d)
+		return
+	var left := _facing == "left" or (_facing in ["up", "down"] and body.flip_h)
 	if left != body.flip_h:
 		body.flip_h = left
-		body.offset = Pack.actor_offset(actor, _anim, left)
+		_anim = ""
+	_play("run" if what == "walk" else "idle")
 
 
 func _play(anim: String) -> void:

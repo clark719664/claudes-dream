@@ -21,3 +21,8 @@ func interact(_player: Node) -> void:
 			Game.hud.open_crafting("kitchen")
 		"alchemy":
 			Game.hud.open_crafting("alchemy")
+		"wardrobe":
+			var looks: Array = Player.LOOKS
+			var i := (looks.find(Game.look) + 1) % looks.size()
+			Game.player.set_look(looks[i])
+			Game.say("You change into something else. (E again for another outfit)")

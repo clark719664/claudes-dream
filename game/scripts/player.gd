@@ -1,6 +1,6 @@
 class_name Player
 extends CharacterBody2D
-## The hooded rogue: walks, uses whatever is selected in the toolbar (a sword, an axe, a hoe, the
+## You: walks, uses whatever is selected in the toolbar (a sword, an axe, a hoe, the
 ## watering can, seeds, a kit to set up), gathers, crafts, eats.
 
 const WALK := 72.0
@@ -8,7 +8,9 @@ const SPRINT := 112.0
 const ATTACK_TIME := 0.32
 const REACH := 16.0
 
-var actor := "rogue"
+var actor := "player_male"
+## Your character: the player characters made in PixelLab (the wardrobe at home switches them).
+const LOOKS := ["player_male", "player_lg_male", "player_thin_fem", "player_thick_fem"]
 var max_hp := 100
 var hp := 100
 var facing := Vector2.RIGHT
@@ -47,6 +49,8 @@ func _ready() -> void:
 	sh.z_index = -1
 	add_child(sh)
 	body = AnimatedSprite2D.new()
+	if Pack.catalog.actors.has(Game.look):
+		actor = Game.look
 	body.sprite_frames = Pack.frames(actor)
 	body.centered = false
 	body.material = FX.flash_material()
@@ -90,7 +94,7 @@ func _physics_process(delta: float) -> void:
 	if Game.energy <= 0:
 		speed *= 0.6
 	max_hp = 130 if Inventory.has("backpack") else 100
-	var underground := Game.area.begins_with("mine")
+	var underground := Game.underground()
 	var glow := underground or (Inventory.has("lantern") and Game.darkness() > 0.3)
 	_lantern.enabled = glow
 	if underground:
@@ -102,12 +106,10 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	if input.length() > 0.1 and _attack_t <= 0.0:
 		facing = input.normalized()
-	if absf(facing.x) > 0.05 and body.flip_h != (facing.x < 0):
-		body.flip_h = facing.x < 0
+	if absf(facing.x) > 0.05 and weapon_pivot.scale.x != (-1.0 if facing.x < 0 else 1.0):
 		weapon_pivot.scale.x = -1.0 if facing.x < 0 else 1.0
 		weapon_pivot.position.x = -4.0 if facing.x < 0 else 4.0
-		body.offset = Pack.actor_offset(actor, _anim, body.flip_h)
-	_play("run" if input.length() > 0.1 else "idle")
+	_show(input.length() > 0.1, speed == SPRINT)
 	body.speed_scale = 1.4 if speed == SPRINT and input.length() > 0.1 else 1.0
 	_update_cursor()
 
@@ -177,6 +179,8 @@ func use_selected() -> void:
 			Game.say("There's no room there.")
 	elif Inventory.FOOD.has(item):
 		eat_item(item)
+	elif Inventory.RANGED.has(item):
+		_shoot(item)
 	elif item in Inventory.AXES and w.area_id == "farm" and w.remove_fence(cell):
 		_swing(item, Callable(), 1)
 	elif item in Inventory.PICKAXES and w.soil and w.soil.clear(cell):
@@ -214,9 +218,9 @@ func _water(cell: Vector2i) -> void:
 	var w := Game.world
 	for c in [cell, facing_cell() + Vector2i(signi(int(facing.x)), 0)]:
 		if w.ground_at(c) == "~":
-			Inventory.water = Inventory.CAN_SIZE
+			Inventory.water = Inventory.can().size
 			Inventory.changed.emit()
-			Game.say("Filled the watering can.")
+			Game.say("Filled the %s." % Inventory.can().name.to_lower())
 			FX.chips(w.entities, Vector2(c) * 16 + Vector2(8, 8), Color(0.5, 0.7, 1.0), 8)
 			return
 	if Inventory.water <= 0:
@@ -224,9 +228,42 @@ func _water(cell: Vector2i) -> void:
 		return
 	Inventory.water -= 1
 	Inventory.changed.emit()
-	FX.chips(w.entities, Vector2(cell) * 16 + Vector2(8, 10), Color(0.5, 0.7, 1.0), 6)
-	if w.soil and w.soil.water(cell):
-		Game.note("watered")
+	for c in _pour_cells(cell, int(Inventory.can().reach)):
+		FX.chips(w.entities, Vector2(c) * 16 + Vector2(8, 10), Color(0.5, 0.7, 1.0), 4)
+		if w.soil and w.soil.water(c):
+			Game.note("watered")
+
+
+## The cells one pour reaches: a line ahead for the copper and iron cans, a 3x3 patch for gold.
+func _pour_cells(cell: Vector2i, reach: int) -> Array:
+	var d := Vector2i(signi(int(round(facing.x))), 0) if absf(facing.x) > absf(facing.y) else Vector2i(0, signi(int(round(facing.y))))
+	if d == Vector2i.ZERO:
+		d = Vector2i(0, 1)
+	var out := []
+	if reach >= 9:
+		var mid := cell + d
+		for dy in range(-1, 2):
+			for dx in range(-1, 2):
+				out.append(mid + Vector2i(dx, dy))
+		return out
+	for i in reach:
+		out.append(cell + d * i)
+	return out
+
+
+## Loose an arrow or a spore bolt the way you face.
+func _shoot(item: String) -> void:
+	var r: Dictionary = Inventory.RANGED[item]
+	if int(r.cost) > 0 and not Game.use_energy(int(r.cost)):
+		return
+	_held = item
+	_set_weapon_texture(item)
+	_attack_t = ATTACK_TIME * 0.8
+	_struck = true
+	_action = Callable()
+	var shot := Projectile.new(str(r.shot), facing.normalized(), int(r.dmg))
+	shot.global_position = global_position + Vector2(0, -9) + facing.normalized() * 8.0
+	get_parent().add_child(shot)
 
 
 func _scythe() -> void:
@@ -383,11 +420,16 @@ func _die() -> void:
 	hp = 0
 	velocity = Vector2.ZERO
 	weapon.visible = false
-	_play("death")
+	if body.sprite_frames.has_animation("death"):
+		_play("death")
+	else:
+		var tw := body.create_tween()
+		tw.tween_property(body, "rotation_degrees", 90.0 if facing.x >= 0.0 else -90.0, 0.35).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	Game.say("You black out...")
 	await get_tree().create_timer(2.5).timeout
 	hp = max_hp
 	Game.energy = mini(Game.energy, Game.MAX_ENERGY / 2)
+	body.rotation_degrees = 0.0
 	dead = false
 	weapon.visible = true
 	_invuln = 1.5
@@ -420,6 +462,39 @@ func _play(anim: String) -> void:
 	_anim = anim
 	body.play(anim)
 	body.offset = Pack.actor_offset(actor, anim, body.flip_h)
+
+
+## Standing or walking, facing the way you face. The PixelLab looks turn four ways; the rogue
+## faces left by mirroring.
+func _show(moving: bool, sprinting := false) -> void:
+	var d := "right"
+	if absf(facing.x) >= absf(facing.y) * 0.8:
+		d = "right" if facing.x >= 0.0 else "left"
+	else:
+		d = "down" if facing.y > 0.0 else "up"
+	var name := ("run_" if sprinting else "walk_") + d if moving else "idle_" + d
+	if body.sprite_frames.has_animation(name):
+		if body.flip_h:
+			body.flip_h = false
+			_anim = ""
+		_play(name)
+		return
+	var left := facing.x < -0.05 or (absf(facing.x) <= 0.05 and body.flip_h)
+	if left != body.flip_h:
+		body.flip_h = left
+		_anim = ""
+	_play("run" if moving else "idle")
+
+
+## Change clothes (the wardrobe at home).
+func set_look(look: String) -> void:
+	if not Pack.catalog.actors.has(look):
+		look = LOOKS[0]
+	actor = look
+	Game.look = look
+	body.sprite_frames = Pack.frames(actor)
+	_anim = ""
+	_show(false)
 
 
 func _refresh_weapon() -> void:

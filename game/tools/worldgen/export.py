@@ -6,7 +6,7 @@ from core import CAT, DATA
 from terrain_bake import Baker, write_tiles, merge_rects, write_png
 
 CHUNK = 32
-PERSISTENT = {'player_start', 'cabin', 'npc', 'villager', 'station', 'deck', 'ship_crate', 'spring', 'mine_entrance', 'shopkeeper'}
+PERSISTENT = {'player_start', 'cabin', 'npc', 'villager', 'station', 'deck', 'ship_crate', 'spring', 'mine_entrance', 'shopkeeper', 'minecart_stop', 'ladder'}
 OUT = os.path.join(DATA, 'areas')
 EDGES = {tuple(int(v) for v in k.split(',')): e for k, e in CAT['floor_edges'].items()}
 
@@ -45,7 +45,7 @@ def check_reach(a):
     deck = set((d['x'] + i, d['y'] + j) for d in a.decks for i in range(d['w']) for j in range(d['h']))
     for y in range(H):
         for x in range(W):
-            if a.grid[y][x] == '~' and (x, y) not in deck:
+            if (a.grid[y][x] == '~' and (x, y) not in deck) or a.grid[y][x] == '#':
                 blocked[y * W + x] = 1
     for cells in a.fences.values():
         for (x, y) in cells:
@@ -93,7 +93,7 @@ def check_reach(a):
                 stack.append((nx, ny))
     problems = []
     for o in a.objs:
-        if o['t'] not in ('chest', 'spring', 'villager', 'shopkeeper', 'ship_crate', 'cabin') or o.get('festival'):
+        if o['t'] not in ('chest', 'spring', 'villager', 'shopkeeper', 'ship_crate', 'cabin', 'minecart_stop', 'ladder') or o.get('festival'):
             continue
         x, y = int(o['x'] / 16), int(o['y'] / 16)
         ok = any(a.inside(x + dx, y + dy) and seen[(y + dy) * W + x + dx] for dx in (-1, 0, 1) for dy in (-1, 0, 1, 2))
@@ -104,7 +104,7 @@ def check_reach(a):
     return problems
 
 
-MAP_COL = {'.': (104, 156, 72), ':': (170, 132, 88), '=': (160, 158, 150), '~': (72, 124, 196), '*': (226, 232, 242)}
+MAP_COL = {'#': (34, 28, 26), '.': (104, 156, 72), ':': (170, 132, 88), '=': (160, 158, 150), '~': (72, 124, 196), '*': (226, 232, 242)}
 
 
 def write(a):
@@ -121,16 +121,21 @@ def write(a):
     for k in chunks:
         chunks[k].sort(key=lambda o: (o['y'], o['x']))
     rows = [''.join(r) for r in a.grid]
-    layers, blocked = Baker(rows, EDGES, seed=a.seed).bake(a.decks)
-    raw = write_tiles(os.path.join(OUT, a.id + '.bin'), layers)
-    if not a.snowy:
+    cave = getattr(a, 'cave', False)
+    if cave:
+        # underground: the game draws rock and floor itself (cave_rock.gd), nothing to bake
+        layers, blocked, raw = None, set(), 0
+    else:
+        layers, blocked = Baker(rows, EDGES, seed=a.seed).bake(a.decks)
+        raw = write_tiles(os.path.join(OUT, a.id + '.bin'), layers)
+    if not a.snowy and not cave:
         wrows = [r.replace('.', '*') for r in rows]
         wl, _ = Baker(wrows, EDGES, seed=a.seed).bake(a.decks)
         write_tiles(os.path.join(OUT, a.id + '_winter.bin'), wl)
     water = [v for r in merge_rects(blocked) for v in r]
     data = {
         'id': a.id, 'name': a.name, 'width': a.w, 'height': a.h, 'seed': a.seed, 'chunk': CHUNK,
-        'biome': a.biome, 'snowy': a.snowy, 'regrow': a.regrow, 'farmable': a.farmable,
+        'biome': a.biome, 'snowy': a.snowy, 'regrow': a.regrow, 'farmable': a.farmable, 'cave': cave,
         'exits': a.exits, 'spawns': a.spawns, 'cliffs': a.cliffs, 'water': water, 'pois': a.pois,
         'fences': {k: [c for cell in sorted(v) for c in cell] for k, v in a.fences.items()},
         'gates': a.gates, 'persistent': persistent, 'chunks': chunks, 'ground': ''.join(rows),
@@ -145,7 +150,9 @@ def write(a):
 
 
 def _map_png(a):
-    col = [MAP_COL[a.grid[y][x]] for y in range(a.h) for x in range(a.w)]
+    cave = getattr(a, 'cave', False)
+    under = {'.': (120, 96, 72), '=': (140, 138, 132)}
+    col = [(under.get(a.grid[y][x]) if cave else None) or MAP_COL[a.grid[y][x]] for y in range(a.h) for x in range(a.w)]
     for c in a.cliffs:
         for y in range(max(0, c['y']), min(a.h, c['y'] + c['top'] + c['face'] + 3)):
             for x in range(max(0, c['x']), min(a.w, c['x'] + c['w'])):

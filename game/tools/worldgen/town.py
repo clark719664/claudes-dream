@@ -68,18 +68,18 @@ def generate(a):
     # ---- Main Street, north side
     door = B.lot(a, 12, MAIN, 12, 'plank', 'The Millers', 'veg')
     door = B.lot(a, 25, MAIN, 20, 'plaster', 'General Store', 'flowers', gables=2)
-    B.shopkeeper(a, door + 2.6, MAIN - 3.4, 'peasant', 'Pell', 'general')
+    B.shopkeeper(a, door + 2.6, MAIN - 3.4, 'pella', 'Pella', 'general')
     a.add('crate_crops', door - 3.2, MAIN - 2.6, 1, 0.4)
     a.add('crate_crops', door - 4.3, MAIN - 2.4, 4, 0.4)
     a.add('sack', door + 4.2, MAIN - 2.7, 0, 0.4)
     door = B.lot(a, 57, MAIN, 12, 'brick', 'Smithy', dress=False)
-    B.shopkeeper(a, door + 2.4, MAIN - 3.3, 'knight', 'Brom', 'smith')
+    B.shopkeeper(a, door + 2.4, MAIN - 3.3, 'mechanic_grease', 'Brom', 'smith')
     a.add('station_deco', door - 3.6, MAIN - 2.2, station='anvil', tier=2)
     a.add('station_deco', door + 4.3, MAIN - 5.0, station='furnace', tier=2)
     a.add('ore_crate', door - 1.9, MAIN - 5.2, 0, 0.4)
     a.add('water_bucket', door + 1.8, MAIN - 1.6, 2, 0.3)
     door = B.lot(a, 70, MAIN, 20, 'dark', "Tilda's Carpentry", dress=False, gables=2)
-    B.shopkeeper(a, door + 2.6, MAIN - 3.4, 'tavern_b', 'Tilda', 'carpenter')
+    B.shopkeeper(a, door + 2.6, MAIN - 3.4, 'kota', 'Tilda', 'carpenter')
     for (lx, ly) in [(door - 6.5, MAIN - 2.4), (door - 6.2, MAIN - 3.6), (door + 6.5, MAIN - 2.6)]:
         a.add('log_pile', lx + B.jitter(a, 0.2), ly, 0, 0.9)
     a.add('station_deco', door - 3.0, MAIN - 4.6, station='sawmill', tier=2)
@@ -103,13 +103,44 @@ def generate(a):
     B.lot(a, 92, SOUTH, 12, 'plank', 'The Weavers', 'wild', depth=16)
     B.lamps_along(a, SOUTH + 3, 8, 102, 13)
     # ---- people
-    B.villager(a, cx - 4, cy + 6.5, 'wizard', 'Merlo', 50, lines='merlo')
-    B.villager(a, 98, MAIN + 1.6, 'knight', 'Captain Brann', 0, lines='guard')
-    B.villager(a, 30, MAIN + 1.8, 'peasant', 'Ada', 70)
-    B.villager(a, 80, SOUTH + 1.6, 'tavern_a', 'Rosa', 40,
-               say=['The Wayfarer is open all hours. Well, most hours.', 'Ship your crops in the crate by your door. The carter pays at dawn.'])
-    B.villager(a, cx + 7, cy - 1, 'peasant', 'Wick', 30,
-               say=['I sell nothing, I buy nothing, I just like the square.', 'The Blossom Fair is on the 13th of spring. Everybody comes.'])
+    # ---- people (the PixelLab cast)
+    x0, y0, x1, y1 = SQ
+    B.villager(a, cx - 4, cy + 6.5, 'elder_grain', 'Merlo', 50, lines='merlo')
+    B.villager(a, cx + 3, cy + 6.6, 'mayor_holt', 'Mayor Holt', 30, lines='mayor')
+    B.villager(a, x0 + 3.5, y0 + 6.6, 'elena', 'Elena', 0, lines='grocer')
+    B.villager(a, cx + 6.6, cy + 1.6, 'busker_rio', 'Rio', 0, lines='busker')
+    B.villager(a, x1 - 2.4, y0 + 2.2, 'fortune_moth', 'Moth', 0, lines='fortune')
+    B.villager(a, x0 + 6.4, y0 + 2.4, 'curator_ash', 'Ash', 0,
+               say=['I pin the notices. Festivals, lost goats, the price of iron.', 'Someone keeps pinning maps of tunnels under the valley. Old mine railways, they say.'])
+    B.villager(a, 98, MAIN + 1.6, 'bouncer_knox', 'Captain Brann', 0, lines='guard')
+    B.villager(a, 12, MAIN + 1.8, 'gleam_courier', 'Gil the carter', 30,
+               say=['I collect from every shipping crate in the valley overnight. You get paid at dawn, every time.', 'Crops pay best, but ore, forage and goods all sell.'])
+    B.villager(a, 40, MAIN + 1.8, 'doc_elm', 'Doc Elm', 40,
+               say=['Doc Elm. Eat when you are tired - food restores your strength as well as your health.', 'The springs in the woods do more good than any tonic of mine.'])
+    B.villager(a, 62, MAIN + 1.8, 'omar', 'Omar', 60)
+    B.villager(a, 76, MAIN + 1.8, 'iodine', 'Iodine', 30)
+    B.villager(a, 30, SOUTH + 1.6, 'nurse_mira', 'Nurse Mira', 40, lines='nurse')
+    B.villager(a, 80, SOUTH + 1.6, 'barkeep_cass', 'Cass', 40, lines='barkeep')
+    B.villager(a, 98, SOUTH + 1.6, 'patch', 'Patch', 20, lines='tailor')
+    B.villager(a, 20, SOUTH + 1.8, 'tomas', 'Tomas', 50)
+    B.villager(a, 88, SOUTH + 1.8, 'hao', 'Hao', 40)
+    B.villager(a, 69, 20.5, 'sloane', 'Sloane', 0, lines='archivist')
+    B.villager(a, 78, 21.5, 'mercy', 'Sister Mercy', 16,
+               say=['We keep the churchyard tidy, the Hollow in the Oldwood we leave to itself.', 'Lay flowers on a grave and the dead rest easier. Or so I hope.'])
+    # the schoolmistress and the children in the park
+    B.villager(a, 24, 24, 'teacher_nessa', 'Miss Nessa', 20,
+               say=['Lessons are over. Now they run wild until supper.', 'Milo swears he saw a slime in the Pinewood. Green as a bottle, he says.'])
+    for (kx, ky, kid, name, span) in [(30, 24.2, 'kid_milo', 'Milo', 30), (36, 24.0, 'kid_priya', 'Priya', 24), (44, 25.0, 'orphan_ren', 'Ren', 20),
+                                     (27, 25.2, 'orphan_suki', 'Suki', 16)]:
+        B.villager(a, kx, ky, kid, name, span, say=['Tag! You\'re it!', 'Have you been down the Old Mine? Is it scary?', 'Mayor Holt has a goat. Well, the goat has the mayor.'])
+    B.villager(a, 38, 21.4, 'greenhouse_sal', 'Sal', 10,
+               say=['Sal, gardener. Water every day and your crops grow every day. Miss a day and they wait for you.', 'Cauliflower is slow, but it pays.'])
+    # the festival mascot only turns up on festival days
+    for fest in ['spring', 'summer', 'fall', 'winter']:
+        o = B.villager(a, cx - 6.5, cy + 3.2, 'festival_gala', 'Gala', 20, say=['Happy festival! Happy festival!'])
+        o['festival'] = fest
+    # ---- the shaft down to the Deepways, at the top of the park
+    B.shaft_house(a, 47, 22)
     # ---- the town park and pond in the north-west, the meadow by the river
     a.lake(28, 15, 6.5, 3.8, 0.3, k=31)
     a.lake(33, 18, 3.2, 2.4, 0.3, k=32)

@@ -157,6 +157,18 @@ func _norm_anim(v: Variant) -> Dictionary:
 	}
 
 
+func has_anim(actor: String, anim_name: String) -> bool:
+	return catalog.actors.has(actor) and catalog.actors[actor].has(anim_name)
+
+
+## How tall an actor stands (its idle frame's feet anchor), for health bars and name tags.
+func actor_height(actor: String) -> float:
+	for k in ["idle_down", "idle"]:
+		if has_anim(actor, k):
+			return anchor(actor, k).y
+	return 28.0
+
+
 func anchor(actor: String, anim_name: String) -> Vector2:
 	var a := _norm_anim(catalog.actors[actor][anim_name])
 	return Vector2(a.anchor[0], a.anchor[1])
@@ -185,10 +197,13 @@ func _add_anim(sf: SpriteFrames, anim_name: String, raw_a: Variant) -> void:
 	var fw: int = a.frame[0]
 	var fh: int = a.frame[1]
 	var cols := int(a.get("cols", a.frames))
+	# atlases hold several animations: "x"/"y" say where this one starts
+	var x0 := int(a.get("x", 0))
+	var y0 := int(a.get("y", 0))
 	for i in int(a.frames):
 		var t := AtlasTexture.new()
 		t.atlas = tex
-		t.region = Rect2((i % cols) * fw, (i / cols) * fh, fw, fh)
+		t.region = Rect2(x0 + (i % cols) * fw, y0 + (i / cols) * fh, fw, fh)
 		sf.add_frame(anim_name, t)
 
 
