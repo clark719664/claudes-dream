@@ -1,44 +1,55 @@
 """Generates data/world.json for Hearthwild: terrain, cliffs, decks and every placed object.
 
-    python3 tools/make_world.py
+    python3 tools/make_world.py [seed]
 
-The valley is blocked out by hand on the tile grid, the way a level designer lays out a map:
-straight roads, a symmetric village square around an old oak, fenced fields, a crafting yard
-with room for every station tier, forests planted as dense masses that frame the map, avenues
-of trees, flower beds, and one mountain range along the north edge. Nothing is scattered at
-random. Every position comes from the layout below; where variety helps (which tree, which
-flower) it is chosen by a hash of the position, so the map is identical on every run.
+The layout is authored region by region (mountains, forest, graveyard, river, lake, village,
+homestead, orc fort, quarry, meadows, autumn woods, Frostvale) and then dressed the way a level
+artist would: trees in groves with undergrowth, bushes along forest edges, flowers in drifts,
+reeds in clumps, pebbles along paths, rocks at cliff feet, small scenes at points of interest.
 
 Terrain characters, one per 16x16 cell:
     .  grass    :  dirt    =  cobblestone    ~  water    *  snow (over grass)
 Objects: {"t": sprite, "x", "y", "v": variant, ...} in pixels at the object's feet.
 No third-party packages needed."""
-import json, math, os
+import json, math, os, random, sys
 
 W, H = 128, 88
+SEED = int(sys.argv[1]) if len(sys.argv) > 1 else 11
+rng = random.Random(SEED)
 OUT = os.path.join(os.path.dirname(__file__), '..', 'data', 'world.json')
 
 grid = [['.'] * W for _ in range(H)]
-reserved = [[False] * W for _ in range(H)]   # buildings, cliffs, yards, beds: no trees here
-cliffs, decks, objs = [], [], []
+zone = [[''] * W for _ in range(H)]
+solid = [[False] * W for _ in range(H)]   # cliffs and building footprints: nothing grows here
+keep_clear = [[False] * W for _ in range(H)]  # plazas, doorways: no random dressing
+cliffs, decks, objs, occupied = [], [], [], []
 
 
 # ------------------------------------------------------------------ helpers
-def h32(*key):
-    """FNV-1a over the key: a stable pseudo-random number for a position."""
-    x = 2166136261
-    for ch in repr(key).encode():
-        x = ((x ^ ch) * 16777619) & 0xffffffff
-    return x
+class Noise:
+    """Smooth value noise, enough to give forests clumps and clearings."""
+    def __init__(self, seed, scale):
+        self.r = random.Random(seed)
+        self.scale = scale
+        self.g = {}
+
+    def _v(self, i, j):
+        if (i, j) not in self.g:
+            self.g[(i, j)] = self.r.random()
+        return self.g[(i, j)]
+
+    def __call__(self, x, y):
+        x, y = x / self.scale, y / self.scale
+        i, j = math.floor(x), math.floor(y)
+        fx, fy = x - i, y - j
+        sx, sy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
+        a = self._v(i, j) + (self._v(i + 1, j) - self._v(i, j)) * sx
+        b = self._v(i, j + 1) + (self._v(i + 1, j + 1) - self._v(i, j + 1)) * sx
+        return a + (b - a) * sy
 
 
-def pick(seq, *key):
-    return seq[h32(*key) % len(seq)]
-
-
-def wobble(n, *key):
-    """A small, stable offset in -n..n pixels, so rows of trees don't look stamped."""
-    return (h32('w', *key) % (2 * n + 1)) - n
+n_big = Noise(SEED * 3 + 1, 11)
+n_small = Noise(SEED * 5 + 2, 4)
 
 
 def inside(x, y):
@@ -54,72 +65,109 @@ def get(x, y):
     return grid[y][x] if inside(x, y) else '#'
 
 
-def reserve(x0, y0, x1, y1):
-    for y in range(max(0, int(y0)), min(H, int(math.ceil(y1)))):
-        for x in range(max(0, int(x0)), min(W, int(math.ceil(x1)))):
-            reserved[y][x] = True
+def blob(cx, cy, rx, ry, ch, wobble=0.18, seed=0, only=None):
+    r2 = random.Random(seed)
+    ph = [r2.uniform(0, math.tau) for _ in range(3)]
+    for y in range(max(0, int(cy - ry * 1.6)), min(H, int(cy + ry * 1.6) + 1)):
+        for x in range(max(0, int(cx - rx * 1.6)), min(W, int(cx + rx * 1.6) + 1)):
+            dx, dy = (x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry
+            a = math.atan2(dy, dx)
+            k = 1 + wobble * (math.sin(2 * a + ph[0]) * 0.6 + math.sin(3 * a + ph[1]) * 0.4 + math.sin(5 * a + ph[2]) * 0.25)
+            if dx * dx + dy * dy <= k * k and (only is None or grid[y][x] in only):
+                grid[y][x] = ch
 
 
 def rect(x0, y0, x1, y1, ch):
-    """Cells x0 <= x < x1, y0 <= y < y1."""
     for y in range(y0, y1):
         for x in range(x0, x1):
             put(x, y, ch)
 
 
-def rrect(x0, y0, x1, y1, ch=':', r=1, keep=None):
-    """A rectangle with its corners stepped back by r cells, like a laid-out yard."""
-    for y in range(y0, y1):
-        for x in range(x0, x1):
-            dx = x0 + r - x if x < x0 + r else (x - (x1 - r) + 1 if x >= x1 - r else 0)
-            dy = y0 + r - y if y < y0 + r else (y - (y1 - r) + 1 if y >= y1 - r else 0)
-            if dx > 0 and dy > 0 and dx + dy > r:
-                continue
-            if keep is None or get(x, y) in keep:
-                put(x, y, ch)
-
-
-def road(points, width, ch=':'):
-    """Straight segments through the points (tile units, centre line), square-ended so turns join."""
-    hw = width / 2
-    for (ax, ay), (bx, by) in zip(points, points[1:]):
-        x0, x1 = min(ax, bx) - hw, max(ax, bx) + hw
-        y0, y1 = min(ay, by) - hw, max(ay, by) + hw
-        for y in range(int(y0) - 1, int(y1) + 2):
-            for x in range(int(x0) - 1, int(x1) + 2):
-                cx, cy = x + 0.5, y + 0.5
-                if x0 < cx < x1 and y0 < cy < y1:
-                    put(x, y, ch)
-
-
-def ellipse(cx, cy, rx, ry, ch):
-    for y in range(int(cy - ry) - 1, int(cy + ry) + 2):
-        for x in range(int(cx - rx) - 1, int(cx + rx) + 2):
-            if ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1.0:
-                put(x, y, ch)
-
-
-def spline(points, steps=16):
-    """Catmull-Rom through the points, so the river bends smoothly."""
+def spline(points, steps=12):
+    """Catmull-Rom through the points, so roads and rivers bend instead of zig-zagging."""
     pts = [points[0]] + list(points) + [points[-1]]
     out = []
     for i in range(1, len(pts) - 2):
         p0, p1, p2, p3 = pts[i - 1], pts[i], pts[i + 1], pts[i + 2]
         for s in range(steps):
             t = s / steps
-            out.append(tuple(0.5 * (2 * p1[k] + (-p0[k] + p2[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t * t
-                                    + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t ** 3) for k in (0, 1)))
+            t2, t3 = t * t, t * t * t
+            out.append(tuple(0.5 * ((2 * p1[k]) + (-p0[k] + p2[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t2 + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t3) for k in (0, 1)))
     out.append(points[-1])
     return out
 
 
-def river(points, width):
-    r = width / 2
+def stroke(points, width, ch, only=None, jitter=0.0):
     for (x, y) in spline(points):
-        for yy in range(int(y - r) - 1, int(y + r) + 2):
-            for xx in range(int(x - r) - 1, int(x + r) + 2):
-                if (xx + 0.5 - x) ** 2 + (yy + 0.5 - y) ** 2 <= r * r:
-                    put(xx, yy, '~')
+        w = width + (rng.random() * jitter if jitter else 0)
+        r = w / 2
+        for yy in range(int(y - r - 1), int(y + r + 2)):
+            for xx in range(int(x - r - 1), int(x + r + 2)):
+                if (xx + 0.5 - x) ** 2 + (yy + 0.5 - y) ** 2 <= r * r and inside(xx, yy):
+                    if only is None or grid[yy][xx] in only:
+                        grid[yy][xx] = ch
+
+
+def mark(x0, y0, x1, y1, z):
+    for y in range(max(0, y0), min(H, y1)):
+        for x in range(max(0, x0), min(W, x1)):
+            zone[y][x] = z
+
+
+def zone_at(px, py):
+    x, y = int(px // 16), int(py // 16)
+    return zone[y][x] if inside(x, y) else ''
+
+
+def cell(px, py):
+    return get(int(px // 16), int(py // 16))
+
+
+def near(px, py, chars, radius):
+    cx, cy = int(px // 16), int(py // 16)
+    for dy in range(-radius, radius + 1):
+        for dx in range(-radius, radius + 1):
+            if get(cx + dx, cy + dy) in chars:
+                return True
+    return False
+
+
+def is_solid(px, py, pad=0):
+    cx, cy = int(px // 16), int(py // 16)
+    for dy in range(-pad, pad + 1):
+        for dx in range(-pad, pad + 1):
+            x, y = cx + dx, cy + dy
+            if inside(x, y) and solid[y][x]:
+                return True
+    return not inside(cx, cy)
+
+
+def clear_at(px, py):
+    cx, cy = int(px // 16), int(py // 16)
+    return inside(cx, cy) and keep_clear[cy][cx]
+
+
+def free(px, py, r):
+    for x, y, rr in occupied:
+        if (px - x) ** 2 + (py - y) ** 2 < (r + rr) ** 2:
+            return False
+    return True
+
+
+def add(t, px, py, v=None, r=0, **extra):
+    o = {'t': t, 'x': int(round(px)), 'y': int(round(py))}
+    if v is not None:
+        o['v'] = v
+    o.update(extra)
+    objs.append(o)
+    if r:
+        occupied.append((px, py, r))
+    return o
+
+
+def T(x, y):
+    """Tile coordinates to pixel coordinates (cell centre)."""
+    return x * 16 + 8, y * 16 + 8
 
 
 def cliff(x, y, w, top=5, face=0, base='grass', colour=1, mine=None):
@@ -127,460 +175,655 @@ def cliff(x, y, w, top=5, face=0, base='grass', colour=1, mine=None):
     if mine is not None:
         c['mine'] = mine
     cliffs.append(c)
-    reserve(x, y, x + w, y + top + face + 4 + 1)
+    h = top + face + 5
+    for yy in range(y, y + h):
+        for xx in range(x, x + w):
+            if inside(xx, yy):
+                solid[yy][xx] = True
+    # keep a little room along the foot of the cliff
+    return h
 
 
 def deck(x, y, w, h):
     decks.append({'x': x, 'y': y, 'w': w, 'h': h})
-    reserve(x, y, x + w, y + h)
+    for yy in range(y, y + h):
+        for xx in range(x, x + w):
+            if inside(xx, yy):
+                keep_clear[yy][xx] = True
 
 
-def bridge(x0, x1, y0, y1):
-    """Planks over the water where a north-south road (columns x0..x1-1) crosses it."""
-    rows = [y for y in range(y0, y1) if any(get(x, y) == '~' for x in range(x0, x1))]
-    deck(x0 - 1, rows[0] - 1, x1 - x0 + 2, rows[-1] - rows[0] + 3)
+def clear_rect(x0, y0, x1, y1):
+    for y in range(max(0, y0), min(H, y1)):
+        for x in range(max(0, x0), min(W, x1)):
+            keep_clear[y][x] = True
 
 
-def add(t, tx, ty, v=None, **extra):
-    """Place an object with its feet at tile coordinates (tx, ty); fractions are fine."""
-    o = {'t': t, 'x': int(round(tx * 16)), 'y': int(round(ty * 16))}
-    if v is not None:
-        o['v'] = v
-    o.update(extra)
-    objs.append(o)
-    return o
-
-
-def enemy(actor, tx, ty):
-    x, y = int(round(tx * 16)), int(round(ty * 16))
-    add('enemy', tx, ty, actor=actor, home=[x, y])
-
-
-def bed(x0, y0, w, h, colour):
-    """A flower bed: one colour in neat rows, two plants to a tile."""
-    for j in range(h * 2):
-        for i in range(w * 2):
-            add('flower_' + colour, x0 + 0.25 + i * 0.5, y0 + 0.45 + j * 0.5, h32(colour, x0, y0, i, j) % 8)
-    reserve(x0, y0, x0 + w, y0 + h)
-
-
-def fence_row(x0, x1, y):
-    """A straight run of fence from tile x0 to x1, with a post at each end."""
-    n = max(1, int((x1 - x0) * 16 // 36))
-    start = (x0 + x1) / 2 - n * 36 / 32
-    for i in range(n):
-        add('fence', start + (i + 0.5) * 36 / 16, y)
-    add('fence_post', start - 0.1, y + 0.1, 0)
-    add('fence_post', start + n * 36 / 16 + 0.1, y + 0.1, 1)
-
-
-def house(tx, ty, style, name):
-    """A house whose doorstep is at (tx, ty): 8 tiles wide, 9 tall, door in the middle."""
-    add('house', tx, ty, style=style, name=name)
-    reserve(tx - 4, ty - 9, tx + 4, ty + 1)
-    add('planter', tx - 2.4, ty + 0.7, h32(name) % 2)
-    add('planter', tx + 2.4, ty + 0.7, (h32(name) + 1) % 2)
-
-
-def plantable(x, y, ground='.*'):
-    cx, cy = int(x), int(y)
-    for dy in (-1, 0, 1):
-        for dx in (-1, 0, 1):
-            if get(cx + dx, cy + dy) not in ground:
-                return False
-    return not reserved[cy][cx] if inside(cx, cy) else False
+def ground_ok(px, py, chars='.', pad=0):
+    return cell(px, py) in chars and not is_solid(px, py, pad) and not clear_at(px, py)
 
 
 # ------------------------------------------------------------------ terrain
-AX = 65.5          # the village axis: the north and south streets run down cells 64..66
-# Brindle: a cobbled square around a green with the old oak
-rrect(57, 38, 74, 51, '=', 2)
-rect(62, 42, 69, 47, '.')
-road([(AX, 30), (AX, 38)], 3, '=')                     # north street
-road([(AX, 50), (AX, 57)], 3, '=')                     # south street
-road([(AX, 12.5), (AX, 30)], 3)                        # the road north, to the quarry
-road([(AX, 12.5), (70, 12.5)], 3)
-road([(AX, 16.5), (57.5, 16.5), (57.5, 8.5)], 3)       # and the mine
-road([(57, 44.5), (32, 44.5), (32, 50)], 3)            # west road to the lake jetty
-road([(74, 44.5), (95, 44.5)], 3)                      # east road to the orc camp
-road([(AX, 57), (AX, 72)], 3)                          # south road to the stone circle
-road([(AX, 67.5), (100, 67.5)], 2)                     # farm track to the old farmstead
-road([(46, 45), (46, 58)], 2)                          # lane down to your cabin
-road([(58.5, 61.5), (72.5, 61.5)], 2)                  # lane past the south houses
-road([(40, 44.5), (40, 18.5), (29, 18.5)], 2)          # forest track to the graveyard
-road([(37, 18.5), (37, 15)], 2)                        # and the hunters' camp
-road([(86, 44.5), (86, 28.5), (114, 28.5), (114, 20)], 2)  # frost path to the shrine
-road([(29, 67.5), (17, 67.5), (17, 72)], 2)            # path into the autumn woods
-# yards and courtyards
-rrect(29, 58, 55, 71, ':', 2)       # your crafting yard
-rrect(14, 13, 30, 24, '=', 2)       # graveyard
-rrect(33, 10, 41, 16, ':', 1)       # hunters' camp
-rrect(68, 9, 87, 16, ':', 2)        # quarry
-rrect(95, 37, 120, 56, ':', 2)      # orc camp
-rrect(106, 12, 122, 20, '=', 2)     # Frostvale shrine
-rrect(98, 60, 119, 77, ':', 2)      # old farmstead
-rrect(9, 72, 23, 80, ':', 2)        # woodcutters' clearing
-rrect(60, 72, 72, 81, '=', 3)       # stone circle floor
-rect(63, 75, 69, 78, '.')
-
-# water last, so the bridges have a river to cross
-# Mirror Lake in the west: a broad main basin with a smaller lobe to the south-west
-ellipse(15, 52, 12, 8.5, '~')
-ellipse(7.5, 60, 5.5, 3.5, '~')
-ellipse(13, 51, 3.2, 2.4, '.')                         # the island
-# the river: out from under the mountain in the north-east, down into the lake
-river([(100, 3), (98, 10), (92, 16.5), (84, 20.5), (72, 23), (58, 25), (46, 28), (36, 32), (28, 38), (23, 44)], 4)
+# Mirror Lake in the west, with an island and a cove
+blob(16, 48, 12.5, 10, '~', 0.28, seed=3)
+blob(9, 60, 6, 4.2, '~', 0.25, seed=5)
+blob(24, 40, 5, 3.5, '~', 0.3, seed=7)
+blob(14, 47, 3.2, 2.6, '.', 0.2, seed=9)           # the island
+# the river: from the snowy heights in the north-east down into the lake
+river = [(112, 12), (106, 17), (96, 18), (88, 25), (76, 27), (66, 33), (54, 32), (44, 38), (32, 38), (26, 41)]
+stroke(river, 3.2, '~', jitter=1.2)
 # Frostvale: snow over the north-east
 for y in range(H):
     for x in range(W):
-        if ((x + 0.5 - 128) / 44) ** 2 + ((y + 0.5 + 2) / 37) ** 2 < 1 and grid[y][x] == '.':
+        d = (x - 118) ** 2 / 34 ** 2 + (y - 4) ** 2 / 30 ** 2
+        if d + (n_small(x, y) - 0.5) * 0.35 < 1.0 and grid[y][x] == '.':
             grid[y][x] = '*'
+# Brindle village square and its streets
+blob(66, 44, 7.5, 5.2, '=', 0.1, seed=11)
+# homestead yard and fields
+blob(45, 58, 8, 4.6, ':', 0.12, seed=13)
+rect(55, 55, 65, 63, ':')
+# roads: cobbles in the village, packed dirt beyond
+stroke([(66, 40), (67, 36), (62, 31), (57, 26), (58, 21), (57, 16)], 2.4, ':')          # north road to the mine
+stroke([(58, 26), (50, 25), (42, 23), (34, 21), (28, 21)], 2.0, ':')                      # forest track to the graveyard
+stroke([(59, 44), (52, 41), (43, 44), (36, 43), (33, 46)], 2.4, ':')                      # west road to the lake jetty
+stroke([(73, 45), (80, 48), (88, 45), (98, 47)], 2.4, ':')                                # east road to the orc fort
+stroke([(66, 49), (63, 56), (65, 61), (64, 68), (70, 72)], 2.2, ':')                      # south road to the old farmstead
+stroke([(66, 62), (76, 68), (88, 66), (98, 73)], 2.0, ':')                                # quarry track
+stroke([(51, 56), (53, 54), (57, 50), (60, 47)], 2.0, ':')                                # homestead lane
+for pts in ([(60, 45), (72, 45)], [(66, 39), (66, 50)]):
+    stroke(pts, 2.4, '=', only=':=')                                                     # cobbled streets
+# graveyard courtyard, orc yard, quarry floor, farmstead yard
+blob(21, 20, 6.5, 4.2, '=', 0.08, seed=15)
+blob(110, 47, 10, 8, ':', 0.2, seed=17)
+blob(106, 74, 13, 8, ':', 0.3, seed=19)
+blob(71, 73, 5, 3.4, ':', 0.2, seed=21)
+blob(38, 13, 3, 2.2, ':', 0.3, seed=23)            # hunters' camp
+blob(113, 20, 4, 3, '=', 0.1, seed=25, only='*.')  # frost shrine floor
 
+# ------------------------------------------------------------------ zones
+def organic_mark(cx, cy, radius, zone_name, wobble_scale=15):
+    for y in range(H):
+        for x in range(W):
+            d = math.hypot(x - cx, y - cy)
+            d += (n_big(x, y) - 0.5) * wobble_scale
+            if d < radius:
+                zone[y][x] = zone_name
 
-# ------------------------------------------------------------------ the mountain range
-# One continuous wall across the north edge, in three stepped sections, snowy in the east.
-cliff(-3, -6, 45, top=7, face=1, base='grass', colour=1)
-cliff(40, -4, 46, top=7, face=1, base='grass', colour=1, mine=16)    # the Old Mine
-cliff(84, -6, 47, top=7, face=1, base='snow', colour=1)
+mark(0, 0, W, H, 'wild')
+organic_mark(23, 20, 26, 'forest')
+organic_mark(17, 74, 25, 'autumn')
+organic_mark(106, 17, 28, 'frost')
+organic_mark(110, 47, 22, 'fort')
+organic_mark(106, 74, 25, 'quarry')
+organic_mark(60, 75, 30, 'meadow')
+organic_mark(67, 43, 14, 'village')
+organic_mark(50, 55, 16, 'homestead')
+organic_mark(17, 49, 20, 'lake')
+organic_mark(65, 20, 24, 'north')
+
+# ------------------------------------------------------------------ cliffs
+# the northern range: overlapping plateaus, gray rock, snowy in the east
+x = -2
+while x < W:
+    w = rng.randint(9, 16)
+    y = rng.randint(-5, -2)
+    base = 'snow' if x > 86 else 'grass'
+    cliff(x, y, w, top=rng.randint(5, 7), face=rng.randint(0, 1), base=base, colour=1)
+    x += w - rng.randint(2, 4)
+cliff(50, 1, 13, top=5, face=1, base='grass', colour=1, mine=5)       # the old mine
+cliff(92, 3, 10, top=5, face=0, base='snow', colour=1)
+# dark rock walls around the orc fort
+cliff(118, 30, 12, top=8, face=1, base='none', colour=2)
+cliff(98, 33, 13, top=4, face=0, base='none', colour=2)
+cliff(122, 44, 8, top=6, face=1, base='none', colour=2)
+# quarry mesas (brown), one with a tunnel
+cliff(96, 62, 9, top=5, face=0, base='none', colour=0)
+cliff(112, 64, 12, top=5, face=1, base='none', colour=0, mine=4)
+cliff(90, 78, 6, top=4, face=0, base='none', colour=0)
+cliff(120, 76, 8, top=6, face=0, base='none', colour=0)
+# a lone mesa in the meadows and one by the lake
+cliff(78, 76, 7, top=4, face=0, base='grass', colour=0)
+cliff(2, 26, 6, top=4, face=0, base='grass', colour=1)
 
 # ------------------------------------------------------------------ bridges and the jetty
-bridge(64, 67, 18, 30)          # the road north over the river
-bridge(39, 41, 24, 38)          # the forest track
-deck(21, 49, 10, 3)             # jetty into Mirror Lake
+deck(56, 29, 5, 6)     # north road over the river
+deck(31, 35, 5, 6)     # forest track crossing near the lake
+deck(26, 45, 7, 3)     # jetty out into Mirror Lake
+clear_rect(26, 44, 34, 49)
 
-# ------------------------------------------------------------------ Brindle village
-reserve(57, 38, 74, 51)
-house(AX - 6, 38, 'plaster', "Tilda's house")
-house(AX + 6, 38, 'log', 'The Millers')
-house(AX - 6, 61, 'plank', "Captain Brann's house")
-house(AX + 6, 61, 'dark', "Merlo's house")
-# the green: the old oak, a flower border, benches facing it
-add('oak_big', AX, 45.2, 0, wall=1)
-for x in range(62, 69):
-    if x not in (65,):
-        for y in (42, 46):
-            add('flower_' + ('yellow' if y == 42 else 'white'), x + 0.3, y + 0.5, h32(x, y) % 8)
-            add('flower_' + ('yellow' if y == 42 else 'white'), x + 0.8, y + 0.7, h32(y, x) % 8)
-add('bench', AX - 3.2, 48.6, 0)
-add('bench', AX + 3.2, 48.6, 0)
-for tx in (61.6, 69.4):
-    for ty in (41.9, 47.9):
-        add('lamp_post', tx, ty, 0)
-# market stalls on the four corners of the square
-for i, (tx, ty) in enumerate([(59.5, 40.6), (71.5, 40.6), (59.5, 48.4), (71.5, 48.4)]):
-    add('table', tx, ty, 0)
-    add('crate_crops', tx - 1.3, ty + 0.6, (i * 2) % 7)
-    add('crate_crops', tx + 1.3, ty + 0.6, (i * 2 + 1) % 7)
-add('signpost', AX - 2.2, 51.6, 0, text='North: the Old Mine and the quarry.   West: Mirror Lake and your homestead.   East: orc country - keep out!   South: the stone circle and the old farmstead.')
-add('barrel', 57.8, 45.8, 0)
-add('barrel', 58.8, 46.4, 0)
-add('sack', 72.6, 46.2, 0)
-add('sack', 73.3, 46.8, 1)
-add('npc', AX, 48.3, actor='wizard', name='Merlo')
-add('npc', AX - 4.5, 39.2, actor='peasant', name='Tilda', lines='carpenter')
-add('npc', AX + 2.4, 33, actor='knight', name='Captain Brann', lines='guard')
-add('villager', AX - 5, 43.8, actor='tavern_a', name='Rosa', span=40)
-add('villager', AX + 5, 49.6, actor='tavern_b', name='Wren', span=40)
-# an avenue of oaks down the south road
-for ty in (65, 69):
-    add('oak', AX - 3, ty, h32('av', ty) % 2)
-    add('oak', AX + 3, ty, (h32('av', ty) + 1) % 2)
-reserve(AX - 4, 62, AX + 4, 72)
+# ------------------------------------------------------------------ set pieces
+def ring(cx, cy, n, r, fn):
+    for i in range(n):
+        a = i / n * math.tau + rng.uniform(-0.15, 0.15)
+        fn(cx + math.cos(a) * r, cy + math.sin(a) * r * 0.7, i)
 
-# ------------------------------------------------------------------ your homestead
-CX = 40                       # cabin door column
-add('cabin', CX, 58)
-reserve(CX - 4, 49, CX + 4, 59)
-add('player_start', CX, 59.6)
-reserve(29, 58, 55, 71)
-# the crafting yard: a wing of stations each side, laid out with room for their biggest tier
-add('station', 33.5, 62.6, station='sawmill')
-add('station', 33.5, 68.4, station='workbench')
-add('station', 50.5, 62.6, station='anvil')
-add('station', 50.5, 68.4, station='furnace')
-add('station', 44.5, 68.6, station='cookpot')
-add('campfire', CX, 65.2, style='ring')
-add('log_seat', CX - 1.9, 66.4, 0)
-add('log_seat', CX + 1.9, 66.4, 1)
-add('log_seat', CX, 67.6, 0)
-add('chest', CX - 3, 59.4, 0, loot=2, id='homestead')
-add('barrel', CX + 2.6, 59.2, 0)
-add('sack', CX + 3.4, 59.6, 1)
-# fields below the yard: four rows of crops inside a fence, a gap in line with the cabin door
-kinds = ['carrot', 'cabbage', 'beet', 'lettuce']
-for r, fy in enumerate([74, 76, 78, 80]):
-    for fx in list(range(31, 39)) + list(range(42, 54)):
-        add('soil', fx + 0.5, fy + 0.5, 0)
-        add('crop', fx + 0.5, fy + 0.8, kind=kinds[r], stage=[1, 2, 3, 3][h32('c', fx, fy) % 4])
-reserve(29, 72, 56, 82)
-fence_row(30, 38.8, 72.7)
-fence_row(42.2, 55, 72.7)
-fence_row(30, 55, 82.2)
-add('scarecrow', 47.5, 77.4, 0)
-add('scarecrow', 34.5, 79.4, 0)
 
-# ------------------------------------------------------------------ Mirror Lake
-add('oak_big', 13, 51.4, 1, wall=1)
-add('chest', 14.4, 52.2, 0, loot=3, id='island')
-add('bench', 32, 43.2, 0)
-add('lamp_post', 30.6, 48.6, 0)
-add('barrel', 33.4, 49.4, 0)
-add('bucket', 34.1, 49.8, 2)
-add('npc', 29.5, 50.6, actor='rogue', name='Old Fenn', lines='fisher')
-reserve(20, 42, 36, 53)
-for (tx, ty) in [(26.5, 45.3), (27.3, 46.0), (25.8, 46.1), (4.5, 50.2), (5.2, 50.9), (3.9, 51.0), (13.5, 64.4), (14.3, 64.6), (12.8, 64.8)]:
-    add('cattail', tx, ty, h32(tx, ty) % 4)
+# --- Brindle village: market stalls, lamps, benches, planters, a notice board, villagers
+clear_rect(59, 39, 74, 50)
+vx, vy = T(66, 44)
+for i, (dx, dy) in enumerate([(-80, -36), (-40, -44), (40, -44), (80, -36)]):
+    px, py = vx + dx, vy + dy
+    add('table', px, py, 0, 14)
+    add('crate_crops', px - 10, py + 10, i % 7, 6)
+    add('crate_crops', px + 12, py + 11, (i + 3) % 7, 6)
+    add('sack', px + 18, py - 2, i % 2, 5)
+for (dx, dy) in [(-104, -10), (100, 30), (-50, 52)]:
+    add('lamp_post', vx + dx, vy + dy, 0, 6)
+add('bench', vx - 40, vy + 30, 0, 12)
+add('bench', vx + 44, vy + 30, 0, 12)
+add('planter', vx - 12, vy + 38, 1, 6)
+add('planter', vx + 14, vy + 38, 1, 6)
+add('planter', vx - 60, vy - 70, 0, 6)
+add('signpost', vx - 8, vy - 58, 0, 6, text='North: the Old Mine, the graveyard.   West: Mirror Lake.   East: Orc country - keep out!   South: the old farmstead and the quarry.')
+add('npc', vx + 4, vy + 6, actor='wizard', name='Merlo')
+add('npc', vx - 70, vy - 20, actor='knight', name='Captain Brann', lines='guard')
+add('npc', 72 * 16 - 24, 40 * 16 + 4, actor='peasant', name='Tilda', lines='carpenter')
+add('villager', vx - 30, vy + 20, actor='tavern_a', name='Rosa', span=48)
+add('villager', vx + 30, vy - 30, actor='tavern_b', name='Wren', span=40)
+add('barrel', vx - 104, vy + 22, 0, 6)
+add('barrel', vx - 92, vy + 26, 0, 6)
+add('pot', vx - 98, vy + 34, 0, 5)
+add('bucket', vx + 108, vy + 20, 2)
+# houses around the square
+for (tx_, ty_, style, name, box) in [(72, 38, 'plaster', "Tilda's house", (68, 29, 77, 39)),
+                                     (55.5, 38, 'log', 'The Millers', (51, 29, 60, 39)),
+                                     (80, 46, 'plank', "Brann's house", (76, 37, 85, 47))]:
+    add('house', tx_ * 16 + 8, ty_ * 16 + 4, style=style, name=name)
+    for yy in range(box[1], box[3]):
+        for xx in range(box[0], box[2]):
+            if inside(xx, yy):
+                solid[yy][xx] = True
+    add('planter', tx_ * 16 - 40, ty_ * 16 + 10, 1, 6)
+    add('bucket', tx_ * 16 + 44, ty_ * 16 + 8, 0)
 
-# ------------------------------------------------------------------ the old forest: graveyard and hunters' camp
+# --- the homestead: your cabin, crafting yard, campfire, lumber, fenced farm
+cx_, cy_ = 45 * 16 + 8, 53 * 16 + 4
+add('cabin', cx_, cy_)
+for yy in range(44, 54):
+    for xx in range(41, 50):
+        if inside(xx, yy):
+            solid[yy][xx] = True
+hx, hy = T(45, 58)
+yard = [('workbench', -74, -2, 20), ('anvil', -44, 26, 18), ('furnace', 58, -22, 16), ('sawmill', 84, 16, 34), ('cookpot', -12, 40, 14)]
+for t, dx, dy, r in yard:
+    add(t, hx + dx, hy + dy, 0, r)
+add('campfire', hx + 18, hy + 12, r=12, light=1)
+add('log_seat', hx - 6, hy + 22, 0, 6)
+add('log_seat', hx + 44, hy + 20, 1, 6)
+add('player_start', cx_, cy_ + 20)
+add('sack', cx_ - 52, cy_ - 8, 0, 5)
+add('sack', cx_ - 44, cy_ - 2, 1, 5)
+add('barrel', cx_ + 50, cy_ - 10, 0, 6)
+add('bucket', cx_ + 60, cy_ - 4, 1)
+add('planter', cx_ - 30, cy_ + 2, 1, 6)
+add('chest', hx - 100, hy + 20, 0, 6, loot=2, id='homestead')
+clear_rect(37, 53, 54, 63)
+# fields: tilled rows with crops, scarecrow, fences
+crop_kinds = ['carrot', 'beet', 'cabbage', 'lettuce', 'cauliflower', 'broccoli', 'garlic']
+for row, fy in enumerate([56, 58, 60]):
+    kind = crop_kinds[(row * 3) % len(crop_kinds)]
+    for fx in range(56, 64):
+        add('soil', fx * 16 + 8, fy * 16 + 8, 0)
+        if (fx + row) % 6 != 0:
+            add('crop', fx * 16 + 8, fy * 16 + 13, kind=kind, stage=rng.choice([1, 2, 3, 3]))
+add('scarecrow', 60 * 16, 59 * 16 + 4, 0, 6)
+for i in range(4):
+    add('fence', 55 * 16 + 18 + i * 36, 55 * 16 - 2, 0)
+    add('fence', 55 * 16 + 18 + i * 36, 62 * 16 + 14, 0)
+clear_rect(55, 54, 65, 63)
+
+# --- graveyard in the old forest
+gx, gy = T(21, 20)
+clear_rect(15, 16, 28, 25)
 for i in range(5):
-    add('coffin', 16.5 + i * 3, 15.4, i % 2)
-for tx in (17.5, 20.5, 23.5, 26.5):
-    for ty in (18.3, 21.3):
-        add('tombstone', tx, ty, 0)
-add('banner', 29.3, 16.6, 1)
-add('banner', 29.3, 20.6, 1)
-add('lamp_post', 29.8, 17.2, 0)
-add('chest', 22, 14.6, 0, loot=3, id='graveyard')
-add('signpost', 31, 20.4, 0, text='Here rest the founders of Brindle. The dead do not rest easy.')
-for (a, tx, ty) in [('skeleton', 19, 19.8), ('skeleton_rogue', 25, 19.8), ('skeleton_warrior', 22, 17), ('skeleton', 18, 22.6), ('skeleton_mage', 26, 22.6)]:
-    enemy(a, tx, ty)
-reserve(14, 13, 32, 24)
-add('campfire', 37, 13, style='logs')
-add('log_seat', 35.3, 14.2, 0)
-add('log_seat', 38.7, 14.2, 1)
-add('anim', 39.4, 11.6, name='grill_camp', solid=12)
-add('sack', 34, 11.2, 0)
-add('bucket', 34.8, 11.5, 0)
-add('npc', 36.6, 11.6, actor='knight', name='Hunter Odo', lines='hunter')
-reserve(33, 9, 42, 17)
+    add('coffin', gx - 64 + i * 32, gy - 30, i % 2, 7)
+for i, (dx, dy) in enumerate([(-80, 10), (-64, 34), (72, 8), (60, 32), (-20, 40), (24, 42)]):
+    add('tombstone', gx + dx, gy + dy, 0, 5)
+add('banner', gx - 96, gy - 40, 1, 4)
+add('banner', gx + 96, gy - 40, 1, 4)
+add('mine_carts', gx + 30, gy + 4, 1, 8)
+add('chest', gx, gy - 44, 0, 6, loot=3, id='graveyard')
+for i, (dx, dy, a) in enumerate([(-40, 0, 'skeleton'), (40, 4, 'skeleton_rogue'), (0, 20, 'skeleton_warrior'), (-60, 26, 'skeleton'), (70, 24, 'skeleton_mage')]):
+    add('enemy', gx + dx, gy + dy, actor=a, home=[gx + dx, gy + dy])
+add('lamp_post', gx - 50, gy + 58, 0, 6)
+add('signpost', gx + 60, gy + 64, 0, 6, text='Here rest the founders of Brindle. The dead do not rest easy.')
 
-# ------------------------------------------------------------------ the Old Mine and the quarry
-add('lantern', 55.6, 8.1, 0)
-add('lantern', 59.4, 8.1, 0)
-add('mine_carts', 53.5, 10.2, 0)
-add('crate', 60.8, 9.6, 0)
-add('crate', 61.6, 10.2, 1)
-add('signpost', 55, 12, 0, text='OLD MINE - closed after the collapse. Stone and ore are still dug in the quarry next door.')
-reserve(52, 7, 63, 13)
-for i, tx in enumerate(range(70, 86, 2)):
-    add('ore_rock' if i % 2 == 0 else 'rock', tx + 0.5, 9.9, i % 2)
-for i, tx in enumerate(range(71, 86, 3)):
-    add('boulder', tx + 0.5, 12.6, i % 2)
-for i, tx in enumerate([72, 76, 80, 84]):
-    add('crystal', tx + 0.5, 14.9, i % 3)
-add('mine_carts', 68.4, 15.4, 1)
-add('lantern', 69, 9.6, 0)
-add('crate', 86, 14.6, 0)
-add('crate', 86.4, 15.3, 1)
-for (a, tx, ty) in [('skeleton_rogue', 75, 14), ('skeleton', 81, 11.4), ('skeleton_warrior', 84, 13.6)]:
-    enemy(a, tx, ty)
-reserve(67, 8, 88, 17)
+# --- hunters' camp on the forest track
+kx, ky = T(38, 13)
+add('campfire', kx, ky, r=12, light=1)
+add('log_seat', kx - 22, ky + 16, 0, 6)
+add('log_seat', kx + 24, ky + 14, 1, 6)
+add('spit', kx + 36, ky - 20, 0, 14)
+add('sack', kx - 30, ky - 16, 0, 5)
+add('bucket', kx - 18, ky - 22, 0)
+add('npc', kx + 6, ky - 22, actor='knight', name='Hunter Odo', lines='hunter')
+clear_rect(35, 11, 42, 16)
 
-# ------------------------------------------------------------------ the orc camp: a stockade with a west gate
-for tx in (98, 104, 110, 116):
-    add('palisade', tx, 37.9)
-    add('palisade', tx, 56.4)
-for ty in (42.3, 51.6, 56.2):
-    add('palisade_side', 94.6, ty)
-for ty in (42.3, 47.0, 51.6, 56.2):
-    add('palisade_side', 118.6, ty)
-add('banner', 93.6, 43, 0)
-add('banner', 93.6, 46.6, 0)
-add('campfire', 107, 47, style='pit')
-add('log_seat', 105, 48.6, 0)
-add('log_seat', 109, 48.6, 1)
-add('log_seat', 107, 45.2, 0)
-add('anim', 101, 51.8, name='grill_camp', solid=12)
-add('weapon_rack', 112.5, 40.8, 0)
-for i, tx in enumerate([97.2, 98.4, 99.6]):
-    add('crate', tx, 40.4, i % 2)
-for i, tx in enumerate([114.8, 116, 117.2]):
-    add('barrel', tx, 53.8, 0)
-add('banner', 103, 39.8, 2)
-add('banner', 111, 39.8, 2)
-add('chest', 116.8, 40.6, 0, loot=0, id='fort')
-for (a, tx, ty) in [('orc', 100, 44), ('orc_rogue', 104, 42), ('orc_shaman', 110, 51), ('orc_warrior', 113, 45), ('orc', 99, 49), ('orc_rogue', 115, 49)]:
-    enemy(a, tx, ty)
-enemy('orc_rogue', 90, 43)
-reserve(92, 36, 121, 58)
-add('signpost', 88.5, 46.4, 0, text='Beyond this point: ORCS. Turn back, friend.')
+# --- the old mine mouth
+mx, my = T(55.5, 16)
+add('mine_carts', mx - 40, my + 6, 0, 14)
+add('lantern', mx - 22, my - 6, 0)
+add('lantern', mx + 24, my - 6, 0)
+add('crate', mx + 40, my + 2, 0, 6)
+add('barrel', mx + 52, my + 6, 0, 6)
+add('signpost', mx - 60, my + 20, 0, 6, text='OLD MINE - closed after the collapse. Iron ore can still be found in the hills.')
 
-# ------------------------------------------------------------------ Frostvale shrine
-for i, tx in enumerate([109.5, 112.5, 115.5, 118.5]):
-    add('coffin', tx, 14.4, i % 2)
-add('banner', 107.5, 15.6, 1)
-add('banner', 120.5, 15.6, 1)
-add('chest', 114, 16.4, 0, loot=0, id='frost')
-for i, tx in enumerate([108.5, 111, 117, 119.5]):
-    add('crystal', tx, 18.8, i % 3)
-for (a, tx, ty) in [('skeleton_warrior', 111, 17.6), ('skeleton_warrior', 117, 17.6), ('skeleton_mage', 114, 19), ('skeleton', 114, 24)]:
-    enemy(a, tx, ty)
-reserve(105, 11, 123, 21)
-# an avenue of frozen oaks on the approach
-for ty in (23, 26):
-    add('oak_frozen', 111.8, ty, h32('fz', ty) % 2)
-    add('oak_frozen', 116.2, ty, (h32('fz', ty) + 1) % 2)
-reserve(110, 21, 118, 28)
-add('signpost', 87.5, 30.2, 0, text='North-east: the Frostvale shrine. Bring a warm cloak and a sharp sword.')
+# --- orc fort: palisade-less stronghold in a basin of dark rock
+fx, fy = T(110, 47)
+add('spit', fx, fy, 0, 16, light=1)
+add('campfire', fx - 70, fy - 30, r=12, light=1)
+add('campfire', fx + 60, fy + 34, r=12, light=1)
+for i, (dx, dy) in enumerate([(-120, -44), (-120, 28), (-60, -70), (40, -70), (100, -40)]):
+    add('banner', fx + dx, fy + dy, [0, 0, 2, 0, 2][i], 4)
+for i, (dx, dy) in enumerate([(30, -40), (44, -34), (-90, 40), (-80, 52), (90, 10)]):
+    add(['crate', 'barrel', 'crate', 'barrel', 'pot'][i], fx + dx, fy + dy, i % 2 if i != 4 else 1, 6)
+add('log_seat', fx - 24, fy + 20, 0, 6)
+add('log_seat', fx + 24, fy + 22, 1, 6)
+add('chest', fx + 76, fy - 56, 0, 6, loot=0, id='fort')
+for i, (dx, dy, a) in enumerate([(-40, -10, 'orc'), (40, -6, 'orc_rogue'), (0, 40, 'orc_shaman'), (60, -40, 'orc_warrior'), (-80, -20, 'orc'), (-30, 50, 'orc_rogue')]):
+    add('enemy', fx + dx, fy + dy, actor=a, home=[fx + dx, fy + dy])
+for i, (tx_, ty_) in enumerate([(88, 44), (92, 50)]):
+    px, py = T(tx_, ty_)
+    add('enemy', px, py, actor='orc_rogue', home=[px, py])
 
-# ------------------------------------------------------------------ the stone circle
-SX, SY = AX, 76.8
-for i in range(8):
-    a = i / 8 * math.tau + math.pi / 8
-    add('boulder' if i % 2 else 'boulder_brown', SX + math.cos(a) * 4.6, SY + math.sin(a) * 3.2, i % 2, wall=1)
-add('crystal', SX, SY + 0.2, 0)
-add('crystal', SX - 0.8, SY + 0.6, 1)
-add('crystal', SX + 0.8, SY + 0.5, 2)
-bed(57, 73, 2, 2, 'blue')
-bed(73, 73, 2, 2, 'blue')
-bed(57, 78, 2, 2, 'white')
-bed(73, 78, 2, 2, 'white')
-reserve(56, 71, 76, 82)
+# --- quarry: carts, ore, crystals, a few skeleton diggers
+qx, qy = T(106, 74)
+add('mine_carts', qx - 40, qy - 8, 0, 14)
+add('mine_carts', qx + 30, qy + 20, 1, 8)
+add('lantern', qx - 60, qy - 30, 0)
+add('crate', qx + 50, qy - 20, 0, 6)
+add('crate', qx + 62, qy - 16, 1, 6)
+for i, (dx, dy, a) in enumerate([(-30, 20, 'skeleton_rogue'), (40, -10, 'skeleton'), (70, 30, 'skeleton_warrior')]):
+    add('enemy', qx + dx, qy + dy, actor=a, home=[qx + dx, qy + dy])
 
-# ------------------------------------------------------------------ the orchard: fruit trees in rows
-for i, tx in enumerate([74, 78, 82, 86, 90]):
-    for j, ty in enumerate([63, 66.5]):
-        add('oak', tx, ty, (i + j) % 2)
-reserve(72, 61, 92, 67)
+# --- abandoned farmstead in the south meadow
+ax, ay = T(71, 70)
+add('ruin_back', ax, ay, 2)
+add('ruin_front', ax, ay + 80, 2)
+add('doorway', ax, ay + 80, 1)
+add('bed', ax - 24, ay + 24, 0)
+add('debris', ax + 20, ay + 30, 1)
+add('debris', ax + 10, ay + 50, 2)
+add('pot', ax - 20, ay + 56, 3, 5)
+add('chest', ax + 26, ay + 8, 0, 6, loot=1, id='farmstead')
+add('chimney', ax + 40, ay - 64, 0)
+for yy in range(70 - 6, 70 + 6):
+    for xx in range(68, 75):
+        if inside(xx, yy):
+            solid[yy][xx] = True
+for i in range(3):
+    add('fence', ax - 110 + i * 36, ay + 40, 0)
+add('scarecrow', ax - 80, ay + 20, 0, 6)
+for fxx in range(60, 66):
+    for fyy in (72, 74):
+        if rng.random() < 0.7:
+            add('crop', fxx * 16 + 8, fyy * 16 + 12, kind='garlic', stage=0)
+add('enemy', ax - 40, ay + 60, actor='skeleton_mage', home=[ax - 40, ay + 60])
 
-# ------------------------------------------------------------------ the old farmstead
-FX = 108.5
-add('ruin_back', FX, 64.5, 2)
-add('ruin_front', FX, 69.5, 2)
-add('doorway', FX, 69.5, 1)
-add('bed', FX - 1.5, 66, 0)
-add('debris', FX + 1.2, 67.2, 1)
-add('pot', FX - 1.2, 68.6, 3)
-add('chest', FX + 1.6, 65.4, 0, loot=1, id='farmstead')
-add('chimney', FX + 2.5, 60.5, 0)
-reserve(FX - 4, 58, FX + 4, 71)
-for fx in list(range(100, 106)) + list(range(111, 117)):
-    for fy in (72, 74):
-        add('crop', fx + 0.5, fy + 0.8, kind='garlic', stage=0)
-fence_row(99.5, 106.5, 75.9)
-fence_row(110.5, 117.5, 75.9)
-add('scarecrow', 103, 73.9, 0)
-add('scarecrow', 114, 73.9, 0)
-enemy('skeleton_mage', FX, 71.6)
-enemy('skeleton', 102.5, 70)
-enemy('skeleton_rogue', 115, 70)
-for (tx, ty) in [(98, 62), (119.5, 62), (98.5, 77.5), (119, 77.5)]:
-    add(pick(['oak_dead', 'oak_big_dead'], tx, ty), tx, ty, 0)
-reserve(97, 59, 121, 78)
-add('signpost', 97, 69.6, 0, text='The old Harlow farmstead. Nobody has farmed here since the dead walked.')
+# --- stone circle with a crystal heart
+sx, sy = T(48, 76)
+ring(sx, sy, 9, 56, lambda px, py, i: add('boulder' if i % 3 else 'boulder_brown', px, py, i % 2, 12))
+add('crystal', sx, sy, 0, 6)
+add('crystal', sx - 10, sy + 6, 1, 4)
+add('crystal', sx + 12, sy + 4, 2, 4)
+clear_rect(44, 73, 53, 80)
 
-# ------------------------------------------------------------------ the woodcutters' clearing in the autumn woods
-add('campfire', 16, 76, style='logs')
-add('log_seat', 14.3, 77.2, 0)
-add('log_seat', 17.7, 77.2, 1)
-for (t, tx, ty) in [('oak_stump', 11, 74), ('stump_mossy', 12.5, 78.4), ('pine_stump', 20.5, 74.2), ('oak_stump', 21, 78.6)]:
-    add(t, tx, ty, 0)
-add('chest', 16, 73.4, 0, loot=1, id='woodcutters')
-add('sack', 13.2, 73.8, 0)
-add('crate', 18.8, 73.8, 0)
-enemy('skeleton_warrior', 12, 76)
-reserve(9, 72, 23, 80)
+# --- Frostvale shrine
+ix, iy = T(113, 20)
+for i, dx in enumerate([-40, -14, 14, 40]):
+    add('coffin', ix + dx, iy - 20, i % 2, 7)
+add('banner', ix - 60, iy - 30, 1, 4)
+add('banner', ix + 60, iy - 30, 1, 4)
+add('chest', ix, iy + 10, 0, 6, loot=0, id='frost')
+for i, (dx, dy, a) in enumerate([(-50, 20, 'skeleton_warrior'), (50, 24, 'skeleton_warrior'), (0, 40, 'skeleton_mage'), (-20, -60, 'skeleton')]):
+    add('enemy', ix + dx, iy + dy, actor=a, home=[ix + dx, iy + dy])
+clear_rect(108, 16, 119, 24)
 
-# ------------------------------------------------------------------ signposts at the crossroads
-add('signpost', 63.2, 19, 0, text='North: the Old Mine and the quarry.   South: Brindle.')
-add('signpost', 41.8, 42.8, 0, text='North: the forest track to the graveyard and the hunters\' camp.   South: your homestead.')
-add('signpost', 67.8, 66.2, 0, text='South: the stone circle.   East: the old farmstead.')
+# --- lake: island treasure, jetty dressing, a fisher's rest
+add('oak_big', *T(14, 47), 0, 18)
+add('chest', 14 * 16 + 20, 48 * 16 + 4, 0, 6, loot=3, id='island')
+add('bench', 34 * 16, 44 * 16, 0, 12)
+add('barrel', 33 * 16, 48 * 16 + 4, 0, 6)
+add('bucket', 32 * 16 + 4, 48 * 16 + 10, 2)
+add('lamp_post', 33 * 16, 45 * 16 + 14, 0, 6)
+add('npc', 30 * 16, 46 * 16 + 6, actor='rogue', name='Old Fenn', lines='fisher')
 
-# ------------------------------------------------------------------ forests
-def forest(test, species, dx=2.0, dy=1.5, bushes=None):
-    """Plant a forest mass on a staggered lattice wherever test(x, y) holds and the ground is free.
-    Trees on the rim facing open ground get a bush in front, so every forest has a finished edge."""
-    planted = set()
-    j = 0
-    y = 1.0
-    while y < H:
-        x = 0.5 + (dx / 2 if j % 2 else 0)
-        while x < W:
-            if test(x, y) and plantable(x, y):
-                t, v = species(x, y)
-                o = add(t, x + wobble(3, x, y) / 16, y + wobble(2, y, x) / 16, v)
-                if x < 3 or x > W - 3 or y > H - 3:
-                    o['wall'] = 1
-                planted.add((round(x * 2), round(y * 2)))
-            x += dx
-        y += dy
-        j += 1
-    if bushes:
-        for (x2, y2) in planted:
-            x, y = x2 / 2, y2 / 2
-            below = (round(x * 2 - dx), round((y + dy) * 2)) in planted or (round(x * 2 + dx), round((y + dy) * 2)) in planted
-            bx, by = x, y + 1.1
-            if not below and plantable(bx, by) and y < H - 2:
-                add(*bushes(bx, by))
-    return planted
+# signposts at the crossroads
+add('signpost', *T(58, 27), 0, 6, text='North: the Old Mine.   West: the forest track and the graveyard.   South: Brindle.')
+add('signpost', *T(88, 45), 0, 6, text='Beyond this point: ORCS. Turn back, friend.')
+add('signpost', *T(64, 61), 0, 6, text='South-west: the stone circle.   South: the old farmstead.   East: the quarry.')
+
+# ------------------------------------------------------------------ vegetation
+def poisson(n, test, pick, r, tries=30):
+    placed = 0
+    for _ in range(n * tries):
+        if placed >= n:
+            break
+        px, py = rng.uniform(8, W * 16 - 8), rng.uniform(8, H * 16 - 8)
+        if not test(px, py) or not free(px, py, r):
+            continue
+        t, v = pick(px, py)
+        if t:
+            add(t, px, py, v, r)
+            placed += 1
 
 
-def pines(x, y):
-    r = h32('p', x, y) % 100
-    v = h32('pv', x, y) % 2
-    return ('pine_big', v) if r < 38 else ('pine', v) if r < 74 else ('pine_tall', v) if r < 92 else ('oak', v)
+def undergrowth(px, py, zone_name, n):
+    for _ in range(n):
+        a, d = rng.uniform(0, math.tau), rng.uniform(10, 26)
+        qx, qy = px + math.cos(a) * d, py + math.sin(a) * d * 0.6 + 4
+        if not ground_ok(qx, qy, '.*') or not free(qx, qy, 3):
+            continue
+        r = rng.random()
+        if zone_name == 'frost':
+            add('pebble', qx, qy, rng.randrange(8))
+        elif zone_name == 'autumn':
+            add('leaves' if r < 0.5 else ('mushroom' if r < 0.75 else 'fern'), qx, qy, rng.randrange(2 if r < 0.5 else 4))
+        elif r < 0.45:
+            add('fern', qx, qy, rng.randrange(4))
+        elif r < 0.7:
+            add('mushroom', qx, qy, rng.randrange(5))
+        elif r < 0.8:
+            add('mushroom_tall', qx, qy, rng.randrange(2))
+        else:
+            add('tuft', qx, qy, rng.randrange(9))
 
 
-def autumn(x, y):
-    r = h32('a', x, y) % 100
-    v = 2 + h32('av', x, y) % 2
-    return ('oak_big', v) if r < 42 else ('oak', v) if r < 84 else ('pine_tall', v)
+TREE_R = {'pine': 11, 'pine_big': 16, 'pine_tall': 10, 'oak': 13, 'oak_big': 18, 'oak_dead': 10, 'pine_dead': 8,
+          'oak_frozen': 13, 'oak_big_frozen': 17, 'oak_big_dead': 15}
 
 
-def mixed(x, y):
-    r = h32('m', x, y) % 100
-    v = h32('mv', x, y) % 2
-    return ('oak_big', v) if r < 30 else ('oak', v) if r < 55 else ('pine_big', v) if r < 78 else ('pine', v)
+def tree_for(zone_name, px, py):
+    r = rng.random()
+    if zone_name == 'forest':
+        if r < 0.3: return 'pine_big', rng.randrange(4)
+        if r < 0.62: return 'pine', rng.randrange(4)
+        if r < 0.74: return 'pine_tall', rng.randrange(2)
+        if r < 0.9: return 'oak', rng.randrange(2)
+        if r < 0.95: return 'oak_big', rng.randrange(2)
+        return 'pine_dead', 0
+    if zone_name == 'autumn':
+        if r < 0.45: return 'oak', 2 + rng.randrange(2)
+        if r < 0.75: return 'oak_big', 2 + rng.randrange(2)
+        if r < 0.87: return 'pine_tall', 2 + rng.randrange(2)
+        if r < 0.94: return 'oak_big_dead', rng.randrange(2)
+        return 'oak_dead', 0
+    if zone_name == 'frost':
+        if r < 0.45: return 'oak_frozen', rng.randrange(2)
+        if r < 0.7: return 'oak_big_frozen', rng.randrange(2)
+        if r < 0.85: return 'pine_dead', 0
+        return 'pine', 0
+    if zone_name in ('fort', 'quarry'):
+        if r < 0.5: return 'oak_dead', 0
+        if r < 0.8: return 'pine_dead', 0
+        return 'oak_big_dead', 0
+    if r < 0.45: return 'oak', rng.randrange(4)
+    if r < 0.7: return 'oak_big', rng.randrange(4)
+    if r < 0.9: return 'pine', rng.randrange(4)
+    return 'pine_tall', rng.randrange(4)
 
 
-def frozen(x, y):
-    r = h32('f', x, y) % 100
-    v = h32('fv', x, y) % 2
-    return ('oak_big_frozen', v) if r < 40 else ('oak_frozen', v) if r < 85 else ('pine_dead', 0)
+def plant_forest(zone_name, density, n, chars='.*'):
+    """Groves: trees only where the noise field is dense, so clearings and glades appear."""
+    def test(px, py):
+        if zone_at(px, py) != zone_name or not ground_ok(px, py, chars, 1):
+            return False
+        if near(px, py, '=:~', 1):
+            return False
+        return n_big(px / 16, py / 16) * 0.75 + n_small(px / 16, py / 16) * 0.25 > density
+
+    def pick(px, py):
+        return tree_for(zone_name, px, py)
+
+    before = len(objs)
+    for _ in range(n * 30):
+        if len(objs) - before >= n:
+            break
+        px, py = rng.uniform(8, W * 16 - 8), rng.uniform(8, H * 16 - 8)
+        if not test(px, py):
+            continue
+        t, v = pick(px, py)
+        r = TREE_R.get(t, 12)
+        if not free(px, py, r):
+            continue
+        add(t, px, py, v, r)
+        if rng.random() < 0.55:
+            undergrowth(px, py, zone_name, rng.randint(1, 3))
 
 
-def green_bush(x, y):
-    return ('bush', x, y, pick([0, 1], x, y))
+plant_forest('forest', 0.36, 420)
+plant_forest('autumn', 0.34, 170)
+plant_forest('frost', 0.5, 90, '*.')
+plant_forest('north', 0.52, 90)
+plant_forest('fort', 0.7, 14)
+plant_forest('quarry', 0.72, 10)
+plant_forest('wild', 0.62, 50)
 
 
-def autumn_bush(x, y):
-    return ('bush', x, y, pick([2, 3], x, y))
+# forest edges: bushes and young trees where woods meet open ground
+def edge_band():
+    for _ in range(1400):
+        px, py = rng.uniform(8, W * 16 - 8), rng.uniform(8, H * 16 - 8)
+        if not ground_ok(px, py, '.', 0) or near(px, py, '=:~', 1):
+            continue
+        dense = n_big(px / 16, py / 16) * 0.75 + n_small(px / 16, py / 16) * 0.25
+        z = zone_at(px, py)
+        if z not in ('forest', 'autumn', 'north', 'wild', 'lake', 'meadow') or not (0.26 < dense < 0.4):
+            continue
+        if not free(px, py, 11):
+            continue
+        r = rng.random()
+        if z == 'autumn':
+            add('bush', px, py, rng.choice([2, 3]), 10)
+        elif r < 0.55:
+            add('bush', px, py, rng.choice([0, 0, 1]), 10)
+        elif r < 0.75:
+            add('bush_big', px, py, rng.choice([0, 1]), 14)
+        elif r < 0.9:
+            add('fern', px, py, rng.randrange(4), 5)
+        else:
+            add('dead_shrub', px, py, rng.randrange(2), 8)
 
 
-# the old forest: pines in the north-west, down to the west road, parted by the river
-forest(lambda x, y: x < 45 and 6.5 <= y < 41 and not (x > 30 and y > 35), pines, bushes=green_bush)
-# a copse between the village and the orc camp
-forest(lambda x, y: 77 <= x < 93 and 48 <= y < 58, mixed, bushes=green_bush)
-# a grove north of the west road, between the river and the village
-forest(lambda x, y: 45 <= x < 56 and 30 <= y < 41, mixed, bushes=green_bush)
-# the autumn woods in the south-west
-forest(lambda x, y: x < 28 and y >= 66, autumn, bushes=autumn_bush)
-# the southern border
-forest(lambda x, y: 28 <= x < 124 and y >= 83.5, mixed, bushes=green_bush)
-# the eastern border: pines south of Frostvale, frozen trees in the snow
-forest(lambda x, y: x >= 122 and 30 <= y < 84, pines, bushes=green_bush)
-forest(lambda x, y: x >= 121 and 7 <= y < 30, frozen)
-forest(lambda x, y: 88 <= x < 104 and 7 <= y < 11.5, frozen)
-# the north-east meadow's edge along the river
-forest(lambda x, y: 76 <= x < 84 and 28 <= y < 36, mixed, bushes=green_bush)
+edge_band()
 
-# ------------------------------------------------------------------ rocks along the mountain foot
-for (tx, ty) in [(44, 9.8), (46.5, 10.2), (49, 9.8), (93, 13), (95.5, 13.4), (26, 9), (28.5, 9.4)]:
-    add(pick(['rock', 'boulder'], tx, ty), tx, ty, h32(tx, ty) % 2)
-for (tx, ty) in [(28, 64.6), (29.5, 65.2), (56.2, 55), (56.8, 56)]:
-    add('rock', tx, ty, h32(tx, ty) % 4)
 
-# ------------------------------------------------------------------ forage: fixed spots, back every morning
-for (tx, ty) in [(42.5, 40.6), (36.5, 41), (31, 41), (20, 40.6), (46.5, 30.8), (54.5, 40.6), (24.5, 65), (18.5, 65.2),
-                 (80, 57.6), (88, 57.6), (13, 71), (22.5, 71.2)]:
-    add('forage', tx, ty, h32('fm', tx) % 3, item='mushroom', sprite='mushroom')
-for (tx, ty) in [(35.5, 47.5), (52.5, 47.8), (78.5, 40), (84, 34), (61.5, 69), (70, 69.2), (92.5, 63), (26.5, 57.5)]:
-    add('forage', tx, ty, pick([0, 2], tx, ty), item='herb', sprite='fern')
+# lone trees in the open, each with a skirt of flowers or tufts
+def lone_trees(n):
+    placed = 0
+    for _ in range(n * 60):
+        if placed >= n:
+            break
+        px, py = rng.uniform(8, W * 16 - 8), rng.uniform(8, H * 16 - 8)
+        z = zone_at(px, py)
+        if z not in ('meadow', 'village', 'homestead', 'lake', 'wild') or not ground_ok(px, py, '.', 1) or near(px, py, '=:~', 2):
+            continue
+        if not free(px, py, 40):
+            continue
+        t = rng.choice(['oak_big', 'oak', 'oak_big'])
+        add(t, px, py, rng.randrange(4), 18)
+        colour = rng.choice(['white', 'yellow', 'blue', 'orange'])
+        for _ in range(rng.randint(3, 7)):
+            a, d = rng.uniform(0, math.tau), rng.uniform(18, 34)
+            qx, qy = px + math.cos(a) * d, py + math.sin(a) * d * 0.5 + 6
+            if ground_ok(qx, qy) and free(qx, qy, 3):
+                add('flower_' + colour if rng.random() < 0.6 else 'tuft', qx, qy, rng.randrange(8 if rng.random() < 0.6 else 9))
+        placed += 1
+
+
+lone_trees(14)
+
+
+# flower drifts: long soft patches of one colour across the meadows
+def drifts(n, zones):
+    for _ in range(n):
+        for _ in range(80):
+            cx, cy = rng.uniform(0, W * 16), rng.uniform(0, H * 16)
+            if zone_at(cx, cy) in zones and ground_ok(cx, cy):
+                break
+        colour = rng.choice(['orange', 'white', 'blue', 'yellow', 'white', 'yellow'])
+        ang = rng.uniform(-0.6, 0.6)
+        length, width = rng.uniform(40, 110), rng.uniform(10, 22)
+        for _ in range(int(length / 5)):
+            t, s = rng.gauss(0, length / 2.5), rng.gauss(0, width / 2)
+            px, py = cx + math.cos(ang) * t - math.sin(ang) * s, cy + math.sin(ang) * t + math.cos(ang) * s
+            if ground_ok(px, py) and not near(px, py, '~', 0) and free(px, py, 4):
+                add('flower_' + colour, px, py, rng.randrange(8))
+        for _ in range(int(length / 14)):
+            px, py = cx + rng.gauss(0, length / 2), cy + rng.gauss(0, width)
+            if ground_ok(px, py) and free(px, py, 5):
+                add('foxglove' if rng.random() < 0.3 else 'tuft', px, py, rng.randrange(3), 3)
+
+
+drifts(46, ('meadow', 'village', 'homestead', 'wild', 'lake', 'north'))
+
+
+# reed beds along the water
+def reeds():
+    for _ in range(220):
+        px, py = rng.uniform(0, W * 16), rng.uniform(0, H * 16)
+        if not (ground_ok(px, py, '.*') and near(px, py, '~', 1)) or clear_at(px, py):
+            continue
+        if zone_at(px, py) == 'frost':
+            continue
+        for _ in range(rng.randint(2, 6)):
+            qx, qy = px + rng.gauss(0, 8), py + rng.gauss(0, 5)
+            if ground_ok(qx, qy) and free(qx, qy, 4):
+                add('cattail', qx, qy, rng.randrange(4), 3)
+    for _ in range(26):
+        px, py = rng.uniform(0, W * 16), rng.uniform(0, H * 16)
+        if ground_ok(px, py, '.*') and near(px, py, '~', 1) and free(px, py, 9):
+            add('rock', px, py, rng.randrange(4), 7)
+
+
+reeds()
+
+
+# rocks and rubble at the feet of cliffs, clustered
+def cliff_feet():
+    for c in cliffs:
+        h = c['top'] + c['face'] + 5
+        foot_y = (c['y'] + h) * 16 + 6
+        for _ in range(max(1, c['w'] // 3)):
+            px = (c['x'] + rng.uniform(0.5, c['w'] - 0.5)) * 16
+            py = foot_y + rng.uniform(0, 14)
+            if not ground_ok(px, py, '.:*') or not free(px, py, 8):
+                continue
+            r = rng.random()
+            if r < 0.35:
+                add('rock', px, py, rng.randrange(4), 7)
+                for _ in range(rng.randint(1, 3)):
+                    qx, qy = px + rng.uniform(-14, 14), py + rng.uniform(-3, 8)
+                    if ground_ok(qx, qy, '.:*') and free(qx, qy, 3):
+                        add('pebble', qx, qy, rng.randrange(8))
+            elif r < 0.55 and c['colour'] != 2:
+                add('bush', px, py, rng.randrange(2), 10)
+            elif r < 0.7:
+                add('fern', px, py, rng.randrange(4), 4)
+            else:
+                add('tuft_dry' if c['colour'] != 1 else 'tuft', px, py, rng.randrange(5), 3)
+
+
+cliff_feet()
+
+
+# rock clusters for mining: boulders with satellites, ore seams, crystals
+def rock_cluster(px, py, zone_name):
+    big = 'boulder_brown' if zone_name == 'quarry' else 'boulder'
+    add(big, px, py, rng.randrange(2), 14)
+    for _ in range(rng.randint(1, 3)):
+        a = rng.uniform(0, math.tau)
+        qx, qy = px + math.cos(a) * rng.uniform(18, 28), py + math.sin(a) * rng.uniform(10, 18)
+        if ground_ok(qx, qy, '.:*') and free(qx, qy, 8):
+            add(rng.choice(['rock', 'rock', 'ore_rock']), qx, qy, rng.randrange(2), 8)
+    for _ in range(rng.randint(2, 5)):
+        qx, qy = px + rng.uniform(-30, 30), py + rng.uniform(-8, 16)
+        if ground_ok(qx, qy, '.:*') and free(qx, qy, 3):
+            add('pebble', qx, qy, rng.randrange(8))
+
+
+for z, n in (('quarry', 16), ('north', 8), ('frost', 7), ('wild', 6), ('fort', 4)):
+    placed = 0
+    for _ in range(n * 80):
+        if placed >= n:
+            break
+        px, py = rng.uniform(0, W * 16), rng.uniform(0, H * 16)
+        if zone_at(px, py) == z and ground_ok(px, py, '.:*', 1) and free(px, py, 30) and not near(px, py, '=~', 1):
+            rock_cluster(px, py, z)
+            placed += 1
+poisson(12, lambda px, py: zone_at(px, py) == 'quarry' and ground_ok(px, py, ':.', 0), lambda px, py: ('ore_rock', rng.randrange(2)), 10)
+poisson(10, lambda px, py: zone_at(px, py) in ('quarry', 'frost') and ground_ok(px, py, ':.*', 0), lambda px, py: ('crystal', rng.randrange(3)), 9)
+
+
+# path dressing: pebbles and leaves on the dirt, tufts where grass overhangs the edge
+def path_dressing():
+    for _ in range(1600):
+        px, py = rng.uniform(0, W * 16), rng.uniform(0, H * 16)
+        ch = cell(px, py)
+        if is_solid(px, py) or clear_at(px, py):
+            continue
+        if ch in ':=' and rng.random() < 0.18 and free(px, py, 6):
+            add(rng.choice(['pebble', 'pebble', 'twig', 'leaves']) if zone_at(px, py) != 'village' else 'pebble', px, py, rng.randrange(2))
+        elif ch == '.' and near(px, py, ':=', 1) and not near(px, py, ':=', 0) and rng.random() < 0.5 and free(px, py, 4):
+            add(rng.choice(['tuft', 'tuft', 'fern', 'pebble']), px, py, rng.randrange(4))
+
+
+path_dressing()
+
+
+# ground cover: sparse tufts and twigs everywhere else, flowers never alone
+def ground_cover():
+    for _ in range(3800):
+        px, py = rng.uniform(4, W * 16 - 4), rng.uniform(4, H * 16 - 4)
+        if not ground_ok(px, py, '.*') or near(px, py, '~', 0) or not free(px, py, 5):
+            continue
+        z = zone_at(px, py)
+        dense = n_small(px / 7, py / 7)
+        if dense < 0.45:  # leave bare patches so the grass can breathe
+            continue
+        r = rng.random()
+        if cell(px, py) == '*':
+            if r < 0.3:
+                add('pebble', px, py, rng.randrange(8))
+            elif r < 0.4:
+                add('twig', px, py, rng.randrange(7))
+            continue
+        if z == 'forest':
+            add(rng.choice(['fern', 'tuft', 'twig', 'mushroom']), px, py, rng.randrange(4))
+        elif z == 'autumn':
+            add(rng.choice(['leaves', 'leaves', 'tuft_dry', 'twig', 'mushroom']), px, py, rng.randrange(2))
+        elif z in ('fort', 'quarry'):
+            add(rng.choice(['tuft_dry', 'pebble', 'twig']), px, py, rng.randrange(5))
+        else:
+            add('tuft' if r < 0.8 else rng.choice(['twig', 'pebble']), px, py, rng.randrange(9 if r < 0.8 else 7))
+
+
+ground_cover()
+
+
+# things to pick up: mushrooms in the woods, herbs in the meadows
+def forage(n, zones, item, sprite, variants):
+    placed = 0
+    for _ in range(n * 80):
+        if placed >= n:
+            break
+        px, py = rng.uniform(0, W * 16), rng.uniform(0, H * 16)
+        if zone_at(px, py) in zones and ground_ok(px, py, '.') and not near(px, py, '~=:', 0) and free(px, py, 8):
+            add('forage', px, py, rng.choice(variants), 6, item=item, sprite=sprite)
+            placed += 1
+
+
+forage(34, ('forest', 'autumn', 'north'), 'mushroom', 'mushroom', [0, 1, 2])
+forage(26, ('meadow', 'wild', 'lake', 'homestead', 'village'), 'herb', 'fern', [0, 2])
+
+# a few bushes in the village and homestead so they feel lived-in
+poisson(10, lambda px, py: zone_at(px, py) in ('village', 'homestead') and ground_ok(px, py, '.', 0) and not near(px, py, '=:', 0),
+        lambda px, py: ('bush', rng.randrange(2)), 12)
 
 # ------------------------------------------------------------------ write
 objs.sort(key=lambda o: (o['y'], o['x']))
 world = {
-    'tile': 16, 'width': W, 'height': H, 'seed': 7,
+    'tile': 16, 'width': W, 'height': H, 'seed': SEED,
     'legend': {'.': 'grass', ':': 'dirt', '=': 'cobblestone', '~': 'water', '*': 'snow'},
     'terrain': [''.join(r) for r in grid],
     'cliffs': cliffs,
