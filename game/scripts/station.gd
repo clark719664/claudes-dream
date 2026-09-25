@@ -5,19 +5,24 @@ extends StaticBody2D
 
 var station: String
 var tier := 1
+var fixed := false          # a townsfolk's station: always this tier, just for show
 var _visual: Node2D
 
 
-func _init(name_: String) -> void:
+func _init(name_: String, fixed_tier := 0) -> void:
 	station = name_
+	if fixed_tier > 0:
+		tier = fixed_tier
+		fixed = true
 
 
 func _ready() -> void:
 	collision_layer = 1
 	collision_mask = 0
-	add_to_group("interactable")
-	add_to_group("stations")
-	tier = Game.station_tier(station)
+	if not fixed:
+		add_to_group("interactable")
+		add_to_group("stations")
+		tier = Game.station_tier(station)
 	_build()
 
 

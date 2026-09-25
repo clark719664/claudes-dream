@@ -3028,7 +3028,7 @@
        471
       ],
       "at": [
-       29,
+       25,
        3
       ]
      }
@@ -3470,14 +3470,14 @@
     "region": [
      0,
      18,
-     30,
+     48,
      48
     ],
     "anchor": [
-     16,
+     24,
      29
     ],
-    "solid": 12,
+    "solid": 14,
     "shadow": "shadow_small"
    }
   ],
@@ -3805,6 +3805,1751 @@
      20
     ],
     "solid": 5
+   }
+  ],
+  "oak_young": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_03.png",
+    "region": [
+     0,
+     0,
+     48,
+     96
+    ],
+    "anchor": [
+     24,
+     95
+    ],
+    "solid": 5,
+    "shadow": "shadow_tree",
+    "hp": 3,
+    "drop": "wood",
+    "stump": "oak_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_03.png",
+    "region": [
+     48,
+     0,
+     96,
+     96
+    ],
+    "anchor": [
+     24,
+     95
+    ],
+    "solid": 5,
+    "shadow": "shadow_tree",
+    "hp": 3,
+    "drop": "wood",
+    "stump": "oak_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_03.png",
+    "region": [
+     0,
+     96,
+     48,
+     192
+    ],
+    "anchor": [
+     24,
+     95
+    ],
+    "solid": 5,
+    "shadow": "shadow_tree",
+    "hp": 3,
+    "drop": "wood",
+    "stump": "oak_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_03.png",
+    "region": [
+     48,
+     96,
+     96,
+     192
+    ],
+    "anchor": [
+     24,
+     95
+    ],
+    "solid": 5,
+    "shadow": "shadow_tree",
+    "hp": 3,
+    "drop": "wood",
+    "stump": "oak_stump"
+   }
+  ],
+  "oak_young_dead": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_03.png",
+    "region": [
+     96,
+     0,
+     144,
+     96
+    ],
+    "anchor": [
+     24,
+     95
+    ],
+    "solid": 4,
+    "shadow": "shadow_small",
+    "hp": 2,
+    "drop": "wood",
+    "stump": "oak_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_03.png",
+    "region": [
+     96,
+     96,
+     144,
+     192
+    ],
+    "anchor": [
+     24,
+     95
+    ],
+    "solid": 4,
+    "shadow": "shadow_small",
+    "hp": 2,
+    "drop": "wood",
+    "stump": "oak_stump"
+   }
+  ],
+  "oak_young_frozen": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_03.png",
+    "region": [
+     144,
+     0,
+     192,
+     96
+    ],
+    "anchor": [
+     24,
+     95
+    ],
+    "solid": 4,
+    "shadow": "shadow_small",
+    "hp": 3,
+    "drop": "wood",
+    "stump": "stump_frozen"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_03.png",
+    "region": [
+     144,
+     96,
+     192,
+     192
+    ],
+    "anchor": [
+     24,
+     95
+    ],
+    "solid": 4,
+    "shadow": "shadow_small",
+    "hp": 3,
+    "drop": "wood",
+    "stump": "stump_frozen"
+   }
+  ],
+  "sapling": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_02.png",
+    "region": [
+     16,
+     2,
+     64,
+     64
+    ],
+    "anchor": [
+     20,
+     61
+    ],
+    "solid": 3,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_02.png",
+    "region": [
+     80,
+     2,
+     128,
+     64
+    ],
+    "anchor": [
+     20,
+     61
+    ],
+    "solid": 3,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_02.png",
+    "region": [
+     16,
+     66,
+     64,
+     128
+    ],
+    "anchor": [
+     20,
+     61
+    ],
+    "solid": 3,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_02.png",
+    "region": [
+     80,
+     66,
+     128,
+     128
+    ],
+    "anchor": [
+     20,
+     61
+    ],
+    "solid": 3,
+    "shadow": "shadow_small"
+   }
+  ],
+  "pine_young": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_02/Size_03.png",
+    "region": [
+     4,
+     4,
+     41,
+     80
+    ],
+    "anchor": [
+     20,
+     75
+    ],
+    "solid": 4,
+    "shadow": "shadow_small",
+    "hp": 3,
+    "drop": "wood",
+    "stump": "pine_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_02/Size_03.png",
+    "region": [
+     52,
+     4,
+     89,
+     80
+    ],
+    "anchor": [
+     20,
+     75
+    ],
+    "solid": 4,
+    "shadow": "shadow_small",
+    "hp": 3,
+    "drop": "wood",
+    "stump": "pine_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_02/Size_03.png",
+    "region": [
+     4,
+     84,
+     41,
+     160
+    ],
+    "anchor": [
+     20,
+     75
+    ],
+    "solid": 4,
+    "shadow": "shadow_small",
+    "hp": 3,
+    "drop": "wood",
+    "stump": "pine_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_02/Size_03.png",
+    "region": [
+     52,
+     84,
+     89,
+     160
+    ],
+    "anchor": [
+     20,
+     75
+    ],
+    "solid": 4,
+    "shadow": "shadow_small",
+    "hp": 3,
+    "drop": "wood",
+    "stump": "pine_stump"
+   }
+  ],
+  "pine_young_dead": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_02/Size_03.png",
+    "region": [
+     99,
+     6,
+     139,
+     80
+    ],
+    "anchor": [
+     21,
+     73
+    ],
+    "solid": 3,
+    "shadow": "shadow_small",
+    "hp": 2,
+    "drop": "wood",
+    "stump": "pine_stump"
+   }
+  ],
+  "pine_saplings": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_02/Size_02.png",
+    "region": [
+     3,
+     1,
+     48,
+     96
+    ],
+    "anchor": [
+     25,
+     94
+    ],
+    "solid": 3,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_02/Size_02.png",
+    "region": [
+     67,
+     1,
+     112,
+     96
+    ],
+    "anchor": [
+     25,
+     94
+    ],
+    "solid": 3,
+    "shadow": "shadow_small"
+   }
+  ],
+  "pine_grand": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_04.png",
+    "region": [
+     0,
+     0,
+     96,
+     208
+    ],
+    "anchor": [
+     47,
+     207
+    ],
+    "solid": 7,
+    "shadow": "shadow_big",
+    "hp": 8,
+    "drop": "wood",
+    "stump": "pine_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_04.png",
+    "region": [
+     96,
+     0,
+     192,
+     208
+    ],
+    "anchor": [
+     47,
+     207
+    ],
+    "solid": 7,
+    "shadow": "shadow_big",
+    "hp": 8,
+    "drop": "wood",
+    "stump": "pine_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_04.png",
+    "region": [
+     0,
+     208,
+     96,
+     416
+    ],
+    "anchor": [
+     47,
+     207
+    ],
+    "solid": 7,
+    "shadow": "shadow_big",
+    "hp": 8,
+    "drop": "wood",
+    "stump": "pine_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_04.png",
+    "region": [
+     96,
+     208,
+     192,
+     416
+    ],
+    "anchor": [
+     47,
+     207
+    ],
+    "solid": 7,
+    "shadow": "shadow_big",
+    "hp": 8,
+    "drop": "wood",
+    "stump": "pine_stump"
+   }
+  ],
+  "pine_giant": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_05.png",
+    "region": [
+     0,
+     1,
+     128,
+     256
+    ],
+    "anchor": [
+     62,
+     254
+    ],
+    "solid": 9,
+    "shadow": "shadow_big",
+    "hp": 12,
+    "drop": "wood",
+    "stump": "pine_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_05.png",
+    "region": [
+     128,
+     1,
+     256,
+     256
+    ],
+    "anchor": [
+     62,
+     254
+    ],
+    "solid": 9,
+    "shadow": "shadow_big",
+    "hp": 12,
+    "drop": "wood",
+    "stump": "pine_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_05.png",
+    "region": [
+     0,
+     257,
+     128,
+     512
+    ],
+    "anchor": [
+     62,
+     254
+    ],
+    "solid": 9,
+    "shadow": "shadow_big",
+    "hp": 12,
+    "drop": "wood",
+    "stump": "pine_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_05.png",
+    "region": [
+     128,
+     257,
+     256,
+     512
+    ],
+    "anchor": [
+     62,
+     254
+    ],
+    "solid": 9,
+    "shadow": "shadow_big",
+    "hp": 12,
+    "drop": "wood",
+    "stump": "pine_stump"
+   }
+  ],
+  "pine_giant_dead": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_05.png",
+    "region": [
+     271,
+     5,
+     369,
+     256
+    ],
+    "anchor": [
+     46,
+     250
+    ],
+    "solid": 6,
+    "shadow": "shadow_tree",
+    "hp": 6,
+    "drop": "wood",
+    "stump": "pine_stump"
+   }
+  ],
+  "leafy": [
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     64,
+     144,
+     80,
+     160
+    ],
+    "anchor": [
+     8,
+     15
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     80,
+     147,
+     111,
+     172
+    ],
+    "anchor": [
+     14,
+     24
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     64,
+     192,
+     80,
+     208
+    ],
+    "anchor": [
+     8,
+     15
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     80,
+     195,
+     111,
+     220
+    ],
+    "anchor": [
+     14,
+     24
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     64,
+     240,
+     80,
+     256
+    ],
+    "anchor": [
+     8,
+     15
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     80,
+     243,
+     111,
+     268
+    ],
+    "anchor": [
+     14,
+     24
+    ]
+   }
+  ],
+  "reeds": [
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     112,
+     170,
+     128,
+     192
+    ],
+    "anchor": [
+     8,
+     21
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     128,
+     166,
+     144,
+     192
+    ],
+    "anchor": [
+     7,
+     25
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     112,
+     218,
+     128,
+     240
+    ],
+    "anchor": [
+     8,
+     21
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     128,
+     214,
+     144,
+     240
+    ],
+    "anchor": [
+     7,
+     25
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     112,
+     266,
+     128,
+     288
+    ],
+    "anchor": [
+     8,
+     21
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     128,
+     262,
+     144,
+     288
+    ],
+    "anchor": [
+     7,
+     25
+    ]
+   }
+  ],
+  "bush_dry": [
+   {
+    "sheet": "Environment/Props/Static/Vegetation.png",
+    "region": [
+     242,
+     133,
+     254,
+     144
+    ],
+    "anchor": [
+     6,
+     10
+    ]
+   }
+  ],
+  "table_small": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     48,
+     25,
+     80,
+     48
+    ],
+    "anchor": [
+     16,
+     22
+    ],
+    "solid": 10,
+    "shadow": "shadow_small"
+   }
+  ],
+  "counter": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     32,
+     52,
+     80,
+     80
+    ],
+    "anchor": [
+     24,
+     27
+    ],
+    "solid": 16,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     32,
+     86,
+     96,
+     112
+    ],
+    "anchor": [
+     32,
+     25
+    ],
+    "solid": 16,
+    "shadow": "shadow_small"
+   }
+  ],
+  "desk": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     32,
+     121,
+     80,
+     144
+    ],
+    "anchor": [
+     24,
+     22
+    ],
+    "solid": 14,
+    "shadow": "shadow_small"
+   }
+  ],
+  "hedge_box": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     50,
+     410,
+     78,
+     427
+    ],
+    "anchor": [
+     14,
+     16
+    ],
+    "solid": 8,
+    "shadow": "shadow_small"
+   }
+  ],
+  "trough": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     18,
+     416,
+     46,
+     427
+    ],
+    "anchor": [
+     14,
+     10
+    ],
+    "solid": 8,
+    "shadow": "shadow_small"
+   }
+  ],
+  "rope_line": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     179,
+     422,
+     237,
+     445
+    ],
+    "anchor": [
+     29,
+     22
+    ],
+    "block": [
+     56,
+     6
+    ]
+   }
+  ],
+  "pole": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     0,
+     400,
+     12,
+     448
+    ],
+    "anchor": [
+     2,
+     47
+    ],
+    "solid": 3,
+    "shadow": "shadow_actor"
+   }
+  ],
+  "long_table": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     98,
+     466,
+     142,
+     478
+    ],
+    "anchor": [
+     22,
+     11
+    ],
+    "solid": 14,
+    "shadow": "shadow_small"
+   }
+  ],
+  "chair": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     114,
+     489,
+     126,
+     512
+    ],
+    "anchor": [
+     6,
+     22
+    ],
+    "solid": 4
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     130,
+     489,
+     141,
+     512
+    ],
+    "anchor": [
+     6,
+     22
+    ],
+    "solid": 4
+   }
+  ],
+  "stool": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     112,
+     514,
+     128,
+     528
+    ],
+    "anchor": [
+     8,
+     13
+    ],
+    "solid": 4
+   }
+  ],
+  "water_bucket": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     769,
+     13,
+     783,
+     32
+    ],
+    "anchor": [
+     7,
+     18
+    ],
+    "solid": 4
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     785,
+     13,
+     799,
+     32
+    ],
+    "anchor": [
+     7,
+     18
+    ],
+    "solid": 4
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     738,
+     49,
+     750,
+     64
+    ],
+    "anchor": [
+     6,
+     14
+    ],
+    "solid": 4
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     754,
+     48,
+     766,
+     64
+    ],
+    "anchor": [
+     6,
+     15
+    ],
+    "solid": 4
+   }
+  ],
+  "jar": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     787,
+     76,
+     797,
+     96
+    ],
+    "anchor": [
+     5,
+     19
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor"
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     769,
+     80,
+     783,
+     96
+    ],
+    "anchor": [
+     7,
+     15
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor"
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     770,
+     44,
+     782,
+     64
+    ],
+    "anchor": [
+     6,
+     19
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor"
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     786,
+     44,
+     798,
+     64
+    ],
+    "anchor": [
+     6,
+     19
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor"
+   }
+  ],
+  "broken": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     736,
+     105,
+     768,
+     128
+    ],
+    "anchor": [
+     15,
+     22
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     769,
+     133,
+     783,
+     144
+    ],
+    "anchor": [
+     7,
+     10
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     787,
+     132,
+     797,
+     144
+    ],
+    "anchor": [
+     5,
+     11
+    ]
+   }
+  ],
+  "iron_chest": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     752,
+     172,
+     768,
+     192
+    ],
+    "anchor": [
+     8,
+     19
+    ],
+    "solid": 5,
+    "shadow": "shadow_actor"
+   }
+  ],
+  "hay": [
+   {
+    "sheet": "Environment/Props/Static/Farm.png",
+    "region": [
+     366,
+     79,
+     388,
+     99
+    ],
+    "anchor": [
+     10,
+     19
+    ],
+    "solid": 6,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Props/Static/Farm.png",
+    "region": [
+     352,
+     112,
+     368,
+     128
+    ],
+    "anchor": [
+     8,
+     15
+    ],
+    "solid": 6,
+    "shadow": "shadow_small"
+   }
+  ],
+  "puddle": [
+   {
+    "sheet": "Environment/Props/Static/Farm.png",
+    "region": [
+     352,
+     128,
+     384,
+     144
+    ],
+    "anchor": [
+     17,
+     15
+    ]
+   }
+  ],
+  "feed_trough": [
+   {
+    "sheet": "Environment/Props/Static/Farm.png",
+    "region": [
+     320,
+     0,
+     384,
+     16
+    ],
+    "anchor": [
+     32,
+     15
+    ],
+    "solid": 12,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Props/Static/Farm.png",
+    "region": [
+     320,
+     16,
+     384,
+     32
+    ],
+    "anchor": [
+     32,
+     15
+    ],
+    "solid": 12,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Props/Static/Farm.png",
+    "region": [
+     336,
+     32,
+     368,
+     48
+    ],
+    "anchor": [
+     16,
+     15
+    ],
+    "solid": 12,
+    "shadow": "shadow_small"
+   }
+  ],
+  "bin": [
+   {
+    "sheet": "Environment/Props/Static/Farm.png",
+    "region": [
+     288,
+     9,
+     304,
+     32
+    ],
+    "anchor": [
+     8,
+     22
+    ],
+    "solid": 6,
+    "shadow": "shadow_actor"
+   },
+   {
+    "sheet": "Environment/Props/Static/Farm.png",
+    "region": [
+     304,
+     9,
+     320,
+     32
+    ],
+    "anchor": [
+     8,
+     22
+    ],
+    "solid": 6,
+    "shadow": "shadow_actor"
+   }
+  ],
+  "rail_fence": [
+   {
+    "sheet": "Environment/Props/Static/Farm.png",
+    "region": [
+     288,
+     37,
+     336,
+     74
+    ],
+    "anchor": [
+     24,
+     36
+    ],
+    "block": [
+     48,
+     6
+    ]
+   }
+  ],
+  "urn": [
+   {
+    "sheet": "Environment/Props/Static/Farm.png",
+    "region": [
+     273,
+     0,
+     287,
+     32
+    ],
+    "anchor": [
+     7,
+     31
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor"
+   },
+   {
+    "sheet": "Environment/Props/Static/Farm.png",
+    "region": [
+     256,
+     2,
+     272,
+     14
+    ],
+    "anchor": [
+     8,
+     11
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor"
+   }
+  ],
+  "ore_crate": [
+   {
+    "sheet": "Environment/Props/Static/Resources.png",
+    "region": [
+     0,
+     157,
+     15,
+     176
+    ],
+    "anchor": [
+     8,
+     18
+    ],
+    "solid": 6,
+    "shadow": "shadow_actor"
+   },
+   {
+    "sheet": "Environment/Props/Static/Resources.png",
+    "region": [
+     16,
+     156,
+     31,
+     176
+    ],
+    "anchor": [
+     8,
+     19
+    ],
+    "solid": 6,
+    "shadow": "shadow_actor"
+   }
+  ],
+  "log": [
+   {
+    "sheet": "Environment/Props/Static/Resources.png",
+    "region": [
+     32,
+     68,
+     64,
+     75
+    ],
+    "anchor": [
+     16,
+     6
+    ],
+    "solid": 0
+   }
+  ],
+  "log_pile": [
+   {
+    "sheet": "Environment/Props/Static/Resources.png",
+    "region": [
+     32,
+     68,
+     64,
+     75
+    ],
+    "anchor": [
+     16,
+     6
+    ],
+    "solid": 10,
+    "shadow": "shadow_small",
+    "parts": [
+     {
+      "region": [
+       32,
+       68,
+       64,
+       75
+      ],
+      "at": [
+       0,
+       -5
+      ]
+     },
+     {
+      "region": [
+       32,
+       68,
+       64,
+       75
+      ],
+      "at": [
+       0,
+       -10
+      ]
+     },
+     {
+      "region": [
+       32,
+       68,
+       64,
+       75
+      ],
+      "at": [
+       4,
+       -15
+      ]
+     }
+    ]
+   }
+  ],
+  "stall": [
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Estructure.png",
+    "region": [
+     144,
+     160,
+     192,
+     208
+    ],
+    "anchor": [
+     24,
+     47
+    ],
+    "solid": 18,
+    "shadow": "shadow_tree"
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Estructure.png",
+    "region": [
+     208,
+     160,
+     272,
+     224
+    ],
+    "anchor": [
+     31,
+     63
+    ],
+    "solid": 18,
+    "shadow": "shadow_tree"
+   }
+  ],
+  "stall_table": [
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Estructure.png",
+    "region": [
+     80,
+     182,
+     112,
+     208
+    ],
+    "anchor": [
+     16,
+     25
+    ],
+    "solid": 12,
+    "shadow": "shadow_small"
+   }
+  ],
+  "stump_seat": [
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Estructure.png",
+    "region": [
+     24,
+     184,
+     40,
+     208
+    ],
+    "anchor": [
+     8,
+     23
+    ],
+    "solid": 5,
+    "shadow": "shadow_actor"
+   }
+  ],
+  "drying_rack": [
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Estructure.png",
+    "region": [
+     13,
+     20,
+     62,
+     52
+    ],
+    "anchor": [
+     22,
+     31
+    ],
+    "solid": 14,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Estructure.png",
+    "region": [
+     77,
+     20,
+     118,
+     52
+    ],
+    "anchor": [
+     22,
+     31
+    ],
+    "solid": 14,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Estructure.png",
+    "region": [
+     144,
+     20,
+     200,
+     52
+    ],
+    "anchor": [
+     29,
+     31
+    ],
+    "solid": 14,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Estructure.png",
+    "region": [
+     218,
+     20,
+     276,
+     52
+    ],
+    "anchor": [
+     29,
+     31
+    ],
+    "solid": 14,
+    "shadow": "shadow_small"
+   }
+  ],
+  "tripod": [
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Estructure.png",
+    "region": [
+     11,
+     67,
+     53,
+     117
+    ],
+    "anchor": [
+     21,
+     49
+    ],
+    "solid": 8
+   }
+  ],
+  "stove": [
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Estructure.png",
+    "region": [
+     146,
+     102,
+     192,
+     128
+    ],
+    "anchor": [
+     23,
+     25
+    ],
+    "solid": 16,
+    "shadow": "shadow_small"
+   }
+  ],
+  "butcher_table": [
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Butchery/Butchery_03.png",
+    "region": [
+     16,
+     16,
+     64,
+     64
+    ],
+    "anchor": [
+     24,
+     47
+    ],
+    "solid": 16,
+    "shadow": "shadow_small"
+   }
+  ],
+  "butcher_stall": [
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Butchery/Butchery_04.png",
+    "region": [
+     0,
+     16,
+     69,
+     80
+    ],
+    "anchor": [
+     31,
+     63
+    ],
+    "solid": 22,
+    "shadow": "shadow_tree"
+   }
+  ],
+  "chopping_block": [
+   {
+    "sheet": "Environment/Structures/Stations/Cooking Station/Butchery/Butchery_01-Sheet.png",
+    "region": [
+     17,
+     19,
+     48,
+     48
+    ],
+    "anchor": [
+     18,
+     28
+    ],
+    "solid": 6,
+    "shadow": "shadow_actor"
+   }
+  ],
+  "iron_bars": [
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     3,
+     49,
+     13,
+     64
+    ],
+    "anchor": [
+     6,
+     14
+    ],
+    "solid": 3
+   },
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     19,
+     42,
+     29,
+     64
+    ],
+    "anchor": [
+     6,
+     21
+    ],
+    "solid": 3
+   },
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     35,
+     44,
+     45,
+     64
+    ],
+    "anchor": [
+     6,
+     19
+    ],
+    "solid": 3
+   },
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     51,
+     49,
+     61,
+     67
+    ],
+    "anchor": [
+     5,
+     17
+    ],
+    "solid": 3
+   },
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     67,
+     34,
+     77,
+     55
+    ],
+    "anchor": [
+     5,
+     20
+    ],
+    "solid": 3
+   },
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     83,
+     41,
+     93,
+     55
+    ],
+    "anchor": [
+     5,
+     13
+    ],
+    "solid": 3
+   },
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     99,
+     41,
+     109,
+     60
+    ],
+    "anchor": [
+     5,
+     18
+    ],
+    "solid": 3
+   },
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     115,
+     41,
+     125,
+     55
+    ],
+    "anchor": [
+     5,
+     13
+    ],
+    "solid": 3
+   }
+  ],
+  "stone_slab": [
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     11,
+     85,
+     53,
+     93
+    ],
+    "anchor": [
+     21,
+     7
+    ],
+    "solid": 10,
+    "shadow": "shadow_small"
+   }
+  ],
+  "minecart": [
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     0,
+     18,
+     19,
+     30
+    ],
+    "anchor": [
+     10,
+     11
+    ],
+    "solid": 8,
+    "shadow": "shadow_small"
+   }
+  ],
+  "rail_h": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     32,
+     624,
+     48,
+     640
+    ],
+    "anchor": [
+     8,
+     8
+    ]
+   }
+  ],
+  "rail_v": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     0,
+     656,
+     16,
+     672
+    ],
+    "anchor": [
+     8,
+     8
+    ]
+   }
+  ],
+  "cart_tipped": [
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     74,
+     12,
+     96,
+     30
+    ],
+    "anchor": [
+     14,
+     17
+    ],
+    "solid": 8,
+    "shadow": "shadow_small"
    }
   ],
   "shadow_big": [
@@ -5576,6 +7321,141 @@
     63
    ]
   },
+  "alchemy_lab": {
+   "sheet": "Environment/Structures/Stations/Alchemy/Alchemy_Table_03-Sheet.png",
+   "frame": [
+    80,
+    80
+   ],
+   "frames": 22,
+   "cols": 5,
+   "fps": 8,
+   "loop": true,
+   "anchor": [
+    40,
+    79
+   ]
+  },
+  "meat_rack": {
+   "sheet": "Environment/Structures/Stations/Cooking Station/Grill/Grill_03-Sheet.png",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 6,
+   "loop": true,
+   "anchor": [
+    28,
+    51
+   ]
+  },
+  "kitchen_range": {
+   "sheet": "Environment/Structures/Stations/Cooking Station/Cooker/Cooker_04-Sheet.png",
+   "frame": [
+    80,
+    80
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 8,
+   "loop": true,
+   "anchor": [
+    41,
+    79
+   ]
+  },
+  "cooker": {
+   "sheet": "Environment/Structures/Stations/Cooking Station/Cooker/Cooker_03-Sheet.png",
+   "frame": [
+    48,
+    32
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 8,
+   "loop": true,
+   "anchor": [
+    25,
+    31
+   ]
+  },
+  "fire_trough": {
+   "sheet": "Environment/Structures/Stations/Bonfire/Bonfire_10-Sheet.png",
+   "frame": [
+    48,
+    32
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 8,
+   "loop": true,
+   "anchor": [
+    20,
+    31
+   ]
+  },
+  "fire_embers": {
+   "sheet": "Environment/Structures/Stations/Bonfire/Bonfire_03-Sheet.png",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 6,
+   "loop": true,
+   "anchor": [
+    16,
+    21
+   ]
+  },
+  "fire_barrel": {
+   "sheet": "Environment/Structures/Stations/Bonfire/Bonfire_04-Sheet.png",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 8,
+   "loop": true,
+   "anchor": [
+    16,
+    29
+   ]
+  },
+  "grill_spit": {
+   "sheet": "Environment/Structures/Stations/Cooking Station/Grill/Grill_02-Sheet.png",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "cols": 4,
+   "fps": 8,
+   "loop": true,
+   "anchor": [
+    30,
+    60
+   ]
+  },
+  "pan": {
+   "sheet": "Environment/Props/Animated/Pan_03-Sheet.png",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 12,
+   "cols": 12,
+   "fps": 8,
+   "loop": true,
+   "anchor": [
+    18,
+    30
+   ]
+  },
   "water": {
    "fps": 10
   }
@@ -5589,6 +7469,3908 @@
   "frames": [
    3,
    4
+  ]
+ },
+ "floor_edges": {
+  "0,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "1,0": [
+   65535,
+   32767,
+   1023,
+   65535
+  ],
+  "2,0": [
+   65535,
+   16383,
+   2,
+   32767
+  ],
+  "3,0": [
+   65535,
+   65535,
+   65280,
+   32767
+  ],
+  "4,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "5,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "6,0": [
+   65535,
+   32767,
+   32767,
+   65535
+  ],
+  "7,0": [
+   65535,
+   32767,
+   0,
+   32767
+  ],
+  "8,0": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "9,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "10,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,0": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "12,0": [
+   65535,
+   65535,
+   49159,
+   65535
+  ],
+  "13,0": [
+   65535,
+   65535,
+   65511,
+   65535
+  ],
+  "14,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,0": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "17,0": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "18,0": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "19,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,0": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,1": [
+   65535,
+   32767,
+   2047,
+   65535
+  ],
+  "1,1": [
+   1023,
+   0,
+   2,
+   32767
+  ],
+  "2,1": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "3,1": [
+   65408,
+   16383,
+   0,
+   0
+  ],
+  "4,1": [
+   65535,
+   65535,
+   65280,
+   32767
+  ],
+  "5,1": [
+   65535,
+   32767,
+   32767,
+   65535
+  ],
+  "6,1": [
+   32767,
+   0,
+   0,
+   32767
+  ],
+  "7,1": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "8,1": [
+   65535,
+   32767,
+   0,
+   31
+  ],
+  "9,1": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "10,1": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "11,1": [
+   65535,
+   63,
+   7,
+   65535
+  ],
+  "12,1": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,1": [
+   65520,
+   65535,
+   57344,
+   0
+  ],
+  "14,1": [
+   65535,
+   65535,
+   65511,
+   65535
+  ],
+  "15,1": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "16,1": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "17,1": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "18,1": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "19,1": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "20,1": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,1": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,1": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,1": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,1": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,2": [
+   4095,
+   0,
+   4095,
+   65535
+  ],
+  "1,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "2,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "3,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "4,2": [
+   65520,
+   65535,
+   65520,
+   48
+  ],
+  "5,2": [
+   32767,
+   496,
+   32767,
+   65535
+  ],
+  "6,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "7,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "8,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "9,2": [
+   65535,
+   65535,
+   65535,
+   32783
+  ],
+  "10,2": [
+   65535,
+   127,
+   32767,
+   65535
+  ],
+  "11,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,2": [
+   65520,
+   65535,
+   65504,
+   0
+  ],
+  "15,2": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "16,2": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "17,2": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "18,2": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "19,2": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "20,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,2": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,3": [
+   2047,
+   65504,
+   65535,
+   65535
+  ],
+  "1,3": [
+   0,
+   0,
+   1023,
+   65520
+  ],
+  "2,3": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "3,3": [
+   0,
+   65504,
+   65532,
+   0
+  ],
+  "4,3": [
+   65528,
+   65535,
+   65535,
+   65520
+  ],
+  "5,3": [
+   32767,
+   65520,
+   65535,
+   65535
+  ],
+  "6,3": [
+   0,
+   0,
+   32767,
+   65472
+  ],
+  "7,3": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "8,3": [
+   0,
+   65408,
+   65535,
+   32768
+  ],
+  "9,3": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "10,3": [
+   32767,
+   65534,
+   65535,
+   65535
+  ],
+  "11,3": [
+   31,
+   0,
+   32767,
+   65535
+  ],
+  "12,3": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,3": [
+   14336,
+   65534,
+   65504,
+   0
+  ],
+  "14,3": [
+   65527,
+   65535,
+   65535,
+   65535
+  ],
+  "15,3": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "16,3": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "17,3": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "18,3": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "19,3": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "20,3": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,3": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,3": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,3": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,3": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "1,4": [
+   1023,
+   65504,
+   65535,
+   65535
+  ],
+  "2,4": [
+   0,
+   65504,
+   65535,
+   65520
+  ],
+  "3,4": [
+   65528,
+   65535,
+   65535,
+   65520
+  ],
+  "4,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "5,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "6,4": [
+   32767,
+   65520,
+   65535,
+   65535
+  ],
+  "7,4": [
+   0,
+   65472,
+   65535,
+   65472
+  ],
+  "8,4": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "9,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "10,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,4": [
+   32767,
+   65534,
+   65535,
+   65535
+  ],
+  "12,4": [
+   31,
+   65534,
+   65535,
+   65535
+  ],
+  "13,4": [
+   65527,
+   65535,
+   65535,
+   65535
+  ],
+  "14,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,4": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "17,4": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "18,4": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "19,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,4": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "1,5": [
+   65535,
+   16383,
+   511,
+   65535
+  ],
+  "2,5": [
+   65535,
+   8191,
+   0,
+   16383
+  ],
+  "3,5": [
+   65535,
+   65535,
+   65024,
+   16383
+  ],
+  "4,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "5,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "6,5": [
+   65535,
+   16383,
+   16383,
+   65535
+  ],
+  "7,5": [
+   65535,
+   16383,
+   0,
+   16383
+  ],
+  "8,5": [
+   65535,
+   65535,
+   65534,
+   16383
+  ],
+  "9,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "10,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,5": [
+   65535,
+   32767,
+   16383,
+   65535
+  ],
+  "12,5": [
+   65535,
+   32767,
+   0,
+   32767
+  ],
+  "13,5": [
+   65535,
+   65535,
+   65472,
+   32767
+  ],
+  "14,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,5": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,6": [
+   65535,
+   16383,
+   511,
+   65535
+  ],
+  "1,6": [
+   255,
+   0,
+   0,
+   16383
+  ],
+  "2,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "3,6": [
+   65024,
+   8191,
+   0,
+   0
+  ],
+  "4,6": [
+   65535,
+   65535,
+   65024,
+   16383
+  ],
+  "5,6": [
+   65535,
+   16383,
+   16383,
+   65535
+  ],
+  "6,6": [
+   8191,
+   0,
+   0,
+   16383
+  ],
+  "7,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "8,6": [
+   65534,
+   16383,
+   0,
+   0
+  ],
+  "9,6": [
+   65535,
+   65535,
+   65534,
+   16383
+  ],
+  "10,6": [
+   65535,
+   32767,
+   16383,
+   65535
+  ],
+  "11,6": [
+   32767,
+   0,
+   0,
+   32767
+  ],
+  "12,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,6": [
+   65504,
+   32767,
+   0,
+   0
+  ],
+  "14,6": [
+   65535,
+   65535,
+   65472,
+   32767
+  ],
+  "15,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,6": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,7": [
+   2047,
+   0,
+   2047,
+   65535
+  ],
+  "1,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "2,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "3,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "4,7": [
+   65528,
+   65535,
+   65280,
+   0
+  ],
+  "5,7": [
+   8191,
+   0,
+   16383,
+   65535
+  ],
+  "6,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "7,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "8,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "9,7": [
+   65534,
+   65535,
+   65534,
+   0
+  ],
+  "10,7": [
+   32767,
+   0,
+   16383,
+   65535
+  ],
+  "11,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,7": [
+   65504,
+   65535,
+   65472,
+   0
+  ],
+  "15,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,7": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,8": [
+   255,
+   65408,
+   65535,
+   65535
+  ],
+  "1,8": [
+   0,
+   0,
+   511,
+   65440
+  ],
+  "2,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "3,8": [
+   0,
+   65408,
+   65528,
+   0
+  ],
+  "4,8": [
+   65520,
+   65535,
+   65535,
+   65440
+  ],
+  "5,8": [
+   8191,
+   65280,
+   65535,
+   65535
+  ],
+  "6,8": [
+   0,
+   0,
+   16383,
+   65408
+  ],
+  "7,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "8,8": [
+   0,
+   65280,
+   65534,
+   0
+  ],
+  "9,8": [
+   65534,
+   65535,
+   65535,
+   65408
+  ],
+  "10,8": [
+   16383,
+   65532,
+   65535,
+   65535
+  ],
+  "11,8": [
+   0,
+   0,
+   16383,
+   65534
+  ],
+  "12,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,8": [
+   0,
+   65532,
+   65472,
+   0
+  ],
+  "14,8": [
+   65504,
+   65535,
+   65535,
+   65534
+  ],
+  "15,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,8": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "1,9": [
+   255,
+   65408,
+   65535,
+   65535
+  ],
+  "2,9": [
+   0,
+   65408,
+   65535,
+   65440
+  ],
+  "3,9": [
+   65520,
+   65535,
+   65535,
+   65440
+  ],
+  "4,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "5,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "6,9": [
+   8191,
+   65280,
+   65535,
+   65535
+  ],
+  "7,9": [
+   0,
+   65280,
+   65535,
+   65408
+  ],
+  "8,9": [
+   65534,
+   65535,
+   65535,
+   65408
+  ],
+  "9,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "10,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,9": [
+   16383,
+   65532,
+   65535,
+   65535
+  ],
+  "12,9": [
+   0,
+   65532,
+   65535,
+   65534
+  ],
+  "13,9": [
+   65504,
+   65535,
+   65535,
+   65534
+  ],
+  "14,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,9": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "1,10": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "2,10": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "3,10": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "4,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "5,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "6,10": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "7,10": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "8,10": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "9,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "10,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,10": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "12,10": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "13,10": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "14,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,10": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "1,11": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "2,11": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "3,11": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "4,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "5,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "6,11": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "7,11": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "8,11": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "9,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "10,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,11": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "12,11": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "13,11": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "14,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,11": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "1,12": [
+   0,
+   65528,
+   65534,
+   0
+  ],
+  "2,12": [
+   0,
+   65528,
+   65535,
+   65520
+  ],
+  "3,12": [
+   0,
+   0,
+   16383,
+   65520
+  ],
+  "4,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "5,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "6,12": [
+   0,
+   65528,
+   65534,
+   0
+  ],
+  "7,12": [
+   0,
+   65528,
+   65535,
+   65520
+  ],
+  "8,12": [
+   0,
+   0,
+   16383,
+   65520
+  ],
+  "9,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "10,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,12": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,13": [
+   0,
+   65528,
+   65534,
+   0
+  ],
+  "1,13": [
+   65534,
+   65535,
+   65535,
+   65528
+  ],
+  "2,13": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "3,13": [
+   16383,
+   65520,
+   65535,
+   65535
+  ],
+  "4,13": [
+   0,
+   0,
+   16383,
+   65520
+  ],
+  "5,13": [
+   0,
+   65528,
+   65534,
+   0
+  ],
+  "6,13": [
+   65534,
+   65535,
+   65535,
+   65528
+  ],
+  "7,13": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "8,13": [
+   16383,
+   65520,
+   65535,
+   65535
+  ],
+  "9,13": [
+   0,
+   0,
+   16383,
+   65520
+  ],
+  "10,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,13": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,14": [
+   65534,
+   65535,
+   65534,
+   0
+  ],
+  "1,14": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "2,14": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "3,14": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "4,14": [
+   16383,
+   7680,
+   16383,
+   65535
+  ],
+  "5,14": [
+   65534,
+   65535,
+   65534,
+   0
+  ],
+  "6,14": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "7,14": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "8,14": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "9,14": [
+   16383,
+   7680,
+   16383,
+   65535
+  ],
+  "10,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,14": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,15": [
+   65534,
+   16383,
+   0,
+   0
+  ],
+  "1,15": [
+   65535,
+   65535,
+   65534,
+   16383
+  ],
+  "2,15": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "3,15": [
+   65535,
+   32767,
+   32767,
+   65535
+  ],
+  "4,15": [
+   16383,
+   0,
+   0,
+   32767
+  ],
+  "5,15": [
+   65534,
+   16383,
+   0,
+   0
+  ],
+  "6,15": [
+   65535,
+   65535,
+   65534,
+   16383
+  ],
+  "7,15": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "8,15": [
+   65535,
+   32767,
+   32767,
+   65535
+  ],
+  "9,15": [
+   16383,
+   0,
+   0,
+   32767
+  ],
+  "10,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,15": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "1,16": [
+   65534,
+   16383,
+   0,
+   0
+  ],
+  "2,16": [
+   65535,
+   65535,
+   63488,
+   32767
+  ],
+  "3,16": [
+   16383,
+   0,
+   0,
+   32767
+  ],
+  "4,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "5,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "6,16": [
+   65534,
+   16383,
+   0,
+   0
+  ],
+  "7,16": [
+   65535,
+   65535,
+   63488,
+   32767
+  ],
+  "8,16": [
+   16383,
+   0,
+   0,
+   32767
+  ],
+  "9,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "10,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,16": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "1,17": [
+   0,
+   65520,
+   65532,
+   0
+  ],
+  "2,17": [
+   0,
+   65520,
+   65535,
+   65504
+  ],
+  "3,17": [
+   0,
+   0,
+   8191,
+   65504
+  ],
+  "4,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "5,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "6,17": [
+   0,
+   65520,
+   65532,
+   0
+  ],
+  "7,17": [
+   0,
+   65520,
+   65535,
+   65504
+  ],
+  "8,17": [
+   0,
+   0,
+   8191,
+   65504
+  ],
+  "9,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "10,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,17": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,18": [
+   0,
+   65520,
+   65532,
+   0
+  ],
+  "1,18": [
+   65532,
+   65535,
+   65535,
+   65520
+  ],
+  "2,18": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "3,18": [
+   8191,
+   65504,
+   65535,
+   65535
+  ],
+  "4,18": [
+   0,
+   0,
+   8191,
+   65504
+  ],
+  "5,18": [
+   0,
+   65520,
+   65532,
+   0
+  ],
+  "6,18": [
+   65532,
+   65535,
+   65535,
+   65520
+  ],
+  "7,18": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "8,18": [
+   8191,
+   65504,
+   65535,
+   65535
+  ],
+  "9,18": [
+   0,
+   0,
+   8191,
+   65504
+  ],
+  "10,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,18": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,19": [
+   65532,
+   65535,
+   65532,
+   0
+  ],
+  "1,19": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "2,19": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "3,19": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "4,19": [
+   8191,
+   0,
+   8191,
+   65535
+  ],
+  "5,19": [
+   65532,
+   65535,
+   65532,
+   0
+  ],
+  "6,19": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "7,19": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "8,19": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "9,19": [
+   8191,
+   0,
+   8191,
+   65535
+  ],
+  "10,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,19": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,20": [
+   65532,
+   8191,
+   0,
+   0
+  ],
+  "1,20": [
+   65535,
+   65535,
+   65532,
+   8191
+  ],
+  "2,20": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "3,20": [
+   65535,
+   16383,
+   8191,
+   65535
+  ],
+  "4,20": [
+   8191,
+   0,
+   0,
+   16383
+  ],
+  "5,20": [
+   65532,
+   8191,
+   0,
+   0
+  ],
+  "6,20": [
+   65535,
+   65535,
+   65532,
+   8191
+  ],
+  "7,20": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "8,20": [
+   65535,
+   16383,
+   8191,
+   65535
+  ],
+  "9,20": [
+   8191,
+   0,
+   0,
+   16383
+  ],
+  "10,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,20": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "1,21": [
+   65532,
+   8191,
+   0,
+   0
+  ],
+  "2,21": [
+   65535,
+   16383,
+   0,
+   8191
+  ],
+  "3,21": [
+   8191,
+   0,
+   0,
+   16383
+  ],
+  "4,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "5,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "6,21": [
+   65532,
+   8191,
+   0,
+   0
+  ],
+  "7,21": [
+   65535,
+   16383,
+   0,
+   8191
+  ],
+  "8,21": [
+   8191,
+   0,
+   0,
+   16383
+  ],
+  "9,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "10,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,21": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,22": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "1,22": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "2,22": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "3,22": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "4,22": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "5,22": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "6,22": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "7,22": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "8,22": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "9,22": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "10,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,22": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,23": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "1,23": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "2,23": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "3,23": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "4,23": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "5,23": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "6,23": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "7,23": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "8,23": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "9,23": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "10,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,23": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,24": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "1,24": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "2,24": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "3,24": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "4,24": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "5,24": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "6,24": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "7,24": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "8,24": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "9,24": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "10,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,24": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "0,25": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "1,25": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "2,25": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "3,25": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "4,25": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "5,25": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "6,25": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "7,25": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "8,25": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "9,25": [
+   65535,
+   65535,
+   65535,
+   65535
+  ],
+  "10,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "11,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "12,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "13,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "14,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "15,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "16,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "17,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "18,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "19,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "20,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "21,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "22,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "23,25": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "24,25": [
+   0,
+   0,
+   0,
+   0
   ]
  }
 }

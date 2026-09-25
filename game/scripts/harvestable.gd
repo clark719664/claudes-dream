@@ -13,7 +13,6 @@ var sprite: Sprite2D
 var shadow: Sprite2D
 var stump: Node2D
 var _tall := false
-var _fade := 1.0
 
 
 func _init(name_: String, v := 0) -> void:
@@ -37,6 +36,8 @@ func _ready() -> void:
 		bits.position = Vector2(randi_range(-3, 3), -3)
 		sprite.add_child(bits)
 	_tall = sprite.texture.get_size().y > 40
+	if _tall:
+		set_meta("tall", sprite)   # the world fades it while the player is behind it
 	_grow()
 
 
@@ -102,6 +103,7 @@ func _wobble(dir: Vector2) -> void:
 
 func _break(dir: Vector2) -> void:
 	remove_from_group("hittable")
+	Game.world.note_depleted(self)
 	var drop: String = spec.drop
 	var n := 1
 	match sprite_name:
@@ -140,13 +142,3 @@ func _break(dir: Vector2) -> void:
 		await get_tree().create_timer(2.0).timeout
 	_grow()
 
-
-func _process(delta: float) -> void:
-	# tall trees turn see-through while the player is behind them
-	if not _tall or not sprite.visible or Game.player == null:
-		return
-	var p := Game.player.global_position
-	var sz := sprite.texture.get_size()
-	var behind := p.y < global_position.y - 2 and p.y > global_position.y - sz.y + 8 and absf(p.x - global_position.x) < sz.x * 0.42
-	_fade = move_toward(_fade, 0.5 if behind else 1.0, delta * 3.0)
-	sprite.modulate.a = _fade

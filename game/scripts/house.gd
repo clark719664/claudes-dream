@@ -4,7 +4,8 @@ extends StaticBody2D
 ## the wall is stretched from the wall sheet's room stamps (continuous logs, boards or plaster
 ## framed by corner posts) to fill the whole space under the gable roof, the roof casts a
 ## shadow under its eaves, and the door, windows and a small attic window sit on top.
-## The origin is the middle of the bottom edge (the doorstep); the image is 128 x 164 px.
+## Wide buildings (taverns, stores, barns) put two gables side by side over one long wall.
+## The origin is the middle of the bottom edge (the doorstep); each gable adds 128 x 164 px.
 
 const ROOFS := "Environment/Structures/Buildings/Roofs.png"
 const WALLS := "Environment/Structures/Buildings/Walls.png"
@@ -34,13 +35,15 @@ signal entered
 var style := "log"
 var label := ""
 var is_cabin := false
+var gables := 1
 var _parts: Node2D
 
 
-func _init(style_name := "log", label_text := "", cabin := false) -> void:
+func _init(style_name := "log", label_text := "", cabin := false, gable_count := 1) -> void:
 	style = style_name
 	label = label_text
 	is_cabin = cabin
+	gables = clampi(gable_count, 1, 2)
 
 
 func _ready() -> void:
@@ -48,7 +51,7 @@ func _ready() -> void:
 	collision_mask = 0
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
-	rect.size = Vector2(112, 92)
+	rect.size = Vector2(128 * gables - 16, 92)
 	shape.shape = rect
 	shape.position = Vector2(0, -56)
 	add_child(shape)
@@ -64,24 +67,40 @@ func rebuild(style_name: String) -> void:
 	add_child(_parts)
 	var shadow := Pack.sprite("shadow_big")
 	shadow.position = Vector2(0, -2)
-	shadow.scale = Vector2(1.3, 0.9)
+	shadow.scale = Vector2(1.3 * gables, 0.9)
 	shadow.z_index = -1
 	_parts.add_child(shadow)
 	var front := Sprite2D.new()
-	front.texture = front_texture(style)
+	front.texture = front_texture(style, gables)
 	front.centered = false
-	front.offset = Vector2(-SIZE.x / 2.0, -SIZE.y)
+	front.offset = Vector2(-SIZE.x * gables / 2.0, -SIZE.y)
 	_parts.add_child(front)
 	if STYLES[style].chimney:
 		var smoke := Pack.anim_node("smoke")
-		smoke.position = Vector2(36, -SIZE.y + 10)
+		smoke.position = Vector2(36 + (SIZE.x * gables - SIZE.x) / 2.0, -SIZE.y + 10)
 		smoke.modulate.a = 0.75
 		_parts.add_child(smoke)
-	# a lantern by the door that lights up after dark
-	var lamp := Pack.sprite("lantern")
-	lamp.position = Vector2(26, 2)
-	_parts.add_child(lamp)
-	_parts.add_child(World.make_light(Color(1.0, 0.78, 0.45), 0.8, Vector2(26, -8), 72))
+	# the windows and the door glow after dark
+	_parts.add_child(World.make_light(Color(1.0, 0.78, 0.45), 0.8, Vector2(0, -20), 80))
+	if not is_cabin and label != "":
+		var sign := Label.new()
+		sign.text = label
+		sign.add_theme_color_override("font_color", Color(1.0, 0.9, 0.7))
+		sign.add_theme_color_override("font_outline_color", Color(0.12, 0.08, 0.05))
+		sign.add_theme_constant_override("outline_size", 2)
+		sign.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		sign.size = Vector2(160, 10)
+		sign.position = Vector2(-80, -64)
+		sign.visible = false
+		sign.name = "NameSign"
+		_parts.add_child(sign)
+
+
+## Names hang over the door while you stand near it.
+func _process(_delta: float) -> void:
+	var sign := _parts.get_node_or_null("NameSign") if _parts else null
+	if sign and Game.player:
+		sign.visible = Game.player.global_position.distance_squared_to(global_position) < 56.0 * 56.0
 
 
 func interact(_player: Node) -> void:
@@ -92,32 +111,37 @@ func interact(_player: Node) -> void:
 
 
 ## The composited front for a style, built once and shared by every house of that style.
-static func front_texture(style_name: String) -> Texture2D:
-	if _fronts.has(style_name):
-		return _fronts[style_name]
+static func front_texture(style_name: String, gable_count := 1) -> Texture2D:
+	var key := "%s/%d" % [style_name, gable_count]
+	if _fronts.has(key):
+		return _fronts[key]
 	var s: Dictionary = STYLES[style_name]
 	var walls := _sheet(WALLS)
 	var furn := _sheet(FURN)
-	var img := Image.create(SIZE.x, SIZE.y, false, Image.FORMAT_RGBA8)
+	var w := SIZE.x * gable_count
+	var img := Image.create(w, SIZE.y, false, Image.FORMAT_RGBA8)
 	var base := SIZE.y                 # the bottom edge (doorstep line)
 	var roof_y := TOP                  # the roof's top row
-	# the wall fills the whole space under the roof: the gable and the front are one surface
-	_stretch(walls, s.wall, s.caps, img, Rect2i(8, roof_y + 56, 112, base - roof_y - 56))
+	# the wall fills the whole space under the roofs: gables and front are one surface
+	_stretch(walls, s.wall, s.caps, img, Rect2i(8, roof_y + 56, w - 16, base - roof_y - 56))
 	if s.chimney:
-		img.blend_rect(furn, CHIMNEY, Vector2i(84, roof_y - 12))
+		img.blend_rect(furn, CHIMNEY, Vector2i(w - 44, roof_y - 12))
 	var roof := _sheet(ROOFS).get_region(s.roof)
 	_keep_first_run(roof)
-	_eave_shadow(roof, img, roof_y)
-	img.blend_rect(roof, Rect2i(Vector2i.ZERO, roof.get_size()), Vector2i(0, roof_y))
-	img.blend_rect(furn, ATTIC, Vector2i(SIZE.x / 2 - ATTIC.size.x / 2, roof_y + 74))
+	for g in gable_count:
+		_eave_shadow(roof, img, Vector2i(g * SIZE.x, roof_y))
+	for g in gable_count:
+		img.blend_rect(roof, Rect2i(Vector2i.ZERO, roof.get_size()), Vector2i(g * SIZE.x, roof_y))
+		img.blend_rect(furn, ATTIC, Vector2i(g * SIZE.x + SIZE.x / 2 - ATTIC.size.x / 2, roof_y + 74))
 	var door: Rect2i = s.door
-	img.blend_rect(furn, door, Vector2i(SIZE.x / 2 - door.size.x / 2, base - door.size.y))
+	img.blend_rect(furn, door, Vector2i(w / 2 - door.size.x / 2, base - door.size.y))
 	var win: Rect2i = s.window
 	var wy := base - 46 + (32 - win.size.y) / 2
-	img.blend_rect(furn, win, Vector2i(18, wy))
-	img.blend_rect(furn, win, Vector2i(SIZE.x - 18 - win.size.x, wy))
+	var xs := [18, SIZE.x - 18 - win.size.x] if gable_count == 1 else [22, 80, w - 80 - win.size.x, w - 22 - win.size.x]
+	for x in xs:
+		img.blend_rect(furn, win, Vector2i(x, wy))
 	var tex := ImageTexture.create_from_image(img)
-	_fronts[style_name] = tex
+	_fronts[key] = tex
 	return tex
 
 
@@ -178,7 +202,7 @@ static func _keep_first_run(roof: Image) -> void:
 
 
 ## Darken the wall for a few rows under the roof's lower edge.
-static func _eave_shadow(roof: Image, img: Image, roof_y: int) -> void:
+static func _eave_shadow(roof: Image, img: Image, at: Vector2i) -> void:
 	for x in roof.get_width():
 		var low := -1
 		for y in range(roof.get_height() - 1, -1, -1):
@@ -188,10 +212,10 @@ static func _eave_shadow(roof: Image, img: Image, roof_y: int) -> void:
 		if low < 0:
 			continue
 		for d in range(1, 7):
-			var y := roof_y + low + d
+			var y := at.y + low + d
 			if y >= img.get_height():
 				break
-			var c := img.get_pixel(x, y)
+			var c := img.get_pixel(at.x + x, y)
 			if c.a > 0.0:
 				var f := 0.55 + 0.07 * d
-				img.set_pixel(x, y, Color(c.r * f, c.g * f, c.b * f, c.a))
+				img.set_pixel(at.x + x, y, Color(c.r * f, c.g * f, c.b * f, c.a))

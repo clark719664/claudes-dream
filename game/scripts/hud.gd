@@ -33,11 +33,13 @@ var menu: PanelContainer        # crafting, inventory and upgrade screens share 
 var menu_box: VBoxContainer
 var black: ColorRect
 var _toast_t := 0.0
-var _mode := ""                 # "", "craft", "inventory", "upgrade"
+var _mode := ""                 # "", "craft", "inventory", "upgrade", "travel", "map"
 var _station := ""
 var _station_node: Node = null
 var _selected := 0
 var _confirm: Callable
+var _stops: Array = []          # minecart stop ids listed in the travel menu
+var _here := ""
 
 
 func _ready() -> void:
@@ -324,6 +326,21 @@ func open_upgrades() -> void:
 	_open("upgrade", "")
 
 
+func open_travel(from_id: String) -> void:
+	_here = from_id
+	_stops = Game.stations_found.keys()
+	_open("travel", "")
+	_selected = maxi(0, _stops.find(from_id))
+	_refresh_menu()
+
+
+func toggle_map() -> void:
+	if _mode == "map":
+		close_menu()
+	else:
+		_open("map", "")
+
+
 func _open(mode: String, station: String) -> void:
 	_mode = mode
 	_station = station
@@ -357,12 +374,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _mode == "":
 		return
-	if event.is_action_pressed("cancel") or (_mode == "inventory" and event.is_action_pressed("inventory")) or (_mode == "craft" and _station == "hands" and event.is_action_pressed("craft")):
+	if event.is_action_pressed("cancel") or (_mode == "inventory" and event.is_action_pressed("inventory")) or (_mode == "craft" and _station == "hands" and event.is_action_pressed("craft")) or (_mode == "map" and event.is_action_pressed("map")):
 		close_menu()
-	elif _mode == "craft" and event.is_action_pressed("move_up"):
+	elif _mode in ["craft", "travel"] and event.is_action_pressed("move_up"):
 		_selected = (_selected - 1 + _row_count()) % _row_count()
 		_refresh_menu()
-	elif _mode == "craft" and event.is_action_pressed("move_down"):
+	elif _mode in ["craft", "travel"] and event.is_action_pressed("move_down"):
 		_selected = (_selected + 1) % _row_count()
 		_refresh_menu()
 	elif event.is_action_pressed("interact") or (event is InputEventKey and event.is_action_pressed("attack")):
@@ -370,6 +387,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_craft_selected()
 		elif _mode == "upgrade":
 			_build_selected()
+		elif _mode == "travel":
+			_ride_selected()
 	else:
 		return
 	get_viewport().set_input_as_handled()
@@ -388,6 +407,8 @@ func _can_upgrade() -> bool:
 
 
 func _row_count() -> int:
+	if _mode == "travel":
+		return maxi(1, _stops.size())
 	return _recipes().size() + (1 if _can_upgrade() else 0)
 
 
@@ -440,6 +461,8 @@ func _refresh_menu() -> void:
 		"craft": _fill_craft()
 		"inventory": _fill_inventory()
 		"upgrade": _fill_upgrade()
+		"travel": _fill_travel()
+		"map": _fill_map()
 	menu.reset_size()
 	menu.position = Vector2(roundf((480 - menu.size.x) / 2.0), maxf(4, roundf((270 - menu.size.y) / 2.0) - 8))
 
@@ -527,7 +550,10 @@ func _fill_craft() -> void:
 func _on_row_input(event: InputEvent, i: int) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if _selected == i:
-			_craft_selected()
+			if _mode == "travel":
+				_ride_selected()
+			else:
+				_craft_selected()
 		else:
 			_selected = i
 			_refresh_menu()
@@ -559,6 +585,78 @@ func _fill_inventory() -> void:
 	if Inventory.items.is_empty():
 		menu_box.add_child(_label("Nothing yet.", DIM))
 	menu_box.add_child(_label("C  hand crafting     I / ESC  close", DIM))
+
+
+func _fill_travel() -> void:
+	_title("MINECART")
+	menu_box.add_child(_label("Ride the old mine railway to any stop you've found.", DIM))
+	for i in _stops.size():
+		var parts := _row(i == _selected)
+		var row: PanelContainer = parts[0]
+		var h: HBoxContainer = parts[1]
+		var here: bool = _stops[i] == _here
+		h.add_child(_label(Game.stations_found[_stops[i]] + ("   (you are here)" if here else ""), DIM if here else TEXT))
+		row.mouse_filter = Control.MOUSE_FILTER_STOP
+		row.gui_input.connect(_on_row_input.bind(i))
+	menu_box.add_child(_label("Stops you haven't used yet stay off the list.", DIM))
+	menu_box.add_child(_label("W/S  choose     E  ride     ESC  stay", DIM))
+
+
+func _ride_selected() -> void:
+	if _stops.is_empty():
+		return
+	var id: String = _stops[_selected]
+	close_menu()
+	if id != _here:
+		Game.world.travel_to(id)
+
+
+## The whole valley, with the towns, what you've found and where you are.
+func _fill_map() -> void:
+	_title("THE VALLEY OF BRINDLE")
+	var img: Image = Game.world.map_image
+	if img == null:
+		menu_box.add_child(_label("No map yet.", DIM))
+		return
+	var holder := Control.new()
+	var scale := minf(440.0 / img.get_width(), 200.0 / img.get_height())
+	var sz := Vector2(img.get_width(), img.get_height()) * scale
+	holder.custom_minimum_size = sz
+	var tex := TextureRect.new()
+	tex.texture = ImageTexture.create_from_image(img)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_SCALE
+	tex.size = sz
+	tex.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	holder.add_child(tex)
+	# the map image has one pixel per `px` tiles
+	var tiles_per_px: float = Game.world.size.x / 16.0 / img.get_width()
+	var to_map := func(tile: Vector2) -> Vector2: return tile / tiles_per_px * scale
+	for p in Game.world.pois:
+		if p.get("kind", "") not in ["town", "home"]:
+			continue
+		var l := _label(p.name, GOLD if p.kind == "home" else TEXT)
+		l.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.05))
+		l.add_theme_constant_override("outline_size", 2)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.size = Vector2(80, 10)
+		l.position = to_map.call(Vector2(p.x, p.y)) - Vector2(40, 5)
+		holder.add_child(l)
+	for m in Game.world.get_tree().get_nodes_in_group("minecarts"):
+		if Game.stations_found.has(m.id):
+			var dot := ColorRect.new()
+			dot.color = Color(0.45, 0.75, 1.0)
+			dot.size = Vector2(3, 3)
+			dot.position = to_map.call(m.global_position / 16.0) - Vector2(1, 1)
+			holder.add_child(dot)
+	var me := ColorRect.new()
+	me.color = Color(1.0, 0.25, 0.2)
+	me.size = Vector2(4, 4)
+	var pp: Vector2 = Game.player.global_position / 16.0 if Game.area == "world" else Game.world.cabin.global_position / 16.0
+	me.position = to_map.call(pp) - Vector2(2, 2)
+	holder.add_child(me)
+	menu_box.add_child(holder)
+	menu_box.add_child(_label("Red: you.  Blue: minecart stops you've used.     M / ESC  close", DIM))
 
 
 func _fill_upgrade() -> void:

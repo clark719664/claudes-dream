@@ -39,6 +39,7 @@ var stats := {"gathered": {}, "crafted": {}, "kills": {}}
 var opened := {}           # chests already looted, by id
 var buffs := {}            # name -> seconds left
 var station_tiers := {}    # station -> 1..3
+var stations_found := {}   # minecart stop id -> name
 var _last_hour := -1
 var _goal_timer := 0.0
 var _sleeping := false
@@ -56,6 +57,7 @@ func _ready() -> void:
 	_bind("sprint", [KEY_SHIFT], -1, 0.0, -1, JOY_BUTTON_RIGHT_SHOULDER)
 	_bind("craft", [KEY_C], -1, 0.0, -1, JOY_BUTTON_LEFT_SHOULDER)
 	_bind("inventory", [KEY_I, KEY_TAB], -1, 0.0, -1, JOY_BUTTON_BACK)
+	_bind("map", [KEY_M], -1, 0.0, -1, JOY_BUTTON_START)
 	_bind("cancel", [KEY_ESCAPE], -1, 0.0, -1, JOY_BUTTON_B)
 	Inventory.changed.connect(_check_goal)
 	Inventory.leveled.connect(func(lv): say("Crafting level %d! New recipes unlocked." % lv))
@@ -270,7 +272,7 @@ func save_game() -> void:
 	var data := {
 		"day": day, "time": time_of_day, "cabin_tier": cabin_tier, "upgrade_pending": upgrade_pending,
 		"goal": goal, "stats": stats, "opened": opened.keys(), "inventory": Inventory.save_data(),
-		"stations": station_tiers,
+		"stations": station_tiers, "minecarts": stations_found,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -298,5 +300,6 @@ func load_game() -> bool:
 	station_tiers = {}
 	for k in data.get("stations", {}):
 		station_tiers[k] = int(data.stations[k])
+	stations_found = data.get("minecarts", {})
 	Inventory.load_data(data.get("inventory", {}))
 	return true

@@ -114,6 +114,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		Game.hud.open_crafting("hands")
 	elif event.is_action_pressed("inventory"):
 		Game.hud.toggle_inventory()
+	elif event.is_action_pressed("map"):
+		Game.hud.toggle_map()
 
 
 func _start_attack() -> void:
@@ -230,6 +232,7 @@ func _die() -> void:
 		Game.area = "world"
 		set_room(Rect2(Vector2.ZERO, Game.world.size))
 	position = Game.world.cabin.global_position + Vector2(0, 14) if Game.world.cabin else start
+	Game.world.stream_now()
 	hp = max_hp
 	dead = false
 	weapon.visible = true

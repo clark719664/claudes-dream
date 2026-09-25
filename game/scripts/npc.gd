@@ -40,6 +40,7 @@ const LINES := {
 var actor: String
 var display_name: String
 var lines_key: String
+var custom: Array = []      # lines of its own, instead of a shared set
 var span := 0.0
 var body: AnimatedSprite2D
 var _line := 0
@@ -116,6 +117,6 @@ func interact(_player: Node) -> void:
 	if lines_key == "carpenter":
 		Game.hud.open_upgrades()
 		return
-	var lines: Array = LINES.get(lines_key, LINES.villager)
+	var lines: Array = custom if not custom.is_empty() else LINES.get(lines_key, LINES.villager)
 	Game.hud.show_dialog(display_name, lines[_line % lines.size()])
 	_line += 1

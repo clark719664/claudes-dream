@@ -171,7 +171,7 @@ S['stump_frozen'] = variants(T1_4, [[320, 64, 360, 96]], solid=6, shadow='shadow
 S['stump_mossy'] = variants(T1_5, [[352, 320, 432, 368]], solid=9, shadow='shadow_tree')
 S['pine_tall'] = variants(T3_3, [[0, 0, 64, 144], [64, 0, 128, 144], [0, 144, 64, 288], [64, 144, 128, 288]], solid=5, shadow='shadow_tree', hp=5, drop='wood', stump='pine_stump')
 # ---- v2: village, camp, ruin and mine props
-S['lamp_post'] = [composite(FURN, [144, 448, 176, 496], [[176, 448, 192, 480]], solid=3, shadow='shadow_actor', light=1)]
+S['lamp_post'] = [composite(FURN, [144, 448, 176, 496], [([176, 448, 192, 480], [25, 3])], solid=3, shadow='shadow_actor', light=1)]
 S['signpost'] = [composite(FURN, [144, 448, 176, 496], [([96, 528, 144, 560], [-6, 5])], solid=3, shadow='shadow_actor', sign=1)]
 S['lantern'] = variants(FURN, [[176, 480, 192, 496]], light=1)
 S['bench'] = variants(FURN, [[80, 432, 144, 464], [16, 384, 48, 400]], solid=10, shadow='shadow_small')
@@ -199,6 +199,69 @@ S['palisade'] = variants(WALLS, [[0, 192, 96, 240]], block=[96, 12])
 S['palisade_side'] = variants(WALLS, [[0, 16, 16, 96]], block=[14, 76])
 S['mine_carts'] = variants(DPROPS, [[0, 0, 56, 32], [72, 8, 96, 32]], solid=10, shadow='shadow_small')
 S['tombstone'] = variants(DPROPS, [[96, 0, 112, 24]], solid=5)
+# ---- v4: more trees, from saplings to giants
+T1_2 = 'Environment/Props/Static/Trees/Model_01/Size_02.png'
+T1_3 = 'Environment/Props/Static/Trees/Model_01/Size_03.png'
+T2_2 = 'Environment/Props/Static/Trees/Model_02/Size_02.png'
+T2_3 = 'Environment/Props/Static/Trees/Model_02/Size_03.png'
+T3_4 = 'Environment/Props/Static/Trees/Model_03/Size_04.png'
+T3_5 = 'Environment/Props/Static/Trees/Model_03/Size_05.png'
+S['oak_young'] = variants(T1_3, [[0, 0, 48, 96], [48, 0, 96, 96], [0, 96, 48, 192], [48, 96, 96, 192]], solid=5, shadow='shadow_tree', hp=3, drop='wood', stump='oak_stump')
+S['oak_young_dead'] = variants(T1_3, [[96, 0, 144, 96], [96, 96, 144, 192]], solid=4, shadow='shadow_small', hp=2, drop='wood', stump='oak_stump')
+S['oak_young_frozen'] = variants(T1_3, [[144, 0, 192, 96], [144, 96, 192, 192]], solid=4, shadow='shadow_small', hp=3, drop='wood', stump='stump_frozen')
+S['sapling'] = variants(T1_2, [[16, 2, 64, 64], [80, 2, 128, 64], [16, 66, 64, 128], [80, 66, 128, 128]], solid=3, shadow='shadow_small')
+S['pine_young'] = variants(T2_3, [[4, 4, 41, 80], [52, 4, 89, 80], [4, 84, 41, 160], [52, 84, 89, 160]], solid=4, shadow='shadow_small', hp=3, drop='wood', stump='pine_stump')
+S['pine_young_dead'] = variants(T2_3, [[99, 6, 139, 80]], solid=3, shadow='shadow_small', hp=2, drop='wood', stump='pine_stump')
+S['pine_saplings'] = variants(T2_2, [[3, 1, 48, 96], [67, 1, 112, 96]], solid=3, shadow='shadow_small')
+S['pine_grand'] = variants(T3_4, [[0, 0, 96, 208], [96, 0, 192, 208], [0, 208, 96, 416], [96, 208, 192, 416]], solid=7, shadow='shadow_big', hp=8, drop='wood', stump='pine_stump')
+S['pine_giant'] = variants(T3_5, [[0, 0, 128, 256], [128, 0, 256, 256], [0, 256, 128, 512], [128, 256, 256, 512]], solid=9, shadow='shadow_big', hp=12, drop='wood', stump='pine_stump')
+S['pine_giant_dead'] = variants(T3_5, [[271, 5, 369, 256]], solid=6, shadow='shadow_tree', hp=6, drop='wood', stump='pine_stump')
+# ---- v4: plants
+S['leafy'] = variants(VEG, [[64, 144, 80, 160], [80, 144, 112, 176], [64, 192, 80, 208], [80, 192, 112, 224], [64, 240, 80, 256], [80, 240, 112, 272]])
+S['reeds'] = variants(VEG, [[112, 160, 128, 192], [128, 160, 144, 192], [112, 208, 128, 240], [128, 208, 144, 240], [112, 256, 128, 288], [128, 256, 144, 288]])
+S['bush_dry'] = variants(VEG, [[240, 128, 256, 144]])
+# ---- v4: yards, farms and markets
+FURN_ = 'Environment/Props/Static/Furniture.png'
+EST = ST + 'Cooking Station/Estructure.png'
+S['table'] = variants(FURN_, [[0, 18, 48, 48]], solid=14, shadow='shadow_small')
+S['table_small'] = variants(FURN_, [[48, 24, 80, 48]], solid=10, shadow='shadow_small')
+S['counter'] = variants(FURN_, [[32, 52, 80, 80], [32, 86, 96, 112]], solid=16, shadow='shadow_small')
+S['desk'] = variants(FURN_, [[32, 118, 80, 144]], solid=14, shadow='shadow_small')
+S['hedge_box'] = variants(FURN_, [[50, 410, 78, 427]], solid=8, shadow='shadow_small')
+S['trough'] = variants(FURN_, [[18, 416, 46, 427]], solid=8, shadow='shadow_small')
+S['rope_line'] = variants(FURN_, [[179, 422, 237, 445]], block=[56, 6])
+S['pole'] = variants(FURN_, [[0, 400, 12, 448]], solid=3, shadow='shadow_actor')
+S['long_table'] = variants(FURN_, [[98, 466, 142, 478]], solid=14, shadow='shadow_small')
+S['chair'] = variants(FURN_, [[114, 489, 126, 512], [130, 489, 141, 512]], solid=4)
+S['stool'] = variants(FURN_, [[112, 514, 128, 528]], solid=4)
+S['water_bucket'] = variants(FURN_, [[769, 13, 783, 32], [785, 13, 799, 32], [738, 49, 750, 64], [754, 48, 766, 64]], solid=4)
+S['jar'] = variants(FURN_, [[787, 76, 797, 96], [769, 80, 783, 96], [770, 44, 782, 64], [786, 44, 798, 64]], solid=4, shadow='shadow_actor')
+S['broken'] = variants(FURN_, [[736, 105, 768, 128], [769, 133, 783, 144], [787, 132, 797, 144]])
+S['iron_chest'] = variants(FURN_, [[752, 165, 768, 192]], solid=5, shadow='shadow_actor')
+S['hay'] = variants(FARM, [[366, 79, 388, 99], [352, 112, 368, 128]], solid=6, shadow='shadow_small')
+S['puddle'] = variants(FARM, [[352, 128, 384, 144]])
+S['feed_trough'] = variants(FARM, [[320, 0, 384, 16], [320, 16, 384, 32], [336, 32, 368, 48]], solid=12, shadow='shadow_small')
+S['bin'] = variants(FARM, [[288, 8, 304, 32], [304, 8, 320, 32]], solid=6, shadow='shadow_actor')
+S['rail_fence'] = variants(FARM, [[288, 32, 336, 80]], block=[48, 6])
+S['urn'] = variants(FARM, [[272, 0, 288, 32], [256, 0, 272, 16]], solid=4, shadow='shadow_actor')
+S['ore_crate'] = variants(RES, [[0, 157, 15, 176], [16, 156, 31, 176]], solid=6, shadow='shadow_actor')
+S['log'] = variants(RES, [[32, 64, 64, 80]], solid=0)
+S['log_pile'] = [composite(RES, [32, 64, 64, 80], [([32, 64, 64, 80], [0, -5]), ([32, 64, 64, 80], [0, -10]), ([32, 64, 64, 80], [4, -15])], solid=10, shadow='shadow_small')]
+S['stall'] = variants(EST, [[144, 160, 192, 208], [208, 160, 272, 224]], solid=18, shadow='shadow_tree')
+S['stall_table'] = variants(EST, [[80, 182, 112, 208]], solid=12, shadow='shadow_small')
+S['stump_seat'] = variants(EST, [[24, 184, 40, 208]], solid=5, shadow='shadow_actor')
+S['drying_rack'] = variants(EST, [[13, 20, 62, 52], [77, 20, 118, 52], [144, 20, 200, 52], [218, 20, 276, 52]], solid=14, shadow='shadow_small')
+S['tripod'] = variants(EST, [[11, 67, 53, 117]], solid=8)
+S['stove'] = variants(EST, [[146, 102, 192, 128]], solid=16, shadow='shadow_small')
+S['butcher_table'] = variants(ST + 'Cooking Station/Butchery/Butchery_03.png', [[16, 16, 64, 64]], solid=16, shadow='shadow_small')
+S['butcher_stall'] = variants(ST + 'Cooking Station/Butchery/Butchery_04.png', [[0, 16, 69, 80]], solid=22, shadow='shadow_tree')
+S['chopping_block'] = variants(ST + 'Cooking Station/Butchery/Butchery_01-Sheet.png', [[17, 19, 48, 48]], solid=6, shadow='shadow_actor')
+S['iron_bars'] = variants(DPROPS, [[3, 49, 13, 64], [19, 42, 29, 64], [35, 44, 45, 64], [51, 49, 61, 67], [67, 34, 77, 55], [83, 41, 93, 55], [99, 41, 109, 60], [115, 41, 125, 55]], solid=3)
+S['stone_slab'] = variants(DPROPS, [[11, 85, 53, 93]], solid=10, shadow='shadow_small')
+S['minecart'] = variants(DPROPS, [[0, 8, 19, 32]], solid=8, shadow='shadow_small')
+S['rail_h'] = variants(FURN_, [[32, 624, 48, 640]], anchor='centre')
+S['rail_v'] = variants(FURN_, [[0, 656, 16, 672]], anchor='centre')
+S['cart_tipped'] = variants(DPROPS, [[74, 12, 96, 30]], solid=8, shadow='shadow_small')
 # ---- shadows (drawn under objects, black at low alpha in the pack)
 S['shadow_big'] = variants(SHADOWS, [[0, 0, 112, 48]], anchor='centre')
 S['shadow_tree'] = variants(SHADOWS, [[0, 49, 80, 80]], anchor='centre')
@@ -242,6 +305,15 @@ cat['anims'] = {
     'fire_ring': anim(ST + 'Bonfire/Bonfire_02-Sheet.png', 32, 32, fps=8, centre=True),
     'grill_camp': anim(ST + 'Cooking Station/Grill/Grill_01-Sheet.png', 64, 64, fps=8, centre=True),
     'alchemy': anim(ST + 'Alchemy/Alchemy_Table_02-Sheet.png', 48, 64, cols=11, frames=51, fps=10, centre=True),
+    'alchemy_lab': anim(ST + 'Alchemy/Alchemy_Table_03-Sheet.png', 80, 80, cols=5, frames=22, fps=8, centre=True),
+    'meat_rack': anim(ST + 'Cooking Station/Grill/Grill_03-Sheet.png', 64, 64, fps=6, centre=True),
+    'kitchen_range': anim(ST + 'Cooking Station/Cooker/Cooker_04-Sheet.png', 80, 80, fps=8, centre=True),
+    'cooker': anim(ST + 'Cooking Station/Cooker/Cooker_03-Sheet.png', 48, 32, fps=8, centre=True),
+    'fire_trough': anim(ST + 'Bonfire/Bonfire_10-Sheet.png', 48, 32, fps=8, centre=True),
+    'fire_embers': anim(ST + 'Bonfire/Bonfire_03-Sheet.png', 32, 32, fps=6, centre=True),
+    'fire_barrel': anim(ST + 'Bonfire/Bonfire_04-Sheet.png', 32, 32, fps=8, centre=True),
+    'grill_spit': anim(ST + 'Cooking Station/Grill/Grill_02-Sheet.png', 64, 64, fps=8, centre=True),
+    'pan': anim('Environment/Props/Animated/Pan_03-Sheet.png', 32, 32, fps=8, centre=True),
     'water': {'fps': 10},
 }
 # ---- characters
@@ -319,6 +391,16 @@ I['shield'] = icon(WOOD, [128, 0, 144, 16])
 I['poultice'] = icon(VEG, [64, 144, 80, 160])
 I['stew'] = icon('Environment/Props/Static/Pan.png', [80, 112, 96, 128])
 I['cooked_meat'] = icon(MEAT, [32, 64, 64, 80])
+
+# ---- floor tile edges (opaque pixels along each side as a 16-bit mask: top, right, bottom,
+# left), so tools/make_world.py can pick stamp variants whose rims line up with their neighbours
+fl = img(FLOORS)
+cat['floor_edges'] = {}
+for ty in range(fl.height // 16):
+    for tx in range(fl.width // 16):
+        a = fl.crop((tx * 16, ty * 16, tx * 16 + 16, ty * 16 + 16)).getchannel('A').load()
+        sides = [[(i, 0) for i in range(16)], [(15, i) for i in range(16)], [(i, 15) for i in range(16)], [(0, i) for i in range(16)]]
+        cat['floor_edges'][f'{tx},{ty}'] = [sum(1 << i for i, p in enumerate(side) if a[p] > 0) for side in sides]
 
 json.dump(cat, open(OUT, 'w'), indent=1)
 print('wrote', OUT)
