@@ -33,6 +33,7 @@ reserved = bytearray(W * H)        # 1 = built on / laid out: no trees or dressi
 forest_id = bytearray(W * H)       # which forest a tree was planted by (for the map colours)
 cliffs, decks, objs, pois = [], [], [], []
 fences = {'picket': set(), 'dark': set()}
+CAT = json.load(open(os.path.join(DATA, 'catalog.json')))
 PERSISTENT = {'player_start', 'cabin', 'npc', 'villager', 'station', 'minecart_stop', 'deck'}
 
 
@@ -693,9 +694,8 @@ rrect(296, 60, 318, 76, ':', 2)
 reserve(296, 60, 318, 76)
 add('station_deco', 302, 68, station='anvil', tier=3)
 add('station_deco', 309, 67, station='furnace', tier=3)
-add('iron_bars', 311, 66, 0)
-add('iron_bars', 312, 66, 1)
-add('iron_bars', 313, 66, 2)
+add('trough', 312.5, 66.4, 0)
+add('water_bucket', 314.4, 66.6, 1)
 add('anim', 314, 72, name='fire_trough', solid=10)
 for i in range(4):
     add('ore_crate', 299 + i * 1.2, 73.6, i % 2)
@@ -1091,11 +1091,13 @@ def plantable(x, y, ground='.*', margin=1):
     return True
 
 
-def crown_clear(x, y):
-    """A tree's crown rises about seven tiles above its trunk: don't let it hide anything laid out
-    behind it (graves, yards, stalls). Roads and water may be overhung."""
+def crown_clear(x, y, t='oak', v=0):
+    """Don't let a tree's crown hide anything laid out behind it (graves, yards, stalls): the
+    crown rises as far as the sprite is tall. Roads and water may be overhung."""
+    r = CAT['sprites'][t][v]['region']
+    rise = int((r[3] - r[1]) / 16) + 1
     cx, cy = int(x), int(y)
-    for dy in range(2, 8):
+    for dy in range(2, rise):
         for dx in (-2, -1, 0, 1, 2):
             gx, gy = cx + dx, cy - dy
             if inside(gx, gy) and reserved[gy * W + gx] and grid[gy][gx] not in ':~':
@@ -1114,7 +1116,7 @@ def forest(test, species, dx=2.0, dy=1.5, bushes=None, fid=1, edge_rows=2):
         x = 0.5 + (dx / 2 if j % 2 else 0)
         i = 0
         while x < W:
-            if test(x, y) and plantable(x, y) and crown_clear(x, y):
+            if test(x, y) and plantable(x, y) and crown_clear(x, y, *species(x, y)):
                 pts[(i * 2 + (j % 2), j)] = (x, y)
             x += dx
             i += 1
@@ -1313,6 +1315,11 @@ def clear_around(x, y, r):
         for xx in range(int(x) - r, int(x) + r + 1):
             if not inside(xx, yy) or grid[yy][xx] not in '.*' or reserved[yy * W + xx]:
                 return False
+    # tree crowns rise well above the scene: keep them off anything laid out to the north
+    for yy in range(int(y) - r - 8, int(y) - r):
+        for xx in range(int(x) - r, int(x) + r + 1):
+            if inside(xx, yy) and reserved[yy * W + xx] and grid[yy][xx] not in ':~':
+                return False
     for yy in range(int(y) - r - 3, int(y) + r + 9):
         for xx in range(int(x) - r - 3, int(x) + r + 4):
             if inside(xx, yy) and forest_id[yy * W + xx]:
@@ -1447,8 +1454,7 @@ for k in chunks:
     chunks[k].sort(key=lambda o: (o['y'], o['x']))
 
 rows = [''.join(r) for r in grid]
-cat = json.load(open(os.path.join(DATA, 'catalog.json')))
-edges = {tuple(int(v) for v in k.split(',')): e for k, e in cat['floor_edges'].items()}
+edges = {tuple(int(v) for v in k.split(',')): e for k, e in CAT['floor_edges'].items()}
 baker = Baker(rows, edges, seed=7)
 layers, blocked = baker.bake(decks)
 raw = write_tiles(os.path.join(DATA, 'world_tiles.bin'), layers)
