@@ -674,3 +674,122 @@ export function refineSpec(input, request) {
 }
 
 export const THEME_NAMES = Object.keys(THEMES);
+
+/**
+ * Deterministic GameSpec Compiler
+ * Converts a compact Semantic GameIntent object from the AI into a full GameSpec.
+ */
+export function compileIntentToSpec(intent, rng = new Rng(Math.random() * 0xffffffff | 0)) {
+  const tName = THEME_NAMES.includes(intent.theme) ? intent.theme : 'meadow';
+  const theme = THEMES[tName];
+  const spec = defaultSpec();
+  spec.seed = rng.seed;
+  spec.title = intent.title || 'Untitled';
+  spec.tagline = intent.tagline || 'A new adventure awaits.';
+  spec.rules.goal = intent.goal || 'collect';
+  spec.rules.targetScore = 15;
+  spec.rules.timeLimit = spec.rules.goal === 'survive' ? 120 : 0;
+  
+  spec.environment.timeOfDay = typeof intent.timeOfDay === 'number' ? intent.timeOfDay : theme.time;
+  spec.environment.particles = intent.weather || theme.particles;
+  spec.audio.music = intent.music || theme.music;
+  spec.player.camera = intent.camera === 'first' ? 'first' : 'third';
+  
+  if (intent.difficulty === 'hard') {
+    spec.player.lives = 2;
+    spec.rules.timeLimit = spec.rules.goal === 'survive' ? 180 : 60;
+  } else if (intent.difficulty === 'easy') {
+    spec.player.lives = 6;
+    spec.rules.timeLimit = spec.rules.goal === 'survive' ? 60 : 180;
+  }
+
+  spec.terrain.style = theme.terrain.style;
+  spec.terrain.height = theme.terrain.height;
+  spec.terrain.roughness = theme.terrain.roughness;
+  spec.terrain.palette = { ...theme.terrain.palette };
+  spec.environment.fogDensity = theme.fog;
+  spec.environment.skyTint = theme.tint;
+  if (theme.aurora) spec.environment.aurora = theme.aurora;
+  if (theme.rain) spec.environment.rain = theme.rain;
+  
+  spec.water.enabled = intent.water ?? theme.water.enabled;
+  spec.water.level = theme.water.level;
+  spec.water.color = theme.water.color;
+  spec.post = { ...spec.post, ...theme.post };
+
+  spec.scatter = theme.scatter.map(([kind, density, color]) => ({ kind, density, color, scale: 1 }));
+  spec.player.color = theme.player;
+
+  const half = spec.terrain.size / 2;
+  let nextId = 1;
+
+  if (intent.goalObject && spec.rules.goal === 'reach') {
+    const id = `goal_${nextId++}`;
+    spec.prefabs.push({
+      id, shape: 'star', visual: { archetype: 'prop', description: intent.goalObject, surface: 'painted', detail: 0.8, variation: 0.1 },
+      color: theme.accent, emissive: 4, metallic: 0.5, roughness: 0.2, size: [1.5, 1.5, 1.5], solid: false,
+      behaviors: [{ type: 'goal', value: 0, speed: 0, range: 0, axis: 'y' }, { type: 'spin', value: 0, speed: 45, range: 0, axis: 'y' }]
+    });
+    spec.spawns.push({ prefab: id, count: 1, pattern: 'scatter', center: [half * 0.7, 1, half * 0.7], radius: 5, height: 0 });
+  }
+
+  const cols = Array.isArray(intent.collectibles) ? intent.collectibles : [];
+  for (const c of cols.slice(0, 3)) {
+    const id = `collect_${nextId++}`;
+    spec.prefabs.push({
+      id, shape: 'coin', visual: { archetype: 'prop', description: c, surface: 'painted', detail: 0.5, variation: 0.2 },
+      color: theme.accent, emissive: 1, metallic: 0.8, roughness: 0.2, size: [1, 1, 0.2], solid: false,
+      behaviors: [{ type: 'collectible', value: 1, speed: 0, range: 0, axis: 'y' }, { type: 'bob', value: 0.2, speed: 1.5, range: 0, axis: 'y' }]
+    });
+    spec.spawns.push({ prefab: id, count: 15, pattern: 'path', center: [0, 1, 0], radius: half * 0.6, height: 0 });
+  }
+
+  const en = Array.isArray(intent.enemies) ? intent.enemies : [];
+  for (const e of en.slice(0, 3)) {
+    const id = `enemy_${nextId++}`;
+    const speed = intent.difficulty === 'hard' ? 4 : 2;
+    spec.prefabs.push({
+      id, shape: 'box', visual: { archetype: 'creature', description: e, surface: 'organic', detail: 0.8, variation: 0.3 },
+      color: theme.danger, emissive: 0, metallic: 0.1, roughness: 0.8, size: [1.2, 1.8, 1.2], solid: true,
+      behaviors: [{ type: 'hazard', value: 1, speed: 0, range: 0, axis: 'y' }, { type: 'chase', value: 0, speed, range: 25, axis: 'y' }]
+    });
+    spec.spawns.push({ prefab: id, count: 6, pattern: 'scatter', center: [0, 1, 0], radius: half * 0.8, height: 0 });
+  }
+
+  const haz = Array.isArray(intent.hazards) ? intent.hazards : [];
+  for (const h of haz.slice(0, 2)) {
+    const id = `hazard_${nextId++}`;
+    spec.prefabs.push({
+      id, shape: 'cylinder', visual: { archetype: 'prop', description: h, surface: 'metal', detail: 0.6, variation: 0.2 },
+      color: '#ff3a3a', emissive: 1, metallic: 0.9, roughness: 0.1, size: [1.5, 0.5, 1.5], solid: false,
+      behaviors: [{ type: 'hazard', value: 1, speed: 0, range: 0, axis: 'y' }]
+    });
+    spec.spawns.push({ prefab: id, count: 8, pattern: 'scatter', center: [0, 0, 0], radius: half * 0.7, height: 0 });
+  }
+
+  const sce = Array.isArray(intent.scenery) ? intent.scenery : [];
+  for (const s of sce.slice(0, 5)) {
+    const id = `scenery_${nextId++}`;
+    spec.prefabs.push({
+      id, shape: 'box', visual: { archetype: 'architecture', description: s, surface: 'stone', detail: 0.8, variation: 0.4 },
+      color: theme.terrain.palette.cliff, emissive: 0, metallic: 0, roughness: 0.9, size: [4, 6, 4], solid: true,
+      behaviors: []
+    });
+    spec.spawns.push({ prefab: id, count: 4, pattern: 'scatter', center: [0, 0, 0], radius: half * 0.8, height: 0 });
+  }
+
+  const chars = Array.isArray(intent.characters) ? intent.characters : [];
+  for (let i = 0; i < chars.slice(0, 2).length; i++) {
+    spec.characters.push({
+      name: `Character ${i+1}`,
+      role: chars[i],
+      personality: `A denizen of this ${tName} world.`,
+      greeting: "Hello there!",
+      color: '#ffffff',
+      position: [5 + i * 5, 0, 5],
+      powers: []
+    });
+  }
+
+  return normalizeSpec(spec).spec;
+}

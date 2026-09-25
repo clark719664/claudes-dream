@@ -142,7 +142,7 @@ async function runArtDirector() {
       shots.appendChild(el);
     }
     const changes = lookChanges(before, r.spec);
-    if (r.source === 'claude') {
+    if (r.source === 'router') {
       applySpec(r.spec);
       log(`✓ Claude polished the look${changes.length ? `: ${changes.slice(0, 8).join(', ')}` : ''}.`, 'ok');
     } else {
@@ -423,11 +423,11 @@ async function boot() {
 
   fetch('/api/status').then((r) => r.json()).then((s) => {
     state.aiMode = s.ai;
-    $('#ai-badge').textContent = s.ai === 'claude' ? `Claude · ${s.model}` : 'Offline designer';
-    $('#ai-badge').classList.toggle('offline', s.ai !== 'claude');
-    if (s.ai !== 'claude') log('Running with the built-in offline designer. Start the server with ANTHROPIC_API_KEY set to design games with Claude.');
+    $('#ai-badge').textContent = s.ai === 'router' ? ?? AI Designer � \ : '?? Offline Fallback';
+    $('#ai-badge').classList.toggle('offline', s.ai === 'offline');
+    if (s.ai === 'offline') log('Running with the built-in offline designer. Configure GROQ_API_KEY, OPENROUTER_API_KEY, or LOCAL_AI_URL to use the AI Designer.');
   }).catch(() => {
-    $('#ai-badge').textContent = 'Offline designer';
+    #ai-badge.textContent = '?? Offline Fallback';
     $('#ai-badge').classList.add('offline');
   });
 
@@ -437,7 +437,7 @@ async function boot() {
     window.__reverie = state.engine; // handy for the console and automated checks
     state.engine.on('level', ({ spec, source, level, notes }) => {
       adoptSpec(spec);
-      log(`✦ Level ${level}: "${spec.title}", designed by ${source === 'claude' ? 'the Claude game master' : 'the offline game master'}${notes?.length ? ` (${notes.join('; ')})` : ''}.`, 'ok');
+      log(`✦ Level ${level}: "${spec.title}", designed by ${source === 'router' ? 'the AI game master' : 'the offline game master'}${notes?.length ? ` (${notes.join('; ')})` : ''}.`, 'ok');
     });
     let n = 0;
     state.engine.on('frame', (s) => {

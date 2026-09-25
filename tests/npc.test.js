@@ -95,7 +95,7 @@ test('/api/npc streams Claude\'s reply and relays the powers it uses', async () 
     });
   });
   await new Promise((r) => mock.listen(0, r));
-  process.env.ANTHROPIC_API_KEY = 'test-key';
+  process.env.ANTHROPIC_API_KEY = 'test-key'; process.env.GROQ_API_KEY = 'test-key';
   process.env.ANTHROPIC_BASE_URL = `http://127.0.0.1:${mock.address().port}`;
   const { createServer } = await import('../server/index.js');
   const app = createServer();

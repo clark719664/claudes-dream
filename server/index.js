@@ -8,7 +8,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { generateWithClaude, hasCredentials, MODEL } from './claude.js';
+import { generateWithAI as generateWithClaude, hasCredentials, MODEL } from './router.js';
 import { designFromPrompt, refineSpec } from '../shared/designer.js';
 import { normalizeSpec } from '../shared/spec.js';
 import { talkToCharacter } from './npc.js';
@@ -96,7 +96,7 @@ async function generate(req, res) {
   }
   try {
     const result = await generateWithClaude({ prompt, baseSpec, onEvent: event, signal: controller.signal });
-    event('spec', { ...result, source: 'claude' });
+    event('spec', { ...result, source: 'router' });
   } catch (err) {
     if (controller.signal.aborted) return res.end();
     console.error('[generate]', err?.status ?? '', err?.message ?? err);
@@ -173,7 +173,7 @@ async function specEndpoint(req, res, { limit, prepare, claude, offline }) {
   if (!hasCredentials() || body.offline) { fallback(); return res.end(); }
   try {
     const result = await claude(input, event, controller.signal);
-    event('spec', { ...result, source: 'claude' });
+    event('spec', { ...result, source: 'router' });
   } catch (err) {
     if (controller.signal.aborted) return res.end();
     console.error('[ai]', err?.status ?? '', err?.message ?? err);
@@ -214,7 +214,7 @@ export function createServer() {
       return send(res, 200, { ok: true, service: 'reverie', ai: hasCredentials() ? 'claude' : 'offline' });
     }
     if (url.pathname === '/api/status' && req.method === 'GET') {
-      return send(res, 200, { ai: hasCredentials() ? 'claude' : 'offline', model: hasCredentials() ? MODEL : null });
+      return send(res, 200, { ai: hasCredentials() ? 'router' : 'offline', model: hasCredentials() ? MODEL : null });
     }
     if (url.pathname === '/api/generate' && req.method === 'POST') return void generate(req, res);
     const assetMatch = /^\/api\/assets\/([a-zA-Z0-9_-]+)$/.exec(url.pathname);
