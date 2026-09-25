@@ -1,17 +1,20 @@
 # Hearthwild
 
-A top-down 2D game in the spirit of Stardew Valley, with more combat and Ark-style crafting, built in **Godot 4.4**. It uses the **Pixel Crawler — Free Pack** by Anokolisa for all of its art.
+A cosy-but-dangerous top-down game in **Godot 4.4**. Mend your cabin, farm, and build up a deep crafting tree, in the style of Stardew Valley with Ark-style crafting. Fight orcs and skeletons across a hand-dressed valley. All the art comes from the **Pixel Crawler — Free Pack** by Anokolisa.
+
+![The valley of Brindle](../docs/media/hearthwild-map.jpg)
 
 | | |
 | --- | --- |
-| ![The camp: workbench, anvil, furnace, sawmill, cooking pot and the farm](../docs/media/hearthwild-camp.png) | ![Night at the camp, lit by the fire and the furnace](../docs/media/hearthwild-night.png) |
-| ![Crafting at the workbench](../docs/media/hearthwild-crafting.png) | ![Fighting at the orc camp](../docs/media/hearthwild-combat.png) |
+| ![Your log shack and crafting yard](../docs/media/hearthwild-homestead.png) | ![The farmhouse after two upgrades](../docs/media/hearthwild-farmhouse.png) |
+| ![Inside the farmhouse: kitchen, fireplace, alchemy bench, bath](../docs/media/hearthwild-farmhouse-interior.png) | ![The anvil's recipes, some still locked by crafting level](../docs/media/hearthwild-crafting.png) |
+| ![Frostvale's shrine and its skeleton guards](../docs/media/hearthwild-frostvale.png) | ![Night at the homestead](../docs/media/hearthwild-night.png) |
 
 ## Setup
 
-1. Download the [Pixel Crawler Free Pack](https://anokolisa.itch.io/free-pixel-art-asset-pack-topdown-tileset-rpg-16x16-sprites) and unzip it into `game/assets/`, so that `game/assets/Pixel Crawler - Free Pack/Environment/` exists. The pack's terms don't allow redistributing its files, so they are not in the repo (see `assets/README.md`).
+1. Download the [Pixel Crawler Free Pack](https://anokolisa.itch.io/free-pixel-art-asset-pack-topdown-tileset-rpg-16x16-sprites) and unzip it into `game/assets/`, so that `game/assets/Pixel Crawler - Free Pack/Environment/` exists. The pack's terms don't allow redistributing its files, so they're not in the repo.
 2. Open `game/project.godot` in Godot 4.4 or newer. The first open imports the pack.
-3. Press **F5** to play.
+3. Press **F5**. The game saves every time you sleep. Add `-- --new` to the command line to ignore the save.
 
 ## Controls
 
@@ -19,80 +22,151 @@ A top-down 2D game in the spirit of Stardew Valley, with more combat and Ark-sty
 | --- | --- |
 | WASD / arrows / left stick | Move |
 | Shift | Run |
-| J / Space / left click | Swing: attack, chop, mine |
-| E / Enter / right click | Use a station, talk, harvest a crop |
+| J / Space / left click | Swing: attack, chop, mine, break crates |
+| E / Enter / right click | Use: doors, stations, beds, people, crops, chests, signs, forage |
+| C | Hand crafting |
+| I / Tab | Pack, stats and home |
 | Q | Eat the food that best fits your missing health |
-| Esc / Tab | Close menus |
+| Esc | Close menus |
 
-## What's in the slice
+## The game
 
-- **The world.** An 80×50-tile map with a camp and crafting yard, a farm, a lake with animated water, a pine forest, an old graveyard, a mining field with ore and crystals, and an orc camp. It has over a thousand hand-placed and scattered props: trees, bushes, flowers, ferns, reeds, rocks, fences and banners.
-- **Gathering.** Trees, rocks, ore, crystals and bushes wobble and throw chips when hit. They drop items that burst out and fly to you, leave stumps behind, and grow back. An axe chops three times faster. Iron ore needs a pickaxe.
-- **Crafting.** Five stations, each with its own recipes:
-  - Workbench: sword, axe, pickaxe, poultice.
-  - Sawmill: planks.
-  - Furnace: iron bars.
-  - Anvil: bone and iron swords, buckler.
-  - Cooking pot: roast meat, stew.
-  
-  Your gear changes damage, gathering speed and damage taken.
-- **Combat.** There are eight enemy types (four orcs, four skeletons). Each one wanders near home and chases you when you get close. It flashes before it lunges, flinches when hit and dies with the pack's death animation. It drops loot and respawns later. Hits come with hit-stop, screen shake, damage numbers and knockback.
-- **Farming.** Seven crops grow through four stages. Harvest ripe ones with E; they replant themselves.
-- **Day and night.** A full day lasts 8 minutes. At dusk the world turns orange. At night it turns blue and the fires light up, and enemies get faster and notice you from further away.
-- **NPC.** Merlo, the wizard at the camp, gives advice.
+### Your cabin
+
+Your home is a cabin by the lake. You walk inside through the door. Tilda, the carpenter in Brindle, rebuilds it in two stages from materials you bring her. The work happens overnight, so sleep and wake up to a new house.
+
+| Tier | Outside | Inside | Unlocks |
+| --- | --- | --- | --- |
+| Log Shack | Log walls, plank roof | One room, bed, table, wardrobe | Sleeping and saving |
+| Timber Cabin | Plank walls, chimney | Brick fireplace, kitchen stove, long table | Kitchen recipes |
+| Farmhouse | Plaster and timber, green tile roof | Stone fireplace, kitchen with sink, bath, alchemy bench | Tonics |
+
+Sleeping in your bed ends the day, restores your health, regrows forage and saves the game. Stay out past 2 AM and you collapse and wake up at home.
+
+### Crafting
+
+Crafting is a tree, not a flat list, and every tool is made from things you made first.
+
+```
+wood ──sawmill──▶ planks, sticks ─┐
+fiber ──hands──▶ twine ──bench──▶ cloth
+stone + stick + twine ──bench──▶ stone axe / pickaxe
+iron ore + coal ──furnace──▶ iron bar ──anvil──▶ nails, iron tools, iron sword, iron shield
+stone + coal ──furnace──▶ bricks          iron bar + coal ──furnace──▶ steel ──anvil──▶ steel sword
+crystal (iron pickaxe) ──furnace──▶ glass ──▶ lantern, tonics, farmhouse windows
+herbs, mushrooms, meat, crops, bones, resin ──pot / kitchen / alchemy──▶ food and tonics
+```
+
+- **Stations.** There are eight: hand crafting, workbench, sawmill, furnace, anvil and cooking pot in the yard, plus the kitchen and alchemy bench inside your upgraded house.
+- **Levels.** Recipes unlock as your crafting level rises. Crafting, gathering, finishing goals and winning fights all give XP.
+- **Tools set what you can gather.**
+  - Axes chop 3× (stone) or 5× (iron) faster.
+  - Iron ore needs a pickaxe, and crystal needs an iron one.
+- **Side products keep the tree turning.** Pines drop resin, bushes drop herbs, rocks drop coal, crystal sometimes drops gems, and skeletons drop bones.
+- **Gear.**
+  - Swords set your damage: wood 6, bone 10, iron 14, steel 20.
+  - Shields reduce damage taken.
+  - The lantern lights your way at night.
+  - Tonics give might (+50% damage) or haste (+30% speed).
+
+### The valley
+
+The map is 128×88 tiles.
+
+- **Brindle village:** a market square, three houses, Merlo the wizard, Captain Brann, Tilda, and wandering villagers.
+- **Your homestead:** the cabin, crafting yard, campfire and fenced fields.
+- **Mirror Lake:** an island with a chest on it and a jetty.
+- **The river:** runs down from the snowy north-east, with plank bridges.
+- **The old forest:** the graveyard and a hunters' camp.
+- **The mountain wall:** runs across the north and holds the Old Mine.
+- **Frostvale:** snowfields, frozen trees and a skeleton shrine.
+- **The orc basin:** ringed by dark rock.
+- **The quarry:** mesas and a second tunnel.
+- **The southern meadows:** a stone circle and an abandoned farmstead.
+- **The autumn woods.**
+
+**Combat.** There are eight enemy types. They wander, chase, flash before they lunge, flinch when hit, drop loot and come back later. At night they're faster and see further.
+
+**Goals.** A short chain of goals in the corner leads you from your first log to a steel sword and the Frostvale shrine.
+
+**Ambience.** Cloud shadows drift over by day. Fireflies come out at night, and leaves fall in the thick woods. Lamps, the furnace, campfires and the cabin fireplace light up after dark.
 
 ## How the world is built
 
-Everything is data, so you (or an AI) can reshape the world without touching the editor:
+Everything is data, so the world can be reshaped without the editor, by hand or by an AI.
 
-- `data/world.json` holds the terrain as a grid of characters and every placed object:
-  - Terrain characters: `.` grass, `:` dirt, `=` cobblestone, `~` water.
-  - Each object is `{"t": sprite, "x", "y", "v": variant}`. Positions are pixels at the object's feet.
-- `data/catalog.json` names every sprite, animation and item icon cut out of the pack: its sheet, region, feet anchor, shadow, collision radius and what it drops.
-- `scripts/terrain.gd` autotiles the grid.
-  - The pack draws each ground type as a hand-painted 5×5 "stamp", such as grass around a hole, or a grass island in water. Those stamps contain every edge and corner piece.
-  - Grass and cobblestone use a cell-based match. Each cell picks the piece whose rim faces its open neighbours.
-  - Water uses a corner-based (dual-grid) match, which gives shorelines in any shape. The water animates using the sheet's four frames.
-  - Shapes the stamps can't draw, such as grass strips one tile wide, are opened up automatically.
-  - Where the stamps offer more than one version of a piece, the one whose pixels line up best with its neighbours is used.
+### `data/world.json`
 
-To change the layout, edit `tools/make_world.py` and run it (plain Python, no packages), or edit `world.json` directly:
+- **`terrain`:** a grid of characters: `.` grass, `:` dirt, `=` cobblestone, `~` water, `*` snow.
+- **`cliffs`:** stretched plateaus. Each is `{x, y, w, top, face, base, colour, mine?}`.
+- **`decks`:** plank bridges and jetties.
+- **`objects`:** every placed thing, in pixels at its feet.
+
+### `tools/make_world.py`
+
+This generates `world.json` (plain Python, no packages). It lays out each region by hand, then dresses it the way a level artist would:
+
+- trees in groves with undergrowth under them, and clearings between
+- bushes where forest meets open ground
+- flowers in long drifts of one colour
+- reeds in clumps along the water
+- rocks and rubble at the feet of cliffs
+- pebbles and grass tufts along path edges
+- small scenes at every point of interest
+
+### `data/catalog.json`
+
+This names every sprite, animation and icon cut out of the pack: sheet, region, feet anchor, shadow, collision, drops and light. `tools/build_catalog.py` rebuilds it and needs Pillow.
+
+### `scripts/terrain.gd`
+
+This autotiles from the pack's hand-painted 5×5 ground "stamps":
+
+- Grass, cobblestone and snow drifts use a cell-based match. The pack draws these as holes or islands.
+- Water shorelines use a corner-based (dual-grid) match and animate.
+- Cliffs are stretched from the 6-wide plateau stamp, and each one is Y-sorted, so it hides what stands behind it.
+- The Old Mine and the quarry tunnel use the cliff variant with a timber-framed opening set into the face.
+
+### Buildings
+
+These are assembled from the pack's pieces:
+
+- **House fronts** (`house.gd`): roof, gable wall, wall strip, door, windows and chimney.
+- **Cabin interiors** (`interior.gd`): interior wall and floor sets plus kitchen and bedroom furniture.
+
+To regenerate the world:
 
 ```bash
-python3 tools/make_world.py          # rewrites data/world.json (optional seed argument)
-python3 tools/build_catalog.py       # only if you change sprite regions; needs Pillow
+python3 tools/make_world.py              # rewrite data/world.json (optional seed)
+godot --path game -- --demo --new --mapshot=/tmp/map.png     # render the whole map to one image
+godot --path game -- --demo --new --shots=/tmp/tour          # scripted tour with screenshots
 ```
 
 ## Project layout
 
 ```
 game/
-  project.godot     480x270 pixel-perfect viewport, integer scaling, GL Compatibility renderer
-  scenes/main.tscn  a single World node; everything else is built from data at startup
+  project.godot        480x270 pixel-perfect viewport, integer scaling, GL Compatibility renderer
+  scenes/main.tscn     a single World node; everything else is built from data
   scripts/
-    pack.gd         cuts sprites, animations, icons and the slash effect out of the pack
-    terrain.gd      the autotiler
-    world.gd        spawns the level, props, lights, drops and floating text
-    player.gd       movement, swinging, gathering, eating, dying and waking up
-    enemy.gd        wander, chase, telegraph, lunge, flinch, die, respawn
-    harvestable.gd  trees, rocks, ore, crystals and bushes
-    station.gd      crafting stations        inventory.gd  items, recipes, gear
-    crop.gd         farming                  npc.gd        talking characters
-    hud.gd          health, clock, gear, items, dialogue, crafting menu
-    daynight.gd     time-of-day tint and fire light
-    demo.gd         scripted tour for automated screenshots
-  tools/            make_world.py, build_catalog.py
-  ui/               Silkscreen pixel font (SIL Open Font License)
+    game.gd            clock, cabin tier, goals, buffs, sleep, save and load
+    inventory.gd       items, the recipe tree, crafting levels, cabin upgrade costs
+    pack.gd            cuts sprites, animations and icons out of the art pack
+    terrain.gd         ground autotiler, cliffs, decks
+    world.gd           builds the valley, doors in and out of the cabin, drops, floating text
+    house.gd           house fronts                interior.gd   cabin interiors per tier
+    player.gd          movement, swinging, eating, the lantern, camera rooms
+    enemy.gd           orc and skeleton AI         harvestable.gd  trees, rocks, ore, crystal, crates
+    npc.gd             villagers, Tilda, Merlo     station.gd / cabin_fixture.gd  things you craft at
+    crop.gd  forage.gd pickup.gd interactable.gd campfire.gd daynight.gd ambience.gd fx.gd
+    hud.gd             status, goal, items, dialogue, crafting, pack screen, cabin plans, fades
+    demo.gd            scripted tour and whole-map render
+  tools/               make_world.py, build_catalog.py
+  ui/                  Silkscreen pixel font (SIL Open Font License)
 ```
 
-For a scripted tour that saves screenshots as it goes:
+## Limits of the free pack
 
-```bash
-godot --path game -- --demo --shots=/tmp/hearthwild
-```
-
-## Limits of the free pack and what's next
-
-- In the free pack, the three heroes and the monsters only have idle, run and death animations. Attacks are shown as a swing of the held weapon plus the pack's slash effect. The tool animations (chop, mine, water, fish) exist only for the pack's unclothed base body. The paid Pixel Crawler packs add more characters and actions.
-- The pack has no sound. Audio would need a separate pack.
-- Not built yet: saving and loading, building walls and floors, an inventory screen, and more NPCs and quests. The NPC dialogue is written so it could be handed to Claude the way the Reverie engine does for its characters.
+- The heroes and monsters only have idle, run and death animations. Attacks are drawn as a swing of the held item plus the pack's slash effect.
+- There's no sound in the pack.
+- The Old Mine and the quarry tunnel are entrances only for now. Interiors for them are a natural next step, using the pack's dungeon tiles.

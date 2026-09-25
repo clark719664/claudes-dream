@@ -2,13 +2,15 @@ class_name World
 extends Node2D
 ## Builds the level from data/world.json (terrain grid + placed objects) and hosts it.
 
-const FLAT_DECOR := ["tuft", "tuft_dry", "fern", "mushroom", "mushroom_tall", "twig", "pebble", "leaves"]
+const FLAT_DECOR := ["tuft", "tuft_dry", "fern", "mushroom", "mushroom_tall", "twig", "pebble", "leaves", "debris"]
 const WORLD_LAYER := 1
 
 var size := Vector2.ZERO
 var entities: Node2D   # everything that stands up, sorted by feet position
 var decor: Node2D      # flat things on the ground
 var player: Player
+var cabin: House
+var interior: Interior
 
 
 func _ready() -> void:
@@ -17,24 +19,36 @@ func _ready() -> void:
 		_missing_assets()
 		return
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/world.json"))
-	var rows := PackedStringArray(data.terrain)
 	size = Vector2(data.width, data.height) * 16
-	var blocked := Terrain.new().build(self, rows, int(data.seed))
-	_add_water_collision(blocked)
-	_add_bounds()
+	var loaded := Game.load_game()
 	decor = Node2D.new()
 	decor.name = "Decor"
-	decor.z_index = -5
-	add_child(decor)
+	decor.z_index = -4
 	entities = Node2D.new()
 	entities.name = "Entities"
 	entities.y_sort_enabled = true
+	var built := Terrain.new().build(self, entities, data)
+	add_child(decor)
 	add_child(entities)
+	_add_water_collision(built.blocked)
+	for body in built.bodies:
+		add_child(body)
+	_add_bounds()
+	for m in built.mines:
+		spawn({"t": "mine_entrance", "x": m.x, "y": m.y})
 	for o in data.objects:
 		spawn(o)
+	interior = Interior.new()
+	add_child(interior)
+	interior.build(Game.cabin_tier, entities)
 	add_child(DayNight.new())
+	add_child(Ambience.new())
 	var hud := Hud.new()
 	add_child(hud)
+	if loaded:
+		enter_cabin(true)
+		player.global_position = interior.door_inside() + Vector2(0, -40)
+		Game.say("Welcome back. Day %d." % Game.day)
 	if "--demo" in OS.get_cmdline_user_args():
 		add_child(load("res://scripts/demo.gd").new())
 
@@ -50,16 +64,32 @@ func spawn(o: Dictionary) -> Node2D:
 			player = Player.new()
 			node = player
 		"npc":
-			node = Npc.new(o.actor, o.get("name", "Stranger"))
+			node = Npc.new(o.actor, o.get("name", "Stranger"), o.get("lines", "merlo" if o.actor == "wizard" else "villager"))
+		"villager":
+			node = Npc.new(o.actor, o.get("name", "Villager"), o.get("lines", "villager"), float(o.get("span", 40)))
 		"enemy":
 			node = Enemy.new(o.actor)
 		"crop":
 			node = Crop.new(o.kind, int(o.stage))
 		"campfire":
 			node = Campfire.new()
+		"mine_entrance":
+			node = Interactable.new("mine", o)
+		"house":
+			node = House.new(o.get("style", "log"), o.get("name", ""))
+		"cabin":
+			cabin = House.new(Inventory.CABIN_TIERS[Game.cabin_tier].style, "Your cabin", true)
+			cabin.entered.connect(enter_cabin)
+			node = cabin
+		"forage":
+			node = Forage.new(o.item, o.sprite, v)
 		_:
 			var s := Pack.spec(t, v)
-			if s.has("station"):
+			if s.has("chest") and Game.opened.has(str(o.get("id", ""))):
+				node = prop("chest_open")
+			elif s.has("sign") or s.has("chest"):
+				node = Interactable.new("sign" if s.has("sign") else "chest", o)
+			elif s.has("station"):
 				node = Station.new(t, v)
 			elif s.has("hp"):
 				node = Harvestable.new(t, v)
@@ -72,11 +102,56 @@ func spawn(o: Dictionary) -> Node2D:
 				return sprite
 			else:
 				node = prop(t, v)
+				if t.begins_with("ruin_"):
+					_ruin_walls(node, t)
 			if o.get("light", 0):
 				node.add_child(make_light(Color(1.0, 0.62, 0.3), 1.1, Vector2(0, -10)))
+			elif s.has("light"):
+				var at := Vector2(10, -22) if t == "lamp_post" else Vector2(0, -6)
+				node.add_child(make_light(Color(1.0, 0.78, 0.45), 0.9, at, 72))
 	node.position = pos
 	entities.add_child(node)
 	return node
+
+
+## Step through the cabin door. `quiet` skips the fade (waking up, passing out).
+func enter_cabin(quiet := false) -> void:
+	if not quiet:
+		await Game.hud.fade(true)
+	Game.area = "cabin"
+	player.global_position = interior.door_inside() + Vector2(0, -6)
+	player.facing = Vector2.UP
+	player.set_room(interior.room_rect())
+	if not quiet:
+		await Game.hud.fade(false)
+
+
+func exit_cabin() -> void:
+	await Game.hud.fade(true)
+	Game.area = "world"
+	player.global_position = cabin.global_position + Vector2(0, 12)
+	player.facing = Vector2.DOWN
+	player.set_room(Rect2(Vector2.ZERO, size))
+	await Game.hud.fade(false)
+
+
+func rebuild_cabin() -> void:
+	cabin.rebuild(Inventory.CABIN_TIERS[Game.cabin_tier].style)
+	interior.build(Game.cabin_tier, entities)
+	if Game.area == "cabin":
+		player.set_room(interior.room_rect())
+
+
+## Mornings: forage grows back.
+func new_day() -> void:
+	for f in get_tree().get_nodes_in_group("forage"):
+		f.regrow()
+
+
+func _physics_process(_delta: float) -> void:
+	if Game.area == "cabin" and player and player.global_position.y > interior.exit_line() and not player.dead:
+		Game.area = "leaving"
+		exit_cabin()
 
 
 ## A static, possibly solid, prop with its shadow.
@@ -95,6 +170,25 @@ func prop(t: String, v := 0) -> Node2D:
 	add_shadow(root, s)
 	root.add_child(Pack.sprite(t, v))
 	return root
+
+
+## Roofless cottage walls: solid along the back, the sides and the front (with a doorway gap).
+func _ruin_walls(node: Node2D, t: String) -> void:
+	var body := StaticBody2D.new()
+	body.collision_layer = WORLD_LAYER
+	var rects := []
+	if t == "ruin_back":
+		rects = [Rect2(-48, -60, 96, 12), Rect2(-48, -60, 8, 60), Rect2(40, -60, 8, 60)]
+	else:
+		rects = [Rect2(-48, -12, 32, 12), Rect2(16, -12, 32, 12), Rect2(-48, -60, 8, 60), Rect2(40, -60, 8, 60)]
+	for r in rects:
+		var shape := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = r.size
+		shape.shape = rect
+		shape.position = r.get_center()
+		body.add_child(shape)
+	node.add_child(body)
 
 
 static func foot_shape(radius: float) -> CollisionShape2D:
@@ -137,7 +231,7 @@ static func make_light(colour: Color, energy: float, offset := Vector2.ZERO, rad
 	return light
 
 
-func _add_water_collision(cells: Array[Vector2i]) -> void:
+func _add_water_collision(cells: Array) -> void:
 	var body := StaticBody2D.new()
 	body.name = "Water"
 	body.collision_layer = WORLD_LAYER
@@ -184,7 +278,22 @@ func drop(item: String, n: int, at: Vector2) -> void:
 		p.burst(Vector2.from_angle(randf() * TAU) * randf_range(10, 22))
 
 
-func float_text(text: String, at: Vector2, colour := Color.WHITE) -> void:
+var _pickup_labels := {}
+
+
+## "+1 Wood" three times in a row becomes one "+3 Wood".
+func pickup_text(item: String, at: Vector2) -> void:
+	var entry = _pickup_labels.get(item)
+	if entry and is_instance_valid(entry.label) and Time.get_ticks_msec() - entry.t < 900:
+		entry.n += 1
+		entry.t = Time.get_ticks_msec()
+		entry.label.text = "+%d %s" % [entry.n, Inventory.display_name(item)]
+		return
+	var l := float_text("+1 " + Inventory.display_name(item), at, Color(1, 0.95, 0.7))
+	_pickup_labels[item] = {"label": l, "n": 1, "t": Time.get_ticks_msec()}
+
+
+func float_text(text: String, at: Vector2, colour := Color.WHITE) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.add_theme_color_override("font_color", colour)
@@ -199,6 +308,7 @@ func float_text(text: String, at: Vector2, colour := Color.WHITE) -> void:
 	tw.tween_property(l, "position:y", l.position.y - 14, 0.7).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 	tw.parallel().tween_property(l, "modulate:a", 0.0, 0.7).set_delay(0.3)
 	tw.tween_callback(l.queue_free)
+	return l
 
 
 func _missing_assets() -> void:

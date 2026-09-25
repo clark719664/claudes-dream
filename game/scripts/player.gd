@@ -24,6 +24,7 @@ var _knock := Vector2.ZERO
 var _anim := ""
 var _struck := false
 var _held := ""
+var _lantern: PointLight2D
 
 
 func _ready() -> void:
@@ -60,10 +61,10 @@ func _ready() -> void:
 	add_child(camera)
 	var world := get_parent().get_parent() as Node2D
 	if world and "size" in world:
-		camera.limit_left = 0
-		camera.limit_top = 0
-		camera.limit_right = int(world.size.x)
-		camera.limit_bottom = int(world.size.y)
+		set_room(Rect2(Vector2.ZERO, world.size))
+	_lantern = World.make_light(Color(1.0, 0.85, 0.55), 0.0, Vector2(0, -10), 90)
+	_lantern.remove_from_group("night_lights")
+	add_child(_lantern)
 	Inventory.changed.connect(_refresh_weapon)
 	_refresh_weapon()
 	_play("idle")
@@ -80,6 +81,11 @@ func _physics_process(delta: float) -> void:
 		_update_swing()
 		input *= 0.25
 	var speed := SPRINT if Input.is_action_pressed("sprint") else WALK
+	if Game.has_buff("haste"):
+		speed *= 1.3
+	var glow := Inventory.has("lantern") and Game.darkness() > 0.3
+	_lantern.enabled = glow
+	_lantern.energy = Game.darkness() * 1.1 if glow else 0.0
 	velocity = input * speed + _knock
 	_knock = _knock.move_toward(Vector2.ZERO, 600.0 * delta)
 	move_and_slide()
@@ -103,16 +109,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		_interact()
 	elif event.is_action_pressed("eat"):
 		eat()
+	elif event.is_action_pressed("craft"):
+		Game.hud.open_crafting("hands")
+	elif event.is_action_pressed("inventory"):
+		Game.hud.toggle_inventory()
 
 
 func _start_attack() -> void:
 	var target := _target_in_front()
 	_held = Inventory.weapon()
 	if target is Harvestable:
-		if target.kind == "wood" and Inventory.has("axe"):
-			_held = "axe"
-		elif target.kind == "stone" and Inventory.has("pickaxe"):
-			_held = "pickaxe"
+		if target.kind == "wood" and Inventory.best(Inventory.AXES) != "":
+			_held = Inventory.best(Inventory.AXES)
+		elif target.kind == "stone" and Inventory.best(Inventory.PICKAXES) != "":
+			_held = Inventory.best(Inventory.PICKAXES)
 	_set_weapon_texture(_held)
 	_attack_t = ATTACK_TIME
 	_struck = false
@@ -139,7 +149,10 @@ func _strike() -> void:
 			continue
 		var centre: Vector2 = n.hit_centre()
 		if centre.distance_to(point) <= REACH + n.hit_radius():
-			n.hit(Inventory.damage(), facing, self)
+			var dmg := Inventory.damage()
+			if Game.has_buff("might"):
+				dmg = int(dmg * 1.5)
+			n.hit(dmg, facing, self)
 			hit_any = true
 	if hit_any:
 		Game.shake(1.5)
@@ -181,6 +194,8 @@ func eat() -> void:
 	Inventory.take(food)
 	heal(Inventory.FOOD[food])
 	Game.say("Ate %s." % Inventory.display_name(food))
+	if Inventory.BUFFS.has(food):
+		Game.add_buff(Inventory.BUFFS[food][0], Inventory.BUFFS[food][1])
 
 
 func heal(n: int) -> void:
@@ -191,8 +206,7 @@ func heal(n: int) -> void:
 func take_damage(amount: int, from: Vector2) -> void:
 	if dead or _invuln > 0.0:
 		return
-	if Inventory.has("shield"):
-		amount = int(ceil(amount * 0.67))
+	amount = int(ceil(amount * Inventory.damage_taken_factor()))
 	hp -= amount
 	_invuln = 0.8
 	_knock = (global_position - from).normalized() * 150.0
@@ -211,12 +225,27 @@ func _die() -> void:
 	_play("death")
 	Game.say("You black out...")
 	await get_tree().create_timer(2.5).timeout
-	position = start
+	if Game.area != "world":
+		Game.area = "world"
+		set_room(Rect2(Vector2.ZERO, Game.world.size))
+	position = Game.world.cabin.global_position + Vector2(0, 14) if Game.world.cabin else start
 	hp = max_hp
 	dead = false
 	weapon.visible = true
 	_invuln = 1.5
-	Game.say("You wake up by the campfire.")
+	Game.say("You wake up outside your cabin.")
+
+
+## Keep the camera inside an area; rooms smaller than the screen are centred.
+func set_room(r: Rect2) -> void:
+	var view := Vector2(480, 270)
+	var c := r.get_center()
+	var half := Vector2(maxf(r.size.x, view.x), maxf(r.size.y + 24, view.y)) / 2.0
+	camera.limit_left = int(c.x - half.x)
+	camera.limit_right = int(c.x + half.x)
+	camera.limit_top = int(c.y - half.y)
+	camera.limit_bottom = int(c.y + half.y)
+	camera.reset_smoothing()
 
 
 func shake(amount: float) -> void:
@@ -250,4 +279,4 @@ func _set_weapon_texture(item: String) -> void:
 	weapon.texture = t
 	var sz := t.get_size()
 	weapon.offset = Vector2(-sz.x * 0.5, -sz.y + 3)
-	weapon.modulate = Color(0.78, 0.85, 1.0) if item == "sword_iron" else Color.WHITE
+	weapon.modulate = Inventory.tint(item)

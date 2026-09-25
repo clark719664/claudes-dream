@@ -57,6 +57,12 @@ func sprite(name: String, variant := 0) -> Sprite2D:
 	node.texture = atlas(s)
 	node.centered = false
 	node.offset = -Vector2(s.anchor[0], s.anchor[1])
+	for part in s.get("parts", []):
+		var p := Sprite2D.new()
+		p.texture = atlas({"sheet": s.sheet, "region": part.region})
+		p.centered = false
+		p.offset = node.offset + Vector2(part.at[0], part.at[1])
+		node.add_child(p)
 	return node
 
 

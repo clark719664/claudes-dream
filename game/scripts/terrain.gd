@@ -13,8 +13,14 @@ extends RefCounted
 
 const FLOORS := "Environment/Tilesets/Floors_Tiles.png"
 const WATER := "Environment/Tilesets/Water_tiles.png"
+const CLIFFS := "Environment/Tilesets/Wall_Tiles.png"
+const CLIFF_VARIANTS := "Environment/Tilesets/Wall_Variations.png"
+const FURNITURE := "Environment/Props/Static/Furniture.png"
 const SRC_FLOORS := 0
 const SRC_WATER := 1
+const SRC_CLIFFS := 2
+const SRC_CLIFF_VARIANTS := 3
+const SRC_FURNITURE := 4
 
 enum { GRASS, DIRT, STONE }
 
@@ -27,6 +33,8 @@ const RING := {
 }
 const GRASS_STAMPS := [Vector2i(0, 0), Vector2i(0, 5)]
 const STONE_STAMPS := [Vector2i(5, 0), Vector2i(5, 5)]
+const SNOW_STAMPS := [Vector2i(0, 12), Vector2i(0, 17)]
+const SNOW_FILL := [Vector2i(0, 22), Vector2i(1, 22), Vector2i(2, 22), Vector2i(3, 22), Vector2i(4, 22), Vector2i(0, 23), Vector2i(1, 23), Vector2i(2, 23), Vector2i(3, 23), Vector2i(4, 23)]
 const GRASS_FILL := [Vector2i(1, 10), Vector2i(2, 10), Vector2i(3, 10)]
 const DIRT_FILL := [Vector2i(11, 10), Vector2i(12, 10), Vector2i(13, 10)]
 const STONE_FILL := [Vector2i(6, 10), Vector2i(7, 10), Vector2i(8, 10)]
@@ -55,29 +63,32 @@ var width := 0
 var height := 0
 var mat := PackedByteArray()        # material per cell
 var shore := PackedByteArray()      # 1 if any corner of the cell is water
+var snow := PackedByteArray()       # 1 if the cell is covered in snow
 var vwater := PackedByteArray()     # water per corner (width+1 x height+1)
 var rng := RandomNumberGenerator.new()
 var _floors_img: Image
 var _edges := {}
 
 
-## Build tile layers under `parent`. Returns the cells that should block movement (deep water).
-func build(parent: Node2D, rows: PackedStringArray, seed_value: int) -> Array[Vector2i]:
-	rng.seed = seed_value
+## Build the ground under `parent` and the cliffs under `sorted` (a Y-sorted node, so cliffs hide
+## what stands behind them). Returns {"blocked": cells that stop movement, "bodies": collision
+## nodes for cliffs, "mines": positions of mine entrances}.
+func build(parent: Node2D, sorted: Node2D, data: Dictionary) -> Dictionary:
+	var rows := PackedStringArray(data.terrain)
+	rng.seed = int(data.get("seed", 1))
 	height = rows.size()
 	width = rows[0].length()
 	_solve(rows)
 	var ts := _tileset()
 	var layers := {}
-	for spec in [["Water", -10], ["Ground", -9], ["Cobbles", -8], ["Grass", -7]]:
+	for spec in [["Water", -10], ["Ground", -9], ["Cobbles", -8], ["Grass", -7], ["Snow", -6], ["Decks", -5]]:
 		var layer := TileMapLayer.new()
 		layer.name = spec[0]
 		layer.z_index = spec[1]
 		layer.tile_set = ts
 		parent.add_child(layer)
 		layers[spec[0]] = layer
-	var blocked: Array[Vector2i] = []
-	var grass_pending := {}
+	var blocked := {}
 	for y in height:
 		for x in width:
 			var c := Vector2i(x, y)
@@ -90,7 +101,7 @@ func build(parent: Node2D, rows: PackedStringArray, seed_value: int) -> Array[Ve
 					at = _pick(SHORE[key])
 				layers.Water.set_cell(c, SRC_WATER, at)
 				if key.count("0") >= 3:
-					blocked.append(c)
+					blocked[c] = true
 				continue
 			var m := mat[_i(x, y)]
 			if m == STONE:
@@ -100,22 +111,102 @@ func build(parent: Node2D, rows: PackedStringArray, seed_value: int) -> Array[Ve
 				else:
 					layers.Ground.set_cell(c, SRC_FLOORS, _pick(DIRT_FILL))
 					layers.Cobbles.set_cell(c, SRC_FLOORS, _variant(r, STONE_STAMPS, layers.Cobbles, c))
-				continue
-			if m == DIRT:
+			elif m == DIRT:
 				layers.Ground.set_cell(c, SRC_FLOORS, _pick(DIRT_FILL))
-				continue
-			# grass: the ground under its rim is whatever open material it borders
-			var under := _open_neighbour(x, y)
-			if under == DIRT:
-				layers.Ground.set_cell(c, SRC_FLOORS, _pick(DIRT_FILL))
-			elif under == STONE:
-				layers.Ground.set_cell(c, SRC_FLOORS, _pick(STONE_FILL))
-			var gr := role(_mask(x, y, -1))
-			if gr == "full":
-				layers.Grass.set_cell(c, SRC_FLOORS, _pick(GRASS_FILL))
 			else:
-				layers.Grass.set_cell(c, SRC_FLOORS, _variant(gr, GRASS_STAMPS, layers.Grass, c))
-	return blocked
+				# grass: the ground under its rim is whatever open material it borders
+				var under := _open_neighbour(x, y)
+				if under == DIRT:
+					layers.Ground.set_cell(c, SRC_FLOORS, _pick(DIRT_FILL))
+				elif under == STONE:
+					layers.Ground.set_cell(c, SRC_FLOORS, _pick(STONE_FILL))
+				var gr := role(_mask(x, y, -1))
+				if gr == "full":
+					layers.Grass.set_cell(c, SRC_FLOORS, _pick(GRASS_FILL))
+				else:
+					layers.Grass.set_cell(c, SRC_FLOORS, _variant(gr, GRASS_STAMPS, layers.Grass, c))
+			# snow lies on top: snow cells are filled, their neighbours carry the drifted rims
+			if snow[_i(x, y)]:
+				layers.Snow.set_cell(c, SRC_FLOORS, _pick(SNOW_FILL))
+			else:
+				var sr := role(_snow_mask(x, y))
+				if sr != "full":
+					layers.Snow.set_cell(c, SRC_FLOORS, _variant(sr, SNOW_STAMPS, layers.Snow, c))
+	for d in data.get("decks", []):
+		for c in _deck(layers.Decks, int(d.x), int(d.y), int(d.w), int(d.h)):
+			blocked.erase(c)
+	var out := {"blocked": blocked.keys(), "bodies": [], "mines": []}
+	var n := 0
+	for cl in data.get("cliffs", []):
+		n += 1
+		var layer := TileMapLayer.new()
+		layer.name = "Cliff%d" % n
+		layer.tile_set = ts
+		layer.y_sort_enabled = true
+		sorted.add_child(layer)
+		_cliff(layer, cl, out)
+	return out
+
+
+## A raised plateau with a rock face, stretched from the pack's 6-wide cliff stamp.
+## Columns: 0 | 1 | 2,3 repeated | 4 | 5. Rows: 0 | 1 | 2,3 repeated | 4 | 5 | 6 | 6,7 repeated | 7 | base.
+func _cliff(layer: TileMapLayer, cl: Dictionary, out: Dictionary) -> void:
+	var x0 := int(cl.x)
+	var y0 := int(cl.y)
+	var w := maxi(int(cl.w), 4)
+	var top := maxi(int(cl.get("top", 5)), 4)
+	var colour := int(cl.get("colour", 0))
+	var cols := [0, 1]
+	for i in w - 4:
+		cols.append(2 + rng.randi() % 2)
+	cols += [4, 5]
+	var rows := [0, 1]
+	for i in top - 4:
+		rows.append(2 + rng.randi() % 2)
+	rows += [4, 5, 6]
+	for i in int(cl.get("face", 0)):
+		rows.append(6 + rng.randi() % 2)
+	rows.append(7)
+	rows += {"grass": [8, 9], "snow": [10, 11], "none": [12, 13]}[cl.get("base", "grass")]
+	for j in rows.size():
+		for i in cols.size():
+			_put(layer, Vector2i(x0 + i, y0 + j), SRC_CLIFFS, Vector2i(cols[i] + colour * 6, rows[j]))
+	var h := rows.size()
+	if cl.has("mine"):
+		var k := int(cl.mine)
+		for dx in 3:
+			for dy in 4:
+				_put(layer, Vector2i(x0 + k + dx, y0 + h - 4 + dy), SRC_CLIFF_VARIANTS, Vector2i(12 + dx, 6 + dy + colour * 10))
+		out.mines.append(Vector2((x0 + k + 1.5) * 16, (y0 + h) * 16 - 6))
+	var body := StaticBody2D.new()
+	body.collision_layer = 1
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(w * 16 - 8, (h - 1) * 16 - 6)
+	shape.shape = rect
+	shape.position = Vector2(x0 * 16 + w * 8, y0 * 16 + 16 + rect.size.y / 2.0 - 8)
+	body.add_child(shape)
+	out.bodies.append(body)
+
+
+## A plank platform (bridge or jetty) from the furniture sheet's 5x5 deck stamp.
+func _deck(layer: TileMapLayer, x0: int, y0: int, w: int, h: int) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for j in h:
+		var r := 34 if j == 0 else (38 if j == h - 1 else 35 + (j - 1) % 3)
+		for i in w:
+			var c := 0 if i == 0 else (4 if i == w - 1 else 1 + (i - 1) % 3)
+			var cell := Vector2i(x0 + i, y0 + j)
+			_put(layer, cell, SRC_FURNITURE, Vector2i(c, r))
+			cells.append(cell)
+	return cells
+
+
+## set_cell, skipping pieces that are blank on the sheet.
+static func _put(layer: TileMapLayer, cell: Vector2i, source: int, at: Vector2i) -> void:
+	var src := layer.tile_set.get_source(source) as TileSetAtlasSource
+	if src.has_tile(at):
+		layer.set_cell(cell, source, at)
 
 
 ## Which stamp piece a material cell needs, from a bitmask of open neighbours. "" = no piece exists.
@@ -154,6 +245,7 @@ func _solve(rows: PackedStringArray) -> void:
 	var n := width * height
 	mat.resize(n)
 	shore.resize(n)
+	snow.resize(n)
 	vwater.resize((width + 1) * (height + 1))
 	for j in height + 1:
 		for i in width + 1:
@@ -170,7 +262,7 @@ func _solve(rows: PackedStringArray) -> void:
 					wet = true
 			shore[_i(x, y)] = 1 if wet else 0
 			var ch := _ch(rows, x, y)
-			mat[_i(x, y)] = GRASS if (wet or ch == "." or ch == "~") else (DIRT if ch == ":" else STONE)
+			mat[_i(x, y)] = GRASS if (wet or ch in ".~*") else (DIRT if ch == ":" else STONE)
 	# dirt and cobbles never touch the shore; grass never meets dirt and cobbles at once
 	for y in height:
 		for x in width:
@@ -180,6 +272,18 @@ func _solve(rows: PackedStringArray) -> void:
 		for x in width:
 			if mat[_i(x, y)] == GRASS and not shore[_i(x, y)] and _borders(x, y, DIRT) and _borders(x, y, STONE):
 				mat[_i(x, y)] = DIRT
+	# snow: only on grass away from the water; grow drifts where their rim has no piece
+	for y in height:
+		for x in width:
+			snow[_i(x, y)] = 1 if _ch(rows, x, y) == "*" and not shore[_i(x, y)] and not _touches_shore(x, y) else 0
+	var grew := true
+	while grew:
+		grew = false
+		for y in height:
+			for x in width:
+				if not snow[_i(x, y)] and not shore[_i(x, y)] and role(_snow_mask(x, y)) == "":
+					snow[_i(x, y)] = 1
+					grew = true
 	# open up shapes the stamps cannot draw, until everything is drawable
 	var changed := true
 	while changed:
@@ -204,6 +308,15 @@ func _mask(x: int, y: int, open: int) -> int:
 		if q.x >= 0 and q.y >= 0 and q.x < width and q.y < height:
 			mm = mat[_i(q.x, q.y)]
 		if (open == -1 and mm != GRASS) or (open != -1 and mm == open):
+			m |= 1 << k
+	return m
+
+
+func _snow_mask(x: int, y: int) -> int:
+	var m := 0
+	for k in 8:
+		var q: Vector2i = Vector2i(x, y) + D8[k]
+		if q.x >= 0 and q.y >= 0 and q.x < width and q.y < height and snow[_i(q.x, q.y)]:
 			m |= 1 << k
 	return m
 
@@ -302,7 +415,11 @@ func _tileset() -> TileSet:
 		for r in RING:
 			for off in RING[r]:
 				wanted[stamp + off] = true
-	for t in GRASS_FILL + DIRT_FILL + STONE_FILL:
+	for stamp in SNOW_STAMPS:
+		for r in RING:
+			for off in RING[r]:
+				wanted[stamp + off] = true
+	for t in GRASS_FILL + DIRT_FILL + STONE_FILL + SNOW_FILL:
 		wanted[t] = true
 	for t in wanted:
 		floors.create_tile(t)
@@ -321,7 +438,26 @@ func _tileset() -> TileSet:
 			for f in 4:
 				water.set_tile_animation_frame_duration(t, f, 0.16)
 	ts.add_source(water, SRC_WATER)
+	ts.add_source(_grid_source(CLIFFS, Rect2i(0, 0, 18, 14)), SRC_CLIFFS)
+	ts.add_source(_grid_source(CLIFF_VARIANTS, Rect2i(12, 0, 3, 30)), SRC_CLIFF_VARIANTS)
+	ts.add_source(_grid_source(FURNITURE, Rect2i(0, 34, 5, 5)), SRC_FURNITURE)
 	return ts
+
+
+## An atlas source with a plain 16x16 tile at every cell of `cells` that has any pixels.
+func _grid_source(sheet: String, cells: Rect2i) -> TileSetAtlasSource:
+	var src := TileSetAtlasSource.new()
+	var tex := Pack.texture(sheet)
+	src.texture = tex
+	src.texture_region_size = Vector2i(16, 16)
+	var img := tex.get_image()
+	if img.is_compressed():
+		img.decompress()
+	for y in range(cells.position.y, cells.end.y):
+		for x in range(cells.position.x, cells.end.x):
+			if not img.get_region(Rect2i(x * 16, y * 16, 16, 16)).is_invisible():
+				src.create_tile(Vector2i(x, y))
+	return src
 
 
 func _pick(options: Array) -> Vector2i:

@@ -1,31 +1,42 @@
 class_name Hud
 extends CanvasLayer
-## Health, clock, gear, carried items, messages, dialog and the crafting menu.
+## Health, level, clock, goal, carried items, messages, dialogue, the crafting menu,
+## the inventory screen, Tilda's cabin plans and the fade used for doors and sleep.
 
-const PANEL := Color(0.15, 0.1, 0.07, 0.92)
+signal faded
+signal answered(yes: bool)
+
+const PANEL := Color(0.15, 0.1, 0.07, 0.93)
 const EDGE := Color(0.62, 0.43, 0.24)
 const TEXT := Color(0.98, 0.93, 0.82)
 const DIM := Color(0.62, 0.55, 0.46)
 const BAD := Color(0.95, 0.42, 0.35)
 const GOOD := Color(0.6, 0.92, 0.5)
+const GOLD := Color(1.0, 0.8, 0.45)
+const STRIP_MAX := 10
 
 var root: Control
 var hp_bar: ColorRect
 var hp_label: Label
+var xp_bar: ColorRect
+var lv_label: Label
 var clock: Label
+var buff_label: Label
+var goal_label: Label
 var gear: HBoxContainer
 var strip: HBoxContainer
 var toast: Label
 var hint: PanelContainer
 var dialog: PanelContainer
 var dialog_label: Label
-var craft: PanelContainer
-var craft_list: VBoxContainer
-var craft_title: Label
-var craft_desc: Label
+var menu: PanelContainer        # crafting, inventory and upgrade screens share one panel
+var menu_box: VBoxContainer
+var black: ColorRect
 var _toast_t := 0.0
+var _mode := ""                 # "", "craft", "inventory", "upgrade"
 var _station := ""
 var _selected := 0
+var _confirm: Callable
 
 
 func _ready() -> void:
@@ -42,13 +53,20 @@ func _ready() -> void:
 	root.theme = theme
 	add_child(root)
 	_build_status()
+	_build_clock()
 	_build_strip()
 	_build_toast()
 	_build_hint()
 	_build_dialog()
-	_build_craft()
+	_build_menu()
+	black = ColorRect.new()
+	black.color = Color(0, 0, 0, 0)
+	black.set_anchors_preset(Control.PRESET_FULL_RECT)
+	black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(black)
 	Inventory.changed.connect(_refresh_items)
 	Game.message.connect(say)
+	Game.goal_changed.connect(func(t): goal_label.text = t)
 	_refresh_items()
 
 
@@ -58,7 +76,17 @@ func _process(delta: float) -> void:
 		hp_bar.size.x = 56.0 * clampf(float(p.hp) / p.max_hp, 0.0, 1.0)
 		hp_bar.color = GOOD if p.hp > 50 else (Color(0.95, 0.75, 0.3) if p.hp > 25 else BAD)
 		hp_label.text = "%d" % p.hp
+	var lv := Inventory.level
+	var lo := Inventory.xp_for(lv)
+	var hi := Inventory.xp_for(lv + 1)
+	xp_bar.size.x = 56.0 * clampf(float(Inventory.xp - lo) / maxf(hi - lo, 1), 0.0, 1.0)
+	lv_label.text = "LV %d" % lv
 	clock.text = Game.clock_text() + ("  NIGHT" if Game.is_night() else "")
+	var b := ""
+	for k in Game.buffs:
+		b += "%s %ds  " % [k.to_upper(), int(Game.buffs[k])]
+	buff_label.text = b
+	buff_label.visible = b != ""
 	if _toast_t > 0.0:
 		_toast_t -= delta
 		toast.modulate.a = clampf(_toast_t * 2.0, 0.0, 1.0)
@@ -66,9 +94,10 @@ func _process(delta: float) -> void:
 
 func say(text: String) -> void:
 	toast.text = text
-	_toast_t = 3.0
+	_toast_t = 3.5
 
 
+# ---------------------------------------------------------------- building blocks
 func _panel(min_size := Vector2.ZERO) -> PanelContainer:
 	var p := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
@@ -92,6 +121,36 @@ func _label(text := "", colour := TEXT) -> Label:
 	return l
 
 
+func _icon(item: String, px: int) -> TextureRect:
+	var t := TextureRect.new()
+	t.texture = Pack.icon("carrot" if item == "any_veg" else item)
+	t.custom_minimum_size = Vector2(px, px)
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.modulate = Inventory.tint(item)
+	return t
+
+
+func _bar(width: float, colour: Color) -> Array:
+	var back := ColorRect.new()
+	back.color = Color(0.08, 0.05, 0.04)
+	back.custom_minimum_size = Vector2(width + 2, 6)
+	back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var bar := ColorRect.new()
+	bar.position = Vector2(1, 1)
+	bar.size = Vector2(width, 4)
+	bar.color = colour
+	back.add_child(bar)
+	return [back, bar]
+
+
+func _clear(box: Node) -> void:
+	for c in box.get_children():
+		box.remove_child(c)
+		c.queue_free()
+
+
+# ---------------------------------------------------------------- always-on widgets
 func _build_status() -> void:
 	var box := _panel()
 	box.position = Vector2(4, 4)
@@ -103,28 +162,42 @@ func _build_status() -> void:
 	row.add_theme_constant_override("separation", 4)
 	v.add_child(row)
 	row.add_child(_label("HP", BAD))
-	var back := ColorRect.new()
-	back.color = Color(0.08, 0.05, 0.04)
-	back.custom_minimum_size = Vector2(58, 6)
-	back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(back)
-	hp_bar = ColorRect.new()
-	hp_bar.position = Vector2(1, 1)
-	hp_bar.size = Vector2(56, 4)
-	back.add_child(hp_bar)
+	var hp := _bar(56, GOOD)
+	row.add_child(hp[0])
+	hp_bar = hp[1]
 	hp_label = _label("100")
 	row.add_child(hp_label)
+	var row2 := HBoxContainer.new()
+	row2.add_theme_constant_override("separation", 4)
+	v.add_child(row2)
+	lv_label = _label("LV 1", GOLD)
+	row2.add_child(lv_label)
+	var xp := _bar(56, GOLD)
+	row2.add_child(xp[0])
+	xp_bar = xp[1]
 	gear = HBoxContainer.new()
 	gear.add_theme_constant_override("separation", 2)
 	v.add_child(gear)
-	var cbox := _panel()
-	root.add_child(cbox)
-	cbox.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	cbox.position = Vector2(480 - 108, 4)
-	cbox.custom_minimum_size = Vector2(104, 0)
+
+
+func _build_clock() -> void:
+	var box := _panel()
+	box.position = Vector2(480 - 176 - 4, 4)
+	box.custom_minimum_size = Vector2(176, 0)
+	root.add_child(box)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	box.add_child(v)
 	clock = _label("Day 1")
 	clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cbox.add_child(clock)
+	v.add_child(clock)
+	buff_label = _label("", GOOD)
+	buff_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(buff_label)
+	goal_label = _label(Game.goal_text(), GOLD)
+	goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	goal_label.custom_minimum_size = Vector2(168, 0)
+	v.add_child(goal_label)
 
 
 func _build_strip() -> void:
@@ -140,7 +213,7 @@ func _build_strip() -> void:
 func _build_toast() -> void:
 	toast = _label("")
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	toast.position = Vector2(0, 222)
+	toast.position = Vector2(0, 226)
 	toast.size = Vector2(480, 10)
 	toast.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.03))
 	toast.add_theme_constant_override("outline_size", 3)
@@ -149,18 +222,47 @@ func _build_toast() -> void:
 
 func _build_hint() -> void:
 	hint = _panel()
-	hint.position = Vector2(4, 40)
-	var l := _label("WASD  move     SHIFT  run\nJ / SPACE / CLICK  swing\nE  use / talk / harvest\nQ  eat     ESC  close", DIM)
-	hint.add_child(l)
+	hint.position = Vector2(4, 52)
+	hint.add_child(_label("WASD move   SHIFT run\nJ / SPACE / CLICK swing\nE use - talk - harvest\nC craft   I inventory\nQ eat   ESC close", DIM))
 	root.add_child(hint)
 	var tw := hint.create_tween()
-	tw.tween_interval(16.0)
+	tw.tween_interval(18.0)
 	tw.tween_property(hint, "modulate:a", 0.0, 1.5)
 
 
+func _refresh_items() -> void:
+	_clear(strip)
+	_clear(gear)
+	var shown := 0
+	var extra := 0
+	for item in Inventory.items:
+		if item in Inventory.GEAR:
+			gear.add_child(_icon(item, 12))
+			continue
+		if shown >= STRIP_MAX:
+			extra += 1
+			continue
+		shown += 1
+		var slot := HBoxContainer.new()
+		slot.add_theme_constant_override("separation", 1)
+		slot.add_child(_icon(item, 14))
+		slot.add_child(_label(str(Inventory.count(item))))
+		strip.add_child(slot)
+	if shown == 0:
+		strip.add_child(_label("Your pack is empty. Chop a tree!", DIM))
+	elif extra > 0:
+		strip.add_child(_label("+%d  (I)" % extra, DIM))
+	if gear.get_child_count() == 0:
+		gear.add_child(_label("Fists", DIM))
+	strip.get_parent().reset_size()
+	gear.get_parent().get_parent().reset_size()
+	if _mode != "":
+		_refresh_menu()
+
+
+# ---------------------------------------------------------------- dialogue, confirm, fade
 func _build_dialog() -> void:
 	dialog = _panel(Vector2(360, 0))
-	dialog.position = Vector2(60, 196)
 	dialog.visible = false
 	var l := _label("")
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -171,119 +273,197 @@ func _build_dialog() -> void:
 
 
 func show_dialog(who: String, text: String) -> void:
+	_confirm = Callable()
 	dialog_label.text = who.to_upper() + "\n" + text
+	_show_dialog()
+
+
+func confirm(question: String, on_yes: Callable) -> void:
+	_confirm = on_yes
+	dialog_label.text = question + "\nE  yes        ESC  no"
+	_show_dialog()
+
+
+func _show_dialog() -> void:
 	dialog.visible = true
 	dialog.reset_size()
-	dialog.position = Vector2(60, 212 - dialog.size.y)
+	dialog.position = Vector2(60, 218 - dialog.size.y)
 
 
-func _build_craft() -> void:
-	craft = _panel(Vector2(260, 0))
-	craft.visible = false
-	craft.mouse_filter = Control.MOUSE_FILTER_STOP
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 3)
-	craft.add_child(v)
-	craft_title = _label("", Color(1.0, 0.8, 0.45))
-	craft_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(craft_title)
-	craft_list = VBoxContainer.new()
-	craft_list.add_theme_constant_override("separation", 2)
-	v.add_child(craft_list)
-	craft_desc = _label("", DIM)
-	craft_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	craft_desc.custom_minimum_size = Vector2(250, 18)
-	v.add_child(craft_desc)
-	v.add_child(_label("W/S choose   E craft   ESC close", DIM))
-	root.add_child(craft)
+func fade(to_black: bool, time := 0.35) -> void:
+	var tw := black.create_tween()
+	tw.tween_property(black, "color:a", 1.0 if to_black else 0.0, time)
+	await tw.finished
+
+
+# ---------------------------------------------------------------- menus
+func _build_menu() -> void:
+	menu = _panel(Vector2(300, 0))
+	menu.visible = false
+	menu.mouse_filter = Control.MOUSE_FILTER_STOP
+	menu_box = VBoxContainer.new()
+	menu_box.add_theme_constant_override("separation", 2)
+	menu.add_child(menu_box)
+	root.add_child(menu)
 
 
 func open_crafting(station: String) -> void:
+	_open("craft", station)
+
+
+func toggle_inventory() -> void:
+	if _mode == "inventory":
+		close_menu()
+	else:
+		_open("inventory", "")
+
+
+func open_upgrades() -> void:
+	_open("upgrade", "")
+
+
+func _open(mode: String, station: String) -> void:
+	_mode = mode
 	_station = station
 	_selected = 0
-	craft.visible = true
 	dialog.visible = false
+	menu.visible = true
 	get_tree().paused = true
-	_refresh_craft()
+	_refresh_menu()
 
 
-func close_crafting() -> void:
-	craft.visible = false
+func close_menu() -> void:
+	_mode = ""
+	menu.visible = false
 	get_tree().paused = false
 
 
+## kept for older callers
+func close_crafting() -> void:
+	close_menu()
+
+
 func _unhandled_input(event: InputEvent) -> void:
-	if dialog.visible and (event.is_action_pressed("interact") or event.is_action_pressed("cancel") or event.is_action_pressed("attack")):
-		dialog.visible = false
-		get_viewport().set_input_as_handled()
+	if dialog.visible:
+		if event.is_action_pressed("interact") or event.is_action_pressed("attack") or event.is_action_pressed("cancel"):
+			dialog.visible = false
+			get_viewport().set_input_as_handled()
+			if _confirm.is_valid() and event.is_action_pressed("interact"):
+				var c := _confirm
+				_confirm = Callable()
+				c.call()
 		return
-	if not craft.visible:
+	if _mode == "":
 		return
-	var recipes: Array = Inventory.RECIPES[_station]
-	if event.is_action_pressed("cancel"):
-		close_crafting()
-	elif event.is_action_pressed("move_up"):
-		_selected = (_selected - 1 + recipes.size()) % recipes.size()
-		_refresh_craft()
-	elif event.is_action_pressed("move_down"):
-		_selected = (_selected + 1) % recipes.size()
-		_refresh_craft()
+	if event.is_action_pressed("cancel") or (_mode == "inventory" and event.is_action_pressed("inventory")) or (_mode == "craft" and _station == "hands" and event.is_action_pressed("craft")):
+		close_menu()
+	elif _mode == "craft" and event.is_action_pressed("move_up"):
+		_selected = (_selected - 1 + _recipes().size()) % _recipes().size()
+		_refresh_menu()
+	elif _mode == "craft" and event.is_action_pressed("move_down"):
+		_selected = (_selected + 1) % _recipes().size()
+		_refresh_menu()
 	elif event.is_action_pressed("interact") or (event is InputEventKey and event.is_action_pressed("attack")):
-		_craft_selected()
+		if _mode == "craft":
+			_craft_selected()
+		elif _mode == "upgrade":
+			_build_selected()
 	else:
 		return
 	get_viewport().set_input_as_handled()
 
 
+func _recipes() -> Array:
+	return Inventory.RECIPES[_station]
+
+
 func _craft_selected() -> void:
-	var recipe: Dictionary = Inventory.RECIPES[_station][_selected]
-	if Inventory.craft(recipe):
-		say("Made %s!" % Inventory.display_name(recipe.out))
-	elif recipe.out in Inventory.GEAR and Inventory.has(recipe.out):
-		say("You already have one.")
+	var recipe: Dictionary = _recipes()[_selected]
+	var why := Inventory.blocker(recipe)
+	if why == "":
+		Inventory.craft(recipe)
+		Game.note_craft(recipe.out, recipe.get("n", 1))
+		say("Made %s%s" % [Inventory.display_name(recipe.out), (" x%d" % recipe.n) if recipe.has("n") else ""])
 	else:
-		say("Not enough materials.")
-	_refresh_craft()
+		say(why + ".")
+	_refresh_menu()
 
 
-func _refresh_craft() -> void:
-	craft_title.text = Inventory.STATION_NAMES[_station].to_upper()
-	_clear(craft_list)
-	var recipes: Array = Inventory.RECIPES[_station]
+func _build_selected() -> void:
+	if Game.upgrade_pending:
+		say("Tilda is already working on it. Sleep, and it'll be done by morning.")
+	elif Game.request_upgrade():
+		say("Tilda: \"Leave it to me. It'll be ready when you wake up.\"")
+	else:
+		say("Tilda: \"Not enough materials yet.\"")
+	_refresh_menu()
+
+
+func _refresh_menu() -> void:
+	_clear(menu_box)
+	match _mode:
+		"craft": _fill_craft()
+		"inventory": _fill_inventory()
+		"upgrade": _fill_upgrade()
+	menu.reset_size()
+	menu.position = Vector2(roundf((480 - menu.size.x) / 2.0), maxf(4, roundf((270 - menu.size.y) / 2.0) - 8))
+
+
+func _title(text: String) -> void:
+	var t := _label(text, GOLD)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	menu_box.add_child(t)
+
+
+func _row(selected: bool) -> Array:
+	var row := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.3, 0.2, 0.12, 0.9) if selected else Color(0, 0, 0, 0)
+	sb.border_color = EDGE if selected else Color(0, 0, 0, 0)
+	sb.set_border_width_all(1)
+	sb.set_content_margin_all(2)
+	row.add_theme_stylebox_override("panel", sb)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 3)
+	row.add_child(h)
+	menu_box.add_child(row)
+	return [row, h]
+
+
+func _costs(h: HBoxContainer, cost: Dictionary) -> void:
+	for k in cost:
+		h.add_child(_icon(k, 12))
+		var have := Inventory.count(k)
+		h.add_child(_label("%d/%d" % [have, cost[k]], GOOD if have >= cost[k] else BAD))
+
+
+func _fill_craft() -> void:
+	_title("%s     crafting LV %d" % [Inventory.STATION_NAMES[_station].to_upper(), Inventory.level])
+	var recipes := _recipes()
 	for i in recipes.size():
 		var r: Dictionary = recipes[i]
-		var row := PanelContainer.new()
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(0.3, 0.2, 0.12, 0.9) if i == _selected else Color(0, 0, 0, 0)
-		sb.border_color = EDGE if i == _selected else Color(0, 0, 0, 0)
-		sb.set_border_width_all(1)
-		sb.set_content_margin_all(2)
-		row.add_theme_stylebox_override("panel", sb)
+		var parts := _row(i == _selected)
+		var row: PanelContainer = parts[0]
+		var h: HBoxContainer = parts[1]
 		row.mouse_filter = Control.MOUSE_FILTER_STOP
 		row.gui_input.connect(_on_row_input.bind(i))
-		var h := HBoxContainer.new()
-		h.add_theme_constant_override("separation", 3)
-		row.add_child(h)
+		var why := Inventory.blocker(r)
+		var locked := Inventory.level < int(r.get("lv", 1))
 		h.add_child(_icon(r.out, 16))
-		var owned: bool = r.out in Inventory.GEAR and Inventory.has(r.out)
-		var name_text: String = Inventory.display_name(r.out) + (" x%d" % r.n if r.has("n") else "")
-		var nl := _label(name_text + (" (owned)" if owned else ""), DIM if owned else (TEXT if Inventory.can_craft(r) else DIM))
-		nl.custom_minimum_size = Vector2(118, 0)
+		var name_text: String = Inventory.display_name(r.out) + ((" x%d" % r.n) if r.has("n") else "")
+		var nl := _label(name_text, DIM if why != "" else TEXT)
+		nl.custom_minimum_size = Vector2(112, 0)
 		h.add_child(nl)
-		for k in r.cost:
-			h.add_child(_icon("carrot" if k == "any_veg" else k, 12))
-			var have := Inventory.count(k)
-			h.add_child(_label("%d/%d" % [have, r.cost[k]], GOOD if have >= r.cost[k] else BAD))
-		craft_list.add_child(row)
-	craft_desc.text = recipes[_selected].desc
-	craft.reset_size()
-	craft.position = Vector2(roundf((480 - craft.size.x) / 2.0), roundf((270 - craft.size.y) / 2.0) - 10)
-
-
-func _clear(box: Node) -> void:
-	for c in box.get_children():
-		box.remove_child(c)
-		c.queue_free()
+		if locked:
+			h.add_child(_label("LV %d" % r.lv, BAD))
+		else:
+			_costs(h, r.cost)
+	var sel: Dictionary = recipes[_selected]
+	var d := _label(sel.desc + ("   " + Inventory.blocker(sel) if Inventory.blocker(sel) != "" else ""), DIM)
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	d.custom_minimum_size = Vector2(290, 18)
+	menu_box.add_child(d)
+	menu_box.add_child(_label("W/S choose    E craft    ESC close", DIM))
 
 
 func _on_row_input(event: InputEvent, i: int) -> void:
@@ -292,36 +472,57 @@ func _on_row_input(event: InputEvent, i: int) -> void:
 			_craft_selected()
 		else:
 			_selected = i
-			_refresh_craft()
+			_refresh_menu()
 
 
-func _icon(item: String, px: int) -> TextureRect:
-	var t := TextureRect.new()
-	t.texture = Pack.icon(item)
-	t.custom_minimum_size = Vector2(px, px)
-	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	t.modulate = Color(0.78, 0.85, 1.0) if item == "sword_iron" else Color.WHITE
-	return t
-
-
-func _refresh_items() -> void:
-	_clear(strip)
-	_clear(gear)
-	var any := false
+func _fill_inventory() -> void:
+	_title("PACK")
+	var stats := "Crafting LV %d   XP %d / %d\nDamage %d   Chop x%d   Mine x%d   Armour %d%%\nHome: %s%s" % [
+		Inventory.level, Inventory.xp, Inventory.xp_for(Inventory.level + 1),
+		Inventory.damage(), Inventory.tool_power(Inventory.AXES), Inventory.tool_power(Inventory.PICKAXES),
+		int(round((1.0 - Inventory.damage_taken_factor()) * 100)),
+		Inventory.CABIN_TIERS[Game.cabin_tier].name, "  (upgrade tonight)" if Game.upgrade_pending else ""]
+	menu_box.add_child(_label(stats, DIM))
+	var grid := GridContainer.new()
+	grid.columns = 5
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 3)
+	menu_box.add_child(grid)
 	for item in Inventory.items:
-		if item in Inventory.GEAR:
-			gear.add_child(_icon(item, 12))
-			continue
-		any = true
-		var slot := HBoxContainer.new()
-		slot.add_theme_constant_override("separation", 1)
-		slot.add_child(_icon(item, 14))
-		slot.add_child(_label(str(Inventory.count(item))))
-		strip.add_child(slot)
-	if not any:
-		strip.add_child(_label("Your pack is empty. Chop a tree!", DIM))
-	if gear.get_child_count() == 0:
-		gear.add_child(_label("Fists", DIM))
-	strip.get_parent().reset_size()
-	gear.get_parent().get_parent().reset_size()
+		var cell := HBoxContainer.new()
+		cell.add_theme_constant_override("separation", 2)
+		cell.custom_minimum_size = Vector2(56, 14)
+		cell.add_child(_icon(item, 12))
+		var l := _label("%d %s" % [Inventory.count(item), Inventory.display_name(item)])
+		l.clip_text = true
+		l.custom_minimum_size = Vector2(40, 0)
+		cell.add_child(l)
+		grid.add_child(cell)
+	if Inventory.items.is_empty():
+		menu_box.add_child(_label("Nothing yet.", DIM))
+	menu_box.add_child(_label("C  hand crafting     I / ESC  close", DIM))
+
+
+func _fill_upgrade() -> void:
+	_title("TILDA'S CABIN PLANS")
+	var next := Game.cabin_tier + 1
+	menu_box.add_child(_label("Your home now: %s" % Inventory.CABIN_TIERS[Game.cabin_tier].name, DIM))
+	if next >= Inventory.CABIN_TIERS.size():
+		menu_box.add_child(_label("\"That's the finest house in Brindle. Nothing left to build!\"", GOOD))
+	else:
+		var t: Dictionary = Inventory.CABIN_TIERS[next]
+		var parts := _row(true)
+		var h: HBoxContainer = parts[1]
+		h.add_child(_label(t.name.to_upper(), GOLD))
+		var d := _label(t.desc, TEXT)
+		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		d.custom_minimum_size = Vector2(290, 0)
+		menu_box.add_child(d)
+		var cost_row := HBoxContainer.new()
+		cost_row.add_theme_constant_override("separation", 3)
+		menu_box.add_child(cost_row)
+		_costs(cost_row, t.cost)
+		if Game.upgrade_pending:
+			menu_box.add_child(_label("Under construction - sleep and it'll be done by morning.", GOOD))
+		else:
+			menu_box.add_child(_label("E  build     ESC  close", DIM))

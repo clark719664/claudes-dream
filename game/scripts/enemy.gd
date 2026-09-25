@@ -179,6 +179,7 @@ func _die(dir: Vector2) -> void:
 	_play("death")
 	Game.hitstop(0.07)
 	Game.shake(2.5)
+	Game.note_kill(actor)
 	for item in stats.loot:
 		Game.world.drop(item, stats.loot[item], global_position + dir * 4.0)
 	await get_tree().create_timer(4.0).timeout

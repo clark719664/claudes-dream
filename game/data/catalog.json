@@ -2772,6 +2772,994 @@
     "solid": 6
    }
   ],
+  "oak_frozen": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_04.png",
+    "region": [
+     246,
+     2,
+     315,
+     128
+    ],
+    "anchor": [
+     34,
+     125
+    ],
+    "solid": 6,
+    "shadow": "shadow_tree",
+    "hp": 5,
+    "drop": "wood",
+    "stump": "stump_frozen"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_04.png",
+    "region": [
+     246,
+     130,
+     315,
+     256
+    ],
+    "anchor": [
+     34,
+     125
+    ],
+    "solid": 6,
+    "shadow": "shadow_tree",
+    "hp": 5,
+    "drop": "wood",
+    "stump": "stump_frozen"
+   }
+  ],
+  "oak_big_frozen": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_05.png",
+    "region": [
+     337,
+     2,
+     437,
+     160
+    ],
+    "anchor": [
+     51,
+     157
+    ],
+    "solid": 9,
+    "shadow": "shadow_big",
+    "hp": 8,
+    "drop": "wood",
+    "stump": "stump_frozen"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_05.png",
+    "region": [
+     337,
+     162,
+     437,
+     320
+    ],
+    "anchor": [
+     51,
+     157
+    ],
+    "solid": 9,
+    "shadow": "shadow_big",
+    "hp": 8,
+    "drop": "wood",
+    "stump": "stump_frozen"
+   }
+  ],
+  "oak_big_dead": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_05.png",
+    "region": [
+     225,
+     2,
+     325,
+     160
+    ],
+    "anchor": [
+     51,
+     157
+    ],
+    "solid": 8,
+    "shadow": "shadow_tree",
+    "hp": 5,
+    "drop": "wood",
+    "stump": "oak_big_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_05.png",
+    "region": [
+     225,
+     162,
+     325,
+     320
+    ],
+    "anchor": [
+     51,
+     157
+    ],
+    "solid": 8,
+    "shadow": "shadow_tree",
+    "hp": 5,
+    "drop": "wood",
+    "stump": "oak_big_stump"
+   }
+  ],
+  "stump_frozen": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_04.png",
+    "region": [
+     328,
+     73,
+     356,
+     96
+    ],
+    "anchor": [
+     16,
+     22
+    ],
+    "solid": 6,
+    "shadow": "shadow_small"
+   }
+  ],
+  "stump_mossy": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_01/Size_05.png",
+    "region": [
+     359,
+     326,
+     420,
+     368
+    ],
+    "anchor": [
+     29,
+     41
+    ],
+    "solid": 9,
+    "shadow": "shadow_tree"
+   }
+  ],
+  "pine_tall": [
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_03.png",
+    "region": [
+     0,
+     1,
+     63,
+     144
+    ],
+    "anchor": [
+     32,
+     142
+    ],
+    "solid": 5,
+    "shadow": "shadow_tree",
+    "hp": 5,
+    "drop": "wood",
+    "stump": "pine_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_03.png",
+    "region": [
+     64,
+     1,
+     127,
+     144
+    ],
+    "anchor": [
+     32,
+     142
+    ],
+    "solid": 5,
+    "shadow": "shadow_tree",
+    "hp": 5,
+    "drop": "wood",
+    "stump": "pine_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_03.png",
+    "region": [
+     0,
+     145,
+     63,
+     288
+    ],
+    "anchor": [
+     32,
+     142
+    ],
+    "solid": 5,
+    "shadow": "shadow_tree",
+    "hp": 5,
+    "drop": "wood",
+    "stump": "pine_stump"
+   },
+   {
+    "sheet": "Environment/Props/Static/Trees/Model_03/Size_03.png",
+    "region": [
+     64,
+     145,
+     127,
+     288
+    ],
+    "anchor": [
+     32,
+     142
+    ],
+    "solid": 5,
+    "shadow": "shadow_tree",
+    "hp": 5,
+    "drop": "wood",
+    "stump": "pine_stump"
+   }
+  ],
+  "lamp_post": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     147,
+     448,
+     174,
+     494
+    ],
+    "anchor": [
+     5,
+     45
+    ],
+    "solid": 3,
+    "shadow": "shadow_actor",
+    "light": 1,
+    "parts": [
+     {
+      "region": [
+       176,
+       451,
+       190,
+       471
+      ],
+      "at": [
+       29,
+       3
+      ]
+     }
+    ]
+   }
+  ],
+  "signpost": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     147,
+     448,
+     174,
+     494
+    ],
+    "anchor": [
+     5,
+     45
+    ],
+    "solid": 3,
+    "shadow": "shadow_actor",
+    "sign": 1,
+    "parts": [
+     {
+      "region": [
+       98,
+       539,
+       142,
+       560
+      ],
+      "at": [
+       -6,
+       5
+      ]
+     }
+    ]
+   }
+  ],
+  "lantern": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     179,
+     482,
+     188,
+     496
+    ],
+    "anchor": [
+     4,
+     13
+    ],
+    "light": 1
+   }
+  ],
+  "bench": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     83,
+     432,
+     141,
+     464
+    ],
+    "anchor": [
+     29,
+     31
+    ],
+    "solid": 10,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     17,
+     388,
+     47,
+     400
+    ],
+    "anchor": [
+     15,
+     11
+    ],
+    "solid": 10,
+    "shadow": "shadow_small"
+   }
+  ],
+  "planter": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     18,
+     416,
+     46,
+     427
+    ],
+    "anchor": [
+     14,
+     10
+    ],
+    "solid": 8,
+    "shadow": "shadow_actor"
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     50,
+     410,
+     78,
+     427
+    ],
+    "anchor": [
+     14,
+     16
+    ],
+    "solid": 8,
+    "shadow": "shadow_actor"
+   }
+  ],
+  "rope_fence": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     148,
+     422,
+     237,
+     445
+    ],
+    "anchor": [
+     44,
+     22
+    ]
+   }
+  ],
+  "rope_post": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     148,
+     422,
+     156,
+     445
+    ],
+    "anchor": [
+     4,
+     22
+    ],
+    "solid": 3
+   }
+  ],
+  "board": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     81,
+     417,
+     111,
+     429
+    ],
+    "anchor": [
+     15,
+     11
+    ]
+   }
+  ],
+  "crate": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     720,
+     73,
+     736,
+     96
+    ],
+    "anchor": [
+     8,
+     22
+    ],
+    "solid": 6,
+    "shadow": "shadow_actor",
+    "hp": 1,
+    "drop": "plank"
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     736,
+     73,
+     752,
+     96
+    ],
+    "anchor": [
+     8,
+     22
+    ],
+    "solid": 6,
+    "shadow": "shadow_actor",
+    "hp": 1,
+    "drop": "plank"
+   }
+  ],
+  "barrel": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     752,
+     74,
+     768,
+     96
+    ],
+    "anchor": [
+     8,
+     21
+    ],
+    "solid": 6,
+    "shadow": "shadow_actor",
+    "hp": 1,
+    "drop": "wood"
+   }
+  ],
+  "pot": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     769,
+     80,
+     783,
+     96
+    ],
+    "anchor": [
+     7,
+     15
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor",
+    "hp": 1,
+    "drop": "coal"
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     787,
+     76,
+     797,
+     96
+    ],
+    "anchor": [
+     5,
+     19
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor",
+    "hp": 1,
+    "drop": "coal"
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     769,
+     112,
+     783,
+     128
+    ],
+    "anchor": [
+     7,
+     15
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor",
+    "hp": 1,
+    "drop": "coal"
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     787,
+     108,
+     797,
+     128
+    ],
+    "anchor": [
+     5,
+     19
+    ],
+    "solid": 4,
+    "shadow": "shadow_actor",
+    "hp": 1,
+    "drop": "coal"
+   }
+  ],
+  "bucket": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     738,
+     17,
+     750,
+     32
+    ],
+    "anchor": [
+     6,
+     14
+    ],
+    "solid": 0
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     754,
+     16,
+     766,
+     32
+    ],
+    "anchor": [
+     6,
+     15
+    ],
+    "solid": 0
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     738,
+     49,
+     750,
+     64
+    ],
+    "anchor": [
+     6,
+     14
+    ],
+    "solid": 0
+   }
+  ],
+  "debris": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     736,
+     105,
+     752,
+     128
+    ],
+    "anchor": [
+     8,
+     22
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     752,
+     108,
+     768,
+     128
+    ],
+    "anchor": [
+     8,
+     19
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     736,
+     129,
+     768,
+     144
+    ],
+    "anchor": [
+     15,
+     14
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     769,
+     133,
+     783,
+     144
+    ],
+    "anchor": [
+     7,
+     10
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     787,
+     132,
+     797,
+     144
+    ],
+    "anchor": [
+     5,
+     11
+    ]
+   }
+  ],
+  "chest": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     752,
+     176,
+     768,
+     192
+    ],
+    "anchor": [
+     8,
+     15
+    ],
+    "solid": 5,
+    "shadow": "shadow_actor",
+    "chest": 1
+   }
+  ],
+  "chest_open": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     736,
+     165,
+     752,
+     192
+    ],
+    "anchor": [
+     8,
+     26
+    ],
+    "solid": 5,
+    "shadow": "shadow_actor"
+   }
+  ],
+  "table": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     0,
+     18,
+     30,
+     48
+    ],
+    "anchor": [
+     16,
+     29
+    ],
+    "solid": 12,
+    "shadow": "shadow_small"
+   }
+  ],
+  "shelf": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     0,
+     98,
+     32,
+     144
+    ],
+    "anchor": [
+     16,
+     45
+    ],
+    "solid": 12
+   }
+  ],
+  "bed": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     32,
+     149,
+     64,
+     203
+    ],
+    "anchor": [
+     16,
+     53
+    ],
+    "solid": 12
+   }
+  ],
+  "door": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     134,
+     283,
+     154,
+     304
+    ],
+    "anchor": [
+     10,
+     20
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     166,
+     281,
+     186,
+     304
+    ],
+    "anchor": [
+     10,
+     22
+    ]
+   }
+  ],
+  "doorway": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     1,
+     279,
+     31,
+     304
+    ],
+    "anchor": [
+     15,
+     24
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     32,
+     276,
+     64,
+     304
+    ],
+    "anchor": [
+     16,
+     27
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     65,
+     276,
+     95,
+     304
+    ],
+    "anchor": [
+     15,
+     27
+    ]
+   }
+  ],
+  "chimney": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     4,
+     329,
+     28,
+     384
+    ],
+    "anchor": [
+     12,
+     54
+    ],
+    "solid": 8
+   }
+  ],
+  "window": [
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     69,
+     320,
+     91,
+     352
+    ],
+    "anchor": [
+     11,
+     31
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     37,
+     352,
+     59,
+     384
+    ],
+    "anchor": [
+     11,
+     31
+    ]
+   },
+   {
+    "sheet": "Environment/Props/Static/Furniture.png",
+    "region": [
+     132,
+     355,
+     156,
+     380
+    ],
+    "anchor": [
+     12,
+     24
+    ]
+   }
+  ],
+  "ruin_back": [
+   {
+    "sheet": "Environment/Structures/Buildings/Walls.png",
+    "region": [
+     0,
+     7,
+     96,
+     96
+    ],
+    "anchor": [
+     48,
+     88
+    ]
+   },
+   {
+    "sheet": "Environment/Structures/Buildings/Walls.png",
+    "region": [
+     96,
+     10,
+     192,
+     96
+    ],
+    "anchor": [
+     48,
+     85
+    ]
+   },
+   {
+    "sheet": "Environment/Structures/Buildings/Walls.png",
+    "region": [
+     288,
+     13,
+     384,
+     80
+    ],
+    "anchor": [
+     48,
+     66
+    ]
+   }
+  ],
+  "ruin_front": [
+   {
+    "sheet": "Environment/Structures/Buildings/Walls.png",
+    "region": [
+     0,
+     96,
+     96,
+     176
+    ],
+    "anchor": [
+     48,
+     79
+    ]
+   },
+   {
+    "sheet": "Environment/Structures/Buildings/Walls.png",
+    "region": [
+     96,
+     96,
+     192,
+     176
+    ],
+    "anchor": [
+     48,
+     79
+    ]
+   },
+   {
+    "sheet": "Environment/Structures/Buildings/Walls.png",
+    "region": [
+     288,
+     96,
+     384,
+     176
+    ],
+    "anchor": [
+     48,
+     79
+    ]
+   }
+  ],
+  "mine_carts": [
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     0,
+     8,
+     54,
+     30
+    ],
+    "anchor": [
+     24,
+     21
+    ],
+    "solid": 10,
+    "shadow": "shadow_small"
+   },
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     74,
+     12,
+     96,
+     30
+    ],
+    "anchor": [
+     14,
+     17
+    ],
+    "solid": 10,
+    "shadow": "shadow_small"
+   }
+  ],
+  "tombstone": [
+   {
+    "sheet": "Environment/Props/Static/Dungeon_Props.png",
+    "region": [
+     97,
+     1,
+     111,
+     22
+    ],
+    "anchor": [
+     7,
+     20
+    ],
+    "solid": 5
+   }
+  ],
   "shadow_big": [
    {
     "sheet": "Environment/Props/Static/Shadows.png",
@@ -3317,6 +4305,96 @@
      47
     ]
    }
+  },
+  "peasant": {
+   "idle": {
+    "sheet": "Entities/Npc's/Citizen_F/Peasant_A/Idle/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     47
+    ]
+   },
+   "run": {
+    "sheet": "Entities/Npc's/Citizen_F/Peasant_A/Walk/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "fps": 8,
+    "loop": true,
+    "anchor": [
+     34,
+     47
+    ]
+   }
+  },
+  "tavern_a": {
+   "idle": {
+    "sheet": "Entities/Npc's/Citizen_F/Tavern_A/Idle/Idle_Side-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     47
+    ]
+   },
+   "run": {
+    "sheet": "Entities/Npc's/Citizen_F/Tavern_A/Walk/Walk_Side-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "fps": 8,
+    "loop": true,
+    "anchor": [
+     34,
+     47
+    ]
+   }
+  },
+  "tavern_b": {
+   "idle": {
+    "sheet": "Entities/Npc's/Citizen_F/Tavern_B/Idle/Idle_Side-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     47
+    ]
+   },
+   "run": {
+    "sheet": "Entities/Npc's/Citizen_F/Tavern_B/Walk/Walk_Side-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "fps": 8,
+    "loop": true,
+    "anchor": [
+     34,
+     47
+    ]
+   }
   }
  },
  "items": {
@@ -3331,6 +4409,305 @@
    "anchor": [
     16,
     3
+   ]
+  },
+  "stick": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    84,
+    67,
+    91,
+    76
+   ],
+   "anchor": [
+    3,
+    4
+   ]
+  },
+  "twine": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    20,
+    97,
+    42,
+    110
+   ],
+   "anchor": [
+    11,
+    6
+   ]
+  },
+  "cloth": {
+   "sheet": "Environment/Structures/Buildings/Interior/Interior_Props_01.png",
+   "region": [
+    102,
+    274,
+    122,
+    286
+   ],
+   "anchor": [
+    10,
+    6
+   ]
+  },
+  "resin": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    6,
+    51,
+    12,
+    61
+   ],
+   "anchor": [
+    3,
+    5
+   ]
+  },
+  "herb": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    37,
+    117,
+    43,
+    122
+   ],
+   "anchor": [
+    3,
+    2
+   ]
+  },
+  "mushroom": {
+   "sheet": "Environment/Props/Static/Vegetation.png",
+   "region": [
+    49,
+    338,
+    63,
+    352
+   ],
+   "anchor": [
+    7,
+    7
+   ]
+  },
+  "nails": {
+   "sheet": "Environment/Props/Static/Tools.png",
+   "region": [
+    102,
+    82,
+    105,
+    92
+   ],
+   "anchor": [
+    1,
+    5
+   ]
+  },
+  "brick": {
+   "sheet": "Environment/Tilesets/Floors_Tiles.png",
+   "region": [
+    256,
+    16,
+    272,
+    32
+   ],
+   "anchor": [
+    8,
+    8
+   ]
+  },
+  "glass": {
+   "sheet": "Environment/Props/Static/Tools.png",
+   "region": [
+    0,
+    240,
+    16,
+    256
+   ],
+   "anchor": [
+    8,
+    8
+   ]
+  },
+  "steel_bar": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    68,
+    20,
+    75,
+    29
+   ],
+   "anchor": [
+    3,
+    4
+   ]
+  },
+  "gem": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    83,
+    20,
+    92,
+    30
+   ],
+   "anchor": [
+    4,
+    5
+   ]
+  },
+  "ring": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    101,
+    19,
+    107,
+    28
+   ],
+   "anchor": [
+    3,
+    4
+   ]
+  },
+  "bread": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    17,
+    133,
+    32,
+    139
+   ],
+   "anchor": [
+    7,
+    3
+   ]
+  },
+  "lantern": {
+   "sheet": "Environment/Props/Static/Furniture.png",
+   "region": [
+    179,
+    482,
+    188,
+    496
+   ],
+   "anchor": [
+    4,
+    7
+   ]
+  },
+  "tonic_health": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    21,
+    52,
+    26,
+    61
+   ],
+   "anchor": [
+    2,
+    4
+   ]
+  },
+  "tonic_strength": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    54,
+    52,
+    59,
+    61
+   ],
+   "anchor": [
+    2,
+    4
+   ]
+  },
+  "tonic_swift": {
+   "sheet": "Environment/Props/Static/Resources.png",
+   "region": [
+    38,
+    52,
+    43,
+    61
+   ],
+   "anchor": [
+    2,
+    4
+   ]
+  },
+  "skewer": {
+   "sheet": "Environment/Props/Static/Meat.png",
+   "region": [
+    5,
+    49,
+    10,
+    63
+   ],
+   "anchor": [
+    2,
+    7
+   ]
+  },
+  "hearty_meal": {
+   "sheet": "Environment/Props/Static/Meat.png",
+   "region": [
+    64,
+    32,
+    80,
+    48
+   ],
+   "anchor": [
+    8,
+    8
+   ]
+  },
+  "axe_iron": {
+   "sheet": "Weapons/Wood/Wood.png",
+   "region": [
+    48,
+    18,
+    64,
+    46
+   ],
+   "anchor": [
+    8,
+    14
+   ]
+  },
+  "pickaxe_iron": {
+   "sheet": "Weapons/Wood/Wood.png",
+   "region": [
+    0,
+    50,
+    16,
+    78
+   ],
+   "anchor": [
+    8,
+    14
+   ]
+  },
+  "sword_steel": {
+   "sheet": "Weapons/Wood/Wood.png",
+   "region": [
+    3,
+    16,
+    13,
+    47
+   ],
+   "anchor": [
+    5,
+    15
+   ]
+  },
+  "shield_iron": {
+   "sheet": "Weapons/Wood/Wood.png",
+   "region": [
+    119,
+    19,
+    136,
+    43
+   ],
+   "anchor": [
+    8,
+    12
    ]
   },
   "stone": {
@@ -3373,16 +4750,16 @@
    ]
   },
   "iron_bar": {
-   "sheet": "Environment/Props/Static/Resources.png",
+   "sheet": "Environment/Props/Static/Tools.png",
    "region": [
-    68,
-    20,
-    75,
-    29
+    34,
+    245,
+    47,
+    250
    ],
    "anchor": [
-    3,
-    4
+    6,
+    2
    ]
   },
   "crystal": {

@@ -24,6 +24,7 @@ func _ready() -> void:
 	add_child(sh)
 	icon = Sprite2D.new()
 	icon.texture = Pack.icon(item)
+	icon.modulate = Inventory.tint(item)
 	var s := icon.texture.get_size()
 	var k := minf(1.0, 12.0 / maxf(s.x, s.y))
 	icon.scale = Vector2(k, k)
@@ -52,7 +53,8 @@ func _process(delta: float) -> void:
 	var d := to.length()
 	if d < COLLECT:
 		Inventory.add(item)
-		Game.world.float_text("+1 " + Inventory.display_name(item), p.global_position + Vector2(0, -6), Color(1, 0.95, 0.7))
+		Game.note_gather(item)
+		Game.world.pickup_text(item, p.global_position + Vector2(0, -6))
 		queue_free()
 	elif d < MAGNET:
 		position += to.normalized() * (60.0 + (MAGNET - d) * 5.0) * delta

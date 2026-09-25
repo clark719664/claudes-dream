@@ -1,50 +1,108 @@
 extends Node
-## What the player carries, what they can make, and what their gear does.
+## What the player carries and knows how to make.
+##
+## Crafting is a tree, not a list: raw materials (wood, stone, fiber, ore, coal, crystal, resin,
+## herbs, meat, bones, crops) become components at the right station (sticks, twine, cloth, planks,
+## iron and steel bars, nails, bricks, glass), and components become tools, gear, food and tonics.
+## Recipes unlock with your crafting level; the kitchen and alchemy table only exist once your
+## cabin has been upgraded.
 
 signal changed
+signal leveled(level: int)
 
 const NAMES := {
-	"wood": "Wood", "stone": "Stone", "fiber": "Fiber", "iron_ore": "Iron Ore", "iron_bar": "Iron Bar",
-	"crystal": "Crystal", "plank": "Plank", "meat": "Raw Meat", "bone": "Bone", "coal": "Coal",
+	"wood": "Wood", "stone": "Stone", "fiber": "Fiber", "iron_ore": "Iron Ore", "coal": "Coal",
+	"crystal": "Crystal", "resin": "Resin", "herb": "Wild Herb", "mushroom": "Mushroom", "bone": "Bone",
+	"meat": "Raw Meat", "gem": "Gem", "ring": "Old Ring",
+	"stick": "Stick", "twine": "Twine", "cloth": "Cloth", "plank": "Plank", "iron_bar": "Iron Bar",
+	"steel_bar": "Steel Bar", "nails": "Nails", "brick": "Brick", "glass": "Glass Pane",
 	"carrot": "Carrot", "beet": "Beet", "cabbage": "Cabbage", "lettuce": "Lettuce",
 	"cauliflower": "Cauliflower", "broccoli": "Broccoli", "garlic": "Garlic",
-	"sword_wood": "Wooden Sword", "sword_bone": "Bone Blade", "sword_iron": "Iron Sword",
-	"axe": "Stone Axe", "pickaxe": "Pickaxe", "shield": "Buckler",
-	"poultice": "Herb Poultice", "cooked_meat": "Roast Meat", "stew": "Veggie Stew",
+	"sword_wood": "Wooden Sword", "sword_bone": "Bone Blade", "sword_iron": "Iron Sword", "sword_steel": "Steel Sword",
+	"axe": "Stone Axe", "axe_iron": "Iron Axe", "pickaxe": "Stone Pickaxe", "pickaxe_iron": "Iron Pickaxe",
+	"shield": "Buckler", "shield_iron": "Iron Shield", "lantern": "Lantern",
+	"poultice": "Herb Poultice", "cooked_meat": "Roast Meat", "stew": "Veggie Stew", "skewer": "Mushroom Skewer",
+	"bread": "Hearth Bread", "hearty_meal": "Hearty Meal",
+	"tonic_health": "Healing Tonic", "tonic_strength": "Tonic of Might", "tonic_swift": "Tonic of Haste",
 }
 const VEGGIES := ["carrot", "beet", "cabbage", "lettuce", "cauliflower", "broccoli", "garlic"]
-const FOOD := {"cooked_meat": 45, "stew": 35, "poultice": 25, "carrot": 6, "beet": 6, "cabbage": 8, "lettuce": 5, "cauliflower": 8, "broccoli": 8, "garlic": 4}
-const WEAPONS := {"sword_iron": 14, "sword_bone": 10, "sword_wood": 6}
+const FOOD := {"hearty_meal": 90, "tonic_health": 70, "cooked_meat": 45, "bread": 40, "stew": 35, "skewer": 28, "poultice": 25,
+	"mushroom": 4, "carrot": 6, "beet": 6, "cabbage": 8, "lettuce": 5, "cauliflower": 8, "broccoli": 8, "garlic": 4}
+const BUFFS := {"tonic_strength": ["might", 120.0], "tonic_swift": ["haste", 120.0], "hearty_meal": ["haste", 60.0]}
+const WEAPONS := {"sword_steel": 20, "sword_iron": 14, "sword_bone": 10, "sword_wood": 6}
+const AXES := {"axe_iron": 5, "axe": 3}
+const PICKAXES := {"pickaxe_iron": 5, "pickaxe": 3}
 const FIST_DAMAGE := 3
-const GEAR := ["sword_wood", "sword_bone", "sword_iron", "axe", "pickaxe", "shield"]
+const GEAR := ["sword_wood", "sword_bone", "sword_iron", "sword_steel", "axe", "axe_iron", "pickaxe", "pickaxe_iron", "shield", "shield_iron", "lantern"]
+const TINTS := {"sword_iron": Color(0.8, 0.86, 1.0), "sword_steel": Color(0.62, 0.95, 1.0), "axe_iron": Color(0.8, 0.86, 1.0),
+	"pickaxe_iron": Color(0.8, 0.86, 1.0), "shield_iron": Color(0.8, 0.86, 1.0)}
 
-## station -> recipes. "any_veg" in a cost means any two vegetables.
+## station -> recipes: out, n (default 1), cost, lv (crafting level needed), desc
 const RECIPES := {
+	"hands": [
+		{"out": "stick", "n": 2, "cost": {"wood": 1}, "lv": 1, "desc": "Snap a log into handles and hafts."},
+		{"out": "twine", "cost": {"fiber": 3}, "lv": 1, "desc": "Twist plant fiber into cord. Holds tools together."},
+		{"out": "poultice", "cost": {"herb": 2, "fiber": 1}, "lv": 1, "desc": "Heals 25. Wild herbs grow by bushes."},
+	],
 	"workbench": [
-		{"out": "sword_wood", "cost": {"wood": 4}, "desc": "6 damage. Better than fists."},
-		{"out": "axe", "cost": {"wood": 3, "stone": 2}, "desc": "Chops trees three times faster."},
-		{"out": "pickaxe", "cost": {"wood": 3, "stone": 3}, "desc": "Breaks rock fast and can mine iron ore."},
-		{"out": "poultice", "cost": {"fiber": 3}, "desc": "Heals 25. Press Q to use food."},
+		{"out": "sword_wood", "cost": {"plank": 2, "stick": 1}, "lv": 1, "desc": "6 damage. Better than fists."},
+		{"out": "axe", "cost": {"stick": 1, "stone": 3, "twine": 1}, "lv": 1, "desc": "Chops 3x faster than bare hands."},
+		{"out": "pickaxe", "cost": {"stick": 1, "stone": 4, "twine": 1}, "lv": 1, "desc": "Mines 3x faster. Needed for iron ore."},
+		{"out": "cloth", "cost": {"twine": 3}, "lv": 2, "desc": "Woven twine. Bandages, sacks, curtains."},
+		{"out": "shield", "cost": {"plank": 3, "twine": 2}, "lv": 3, "desc": "Take a quarter less damage."},
+		{"out": "lantern", "cost": {"iron_bar": 1, "glass": 1, "resin": 2}, "lv": 4, "desc": "Lights your way at night."},
 	],
 	"sawmill": [
-		{"out": "plank", "n": 2, "cost": {"wood": 1}, "desc": "Sawn boards for sturdier gear."},
+		{"out": "plank", "n": 2, "cost": {"wood": 1}, "lv": 1, "desc": "Sawn boards for building and gear."},
+		{"out": "stick", "n": 4, "cost": {"wood": 1}, "lv": 1, "desc": "Clean hafts, four to a log."},
 	],
 	"furnace": [
-		{"out": "iron_bar", "cost": {"iron_ore": 2, "wood": 1}, "desc": "Smelt ore into a bar."},
+		{"out": "coal", "cost": {"wood": 3}, "lv": 1, "desc": "Char wood into fuel."},
+		{"out": "iron_bar", "cost": {"iron_ore": 2, "coal": 1}, "lv": 2, "desc": "Smelt ore into a bar."},
+		{"out": "brick", "n": 2, "cost": {"stone": 3, "coal": 1}, "lv": 2, "desc": "Fired stone blocks for building."},
+		{"out": "glass", "n": 2, "cost": {"crystal": 1, "coal": 1}, "lv": 3, "desc": "Melted crystal, poured flat."},
+		{"out": "steel_bar", "cost": {"iron_bar": 2, "coal": 2}, "lv": 5, "desc": "Iron folded with carbon. Hard and bright."},
 	],
 	"anvil": [
-		{"out": "sword_bone", "cost": {"bone": 3, "wood": 1}, "desc": "10 damage. Skeletons drop bones."},
-		{"out": "sword_iron", "cost": {"iron_bar": 2, "plank": 1}, "desc": "14 damage."},
-		{"out": "shield", "cost": {"plank": 3, "iron_bar": 1}, "desc": "Take a third less damage."},
+		{"out": "nails", "n": 6, "cost": {"iron_bar": 1}, "lv": 2, "desc": "Every good house is held together by these."},
+		{"out": "sword_bone", "cost": {"bone": 3, "twine": 1}, "lv": 2, "desc": "10 damage. Skeletons drop bones."},
+		{"out": "axe_iron", "cost": {"iron_bar": 2, "stick": 1, "twine": 1}, "lv": 3, "desc": "Chops 5x faster."},
+		{"out": "pickaxe_iron", "cost": {"iron_bar": 3, "stick": 1, "twine": 1}, "lv": 3, "desc": "Mines 5x faster. Can split crystal."},
+		{"out": "sword_iron", "cost": {"iron_bar": 3, "plank": 1, "cloth": 1}, "lv": 4, "desc": "14 damage."},
+		{"out": "shield_iron", "cost": {"iron_bar": 3, "plank": 2, "nails": 4}, "lv": 5, "desc": "Take 40% less damage."},
+		{"out": "sword_steel", "cost": {"steel_bar": 3, "cloth": 1, "gem": 1}, "lv": 6, "desc": "20 damage. A blade worth naming."},
 	],
 	"cookpot": [
-		{"out": "cooked_meat", "cost": {"meat": 1, "wood": 1}, "desc": "Heals 45."},
-		{"out": "stew", "cost": {"any_veg": 2}, "desc": "Heals 35. Uses any two vegetables."},
+		{"out": "cooked_meat", "cost": {"meat": 1, "wood": 1}, "lv": 1, "desc": "Heals 45."},
+		{"out": "skewer", "cost": {"mushroom": 3, "stick": 1}, "lv": 1, "desc": "Heals 28. Mushrooms grow in the woods."},
+		{"out": "stew", "cost": {"any_veg": 2, "wood": 1}, "lv": 1, "desc": "Heals 35. Any two vegetables."},
+	],
+	"kitchen": [
+		{"out": "bread", "cost": {"any_veg": 1, "herb": 1, "coal": 1}, "lv": 2, "desc": "Heals 40."},
+		{"out": "hearty_meal", "cost": {"cooked_meat": 1, "any_veg": 2, "mushroom": 2}, "lv": 3, "desc": "Heals 90 and quickens your step."},
+	],
+	"alchemy": [
+		{"out": "tonic_health", "cost": {"herb": 3, "crystal": 1, "glass": 1}, "lv": 4, "desc": "Heals 70."},
+		{"out": "tonic_strength", "cost": {"bone": 2, "resin": 1, "glass": 1}, "lv": 5, "desc": "Hit 50% harder for two minutes."},
+		{"out": "tonic_swift", "cost": {"mushroom": 2, "herb": 2, "glass": 1}, "lv": 5, "desc": "Move 30% faster for two minutes."},
 	],
 }
-const STATION_NAMES := {"workbench": "Workbench", "sawmill": "Sawmill", "furnace": "Furnace", "anvil": "Anvil", "cookpot": "Cooking Pot"}
+const STATION_NAMES := {"hands": "Hand Crafting", "workbench": "Workbench", "sawmill": "Sawmill", "furnace": "Furnace", "anvil": "Anvil",
+	"cookpot": "Cooking Pot", "kitchen": "Kitchen", "alchemy": "Alchemy Table"}
+
+## Tilda's rebuilds of the cabin. Index = the tier you upgrade to.
+const CABIN_TIERS := [
+	{},
+	{"name": "Log Shack", "style": "log", "desc": "One room, a bed and a draughty door."},
+	{"name": "Timber Cabin", "style": "plank", "desc": "Bigger room, a kitchen stove and a fireplace. Unlocks kitchen recipes.",
+		"cost": {"plank": 30, "nails": 18, "brick": 10, "glass": 2}},
+	{"name": "Farmhouse", "style": "plaster", "desc": "Plaster walls, a green tile roof, a bath and an alchemy table. Unlocks tonics.",
+		"cost": {"plank": 50, "nails": 30, "brick": 24, "glass": 8, "steel_bar": 4, "cloth": 6}},
+]
 
 var items := {}
+var xp := 0
+var level := 1
 
 
 func count(item: String) -> int:
@@ -79,22 +137,52 @@ func take(item: String, n := 1) -> bool:
 	return true
 
 
-func can_craft(recipe: Dictionary) -> bool:
-	if recipe.out in GEAR and count(recipe.out) > 0:
-		return false
-	for k in recipe.cost:
-		if count(k) < recipe.cost[k]:
+func has_all(cost: Dictionary) -> bool:
+	for k in cost:
+		if count(k) < cost[k]:
 			return false
 	return true
 
 
+func take_all(cost: Dictionary) -> void:
+	for k in cost:
+		take(k, cost[k])
+
+
+## "" if the recipe can be made right now, otherwise the reason it can't.
+func blocker(recipe: Dictionary) -> String:
+	if level < int(recipe.get("lv", 1)):
+		return "Needs crafting level %d" % recipe.lv
+	if recipe.out in GEAR and count(recipe.out) > 0:
+		return "You already own one"
+	if not has_all(recipe.cost):
+		return "Missing materials"
+	return ""
+
+
 func craft(recipe: Dictionary) -> bool:
-	if not can_craft(recipe):
+	if blocker(recipe) != "":
 		return false
-	for k in recipe.cost:
-		take(k, recipe.cost[k])
+	take_all(recipe.cost)
 	add(recipe.out, recipe.get("n", 1))
+	var gained := 0
+	for k in recipe.cost:
+		gained += int(recipe.cost[k])
+	gain_xp(3 + gained)
 	return true
+
+
+func gain_xp(n: int) -> void:
+	xp += n
+	while xp >= xp_for(level + 1):
+		level += 1
+		leveled.emit(level)
+	changed.emit()
+
+
+## Total XP needed to reach a level.
+static func xp_for(lv: int) -> int:
+	return 20 * (lv - 1) * (lv - 1) + 10 * (lv - 1)
 
 
 func weapon() -> String:
@@ -109,18 +197,54 @@ func damage() -> int:
 	return WEAPONS[w] if w != "" else FIST_DAMAGE
 
 
+func best(tools: Dictionary) -> String:
+	for t in tools:
+		if count(t) > 0:
+			return t
+	return ""
+
+
+func tool_power(tools: Dictionary) -> int:
+	var t := best(tools)
+	return tools[t] if t != "" else 1
+
+
+func damage_taken_factor() -> float:
+	if has("shield_iron"):
+		return 0.6
+	if has("shield"):
+		return 0.75
+	return 1.0
+
+
 func has(item: String) -> bool:
 	return count(item) > 0
 
 
-## Best food to eat when hurt, or "".
 func best_food(missing_hp: int) -> String:
-	var best := ""
+	var best_item := ""
 	for f in FOOD:
-		if count(f) > 0 and (best == "" or abs(FOOD[f] - missing_hp) < abs(FOOD[best] - missing_hp)):
-			best = f
-	return best
+		if count(f) > 0 and (best_item == "" or abs(FOOD[f] - missing_hp) < abs(FOOD[best_item] - missing_hp)):
+			best_item = f
+	return best_item
 
 
 func display_name(item: String) -> String:
 	return NAMES.get(item, item.capitalize())
+
+
+func tint(item: String) -> Color:
+	return TINTS.get(item, Color.WHITE)
+
+
+func save_data() -> Dictionary:
+	return {"items": items, "xp": xp, "level": level}
+
+
+func load_data(d: Dictionary) -> void:
+	items = {}
+	for k in d.get("items", {}):
+		items[k] = int(d.items[k])
+	xp = int(d.get("xp", 0))
+	level = int(d.get("level", 1))
+	changed.emit()
