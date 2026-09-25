@@ -189,6 +189,22 @@ func _run() -> void:
 			await _wait(0.9)
 			await _shot(String(q.name).to_lower().replace(" ", "_").replace("'", ""))
 			break
+	# down the Old Mine
+	await _go("mountain", "mine")
+	await _wait(0.6)
+	await _shot("mine_mouth")
+	for lv in [1, 4, 9, 15]:
+		await _go("mine_%d" % lv, "top")
+		await _wait(0.8)
+		await _shot("mine_%d" % lv)
+		if lv == 4:
+			var r := _nearest(func(n): return n is Harvestable and n.has_meta("ladder"), p.global_position)
+			if r:
+				p.global_position = r.global_position + Vector2(0, 18)
+				Game.world.stream_now()
+				r._gone()
+				await _wait(0.6)
+				await _shot("mine_ladder")
 	# a fight at the stockade
 	await _go("badlands", "from_town")
 	Inventory.add("sword_iron")

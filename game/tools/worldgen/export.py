@@ -36,12 +36,81 @@ def finish_links(a):
             a.spawn('from_' + to, a.w - 2.0, mid + 0.4)
 
 
+def check_reach(a):
+    """Walk the area from every way in and report anything you'd need to reach but can't: chests,
+    springs, people, the crate. Choppable trees, rocks and stumps count as passable (you can clear
+    them); water, unchoppable woods, cliffs, fences, walls and buildings don't."""
+    W, H = a.w, a.h
+    blocked = bytearray(W * H)
+    deck = set((d['x'] + i, d['y'] + j) for d in a.decks for i in range(d['w']) for j in range(d['h']))
+    for y in range(H):
+        for x in range(W):
+            if a.grid[y][x] == '~' and (x, y) not in deck:
+                blocked[y * W + x] = 1
+    for cells in a.fences.values():
+        for (x, y) in cells:
+            if a.inside(x, y):
+                blocked[y * W + x] = 1
+    for g in a.gates:
+        for i in range(g['w']):
+            if a.inside(g['x'] + i, g['y']):
+                blocked[g['y'] * W + g['x'] + i] = 0
+
+    def block_rect(x0, y0, x1, y1):
+        for yy in range(max(0, int(y0)), min(H, int(y1 + 0.999))):
+            for xx in range(max(0, int(x0)), min(W, int(x1 + 0.999))):
+                blocked[yy * W + xx] = 1
+    for c in a.cliffs:
+        block_rect(c['x'], c['y'] + 1, c['x'] + c['w'], c['y'] + c['top'] + c['face'] + 3)
+    for o in a.objs:
+        x, y = o['x'] / 16, o['y'] / 16
+        t = o['t']
+        if o.get('wall'):
+            for yy in range(int(y) - 1, int(y) + 2):
+                for xx in range(int(x) - 1, int(x) + 2):
+                    if a.inside(xx, yy) and (xx + 0.5 - x) ** 2 + (yy + 0.5 - y + 0.25) ** 2 < 0.72:
+                        blocked[yy * W + xx] = 1
+        elif t in ('house', 'cabin'):
+            g = o.get('gables', 1)
+            block_rect(x - 4 * g + 0.5, y - 6, x + 4 * g - 0.5, y - 0.2)
+        elif t == 'palisade':
+            block_rect(x - 3, y - 0.8, x + 3, y)
+        elif t == 'palisade_side':
+            block_rect(x - 0.5, y - 4.7, x + 0.5, y)
+    seen = bytearray(W * H)
+    stack = []
+    for (sx, sy) in a.spawns.values():
+        cx, cy = int(sx / 16), int(sy / 16)
+        if a.inside(cx, cy):
+            seen[cy * W + cx] = 1
+            stack.append((cx, cy))
+    while stack:
+        x, y = stack.pop()
+        for (dx, dy) in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nx, ny = x + dx, y + dy
+            if a.inside(nx, ny) and not seen[ny * W + nx] and not blocked[ny * W + nx]:
+                seen[ny * W + nx] = 1
+                stack.append((nx, ny))
+    problems = []
+    for o in a.objs:
+        if o['t'] not in ('chest', 'spring', 'villager', 'shopkeeper', 'ship_crate', 'cabin') or o.get('festival'):
+            continue
+        x, y = int(o['x'] / 16), int(o['y'] / 16)
+        ok = any(a.inside(x + dx, y + dy) and seen[(y + dy) * W + x + dx] for dx in (-1, 0, 1) for dy in (-1, 0, 1, 2))
+        if not ok:
+            problems.append(f"{o['t']} {o.get('name', o.get('cid', ''))} at {x},{y}")
+    for p in problems:
+        print(f'  UNREACHABLE in {a.id}: {p}')
+    return problems
+
+
 MAP_COL = {'.': (104, 156, 72), ':': (170, 132, 88), '=': (160, 158, 150), '~': (72, 124, 196), '*': (226, 232, 242)}
 
 
 def write(a):
     os.makedirs(OUT, exist_ok=True)
     finish_links(a)
+    check_reach(a)
     chunks, persistent = {}, []
     for o in a.objs:
         if o['t'] in PERSISTENT:

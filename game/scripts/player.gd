@@ -90,9 +90,13 @@ func _physics_process(delta: float) -> void:
 	if Game.energy <= 0:
 		speed *= 0.6
 	max_hp = 130 if Inventory.has("backpack") else 100
-	var glow := Inventory.has("lantern") and Game.darkness() > 0.3
+	var underground := Game.area.begins_with("mine")
+	var glow := underground or (Inventory.has("lantern") and Game.darkness() > 0.3)
 	_lantern.enabled = glow
-	_lantern.energy = Game.darkness() * 1.1 if glow else 0.0
+	if underground:
+		_lantern.energy = 1.2 if Inventory.has("lantern") else 0.7
+	else:
+		_lantern.energy = Game.darkness() * 1.1 if glow else 0.0
 	velocity = input * speed + _knock
 	_knock = _knock.move_toward(Vector2.ZERO, 600.0 * delta)
 	move_and_slide()

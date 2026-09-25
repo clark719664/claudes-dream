@@ -166,6 +166,8 @@ func _break(dir: Vector2) -> void:
 func _gone() -> void:
 	remove_from_group("hittable")
 	Game.world.note_removed(self)
+	if Game.world.mine and kind == "stone":
+		Game.world.mine.rock_broken(self)
 	collision_layer = 0
 	var tw := create_tween()
 	tw.tween_property(self, "modulate:a", 0.0, 0.2)

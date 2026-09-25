@@ -18,6 +18,7 @@ const CHUNK := 32                       # tiles
 const CHUNK_PX := CHUNK * 16
 const SPAWN_BUDGET := 90                # objects per frame while streaming in
 const FROZEN := {"oak": "oak_frozen", "oak_big": "oak_big_frozen", "oak_young": "oak_young_frozen"}
+const PINES := ["pine", "pine_big", "pine_tall", "pine_grand", "pine_giant", "pine_young"]
 
 var size := Vector2.ZERO
 var area_id := ""
@@ -320,6 +321,9 @@ func seasonal(t: String, v: int) -> Array:
 			1: return [t, v % 2]
 			2: return [t, 2 + v % 2]
 			3: return [FROZEN[t], v % 2]
+	if t in PINES:
+		# the pack's third and fourth pine of each size are rust-coloured: only in fall
+		return [t, v % 2 if s != 2 else v]
 	match t:
 		"bush", "bush_big":
 			match s:

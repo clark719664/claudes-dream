@@ -54,7 +54,7 @@ func interact(_player: Node) -> void:
 				Game.world.drop(item, loot[item], global_position + Vector2(0, 4))
 			Game.say("The chest creaks open.")
 		"mine":
-			if ResourceLoader.exists("res://scripts/mine.gd"):
-				Game.world.go_to("mine_1", "top")
+			if int(Game.stats.get("mine_lift", 0)) >= 5:
+				Game.hud.open_lift()
 			else:
-				Game.hud.show_dialog("Old Mine", "Cold air breathes out of the dark. The tunnels are blocked by rubble, for now.")
+				Game.world.go_to("mine_1", "top")

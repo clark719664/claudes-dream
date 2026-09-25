@@ -400,6 +400,16 @@ func open_travel(from_id: String) -> void:
 	_refresh_menu()
 
 
+## The mine lift: ride down to the top floor or any fifth floor you've reached.
+func open_lift() -> void:
+	_here = ""
+	_stops = ["mine_1"]
+	for lv in range(5, int(Game.stats.get("mine_lift", 0)) + 1, 5):
+		_stops.append("mine_%d" % lv)
+	_open("travel", "lift")
+	_refresh_menu()
+
+
 func toggle_map() -> void:
 	if _mode == "map":
 		close_menu()
@@ -690,6 +700,18 @@ func _fill_inventory() -> void:
 
 
 func _fill_travel() -> void:
+	if _station == "lift":
+		_title("THE MINE LIFT")
+		menu_box.add_child(_label("Ride down to any fifth floor you've reached.", DIM))
+		for i in _stops.size():
+			var parts := _row(i == _selected)
+			var row: PanelContainer = parts[0]
+			var h: HBoxContainer = parts[1]
+			h.add_child(_label("Floor %s" % String(_stops[i]).substr(5)))
+			row.mouse_filter = Control.MOUSE_FILTER_STOP
+			row.gui_input.connect(_on_row_input.bind(i))
+		menu_box.add_child(_label("W/S  choose     E  ride     ESC  stay", DIM))
+		return
 	_title("MINECART")
 	menu_box.add_child(_label("Ride the old mine railway to any stop you've found.", DIM))
 	for i in _stops.size():
@@ -709,6 +731,9 @@ func _ride_selected() -> void:
 		return
 	var id: String = _stops[_selected]
 	close_menu()
+	if id.begins_with("mine"):
+		Game.world.go_to(id, "top")
+		return
 	if id != _here:
 		Game.world.travel_to(id)
 

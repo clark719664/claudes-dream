@@ -279,14 +279,15 @@ def reeds(a, box, every=0.5):
 
 def spring(a, x, y, name='A hidden spring'):
     """A small clear pool deep in the woods; drinking from it restores your energy."""
-    a.lake(x, y, 2.6, 1.9, 0.18, int(x * 3 + y))
-    a.add('spring', x, y + 2.7, name=name)
-    for i in range(6):
-        ang = i / 6 * math.tau + 0.4
-        a.add('stone', x + math.cos(ang) * 3.4, y + math.sin(ang) * 2.6 + 0.4, i % 4, 0.4, regrow=0)
-    a.cluster(x, y + 3.2, 6, 1.6, lambda px, py, i: a.add('flower_' + a.rng.choice(['blue', 'white']), px, py, a.rng.randrange(8)), 0.35,
+    a.lake(x, y, 3.4, 2.5, 0.3, int(x * 3 + y))
+    a.lake(x + 1.4, y + 0.8, 2.2, 1.6, 0.3, int(x * 3 + y) + 1)
+    a.add('spring', x, y + 3.4, name=name)
+    for i in range(7):
+        ang = i / 7 * math.tau + a.rng.uniform(0.1, 0.6)
+        a.add('stone', x + math.cos(ang) * 4.4, y + math.sin(ang) * 3.4 + 0.4, i % 4, 0.4, regrow=0)
+    a.cluster(x, y + 3.9, 6, 1.6, lambda px, py, i: a.add('flower_' + a.rng.choice(['blue', 'white']), px, py, a.rng.randrange(8)), 0.35,
               lambda px, py: a.open_ground(px, py))
-    a.reserve(x - 4, y - 3, x + 5, y + 5)
+    a.reserve(x - 5, y - 4, x + 6, y + 5)
     a.poi(name, x, y)
 
 

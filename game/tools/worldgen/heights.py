@@ -55,6 +55,7 @@ def gen_mountain(a):
                say=['The Old Mine goes down a long way. Every fifth level there is a ladder shaft - get that far and you can ride straight back down.',
                     'Iron below the first few floors, coal all the way, and crystal deeper still. Bring a pickaxe - and bring food.'])
     B.sign(a, mx - 3.2, my + 2.6, 'THE OLD MINE\nEnter at your own risk.')
+    a.spawn('mine', mx, my + 1.0)
     # snow thickens with height, in patches first
     N.snow_line(a, lambda x, y: 1.05 - y / 34.0, 0.2)
     # trees: pine lower down, frosted and dead trees higher up
