@@ -1,0 +1,15 @@
+{
+  "id": "4a91fe4f-b945-4ec3-a29a-f8704f730cd7",
+  "name": "frost_yeti",
+  "rotations": [
+    "south",
+    "west",
+    "east",
+    "north",
+    "south-east",
+    "north-east",
+    "north-west",
+    "south-west"
+  ],
+  "animations": 1
+}

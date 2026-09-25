@@ -12,6 +12,21 @@ const STATS := {
 	"skeleton_mage": {"hp": 18, "dmg": 9, "speed": 34, "aggro": 120, "loot": {"bone": 1, "crystal": 1}},
 	"skeleton_warrior": {"hp": 38, "dmg": 11, "speed": 32, "aggro": 90, "loot": {"bone": 2, "iron_ore": 1}},
 	"myconid": {"hp": 30, "dmg": 10, "speed": 36, "aggro": 95, "loot": {"mushroom": 2, "herb": 1}},
+	"bone_pax": {"hp": 34, "dmg": 11, "speed": 40, "aggro": 105, "loot": {"bone": 2, "gem": 1}},
+	"thorn_vale": {"hp": 65, "dmg": 15, "speed": 34, "aggro": 110, "loot": {"herb": 3, "resin": 2, "gem": 1}},
+	"spark_kael": {"hp": 70, "dmg": 16, "speed": 36, "aggro": 115, "loot": {"crystal": 2, "steel_bar": 1}},
+	"archon_vex": {"hp": 85, "dmg": 18, "speed": 32, "aggro": 110, "loot": {"steel_bar": 2, "gem": 2}},
+	"garrick": {"hp": 58, "dmg": 14, "speed": 30, "aggro": 95, "loot": {"iron_bar": 2, "coal": 2}},
+	"reaper_m": {"hp": 44, "dmg": 13, "speed": 44, "aggro": 115, "loot": {"bone": 2, "cloth": 1}},
+	"berserker_m": {"hp": 48, "dmg": 14, "speed": 42, "aggro": 100, "loot": {"meat": 2, "iron_ore": 2}},
+	"necro_m": {"hp": 36, "dmg": 12, "speed": 35, "aggro": 120, "loot": {"crystal": 1, "bone": 2}},
+	"hexer_f": {"hp": 32, "dmg": 11, "speed": 38, "aggro": 115, "loot": {"herb": 2, "crystal": 1}},
+	"zealot_m": {"hp": 35, "dmg": 10, "speed": 38, "aggro": 100, "loot": {"cloth": 1, "coal": 1}},
+	"frost_yeti": {"hp": 60, "dmg": 15, "speed": 34, "aggro": 105, "loot": {"meat": 3, "crystal": 1}},
+	"emerald_slime": {"hp": 24, "dmg": 7, "speed": 34, "aggro": 85, "loot": {"resin": 2, "herb": 1}},
+	"cave_goblin": {"hp": 28, "dmg": 9, "speed": 46, "aggro": 100, "loot": {"iron_ore": 2, "coal": 1}},
+	"magma_golem": {"hp": 72, "dmg": 16, "speed": 28, "aggro": 95, "loot": {"iron_bar": 2, "coal": 3, "gem": 1}},
+	"bramble_treant": {"hp": 55, "dmg": 13, "speed": 28, "aggro": 90, "loot": {"wood": 4, "resin": 2}},
 }
 const RESPAWN := 120.0
 

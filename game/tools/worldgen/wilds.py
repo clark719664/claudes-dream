@@ -49,6 +49,13 @@ def gen_pinewood(a):
     N.ruin(a, 72, 13, 2)
     for (x, y) in [(69, 20), (76, 21), (73, 25)]:
         N.enemy(a, 'skeleton', x, y)
+    N.enemy(a, 'bone_pax', 72, 17)
+    for (x, y) in [(42, 28), (86, 28), (34, 68)]:
+        N.enemy(a, 'myconid', x, y)
+    for (x, y) in [(22, 24), (92, 64)]:
+        N.enemy(a, 'bramble_treant', x, y)
+    for (x, y) in [(36, 40), (48, 82)]:
+        N.enemy(a, 'emerald_slime', x, y)
     N.hidden_chest(a, 72.5, 11.2, 'pinewood_ruin', 1)
     N.hidden_chest(a, 108, 84, 'pinewood_thicket', 0)
     # the woods: mixed by the farm (south), pine further in, old pine towards the mountain (NE)
@@ -92,6 +99,14 @@ def gen_oldwood(a):
     N.enemy(a, 'skeleton', hx + 4, hy + 6)
     N.enemy(a, 'skeleton_rogue', hx + 10, hy + 9)
     N.enemy(a, 'skeleton_warrior', hx - 2, hy + 7)
+    N.enemy(a, 'reaper_m', hx + 7, hy + 11)
+    N.enemy(a, 'necro_m', hx + 14, hy + 7)
+    N.enemy(a, 'hexer_f', hx - 4, hy + 10)
+    N.enemy(a, 'thorn_vale', 48, 72)
+    for (x, y) in [(54, 32), (88, 28)]:
+        N.enemy(a, 'bramble_treant', x, y)
+    for (x, y) in [(32, 54), (82, 64)]:
+        N.enemy(a, 'myconid', x, y)
     N.hidden_chest(a, hx + 12.5, hy + 2.2, 'hollow', 3)
     N.spring(a, 14, 40, 'The Wellspring')
     N.hidden_chest(a, 104, 14, 'oldwood_thicket', 2)

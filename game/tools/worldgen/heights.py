@@ -51,6 +51,9 @@ def gen_mountain(a):
     a.add('crate', qx - 3.8, qy + 1.8, 0, 0.5)
     for i in range(10):
         a.add('rail_h', qx - 12 + i, qy + 0.5)
+    for (x, y) in [(qx + 6, qy - 4), (qx - 6, qy + 5)]:
+        N.enemy(a, 'cave_goblin', x, y)
+    N.enemy(a, 'magma_golem', qx + 9, qy + 2)
     B.villager(a, mx + 3.5, my + 2.0, 'peasant', 'Gorran the miner', 0,
                say=['The Old Mine goes down a long way. Every fifth level there is a ladder shaft - get that far and you can ride straight back down.',
                     'Iron below the first few floors, coal all the way, and crystal deeper still. Bring a pickaxe - and bring food.'])
@@ -96,7 +99,7 @@ def gen_summit(a):
     a.trail([s, (s[0], 60), (52, 48), (58, 38), (58, 24), (sx, sy + 7)], 2.0, ':', 2.2, k=73)
     N.ruin(a, sx, sy, 1)
     N.hidden_chest(a, sx + 0.5, sy + 2.5, 'frost', 0)
-    for (x, y, actor) in [(sx - 5, sy + 9, 'skeleton_mage'), (sx + 6, sy + 9, 'skeleton_mage'), (sx, sy + 12, 'skeleton_warrior')]:
+    for (x, y, actor) in [(sx - 5, sy + 9, 'skeleton_mage'), (sx + 6, sy + 9, 'spark_kael'), (sx, sy + 12, 'archon_vex'), (24, 24, 'frost_yeti'), (68, 22, 'frost_yeti')]:
         N.enemy(a, actor, x, y)
     for (x, y) in [(sx - 4.5, sy + 6.8), (sx + 4.5, sy + 6.8)]:
         a.add('banner', x, y, 2, 0.3)

@@ -1,0 +1,38 @@
+{
+  "object": {
+    "id": "288df055-6ee3-45b9-b4f2-8e66823c8ea6",
+    "name": null,
+    "prompt": "ornate gothic game UI button, dark stone with gold trim and rivets, blank face",
+    "size": {
+      "width": 96,
+      "height": 48
+    },
+    "directions": 1,
+    "view": "high top-down"
+  },
+  "spritesheet": {
+    "path": "ornate_gothic_game_UI_button.png",
+    "cell_size": {
+      "width": 96,
+      "height": 48
+    },
+    "sheet_size": {
+      "width": 96,
+      "height": 48
+    },
+    "columns": 1,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 1,
+        "directions": [
+          "unknown"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T18:26:34.885107+00:00"
+}

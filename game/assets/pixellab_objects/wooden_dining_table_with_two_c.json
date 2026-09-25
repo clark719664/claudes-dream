@@ -1,0 +1,38 @@
+{
+  "object": {
+    "id": "342e94c0-c438-4c31-b3c7-651b6b9fc970",
+    "name": null,
+    "prompt": "wooden dining table with two chairs, cozy cabin interior",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 1,
+    "view": "high top-down"
+  },
+  "spritesheet": {
+    "path": "wooden_dining_table_with_two_c.png",
+    "cell_size": {
+      "width": 64,
+      "height": 64
+    },
+    "sheet_size": {
+      "width": 64,
+      "height": 64
+    },
+    "columns": 1,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 1,
+        "directions": [
+          "unknown"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T18:26:37.151506+00:00"
+}

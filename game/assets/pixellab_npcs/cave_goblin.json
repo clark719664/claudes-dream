@@ -1,0 +1,15 @@
+{
+  "id": "3dcc229f-384c-4dbf-a707-e5f3a2ca8345",
+  "name": "cave_goblin",
+  "rotations": [
+    "south",
+    "west",
+    "east",
+    "north",
+    "south-east",
+    "north-east",
+    "north-west",
+    "south-west"
+  ],
+  "animations": 1
+}

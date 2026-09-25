@@ -1,0 +1,38 @@
+{
+  "object": {
+    "id": "d3d2ca44-4d6f-4727-86fa-986d49c320e1",
+    "name": null,
+    "prompt": "ornate gothic UI panel frame, dark iron border with gold filigree corners, hollow empty center, game menu window border",
+    "size": {
+      "width": 128,
+      "height": 128
+    },
+    "directions": 1,
+    "view": "high top-down"
+  },
+  "spritesheet": {
+    "path": "ornate_gothic_UI_panel_frame.png",
+    "cell_size": {
+      "width": 128,
+      "height": 128
+    },
+    "sheet_size": {
+      "width": 128,
+      "height": 128
+    },
+    "columns": 1,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 1,
+        "directions": [
+          "unknown"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T18:26:36.398930+00:00"
+}

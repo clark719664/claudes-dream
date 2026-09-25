@@ -1,0 +1,15 @@
+{
+  "id": "d1744945-5033-459b-b6c2-6482da99aa82",
+  "name": "magma_golem",
+  "rotations": [
+    "south",
+    "west",
+    "east",
+    "north",
+    "south-east",
+    "north-east",
+    "north-west",
+    "south-west"
+  ],
+  "animations": 1
+}
