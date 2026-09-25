@@ -1,0 +1,6 @@
+# Godot cache
+.godot/
+*.import
+# The art pack is licensed to you, not redistributable: unzip it here locally (see assets/README.md)
+assets/*
+!assets/README.md
