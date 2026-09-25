@@ -209,8 +209,8 @@ blob(9, 60, 6, 4.2, '~', 0.25, seed=5)
 blob(24, 40, 5, 3.5, '~', 0.3, seed=7)
 blob(14, 47, 3.2, 2.6, '.', 0.2, seed=9)           # the island
 # the river: from the snowy heights in the north-east down into the lake
-river = [(112, 14), (104, 18), (94, 21), (84, 23), (74, 27), (64, 31), (52, 33), (42, 35), (32, 38), (26, 41)]
-stroke(river, 3.2, '~', jitter=0.9)
+river = [(112, 12), (106, 17), (96, 18), (88, 25), (76, 27), (66, 33), (54, 32), (44, 38), (32, 38), (26, 41)]
+stroke(river, 3.2, '~', jitter=1.2)
 # Frostvale: snow over the north-east
 for y in range(H):
     for x in range(W):
@@ -223,13 +223,13 @@ blob(66, 44, 7.5, 5.2, '=', 0.1, seed=11)
 blob(45, 58, 8, 4.6, ':', 0.12, seed=13)
 rect(55, 55, 65, 63, ':')
 # roads: cobbles in the village, packed dirt beyond
-stroke([(66, 40), (65, 35), (61, 31), (58, 26), (57, 21), (57, 16)], 2.4, ':')          # north road to the mine
-stroke([(58, 26), (48, 24), (38, 22), (28, 21)], 2.0, ':')                                # forest track to the graveyard
-stroke([(59, 44), (50, 42), (40, 42), (34, 45), (33, 46)], 2.4, ':')                      # west road to the lake jetty
-stroke([(73, 45), (82, 46), (90, 47), (98, 47)], 2.4, ':')                                # east road to the orc fort
-stroke([(66, 49), (65, 55), (64, 62), (66, 68), (70, 72)], 2.2, ':')                      # south road to the old farmstead
-stroke([(66, 62), (76, 66), (88, 70), (98, 73)], 2.0, ':')                                # quarry track
-stroke([(51, 56), (55, 52), (58, 49), (60, 47)], 2.0, ':')                                # homestead lane
+stroke([(66, 40), (67, 36), (62, 31), (57, 26), (58, 21), (57, 16)], 2.4, ':')          # north road to the mine
+stroke([(58, 26), (50, 25), (42, 23), (34, 21), (28, 21)], 2.0, ':')                      # forest track to the graveyard
+stroke([(59, 44), (52, 41), (43, 44), (36, 43), (33, 46)], 2.4, ':')                      # west road to the lake jetty
+stroke([(73, 45), (80, 48), (88, 45), (98, 47)], 2.4, ':')                                # east road to the orc fort
+stroke([(66, 49), (63, 56), (65, 61), (64, 68), (70, 72)], 2.2, ':')                      # south road to the old farmstead
+stroke([(66, 62), (76, 68), (88, 66), (98, 73)], 2.0, ':')                                # quarry track
+stroke([(51, 56), (53, 54), (57, 50), (60, 47)], 2.0, ':')                                # homestead lane
 for pts in ([(60, 45), (72, 45)], [(66, 39), (66, 50)]):
     stroke(pts, 2.4, '=', only=':=')                                                     # cobbled streets
 # graveyard courtyard, orc yard, quarry floor, farmstead yard
@@ -241,17 +241,25 @@ blob(38, 13, 3, 2.2, ':', 0.3, seed=23)            # hunters' camp
 blob(113, 20, 4, 3, '=', 0.1, seed=25, only='*.')  # frost shrine floor
 
 # ------------------------------------------------------------------ zones
+def organic_mark(cx, cy, radius, zone_name, wobble_scale=15):
+    for y in range(H):
+        for x in range(W):
+            d = math.hypot(x - cx, y - cy)
+            d += (n_big(x, y) - 0.5) * wobble_scale
+            if d < radius:
+                zone[y][x] = zone_name
+
 mark(0, 0, W, H, 'wild')
-mark(0, 6, 46, 34, 'forest')
-mark(0, 60, 34, H, 'autumn')
-mark(84, 0, W, 34, 'frost')
-mark(94, 34, W, 60, 'fort')
-mark(86, 60, W, H, 'quarry')
-mark(34, 62, 86, H, 'meadow')
-mark(56, 34, 78, 52, 'village')
-mark(36, 48, 64, 62, 'homestead')
-mark(0, 34, 34, 64, 'lake')
-mark(46, 6, 84, 34, 'north')
+organic_mark(23, 20, 26, 'forest')
+organic_mark(17, 74, 25, 'autumn')
+organic_mark(106, 17, 28, 'frost')
+organic_mark(110, 47, 22, 'fort')
+organic_mark(106, 74, 25, 'quarry')
+organic_mark(60, 75, 30, 'meadow')
+organic_mark(67, 43, 14, 'village')
+organic_mark(50, 55, 16, 'homestead')
+organic_mark(17, 49, 20, 'lake')
+organic_mark(65, 20, 24, 'north')
 
 # ------------------------------------------------------------------ cliffs
 # the northern range: overlapping plateaus, gray rock, snowy in the east
