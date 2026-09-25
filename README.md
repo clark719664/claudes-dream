@@ -114,3 +114,7 @@ The headless tools run Chromium with SwiftShader's software WebGPU, so they chec
 - Everything is procedural. Characters are stylised primitives, and there is no skeletal animation or imported-model pipeline yet.
 - Moving objects are handled by TAA through neighbourhood clamping, without per-object motion vectors, so fast-moving objects can ghost slightly.
 - Gameplay covers the 13 built-in behaviours and 4 rule sets. There is no scripting API yet.
+
+## License
+
+[MIT](LICENSE)
