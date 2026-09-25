@@ -40,9 +40,12 @@ var state := State.IDLE
 var body: AnimatedSprite2D
 var bar: ColorRect
 var _t := 0.0
-var _dir := Vector2.ZERO
+var _dir := Vector2.DOWN
+var _facing := "down"
 var _anim := ""
 var _hit_player := false
+var _atk_count := 0
+var _is_heavy := false
 
 
 func _init(actor_name := "orc") -> void:
@@ -81,7 +84,7 @@ func _ready() -> void:
 	bar.color = Color(0.85, 0.2, 0.2)
 	bar.size = Vector2(16, 2)
 	back.add_child(bar)
-	_play("idle")
+	_play_dir("idle", Vector2.DOWN)
 	_t = randf_range(0.5, 2.5)
 
 
@@ -107,8 +110,9 @@ func hit(damage: int, dir: Vector2, _by: Node) -> void:
 		return
 	Game.hitstop(0.04)
 	state = State.HURT
-	_t = 0.22
-	velocity = dir * 130.0
+	_t = 0.28
+	velocity = dir * 135.0
+	_play_dir("hit", -dir)
 
 
 func _physics_process(delta: float) -> void:
@@ -127,6 +131,7 @@ func _physics_process(delta: float) -> void:
 	match state:
 		State.IDLE:
 			velocity = Vector2.ZERO
+			_play_dir("idle", _dir)
 			if dist < aggro:
 				state = State.CHASE
 			elif _t <= 0.0:
@@ -136,6 +141,7 @@ func _physics_process(delta: float) -> void:
 				_dir = (target - global_position).normalized()
 		State.WANDER:
 			velocity = _dir * speed * 0.45
+			_play_dir("walk", velocity)
 			if dist < aggro:
 				state = State.CHASE
 			elif _t <= 0.0:
@@ -148,24 +154,30 @@ func _physics_process(delta: float) -> void:
 				_t = 2.0
 			elif dist < 22.0:
 				state = State.WINDUP
-				_t = 0.38
+				_atk_count += 1
+				_is_heavy = (_atk_count % 3 == 0)
+				_t = 0.46 if _is_heavy else 0.34
 				_dir = to_player.normalized()
 				velocity = Vector2.ZERO
+				_play_dir("heavy_attack" if _is_heavy else "attack", _dir)
 			else:
 				velocity = to_player.normalized() * speed
+				_play_dir("run", velocity)
 		State.WINDUP:
 			velocity = -_dir * 10.0
-			body.modulate = Color(1.3, 1.1, 1.1) if int(_t * 20.0) % 2 == 0 else Color.WHITE
+			body.modulate = Color(1.35, 1.1, 0.9) if int(_t * 20.0) % 2 == 0 else Color.WHITE
 			if _t <= 0.0:
 				body.modulate = Color.WHITE
 				state = State.LUNGE
-				_t = 0.18
+				_t = 0.24 if _is_heavy else 0.18
 				_hit_player = false
 		State.LUNGE:
-			velocity = _dir * speed * 4.2
-			if not _hit_player and player and dist < 13.0:
+			velocity = _dir * speed * (4.8 if _is_heavy else 4.2)
+			var reach := 16.5 if _is_heavy else 13.0
+			if not _hit_player and player and dist < reach:
 				_hit_player = true
-				player.take_damage(stats.dmg, global_position)
+				var dmg := int(round(stats.dmg * (1.4 if _is_heavy else 1.0)))
+				player.take_damage(dmg, global_position)
 			if _t <= 0.0:
 				state = State.RECOVER
 				_t = 0.55
@@ -175,15 +187,10 @@ func _physics_process(delta: float) -> void:
 				state = State.CHASE
 		State.HURT:
 			velocity = velocity.move_toward(Vector2.ZERO, 700.0 * delta)
+			_play_dir("hit", _dir)
 			if _t <= 0.0:
 				state = State.CHASE
 	move_and_slide()
-	if absf(velocity.x) > 2.0:
-		var left := velocity.x < 0
-		if left != body.flip_h:
-			body.flip_h = left
-			body.offset = Pack.actor_offset(actor, _anim, left)
-	_play("run" if velocity.length() > 4.0 else "idle")
 
 
 func _die(dir: Vector2) -> void:
@@ -192,7 +199,7 @@ func _die(dir: Vector2) -> void:
 	remove_from_group("hittable")
 	bar.get_parent().visible = false
 	collision_layer = 0
-	_play("death")
+	_play_dir("death", -dir if dir.length() > 0.1 else _dir)
 	Game.hitstop(0.07)
 	Game.shake(2.5)
 	Game.note_kill(actor)
@@ -216,7 +223,36 @@ func _respawn() -> void:
 	collision_layer = 4
 	add_to_group("hittable")
 	_anim = ""
-	_play("idle")
+	_play_dir("idle", Vector2.DOWN)
+
+
+func _dir_name(v: Vector2) -> String:
+	if v.length_squared() < 0.01:
+		return _facing
+	if absf(v.x) >= absf(v.y):
+		_facing = "right" if v.x >= 0.0 else "left"
+	else:
+		_facing = "down" if v.y >= 0.0 else "up"
+	return _facing
+
+
+func _play_dir(base_anim: String, v: Vector2) -> void:
+	var d := _dir_name(v)
+	var directional := "%s_%s" % [base_anim, d]
+	if body.sprite_frames.has_animation(directional):
+		body.flip_h = false
+		_play(directional)
+		return
+	# Fallback for base Pixel Crawler actors (orc, skeleton) that only have idle/run/death
+	if absf(v.x) > 0.1:
+		body.flip_h = v.x < 0.0
+	var fallback := base_anim
+	if not body.sprite_frames.has_animation(fallback):
+		if base_anim in ["walk", "attack", "heavy_attack"]:
+			fallback = "run" if body.sprite_frames.has_animation("run") else "idle"
+		else:
+			fallback = "idle"
+	_play(fallback)
 
 
 func _play(anim: String) -> void:
