@@ -144,7 +144,7 @@ async function runArtDirector() {
     const changes = lookChanges(before, r.spec);
     if (r.source === 'router') {
       applySpec(r.spec);
-      log(`✓ Claude polished the look${changes.length ? `: ${changes.slice(0, 8).join(', ')}` : ''}.`, 'ok');
+      log(`✓ AI polished the look${changes.length ? `: ${changes.slice(0, 8).join(', ')}` : ''}.`, 'ok');
     } else {
       if (changes.length) applySpec(r.spec);
       log(`✓ Offline grading from the screenshots: ${(r.notes ?? []).join(', ')}.`, 'ok');
@@ -222,7 +222,7 @@ async function generate(prompt, base = null) {
     }
     if (!result) throw new Error('no design received');
     applySpec(result.spec);
-    const who = result.source === 'claude' ? `Claude${result.model ? ` (${result.model})` : ''}` : 'the offline designer';
+    const who = result.source === 'router' ? `AI${result.model ? ` (${result.model})` : ''}` : 'the offline designer';
     log(`✓ "${result.spec.title}" designed by ${who}.${result.changes ? ` ${capitalize(result.changes.join(', '))}.` : ''}`, 'ok');
   } catch (err) {
     // No server (e.g. static hosting): design locally in the browser.
@@ -423,11 +423,11 @@ async function boot() {
 
   fetch('/api/status').then((r) => r.json()).then((s) => {
     state.aiMode = s.ai;
-    $('#ai-badge').textContent = s.ai === 'router' ? ?? AI Designer � \ : '?? Offline Fallback';
+    $('#ai-badge').textContent = s.ai === 'router' ? `🟢 AI Designer — ${s.model}` : '🟡 Offline Fallback';
     $('#ai-badge').classList.toggle('offline', s.ai === 'offline');
     if (s.ai === 'offline') log('Running with the built-in offline designer. Configure GROQ_API_KEY, OPENROUTER_API_KEY, or LOCAL_AI_URL to use the AI Designer.');
   }).catch(() => {
-    #ai-badge.textContent = '?? Offline Fallback';
+    $('#ai-badge').textContent = '🟡 Offline Fallback';
     $('#ai-badge').classList.add('offline');
   });
 
