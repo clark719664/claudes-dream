@@ -15,7 +15,7 @@ const INSTANCE_BYTES = INSTANCE_FLOATS * 4;
 const DRAW_STRIDE = 256;
 export const MAX_VIEWS = 5;
 
-export const KIND = { standard: 0, terrain: 1, foliage: 3, leaves: 4, rock: 5 };
+export const KIND = { standard: 0, terrain: 1, foliage: 3, leaves: 4, rock: 5, animated: 6 };
 
 export const INSTANCE_WGSL = /* wgsl */ `
 struct Instance { model: mat4x4f, color: vec4f, emissive: vec4f, params: vec4f, bounds: vec4f };

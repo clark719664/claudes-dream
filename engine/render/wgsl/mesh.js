@@ -35,9 +35,77 @@ fn terrainTexel(t: vec2i) -> f32 {
 
 struct Placed { world: vec3f, normal: vec3f };
 
+fn rotX(p: vec3f, a: f32) -> vec3f { let c = cos(a); let s = sin(a); return vec3f(p.x, p.y * c - p.z * s, p.y * s + p.z * c); }
+fn rotZ(p: vec3f, a: f32) -> vec3f { let c = cos(a); let s = sin(a); return vec3f(p.x * c - p.y * s, p.x * s + p.y * c, p.z); }
+
+/**
+ * Procedural skinning for characters and creatures (kind 6). Each vertex
+ * carries a bone id in uv.x (id / 16); the instance packs its gait into
+ * params.y: |y| = floor(speed * 40) * 8 + phase. Legs and arms swing with
+ * the stride, the body bobs and leans, the head nods, wings flap, and idle
+ * characters breathe.
+ */
+fn animateVertex(pos: vec3f, nrm: vec3f, bone: u32, packed: f32, seed: f32) -> array<vec3f, 2> {
+  let a = abs(packed);
+  let k = floor(a / 8.0);
+  let amp = min(k / 40.0, 1.5);
+  let phase = a - k * 8.0;
+  let t = frame.time.x + seed;
+  let idle = 1.0 - clamp(amp * 2.0, 0.0, 1.0);
+  let swing = sin(phase) * min(amp, 1.0);
+  var p = pos;
+  var n = nrm;
+  if (bone == 4u || bone == 5u) {
+    // legs pivot at the hips
+    let side = select(1.0, -1.0, bone == 5u);
+    let pivot = vec3f(0.13 * -side, 0.56, 0.0);
+    let ang = swing * 0.75 * side;
+    p = rotX(p - pivot, ang) + pivot;
+    n = rotX(n, ang);
+  } else if (bone == 2u || bone == 3u) {
+    // arms swing against the legs and hang slightly out; they rise and fall with the breath
+    let side = select(1.0, -1.0, bone == 3u);
+    let pivot = vec3f(0.26 * -side, 0.98, 0.0);
+    let breathe = sin(t * 2.1) * 0.05 * idle;
+    let angX = -swing * 0.9 * side;
+    let angZ = (0.12 + breathe) * -side;
+    p = rotZ(rotX(p - pivot, angX), angZ) + pivot;
+    n = rotZ(rotX(n, angX), angZ);
+  } else if (bone == 1u) {
+    // the head nods with each step and sways a little at rest
+    let pivot = vec3f(0.0, 1.12, 0.0);
+    let ang = sin(phase * 2.0) * 0.06 * min(amp, 1.0) + sin(t * 0.9) * 0.04 * idle;
+    let tilt = sin(t * 0.7) * 0.05 * idle;
+    p = rotZ(rotX(p - pivot, ang), tilt) + pivot;
+    n = rotZ(rotX(n, ang), tilt);
+  } else if (bone == 6u || bone == 7u) {
+    // wings flap all the time, faster when chasing
+    let side = select(1.0, -1.0, bone == 7u);
+    let pivot = vec3f(0.14 * -side, 0.05, 0.0);
+    let ang = sin(t * (11.0 + amp * 8.0)) * 0.75 * side;
+    p = rotZ(p - pivot, ang) + pivot;
+    n = rotZ(n, ang);
+  }
+  // whole body: bob with the stride, lean into the run, breathe at rest
+  let chest = smoothstep(0.5, 1.1, pos.y);
+  p.y += abs(cos(phase)) * 0.07 * min(amp, 1.0) + sin(t * 2.1) * 0.012 * idle * chest;
+  let lean = 0.1 * min(amp, 1.0);
+  p = rotX(p, lean * smoothstep(0.0, 1.6, pos.y));
+  return array<vec3f, 2>(p, n);
+}
+
 fn placeVertex(v: VIn, inst: Instance) -> Placed {
   var o: Placed;
   let kind = inst.params.x;
+  if (kind == 6.0) {
+    let bone = u32(round(v.uv.x * 16.0));
+    let r = animateVertex(v.pos, v.normal, bone, inst.params.y, inst.model[3].x * 1.7 + inst.model[3].z);
+    let m = inst.model;
+    let s2 = vec3f(dot(m[0].xyz, m[0].xyz), dot(m[1].xyz, m[1].xyz), dot(m[2].xyz, m[2].xyz));
+    o.world = (m * vec4f(r[0], 1.0)).xyz;
+    o.normal = normalize(mat3x3f(m[0].xyz, m[1].xyz, m[2].xyz) * (r[1] / s2));
+    return o;
+  }
   if (kind == 1.0) {
     // Terrain chunk: local xz are texel offsets, displaced from the heightmap on the GPU.
     let texel = vec2i(round(v.pos.xz + inst.model[3].xz));
@@ -95,6 +163,13 @@ fn vs(v: VIn) -> VOut {
   // vertex alpha 1 = tinted by the instance, 0 = keeps its own color (tree bark...)
   o.color = vec4f(mix(v.color.rgb, v.color.rgb * inst.color.rgb, v.color.a), inst.color.a);
   o.emissive = inst.emissive;
+  let kind = inst.params.x;
+  if (kind == 0.0 || kind == 6.0) {
+    // per-part glow: uv.y = 1 marks parts that never glow (eyes, stems); uv.x = 1 marks lamps
+    // that always glow in their own colour (lantern glass, visors)
+    o.emissive = vec4f(inst.emissive.rgb * (1.0 - v.uv.y), inst.emissive.a);
+    if (v.uv.x > 0.95) { o.emissive = vec4f(o.emissive.rgb + o.color.rgb * 3.0, inst.emissive.a); }
+  }
   o.params = inst.params;
   o.uv = v.uv;
   o.card = select(0.0, 1.0, inst.params.x == 4.0 && v.color.a > 0.5);
