@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "c574b348-d63e-4503-94b5-ed6a7ad3d24a",
+    "name": "teacher_nessa",
+    "prompt": "a kind schoolteacher in a tidy cardigan and long skirt holding a book, warm friendly townsperson, gothic-punk, full body",
+    "size": {
+      "width": 120,
+      "height": 120
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "teacher_nessa.png",
+    "cell_size": {
+      "width": 120,
+      "height": 120
+    },
+    "sheet_size": {
+      "width": 960,
+      "height": 1080
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2016dcdc-4750-4d51-bdbf-bb9a808feb19",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2016dcdc-4750-4d51-bdbf-bb9a808feb19",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2016dcdc-4750-4d51-bdbf-bb9a808feb19",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2016dcdc-4750-4d51-bdbf-bb9a808feb19",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2016dcdc-4750-4d51-bdbf-bb9a808feb19",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2016dcdc-4750-4d51-bdbf-bb9a808feb19",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2016dcdc-4750-4d51-bdbf-bb9a808feb19",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "2016dcdc-4750-4d51-bdbf-bb9a808feb19",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:52:26.869677+00:00"
+}

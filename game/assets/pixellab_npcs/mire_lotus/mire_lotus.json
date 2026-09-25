@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "5e2302d8-f5c6-485d-a602-3cc69b64a879",
+    "name": "mire_lotus",
+    "prompt": "Lotus, a serene swamp guide in a woven cloak holding a lantern, barefoot, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 84,
+      "height": 84
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "mire_lotus.png",
+    "cell_size": {
+      "width": 84,
+      "height": 84
+    },
+    "sheet_size": {
+      "width": 672,
+      "height": 756
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "18d593f6-ee8a-412c-82d5-4ca22ce93359",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "18d593f6-ee8a-412c-82d5-4ca22ce93359",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "18d593f6-ee8a-412c-82d5-4ca22ce93359",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "18d593f6-ee8a-412c-82d5-4ca22ce93359",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "18d593f6-ee8a-412c-82d5-4ca22ce93359",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "18d593f6-ee8a-412c-82d5-4ca22ce93359",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "18d593f6-ee8a-412c-82d5-4ca22ce93359",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "18d593f6-ee8a-412c-82d5-4ca22ce93359",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:53:15.514313+00:00"
+}

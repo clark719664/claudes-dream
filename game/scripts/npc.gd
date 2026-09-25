@@ -35,6 +35,46 @@ const LINES := {
 		"My gran says the stone circle in the south hums at night.",
 		"They say the quarry skeletons are still digging. For what, nobody knows.",
 	],
+	"mayor": [
+		"Mayor Holt, at your service! Brindle Valley is growing faster than ever since you took over the old homestead.",
+		"Speak with the folks around the square - everyone here has a trade, a story, and a favorite gift.",
+	],
+	"herbalist": [
+		"I'm Wren! I gather wild herbs and mushrooms along the forest edge before the morning dew dries.",
+		"Brewing a Health Tonic at your Alchemy Bench takes fresh herbs and a clean glass vial. Never enter the mines without one!",
+	],
+	"barkeep": [
+		"Name's Cass! Pull up a bench by the fire. Nothing beats a hot skewer and stew after a long day chopping timber.",
+		"Folks gather around the square in the evening to unwind and trade stories.",
+	],
+	"farmer": [
+		"Howdy, neighbor! Farmer Dell here. Keep your rows tilled and harvest on time, and that soil will treat you right.",
+		"Garlic and cabbage hold up best when the chill winds blow down from Frostvale.",
+	],
+	"tailor": [
+		"Patch Silas, master tailor! Spin plant fiber into twine, weave twine into cloth, and you'll have fine gear in no time.",
+	],
+	"busker": [
+		"Hey there! I'm Rio. Every good frontier town needs a little guitar music in the square to keep spirits high!",
+	],
+	"fortune": [
+		"I am Moth... The crystal ball whispers of ancient crystal veins sleeping beneath the southern stone circle.",
+	],
+	"archivist": [
+		"Archivist Sloane. I've been cataloging the inscriptions around the old ruins and the founders' graveyard.",
+	],
+	"elder": [
+		"Elder Grain... I remember when the Old Mine still rang with pickaxes. Guard your lantern well when night falls.",
+	],
+	"nurse": [
+		"Hi, I'm Nurse Mira! If you get roughed up by Orcs in the east basin, eat a hearty meal or rest in your cabin bed to recover.",
+	],
+	"grocer": [
+		"Welcome to the market! I'm Elena. Fresh carrots, beets, and cauliflower straight from the valley's gardens!",
+	],
+	"rancher": [
+		"Pen Ridge, ranch hand. The south meadows have the sweetest grass in the whole valley.",
+	],
 }
 
 var actor: String

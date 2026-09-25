@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "69d40a60-7f5a-4d70-8bb9-7b900d0cb6b6",
+    "name": "ranger_cole",
+    "prompt": "Ranger Cole, a forest ranger in green with a wide-brim hat and binoculars, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "ranger_cole.png",
+    "cell_size": {
+      "width": 88,
+      "height": 88
+    },
+    "sheet_size": {
+      "width": 704,
+      "height": 792
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "57236ae4-dbc2-43c0-87a2-7aa4e9fbfdf2",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "57236ae4-dbc2-43c0-87a2-7aa4e9fbfdf2",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "57236ae4-dbc2-43c0-87a2-7aa4e9fbfdf2",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "57236ae4-dbc2-43c0-87a2-7aa4e9fbfdf2",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "57236ae4-dbc2-43c0-87a2-7aa4e9fbfdf2",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "57236ae4-dbc2-43c0-87a2-7aa4e9fbfdf2",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "57236ae4-dbc2-43c0-87a2-7aa4e9fbfdf2",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "57236ae4-dbc2-43c0-87a2-7aa4e9fbfdf2",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:53:03.897594+00:00"
+}

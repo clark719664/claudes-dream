@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "130806fb-f1ac-4939-855f-be6ca11ea85c",
+    "name": "farmer_skim",
+    "prompt": "a humble farmer in denim overalls and a straw hat holding a hoe, friendly townsperson, cozy gothic-punk, full body",
+    "size": {
+      "width": 120,
+      "height": 120
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "farmer_skim.png",
+    "cell_size": {
+      "width": 120,
+      "height": 120
+    },
+    "sheet_size": {
+      "width": 960,
+      "height": 1080
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "8c74cb47-f24a-4045-8c57-fd085da0fa70",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "8c74cb47-f24a-4045-8c57-fd085da0fa70",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "8c74cb47-f24a-4045-8c57-fd085da0fa70",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "8c74cb47-f24a-4045-8c57-fd085da0fa70",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "8c74cb47-f24a-4045-8c57-fd085da0fa70",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "8c74cb47-f24a-4045-8c57-fd085da0fa70",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "8c74cb47-f24a-4045-8c57-fd085da0fa70",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "8c74cb47-f24a-4045-8c57-fd085da0fa70",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:52:26.657787+00:00"
+}

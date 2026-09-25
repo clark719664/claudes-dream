@@ -25,7 +25,11 @@ func _ready() -> void:
 
 func texture(sheet: String) -> Texture2D:
 	if not _textures.has(sheet):
-		_textures[sheet] = load(PACK_DIR + sheet)
+		var custom_path := "res://assets/" + sheet
+		if ResourceLoader.exists(custom_path):
+			_textures[sheet] = load(custom_path)
+		else:
+			_textures[sheet] = load(PACK_DIR + sheet)
 	return _textures[sheet]
 
 

@@ -6665,6 +6665,2929 @@
      47
     ]
    }
+  },
+  "acolyte_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/acolyte_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/acolyte_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "acolyte_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/acolyte_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/acolyte_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "archon_vex": {
+   "idle": {
+    "sheet": "pixellab_npcs/archon_vex/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/archon_vex/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "barkeep_cass": {
+   "idle": {
+    "sheet": "pixellab_npcs/barkeep_cass/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/barkeep_cass/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "berserker_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/berserker_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/berserker_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "berserker_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/berserker_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/berserker_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "bone_pax": {
+   "idle": {
+    "sheet": "pixellab_npcs/bone_pax/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/bone_pax/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "bouncer_knox": {
+   "idle": {
+    "sheet": "pixellab_npcs/bouncer_knox/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/bouncer_knox/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "busker_rio": {
+   "idle": {
+    "sheet": "pixellab_npcs/busker_rio/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/busker_rio/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "curator_ash": {
+   "idle": {
+    "sheet": "pixellab_npcs/curator_ash/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/curator_ash/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "defector_lace": {
+   "idle": {
+    "sheet": "pixellab_npcs/defector_lace/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/defector_lace/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "diver_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/diver_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/diver_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "diver_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/diver_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/diver_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "doc_elm": {
+   "idle": {
+    "sheet": "pixellab_npcs/doc_elm/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/doc_elm/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "elder_grain": {
+   "idle": {
+    "sheet": "pixellab_npcs/elder_grain/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/elder_grain/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "elena": {
+   "idle": {
+    "sheet": "pixellab_npcs/elena/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/elena/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "enforcer_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/enforcer_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/enforcer_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "enforcer_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/enforcer_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/enforcer_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "farmer_dell": {
+   "idle": {
+    "sheet": "pixellab_npcs/farmer_dell/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/farmer_dell/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "farmer_skim": {
+   "idle": {
+    "sheet": "pixellab_npcs/farmer_skim/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/farmer_skim/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "fenn": {
+   "idle": {
+    "sheet": "pixellab_npcs/fenn/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/fenn/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "festival_gala": {
+   "idle": {
+    "sheet": "pixellab_npcs/festival_gala/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/festival_gala/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "fortune_moth": {
+   "idle": {
+    "sheet": "pixellab_npcs/fortune_moth/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/fortune_moth/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "garrick": {
+   "idle": {
+    "sheet": "pixellab_npcs/garrick/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/garrick/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "gleam_courier": {
+   "idle": {
+    "sheet": "pixellab_npcs/gleam_courier/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/gleam_courier/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "goat": {
+   "idle": {
+    "sheet": "pixellab_npcs/goat/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/goat/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 7,
+    "cols": 7,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "greenhouse_sal": {
+   "idle": {
+    "sheet": "pixellab_npcs/greenhouse_sal/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/greenhouse_sal/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "grunt_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/grunt_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/grunt_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "grunt_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/grunt_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/grunt_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "hacker_rem": {
+   "idle": {
+    "sheet": "pixellab_npcs/hacker_rem/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/hacker_rem/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "hao": {
+   "idle": {
+    "sheet": "pixellab_npcs/hao/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/hao/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "hexer_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/hexer_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/hexer_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "hexer_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/hexer_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/hexer_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "inquisitor_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/inquisitor_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/inquisitor_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "inquisitor_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/inquisitor_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/inquisitor_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "iodine": {
+   "idle": {
+    "sheet": "pixellab_npcs/iodine/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/iodine/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "jax": {
+   "idle": {
+    "sheet": "pixellab_npcs/jax/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/jax/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "kid_milo": {
+   "idle": {
+    "sheet": "pixellab_npcs/kid_milo/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/kid_milo/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "kid_priya": {
+   "idle": {
+    "sheet": "pixellab_npcs/kid_priya/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/kid_priya/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "kota": {
+   "idle": {
+    "sheet": "pixellab_npcs/kota/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/kota/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "lyric": {
+   "idle": {
+    "sheet": "pixellab_npcs/lyric/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/lyric/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "marlow": {
+   "idle": {
+    "sheet": "pixellab_npcs/marlow/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/marlow/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "mayor_holt": {
+   "idle": {
+    "sheet": "pixellab_npcs/mayor_holt/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/mayor_holt/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "mechanic_grease": {
+   "idle": {
+    "sheet": "pixellab_npcs/mechanic_grease/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/mechanic_grease/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "mercy": {
+   "idle": {
+    "sheet": "pixellab_npcs/mercy/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/mercy/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "mire_lotus": {
+   "idle": {
+    "sheet": "pixellab_npcs/mire_lotus/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/mire_lotus/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "mirelle": {
+   "idle": {
+    "sheet": "pixellab_npcs/mirelle/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/mirelle/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "necro_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/necro_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/necro_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "necro_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/necro_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/necro_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "neon_pix": {
+   "idle": {
+    "sheet": "pixellab_npcs/neon_pix/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/neon_pix/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "nurse_mira": {
+   "idle": {
+    "sheet": "pixellab_npcs/nurse_mira/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/nurse_mira/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "nyx": {
+   "idle": {
+    "sheet": "pixellab_npcs/nyx/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/nyx/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "omar": {
+   "idle": {
+    "sheet": "pixellab_npcs/omar/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/omar/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "orphan_ren": {
+   "idle": {
+    "sheet": "pixellab_npcs/orphan_ren/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/orphan_ren/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "orphan_suki": {
+   "idle": {
+    "sheet": "pixellab_npcs/orphan_suki/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/orphan_suki/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "patch": {
+   "idle": {
+    "sheet": "pixellab_npcs/patch/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/patch/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "pella": {
+   "idle": {
+    "sheet": "pixellab_npcs/pella/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/pella/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "player_lg_male": {
+   "idle": {
+    "sheet": "pixellab_npcs/player_lg_male/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/player_lg_male/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "player_male": {
+   "idle": {
+    "sheet": "pixellab_npcs/player_male/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/player_male/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "player_thick_fem": {
+   "idle": {
+    "sheet": "pixellab_npcs/player_thick_fem/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/player_thick_fem/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "player_thin_fem": {
+   "idle": {
+    "sheet": "pixellab_npcs/player_thin_fem/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/player_thin_fem/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "ranch_pen": {
+   "idle": {
+    "sheet": "pixellab_npcs/ranch_pen/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/ranch_pen/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "ranger_cole": {
+   "idle": {
+    "sheet": "pixellab_npcs/ranger_cole/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/ranger_cole/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "reaper_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/reaper_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/reaper_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "reaper_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/reaper_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/reaper_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "road_ira": {
+   "idle": {
+    "sheet": "pixellab_npcs/road_ira/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/road_ira/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "rook": {
+   "idle": {
+    "sheet": "pixellab_npcs/rook/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/rook/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "rust_juno": {
+   "idle": {
+    "sheet": "pixellab_npcs/rust_juno/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/rust_juno/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "sable": {
+   "idle": {
+    "sheet": "pixellab_npcs/sable/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/sable/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 7,
+    "cols": 7,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "samuel": {
+   "idle": {
+    "sheet": "pixellab_npcs/samuel/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/samuel/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "scientist_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/scientist_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/scientist_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "scientist_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/scientist_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/scientist_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "scrap_yadi": {
+   "idle": {
+    "sheet": "pixellab_npcs/scrap_yadi/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/scrap_yadi/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "seraphine": {
+   "idle": {
+    "sheet": "pixellab_npcs/seraphine/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/seraphine/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "sloane": {
+   "idle": {
+    "sheet": "pixellab_npcs/sloane/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/sloane/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "spark_kael": {
+   "idle": {
+    "sheet": "pixellab_npcs/spark_kael/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/spark_kael/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "teacher_nessa": {
+   "idle": {
+    "sheet": "pixellab_npcs/teacher_nessa/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/teacher_nessa/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "technomancer_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/technomancer_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/technomancer_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "technomancer_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/technomancer_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/technomancer_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "thorn_vale": {
+   "idle": {
+    "sheet": "pixellab_npcs/thorn_vale/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/thorn_vale/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "tomas": {
+   "idle": {
+    "sheet": "pixellab_npcs/tomas/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/tomas/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "vale": {
+   "idle": {
+    "sheet": "pixellab_npcs/vale/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/vale/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "venn": {
+   "idle": {
+    "sheet": "pixellab_npcs/venn/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/venn/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "wiccan_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/wiccan_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/wiccan_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "wiccan_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/wiccan_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/wiccan_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "wren": {
+   "idle": {
+    "sheet": "pixellab_npcs/wren/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/wren/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "zealot_f": {
+   "idle": {
+    "sheet": "pixellab_npcs/zealot_f/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/zealot_f/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "zealot_m": {
+   "idle": {
+    "sheet": "pixellab_npcs/zealot_m/Idle-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   },
+   "run": {
+    "sheet": "pixellab_npcs/zealot_m/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 9,
+    "loop": true,
+    "anchor": [
+     32,
+     62
+    ]
+   }
+  },
+  "myconid": {
+   "idle": {
+    "sheet": "expansion/Mobs/Myconid/Idle/Idle-Sheet.png",
+    "frame": [
+     32,
+     32
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 6,
+    "loop": true,
+    "anchor": [
+     16,
+     31
+    ]
+   },
+   "walk": {
+    "sheet": "expansion/Mobs/Myconid/Walk/Walk-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 8,
+    "loop": true,
+    "anchor": [
+     32,
+     63
+    ]
+   },
+   "run": {
+    "sheet": "expansion/Mobs/Myconid/Run/Run-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 10,
+    "loop": true,
+    "anchor": [
+     32,
+     63
+    ]
+   },
+   "attack": {
+    "sheet": "expansion/Mobs/Myconid/Attack/Attack-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 12,
+    "loop": false,
+    "anchor": [
+     32,
+     63
+    ]
+   },
+   "heavy_attack": {
+    "sheet": "expansion/Mobs/Myconid/Heavy_Attack/Heavy_Attack-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 11,
+    "loop": false,
+    "anchor": [
+     32,
+     63
+    ]
+   },
+   "hit": {
+    "sheet": "expansion/Mobs/Myconid/Hit_Bounce/Hit_Bounce-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 4,
+    "cols": 4,
+    "fps": 12,
+    "loop": false,
+    "anchor": [
+     32,
+     63
+    ]
+   },
+   "death": {
+    "sheet": "expansion/Mobs/Myconid/Death/Death-Sheet.png",
+    "frame": [
+     64,
+     64
+    ],
+    "frames": 6,
+    "cols": 6,
+    "fps": 10,
+    "loop": false,
+    "anchor": [
+     32,
+     63
+    ]
+   }
   }
  },
  "items": {

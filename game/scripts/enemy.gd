@@ -11,6 +11,7 @@ const STATS := {
 	"skeleton_rogue": {"hp": 16, "dmg": 6, "speed": 52, "aggro": 110, "loot": {"bone": 1}},
 	"skeleton_mage": {"hp": 18, "dmg": 9, "speed": 34, "aggro": 120, "loot": {"bone": 1, "crystal": 1}},
 	"skeleton_warrior": {"hp": 38, "dmg": 11, "speed": 32, "aggro": 90, "loot": {"bone": 2, "iron_ore": 1}},
+	"myconid": {"hp": 30, "dmg": 10, "speed": 36, "aggro": 95, "loot": {"mushroom": 2, "herb": 1}},
 }
 const RESPAWN := 120.0
 

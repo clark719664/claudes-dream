@@ -1,0 +1,101 @@
+{
+  "character": {
+    "id": "7e918edd-393f-4b68-8d5f-69e5f1a479fa",
+    "name": "archon_vex",
+    "prompt": "Archon Vex, a towering Covenant archon in black and gold ceremonial armor with a dark void halo, imposing villain, gothic-punk, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "archon_vex.png",
+    "cell_size": {
+      "width": 96,
+      "height": 96
+    },
+    "sheet_size": {
+      "width": 768,
+      "height": 768
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "7aa7b584-7952-4584-af2d-2053e4d74ae7",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "7aa7b584-7952-4584-af2d-2053e4d74ae7",
+        "direction": "east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "7aa7b584-7952-4584-af2d-2053e4d74ae7",
+        "direction": "north-east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "7aa7b584-7952-4584-af2d-2053e4d74ae7",
+        "direction": "north"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "7aa7b584-7952-4584-af2d-2053e4d74ae7",
+        "direction": "north-west"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "7aa7b584-7952-4584-af2d-2053e4d74ae7",
+        "direction": "west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "7aa7b584-7952-4584-af2d-2053e4d74ae7",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:52:57.195584+00:00"
+}

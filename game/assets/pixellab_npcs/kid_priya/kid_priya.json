@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "0f4148f3-8f24-4b5f-bd55-49a5944a54fb",
+    "name": "kid_priya",
+    "prompt": "Priya, a sweet little girl in a flowery dress with pigtails, cute, cozy stardew-style RPG child, full body",
+    "size": {
+      "width": 76,
+      "height": 76
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "kid_priya.png",
+    "cell_size": {
+      "width": 76,
+      "height": 76
+    },
+    "sheet_size": {
+      "width": 608,
+      "height": 684
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "0b1c6a9f-a500-4f17-9acc-0e3395bf13cb",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "0b1c6a9f-a500-4f17-9acc-0e3395bf13cb",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "0b1c6a9f-a500-4f17-9acc-0e3395bf13cb",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "0b1c6a9f-a500-4f17-9acc-0e3395bf13cb",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "0b1c6a9f-a500-4f17-9acc-0e3395bf13cb",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "0b1c6a9f-a500-4f17-9acc-0e3395bf13cb",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "0b1c6a9f-a500-4f17-9acc-0e3395bf13cb",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "0b1c6a9f-a500-4f17-9acc-0e3395bf13cb",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-25T17:53:08.845379+00:00"
+}
