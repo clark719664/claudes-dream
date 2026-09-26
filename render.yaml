@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: reverie
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: REVERIE_MODEL
+        value: claude-opus-5
+      - key: REVERIE_EFFORT
+        value: medium

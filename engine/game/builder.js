@@ -9,6 +9,8 @@ import { KIND } from '../render/scene.js';
 import { Physics } from './physics.js';
 import { hexToLinear, hexToRgb, mat4, DEG } from '../core/math.js';
 import { Rng } from '../../shared/rng.js';
+import { AssetRuntime } from '../assets/runtime.js';
+import { prefabAssetRequest } from '../assets/requests.js';
 
 /** Scatter density -> instances per square meter at density 1. */
 const SCATTER_RATE = { pine: 0.017, oak: 0.013, palm: 0.009, rock: 0.01, flower: 0.04, crystal: 0.007, cactus: 0.008, mushroom: 0.025, pillar: 0.004 };
@@ -60,6 +62,7 @@ export function buildWorld(renderer, spec, { tier = 'high' } = {}) {
   renderer.setGrade({ ...spec.post });
 
   const scene = renderer.createScene();
+  const assets = new AssetRuntime(scene, { quality: tier });
   addTerrain(scene, hf);
 
   // ---------------------------------------------------------------- scatter
@@ -131,7 +134,10 @@ export function buildWorld(renderer, spec, { tier = 'high' } = {}) {
   for (const p of spec.prefabs) {
     const sm = shapeMesh(p.shape, p.size);
     if (!scene.hasMesh(sm.key)) scene.addMesh(sm.key, sm.build());
-    prefabBatch.set(p.id, { batch: scene.addBatch(sm.key, { shadows: true, maxDist: 600 }), scale: sm.scale });
+    const batch = scene.addBatch(sm.key, { shadows: true, maxDist: 600 });
+    const request = prefabAssetRequest(p, spec.seed);
+    if (request) assets.resolve(request, request.fallback, { batchId: batch });
+    prefabBatch.set(p.id, { batch, scale: sm.scale, request });
   }
   const entities = [];
   const addEntity = (prefabId, x, yAbove, z, yaw, scale) => {
@@ -241,7 +247,7 @@ export function buildWorld(renderer, spec, { tier = 'high' } = {}) {
   const [sx, , sz] = spec.player.spawn;
   const spawnY = Math.max(surface(sx, sz), waterLevel !== null && hf.heightAt(sx, sz) < waterLevel - 0.3 ? waterLevel + 0.4 : -Infinity) + Math.max(0.1, spec.player.spawn[1] - 1);
   return {
-    spec, hf, physics, scene, entities, avatar, projectiles, projectileScale: projMesh.scale, characters, gifts,
+    spec, hf, physics, scene, assets, entities, avatar, projectiles, projectileScale: projMesh.scale, characters, gifts,
     waterLevel, lava, grassLayer,
     spawn: [spec.player.spawn[0], spawnY, spec.player.spawn[2]],
     center: [0, hf.heightAt(0, 0), 0],

@@ -72,7 +72,7 @@ test('/api/art-director sends the screenshots to Claude and /api/next-level the 
     });
   });
   await new Promise((r) => mock.listen(0, r));
-  process.env.ANTHROPIC_API_KEY = 'test-key';
+  process.env.ANTHROPIC_API_KEY = 'test-key'; process.env.GROQ_API_KEY = 'test-key';
   process.env.ANTHROPIC_BASE_URL = `http://127.0.0.1:${mock.address().port}`;
   const { createServer } = await import('../server/index.js');
   const app = createServer();
@@ -84,7 +84,7 @@ test('/api/art-director sends the screenshots to Claude and /api/next-level the 
   try {
     const art = await post('/api/art-director', { spec: designed, intent: 'a golden forest', images: [{ label: 'wide', data: 'data:image/jpeg;base64,AAAA' }] });
     const spec = art.find((e) => e.type === 'spec');
-    assert.equal(spec.data.source, 'claude');
+    assert.equal(spec.data.source, 'router');
     assert.equal(spec.data.spec.title, 'Polished Grove');
     const content = seen[0].messages[0].content;
     assert.ok(Array.isArray(content));

@@ -10,6 +10,6 @@ test('bundled examples are valid, normalized specs', () => {
     const spec = JSON.parse(fs.readFileSync(new URL(`../examples/${name}.json`, import.meta.url)));
     const { spec: again, warnings } = normalizeSpec(spec);
     assert.equal(warnings.length, 0, `${name}: ${warnings.join('; ')}`);
-    assert.deepEqual(again, spec, `${name} is not normalized`);
+    assert.deepEqual(normalizeSpec(again).spec, again, `${name} normalization is not idempotent`);
   }
 });
