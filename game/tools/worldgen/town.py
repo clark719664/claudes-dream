@@ -86,10 +86,11 @@ def generate(a):
     a.add('chopping_block', door + 4.0, MAIN - 1.8, 0, 0.5)
     for i in range(4):
         a.add('branch', door + a.rng.uniform(3, 8), MAIN - a.rng.uniform(1.4, 3.5), a.rng.randrange(5))
-    B.lot(a, 91, MAIN, 12, 'log', 'The Coopers', 'woodpile')
-    door2 = B.lot(a, 105, MAIN, 12, 'plank', 'Pen Ridge Ranch', dress=False)
+    # Keep source placements aligned with patch_town_layout.py's curated PixelLab doors.
+    B.lot(a, 93, MAIN, 12, 'log', 'The Coopers', 'woodpile')
+    door2 = B.lot(a, 100.25, MAIN, 12, 'plank', 'Pen Ridge Ranch', dress=False)
     B.shopkeeper(a, door2 + 2.6, MAIN - 3.4, 'peasant', 'Pen Ridge', 'rancher')
-    door = B.lot(a, 64, SOUTH, 12, 'wood', 'Green Thumb Dispensary')
+    door = B.lot(a, 65.875, SOUTH, 12, 'wood', 'Green Thumb Dispensary')
     B.shopkeeper(a, door + 2.6, SOUTH - 3.4, 'peasant', 'Snoop', 'dispensary')
 
     B.lamps_along(a, MAIN + 3, 8, 100, 12)
@@ -105,11 +106,11 @@ def generate(a):
         a.add('table_small', tx, ty, 0, 0.9)
         a.add('stool', tx - 1.4, ty + 0.2, 0, 0.3)
         a.add('stool', tx + 1.4, ty + 0.2, 0, 0.3)
-    B.lot(a, 92, SOUTH, 12, 'plank', 'The Weavers', 'wild', depth=16)
+    B.lot(a, 92.75, SOUTH, 12, 'plank', 'The Weavers', 'wild', depth=16)
     B.lamps_along(a, SOUTH + 3, 8, 102, 13)
     # Additional town buildings
     door = B.lot(a, 40, SOUTH, 20, 'brick', 'Town Library', 'flowers', depth=16)
-    door = B.lot(a, 55, SOUTH, 20, 'plaster', 'Town Museum', depth=16)
+    door = B.lot(a, 52.5, SOUTH, 20, 'plaster', 'Town Museum', depth=16)
     door = B.lot(a, 82, MAIN, 20, 'brick', 'Medical Clinic', depth=16)
     door = B.lot(a, 35, MAIN, 20, 'dark', 'The Stardrop Saloon', depth=16)
     B.shopkeeper(a, door + 2.6, MAIN - 3.4, 'barkeep_cass', 'Cass', 'saloon')
