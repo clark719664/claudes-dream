@@ -13,26 +13,47 @@ const ORIGIN := Vector2.ZERO
 const LAYOUTS := {
 	"barn": {"wall": 4, "floor": 6, "w": 12, "h": 6, "props": []},
 	"coop": {"wall": 0, "floor": 0, "w": 8, "h": 5, "props": []},
-	"general_store": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["store_counter", 5.0, 4.0, 40, ""]]},
-	"saloon": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["tavern_bar", 5.0, 4.0, 40, ""], ["tavern_table", 2.5, 7.0, 0, ""], ["tavern_table", 7.5, 7.0, 0, ""]]},
-	"blacksmith_shop": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["forge_anvil", 5.0, 5.0, 40, ""]]},
-	"library": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["library_desk", 5.0, 5.0, 40, ""]]},
-	
+	"general_store": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["bookshelf", 2.2, 5.9, 28, ""], ["bookshelf", 9.8, 5.9, 28, ""], ["store_counter", 6.0, 7.6, 48, ""],
+		["house_plant", 1.6, 12.4, 10, ""], ["house_plant", 10.4, 12.4, 10, ""]]},
+	"saloon": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["tavern_bar", 6.0, 6.6, 68, ""], ["tavern_table", 2.8, 9.6, 22, ""], ["tavern_table", 9.2, 9.6, 22, ""],
+		["wood_stool", 1.5, 9.8, 0, ""], ["wood_stool", 4.1, 9.8, 0, ""], ["wood_stool", 7.9, 9.8, 0, ""], ["wood_stool", 10.5, 9.8, 0, ""],
+		["floor_lamp", 1.4, 6.0, 6, ""], ["house_plant", 10.5, 12.4, 10, ""]]},
+	"blacksmith_shop": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["forge_anvil", 6.0, 8.4, 26, ""], ["wood_stool", 8.2, 8.6, 0, ""], ["house_plant", 1.6, 12.4, 10, ""]]},
+	"library": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["bookshelf", 2.0, 5.9, 28, ""], ["bookshelf", 3.9, 5.9, 28, ""], ["bookshelf", 8.1, 5.9, 28, ""], ["bookshelf", 10.0, 5.9, 28, ""],
+		["library_desk", 6.0, 8.2, 40, ""], ["rug", 6.0, 10.4, 0, "rug"], ["floor_lamp", 1.5, 9.0, 6, ""], ["house_plant", 10.5, 12.4, 10, ""]]},
 	"dispensary": {"wall": 3, "floor": 5, "w": 8, "h": 6, "props": [
-		["counter", 5.0, 3.0, 20, ""],
-		["plant", 2.0, 2.0, 10, ""],
-		["plant", 7.0, 2.0, 10, ""]
-	]},
-
-	"clinic": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["clinic_bed", 2.5, 5.0, 40, ""], ["clinic_bed", 7.5, 5.0, 40, ""]]},
-	"school": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["school_desk", 2.5, 4.0, 0, ""], ["school_desk", 5.0, 4.0, 0, ""], ["school_desk", 7.5, 4.0, 0, ""], ["school_desk", 2.5, 7.0, 0, ""], ["school_desk", 5.0, 7.0, 0, ""], ["school_desk", 7.5, 7.0, 0, ""]]},
-	"church": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["church_pew", 2.5, 4.0, 40, ""], ["church_pew", 7.5, 4.0, 40, ""], ["church_pew", 2.5, 7.0, 40, ""], ["church_pew", 7.5, 7.0, 40, ""]]},
-	"bathhouse": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["bathhouse_pool", 5.0, 5.0, 0, ""]]},
-	"museum": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["museum_display", 2.5, 4.0, 40, ""], ["museum_display", 7.5, 4.0, 40, ""], ["museum_display", 5.0, 7.0, 40, ""]]},
-	"inn": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["inn_bed", 2.5, 5.0, 40, ""], ["inn_bed", 7.5, 5.0, 40, ""]]},
-	"mayors_manor": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": []},
-	"npc_house_1": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": []},
-	"npc_house_2": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": []},
+		["counter", 5.0, 7.0, 40, ""], ["house_plant", 1.6, 6.3, 10, ""], ["house_plant", 8.4, 6.3, 10, ""]]},
+	"clinic": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["clinic_bed", 2.6, 7.6, 26, ""], ["clinic_bed", 9.4, 7.6, 26, ""], ["house_plant", 6.0, 6.3, 10, ""],
+		["floor_lamp", 1.4, 12.4, 6, ""], ["house_plant", 10.5, 12.4, 10, ""]]},
+	"school": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["school_desk", 3.0, 8.0, 20, ""], ["school_desk", 6.0, 8.0, 20, ""], ["school_desk", 9.0, 8.0, 20, ""],
+		["school_desk", 3.0, 10.4, 20, ""], ["school_desk", 9.0, 10.4, 20, ""], ["bookshelf", 2.0, 5.9, 28, ""], ["house_plant", 10.4, 6.3, 10, ""]]},
+	"church": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["church_pew", 3.4, 7.8, 44, ""], ["church_pew", 8.6, 7.8, 44, ""], ["church_pew", 3.4, 10.2, 44, ""], ["church_pew", 8.6, 10.2, 44, ""],
+		["house_plant", 1.5, 6.3, 10, ""], ["house_plant", 10.5, 6.3, 10, ""]]},
+	"bathhouse": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["bathhouse_pool", 6.0, 10.6, 0, "bathhouse_pool"], ["house_plant", 1.5, 6.3, 10, ""], ["house_plant", 10.5, 6.3, 10, ""],
+		["wood_stool", 1.6, 12.4, 0, ""]]},
+	"museum": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["museum_display", 3.0, 7.2, 24, ""], ["museum_display", 6.0, 7.2, 24, ""], ["museum_display", 9.0, 7.2, 24, ""],
+		["museum_display", 3.0, 10.2, 24, ""], ["museum_display", 9.0, 10.2, 24, ""], ["house_plant", 1.5, 12.4, 10, ""], ["house_plant", 10.5, 12.4, 10, ""]]},
+	"inn": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["inn_bed", 2.4, 7.8, 30, ""], ["inn_bed", 9.6, 7.8, 30, ""], ["tavern_table", 6.0, 7.4, 22, ""],
+		["floor_lamp", 4.2, 6.0, 6, ""], ["floor_lamp", 7.8, 6.0, 6, ""], ["rug", 6.0, 10.4, 0, "rug"], ["house_plant", 10.5, 12.4, 10, ""]]},
+	"mayors_manor": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["bookshelf", 2.0, 5.9, 28, ""], ["bookshelf", 3.9, 5.9, 28, ""], ["library_desk", 6.6, 7.8, 40, ""], ["floor_lamp", 9.0, 6.0, 6, ""],
+		["house_plant", 10.4, 6.3, 10, ""], ["rug", 6.0, 10.4, 0, "rug"], ["house_plant", 1.5, 12.4, 10, ""]]},
+	"npc_house_1": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["cozy_bed", 2.4, 7.8, 26, ""], ["tavern_table", 7.6, 8.8, 22, ""], ["wood_stool", 6.2, 9.0, 0, ""], ["wood_stool", 9.0, 9.0, 0, ""],
+		["bookshelf", 10.0, 5.9, 28, ""], ["rug", 6.0, 11.0, 0, "rug"], ["house_plant", 10.5, 12.4, 10, ""]]},
+	"npc_house_2": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
+		["cozy_bed", 9.6, 7.8, 26, ""], ["tavern_table", 3.6, 8.8, 22, ""], ["wood_stool", 2.2, 9.0, 0, ""], ["wood_stool", 5.0, 9.0, 0, ""],
+		["floor_lamp", 1.4, 6.0, 6, ""], ["house_plant", 1.5, 12.4, 10, ""]]},
 	1: {"wall": 0, "floor": 0, "w": 9, "h": 5, "props": [
 		[Rect2(64, 176, 32, 32), 3.0, 3.4, 0, ""],             # window
 		[Rect2(0, 288, 32, 64), 1.5, 8.6, 26, "bed"],
@@ -183,22 +204,21 @@ func _furniture(region, feet: Vector2, solid: float, role: String) -> void:
 	node.position = feet
 	var sp := Sprite2D.new()
 	var sz = Vector2()
+	var feet_at := Vector2.ZERO
 	if typeof(region) == TYPE_STRING:
-		var d = Pack.catalog.sprites[region]
-		if typeof(d) == TYPE_ARRAY:
-			d = d[0]
-		sp.texture = Pack.texture(d.sheet)
-		sp.region_enabled = true
-		sp.region_rect = Rect2(d.region[0], d.region[1], d.region[2] - d.region[0], d.region[3] - d.region[1])
-		sz = sp.region_rect.size
+		var d := Pack.spec(region)
+		sp.texture = Pack.atlas(d)
+		sz = sp.texture.get_size()
+		feet_at = Vector2(d.anchor[0], d.anchor[1]) if d.has("anchor") else Vector2(sz.x / 2.0, sz.y)
 	else:
 		var t := AtlasTexture.new()
 		t.atlas = Pack.texture(PROPS)
 		t.region = region
 		sp.texture = t
 		sz = region.size
+		feet_at = Vector2(sz.x / 2.0, sz.y)
 	sp.centered = false
-	sp.offset = Vector2(-sz.x / 2.0, -sz.y)
+	sp.offset = -feet_at
 	if role == "rug":
 		sp.z_index = -8
 		sp.offset = Vector2(-sz.x / 2.0, -sz.y / 2.0)

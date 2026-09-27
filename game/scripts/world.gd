@@ -19,6 +19,9 @@ const CHUNK_PX := CHUNK * 16
 const SPAWN_BUDGET := 90                # objects per frame while streaming in
 const FROZEN := {"oak": "oak_frozen", "oak_big": "oak_big_frozen", "oak_young": "oak_young_frozen"}
 
+## Areas built as a room by Interior rather than loaded from data/areas.
+const INTERIORS := ["house", "barn", "coop", "general_store", "saloon", "blacksmith_shop", "library", "clinic", "school", "church", "bathhouse", "museum", "inn", "mayors_manor", "npc_house_1", "npc_house_2", "dispensary"]
+
 var size := Vector2.ZERO
 var area_id := ""
 var data: Dictionary = {}
@@ -39,6 +42,7 @@ var _loaded := {}      # Vector2i -> Array of nodes (the first is the chunk's De
 var _tall := {}        # Vector2i -> Array of [node, sprite] that fade when the player is behind
 var _queue: Array = [] # [chunk, index] still to spawn
 var _exits: Array = [] # [Rect2 in px, area, spawn]
+var _door_return := {} # the building door you last walked in through: kind, area, spot
 var _fence_layer: TileMapLayer
 var _busy := false
 var _stream_t := 0.0
@@ -91,9 +95,14 @@ func _physics_process(_delta: float) -> void:
 	if _busy or player == null or player.dead or root == null:
 		return
 	var p := player.global_position
-	if area_id in ["house", "barn", "coop"]:
+	if interior:
 		if p.y > interior.exit_line():
-			go_to("farm", "door")
+			if _door_return.get("kind", "") == area_id:
+				go_to(_door_return.area, "return")
+			elif area_id in ["house", "barn", "coop"]:
+				go_to("farm", "door")
+			else:
+				go_to("town", "")
 		return
 	if mine and mine.has_method("check_exit"):
 		mine.check_exit(p)
@@ -133,7 +142,7 @@ func load_area(id: String, at: String) -> void:
 	entities.name = "Entities"
 	entities.y_sort_enabled = true
 	var spot := Vector2.ZERO
-	if id in ["house", "barn", "coop", "general_store", "saloon", "blacksmith_shop", "library", "clinic", "school", "church", "bathhouse", "museum", "inn", "mayors_manor", "npc_house_1", "npc_house_2", "dispensary"]:
+	if id in INTERIORS:
 		spot = _build_interior(id, at)
 	elif id.begins_with("mine"):
 		spot = _build_mine(id, at)
@@ -142,7 +151,7 @@ func load_area(id: String, at: String) -> void:
 	player.position = spot
 	entities.add_child(player)
 	player.facing = Vector2.DOWN if at != "bed" else Vector2.DOWN
-	if id in ["house", "barn", "coop", "general_store", "saloon", "blacksmith_shop", "library", "clinic", "school", "church", "bathhouse", "museum", "inn", "mayors_manor", "npc_house_1", "npc_house_2", "dispensary"]:
+	if id in INTERIORS:
 		player.set_room(interior.room_rect())
 	elif id.begins_with("mine"):
 		player.set_room(Rect2(Vector2(-256, -256), Vector2(512, 512)))
@@ -224,6 +233,8 @@ func _build_outdoor(id: String, at: String) -> Vector2:
 	var spawns: Dictionary = data.get("spawns", {})
 	if spawns.has(at):
 		return Vector2(spawns[at][0], spawns[at][1])
+	if at == "return" and _door_return.get("area", "") == id:
+		return _door_return.spot
 	if at == "door" and cabin:
 		return cabin.position + Vector2(0, 12)
 	return size / 2.0
@@ -649,7 +660,11 @@ func spawn(o: Dictionary) -> Node2D:
 			node = Gate.new(int(o.get("w", 2)))
 		"custom_building":
 			node = CustomBuilding.new(o.kind)
-			node.entered.connect(func(): go_to(o.kind, "door"))
+			node.label = o.get("name", "")
+			var door_spot: Vector2 = pos + (node.door_area.position + Vector2(0, 8) if node.door_area else Vector2(0, 14))
+			node.entered.connect(func():
+				_door_return = {"kind": o.kind, "area": area_id, "spot": door_spot}
+				go_to(o.kind, "door"))
 		"deck":
 			node = Deck.new(o.kind, int(o.w), int(o.h))
 		"house":

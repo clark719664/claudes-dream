@@ -184,8 +184,7 @@ func use_selected() -> void:
 		if w.area_id == "farm" and not w.cell_blocked(cell):
 			var o := {"t": "custom_building", "kind": item, "x": cell.x * 16 + 8, "y": cell.y * 16 + 14}
 			Game.area_state(w.area_id).placed.append(o)
-			var node = w.spawn(o)
-			w.entities.add_child(node)
+			w.spawn(o)
 			Inventory.take(item)
 			Game.say("Built the %s!" % item.capitalize())
 		else:
@@ -492,10 +491,16 @@ func _refresh_weapon() -> void:
 	var sel := selected()
 	_held = sel if sel in Inventory.TOOLS else Inventory.weapon()
 	_set_weapon_texture(_held)
-	if weapon.texture and weapon.texture.get_size().x == 24:
+	if weapon.texture and _diagonal_art(_held):
 		weapon.rotation_degrees = -10.0
 	else:
 		weapon.rotation_degrees = 35.0
+
+
+## PixelLab item art is already drawn on the diagonal, so it swings less and is held lower.
+func _diagonal_art(item: String) -> bool:
+	var spec: Dictionary = Pack.catalog.items.get(item, {})
+	return spec.get("curated", false) or str(spec.get("sheet", "")).begins_with("pixellab_items/")
 
 
 func _set_weapon_texture(item: String) -> void:
@@ -505,8 +510,8 @@ func _set_weapon_texture(item: String) -> void:
 	var t := Pack.icon(item)
 	weapon.texture = t
 	var sz := t.get_size()
-	if sz.x == 24:
-		weapon.offset = Vector2(-6, -18)
+	if _diagonal_art(item):
+		weapon.offset = Vector2(-sz.x * 0.25, -sz.y * 0.75)
 	else:
 		weapon.offset = Vector2(-sz.x * 0.5, -sz.y + 3)
 
