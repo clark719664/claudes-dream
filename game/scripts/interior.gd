@@ -13,18 +13,31 @@ const ORIGIN := Vector2.ZERO
 const LAYOUTS := {
 	"barn": {"wall": 4, "floor": 6, "w": 12, "h": 6, "props": []},
 	"coop": {"wall": 0, "floor": 0, "w": 8, "h": 5, "props": []},
-	"general_store": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
-		["bookshelf", 2.2, 5.9, 28, ""], ["bookshelf", 9.8, 5.9, 28, ""], ["store_counter", 6.0, 7.6, 48, ""],
-		["house_plant", 1.6, 12.4, 10, ""], ["house_plant", 10.4, 12.4, 10, ""]]},
+	"general_store": {"wall": 2, "floor": 4, "w": 20, "h": 14, "props": [
+		["bookshelf", 2.2, 5.9, 28, ""], ["bookshelf", 5.4, 5.9, 28, ""], ["bookshelf", 8.6, 5.9, 28, ""], ["bookshelf", 12.0, 5.9, 28, ""],
+		["bookshelf", 3.0, 8.3, 28, ""], ["bookshelf", 7.0, 8.3, 28, ""], ["bookshelf", 11.0, 8.3, 28, ""],
+		["tavern_table", 4.6, 12.0, 22, ""], ["tavern_table", 10.0, 12.0, 22, ""], ["tavern_table", 13.4, 12.0, 22, ""],
+		["store_counter", 10.5, 10.8, 52, ""], ["store_counter", 18.0, 8.7, 34, ""],
+		["wood_stool", 8.8, 11.0, 0, ""], ["wood_stool", 12.3, 11.0, 0, ""],
+		["rug", 10.5, 17.1, 0, "rug"], ["floor_lamp", 2.0, 12.4, 6, ""], ["floor_lamp", 18.5, 12.4, 6, ""],
+		["house_plant", 2.0, 18.2, 10, ""], ["house_plant", 19.0, 18.2, 10, ""]],
+		"partitions": [[[15, 5], [15, 7]], [[15, 9], [15, 10]], [[16, 10], [20, 10]]]},
 	"saloon": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
 		["tavern_bar", 6.0, 6.6, 68, ""], ["tavern_table", 2.8, 9.6, 22, ""], ["tavern_table", 9.2, 9.6, 22, ""],
 		["wood_stool", 1.5, 9.8, 0, ""], ["wood_stool", 4.1, 9.8, 0, ""], ["wood_stool", 7.9, 9.8, 0, ""], ["wood_stool", 10.5, 9.8, 0, ""],
 		["floor_lamp", 1.4, 6.0, 6, ""], ["house_plant", 10.5, 12.4, 10, ""]]},
 	"blacksmith_shop": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
 		["forge_anvil", 6.0, 8.4, 26, ""], ["wood_stool", 8.2, 8.6, 0, ""], ["house_plant", 1.6, 12.4, 10, ""]]},
-	"library": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
-		["bookshelf", 2.0, 5.9, 28, ""], ["bookshelf", 3.9, 5.9, 28, ""], ["bookshelf", 8.1, 5.9, 28, ""], ["bookshelf", 10.0, 5.9, 28, ""],
-		["library_desk", 6.0, 8.2, 40, ""], ["rug", 6.0, 10.4, 0, "rug"], ["floor_lamp", 1.5, 9.0, 6, ""], ["house_plant", 10.5, 12.4, 10, ""]]},
+	"library": {"wall": 2, "floor": 4, "w": 22, "h": 14, "props": [
+		["bookshelf", 2.0, 5.9, 28, ""], ["bookshelf", 5.0, 5.9, 28, ""], ["bookshelf", 8.0, 5.9, 28, ""], ["bookshelf", 11.0, 5.9, 28, ""], ["bookshelf", 14.0, 5.9, 28, ""],
+		["bookshelf", 2.0, 9.2, 28, ""], ["bookshelf", 5.0, 9.2, 28, ""], ["bookshelf", 8.0, 9.2, 28, ""], ["bookshelf", 11.0, 9.2, 28, ""],
+		["bookshelf", 18.2, 5.9, 28, ""], ["bookshelf", 20.5, 5.9, 28, ""], ["bookshelf", 18.2, 8.2, 28, ""], ["bookshelf", 20.5, 8.2, 28, ""],
+		["library_desk", 7.0, 14.5, 40, ""], ["library_desk", 13.2, 14.5, 40, ""],
+		["tavern_table", 10.0, 11.7, 22, ""], ["wood_stool", 8.2, 11.9, 0, ""], ["wood_stool", 11.8, 11.9, 0, ""],
+		["rug", 10.5, 17.0, 0, "rug"], ["rug", 19.0, 11.7, 0, "rug"],
+		["floor_lamp", 3.0, 14.5, 6, ""], ["floor_lamp", 16.0, 14.5, 6, ""],
+		["house_plant", 2.0, 18.1, 10, ""], ["house_plant", 21.0, 18.1, 10, ""]],
+		"partitions": [[[17, 5], [17, 7]], [[17, 9], [17, 10]], [[18, 10], [22, 10]]]},
 	"dispensary": {"wall": 3, "floor": 5, "w": 8, "h": 6, "props": [
 		["counter", 5.0, 7.0, 40, ""], ["house_plant", 1.6, 6.3, 10, ""], ["house_plant", 8.4, 6.3, 10, ""]]},
 	"clinic": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [
@@ -178,6 +191,22 @@ func build(tier_, sorted_parent: Node2D) -> void:
 	_body = StaticBody2D.new()
 	_body.collision_layer = 1
 	add_child(_body)
+	for partition in lay.get("partitions", []):
+		var a := Vector2i(partition[0][0], partition[0][1])
+		var b := Vector2i(partition[1][0], partition[1][1])
+		if a.x == b.x:
+			var top := mini(a.y, b.y)
+			var bottom := maxi(a.y, b.y)
+			for y in range(top, bottom + 1):
+				_put(Vector2i(a.x, y), Vector2i(sc + 2, 5))
+			_rect(Rect2(a.x * 16.0, top * 16.0, 16.0, (bottom - top + 1) * 16.0))
+		elif a.y == b.y:
+			var left := mini(a.x, b.x)
+			var right := maxi(a.x, b.x)
+			for x in range(left, right + 1):
+				_put(Vector2i(x, a.y), Vector2i(sc + 2, 5))
+			_rect(Rect2(left * 16.0, a.y * 16.0, (right - left + 1) * 16.0, 16.0))
+
 	var W := (w + 2) * 16.0
 	var floor_bottom := (5 + h) * 16.0
 	_rect(Rect2(0, 0, W, 86))
