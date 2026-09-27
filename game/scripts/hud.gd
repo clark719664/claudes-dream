@@ -206,7 +206,7 @@ func _build_status() -> void:
 
 func _build_clock() -> void:
 	var box := _panel()
-	box.position = Vector2(480 - 176 - 4, 4)
+	box.position = Vector2(480 - 176 - 48, 4)
 	box.custom_minimum_size = Vector2(176, 0)
 	root.add_child(box)
 	var v := VBoxContainer.new()
@@ -258,7 +258,7 @@ func _build_hint() -> void:
 	root.add_child(hint)
 	var access := Button.new()
 	access.text = "Menu"
-	access.position = Vector2(432, 7)
+	access.position = Vector2(435, 7)
 	access.size = Vector2(40, 20)
 	access.tooltip_text = "Settings and controls"
 	access.pressed.connect(func(): Preferences.open_settings())
@@ -786,18 +786,18 @@ func _fill_inventory() -> void:
 		Inventory.CABIN_TIERS[Game.cabin_tier].name, "  (upgrade tonight)" if Game.upgrade_pending else ""]
 	menu_box.add_child(_label(stats, DIM))
 	var grid := GridContainer.new()
-	grid.columns = 5
+	grid.columns = 4
 	grid.add_theme_constant_override("h_separation", 6)
 	grid.add_theme_constant_override("v_separation", 3)
 	menu_box.add_child(grid)
 	for item in Inventory.items:
 		var cell := HBoxContainer.new()
 		cell.add_theme_constant_override("separation", 2)
-		cell.custom_minimum_size = Vector2(56, 14)
+		cell.custom_minimum_size = Vector2(98, 14)
 		cell.add_child(_icon(item, 12))
 		var l := _label("%d %s" % [Inventory.count(item), Inventory.display_name(item)])
-		l.clip_text = true
-		l.custom_minimum_size = Vector2(40, 0)
+		l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		l.custom_minimum_size = Vector2(84, 0)
 		cell.add_child(l)
 		grid.add_child(cell)
 	if Inventory.items.is_empty():

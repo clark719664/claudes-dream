@@ -151,7 +151,7 @@ func open_settings(tab := "settings") -> void:
 	overlay.add_child(shade)
 	panel = PanelContainer.new()
 	panel.position = Vector2(34, 16)
-	panel.size = Vector2(412, 238)
+	panel.size = Vector2(412, 229)
 	panel.theme = _theme()
 	panel.add_theme_stylebox_override("panel", _style())
 	overlay.add_child(panel)
@@ -193,7 +193,7 @@ func _fill() -> void:
 		button.disabled = active_tab == tab
 		tabs.add_child(button)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(384, 134)
+	scroll.custom_minimum_size = Vector2(384, 125)
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(scroll)
