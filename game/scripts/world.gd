@@ -50,7 +50,10 @@ func _ready() -> void:
 	if not Pack.ok:
 		_missing_assets()
 		return
-	var loaded := Game.load_game()
+	var loaded := false
+	if not Preferences.new_game_requested:
+		loaded = Game.load_game()
+	Preferences.new_game_requested = false
 	if not loaded:
 		Game.new_game()
 	player = Player.new()

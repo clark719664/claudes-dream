@@ -187,7 +187,7 @@ func _furniture(region, feet: Vector2, solid: float, role: String) -> void:
 		var d = Pack.catalog.sprites[region]
 		if typeof(d) == TYPE_ARRAY:
 			d = d[0]
-		sp.texture = load("res://assets/" + d.sheet)
+		sp.texture = Pack.texture(d.sheet)
 		sp.region_enabled = true
 		sp.region_rect = Rect2(d.region[0], d.region[1], d.region[2] - d.region[0], d.region[3] - d.region[1])
 		sz = sp.region_rect.size

@@ -51,6 +51,11 @@ var _selected := 0
 var _confirm: Callable
 var _stops: Array = []          # minecart stop ids listed in the travel menu
 var _here := ""
+var _ui_dimmer: ColorRect
+var _ui_title: Label
+var _ui_scroll: ScrollContainer
+var _ui_footer: Label
+var _ui_tabs: HBoxContainer
 
 
 func _ready() -> void:
@@ -119,19 +124,10 @@ func say(text: String) -> void:
 # ---------------------------------------------------------------- building blocks
 func _panel(min_size := Vector2.ZERO) -> PanelContainer:
 	var p := PanelContainer.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = PANEL
-	sb.border_color = EDGE
-	sb.set_border_width_all(1)
-	sb.set_content_margin_all(4)
-	sb.shadow_color = Color(0, 0, 0, 0.35)
-	sb.shadow_offset = Vector2(1, 1)
-	sb.shadow_size = 1
-	p.add_theme_stylebox_override("panel", sb)
+	p.add_theme_stylebox_override("panel", HearthTheme.panel_style())
 	p.custom_minimum_size = min_size
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return p
-
 
 func _label(text := "", colour := TEXT) -> Label:
 	var l := Label.new()
@@ -258,13 +254,15 @@ func _build_toast() -> void:
 
 func _build_hint() -> void:
 	hint = _panel()
-	hint.position = Vector2(4, 62)
-	hint.add_child(_label("WASD move   SHIFT run\n1-0 / WHEEL pick a tool\nSPACE / CLICK use it\nE talk - open - harvest\nC craft  I pack  M map\nQ eat   ESC close", DIM))
+	hint.visible = false
 	root.add_child(hint)
-	var tw := hint.create_tween()
-	tw.tween_interval(18.0)
-	tw.tween_property(hint, "modulate:a", 0.0, 1.5)
-
+	var access := Button.new()
+	access.text = "Menu"
+	access.position = Vector2(432, 7)
+	access.size = Vector2(40, 20)
+	access.tooltip_text = "Settings and controls"
+	access.pressed.connect(func(): Preferences.open_settings())
+	root.add_child(access)
 
 func _refresh_items() -> void:
 	_clear(strip)
@@ -368,14 +366,55 @@ func fade(to_black: bool, time := 0.35) -> void:
 
 # ---------------------------------------------------------------- menus
 func _build_menu() -> void:
-	menu = _panel(Vector2(300, 0))
+	root.theme = HearthTheme.make_theme()
+	root.theme.default_font = Pack.font
+	_ui_dimmer = ColorRect.new()
+	_ui_dimmer.color = Color(0.07, 0.06, 0.04, 0.55)
+	_ui_dimmer.size = Vector2(480, 270)
+	_ui_dimmer.mouse_filter = Control.MOUSE_FILTER_STOP
+	_ui_dimmer.visible = false
+	root.add_child(_ui_dimmer)
+	menu = _panel(Vector2(424, 224))
+	menu.position = Vector2(28, 23)
+	menu.size = Vector2(424, 224)
 	menu.visible = false
 	menu.mouse_filter = Control.MOUSE_FILTER_STOP
+	var shell := VBoxContainer.new()
+	menu.add_child(shell)
+	var heading := HBoxContainer.new()
+	shell.add_child(heading)
+	_ui_title = _label("Hearthwild", GOLD)
+	_ui_title.add_theme_font_size_override("font_size", 11)
+	_ui_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_child(_ui_title)
+	var close := Button.new()
+	close.text = "X"
+	close.custom_minimum_size = Vector2(22, 20)
+	close.pressed.connect(close_menu)
+	heading.add_child(close)
+	_ui_tabs = HBoxContainer.new()
+	shell.add_child(_ui_tabs)
+	for entry in [["inventory", "Pack"], ["craft", "Craft"], ["social", "People"]]:
+		var mode_name: String = entry[0]
+		var tab := Button.new()
+		tab.name = mode_name
+		tab.text = entry[1]
+		tab.custom_minimum_size = Vector2(62, 20)
+		tab.pressed.connect(func(): _mode = mode_name; _station = ""; _selected = 0; _refresh_menu())
+		_ui_tabs.add_child(tab)
+	_ui_scroll = ScrollContainer.new()
+	_ui_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_ui_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_ui_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_ui_scroll.follow_focus = true
+	shell.add_child(_ui_scroll)
 	menu_box = VBoxContainer.new()
-	menu_box.add_theme_constant_override("separation", 2)
-	menu.add_child(menu_box)
+	menu_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_box.add_theme_constant_override("separation", 4)
+	_ui_scroll.add_child(menu_box)
+	_ui_footer = _label("", DIM)
+	shell.add_child(_ui_footer)
 	root.add_child(menu)
-
 
 func open_crafting(station: String, node: Node = null) -> void:
 	_station_node = node
@@ -438,10 +477,12 @@ func _open(mode: String, station: String) -> void:
 func close_menu() -> void:
 	_mode = ""
 	menu.visible = false
+	_ui_dimmer.visible = false
 	get_tree().paused = false
 
 
 ## kept for older callers
+
 func close_crafting() -> void:
 	close_menu()
 
@@ -622,6 +663,13 @@ func _ship_selected(all: bool) -> void:
 
 func _refresh_menu() -> void:
 	_clear(menu_box)
+	var titles := {"inventory": "Backpack", "craft": "Workshop", "social": "Village journal", "shop": "Market", "ship": "Shipping crate", "travel": "Travel", "map": "Valley map"}
+	_ui_title.text = titles.get(_mode, "Hearthwild")
+	_ui_tabs.visible = _mode in ["inventory", "craft", "social"]
+	for tab in _ui_tabs.get_children():
+		tab.disabled = tab.name == _mode
+	_ui_footer.text = {"inventory": "Collected goods and supplies", "craft": "Make something useful", "social": "People of the valley", "shop": "Supplies for the season", "ship": "Goods ready for market", "travel": "Choose a destination", "map": "Find your next path"}.get(_mode, "")
+	_ui_dimmer.visible = true
 	match _mode:
 		"craft": _fill_craft()
 		"inventory": _fill_inventory()
@@ -630,9 +678,8 @@ func _refresh_menu() -> void:
 		"ship": _fill_ship()
 		"travel": _fill_travel()
 		"map": _fill_map()
-	menu.reset_size()
-	menu.position = Vector2(roundf((480 - menu.size.x) / 2.0), maxf(4, roundf((270 - menu.size.y) / 2.0) - 8))
-
+	menu.size = Vector2(424, 224)
+	menu.position = Vector2(28, 23)
 
 func _title(text: String) -> void:
 	var t := _label(text, GOLD)

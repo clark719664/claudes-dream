@@ -47,6 +47,7 @@ var weather := "sun"       # sun, rain, storm, wind, snow
 var shipped := {}          # item -> count, paid out overnight
 var earned := 0            # all gold ever made from shipping
 var areas := {}            # area id -> {"removed": {id: day}, "placed": [], "soil": {}, "crops": {}}
+var relationships := {}
 var springs := {}          # spring name -> last day you drank
 var stats := {"gathered": {}, "crafted": {}, "kills": {}, "cleared": 0}
 var opened := {}           # chests already looted, by id
@@ -217,6 +218,8 @@ func hitstop(duration := 0.05) -> void:
 
 
 func shake(amount := 2.0) -> void:
+	if not Preferences.screen_shake:
+		return
 	if player and player.has_method("shake"):
 		player.shake(amount)
 
@@ -348,6 +351,8 @@ func sleep(passed_out := false) -> void:
 		earned += total
 		lines.append("Shipped %s: +%dg" % [", ".join(parts), total])
 	shipped = {}
+	for relation in relationships.values():
+		relation["gifted_today"] = false
 	var upgraded := false
 	if upgrade_pending:
 		upgrade_pending = false
@@ -391,7 +396,7 @@ func save_game() -> void:
 		"version": 5, "day": day, "time": time_of_day, "cabin_tier": cabin_tier, "upgrade_pending": upgrade_pending,
 		"goal": goal, "stats": stats, "opened": opened.keys(), "inventory": Inventory.save_data(),
 		"stations": station_tiers, "gold": gold, "energy": energy, "weather": weather, "shipped": shipped,
-		"earned": earned, "areas": areas, "springs": springs,
+		"earned": earned, "areas": areas, "springs": springs, "relationships": relationships,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -426,11 +431,30 @@ func load_game() -> bool:
 	earned = int(data.get("earned", 0))
 	areas = data.get("areas", {})
 	springs = data.get("springs", {})
+	relationships = data.get("relationships", {})
 	Inventory.load_data(data.get("inventory", {}))
 	return true
 
 
 func new_game() -> void:
+	area = "house"
+	cabin_tier = 1
+	upgrade_pending = false
+	goal = 0
+	shipped = {}
+	earned = 0
+	areas = {}
+	springs = {}
+	relationships = {}
+	stats = {"gathered": {}, "crafted": {}, "kills": {}, "cleared": 0}
+	opened = {}
+	buffs = {}
+	station_tiers = {}
+	stations_found = {}
+	report = ""
+	_last_hour = -1
+	_goal_timer = 0.0
+	_sleeping = false
 	day = 1
 	time_of_day = 0.25
 	gold = Inventory.START_GOLD
