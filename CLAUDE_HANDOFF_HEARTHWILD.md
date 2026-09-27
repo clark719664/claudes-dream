@@ -182,126 +182,48 @@ mine.gd: corrected Harvestable constructor second argument to integer0; replaced
 
 world.gd: added mine-specific camera room Rect2(-256,-256,512,512). Has NOT yet received start-menu new-game flag handling.
 
-custom_building.gd: renamed illegal Node.get_name()->String override to display_name(). Full visual rewrite is NOT done: it still loads a raw pixellab_objects/<id>.png, assumes hframes=8, and uses fixed collision160x60.
+custom_building.gd: renamed illegal Node.get_name()->String override to display_name(). (Since rewritten on curated art — see section 10.)
 
 Fresh import after initial repairs and crop integration had no parser errors. Later full-area testing found runtime issues below. Do not equate parser success with complete game functionality.
 
-## 10. Current failing area test — exact next bugs
+## 10. Current state — 2026-09-27 (Claude, branch codex/hearthwild-claude-handoff-2026-09-27)
 
-Created `game/tests/test_areas.gd` and `.tscn`, which extend world.gd and load 27 interiors/outdoor regions/mine in a fresh game. They print AREA BEGIN/AREA OK and final count. IMPORTANT: Godot runtime errors do not necessarily fail the process and this harness currently prints AREA OK even when a build method aborted. Inspect logs for SCRIPT ERROR and ERROR, and improve the harness before treating it as a green test.
+Sections 10–16 of the Codex handoff described a stop state that no longer exists; they were replaced by this section. Everything below was run and checked on this branch.
 
-Latest log: `C:/Users/lil_c/pixellab-recovery/area-smoke-2.log`.
+### PixelLab curation — done, repeatable
+- `game/tools/curate_pixellab_assets.py` + editable `game/tools/curation_config.json`. One archive UUID and ONE view per asset; crop to alpha bounds (alpha >= 128); resize (`nearest` for buildings, most at native 1:1 so no resampling at all; `majority` area-colour downscale for furniture, icons and the few scaled buildings — same method as `tools/pixellab/pixelscale.py` on the original branch, because plain nearest at 1/4 scale drops outlines); write `game/assets/curated/{buildings,furniture,icons}/`; merge into `data/catalog.json` keeping every non-art field; reapply `data/strain_catalog.json` LAST and assert nothing in it was lost.
+- `--check` verifies sources only; a missing required source exits 1 before anything is written; optional ones are reported as skipped. `--write-index` rebuilds `game/tools/pixellab_object_index.json` (id/name/views derived from archive metadata — no recovery scripts, no credentials).
+- Provenance for every output: `game/data/curation_provenance.json` (source UUID/name/view/path/SHA256, crop box, scale, resample, output path/size/SHA256, catalog key, anchor, footprint, door, notes).
+- 96 assets: 24 buildings (all town kinds incl. dispensary + barn/coop/greenhouse/windmill/silo/well/church), 17 furnishings, 55 item icons (16x16) for items that exist in the game — including tomato/corn/pumpkin/eggplant/onion/strawberry, which previously had NO catalog icon at all.
+- Choices: south views for buildings/furniture (front-facing, matches the orthographic world); the brighter barn, detailed coop, wood-frame greenhouse, big-sail windmill, red silo, stone well, timber church. Long tools/weapons use the north-east view so the icon reads diagonally. Garlic uses EAST: south, SE, SW, W and both north views all carry stray generator text (not only south). Dispensary uses the white-frame glass greenhouse (its old art duplicated Pen Ridge Ranch's cottage). Strain nuggets untouched (sativa 01cb8e15 S, hybrid ad155a81 SE, indica 18bb9cb1 S).
 
-Still failing:
-1. `Interior._furniture`, around line190: `sp.texture = load("res://assets/" + d.sheet)` bypasses Pack's base-pack fallback. Replace with `Pack.texture(d.sheet)` while retaining correct region rectangle. This exact small fix was identified but NOT applied before handoff.
-2. `Interior._furniture` also references missing sprite key `plant`. Select and catalog an appropriate recovered plant, or correct the mismatched key to its actual existing counterpart; don't just hide the exception.
-3. Missing actor catalog keys observed across runs: bear, bee, butterfly, cave_bat, cave_snake, chicken, dog, forest_wolf, frog, green_forest_slime, horse, rock_slime, stone_based_slime, tabby_cat. Pack.frames directly indexes catalog.actors and errors; Enemy/FarmAnimal then call has_animation on null. Recover/map the correct actors and animation layouts from the complete archive. Do not substitute unrelated creatures just to silence errors.
-4. Many additional mine biomes use actors beyond those exercised by the first mine. Audit all referenced actor names, including deeper-floor boss pools, not just the observed list.
-5. Existing resource/node leaks remain at shutdown. Some mine discarded-node leaks were fixed, but the most recent log still mentions CanvasItem/ObjectDB cleanup. Use verbose diagnostics after functional errors are clean.
+### Buildings — rewritten
+- `scripts/custom_building.gd`: same constructor/`entered`/`building_id`/`display_name()`/`interact()`. Feet at the origin from the curated anchor (anchor x = door centre); collision from the curated footprint; a `DoorSpot` Area2D in front of the door is the only interactable, and `entered` fires only when the player presses interact while standing in it. Buildings not in `World.INTERIORS` (wizard tower, npc_house_3-5, farm greenhouse) say the door is locked; silo/windmill/well have no door. Uncurated catalog entries still work (anchor from the art's used rect).
+- `scripts/world.gd`: `const INTERIORS` replaces two duplicated lists; `custom_building` nodes get the area data's `name` as their sign; walking out of ANY interior returns you to the door you came in by (`_door_return`). Before this, town interiors had no exit at all.
+- `tools/patch_town_layout.py` (idempotent) moved museum/dispensary/npc_house_3/npc_house_5 so nothing overlaps, and brought Pen Ridge Ranch (and its rancher) back inside the 1760 px map — it was at x=1776. `tools/worldgen/town.py` still has the overlapping lots; regenerate the world only after fixing it there too.
+- `scripts/player.gd`: building placement no longer double-adds the spawned node (was an engine error on every build); curated diagonal icons get the PixelLab grip/rotation when held.
 
-Named interior clampi failure and missing mine UI/glow images are absent from the second log, confirming those fixes reached execution.
+### Interiors — furnished
+- `scripts/interior.gd` LAYOUTS for every town interior use the curated furniture (fern, bookshelves, counters, bar + stools, beds, desks, pews, display cases, anvil, hot spring, lamp, rug). String props now honour catalog anchors. The old layouts put several props on the back wall (y 3–4 tiles) and centred on x 5.0 instead of the room centre 6.0; both fixed.
 
-Mine caveat: mine rendering is still an unfinished flat-color procedural area, with potentially incomplete collision/camera/world-size behavior inherited from earlier work. A claimed polished production game would require a visual/playability pass there. Mine entrance lives in mountain, not a nonexistent heights area. Verify the `mine` return spawn resolves to a sensible mountain location; changing the destination name alone was not an end-to-end door traversal test.
+### UI fixes from the 480x270 review
+- HUD clock/goal panel no longer runs under the Menu button (weather was clipped).
+- Pack grid: 4 columns x 98 px with ellipsis; names were clipped to "1 WATERI", "15 CARR".
+- Controls list shows exactly five rows (no half row) and the modal clears the title credit.
 
-## 11. Asset integration still to do
+### Verification (all headless unless noted; Godot 4.4.1 console exe)
+- `test_buildings.tscn` (new): 212 checks, 0 failures — every town building curated and on-map, no pair overlaps, interact away from the door does nothing, library door enters, walking out lands at the library door, wizard tower stays locked with a message, every interior's furniture placed, built barn enters and exits back to its door, silo has no door.
+- `test_strain_crops.tscn`: 48 checks, 0 failures. `test_preferences.tscn -- --test-mode`: 21 checks, 0 failures (the flag is required; without it the isolation check fails by design). `test_areas.tscn`: 27 areas loaded, no script errors (only the usual leak warnings at exit).
+- `visual_review.tscn -- --out=<dir>` with a real renderer: title, settings, controls, cabin, farm, placed farm buildings, inventory, 8 town close-ups, shop, 14 interiors. Screenshots were inspected by eye.
+- No user save exists in `%APPDATA%/Godot/app_userdata/Hearthwild`; tests did not write one.
 
-No curation tool has landed. Create a reproducible import/selection pipeline, e.g. `game/tools/curate_pixellab_assets.py` plus a human-readable selection manifest. Keep originals immutable in ArtSource. Work from all UUID variants and direction metadata. Choose views for readability, coherent viewpoint, pixel density, feet anchors, and footprint. Do not simply choose the newest variant everywhere.
+### Still to do
+- Seed purchase → water → grow → harvest → ship was covered in-memory by the crop tests, not by driving the shop UI; New Farm confirmation and rebind-after-restart were covered by the preference tests only as far as they go. A scripted end-to-end run through the real UI is still worth adding.
+- Shop list shows a partial last row as a scroll hint; the town has pre-existing ladder-like fence runs and the interiors reuse one wall/floor style.
+- Farm-placed buildings only check the single clicked cell for obstruction (pre-existing).
+- The three remote-only commits on `claude/game-engine-ai-design-gh3z6p` (f64d85cb, 31038c2a, 5a3bdafc: PixelLab cast, Deepways railway, procedural Old Mine floors, cave walls, can upgrades; they touch world.gd, player.gd, interior.gd, hud.gd, inventory.gd and delete `make_all_monster_animations.py`) are NOT merged. Merge deliberately, file by file.
 
-Audit catalog sprites/items/actors/stations against the archive and actual game references. Existing catalog has many already imported characters, but name mismatches are producing missing actors. Preserve working animation mappings and add the absent source assets. Do not overwrite all actors unnecessarily.
-
-For buildings, rewrite CustomBuilding to consume selected catalog sprites and source-specific metadata, not a hardcoded eight-frame strip. Correct texture cropping, origin at feet, scale, visual footprint, collision, entrance interaction and door location. Keep player collision/door access sensible. Check world spawn paths use the curated result. Building art cannot merely be present in a directory: it must actually be used.
-
-For inventory, preserve original colors with Inventory.tint's curated/ exception. Check every shop/crafting icon resolves. Food/tool assets should be readable at16px; keep pixel edges crisp and transparent bounds tight. Avoid unreadable crops from giant sheets.
-
-Select matching furniture for named interiors and ensure all their keys exist. The current custom building/import code is one of the clearest unfinished areas.
-
-Merge strain_catalog overlay LAST. Record each selected source UUID/direction, destination, and reason. Validate all referenced files, all atlas bounds, all actor frame layouts, and all expected animation names. Keep unselected source variants archived rather than deleting them.
-
-## 12. Start/settings/Controls — not implemented
-
-Final check: project.godot still uses `res://scenes/main.tscn`; no Preferences autoload; no settings files. Implement from scratch while preserving existing game behavior.
-
-Recommended design (not code already present):
-- Start screen: Continue (disabled/no-save state clear), New Game, Settings, Controls, Quit.
-- Settings available before play and in-game through a compact menu button/Escape when no other modal owns Escape.
-- Persist configuration separately from hearthwild_save.json, likely ConfigFile in user://. Handle missing/corrupt config safely.
-- Add a Preferences autoload after Game/Inventory so default InputMap bindings already exist before applying saved overrides.
-- Video: suitable window/fullscreen options, sensible integer pixel scaling; actual implemented audio volume controls; optional reduced-motion/screen-shake setting only if wired into the real effect code.
-- Controls: list actions and current actual bindings; rebind keyboard keys with visible capture state; Escape cancels capture; report key conflicts clearly; provide reset defaults and cancel/back; preserve existing mouse/controller mappings unless intentionally editing those too.
-- Ensure remapped actions work in real play, persisted after restart, and UI labels update.
-- New Game must not immediately destroy an existing save merely by entering the menu. Confirm replacement when applicable. Starting a new run should reset ALL world/global state, not just date/inventory.
-- Existing Game.new_game only resets day/time/gold/energy/weather/inventory: explicitly reset areas, shipped, earned, goal/stats, opened, upgrades/cabin tier, springs, buffs, station tiers, relationships, timers as appropriate.
-- Existing World._ready ALWAYS calls Game.load_game, then Game.new_game if false. Add a consumed startup intent flag to bypass loading for an explicitly selected New Game. Otherwise a New Game button will accidentally reload the old save.
-- Opening settings pauses gameplay; closing restores the prior pause state instead of blindly unpausing another dialog. Prevent input leaking through overlays into tools/movement.
-- Keep Continue/load compatible with existing v5 saves.
-
-Current default actions defined in Game._ready:
-move_left A/Left; move_right D/Right; move_up W/Up; move_down S/Down; attack J/Space + left mouse + padX; interact E/Enter + right mouse + padA; eatQ + padY; sprintShift + right shoulder; craftC + left shoulder; inventoryI/Tab + padBack; mapM + padStart; cancelEscape + padB; slot_next wheelDown + dpadRight; slot_prev wheelUp + dpadLeft; slot_0..slot_9 keys1..0. Preserve the existing controller axes as well.
-
-## 13. HUD/UI polish — not implemented
-
-Final check: hud.gd still contains its six-line WASD/SHIFT/SPACE/E/C/I/M/Q/ESC legend in _build_hint around259-267, with an18-second fade. User explicitly wants that removed and relocated to Controls. Keeping it but making it fade faster is not sufficient.
-
-Visual direction: original cozy woodland farming identity, walnut frames, parchment accents, sage and amber, crisp pixel typography. Current viewport480x270, integer scaling to1440x810, nearest filtering. UI must actually fit this small native canvas; do not transplant oversized web layouts. Prefer consistent theme helpers reused by HUD, start screen, settings, dialogs and menus.
-
-Polish health/energy/level, date/weather/clock/gold, goals, toolbar selection, inventory, crafting, shops, shipping, map/travel, dialogs, and social screen. Use actual best icons. Ensure text contrast, selection/focus feedback, mouse and keyboard usability, readable quantities/prices, constrained dialog text, scrolling for longer lists and no off-screen rows.
-
-HUD landmarks (line numbers will change after edits): _panel120, _label136, _icon143, _bar153, _build_status173, _build_clock211, _build_strip239, _build_toast249, _build_hint259, _refresh_items269, _build_dialog318, _build_menu370, _open428, _unhandled_input449, _fill_social504, _refresh_menu623, _fill_inventory733, _fill_shop835, _fill_ship886.
-
-Social bug: HUD reads Game.relationships, but that property does not exist in current Game. Add correct state/save/load/new-game handling and daily gift reset consistent with actual NPC usage. Inspect npc.gd for exact fields rather than inventing a conflicting shape.
-
-## 14. Verification commands and evidence
-
-From repository root in PowerShell:
-
-```powershell
-$godot = 'C:/Users/lil_c/Tools/Godot-4.4.1/Godot_v4.4.1-stable_win64_console.exe'
-$python = 'C:/Users/lil_c/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe'
-& $python game/tools/import_strain_assets.py
-& $godot --headless --path game --editor --import --quit
-& $godot --headless --path game res://tests/test_strain_crops.tscn --quit-after 120
-& $godot --headless --path game res://tests/test_areas.tscn --quit-after 200 -- --new
-```
-
-Redirect logs to files, inspect error lines, and verify expected completion output. Exit0 alone is not proof of a successful Godot runtime test. `rg` exits1 if no matches; don't confuse that with a failed Godot process when composing commands.
-
-Crop screenshot scene: `game/tests/visual_strains.tscn`. It renders three rows/four stages and writes the current hardcoded path `C:/Users/lil_c/pixellab-recovery/crop-growth-game-refined.png`, then quits. It sets Game.world=null to avoid clock progression. It needs a real rendering backend; headless dummy rendering cannot produce meaningful screenshots. Make output path configurable/portable if retaining as a durable project tool.
-
-Example hidden rendering:
-```powershell
-$p = Start-Process -FilePath $godot -ArgumentList '--path','C:/Users/lil_c/claudes-dream/game','res://tests/visual_strains.tscn','--quit-after','120' -WindowStyle Hidden -PassThru -RedirectStandardOutput C:/Users/lil_c/pixellab-recovery/preview.log -RedirectStandardError C:/Users/lil_c/pixellab-recovery/preview-errors.log
-$p.WaitForExit(30000)
-```
-
-Existing game/scripts/demo.gd can automate tours/screenshots using user args --demo --new --shots=..., or --area=farm --mapshot=... --region=x,y,w,h --mapscale=2. Inspect before use; menus added later must preserve a useful test bypass. Avoid writing to the user's real save/config during tests. Existing --new makes load_game skip the save but does not universally sandbox all later writes; don't invoke sleep/save in a test without an isolated user-data strategy.
-
-Important logs:
-- baseline-import.log / import-after-baseline.log: old initial failures
-- crop-green-import.log: clean parser import at crop milestone
-- crop-green.log: 48 checks,0failures
-- crop-visual.log / crop-refined.log: screenshot runs
-- world-smoke.log: initial house-only run, shutdown leaks
-- area-smoke.log: first27-area test, many errors
-- area-smoke-2.log: latest test, named interiors/mine resource errors fixed, remaining actors/furniture failures listed above
-
-## 15. Suggested execution order
-
-1. Confirm branch and preserve all dirty work; read this handoff and targeted current code, not every report.
-2. Apply the identified Pack.texture furniture fix and register/match missing plant and actors. Audit all referenced actor keys, not only one random mine run.
-3. Build the reproducible visual selection/import pipeline; repair building rendering/anchors/entrances and merge crop overlay last.
-4. Implement Preferences/start/settings/controls and complete global New Game/relationships handling.
-5. Remove HUD button legend and polish all screens with one coherent pixel UI theme.
-6. Run import, crop regression, every area, representative deep mine biomes, and UI/rebinding/persistence tests. Fix errors rather than ignoring logs.
-7. Render and personally inspect start, settings, Controls, game HUD, inventory, crafting/shop, three crop stages, farm/town buildings. Measure/control overflow at480x270. Improve any incoherent scale or blurry/pixel-dense imports.
-8. Play through new game, continue, plant-water-grow-harvest-ship, purchase seeds, visit a shop/interior, enter/exit mine, rebind/use a control, restart and verify persistence.
-9. Leave a clear launch route and concise user-facing completion note backed by evidence. Be candid about any unfinished features. Do not call this AAA complete based solely on parser/tests.
-
-## 16. Stop state and immediate instructions to Claude
-
-The user requested this handoff because Codex credits are low. Implementation is intentionally stopped now. Recovery and crop work are concrete; full asset curation, start/settings/keybindings, HUD redesign, missing actor integration, and remaining runtime fixes are still required. All relevant source files and artifacts are in the paths above. Pick up the actual checkout and finish the authorized work without asking the user to restate the brief.
-
-
-## GitHub handoff update � 2026-09-27
+## GitHub handoff update — 2026-09-27
 
 The owner subsequently requested a GitHub push and explicitly requested inclusion of the Pixel Crawler base pack with author credit. This supersedes the earlier exclusion instruction in section5. The unmodified source pack is now included as a project dependency and credited to Anokolisa in CREDITS.md, with the official source and terms links. Preserve that attribution and add in-game credits before release.
 
