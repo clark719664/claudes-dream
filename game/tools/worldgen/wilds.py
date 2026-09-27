@@ -56,6 +56,16 @@ def gen_pinewood(a):
         N.enemy(a, 'bramble_treant', x, y)
     for (x, y) in [(36, 40), (48, 82)]:
         N.enemy(a, 'emerald_slime', x, y)
+    for (x, y) in [(80, 40), (50, 70), (20, 80)]:
+        N.enemy(a, 'bear', x, y)
+    for (x, y) in [(60, 80), (80, 70), (40, 20)]:
+        N.enemy(a, 'forest_wolf', x, y)
+    for (x, y) in [(30, 20), (50, 40)]:
+        N.enemy(a, 'green_forest_slime', x, y)
+    for (x, y) in [(24, 40), (28, 48), (20, 36)]:
+        N.enemy(a, 'frog', x, y)
+    for (x, y) in [(60, 50), (62, 52), (55, 50), (58, 55)]:
+        N.enemy(a, 'butterfly', x, y)
     N.hidden_chest(a, 72.5, 11.2, 'pinewood_ruin', 1)
     N.hidden_chest(a, 108, 84, 'pinewood_thicket', 0)
     # the woods: mixed by the farm (south), pine further in, old pine towards the mountain (NE)

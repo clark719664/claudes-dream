@@ -1,0 +1,103 @@
+{
+  "group_id": "32707452-3d94-4b2d-b6fe-6f89f0164118",
+  "states": [
+    {
+      "character": {
+        "id": "a0bce44a-c600-4e12-a68d-a051f938814a",
+        "name": "bone_pax",
+        "prompt": "Pax, a bone-collector in a skull mask and rib-cage armor, eerie, cozy stardew-style RPG villager, gothic, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T21:17:21.816952+00:00"
+      },
+      "folder": "bone_pax",
+      "frames": {
+        "rotations": {
+          "south": "bone_pax/rotations/south.png",
+          "south-east": "bone_pax/rotations/south-east.png",
+          "east": "bone_pax/rotations/east.png",
+          "north-east": "bone_pax/rotations/north-east.png",
+          "north": "bone_pax/rotations/north.png",
+          "north-west": "bone_pax/rotations/north-west.png",
+          "west": "bone_pax/rotations/west.png",
+          "south-west": "bone_pax/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-east": [
+              "bone_pax/animations/walking/north-east/frame_000.png",
+              "bone_pax/animations/walking/north-east/frame_001.png",
+              "bone_pax/animations/walking/north-east/frame_002.png",
+              "bone_pax/animations/walking/north-east/frame_003.png",
+              "bone_pax/animations/walking/north-east/frame_004.png",
+              "bone_pax/animations/walking/north-east/frame_005.png"
+            ],
+            "east": [
+              "bone_pax/animations/walking/east/frame_000.png",
+              "bone_pax/animations/walking/east/frame_001.png",
+              "bone_pax/animations/walking/east/frame_002.png",
+              "bone_pax/animations/walking/east/frame_003.png",
+              "bone_pax/animations/walking/east/frame_004.png",
+              "bone_pax/animations/walking/east/frame_005.png"
+            ],
+            "south": [
+              "bone_pax/animations/walking/south/frame_000.png",
+              "bone_pax/animations/walking/south/frame_001.png",
+              "bone_pax/animations/walking/south/frame_002.png",
+              "bone_pax/animations/walking/south/frame_003.png",
+              "bone_pax/animations/walking/south/frame_004.png",
+              "bone_pax/animations/walking/south/frame_005.png"
+            ],
+            "north-west": [
+              "bone_pax/animations/walking/north-west/frame_000.png",
+              "bone_pax/animations/walking/north-west/frame_001.png",
+              "bone_pax/animations/walking/north-west/frame_002.png",
+              "bone_pax/animations/walking/north-west/frame_003.png",
+              "bone_pax/animations/walking/north-west/frame_004.png",
+              "bone_pax/animations/walking/north-west/frame_005.png"
+            ],
+            "south-west": [
+              "bone_pax/animations/walking/south-west/frame_000.png",
+              "bone_pax/animations/walking/south-west/frame_001.png",
+              "bone_pax/animations/walking/south-west/frame_002.png",
+              "bone_pax/animations/walking/south-west/frame_003.png",
+              "bone_pax/animations/walking/south-west/frame_004.png",
+              "bone_pax/animations/walking/south-west/frame_005.png"
+            ],
+            "north": [
+              "bone_pax/animations/walking/north/frame_000.png",
+              "bone_pax/animations/walking/north/frame_001.png",
+              "bone_pax/animations/walking/north/frame_002.png",
+              "bone_pax/animations/walking/north/frame_003.png",
+              "bone_pax/animations/walking/north/frame_004.png",
+              "bone_pax/animations/walking/north/frame_005.png"
+            ],
+            "south-east": [
+              "bone_pax/animations/walking/south-east/frame_000.png",
+              "bone_pax/animations/walking/south-east/frame_001.png",
+              "bone_pax/animations/walking/south-east/frame_002.png",
+              "bone_pax/animations/walking/south-east/frame_003.png",
+              "bone_pax/animations/walking/south-east/frame_004.png",
+              "bone_pax/animations/walking/south-east/frame_005.png"
+            ],
+            "west": [
+              "bone_pax/animations/walking/west/frame_000.png",
+              "bone_pax/animations/walking/west/frame_001.png",
+              "bone_pax/animations/walking/west/frame_002.png",
+              "bone_pax/animations/walking/west/frame_003.png",
+              "bone_pax/animations/walking/west/frame_004.png",
+              "bone_pax/animations/walking/west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:34.530071"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "d22f2c01-4190-4f64-8aa6-bb607c8f4a29",
+  "name": "baby_sheep",
+  "state_name": "Idle",
+  "prompt": "Baby lamb, small fluffy white, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:49:49.803084+00:00",
+  "updated_at": "2026-09-25T20:07:27.776790+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d22f2c01-4190-4f64-8aa6-bb607c8f4a29/rotations/south.png?t=1790366847",
+  "tags": [],
+  "group_id": "289a1897-4f01-4fe7-a3e9-62bd3da4a0a3"
+}

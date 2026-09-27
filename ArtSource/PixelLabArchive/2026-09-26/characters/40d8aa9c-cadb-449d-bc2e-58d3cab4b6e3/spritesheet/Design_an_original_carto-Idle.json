@@ -1,0 +1,45 @@
+{
+  "character": {
+    "id": "40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3",
+    "name": "Idle",
+    "prompt": "Design an original cartoon pig character for a small desktop pet that sits on a Windows taskbar. Show three versions side by side in a neutral standing pose: a slim one, a noticeably rounder one, and an almost spherical one. They must read as the same individual pig at three different weights, with identical face, markings, colours, and accessory. Give it one clear signature detail\u2014a bright gold coin tag on its collar\u2014that stays readable at about 60 pixels tall. Appealing, characterful, readable against both light and dark backgrounds. Fully transparent background, no shadow, no card, no border, no text.",
+    "size": {
+      "width": 60,
+      "height": 60
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "Design_an_original_carto-Idle.png",
+    "cell_size": {
+      "width": 60,
+      "height": 60
+    },
+    "sheet_size": {
+      "width": 480,
+      "height": 60
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:48:50.485802+00:00"
+}

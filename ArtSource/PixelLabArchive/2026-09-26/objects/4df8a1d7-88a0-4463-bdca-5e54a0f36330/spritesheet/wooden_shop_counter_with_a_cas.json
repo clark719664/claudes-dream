@@ -1,0 +1,45 @@
+{
+  "object": {
+    "id": "4df8a1d7-88a0-4463-bdca-5e54a0f36330",
+    "name": "base",
+    "prompt": "wooden shop counter with a cash register, 16-bit RPG top down pixel art, NO UI",
+    "size": {
+      "width": 85,
+      "height": 85
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "wooden_shop_counter_with_a_cas.png",
+    "cell_size": {
+      "width": 85,
+      "height": 85
+    },
+    "sheet_size": {
+      "width": 680,
+      "height": 85
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:51:15.795261+00:00"
+}

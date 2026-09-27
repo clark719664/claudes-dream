@@ -1,0 +1,1 @@
+Tilesheet reconstructed losslessly from the authenticated v2 per-tile PNGs using the export metadata bounding boxes. The prebuilt download URL returned HTTP 403. Individual source tile PNGs are in tiles/.

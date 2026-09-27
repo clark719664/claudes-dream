@@ -1,0 +1,20 @@
+{
+  "id": "d0e25a1e-050a-4b0c-905a-24ab55eecdfe",
+  "name": "Tabby cat ",
+  "state_name": "Idle",
+  "prompt": "Tabby cat ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:17:45.157345+00:00",
+  "updated_at": "2026-09-25T19:20:20.811943+00:00",
+  "animation_count": 0,
+  "template_id": "bear",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d0e25a1e-050a-4b0c-905a-24ab55eecdfe/rotations/south.png?t=1790364020",
+  "tags": [],
+  "group_id": "8d9103a9-445f-46dc-b892-e7a427174ec0"
+}

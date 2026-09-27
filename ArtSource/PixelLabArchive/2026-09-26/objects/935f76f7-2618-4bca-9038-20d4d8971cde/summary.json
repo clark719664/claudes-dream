@@ -1,0 +1,16 @@
+{
+  "id": "935f76f7-2618-4bca-9038-20d4d8971cde",
+  "name": "sturdy stone house building wi",
+  "state_name": "base",
+  "prompt": "sturdy stone house building with a slate roof and a chimney, 16-bit RPG top down pixel art, NO UI, NO BACKGROUND",
+  "size": {
+    "width": 170,
+    "height": 170
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T04:58:33.684123+00:00",
+  "view": "low top-down",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/935f76f7-2618-4bca-9038-20d4d8971cde/rotations/south.png",
+  "tags": [],
+  "status": "completed"
+}

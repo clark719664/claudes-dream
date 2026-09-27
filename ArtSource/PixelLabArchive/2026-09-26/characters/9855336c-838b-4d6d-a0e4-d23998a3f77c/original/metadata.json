@@ -1,0 +1,103 @@
+{
+  "group_id": "3418f164-8d14-438b-acd4-485124e481fb",
+  "states": [
+    {
+      "character": {
+        "id": "9855336c-838b-4d6d-a0e4-d23998a3f77c",
+        "name": "scientist_m",
+        "prompt": "male Covenant scientist in a stained lab coat with void goggles holding a syringe, sinister, gothic-punk, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T21:40:31.016929+00:00"
+      },
+      "folder": "scientist_m",
+      "frames": {
+        "rotations": {
+          "south": "scientist_m/rotations/south.png",
+          "south-east": "scientist_m/rotations/south-east.png",
+          "east": "scientist_m/rotations/east.png",
+          "north-east": "scientist_m/rotations/north-east.png",
+          "north": "scientist_m/rotations/north.png",
+          "north-west": "scientist_m/rotations/north-west.png",
+          "west": "scientist_m/rotations/west.png",
+          "south-west": "scientist_m/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "south": [
+              "scientist_m/animations/walking/south/frame_000.png",
+              "scientist_m/animations/walking/south/frame_001.png",
+              "scientist_m/animations/walking/south/frame_002.png",
+              "scientist_m/animations/walking/south/frame_003.png",
+              "scientist_m/animations/walking/south/frame_004.png",
+              "scientist_m/animations/walking/south/frame_005.png"
+            ],
+            "south-west": [
+              "scientist_m/animations/walking/south-west/frame_000.png",
+              "scientist_m/animations/walking/south-west/frame_001.png",
+              "scientist_m/animations/walking/south-west/frame_002.png",
+              "scientist_m/animations/walking/south-west/frame_003.png",
+              "scientist_m/animations/walking/south-west/frame_004.png",
+              "scientist_m/animations/walking/south-west/frame_005.png"
+            ],
+            "east": [
+              "scientist_m/animations/walking/east/frame_000.png",
+              "scientist_m/animations/walking/east/frame_001.png",
+              "scientist_m/animations/walking/east/frame_002.png",
+              "scientist_m/animations/walking/east/frame_003.png",
+              "scientist_m/animations/walking/east/frame_004.png",
+              "scientist_m/animations/walking/east/frame_005.png"
+            ],
+            "south-east": [
+              "scientist_m/animations/walking/south-east/frame_000.png",
+              "scientist_m/animations/walking/south-east/frame_001.png",
+              "scientist_m/animations/walking/south-east/frame_002.png",
+              "scientist_m/animations/walking/south-east/frame_003.png",
+              "scientist_m/animations/walking/south-east/frame_004.png",
+              "scientist_m/animations/walking/south-east/frame_005.png"
+            ],
+            "west": [
+              "scientist_m/animations/walking/west/frame_000.png",
+              "scientist_m/animations/walking/west/frame_001.png",
+              "scientist_m/animations/walking/west/frame_002.png",
+              "scientist_m/animations/walking/west/frame_003.png",
+              "scientist_m/animations/walking/west/frame_004.png",
+              "scientist_m/animations/walking/west/frame_005.png"
+            ],
+            "north-east": [
+              "scientist_m/animations/walking/north-east/frame_000.png",
+              "scientist_m/animations/walking/north-east/frame_001.png",
+              "scientist_m/animations/walking/north-east/frame_002.png",
+              "scientist_m/animations/walking/north-east/frame_003.png",
+              "scientist_m/animations/walking/north-east/frame_004.png",
+              "scientist_m/animations/walking/north-east/frame_005.png"
+            ],
+            "north": [
+              "scientist_m/animations/walking/north/frame_000.png",
+              "scientist_m/animations/walking/north/frame_001.png",
+              "scientist_m/animations/walking/north/frame_002.png",
+              "scientist_m/animations/walking/north/frame_003.png",
+              "scientist_m/animations/walking/north/frame_004.png",
+              "scientist_m/animations/walking/north/frame_005.png"
+            ],
+            "north-west": [
+              "scientist_m/animations/walking/north-west/frame_000.png",
+              "scientist_m/animations/walking/north-west/frame_001.png",
+              "scientist_m/animations/walking/north-west/frame_002.png",
+              "scientist_m/animations/walking/north-west/frame_003.png",
+              "scientist_m/animations/walking/north-west/frame_004.png",
+              "scientist_m/animations/walking/north-west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:26.078332"
+}

@@ -1,0 +1,36 @@
+{
+  "id": "0d44fb4f-850f-47b1-a77a-6bf7bc573211",
+  "name": "sheep",
+  "state_name": "Idle",
+  "prompt": "Fluffy white sheep, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:49:42.917125+00:00",
+  "updated_at": "2026-09-25T20:08:17.767601+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0d44fb4f-850f-47b1-a77a-6bf7bc573211/rotations/south.png?t=1790366897",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0d44fb4f-850f-47b1-a77a-6bf7bc573211/rotations/west.png?t=1790366897",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0d44fb4f-850f-47b1-a77a-6bf7bc573211/rotations/east.png?t=1790366897",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0d44fb4f-850f-47b1-a77a-6bf7bc573211/rotations/north.png?t=1790366897",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0d44fb4f-850f-47b1-a77a-6bf7bc573211/rotations/south-east.png?t=1790366897",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0d44fb4f-850f-47b1-a77a-6bf7bc573211/rotations/north-east.png?t=1790366897",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0d44fb4f-850f-47b1-a77a-6bf7bc573211/rotations/north-west.png?t=1790366897",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0d44fb4f-850f-47b1-a77a-6bf7bc573211/rotations/south-west.png?t=1790366897"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "4cfbde84-7f4d-46f7-a658-35bbc6e3d0e2",
+  "skeletons": null,
+  "animations": []
+}

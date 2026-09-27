@@ -1,0 +1,103 @@
+{
+  "group_id": "fce553e7-b5c9-49c7-b40d-8bb2de82fd57",
+  "states": [
+    {
+      "character": {
+        "id": "c574b348-d63e-4503-94b5-ed6a7ad3d24a",
+        "name": "teacher_nessa",
+        "prompt": "a kind schoolteacher in a tidy cardigan and long skirt holding a book, warm friendly townsperson, gothic-punk, full body",
+        "size": {
+          "width": 120,
+          "height": 120
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T23:01:06.392221+00:00"
+      },
+      "folder": "teacher_nessa",
+      "frames": {
+        "rotations": {
+          "south": "teacher_nessa/rotations/south.png",
+          "south-east": "teacher_nessa/rotations/south-east.png",
+          "east": "teacher_nessa/rotations/east.png",
+          "north-east": "teacher_nessa/rotations/north-east.png",
+          "north": "teacher_nessa/rotations/north.png",
+          "north-west": "teacher_nessa/rotations/north-west.png",
+          "west": "teacher_nessa/rotations/west.png",
+          "south-west": "teacher_nessa/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north": [
+              "teacher_nessa/animations/walking/north/frame_000.png",
+              "teacher_nessa/animations/walking/north/frame_001.png",
+              "teacher_nessa/animations/walking/north/frame_002.png",
+              "teacher_nessa/animations/walking/north/frame_003.png",
+              "teacher_nessa/animations/walking/north/frame_004.png",
+              "teacher_nessa/animations/walking/north/frame_005.png"
+            ],
+            "north-east": [
+              "teacher_nessa/animations/walking/north-east/frame_000.png",
+              "teacher_nessa/animations/walking/north-east/frame_001.png",
+              "teacher_nessa/animations/walking/north-east/frame_002.png",
+              "teacher_nessa/animations/walking/north-east/frame_003.png",
+              "teacher_nessa/animations/walking/north-east/frame_004.png",
+              "teacher_nessa/animations/walking/north-east/frame_005.png"
+            ],
+            "south": [
+              "teacher_nessa/animations/walking/south/frame_000.png",
+              "teacher_nessa/animations/walking/south/frame_001.png",
+              "teacher_nessa/animations/walking/south/frame_002.png",
+              "teacher_nessa/animations/walking/south/frame_003.png",
+              "teacher_nessa/animations/walking/south/frame_004.png",
+              "teacher_nessa/animations/walking/south/frame_005.png"
+            ],
+            "south-east": [
+              "teacher_nessa/animations/walking/south-east/frame_000.png",
+              "teacher_nessa/animations/walking/south-east/frame_001.png",
+              "teacher_nessa/animations/walking/south-east/frame_002.png",
+              "teacher_nessa/animations/walking/south-east/frame_003.png",
+              "teacher_nessa/animations/walking/south-east/frame_004.png",
+              "teacher_nessa/animations/walking/south-east/frame_005.png"
+            ],
+            "north-west": [
+              "teacher_nessa/animations/walking/north-west/frame_000.png",
+              "teacher_nessa/animations/walking/north-west/frame_001.png",
+              "teacher_nessa/animations/walking/north-west/frame_002.png",
+              "teacher_nessa/animations/walking/north-west/frame_003.png",
+              "teacher_nessa/animations/walking/north-west/frame_004.png",
+              "teacher_nessa/animations/walking/north-west/frame_005.png"
+            ],
+            "east": [
+              "teacher_nessa/animations/walking/east/frame_000.png",
+              "teacher_nessa/animations/walking/east/frame_001.png",
+              "teacher_nessa/animations/walking/east/frame_002.png",
+              "teacher_nessa/animations/walking/east/frame_003.png",
+              "teacher_nessa/animations/walking/east/frame_004.png",
+              "teacher_nessa/animations/walking/east/frame_005.png"
+            ],
+            "west": [
+              "teacher_nessa/animations/walking/west/frame_000.png",
+              "teacher_nessa/animations/walking/west/frame_001.png",
+              "teacher_nessa/animations/walking/west/frame_002.png",
+              "teacher_nessa/animations/walking/west/frame_003.png",
+              "teacher_nessa/animations/walking/west/frame_004.png",
+              "teacher_nessa/animations/walking/west/frame_005.png"
+            ],
+            "south-west": [
+              "teacher_nessa/animations/walking/south-west/frame_000.png",
+              "teacher_nessa/animations/walking/south-west/frame_001.png",
+              "teacher_nessa/animations/walking/south-west/frame_002.png",
+              "teacher_nessa/animations/walking/south-west/frame_003.png",
+              "teacher_nessa/animations/walking/south-west/frame_004.png",
+              "teacher_nessa/animations/walking/south-west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:48:52.434437"
+}

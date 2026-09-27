@@ -1,0 +1,20 @@
+{
+  "id": "2aff475b-f0bc-4575-b92b-4701613b8201",
+  "name": "samuel",
+  "state_name": "samuel",
+  "prompt": "Samuel, a young boy with tousled brown hair in a simple tunic, big eyes, cute, cozy stardew-style RPG child, full body",
+  "size": {
+    "width": 76,
+    "height": 76
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T20:23:38.676711+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/2aff475b-f0bc-4575-b92b-4701613b8201/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "bb76ea51-b848-494c-a2ad-f79244fc5743"
+}

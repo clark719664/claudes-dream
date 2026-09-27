@@ -1,0 +1,20 @@
+{
+  "id": "2623c3b5-8263-4470-999f-dfcd30705792",
+  "name": "reaper_f",
+  "state_name": "reaper_f",
+  "prompt": "female Covenant reaper in a black tattered shroud wielding a void scythe, menacing villain, gothic, full body",
+  "size": {
+    "width": 96,
+    "height": 96
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T22:15:06.813044+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/2623c3b5-8263-4470-999f-dfcd30705792/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "24d4ab32-be6d-46a8-8417-98f1cfae5214"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "ad85d54a-0e5e-4daf-9f4d-81ad96836208",
+  "name": "warped dark haunted wood plank floor, gothic manor → dark gothic manor wall with peeling crimson wallpaper",
+  "lower_description": "warped dark haunted wood plank floor, gothic manor",
+  "upper_description": "dark gothic manor wall with peeling crimson wallpaper",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-16T03:53:55.259960+00:00",
+  "status": "completed"
+}

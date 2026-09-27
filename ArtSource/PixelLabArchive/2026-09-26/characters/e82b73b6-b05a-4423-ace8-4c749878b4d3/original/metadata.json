@@ -1,0 +1,103 @@
+{
+  "group_id": "76663c68-0ba2-4017-9e81-50c03522aa01",
+  "states": [
+    {
+      "character": {
+        "id": "e82b73b6-b05a-4423-ace8-4c749878b4d3",
+        "name": "elena",
+        "prompt": "Elena Grover, cheerful grocer in an apron over a plaid shirt holding a basket of produce, cozy stardew-style RPG villager, full body",
+        "size": {
+          "width": 88,
+          "height": 88
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T16:25:30.338805+00:00"
+      },
+      "folder": "elena",
+      "frames": {
+        "rotations": {
+          "south": "elena/rotations/south.png",
+          "south-east": "elena/rotations/south-east.png",
+          "east": "elena/rotations/east.png",
+          "north-east": "elena/rotations/north-east.png",
+          "north": "elena/rotations/north.png",
+          "north-west": "elena/rotations/north-west.png",
+          "west": "elena/rotations/west.png",
+          "south-west": "elena/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north": [
+              "elena/animations/walking/north/frame_000.png",
+              "elena/animations/walking/north/frame_001.png",
+              "elena/animations/walking/north/frame_002.png",
+              "elena/animations/walking/north/frame_003.png",
+              "elena/animations/walking/north/frame_004.png",
+              "elena/animations/walking/north/frame_005.png"
+            ],
+            "south": [
+              "elena/animations/walking/south/frame_000.png",
+              "elena/animations/walking/south/frame_001.png",
+              "elena/animations/walking/south/frame_002.png",
+              "elena/animations/walking/south/frame_003.png",
+              "elena/animations/walking/south/frame_004.png",
+              "elena/animations/walking/south/frame_005.png"
+            ],
+            "east": [
+              "elena/animations/walking/east/frame_000.png",
+              "elena/animations/walking/east/frame_001.png",
+              "elena/animations/walking/east/frame_002.png",
+              "elena/animations/walking/east/frame_003.png",
+              "elena/animations/walking/east/frame_004.png",
+              "elena/animations/walking/east/frame_005.png"
+            ],
+            "north-east": [
+              "elena/animations/walking/north-east/frame_000.png",
+              "elena/animations/walking/north-east/frame_001.png",
+              "elena/animations/walking/north-east/frame_002.png",
+              "elena/animations/walking/north-east/frame_003.png",
+              "elena/animations/walking/north-east/frame_004.png",
+              "elena/animations/walking/north-east/frame_005.png"
+            ],
+            "south-east": [
+              "elena/animations/walking/south-east/frame_000.png",
+              "elena/animations/walking/south-east/frame_001.png",
+              "elena/animations/walking/south-east/frame_002.png",
+              "elena/animations/walking/south-east/frame_003.png",
+              "elena/animations/walking/south-east/frame_004.png",
+              "elena/animations/walking/south-east/frame_005.png"
+            ],
+            "south-west": [
+              "elena/animations/walking/south-west/frame_000.png",
+              "elena/animations/walking/south-west/frame_001.png",
+              "elena/animations/walking/south-west/frame_002.png",
+              "elena/animations/walking/south-west/frame_003.png",
+              "elena/animations/walking/south-west/frame_004.png",
+              "elena/animations/walking/south-west/frame_005.png"
+            ],
+            "west": [
+              "elena/animations/walking/west/frame_000.png",
+              "elena/animations/walking/west/frame_001.png",
+              "elena/animations/walking/west/frame_002.png",
+              "elena/animations/walking/west/frame_003.png",
+              "elena/animations/walking/west/frame_004.png",
+              "elena/animations/walking/west/frame_005.png"
+            ],
+            "north-west": [
+              "elena/animations/walking/north-west/frame_000.png",
+              "elena/animations/walking/north-west/frame_001.png",
+              "elena/animations/walking/north-west/frame_002.png",
+              "elena/animations/walking/north-west/frame_003.png",
+              "elena/animations/walking/north-west/frame_004.png",
+              "elena/animations/walking/north-west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:50:16.921202"
+}

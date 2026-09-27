@@ -1,0 +1,13 @@
+{
+  "id": "b846c31a-0227-450c-aa4c-2e2021e7c8f7",
+  "name": "warm wooden plank floor, cozy interior room → soft patterned area rug",
+  "lower_description": "warm wooden plank floor, cozy interior room",
+  "upper_description": "soft patterned area rug",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-16T03:06:40.219200+00:00",
+  "status": "completed"
+}

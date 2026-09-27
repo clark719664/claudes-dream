@@ -1,0 +1,20 @@
+{
+  "id": "f91f2553-5cec-4464-9aa9-18797485a5a9",
+  "name": "baby_horse",
+  "state_name": "Idle",
+  "prompt": "Baby foal horse, small brown, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:49:53.155343+00:00",
+  "updated_at": "2026-09-25T20:12:54.417469+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f91f2553-5cec-4464-9aa9-18797485a5a9/rotations/south.png?t=1790367174",
+  "tags": [],
+  "group_id": "179658e2-1716-4520-a547-9457f84ac0a8"
+}

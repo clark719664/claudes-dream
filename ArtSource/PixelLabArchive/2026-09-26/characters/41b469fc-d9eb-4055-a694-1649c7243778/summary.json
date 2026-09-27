@@ -1,0 +1,20 @@
+{
+  "id": "41b469fc-d9eb-4055-a694-1649c7243778",
+  "name": "mirelle",
+  "state_name": "mirelle",
+  "prompt": "Sister Mirelle, a severe Covenant warden in dark ornate robes wielding a bladed staff, cold menacing villain, gothic, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T20:56:21.993128+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/41b469fc-d9eb-4055-a694-1649c7243778/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "c4e62e4c-043f-40da-8fbe-c07ac719f122"
+}

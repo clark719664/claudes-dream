@@ -1,0 +1,16 @@
+{
+  "id": "4bd0fb21-ca2d-47c6-a79d-3c1a288fc7e8",
+  "name": "red brick schoolhouse building",
+  "state_name": "base",
+  "prompt": "red brick schoolhouse building with a bell tower, 16-bit RPG top down pixel art, NO UI, NO BACKGROUND",
+  "size": {
+    "width": 170,
+    "height": 170
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T04:17:23.331142+00:00",
+  "view": "low top-down",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/4bd0fb21-ca2d-47c6-a79d-3c1a288fc7e8/rotations/south.png",
+  "tags": [],
+  "status": "completed"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "955800a7-46dd-4ee3-b099-17f1e4ff0fbe",
+  "name": "Artic wolf ",
+  "state_name": "Idle",
+  "prompt": "Artic wolf ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:20:03.449025+00:00",
+  "updated_at": "2026-09-25T19:23:07.941362+00:00",
+  "animation_count": 0,
+  "template_id": "bear",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/955800a7-46dd-4ee3-b099-17f1e4ff0fbe/rotations/south.png?t=1790364187",
+  "tags": [],
+  "group_id": "e2701413-2c3a-4906-a267-5eab3e788b8c"
+}

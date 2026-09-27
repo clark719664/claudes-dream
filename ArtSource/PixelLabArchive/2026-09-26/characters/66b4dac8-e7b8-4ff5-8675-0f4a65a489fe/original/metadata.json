@@ -1,0 +1,103 @@
+{
+  "group_id": "0bf3748c-791d-4ceb-a0d5-c8a2c5eafd86",
+  "states": [
+    {
+      "character": {
+        "id": "66b4dac8-e7b8-4ff5-8675-0f4a65a489fe",
+        "name": "mechanic_grease",
+        "prompt": "Grease, a mechanic in oil-stained overalls and a cap holding a wrench, cozy stardew-style RPG villager, full body",
+        "size": {
+          "width": 88,
+          "height": 88
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T21:17:26.912852+00:00"
+      },
+      "folder": "mechanic_grease",
+      "frames": {
+        "rotations": {
+          "south": "mechanic_grease/rotations/south.png",
+          "south-east": "mechanic_grease/rotations/south-east.png",
+          "east": "mechanic_grease/rotations/east.png",
+          "north-east": "mechanic_grease/rotations/north-east.png",
+          "north": "mechanic_grease/rotations/north.png",
+          "north-west": "mechanic_grease/rotations/north-west.png",
+          "west": "mechanic_grease/rotations/west.png",
+          "south-west": "mechanic_grease/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-east": [
+              "mechanic_grease/animations/walking/north-east/frame_000.png",
+              "mechanic_grease/animations/walking/north-east/frame_001.png",
+              "mechanic_grease/animations/walking/north-east/frame_002.png",
+              "mechanic_grease/animations/walking/north-east/frame_003.png",
+              "mechanic_grease/animations/walking/north-east/frame_004.png",
+              "mechanic_grease/animations/walking/north-east/frame_005.png"
+            ],
+            "west": [
+              "mechanic_grease/animations/walking/west/frame_000.png",
+              "mechanic_grease/animations/walking/west/frame_001.png",
+              "mechanic_grease/animations/walking/west/frame_002.png",
+              "mechanic_grease/animations/walking/west/frame_003.png",
+              "mechanic_grease/animations/walking/west/frame_004.png",
+              "mechanic_grease/animations/walking/west/frame_005.png"
+            ],
+            "south": [
+              "mechanic_grease/animations/walking/south/frame_000.png",
+              "mechanic_grease/animations/walking/south/frame_001.png",
+              "mechanic_grease/animations/walking/south/frame_002.png",
+              "mechanic_grease/animations/walking/south/frame_003.png",
+              "mechanic_grease/animations/walking/south/frame_004.png",
+              "mechanic_grease/animations/walking/south/frame_005.png"
+            ],
+            "east": [
+              "mechanic_grease/animations/walking/east/frame_000.png",
+              "mechanic_grease/animations/walking/east/frame_001.png",
+              "mechanic_grease/animations/walking/east/frame_002.png",
+              "mechanic_grease/animations/walking/east/frame_003.png",
+              "mechanic_grease/animations/walking/east/frame_004.png",
+              "mechanic_grease/animations/walking/east/frame_005.png"
+            ],
+            "south-east": [
+              "mechanic_grease/animations/walking/south-east/frame_000.png",
+              "mechanic_grease/animations/walking/south-east/frame_001.png",
+              "mechanic_grease/animations/walking/south-east/frame_002.png",
+              "mechanic_grease/animations/walking/south-east/frame_003.png",
+              "mechanic_grease/animations/walking/south-east/frame_004.png",
+              "mechanic_grease/animations/walking/south-east/frame_005.png"
+            ],
+            "north": [
+              "mechanic_grease/animations/walking/north/frame_000.png",
+              "mechanic_grease/animations/walking/north/frame_001.png",
+              "mechanic_grease/animations/walking/north/frame_002.png",
+              "mechanic_grease/animations/walking/north/frame_003.png",
+              "mechanic_grease/animations/walking/north/frame_004.png",
+              "mechanic_grease/animations/walking/north/frame_005.png"
+            ],
+            "south-west": [
+              "mechanic_grease/animations/walking/south-west/frame_000.png",
+              "mechanic_grease/animations/walking/south-west/frame_001.png",
+              "mechanic_grease/animations/walking/south-west/frame_002.png",
+              "mechanic_grease/animations/walking/south-west/frame_003.png",
+              "mechanic_grease/animations/walking/south-west/frame_004.png",
+              "mechanic_grease/animations/walking/south-west/frame_005.png"
+            ],
+            "north-west": [
+              "mechanic_grease/animations/walking/north-west/frame_000.png",
+              "mechanic_grease/animations/walking/north-west/frame_001.png",
+              "mechanic_grease/animations/walking/north-west/frame_002.png",
+              "mechanic_grease/animations/walking/north-west/frame_003.png",
+              "mechanic_grease/animations/walking/north-west/frame_004.png",
+              "mechanic_grease/animations/walking/north-west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:31.968934"
+}

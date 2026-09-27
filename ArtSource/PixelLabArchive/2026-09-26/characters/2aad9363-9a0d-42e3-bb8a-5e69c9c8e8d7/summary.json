@@ -1,0 +1,20 @@
+{
+  "id": "2aad9363-9a0d-42e3-bb8a-5e69c9c8e8d7",
+  "name": "Ghost male ",
+  "state_name": "Idle",
+  "prompt": "Ghost male ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:27:54.056414+00:00",
+  "updated_at": "2026-09-25T19:29:14.163217+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/2aad9363-9a0d-42e3-bb8a-5e69c9c8e8d7/rotations/south.png?t=1790364554",
+  "tags": [],
+  "group_id": "655acc3a-2c69-4a76-94d7-14d374bd41b6"
+}

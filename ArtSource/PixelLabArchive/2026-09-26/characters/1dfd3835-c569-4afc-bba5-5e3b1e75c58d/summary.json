@@ -1,0 +1,20 @@
+{
+  "id": "1dfd3835-c569-4afc-bba5-5e3b1e75c58d",
+  "name": "Pig, large and pink, low top-down 16-bit RPG pixel art, crisp black outline",
+  "state_name": "Idle",
+  "prompt": "Pig, large and pink, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:51:42.474882+00:00",
+  "updated_at": "2026-09-25T22:53:59.518603+00:00",
+  "animation_count": 0,
+  "template_id": "bear",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/1dfd3835-c569-4afc-bba5-5e3b1e75c58d/rotations/south.png?t=1790376839",
+  "tags": [],
+  "group_id": "eeda808b-107f-4f20-bc8e-08efa386fcba"
+}

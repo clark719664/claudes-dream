@@ -1,0 +1,45 @@
+{
+  "object": {
+    "id": "24599644-584c-4b7e-8b11-345a10f8e99c",
+    "name": "base",
+    "prompt": "A yellow ear of corn with green husk, pixel art, top-down view, NO background NO UI NO text",
+    "size": {
+      "width": 85,
+      "height": 85
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "A_yellow_ear_of_corn_with_gree.png",
+    "cell_size": {
+      "width": 85,
+      "height": 85
+    },
+    "sheet_size": {
+      "width": 680,
+      "height": 85
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:54:05.294582+00:00"
+}

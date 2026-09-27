@@ -1,0 +1,16 @@
+{
+  "id": "ac2cbcf5-4c3b-4afe-94c0-1c128fc7649c",
+  "name": "A shimmering teal mythril axe ",
+  "state_name": "base",
+  "prompt": "A shimmering teal mythril axe with elegant curved blade, pixel art, top-down view, NO background NO UI NO text",
+  "size": {
+    "width": 85,
+    "height": 85
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T01:55:38.140751+00:00",
+  "view": "low top-down",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/ac2cbcf5-4c3b-4afe-94c0-1c128fc7649c/rotations/south.png",
+  "tags": [],
+  "status": "completed"
+}

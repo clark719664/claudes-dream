@@ -1,0 +1,20 @@
+{
+  "id": "5f0ad488-fbdf-4043-9e7e-9140c8b3c820",
+  "name": "scrap_yadi",
+  "state_name": "scrap_yadi",
+  "prompt": "Yadi, a junk dealer in a patchwork coat covered in trinkets and gadgets, cozy stardew-style RPG villager, gothic-punk, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:25:05.845084+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5f0ad488-fbdf-4043-9e7e-9140c8b3c820/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "ef07f4ac-b514-4275-af8f-718ce1a4f48d"
+}

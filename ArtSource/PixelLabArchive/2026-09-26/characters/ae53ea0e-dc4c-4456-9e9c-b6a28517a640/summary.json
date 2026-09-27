@@ -1,0 +1,20 @@
+{
+  "id": "ae53ea0e-dc4c-4456-9e9c-b6a28517a640",
+  "name": "llama",
+  "state_name": "Idle",
+  "prompt": "Farm llama, white tall neck, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:32:43.480173+00:00",
+  "updated_at": "2026-09-25T22:41:25.030786+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ae53ea0e-dc4c-4456-9e9c-b6a28517a640/rotations/south.png?t=1790376085",
+  "tags": [],
+  "group_id": "3e9e6ffa-9f6d-4729-ae33-696401bd48be"
+}

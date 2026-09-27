@@ -1,0 +1,20 @@
+{
+  "id": "ac078aa4-d04a-40ae-8153-7ded8d063697",
+  "name": "Ghost female",
+  "state_name": "Idle",
+  "prompt": "Ghost female",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:28:06.229937+00:00",
+  "updated_at": "2026-09-25T19:29:36.432497+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ac078aa4-d04a-40ae-8153-7ded8d063697/rotations/south.png?t=1790364576",
+  "tags": [],
+  "group_id": "979cb025-bd53-485d-b150-17ae2a405ca8"
+}

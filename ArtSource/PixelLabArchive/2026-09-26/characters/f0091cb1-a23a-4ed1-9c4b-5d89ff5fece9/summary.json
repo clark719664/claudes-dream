@@ -1,0 +1,20 @@
+{
+  "id": "f0091cb1-a23a-4ed1-9c4b-5d89ff5fece9",
+  "name": "greenhouse_sal",
+  "state_name": "greenhouse_sal",
+  "prompt": "Sal, greenhouse keeper in a gardening apron and gloves carrying a potted plant, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T20:45:37.453734+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f0091cb1-a23a-4ed1-9c4b-5d89ff5fece9/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "0596e147-af0f-49ef-83fe-c0cea2fe8efc"
+}

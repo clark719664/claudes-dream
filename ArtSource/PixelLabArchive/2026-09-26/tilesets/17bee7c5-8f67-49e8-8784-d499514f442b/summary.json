@@ -1,0 +1,13 @@
+{
+  "id": "17bee7c5-8f67-49e8-8784-d499514f442b",
+  "name": "lush green grass meadow ground → warm tan dirt path",
+  "lower_description": "lush green grass meadow ground",
+  "upper_description": "warm tan dirt path",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-15T23:38:50.664779+00:00",
+  "status": "completed"
+}

@@ -1,0 +1,103 @@
+{
+  "group_id": "4e03ba97-203f-4974-80fe-dc876b808a36",
+  "states": [
+    {
+      "character": {
+        "id": "ea76d990-bf54-4b98-9c60-291e2bb02ab0",
+        "name": "sloane",
+        "prompt": "Archivist Sloane, bookish archivist with round glasses, a long ink-stained coat and a satchel of scrolls, cozy stardew-style RPG villager, gothic-punk world, full body",
+        "size": {
+          "width": 88,
+          "height": 88
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T16:17:50.746206+00:00"
+      },
+      "folder": "sloane",
+      "frames": {
+        "rotations": {
+          "south": "sloane/rotations/south.png",
+          "south-east": "sloane/rotations/south-east.png",
+          "east": "sloane/rotations/east.png",
+          "north-east": "sloane/rotations/north-east.png",
+          "north": "sloane/rotations/north.png",
+          "north-west": "sloane/rotations/north-west.png",
+          "west": "sloane/rotations/west.png",
+          "south-west": "sloane/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-west": [
+              "sloane/animations/walking/north-west/frame_000.png",
+              "sloane/animations/walking/north-west/frame_001.png",
+              "sloane/animations/walking/north-west/frame_002.png",
+              "sloane/animations/walking/north-west/frame_003.png",
+              "sloane/animations/walking/north-west/frame_004.png",
+              "sloane/animations/walking/north-west/frame_005.png"
+            ],
+            "south-east": [
+              "sloane/animations/walking/south-east/frame_000.png",
+              "sloane/animations/walking/south-east/frame_001.png",
+              "sloane/animations/walking/south-east/frame_002.png",
+              "sloane/animations/walking/south-east/frame_003.png",
+              "sloane/animations/walking/south-east/frame_004.png",
+              "sloane/animations/walking/south-east/frame_005.png"
+            ],
+            "south": [
+              "sloane/animations/walking/south/frame_000.png",
+              "sloane/animations/walking/south/frame_001.png",
+              "sloane/animations/walking/south/frame_002.png",
+              "sloane/animations/walking/south/frame_003.png",
+              "sloane/animations/walking/south/frame_004.png",
+              "sloane/animations/walking/south/frame_005.png"
+            ],
+            "south-west": [
+              "sloane/animations/walking/south-west/frame_000.png",
+              "sloane/animations/walking/south-west/frame_001.png",
+              "sloane/animations/walking/south-west/frame_002.png",
+              "sloane/animations/walking/south-west/frame_003.png",
+              "sloane/animations/walking/south-west/frame_004.png",
+              "sloane/animations/walking/south-west/frame_005.png"
+            ],
+            "north-east": [
+              "sloane/animations/walking/north-east/frame_000.png",
+              "sloane/animations/walking/north-east/frame_001.png",
+              "sloane/animations/walking/north-east/frame_002.png",
+              "sloane/animations/walking/north-east/frame_003.png",
+              "sloane/animations/walking/north-east/frame_004.png",
+              "sloane/animations/walking/north-east/frame_005.png"
+            ],
+            "east": [
+              "sloane/animations/walking/east/frame_000.png",
+              "sloane/animations/walking/east/frame_001.png",
+              "sloane/animations/walking/east/frame_002.png",
+              "sloane/animations/walking/east/frame_003.png",
+              "sloane/animations/walking/east/frame_004.png",
+              "sloane/animations/walking/east/frame_005.png"
+            ],
+            "north": [
+              "sloane/animations/walking/north/frame_000.png",
+              "sloane/animations/walking/north/frame_001.png",
+              "sloane/animations/walking/north/frame_002.png",
+              "sloane/animations/walking/north/frame_003.png",
+              "sloane/animations/walking/north/frame_004.png",
+              "sloane/animations/walking/north/frame_005.png"
+            ],
+            "west": [
+              "sloane/animations/walking/west/frame_000.png",
+              "sloane/animations/walking/west/frame_001.png",
+              "sloane/animations/walking/west/frame_002.png",
+              "sloane/animations/walking/west/frame_003.png",
+              "sloane/animations/walking/west/frame_004.png",
+              "sloane/animations/walking/west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:50:25.145220"
+}

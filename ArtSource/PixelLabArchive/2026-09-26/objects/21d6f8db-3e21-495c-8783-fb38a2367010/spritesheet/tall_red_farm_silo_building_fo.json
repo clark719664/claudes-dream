@@ -1,0 +1,45 @@
+{
+  "object": {
+    "id": "21d6f8db-3e21-495c-8783-fb38a2367010",
+    "name": "base",
+    "prompt": "tall red farm silo building for storing hay, 16-bit RPG top down pixel art, NO UI, NO BACKGROUND",
+    "size": {
+      "width": 170,
+      "height": 170
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "tall_red_farm_silo_building_fo.png",
+    "cell_size": {
+      "width": 170,
+      "height": 170
+    },
+    "sheet_size": {
+      "width": 1360,
+      "height": 170
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:50:50.466499+00:00"
+}

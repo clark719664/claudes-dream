@@ -1,0 +1,20 @@
+{
+  "id": "c48ddb99-3bfe-4419-a0d9-92b3caa92be5",
+  "name": "baby_arctic_wolf",
+  "state_name": "Idle",
+  "prompt": "Baby arctic wolf pup, small white, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:32:30.458448+00:00",
+  "updated_at": "2026-09-25T22:38:53.440251+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c48ddb99-3bfe-4419-a0d9-92b3caa92be5/rotations/south.png?t=1790375933",
+  "tags": [],
+  "group_id": "f58b39dd-839f-4b19-935e-b7402322fb16"
+}

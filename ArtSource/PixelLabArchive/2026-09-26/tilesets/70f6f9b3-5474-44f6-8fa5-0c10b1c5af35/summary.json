@@ -1,0 +1,13 @@
+{
+  "id": "70f6f9b3-5474-44f6-8fa5-0c10b1c5af35",
+  "name": "dark metal grate floor with faint cyan neon glow, cyberpunk interior → glowing magenta neon light panel",
+  "lower_description": "dark metal grate floor with faint cyan neon glow, cyberpunk interior",
+  "upper_description": "glowing magenta neon light panel",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-16T03:18:06.638960+00:00",
+  "status": "completed"
+}

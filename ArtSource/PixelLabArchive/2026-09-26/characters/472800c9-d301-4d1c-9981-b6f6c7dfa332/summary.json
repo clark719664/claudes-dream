@@ -1,0 +1,20 @@
+{
+  "id": "472800c9-d301-4d1c-9981-b6f6c7dfa332",
+  "name": "baby_alpaca",
+  "state_name": "Idle",
+  "prompt": "Baby alpaca cria, small fluffy white, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:43:09.089814+00:00",
+  "updated_at": "2026-09-25T22:46:50.719109+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/472800c9-d301-4d1c-9981-b6f6c7dfa332/rotations/south.png?t=1790376410",
+  "tags": [],
+  "group_id": "ff469d35-a15d-450d-ac5f-b77d36713830"
+}

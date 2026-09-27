@@ -1,0 +1,20 @@
+{
+  "id": "c574b348-d63e-4503-94b5-ed6a7ad3d24a",
+  "name": "teacher_nessa",
+  "state_name": "teacher_nessa",
+  "prompt": "a kind schoolteacher in a tidy cardigan and long skirt holding a book, warm friendly townsperson, gothic-punk, full body",
+  "size": {
+    "width": 120,
+    "height": 120
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T23:01:06.392221+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c574b348-d63e-4503-94b5-ed6a7ad3d24a/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "fce553e7-b5c9-49c7-b40d-8bb2de82fd57"
+}

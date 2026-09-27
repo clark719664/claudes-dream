@@ -11,6 +11,9 @@ signal changed
 signal leveled(level: int)
 
 const NAMES := {
+	"sativa": "Sativa Bud", "hybrid": "Hybrid Bud", "indica": "Indica Bud",
+	"sativa_seeds": "Sativa Seeds", "hybrid_seeds": "Hybrid Seeds", "indica_seeds": "Indica Seeds",
+	"sativa_seed": "Sativa Seeds", "hybrid_seed": "Hybrid Seeds", "indica_seed": "Indica Seeds",
 	"wood": "Wood", "stone": "Stone", "fiber": "Fiber", "iron_ore": "Iron Ore", "coal": "Coal",
 	"crystal": "Crystal", "resin": "Resin", "herb": "Wild Herb", "mushroom": "Mushroom", "bone": "Bone",
 	"meat": "Raw Meat", "gem": "Gem", "ring": "Old Ring",
@@ -28,7 +31,7 @@ const NAMES := {
 	"kit_workbench": "Workbench Kit", "kit_sawmill": "Sawmill Kit", "kit_furnace": "Furnace Kit", "kit_anvil": "Anvil Kit",
 	"kit_cookpot": "Cooking Pot Kit",
 }
-const VEGGIES := ["carrot", "beet", "cabbage", "lettuce", "cauliflower", "broccoli", "garlic"]
+const VEGGIES := ["carrot", "beet", "cabbage", "lettuce", "cauliflower", "broccoli", "garlic", "tomato", "corn", "pumpkin", "strawberry", "eggplant", "onion"]
 const FOOD := {"hearty_meal": 90, "tonic_health": 70, "cooked_meat": 45, "bread": 40, "stew": 35, "skewer": 28, "poultice": 25,
 	"mushroom": 4, "carrot": 6, "beet": 6, "cabbage": 8, "lettuce": 5, "cauliflower": 8, "broccoli": 8, "garlic": 4}
 const BUFFS := {"tonic_strength": ["might", 120.0], "tonic_swift": ["haste", 120.0], "hearty_meal": ["haste", 60.0]}
@@ -47,6 +50,16 @@ const CAN_SIZE := 40
 ## Crops: the seasons they grow in (0 spring, 1 summer, 2 fall, 3 winter), days to ripen, what
 ## the seeds cost and what the crop sells for.
 const CROPS := {
+	"tomato": {"seasons": [1, 2], "days": 8, "seed": 40, "sell": 80},
+	"corn": {"seasons": [1, 2], "days": 10, "seed": 50, "sell": 90},
+	"pumpkin": {"seasons": [2], "days": 13, "seed": 100, "sell": 320},
+	"strawberry": {"seasons": [0], "days": 7, "seed": 50, "sell": 90},
+	"eggplant": {"seasons": [1, 2], "days": 7, "seed": 45, "sell": 95},
+	"onion": {"seasons": [0, 2], "days": 6, "seed": 35, "sell": 70},
+	"sativa": {"seasons": [0, 1, 2], "days": 9, "seed": 150, "sell": 240},
+	"hybrid": {"seasons": [0, 1, 2], "days": 8, "seed": 200, "sell": 300},
+	"indica": {"seasons": [0, 1, 2], "days": 7, "seed": 150, "sell": 220},
+
 	"carrot": {"seasons": [0], "days": 4, "seed": 20, "sell": 35},
 	"lettuce": {"seasons": [0], "days": 5, "seed": 30, "sell": 55},
 	"garlic": {"seasons": [0, 2], "days": 5, "seed": 35, "sell": 65},
@@ -61,7 +74,7 @@ const PRICES := {
 	"mushroom": 20, "bone": 6, "meat": 18, "gem": 140, "ring": 220, "stick": 1, "twine": 4, "cloth": 22,
 	"plank": 6, "iron_bar": 60, "steel_bar": 190, "nails": 8, "brick": 12, "glass": 40,
 	"cooked_meat": 55, "stew": 75, "skewer": 60, "bread": 70, "hearty_meal": 200, "poultice": 30,
-	"tonic_health": 150, "tonic_strength": 160, "tonic_swift": 160,
+	"tonic_health": 150, "tonic_strength": 160, "tonic_swift": 160, "beer": 200, "wine": 600, "barley": 20, "hops": 30, "sugar": 40, "hemp": 50, "indica": 80, "sativa": 80, "hybrid": 120, "joint": 120, "blunt": 200, "edible": 300, "golden_relic": 2000, "ancient_doll": 800, "dinosaur_egg": 1200, "strange_fossil": 500, "rusty_sword": 300,
 }
 ## Shops. goods: item, gold, optional material cost and how many you get.
 const SHOPS := {
@@ -75,10 +88,56 @@ const SHOPS := {
 		{"item": "kit_furnace", "gold": 1500, "cost": {"stone": 40}},
 		{"item": "kit_anvil", "gold": 2500, "cost": {"iron_bar": 4}},
 		{"item": "fence", "gold": 8, "n": 1},
+		{"item": "barn", "gold": 6000, "cost": {"wood": 350, "stone": 150}},
+		{"item": "coop", "gold": 4000, "cost": {"wood": 300, "stone": 100}},
+		{"item": "silo", "gold": 3000, "cost": {"wood": 100, "stone": 100}},
+		{"item": "windmill", "gold": 5000, "cost": {"wood": 200, "stone": 200}},
+		{"item": "greenhouse", "gold": 10000, "cost": {"wood": 500, "stone": 500}},
+		{"item": "well", "gold": 1000, "cost": {"wood": 50, "stone": 100}},
 		{"item": "fence", "gold": 70, "n": 10},
 		{"house": true},
 	]},
-	"smith": {"title": "BROM'S SMITHY", "greet": "Coal, ore, and better tools if you bring me bars.", "goods": [
+	
+	
+	"saloon": {"title": "THE STARDROP SALOON", "greet": "Care for a drink? Or something stronger?", "goods": [
+		{"item": "beer", "gold": 400},
+		{"item": "wine", "gold": 1000},
+		{"item": "barley_seed", "gold": 50},
+		{"item": "hops_seed", "gold": 60},
+		{"item": "sugar_seed", "gold": 80}
+	]},
+	"clinic": {"title": "TOWN CLINIC", "greet": "Let me patch you up.", "goods": [
+		{"item": "poultice", "gold": 200},
+		{"item": "tonic_health", "gold": 500},
+		{"item": "tonic_strength", "gold": 800},
+		{"item": "tonic_swift", "gold": 800}
+	]},
+	"dispensary": {"title": "GREEN THUMB DISPENSARY", "greet": "Welcome to the high life.", "goods": [
+		{"item": "joint", "gold": 200},
+		{"item": "blunt", "gold": 400},
+		{"item": "edible", "gold": 500},
+		{"item": "hemp_seed", "gold": 100},
+		{"item": "indica_seeds", "gold": 150},
+		{"item": "sativa_seeds", "gold": 150},
+		{"item": "hybrid_seeds", "gold": 200}
+	]},
+	"museum": {"title": "TOWN MUSEUM", "greet": "We gladly accept artifact donations.", "goods": [
+		{"item": "golden_relic", "gold": 5000},
+		{"item": "ancient_doll", "cost": {"strange_fossil": 1}},
+		{"item": "rusty_sword", "cost": {"stone": 50}}
+	]},
+	"rancher": {"title": "PEN RIDGE RANCH", "greet": "Animals for your farm. Treat them well.", "goods": [
+		{"item": "chicken", "gold": 800},
+		{"item": "duck", "gold": 1200},
+		{"item": "cow", "gold": 1500},
+		{"item": "sheep", "gold": 2000},
+		{"item": "pig", "gold": 4000},
+		{"item": "goat", "gold": 3000},
+		{"item": "alpaca", "gold": 5000},
+		{"item": "turkey", "gold": 2500}
+	]},
+	"smith": {
+"title": "BROM'S SMITHY", "greet": "Coal, ore, and better tools if you bring me bars.", "goods": [{"item": "sunforged_ring", "cost": 5000}, 
 		{"item": "coal", "gold": 30}, {"item": "iron_ore", "gold": 55},
 		{"item": "axe_iron", "gold": 1500, "cost": {"iron_bar": 5}},
 		{"item": "pickaxe_iron", "gold": 1500, "cost": {"iron_bar": 5}},
@@ -86,7 +145,7 @@ const SHOPS := {
 	]},
 }
 const TINTS := {"sword_iron": Color(0.8, 0.86, 1.0), "sword_steel": Color(0.62, 0.95, 1.0), "axe_iron": Color(0.8, 0.86, 1.0),
-	"pickaxe_iron": Color(0.8, 0.86, 1.0), "shield_iron": Color(0.8, 0.86, 1.0)}
+	"pickaxe_iron": Color(0.8, 0.86, 1.0), "shield_iron": Color(0.8, 0.86, 1.0), "beer": Color(1.0, 0.9, 0.4), "wine": Color(0.8, 0.2, 0.5), "barley_seed": Color(0.9, 0.8, 0.4), "hops_seed": Color(0.5, 0.9, 0.5), "sugar_seed": Color(0.9, 0.9, 0.9), "hemp_seed": Color(0.3, 0.6, 0.3), "indica_seed": Color(0.6, 0.3, 0.8), "sativa_seed": Color(0.4, 0.8, 0.4), "hybrid_seed": Color(0.3, 0.8, 0.8), "barley": Color(0.9, 0.8, 0.4), "hops": Color(0.5, 0.9, 0.5), "sugar": Color(1.0, 1.0, 1.0), "hemp": Color(0.3, 0.6, 0.3), "indica": Color(0.6, 0.3, 0.8), "sativa": Color(0.4, 0.8, 0.4), "hybrid": Color(0.3, 0.8, 0.8), "joint": Color(0.9, 0.9, 0.9), "blunt": Color(0.6, 0.4, 0.2), "edible": Color(0.6, 0.8, 0.4), "ancient_doll": Color(0.7, 0.7, 0.7), "dinosaur_egg": Color(0.4, 0.8, 0.4), "rusty_sword": Color(0.6, 0.4, 0.2), "golden_relic": Color(1.0, 0.9, 0.2), "strange_fossil": Color(0.7, 0.5, 0.8)}
 
 ## station -> recipes: out, n (a number, or one per station tier), cost, lv (crafting level),
 ## st (station tier needed), desc
@@ -132,6 +191,9 @@ const RECIPES := {
 		{"out": "hearty_meal", "cost": {"cooked_meat": 1, "any_veg": 2, "mushroom": 2}, "lv": 3, "st": 3, "desc": "Heals 90 and quickens your step."},
 	],
 	"kitchen": [
+		{"out": "beer", "cost": {"barley": 2, "hops": 1}, "lv": 3, "st": 1, "desc": "Brew a cold one."},
+		{"out": "wine", "cost": {"sugar": 2, "gem": 1}, "lv": 4, "st": 1, "desc": "A fine vintage."},
+
 		{"out": "bread", "cost": {"any_veg": 1, "herb": 1, "coal": 1}, "lv": 2, "desc": "Heals 40."},
 		{"out": "stew", "n": 2, "cost": {"any_veg": 2, "wood": 1}, "lv": 1, "desc": "Heals 35. The stove makes two bowls."},
 		{"out": "hearty_meal", "cost": {"cooked_meat": 1, "any_veg": 2, "mushroom": 2}, "lv": 3, "desc": "Heals 90 and quickens your step."},
@@ -227,8 +289,17 @@ func slot(i: int) -> String:
 	return slots[i] if i < slots.size() else ""
 
 
+func crop_for_seed(item: String) -> String:
+	var kind := ""
+	if item.ends_with("_seeds"):
+		kind = item.trim_suffix("_seeds")
+	elif item.ends_with("_seed"):
+		kind = item.trim_suffix("_seed")
+	return kind if CROPS.has(kind) else ""
+
+
 func is_seed(item: String) -> bool:
-	return item.ends_with("_seeds")
+	return not crop_for_seed(item).is_empty()
 
 
 func sell_price(item: String) -> int:
@@ -360,6 +431,9 @@ func display_name(item: String) -> String:
 
 
 func tint(item: String) -> Color:
+	var icon_spec: Dictionary = Pack.catalog.get("items", {}).get(item, {})
+	if str(icon_spec.get("sheet", "")).begins_with("curated/"):
+		return Color.WHITE
 	return TINTS.get(item, Color.WHITE)
 
 

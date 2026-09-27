@@ -1,0 +1,20 @@
+{
+  "id": "f6bef22d-021f-42ac-bb01-cf3917ad6f80",
+  "name": "curator_ash",
+  "state_name": "curator_ash",
+  "prompt": "Curator Ash, museum curator in a tweed jacket with a monocle and white gloves, refined, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:59:14.616684+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f6bef22d-021f-42ac-bb01-cf3917ad6f80/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "4ee275c3-e4c5-40ab-9101-02ace46fa85c"
+}

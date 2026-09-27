@@ -1,0 +1,41 @@
+{
+  "id": "08f34217-f57a-4323-8562-04d4e027c6e7",
+  "name": "luxurious inn bed with red bla",
+  "state_name": "base",
+  "prompt": "luxurious inn bed with red blankets, 16-bit RPG top down pixel art, NO UI",
+  "size": {
+    "width": 85,
+    "height": 85
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T04:28:34.659803+00:00",
+  "view": "low top-down",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/south.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/west.png",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/east.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/north.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/south-west.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/north-west.png"
+  },
+  "storage_urls": {
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/east.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/west.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/north.png",
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/south.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/north-west.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/08f34217-f57a-4323-8562-04d4e027c6e7/rotations/south-west.png"
+  },
+  "frame_urls": null,
+  "style_settings": {},
+  "tags": [],
+  "status": "completed",
+  "group_id": "5455b885-31ef-4910-9b9d-4980f395f402",
+  "progress_percent": null,
+  "eta_seconds": null,
+  "animations": []
+}

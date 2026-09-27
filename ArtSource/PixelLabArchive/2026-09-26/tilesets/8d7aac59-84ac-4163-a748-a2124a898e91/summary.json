@@ -1,0 +1,13 @@
+{
+  "id": "8d7aac59-84ac-4163-a748-a2124a898e91",
+  "name": "lush green grass meadow ground → clear blue water",
+  "lower_description": "lush green grass meadow ground",
+  "upper_description": "clear blue water",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-15T23:29:18.197053+00:00",
+  "status": "completed"
+}

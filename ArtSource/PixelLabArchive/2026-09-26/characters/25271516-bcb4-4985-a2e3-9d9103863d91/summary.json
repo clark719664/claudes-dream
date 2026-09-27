@@ -1,0 +1,20 @@
+{
+  "id": "25271516-bcb4-4985-a2e3-9d9103863d91",
+  "name": "baby_chicken",
+  "state_name": "Idle",
+  "prompt": "Baby chick, small yellow bird, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:32:33.021261+00:00",
+  "updated_at": "2026-09-25T22:40:05.614978+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/25271516-bcb4-4985-a2e3-9d9103863d91/rotations/south.png?t=1790376005",
+  "tags": [],
+  "group_id": "1079624c-3daf-48d7-a343-78db13d02a2c"
+}

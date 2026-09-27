@@ -1,0 +1,41 @@
+{
+  "id": "fe4f24b1-aa9e-4268-9c68-a5e591da38a7",
+  "name": "A rough chunk of copper ore wi",
+  "state_name": "base",
+  "prompt": "A rough chunk of copper ore with reddish-orange metallic veins, pixel art, top-down view, NO background NO UI NO text",
+  "size": {
+    "width": 85,
+    "height": 85
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T02:19:51.580231+00:00",
+  "view": "low top-down",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/south.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/west.png",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/east.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/north.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/south-west.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/north-west.png"
+  },
+  "storage_urls": {
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/east.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/west.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/north.png",
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/south.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/north-west.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fe4f24b1-aa9e-4268-9c68-a5e591da38a7/rotations/south-west.png"
+  },
+  "frame_urls": null,
+  "style_settings": {},
+  "tags": [],
+  "status": "completed",
+  "group_id": "7ff6e179-270d-4b51-8943-58097c723109",
+  "progress_percent": null,
+  "eta_seconds": null,
+  "animations": []
+}

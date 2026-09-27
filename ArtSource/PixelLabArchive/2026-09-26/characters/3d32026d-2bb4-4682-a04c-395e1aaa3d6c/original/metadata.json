@@ -1,0 +1,103 @@
+{
+  "group_id": "3c3b8c53-c662-462b-929e-45d06db04c60",
+  "states": [
+    {
+      "character": {
+        "id": "3d32026d-2bb4-4682-a04c-395e1aaa3d6c",
+        "name": "lyric",
+        "prompt": "a stylish synthwave DJ with neon headphones and a glowing visor, friendly cool townsperson, gothic-punk neon, full body",
+        "size": {
+          "width": 120,
+          "height": 120
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T23:00:56.420535+00:00"
+      },
+      "folder": "lyric",
+      "frames": {
+        "rotations": {
+          "south": "lyric/rotations/south.png",
+          "south-east": "lyric/rotations/south-east.png",
+          "east": "lyric/rotations/east.png",
+          "north-east": "lyric/rotations/north-east.png",
+          "north": "lyric/rotations/north.png",
+          "north-west": "lyric/rotations/north-west.png",
+          "west": "lyric/rotations/west.png",
+          "south-west": "lyric/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "south-east": [
+              "lyric/animations/walking/south-east/frame_000.png",
+              "lyric/animations/walking/south-east/frame_001.png",
+              "lyric/animations/walking/south-east/frame_002.png",
+              "lyric/animations/walking/south-east/frame_003.png",
+              "lyric/animations/walking/south-east/frame_004.png",
+              "lyric/animations/walking/south-east/frame_005.png"
+            ],
+            "south-west": [
+              "lyric/animations/walking/south-west/frame_000.png",
+              "lyric/animations/walking/south-west/frame_001.png",
+              "lyric/animations/walking/south-west/frame_002.png",
+              "lyric/animations/walking/south-west/frame_003.png",
+              "lyric/animations/walking/south-west/frame_004.png",
+              "lyric/animations/walking/south-west/frame_005.png"
+            ],
+            "south": [
+              "lyric/animations/walking/south/frame_000.png",
+              "lyric/animations/walking/south/frame_001.png",
+              "lyric/animations/walking/south/frame_002.png",
+              "lyric/animations/walking/south/frame_003.png",
+              "lyric/animations/walking/south/frame_004.png",
+              "lyric/animations/walking/south/frame_005.png"
+            ],
+            "north": [
+              "lyric/animations/walking/north/frame_000.png",
+              "lyric/animations/walking/north/frame_001.png",
+              "lyric/animations/walking/north/frame_002.png",
+              "lyric/animations/walking/north/frame_003.png",
+              "lyric/animations/walking/north/frame_004.png",
+              "lyric/animations/walking/north/frame_005.png"
+            ],
+            "west": [
+              "lyric/animations/walking/west/frame_000.png",
+              "lyric/animations/walking/west/frame_001.png",
+              "lyric/animations/walking/west/frame_002.png",
+              "lyric/animations/walking/west/frame_003.png",
+              "lyric/animations/walking/west/frame_004.png",
+              "lyric/animations/walking/west/frame_005.png"
+            ],
+            "east": [
+              "lyric/animations/walking/east/frame_000.png",
+              "lyric/animations/walking/east/frame_001.png",
+              "lyric/animations/walking/east/frame_002.png",
+              "lyric/animations/walking/east/frame_003.png",
+              "lyric/animations/walking/east/frame_004.png",
+              "lyric/animations/walking/east/frame_005.png"
+            ],
+            "north-east": [
+              "lyric/animations/walking/north-east/frame_000.png",
+              "lyric/animations/walking/north-east/frame_001.png",
+              "lyric/animations/walking/north-east/frame_002.png",
+              "lyric/animations/walking/north-east/frame_003.png",
+              "lyric/animations/walking/north-east/frame_004.png",
+              "lyric/animations/walking/north-east/frame_005.png"
+            ],
+            "north-west": [
+              "lyric/animations/walking/north-west/frame_000.png",
+              "lyric/animations/walking/north-west/frame_001.png",
+              "lyric/animations/walking/north-west/frame_002.png",
+              "lyric/animations/walking/north-west/frame_003.png",
+              "lyric/animations/walking/north-west/frame_004.png",
+              "lyric/animations/walking/north-west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:48:57.394084"
+}

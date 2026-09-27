@@ -1,0 +1,20 @@
+{
+  "id": "f23a0437-6d04-492f-99e6-625f72796e89",
+  "name": "Frog",
+  "state_name": "Idle",
+  "prompt": "Frog",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:32:17.668715+00:00",
+  "updated_at": "2026-09-25T19:35:24.225897+00:00",
+  "animation_count": 0,
+  "template_id": "bear",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f23a0437-6d04-492f-99e6-625f72796e89/rotations/south.png?t=1790364924",
+  "tags": [],
+  "group_id": "cc5b9370-2da2-4e40-b984-705814e674d9"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "3cf857b9-86de-4821-a5df-5a2f192c7224",
+  "name": "A white cauliflower head with ",
+  "state_name": "base",
+  "prompt": "A white cauliflower head with green leaves, pixel art, top-down view, NO background NO UI NO text",
+  "size": {
+    "width": 85,
+    "height": 85
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T02:11:05.168324+00:00",
+  "view": "low top-down",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/south.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/west.png",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/east.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/north.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/south-west.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/north-west.png"
+  },
+  "storage_urls": {
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/east.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/west.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/north.png",
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/south.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/north-west.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/3cf857b9-86de-4821-a5df-5a2f192c7224/rotations/south-west.png"
+  },
+  "frame_urls": null,
+  "style_settings": {},
+  "tags": [],
+  "status": "completed",
+  "group_id": "221ac42f-59d7-4bfb-806c-0e6ef74563c9",
+  "progress_percent": null,
+  "eta_seconds": null,
+  "animations": []
+}

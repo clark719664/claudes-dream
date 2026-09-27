@@ -1,0 +1,20 @@
+{
+  "id": "bdc495d6-28e2-440b-81ce-72d876f4c83b",
+  "name": "Cave snake ",
+  "state_name": "Idle",
+  "prompt": "Cave snake ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:26:36.671673+00:00",
+  "updated_at": "2026-09-25T19:27:46.323891+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bdc495d6-28e2-440b-81ce-72d876f4c83b/rotations/south.png?t=1790364466",
+  "tags": [],
+  "group_id": "a46abbd0-b550-4f53-8724-89fad6497d8d"
+}

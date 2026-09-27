@@ -24,7 +24,6 @@ func _ready() -> void:
 	add_child(sh)
 	icon = Sprite2D.new()
 	icon.texture = Pack.icon(item)
-	icon.modulate = Inventory.tint(item)
 	var s := icon.texture.get_size()
 	var k := minf(1.0, 12.0 / maxf(s.x, s.y))
 	icon.scale = Vector2(k, k)

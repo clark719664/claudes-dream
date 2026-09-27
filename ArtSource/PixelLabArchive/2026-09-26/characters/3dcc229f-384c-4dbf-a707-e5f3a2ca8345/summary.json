@@ -1,0 +1,20 @@
+{
+  "id": "3dcc229f-384c-4dbf-a707-e5f3a2ca8345",
+  "name": "cave_goblin",
+  "state_name": "Idle",
+  "prompt": "Quarry Cave Goblin raider with mining helmet, jagged iron pickaxe and lantern, low top-down 16-bit RPG pixel art monster, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T18:30:11.838476+00:00",
+  "updated_at": "2026-09-25T18:34:05.199093+00:00",
+  "animation_count": 3,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/3dcc229f-384c-4dbf-a707-e5f3a2ca8345/rotations/south.png?t=1790361245",
+  "tags": [],
+  "group_id": "afeb33fe-d549-4efb-83e1-3d23cb3ce959"
+}

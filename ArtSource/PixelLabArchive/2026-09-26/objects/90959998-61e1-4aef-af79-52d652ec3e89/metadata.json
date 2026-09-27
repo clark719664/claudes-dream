@@ -1,0 +1,36 @@
+{
+  "id": "90959998-61e1-4aef-af79-52d652ec3e89",
+  "name": "ornate gothic UI panel frame, ",
+  "state_name": "This needs to be a U",
+  "prompt": "ornate gothic UI panel frame, dark iron border with gold filigree corners, hollow empty center, game menu window border",
+  "size": {
+    "width": 128,
+    "height": 128
+  },
+  "directions": 1,
+  "created_at": "2026-09-25T18:41:53.864248+00:00",
+  "view": "high top-down",
+  "rotation_urls": {
+    "south": null,
+    "west": null,
+    "east": null,
+    "north": null,
+    "south-east": null,
+    "south-west": null,
+    "north-east": null,
+    "north-west": null
+  },
+  "storage_urls": {
+    "unknown": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/90959998-61e1-4aef-af79-52d652ec3e89/rotations/unknown.png"
+  },
+  "frame_urls": null,
+  "style_settings": {
+    "no_background": true
+  },
+  "tags": [],
+  "status": "completed",
+  "group_id": "a3d87dc6-48fe-4ca9-9c86-c290983a4f78",
+  "progress_percent": null,
+  "eta_seconds": null,
+  "animations": []
+}

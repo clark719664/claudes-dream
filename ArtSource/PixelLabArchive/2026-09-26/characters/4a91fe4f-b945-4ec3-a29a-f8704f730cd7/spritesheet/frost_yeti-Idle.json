@@ -1,0 +1,173 @@
+{
+  "character": {
+    "id": "4a91fe4f-b945-4ec3-a29a-f8704f730cd7",
+    "name": "Idle",
+    "prompt": "Frostvale Yeti monster, hulking white-furred ice beast with glowing blue eyes and frost claws, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "frost_yeti-Idle.png",
+    "cell_size": {
+      "width": 64,
+      "height": 64
+    },
+    "sheet_size": {
+      "width": 512,
+      "height": 1088
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 4,
+        "animation": "animating",
+        "animation_group_id": "1075c54a-022f-404a-87af-586aa9205725",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 4,
+        "animation": "animating",
+        "animation_group_id": "1075c54a-022f-404a-87af-586aa9205725",
+        "direction": "east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 4,
+        "animation": "animating",
+        "animation_group_id": "1075c54a-022f-404a-87af-586aa9205725",
+        "direction": "north"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 4,
+        "animation": "animating",
+        "animation_group_id": "1075c54a-022f-404a-87af-586aa9205725",
+        "direction": "west"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "6995d12b-b3c7-4753-be32-018107b3ad8e",
+        "direction": "south"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "6995d12b-b3c7-4753-be32-018107b3ad8e",
+        "direction": "east"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "6995d12b-b3c7-4753-be32-018107b3ad8e",
+        "direction": "north"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking",
+        "animation_group_id": "6995d12b-b3c7-4753-be32-018107b3ad8e",
+        "direction": "west"
+      },
+      {
+        "row": 9,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_2",
+        "animation_group_id": "77db99de-576b-40bc-83ce-bf8538211ff7",
+        "direction": "south"
+      },
+      {
+        "row": 10,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_2",
+        "animation_group_id": "77db99de-576b-40bc-83ce-bf8538211ff7",
+        "direction": "east"
+      },
+      {
+        "row": 11,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_2",
+        "animation_group_id": "77db99de-576b-40bc-83ce-bf8538211ff7",
+        "direction": "north"
+      },
+      {
+        "row": 12,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_2",
+        "animation_group_id": "77db99de-576b-40bc-83ce-bf8538211ff7",
+        "direction": "west"
+      },
+      {
+        "row": 13,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_3",
+        "animation_group_id": "b4a458a9-7ef3-4de1-be1c-9365defc7f76",
+        "direction": "south"
+      },
+      {
+        "row": 14,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_3",
+        "animation_group_id": "b4a458a9-7ef3-4de1-be1c-9365defc7f76",
+        "direction": "east"
+      },
+      {
+        "row": 15,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_3",
+        "animation_group_id": "b4a458a9-7ef3-4de1-be1c-9365defc7f76",
+        "direction": "north"
+      },
+      {
+        "row": 16,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "walking_3",
+        "animation_group_id": "b4a458a9-7ef3-4de1-be1c-9365defc7f76",
+        "direction": "west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:48:51.101100+00:00"
+}

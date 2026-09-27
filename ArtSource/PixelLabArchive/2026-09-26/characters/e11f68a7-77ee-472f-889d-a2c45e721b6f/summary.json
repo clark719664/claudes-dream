@@ -1,0 +1,20 @@
+{
+  "id": "e11f68a7-77ee-472f-889d-a2c45e721b6f",
+  "name": "diver_f",
+  "state_name": "diver_f",
+  "prompt": "female Covenant diver in a dark sleek wetsuit with a rebreather and void-tech goggles, menacing aquatic villain, gothic-punk, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T22:28:09.660059+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/e11f68a7-77ee-472f-889d-a2c45e721b6f/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "4877d8bc-e214-42d7-95f5-d0dad1a785e7"
+}

@@ -1,0 +1,103 @@
+{
+  "group_id": "904b265a-1c6e-44f7-ab9d-9dca3bdb92bf",
+  "states": [
+    {
+      "character": {
+        "id": "0b66c3ef-6548-4632-aa58-8b3f43183b5f",
+        "name": "bouncer_knox",
+        "prompt": "Knox, burly nightclub bouncer in a black jacket with crossed arms and an earpiece, shaved head, cozy stardew-style RPG villager, cyberpunk, full body",
+        "size": {
+          "width": 88,
+          "height": 88
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T17:13:24.985472+00:00"
+      },
+      "folder": "bouncer_knox",
+      "frames": {
+        "rotations": {
+          "south": "bouncer_knox/rotations/south.png",
+          "south-east": "bouncer_knox/rotations/south-east.png",
+          "east": "bouncer_knox/rotations/east.png",
+          "north-east": "bouncer_knox/rotations/north-east.png",
+          "north": "bouncer_knox/rotations/north.png",
+          "north-west": "bouncer_knox/rotations/north-west.png",
+          "west": "bouncer_knox/rotations/west.png",
+          "south-west": "bouncer_knox/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "east": [
+              "bouncer_knox/animations/walking/east/frame_000.png",
+              "bouncer_knox/animations/walking/east/frame_001.png",
+              "bouncer_knox/animations/walking/east/frame_002.png",
+              "bouncer_knox/animations/walking/east/frame_003.png",
+              "bouncer_knox/animations/walking/east/frame_004.png",
+              "bouncer_knox/animations/walking/east/frame_005.png"
+            ],
+            "north": [
+              "bouncer_knox/animations/walking/north/frame_000.png",
+              "bouncer_knox/animations/walking/north/frame_001.png",
+              "bouncer_knox/animations/walking/north/frame_002.png",
+              "bouncer_knox/animations/walking/north/frame_003.png",
+              "bouncer_knox/animations/walking/north/frame_004.png",
+              "bouncer_knox/animations/walking/north/frame_005.png"
+            ],
+            "north-west": [
+              "bouncer_knox/animations/walking/north-west/frame_000.png",
+              "bouncer_knox/animations/walking/north-west/frame_001.png",
+              "bouncer_knox/animations/walking/north-west/frame_002.png",
+              "bouncer_knox/animations/walking/north-west/frame_003.png",
+              "bouncer_knox/animations/walking/north-west/frame_004.png",
+              "bouncer_knox/animations/walking/north-west/frame_005.png"
+            ],
+            "south-east": [
+              "bouncer_knox/animations/walking/south-east/frame_000.png",
+              "bouncer_knox/animations/walking/south-east/frame_001.png",
+              "bouncer_knox/animations/walking/south-east/frame_002.png",
+              "bouncer_knox/animations/walking/south-east/frame_003.png",
+              "bouncer_knox/animations/walking/south-east/frame_004.png",
+              "bouncer_knox/animations/walking/south-east/frame_005.png"
+            ],
+            "south": [
+              "bouncer_knox/animations/walking/south/frame_000.png",
+              "bouncer_knox/animations/walking/south/frame_001.png",
+              "bouncer_knox/animations/walking/south/frame_002.png",
+              "bouncer_knox/animations/walking/south/frame_003.png",
+              "bouncer_knox/animations/walking/south/frame_004.png",
+              "bouncer_knox/animations/walking/south/frame_005.png"
+            ],
+            "west": [
+              "bouncer_knox/animations/walking/west/frame_000.png",
+              "bouncer_knox/animations/walking/west/frame_001.png",
+              "bouncer_knox/animations/walking/west/frame_002.png",
+              "bouncer_knox/animations/walking/west/frame_003.png",
+              "bouncer_knox/animations/walking/west/frame_004.png",
+              "bouncer_knox/animations/walking/west/frame_005.png"
+            ],
+            "north-east": [
+              "bouncer_knox/animations/walking/north-east/frame_000.png",
+              "bouncer_knox/animations/walking/north-east/frame_001.png",
+              "bouncer_knox/animations/walking/north-east/frame_002.png",
+              "bouncer_knox/animations/walking/north-east/frame_003.png",
+              "bouncer_knox/animations/walking/north-east/frame_004.png",
+              "bouncer_knox/animations/walking/north-east/frame_005.png"
+            ],
+            "south-west": [
+              "bouncer_knox/animations/walking/south-west/frame_000.png",
+              "bouncer_knox/animations/walking/south-west/frame_001.png",
+              "bouncer_knox/animations/walking/south-west/frame_002.png",
+              "bouncer_knox/animations/walking/south-west/frame_003.png",
+              "bouncer_knox/animations/walking/south-west/frame_004.png",
+              "bouncer_knox/animations/walking/south-west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:50:01.934326"
+}

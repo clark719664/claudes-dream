@@ -1,0 +1,20 @@
+{
+  "id": "60ac20dc-107d-4b0f-8c57-50a17545135a",
+  "name": "donkey",
+  "state_name": "Idle",
+  "prompt": "Farm donkey, gray with long ears, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:32:46.001628+00:00",
+  "updated_at": "2026-09-25T22:36:38.645977+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/60ac20dc-107d-4b0f-8c57-50a17545135a/rotations/south.png?t=1790375798",
+  "tags": [],
+  "group_id": "9676759d-994c-4263-892a-1f9126e4397d"
+}

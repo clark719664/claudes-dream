@@ -1,0 +1,20 @@
+{
+  "id": "44ec61ca-58ab-401f-8a21-5586539dab49",
+  "name": "baby_ferret",
+  "state_name": "Idle",
+  "prompt": "Baby ferret, small long body, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:49:58.787872+00:00",
+  "updated_at": "2026-09-25T20:13:34.336131+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/44ec61ca-58ab-401f-8a21-5586539dab49/rotations/south.png?t=1790367214",
+  "tags": [],
+  "group_id": "663df551-c153-4cb2-a569-e71ab39f15b2"
+}

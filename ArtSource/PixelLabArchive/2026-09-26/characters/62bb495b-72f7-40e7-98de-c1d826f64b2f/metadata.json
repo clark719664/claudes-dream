@@ -1,0 +1,36 @@
+{
+  "id": "62bb495b-72f7-40e7-98de-c1d826f64b2f",
+  "name": "duck",
+  "state_name": "Idle",
+  "prompt": "Farm duck, white bird with orange bill, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:32:38.239482+00:00",
+  "updated_at": "2026-09-25T22:36:50.454024+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/62bb495b-72f7-40e7-98de-c1d826f64b2f/rotations/south.png?t=1790375810",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/62bb495b-72f7-40e7-98de-c1d826f64b2f/rotations/west.png?t=1790375810",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/62bb495b-72f7-40e7-98de-c1d826f64b2f/rotations/east.png?t=1790375810",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/62bb495b-72f7-40e7-98de-c1d826f64b2f/rotations/north.png?t=1790375810",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/62bb495b-72f7-40e7-98de-c1d826f64b2f/rotations/south-east.png?t=1790375810",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/62bb495b-72f7-40e7-98de-c1d826f64b2f/rotations/north-east.png?t=1790375810",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/62bb495b-72f7-40e7-98de-c1d826f64b2f/rotations/north-west.png?t=1790375810",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/62bb495b-72f7-40e7-98de-c1d826f64b2f/rotations/south-west.png?t=1790375810"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "be652f00-2bd8-4fcc-8748-8c5149b735b4",
+  "skeletons": null,
+  "animations": []
+}

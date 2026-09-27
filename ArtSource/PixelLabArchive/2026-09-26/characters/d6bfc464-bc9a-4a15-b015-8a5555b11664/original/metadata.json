@@ -1,0 +1,103 @@
+{
+  "group_id": "e8bdc562-be85-43a2-ba78-e9d8811e5e33",
+  "states": [
+    {
+      "character": {
+        "id": "d6bfc464-bc9a-4a15-b015-8a5555b11664",
+        "name": "orphan_suki",
+        "prompt": "Suki, a shy little orphan girl hugging a stuffed toy, cute, cozy stardew-style RPG child, full body",
+        "size": {
+          "width": 76,
+          "height": 76
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T21:04:10.146086+00:00"
+      },
+      "folder": "orphan_suki",
+      "frames": {
+        "rotations": {
+          "south": "orphan_suki/rotations/south.png",
+          "south-east": "orphan_suki/rotations/south-east.png",
+          "east": "orphan_suki/rotations/east.png",
+          "north-east": "orphan_suki/rotations/north-east.png",
+          "north": "orphan_suki/rotations/north.png",
+          "north-west": "orphan_suki/rotations/north-west.png",
+          "west": "orphan_suki/rotations/west.png",
+          "south-west": "orphan_suki/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "east": [
+              "orphan_suki/animations/walking/east/frame_000.png",
+              "orphan_suki/animations/walking/east/frame_001.png",
+              "orphan_suki/animations/walking/east/frame_002.png",
+              "orphan_suki/animations/walking/east/frame_003.png",
+              "orphan_suki/animations/walking/east/frame_004.png",
+              "orphan_suki/animations/walking/east/frame_005.png"
+            ],
+            "south": [
+              "orphan_suki/animations/walking/south/frame_000.png",
+              "orphan_suki/animations/walking/south/frame_001.png",
+              "orphan_suki/animations/walking/south/frame_002.png",
+              "orphan_suki/animations/walking/south/frame_003.png",
+              "orphan_suki/animations/walking/south/frame_004.png",
+              "orphan_suki/animations/walking/south/frame_005.png"
+            ],
+            "north-east": [
+              "orphan_suki/animations/walking/north-east/frame_000.png",
+              "orphan_suki/animations/walking/north-east/frame_001.png",
+              "orphan_suki/animations/walking/north-east/frame_002.png",
+              "orphan_suki/animations/walking/north-east/frame_003.png",
+              "orphan_suki/animations/walking/north-east/frame_004.png",
+              "orphan_suki/animations/walking/north-east/frame_005.png"
+            ],
+            "west": [
+              "orphan_suki/animations/walking/west/frame_000.png",
+              "orphan_suki/animations/walking/west/frame_001.png",
+              "orphan_suki/animations/walking/west/frame_002.png",
+              "orphan_suki/animations/walking/west/frame_003.png",
+              "orphan_suki/animations/walking/west/frame_004.png",
+              "orphan_suki/animations/walking/west/frame_005.png"
+            ],
+            "south-west": [
+              "orphan_suki/animations/walking/south-west/frame_000.png",
+              "orphan_suki/animations/walking/south-west/frame_001.png",
+              "orphan_suki/animations/walking/south-west/frame_002.png",
+              "orphan_suki/animations/walking/south-west/frame_003.png",
+              "orphan_suki/animations/walking/south-west/frame_004.png",
+              "orphan_suki/animations/walking/south-west/frame_005.png"
+            ],
+            "south-east": [
+              "orphan_suki/animations/walking/south-east/frame_000.png",
+              "orphan_suki/animations/walking/south-east/frame_001.png",
+              "orphan_suki/animations/walking/south-east/frame_002.png",
+              "orphan_suki/animations/walking/south-east/frame_003.png",
+              "orphan_suki/animations/walking/south-east/frame_004.png",
+              "orphan_suki/animations/walking/south-east/frame_005.png"
+            ],
+            "north-west": [
+              "orphan_suki/animations/walking/north-west/frame_000.png",
+              "orphan_suki/animations/walking/north-west/frame_001.png",
+              "orphan_suki/animations/walking/north-west/frame_002.png",
+              "orphan_suki/animations/walking/north-west/frame_003.png",
+              "orphan_suki/animations/walking/north-west/frame_004.png",
+              "orphan_suki/animations/walking/north-west/frame_005.png"
+            ],
+            "north": [
+              "orphan_suki/animations/walking/north/frame_000.png",
+              "orphan_suki/animations/walking/north/frame_001.png",
+              "orphan_suki/animations/walking/north/frame_002.png",
+              "orphan_suki/animations/walking/north/frame_003.png",
+              "orphan_suki/animations/walking/north/frame_004.png",
+              "orphan_suki/animations/walking/north/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:34.585458"
+}

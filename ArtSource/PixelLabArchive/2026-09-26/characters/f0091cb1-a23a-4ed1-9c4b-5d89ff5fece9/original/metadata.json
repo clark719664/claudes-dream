@@ -1,0 +1,103 @@
+{
+  "group_id": "0596e147-af0f-49ef-83fe-c0cea2fe8efc",
+  "states": [
+    {
+      "character": {
+        "id": "f0091cb1-a23a-4ed1-9c4b-5d89ff5fece9",
+        "name": "greenhouse_sal",
+        "prompt": "Sal, greenhouse keeper in a gardening apron and gloves carrying a potted plant, cozy stardew-style RPG villager, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T20:45:37.453734+00:00"
+      },
+      "folder": "greenhouse_sal",
+      "frames": {
+        "rotations": {
+          "south": "greenhouse_sal/rotations/south.png",
+          "south-east": "greenhouse_sal/rotations/south-east.png",
+          "east": "greenhouse_sal/rotations/east.png",
+          "north-east": "greenhouse_sal/rotations/north-east.png",
+          "north": "greenhouse_sal/rotations/north.png",
+          "north-west": "greenhouse_sal/rotations/north-west.png",
+          "west": "greenhouse_sal/rotations/west.png",
+          "south-west": "greenhouse_sal/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-west": [
+              "greenhouse_sal/animations/walking/north-west/frame_000.png",
+              "greenhouse_sal/animations/walking/north-west/frame_001.png",
+              "greenhouse_sal/animations/walking/north-west/frame_002.png",
+              "greenhouse_sal/animations/walking/north-west/frame_003.png",
+              "greenhouse_sal/animations/walking/north-west/frame_004.png",
+              "greenhouse_sal/animations/walking/north-west/frame_005.png"
+            ],
+            "east": [
+              "greenhouse_sal/animations/walking/east/frame_000.png",
+              "greenhouse_sal/animations/walking/east/frame_001.png",
+              "greenhouse_sal/animations/walking/east/frame_002.png",
+              "greenhouse_sal/animations/walking/east/frame_003.png",
+              "greenhouse_sal/animations/walking/east/frame_004.png",
+              "greenhouse_sal/animations/walking/east/frame_005.png"
+            ],
+            "south-east": [
+              "greenhouse_sal/animations/walking/south-east/frame_000.png",
+              "greenhouse_sal/animations/walking/south-east/frame_001.png",
+              "greenhouse_sal/animations/walking/south-east/frame_002.png",
+              "greenhouse_sal/animations/walking/south-east/frame_003.png",
+              "greenhouse_sal/animations/walking/south-east/frame_004.png",
+              "greenhouse_sal/animations/walking/south-east/frame_005.png"
+            ],
+            "south": [
+              "greenhouse_sal/animations/walking/south/frame_000.png",
+              "greenhouse_sal/animations/walking/south/frame_001.png",
+              "greenhouse_sal/animations/walking/south/frame_002.png",
+              "greenhouse_sal/animations/walking/south/frame_003.png",
+              "greenhouse_sal/animations/walking/south/frame_004.png",
+              "greenhouse_sal/animations/walking/south/frame_005.png"
+            ],
+            "west": [
+              "greenhouse_sal/animations/walking/west/frame_000.png",
+              "greenhouse_sal/animations/walking/west/frame_001.png",
+              "greenhouse_sal/animations/walking/west/frame_002.png",
+              "greenhouse_sal/animations/walking/west/frame_003.png",
+              "greenhouse_sal/animations/walking/west/frame_004.png",
+              "greenhouse_sal/animations/walking/west/frame_005.png"
+            ],
+            "north": [
+              "greenhouse_sal/animations/walking/north/frame_000.png",
+              "greenhouse_sal/animations/walking/north/frame_001.png",
+              "greenhouse_sal/animations/walking/north/frame_002.png",
+              "greenhouse_sal/animations/walking/north/frame_003.png",
+              "greenhouse_sal/animations/walking/north/frame_004.png",
+              "greenhouse_sal/animations/walking/north/frame_005.png"
+            ],
+            "south-west": [
+              "greenhouse_sal/animations/walking/south-west/frame_000.png",
+              "greenhouse_sal/animations/walking/south-west/frame_001.png",
+              "greenhouse_sal/animations/walking/south-west/frame_002.png",
+              "greenhouse_sal/animations/walking/south-west/frame_003.png",
+              "greenhouse_sal/animations/walking/south-west/frame_004.png",
+              "greenhouse_sal/animations/walking/south-west/frame_005.png"
+            ],
+            "north-east": [
+              "greenhouse_sal/animations/walking/north-east/frame_000.png",
+              "greenhouse_sal/animations/walking/north-east/frame_001.png",
+              "greenhouse_sal/animations/walking/north-east/frame_002.png",
+              "greenhouse_sal/animations/walking/north-east/frame_003.png",
+              "greenhouse_sal/animations/walking/north-east/frame_004.png",
+              "greenhouse_sal/animations/walking/north-east/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:47.286913"
+}

@@ -1,0 +1,103 @@
+{
+  "group_id": "51636b03-10e0-4980-ac83-18c43c83fef0",
+  "states": [
+    {
+      "character": {
+        "id": "ead0418e-b8c9-43dd-bae0-b11702772e86",
+        "name": "neon_pix",
+        "prompt": "Pix, a neon street vendor with a glowing visor and a tray of glowing wares, cyberpunk, cozy stardew-style RPG villager, full body",
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T17:14:11.834446+00:00"
+      },
+      "folder": "neon_pix",
+      "frames": {
+        "rotations": {
+          "south": "neon_pix/rotations/south.png",
+          "south-east": "neon_pix/rotations/south-east.png",
+          "east": "neon_pix/rotations/east.png",
+          "north-east": "neon_pix/rotations/north-east.png",
+          "north": "neon_pix/rotations/north.png",
+          "north-west": "neon_pix/rotations/north-west.png",
+          "west": "neon_pix/rotations/west.png",
+          "south-west": "neon_pix/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-west": [
+              "neon_pix/animations/walking/north-west/frame_000.png",
+              "neon_pix/animations/walking/north-west/frame_001.png",
+              "neon_pix/animations/walking/north-west/frame_002.png",
+              "neon_pix/animations/walking/north-west/frame_003.png",
+              "neon_pix/animations/walking/north-west/frame_004.png",
+              "neon_pix/animations/walking/north-west/frame_005.png"
+            ],
+            "north": [
+              "neon_pix/animations/walking/north/frame_000.png",
+              "neon_pix/animations/walking/north/frame_001.png",
+              "neon_pix/animations/walking/north/frame_002.png",
+              "neon_pix/animations/walking/north/frame_003.png",
+              "neon_pix/animations/walking/north/frame_004.png",
+              "neon_pix/animations/walking/north/frame_005.png"
+            ],
+            "north-east": [
+              "neon_pix/animations/walking/north-east/frame_000.png",
+              "neon_pix/animations/walking/north-east/frame_001.png",
+              "neon_pix/animations/walking/north-east/frame_002.png",
+              "neon_pix/animations/walking/north-east/frame_003.png",
+              "neon_pix/animations/walking/north-east/frame_004.png",
+              "neon_pix/animations/walking/north-east/frame_005.png"
+            ],
+            "east": [
+              "neon_pix/animations/walking/east/frame_000.png",
+              "neon_pix/animations/walking/east/frame_001.png",
+              "neon_pix/animations/walking/east/frame_002.png",
+              "neon_pix/animations/walking/east/frame_003.png",
+              "neon_pix/animations/walking/east/frame_004.png",
+              "neon_pix/animations/walking/east/frame_005.png"
+            ],
+            "south": [
+              "neon_pix/animations/walking/south/frame_000.png",
+              "neon_pix/animations/walking/south/frame_001.png",
+              "neon_pix/animations/walking/south/frame_002.png",
+              "neon_pix/animations/walking/south/frame_003.png",
+              "neon_pix/animations/walking/south/frame_004.png",
+              "neon_pix/animations/walking/south/frame_005.png"
+            ],
+            "south-west": [
+              "neon_pix/animations/walking/south-west/frame_000.png",
+              "neon_pix/animations/walking/south-west/frame_001.png",
+              "neon_pix/animations/walking/south-west/frame_002.png",
+              "neon_pix/animations/walking/south-west/frame_003.png",
+              "neon_pix/animations/walking/south-west/frame_004.png",
+              "neon_pix/animations/walking/south-west/frame_005.png"
+            ],
+            "west": [
+              "neon_pix/animations/walking/west/frame_000.png",
+              "neon_pix/animations/walking/west/frame_001.png",
+              "neon_pix/animations/walking/west/frame_002.png",
+              "neon_pix/animations/walking/west/frame_003.png",
+              "neon_pix/animations/walking/west/frame_004.png",
+              "neon_pix/animations/walking/west/frame_005.png"
+            ],
+            "south-east": [
+              "neon_pix/animations/walking/south-east/frame_000.png",
+              "neon_pix/animations/walking/south-east/frame_001.png",
+              "neon_pix/animations/walking/south-east/frame_002.png",
+              "neon_pix/animations/walking/south-east/frame_003.png",
+              "neon_pix/animations/walking/south-east/frame_004.png",
+              "neon_pix/animations/walking/south-east/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:50:01.871459"
+}

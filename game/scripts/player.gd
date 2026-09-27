@@ -22,6 +22,8 @@ var camera: Camera2D
 var _attack_t := 0.0
 var _invuln := 0.0
 var _knock := Vector2.ZERO
+var _dash_t := 0.0
+var _dash_dir := Vector2.ZERO
 var _anim := ""
 var _struck := false
 var _held := ""
@@ -93,11 +95,26 @@ func _physics_process(delta: float) -> void:
 	var glow := Inventory.has("lantern") and Game.darkness() > 0.3
 	_lantern.enabled = glow
 	_lantern.energy = Game.darkness() * 1.1 if glow else 0.0
-	velocity = input * speed + _knock
-	_knock = _knock.move_toward(Vector2.ZERO, 600.0 * delta)
-	move_and_slide()
+
+	if _dash_t > 0.0:
+		_dash_t -= delta
+		velocity = _dash_dir * 300.0
+		_invuln = 0.1
+		move_and_slide()
+	else:
+		velocity = input * speed + _knock
+		_knock = _knock.move_toward(Vector2.ZERO, 600.0 * delta)
+		move_and_slide()
+		
+		if Input.is_action_just_pressed("ui_accept") and input.length() > 0.1 and Game.energy >= 3 and _attack_t <= 0.0:
+			_dash_t = 0.25
+			_dash_dir = input.normalized()
+			Game.energy -= 3
+			return
+
 	if input.length() > 0.1 and _attack_t <= 0.0:
 		facing = input.normalized()
+		weapon_pivot.z_index = -1 if facing.y < -0.1 and absf(facing.y) > absf(facing.x) else 0
 	if absf(facing.x) > 0.05 and body.flip_h != (facing.x < 0):
 		body.flip_h = facing.x < 0
 		weapon_pivot.scale.x = -1.0 if facing.x < 0 else 1.0
@@ -163,6 +180,16 @@ func use_selected() -> void:
 		_swing(item, _scythe, 1)
 	elif Inventory.is_seed(item):
 		_plant(cell, item)
+	elif item in ["barn", "coop", "silo", "windmill", "greenhouse", "well"]:
+		if w.area_id == "farm" and not w.cell_blocked(cell):
+			var o := {"t": "custom_building", "kind": item, "x": cell.x * 16 + 8, "y": cell.y * 16 + 14}
+			Game.area_state(w.area_id).placed.append(o)
+			var node = w.spawn(o)
+			w.entities.add_child(node)
+			Inventory.take(item)
+			Game.say("Built the %s!" % item.capitalize())
+		else:
+			Game.say("Can't build it there.")
 	elif item.begins_with("kit_") or item == "fence":
 		if w.place(item, cell):
 			Inventory.take(item)
@@ -171,14 +198,34 @@ func use_selected() -> void:
 			Game.say("You can only build on your farm.")
 		else:
 			Game.say("There's no room there.")
+	elif FarmAnimal.STATS.has(item):
+		if w.area_id in ["farm", "barn", "coop"] and not w.cell_blocked(cell):
+			var o := {"t": "enemy", "actor": item, "x": cell.x * 16 + 8, "y": cell.y * 16 + 14}
+			Game.area_state(w.area_id).placed.append(o)
+			var node = w.spawn(o)
+			node.set_meta("placed", o)
+			Inventory.take(item)
+			Game.say("Placed a %s!" % item.capitalize())
+		else:
+			Game.say("Can't place it there.")
 	elif Inventory.FOOD.has(item):
 		eat_item(item)
+	elif item == "fertilizer":
+		_swing(item, func(): _fertilize(cell), 1)
 	elif item in Inventory.AXES and w.area_id == "farm" and w.remove_fence(cell):
 		_swing(item, Callable(), 1)
 	elif item in Inventory.PICKAXES and w.soil and w.soil.clear(cell):
 		_swing(item, Callable(), 1)
 	else:
 		_start_attack()
+
+func _fertilize(cell: Vector2i) -> void:
+	var w := Game.world
+	if w.soil == null or not w.soil.has_soil(cell):
+		return
+	if w.soil.fertilize(cell):
+		Inventory.take("fertilizer")
+		Game.note("fertilized")
 
 
 func _swing(item: String, action: Callable, cost: int) -> void:
@@ -234,7 +281,10 @@ func _scythe() -> void:
 
 func _plant(cell: Vector2i, seed: String) -> void:
 	var w := Game.world
-	var kind := seed.trim_suffix("_seeds")
+	var kind := Inventory.crop_for_seed(seed)
+	if kind.is_empty():
+		Game.say("These seeds cannot be planted.")
+		return
 	if w.soil == null or not w.soil.has_soil(cell):
 		Game.say("Seeds go in tilled soil. Dig with the hoe first.")
 		return
@@ -271,7 +321,7 @@ func _start_attack() -> void:
 
 func _update_cursor() -> void:
 	var item := selected()
-	var show := item in ["hoe", "watering_can"] or Inventory.is_seed(item) or item.begins_with("kit_") or item == "fence"
+	var show := item in ["hoe", "watering_can"] or Inventory.is_seed(item) or item.begins_with("kit_") or item == "fence" or FarmAnimal.STATS.has(item)
 	_cursor.visible = show and Game.world.soil != null
 	if _cursor.visible:
 		_cursor.global_position = Vector2(facing_cell()) * 16
@@ -281,6 +331,8 @@ func _update_swing() -> void:
 	var t := 1.0 - _attack_t / ATTACK_TIME
 	# wind back a touch, then sweep through
 	var ang := lerpf(-70.0, 120.0, ease(clampf(t * 1.6, 0.0, 1.0), 0.4))
+	if weapon.texture and weapon.texture.get_size().x == 24:
+		ang -= 45.0
 	weapon.rotation_degrees = ang
 	if t > 0.22 and not _struck:
 		_struck = true
@@ -303,8 +355,22 @@ func _strike() -> void:
 			var dmg: int = Inventory.WEAPONS.get(_held, Inventory.FIST_DAMAGE if _held == "" else 4)
 			if Game.has_buff("might"):
 				dmg = int(dmg * 1.5)
-			n.hit(dmg, facing, self)
+				
+			var crit = randf() < 0.15
+			var knockback = 1.0
+			
+			if _held in ["axe", "axe_iron", "axe_mythril", "sword_obsidian", "sword_mythril"]:
+				knockback = 1.6
+				crit = randf() < 0.25 # higher crit chance for heavy/mythic
+				
+			if crit:
+				dmg = int(dmg * 2.5)
+				Game.world.float_text("CRIT!", centre + Vector2(0, -16), Color.YELLOW)
+			
+			n.hit(dmg, facing * knockback, self)
 			hit_any = true
+			if crit:
+				Game.shake(2.5)
 	if hit_any:
 		Game.shake(1.5)
 
@@ -364,6 +430,8 @@ func take_damage(amount: int, from: Vector2) -> void:
 	if dead or _invuln > 0.0:
 		return
 	amount = int(ceil(amount * Inventory.damage_taken_factor()))
+	if Game.has_buff("stoneskin"):
+		amount = int(ceil(amount * 0.1)) # Take 10% damage
 	hp -= amount
 	_invuln = 0.8
 	_knock = (global_position - from).normalized() * 150.0
@@ -424,7 +492,10 @@ func _refresh_weapon() -> void:
 	var sel := selected()
 	_held = sel if sel in Inventory.TOOLS else Inventory.weapon()
 	_set_weapon_texture(_held)
-	weapon.rotation_degrees = 35.0
+	if weapon.texture and weapon.texture.get_size().x == 24:
+		weapon.rotation_degrees = -10.0
+	else:
+		weapon.rotation_degrees = 35.0
 
 
 func _set_weapon_texture(item: String) -> void:
@@ -434,8 +505,10 @@ func _set_weapon_texture(item: String) -> void:
 	var t := Pack.icon(item)
 	weapon.texture = t
 	var sz := t.get_size()
-	weapon.offset = Vector2(-sz.x * 0.5, -sz.y + 3)
-	weapon.modulate = Inventory.tint(item)
+	if sz.x == 24:
+		weapon.offset = Vector2(-6, -18)
+	else:
+		weapon.offset = Vector2(-sz.x * 0.5, -sz.y + 3)
 
 
 ## The outline of the cell you're working on, shown while holding a hoe, the can, seeds or a kit.

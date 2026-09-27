@@ -1,0 +1,45 @@
+{
+  "object": {
+    "id": "72a42ff7-543b-4f35-929b-b33b3dace1b7",
+    "name": "base",
+    "prompt": "An iron pickaxe with a grey metal head and wooden handle, pixel art, top-down view, NO background NO UI NO text",
+    "size": {
+      "width": 85,
+      "height": 85
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "An_iron_pickaxe_with_a_grey_me.png",
+    "cell_size": {
+      "width": 85,
+      "height": 85
+    },
+    "sheet_size": {
+      "width": 680,
+      "height": 85
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:54:23.829797+00:00"
+}

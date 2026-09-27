@@ -1,0 +1,38 @@
+{
+  "id": "aa160374-eab1-4a9e-8774-e34552a50018",
+  "name": "A dungeon slime",
+  "state_name": "Idle",
+  "prompt": "A dungeon slime",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T18:27:15.068564+00:00",
+  "updated_at": "2026-09-25T18:28:13.105935+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/aa160374-eab1-4a9e-8774-e34552a50018/rotations/south.png?t=1790360893",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/aa160374-eab1-4a9e-8774-e34552a50018/rotations/west.png?t=1790360893",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/aa160374-eab1-4a9e-8774-e34552a50018/rotations/east.png?t=1790360893",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/aa160374-eab1-4a9e-8774-e34552a50018/rotations/north.png?t=1790360893",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/aa160374-eab1-4a9e-8774-e34552a50018/rotations/south-east.png?t=1790360893",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/aa160374-eab1-4a9e-8774-e34552a50018/rotations/north-east.png?t=1790360893",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/aa160374-eab1-4a9e-8774-e34552a50018/rotations/north-west.png?t=1790360893",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/aa160374-eab1-4a9e-8774-e34552a50018/rotations/south-west.png?t=1790360893"
+  },
+  "style_settings": {
+    "detail": "",
+    "outline": "",
+    "shading": ""
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "eb5350d5-95ac-46c7-a031-15a3cfe8ebd0",
+  "skeletons": {},
+  "animations": []
+}

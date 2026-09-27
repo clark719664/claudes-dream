@@ -1,0 +1,20 @@
+{
+  "id": "66b4dac8-e7b8-4ff5-8675-0f4a65a489fe",
+  "name": "mechanic_grease",
+  "state_name": "mechanic_grease",
+  "prompt": "Grease, a mechanic in oil-stained overalls and a cap holding a wrench, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 88,
+    "height": 88
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:17:26.912852+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/66b4dac8-e7b8-4ff5-8675-0f4a65a489fe/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "0bf3748c-791d-4ceb-a0d5-c8a2c5eafd86"
+}

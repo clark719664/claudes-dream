@@ -212,7 +212,7 @@ def generate_pixellab_item(spec: tuple, color_b64: str) -> tuple | None:
     try:
         if not os.path.exists(out_p):
             res = api_post("v2/create-image-pixflux", {
-                "description": f"16-bit RPG pixel art icon of {prompt}, single centered object, crisp 1px black outline, Stardew Valley and Pixel Crawler style",
+                "description": f"16-bit RPG pixel art icon of {prompt}, single centered object, crisp 1px black outline, Stardew Valley and Pixel Crawler style, NO UI, NO GRID, NO BACKGROUND, NO MENUS, NO TEXT",
                 "image_size": {"width": 64, "height": 64},
                 "no_background": True,
                 "outline": "single color black outline",
@@ -400,6 +400,16 @@ def main():
         ("chest_iron", "polished iron plate chestplate armor"),
         ("chest_mythril", "ornate blue-silver mythril breastplate armor with gold trim"),
         ("shield_sunforged", "radiant golden sun crest heater shield"),
+        ("sword_wood", "wooden training sword weapon with splintered edges"),
+        ("sword_bone", "white skeletal bone blade weapon with dark wrapping"),
+        ("sword_iron", "sturdy iron broadsword weapon with crossguard"),
+        ("sword_steel", "gleaming silver steel longsword weapon"),
+        ("axe", "crude stone woodcutting axe weapon"),
+        ("axe_iron", "sturdy iron battleaxe weapon"),
+        ("pickaxe", "crude stone mining pickaxe weapon"),
+        ("pickaxe_iron", "sturdy iron mining pickaxe weapon"),
+        ("shield", "simple wooden buckler shield"),
+        ("shield_iron", "sturdy iron heater shield"),
     ]
     print("Generating 12 weapons & armor icons via PixelLab API (/v2/create-image-pixen)...")
     generated_items = []

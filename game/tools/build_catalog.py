@@ -143,6 +143,9 @@ S['scarecrow'] = variants(FARM, [[240, 32, 272, 80]], solid=3, shadow='shadow_sm
 crops = ['carrot', 'beet', 'cabbage', 'lettuce', 'cauliflower', 'broccoli', 'garlic']
 for k, crop in enumerate(crops):
     S['crop_' + crop] = variants(FARM, [[32 + s * 16, 32 * k, 48 + s * 16, 32 * k + 32] for s in range(4)])
+new_crops = ['tomato', 'pumpkin', 'corn', 'strawberry', 'eggplant', 'onion']
+for crop in new_crops:
+    S['crop_' + crop] = variants('pixellab_crops/crop_' + crop + '.png', [[s * 16, 0, s * 16 + 16, 32] for s in range(4)])
 S['soil'] = variants(FARM, [[352, 112, 368, 128]], anchor='centre')
 S['crate_crops'] = variants(FARM, [[160, 32 * k, 176, 32 * k + 32] for k in range(len(crops))], solid=6, shadow='shadow_small')
 S['sack'] = variants(FARM, [[256, 0, 272, 16], [256, 16, 272, 32]], solid=4, shadow='shadow_small')

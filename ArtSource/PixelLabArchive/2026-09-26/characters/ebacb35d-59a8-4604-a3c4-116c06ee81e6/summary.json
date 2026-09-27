@@ -1,0 +1,20 @@
+{
+  "id": "ebacb35d-59a8-4604-a3c4-116c06ee81e6",
+  "name": "defector_lace",
+  "state_name": "defector_lace",
+  "prompt": "Lace, a former Covenant member in a half-torn warden cloak, conflicted, cozy stardew-style RPG villager, gothic, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:17:38.796356+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ebacb35d-59a8-4604-a3c4-116c06ee81e6/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "7ab79b56-1a57-4ba2-9040-7dec45f5e320"
+}

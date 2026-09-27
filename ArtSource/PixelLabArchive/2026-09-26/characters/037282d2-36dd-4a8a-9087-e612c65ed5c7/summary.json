@@ -1,0 +1,20 @@
+{
+  "id": "037282d2-36dd-4a8a-9087-e612c65ed5c7",
+  "name": "Small jumping spider",
+  "state_name": "Idle",
+  "prompt": "Small jumping spider",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:35:47.506510+00:00",
+  "updated_at": "2026-09-25T19:37:20.501182+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/037282d2-36dd-4a8a-9087-e612c65ed5c7/rotations/south.png?t=1790365040",
+  "tags": [],
+  "group_id": "2baed737-908a-49fa-82f0-a260dcb63efd"
+}

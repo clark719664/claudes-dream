@@ -1,0 +1,103 @@
+{
+  "group_id": "70da961b-9e78-4dc2-841c-ccbc747ee8a1",
+  "states": [
+    {
+      "character": {
+        "id": "f19b039d-6e29-43a9-9995-99b45cbde87c",
+        "name": "marlow",
+        "prompt": "Bus Driver Marlow, weary middle-aged bus driver in a uniform cap and worn jacket, cozy stardew-style RPG villager, gothic-punk world, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T16:17:53.660815+00:00"
+      },
+      "folder": "marlow",
+      "frames": {
+        "rotations": {
+          "south": "marlow/rotations/south.png",
+          "south-east": "marlow/rotations/south-east.png",
+          "east": "marlow/rotations/east.png",
+          "north-east": "marlow/rotations/north-east.png",
+          "north": "marlow/rotations/north.png",
+          "north-west": "marlow/rotations/north-west.png",
+          "west": "marlow/rotations/west.png",
+          "south-west": "marlow/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "south-east": [
+              "marlow/animations/walking/south-east/frame_000.png",
+              "marlow/animations/walking/south-east/frame_001.png",
+              "marlow/animations/walking/south-east/frame_002.png",
+              "marlow/animations/walking/south-east/frame_003.png",
+              "marlow/animations/walking/south-east/frame_004.png",
+              "marlow/animations/walking/south-east/frame_005.png"
+            ],
+            "east": [
+              "marlow/animations/walking/east/frame_000.png",
+              "marlow/animations/walking/east/frame_001.png",
+              "marlow/animations/walking/east/frame_002.png",
+              "marlow/animations/walking/east/frame_003.png",
+              "marlow/animations/walking/east/frame_004.png",
+              "marlow/animations/walking/east/frame_005.png"
+            ],
+            "north-east": [
+              "marlow/animations/walking/north-east/frame_000.png",
+              "marlow/animations/walking/north-east/frame_001.png",
+              "marlow/animations/walking/north-east/frame_002.png",
+              "marlow/animations/walking/north-east/frame_003.png",
+              "marlow/animations/walking/north-east/frame_004.png",
+              "marlow/animations/walking/north-east/frame_005.png"
+            ],
+            "north-west": [
+              "marlow/animations/walking/north-west/frame_000.png",
+              "marlow/animations/walking/north-west/frame_001.png",
+              "marlow/animations/walking/north-west/frame_002.png",
+              "marlow/animations/walking/north-west/frame_003.png",
+              "marlow/animations/walking/north-west/frame_004.png",
+              "marlow/animations/walking/north-west/frame_005.png"
+            ],
+            "west": [
+              "marlow/animations/walking/west/frame_000.png",
+              "marlow/animations/walking/west/frame_001.png",
+              "marlow/animations/walking/west/frame_002.png",
+              "marlow/animations/walking/west/frame_003.png",
+              "marlow/animations/walking/west/frame_004.png",
+              "marlow/animations/walking/west/frame_005.png"
+            ],
+            "south-west": [
+              "marlow/animations/walking/south-west/frame_000.png",
+              "marlow/animations/walking/south-west/frame_001.png",
+              "marlow/animations/walking/south-west/frame_002.png",
+              "marlow/animations/walking/south-west/frame_003.png",
+              "marlow/animations/walking/south-west/frame_004.png",
+              "marlow/animations/walking/south-west/frame_005.png"
+            ],
+            "south": [
+              "marlow/animations/walking/south/frame_000.png",
+              "marlow/animations/walking/south/frame_001.png",
+              "marlow/animations/walking/south/frame_002.png",
+              "marlow/animations/walking/south/frame_003.png",
+              "marlow/animations/walking/south/frame_004.png",
+              "marlow/animations/walking/south/frame_005.png"
+            ],
+            "north": [
+              "marlow/animations/walking/north/frame_000.png",
+              "marlow/animations/walking/north/frame_001.png",
+              "marlow/animations/walking/north/frame_002.png",
+              "marlow/animations/walking/north/frame_003.png",
+              "marlow/animations/walking/north/frame_004.png",
+              "marlow/animations/walking/north/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:50:23.810666"
+}

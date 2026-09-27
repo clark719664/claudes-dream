@@ -1,0 +1,103 @@
+{
+  "group_id": "0c22a797-1cad-4ed3-b28e-017f86114d20",
+  "states": [
+    {
+      "character": {
+        "id": "0b21563e-43d9-4c84-9b0c-5b64301537f3",
+        "name": "elder_grain",
+        "prompt": "Elder Grain, kindly white-bearded elder in a long robe leaning on a wooden cane, cozy stardew-style RPG villager, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T17:06:03.832895+00:00"
+      },
+      "folder": "elder_grain",
+      "frames": {
+        "rotations": {
+          "south": "elder_grain/rotations/south.png",
+          "south-east": "elder_grain/rotations/south-east.png",
+          "east": "elder_grain/rotations/east.png",
+          "north-east": "elder_grain/rotations/north-east.png",
+          "north": "elder_grain/rotations/north.png",
+          "north-west": "elder_grain/rotations/north-west.png",
+          "west": "elder_grain/rotations/west.png",
+          "south-west": "elder_grain/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-east": [
+              "elder_grain/animations/walking/north-east/frame_000.png",
+              "elder_grain/animations/walking/north-east/frame_001.png",
+              "elder_grain/animations/walking/north-east/frame_002.png",
+              "elder_grain/animations/walking/north-east/frame_003.png",
+              "elder_grain/animations/walking/north-east/frame_004.png",
+              "elder_grain/animations/walking/north-east/frame_005.png"
+            ],
+            "west": [
+              "elder_grain/animations/walking/west/frame_000.png",
+              "elder_grain/animations/walking/west/frame_001.png",
+              "elder_grain/animations/walking/west/frame_002.png",
+              "elder_grain/animations/walking/west/frame_003.png",
+              "elder_grain/animations/walking/west/frame_004.png",
+              "elder_grain/animations/walking/west/frame_005.png"
+            ],
+            "south-west": [
+              "elder_grain/animations/walking/south-west/frame_000.png",
+              "elder_grain/animations/walking/south-west/frame_001.png",
+              "elder_grain/animations/walking/south-west/frame_002.png",
+              "elder_grain/animations/walking/south-west/frame_003.png",
+              "elder_grain/animations/walking/south-west/frame_004.png",
+              "elder_grain/animations/walking/south-west/frame_005.png"
+            ],
+            "north": [
+              "elder_grain/animations/walking/north/frame_000.png",
+              "elder_grain/animations/walking/north/frame_001.png",
+              "elder_grain/animations/walking/north/frame_002.png",
+              "elder_grain/animations/walking/north/frame_003.png",
+              "elder_grain/animations/walking/north/frame_004.png",
+              "elder_grain/animations/walking/north/frame_005.png"
+            ],
+            "east": [
+              "elder_grain/animations/walking/east/frame_000.png",
+              "elder_grain/animations/walking/east/frame_001.png",
+              "elder_grain/animations/walking/east/frame_002.png",
+              "elder_grain/animations/walking/east/frame_003.png",
+              "elder_grain/animations/walking/east/frame_004.png",
+              "elder_grain/animations/walking/east/frame_005.png"
+            ],
+            "north-west": [
+              "elder_grain/animations/walking/north-west/frame_000.png",
+              "elder_grain/animations/walking/north-west/frame_001.png",
+              "elder_grain/animations/walking/north-west/frame_002.png",
+              "elder_grain/animations/walking/north-west/frame_003.png",
+              "elder_grain/animations/walking/north-west/frame_004.png",
+              "elder_grain/animations/walking/north-west/frame_005.png"
+            ],
+            "south": [
+              "elder_grain/animations/walking/south/frame_000.png",
+              "elder_grain/animations/walking/south/frame_001.png",
+              "elder_grain/animations/walking/south/frame_002.png",
+              "elder_grain/animations/walking/south/frame_003.png",
+              "elder_grain/animations/walking/south/frame_004.png",
+              "elder_grain/animations/walking/south/frame_005.png"
+            ],
+            "south-east": [
+              "elder_grain/animations/walking/south-east/frame_000.png",
+              "elder_grain/animations/walking/south-east/frame_001.png",
+              "elder_grain/animations/walking/south-east/frame_002.png",
+              "elder_grain/animations/walking/south-east/frame_003.png",
+              "elder_grain/animations/walking/south-east/frame_004.png",
+              "elder_grain/animations/walking/south-east/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:50:02.172759"
+}

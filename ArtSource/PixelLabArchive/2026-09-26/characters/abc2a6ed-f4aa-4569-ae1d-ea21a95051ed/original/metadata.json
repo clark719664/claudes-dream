@@ -1,0 +1,103 @@
+{
+  "group_id": "6ef9ab58-8880-496e-aee3-be907d408570",
+  "states": [
+    {
+      "character": {
+        "id": "abc2a6ed-f4aa-4569-ae1d-ea21a95051ed",
+        "name": "garrick",
+        "prompt": "Rust Warden Garrick, a menacing Covenant warden in rusted iron plate armor with a horned helm, imposing villain, gothic-punk, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T20:56:18.040822+00:00"
+      },
+      "folder": "garrick",
+      "frames": {
+        "rotations": {
+          "south": "garrick/rotations/south.png",
+          "south-east": "garrick/rotations/south-east.png",
+          "east": "garrick/rotations/east.png",
+          "north-east": "garrick/rotations/north-east.png",
+          "north": "garrick/rotations/north.png",
+          "north-west": "garrick/rotations/north-west.png",
+          "west": "garrick/rotations/west.png",
+          "south-west": "garrick/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-west": [
+              "garrick/animations/walking/north-west/frame_000.png",
+              "garrick/animations/walking/north-west/frame_001.png",
+              "garrick/animations/walking/north-west/frame_002.png",
+              "garrick/animations/walking/north-west/frame_003.png",
+              "garrick/animations/walking/north-west/frame_004.png",
+              "garrick/animations/walking/north-west/frame_005.png"
+            ],
+            "south-east": [
+              "garrick/animations/walking/south-east/frame_000.png",
+              "garrick/animations/walking/south-east/frame_001.png",
+              "garrick/animations/walking/south-east/frame_002.png",
+              "garrick/animations/walking/south-east/frame_003.png",
+              "garrick/animations/walking/south-east/frame_004.png",
+              "garrick/animations/walking/south-east/frame_005.png"
+            ],
+            "north": [
+              "garrick/animations/walking/north/frame_000.png",
+              "garrick/animations/walking/north/frame_001.png",
+              "garrick/animations/walking/north/frame_002.png",
+              "garrick/animations/walking/north/frame_003.png",
+              "garrick/animations/walking/north/frame_004.png",
+              "garrick/animations/walking/north/frame_005.png"
+            ],
+            "east": [
+              "garrick/animations/walking/east/frame_000.png",
+              "garrick/animations/walking/east/frame_001.png",
+              "garrick/animations/walking/east/frame_002.png",
+              "garrick/animations/walking/east/frame_003.png",
+              "garrick/animations/walking/east/frame_004.png",
+              "garrick/animations/walking/east/frame_005.png"
+            ],
+            "north-east": [
+              "garrick/animations/walking/north-east/frame_000.png",
+              "garrick/animations/walking/north-east/frame_001.png",
+              "garrick/animations/walking/north-east/frame_002.png",
+              "garrick/animations/walking/north-east/frame_003.png",
+              "garrick/animations/walking/north-east/frame_004.png",
+              "garrick/animations/walking/north-east/frame_005.png"
+            ],
+            "west": [
+              "garrick/animations/walking/west/frame_000.png",
+              "garrick/animations/walking/west/frame_001.png",
+              "garrick/animations/walking/west/frame_002.png",
+              "garrick/animations/walking/west/frame_003.png",
+              "garrick/animations/walking/west/frame_004.png",
+              "garrick/animations/walking/west/frame_005.png"
+            ],
+            "south-west": [
+              "garrick/animations/walking/south-west/frame_000.png",
+              "garrick/animations/walking/south-west/frame_001.png",
+              "garrick/animations/walking/south-west/frame_002.png",
+              "garrick/animations/walking/south-west/frame_003.png",
+              "garrick/animations/walking/south-west/frame_004.png",
+              "garrick/animations/walking/south-west/frame_005.png"
+            ],
+            "south": [
+              "garrick/animations/walking/south/frame_000.png",
+              "garrick/animations/walking/south/frame_001.png",
+              "garrick/animations/walking/south/frame_002.png",
+              "garrick/animations/walking/south/frame_003.png",
+              "garrick/animations/walking/south/frame_004.png",
+              "garrick/animations/walking/south/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:43.286525"
+}

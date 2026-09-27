@@ -1,0 +1,20 @@
+{
+  "id": "b52e5761-85b6-4fd0-8d95-c6daa4e2b61e",
+  "name": "puppy",
+  "state_name": "Idle",
+  "prompt": "Baby puppy dog, small, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:49:54.751001+00:00",
+  "updated_at": "2026-09-25T20:06:33.072960+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b52e5761-85b6-4fd0-8d95-c6daa4e2b61e/rotations/south.png?t=1790366793",
+  "tags": [],
+  "group_id": "d93896d4-78f0-4904-bc83-443db412b573"
+}

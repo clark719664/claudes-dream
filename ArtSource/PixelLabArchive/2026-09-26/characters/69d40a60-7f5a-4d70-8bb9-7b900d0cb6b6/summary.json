@@ -1,0 +1,20 @@
+{
+  "id": "69d40a60-7f5a-4d70-8bb9-7b900d0cb6b6",
+  "name": "ranger_cole",
+  "state_name": "ranger_cole",
+  "prompt": "Ranger Cole, a forest ranger in green with a wide-brim hat and binoculars, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 88,
+    "height": 88
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T20:45:51.892834+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/69d40a60-7f5a-4d70-8bb9-7b900d0cb6b6/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "198e3a10-6c6c-4555-bfb1-3148af836dd1"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "2c3f7be0-adc5-4531-a19a-82ae43f6f546",
+  "name": "omar",
+  "state_name": "omar",
+  "prompt": "Nurse Omar, young clinic aide in teal scrubs holding a clipboard, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:37:36.099295+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/2c3f7be0-adc5-4531-a19a-82ae43f6f546/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "3afef18c-ebb0-4a9c-b0cf-05735480ab2b"
+}

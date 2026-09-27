@@ -1,0 +1,20 @@
+{
+  "id": "acb7294f-70fc-47ba-bae6-fdf60b007b1f",
+  "name": "patch",
+  "state_name": "patch",
+  "prompt": "Patch Silas, tailor with a measuring tape around the neck, pin cushion and a vest, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 96,
+    "height": 96
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:37:41.257590+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/acb7294f-70fc-47ba-bae6-fdf60b007b1f/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "c97da64e-a2c2-44eb-88ff-0fcedfd758d9"
+}

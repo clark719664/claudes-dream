@@ -1,0 +1,20 @@
+{
+  "id": "c8519849-863e-4c37-8a7a-f205f00b98f1",
+  "name": "magma_golem",
+  "state_name": "Idle",
+  "prompt": "Volcanic Magma Golem brute made of cracked dark basalt rock and glowing orange lava veins, low top-down 16-bit RPG pixel art monster, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T23:44:07.271063+00:00",
+  "updated_at": "2026-09-25T23:47:03.661727+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c8519849-863e-4c37-8a7a-f205f00b98f1/rotations/south.png?t=1790380023",
+  "tags": [],
+  "group_id": "91bf39bc-d853-4851-8132-c2df89718290"
+}

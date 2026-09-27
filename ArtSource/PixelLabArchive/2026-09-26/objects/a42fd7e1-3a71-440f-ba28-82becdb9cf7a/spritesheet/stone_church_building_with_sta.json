@@ -1,0 +1,45 @@
+{
+  "object": {
+    "id": "a42fd7e1-3a71-440f-ba28-82becdb9cf7a",
+    "name": "base",
+    "prompt": "stone church building with stained glass and a steeple, 16-bit RPG top down pixel art, NO UI, NO BACKGROUND",
+    "size": {
+      "width": 170,
+      "height": 170
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "stone_church_building_with_sta.png",
+    "cell_size": {
+      "width": 170,
+      "height": 170
+    },
+    "sheet_size": {
+      "width": 1360,
+      "height": 170
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:51:14.466384+00:00"
+}

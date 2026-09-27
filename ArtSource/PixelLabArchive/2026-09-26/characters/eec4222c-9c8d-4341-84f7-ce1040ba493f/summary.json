@@ -1,0 +1,20 @@
+{
+  "id": "eec4222c-9c8d-4341-84f7-ce1040ba493f",
+  "name": "Green Forrest slime ",
+  "state_name": "A green slime covere",
+  "prompt": "Green Forrest slime ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:19:16.504093+00:00",
+  "updated_at": "2026-09-25T19:22:32.853186+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/eec4222c-9c8d-4341-84f7-ce1040ba493f/rotations/south.png?t=1790364152",
+  "tags": [],
+  "group_id": "f3c6ea8a-f70d-4ff0-b6e8-25e02852b3ed"
+}

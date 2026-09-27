@@ -1,0 +1,20 @@
+{
+  "id": "23faf074-86fe-4bdf-90d9-00518ffc3768",
+  "name": "Dog",
+  "state_name": "Idle",
+  "prompt": "Dog",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:17:54.107387+00:00",
+  "updated_at": "2026-09-25T19:21:04.601046+00:00",
+  "animation_count": 0,
+  "template_id": "bear",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/23faf074-86fe-4bdf-90d9-00518ffc3768/rotations/south.png?t=1790364064",
+  "tags": [],
+  "group_id": "74bddb12-78cf-4464-bb6b-bd1f9cd79485"
+}

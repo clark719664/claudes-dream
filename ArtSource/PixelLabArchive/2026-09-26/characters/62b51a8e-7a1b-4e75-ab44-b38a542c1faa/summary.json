@@ -1,0 +1,20 @@
+{
+  "id": "62b51a8e-7a1b-4e75-ab44-b38a542c1faa",
+  "name": "Male Forrest elf",
+  "state_name": "Idle",
+  "prompt": "Male Forrest elf",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:29:21.900884+00:00",
+  "updated_at": "2026-09-25T19:32:38.676381+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/62b51a8e-7a1b-4e75-ab44-b38a542c1faa/rotations/south.png?t=1790364758",
+  "tags": [],
+  "group_id": "88c218c8-3e91-44ac-8d0f-3598f534d9c8"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "18bb9cb1-4efe-46fa-8276-997b37d7bfda",
+  "name": "One nugget of grand daddy purp",
+  "state_name": "base",
+  "prompt": "One nugget of grand daddy purp weed",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T14:45:31.856921+00:00",
+  "view": "low top-down",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/south.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/west.png",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/east.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/north.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/south-west.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/north-west.png"
+  },
+  "storage_urls": {
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/east.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/west.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/north.png",
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/south.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/north-west.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/18bb9cb1-4efe-46fa-8276-997b37d7bfda/rotations/south-west.png"
+  },
+  "frame_urls": null,
+  "style_settings": {},
+  "tags": [],
+  "status": "completed",
+  "group_id": "0b78b3ab-ed8c-4242-a6d8-b6bcf1365164",
+  "progress_percent": null,
+  "eta_seconds": null,
+  "animations": []
+}

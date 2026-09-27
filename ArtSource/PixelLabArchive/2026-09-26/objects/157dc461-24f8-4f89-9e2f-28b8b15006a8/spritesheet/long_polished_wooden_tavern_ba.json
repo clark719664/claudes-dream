@@ -1,0 +1,45 @@
+{
+  "object": {
+    "id": "157dc461-24f8-4f89-9e2f-28b8b15006a8",
+    "name": "base",
+    "prompt": "long polished wooden tavern bar counter with stools, 16-bit RPG top down pixel art, NO UI",
+    "size": {
+      "width": 85,
+      "height": 85
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "long_polished_wooden_tavern_ba.png",
+    "cell_size": {
+      "width": 85,
+      "height": 85
+    },
+    "sheet_size": {
+      "width": 680,
+      "height": 85
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:51:19.577085+00:00"
+}

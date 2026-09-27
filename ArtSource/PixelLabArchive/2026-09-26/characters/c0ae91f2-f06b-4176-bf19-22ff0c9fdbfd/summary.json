@@ -1,0 +1,20 @@
+{
+  "id": "c0ae91f2-f06b-4176-bf19-22ff0c9fdbfd",
+  "name": "bramble_treant",
+  "state_name": "Idle",
+  "prompt": "Haunted Bramble Treant monster made of twisted oak bark, autumn leaves and glowing amber eyes, low top-down 16-bit RPG pixel art monster, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T23:44:07.777029+00:00",
+  "updated_at": "2026-09-25T23:47:44.088895+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c0ae91f2-f06b-4176-bf19-22ff0c9fdbfd/rotations/south.png?t=1790380064",
+  "tags": [],
+  "group_id": "a374cb55-a1e2-47ef-bbaf-3c2c284bb7fb"
+}

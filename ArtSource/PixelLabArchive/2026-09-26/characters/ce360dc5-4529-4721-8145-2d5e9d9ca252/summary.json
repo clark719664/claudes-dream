@@ -1,0 +1,20 @@
+{
+  "id": "ce360dc5-4529-4721-8145-2d5e9d9ca252",
+  "name": "road_ira",
+  "state_name": "road_ira",
+  "prompt": "a wandering road witch in a patched green traveling cloak with herb pouches, mysterious but friendly townsperson, gothic, full body",
+  "size": {
+    "width": 128,
+    "height": 128
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T23:01:02.416320+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ce360dc5-4529-4721-8145-2d5e9d9ca252/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "64427bbf-2fbb-40e2-b765-fa8dc732f346"
+}

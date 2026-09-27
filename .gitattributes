@@ -1,0 +1,3 @@
+
+# Preserve source archive bytes and checksums on every platform.
+/ArtSource/** -text

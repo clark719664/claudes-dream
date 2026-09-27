@@ -1,0 +1,20 @@
+{
+  "id": "8eb206db-95b0-41c4-a34f-3ea0ec3f278b",
+  "name": "A stone based slime ",
+  "state_name": "Idle",
+  "prompt": "A stone based slime ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:16:30.370554+00:00",
+  "updated_at": "2026-09-25T19:17:40.376852+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/8eb206db-95b0-41c4-a34f-3ea0ec3f278b/rotations/south.png?t=1790363860",
+  "tags": [],
+  "group_id": "f281dafa-c270-4014-aea9-3d8bda117ea1"
+}

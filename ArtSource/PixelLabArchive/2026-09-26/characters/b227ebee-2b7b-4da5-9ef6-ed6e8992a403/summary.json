@@ -1,0 +1,20 @@
+{
+  "id": "b227ebee-2b7b-4da5-9ef6-ed6e8992a403",
+  "name": "baby_pig",
+  "state_name": "Idle",
+  "prompt": "Baby piglet, small pink, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:49:51.570644+00:00",
+  "updated_at": "2026-09-25T20:08:15.316747+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b227ebee-2b7b-4da5-9ef6-ed6e8992a403/rotations/south.png?t=1790366895",
+  "tags": [],
+  "group_id": "b13ccf1d-e99c-4d7f-81ef-7f3130250918"
+}

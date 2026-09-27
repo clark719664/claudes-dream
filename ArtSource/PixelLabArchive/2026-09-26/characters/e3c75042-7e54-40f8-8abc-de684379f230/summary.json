@@ -1,0 +1,20 @@
+{
+  "id": "e3c75042-7e54-40f8-8abc-de684379f230",
+  "name": "baby_cow",
+  "state_name": "Idle",
+  "prompt": "Baby farm calf, small, black and white spots, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:49:48.080251+00:00",
+  "updated_at": "2026-09-25T20:08:23.405479+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/e3c75042-7e54-40f8-8abc-de684379f230/rotations/south.png?t=1790366903",
+  "tags": [],
+  "group_id": "2fcfecb6-0b32-44d6-a19d-16702e66817b"
+}

@@ -79,7 +79,7 @@ def generate(a):
     a.add('ore_crate', door - 1.9, MAIN - 5.2, 0, 0.4)
     a.add('water_bucket', door + 1.8, MAIN - 1.6, 2, 0.3)
     door = B.lot(a, 70, MAIN, 20, 'dark', "Tilda's Carpentry", dress=False, gables=2)
-    B.shopkeeper(a, door + 2.6, MAIN - 3.4, 'tavern_b', 'Tilda', 'carpenter')
+    B.shopkeeper(a, door + 2.6, MAIN - 3.4, 'peasant', 'Tilda', 'carpenter')
     for (lx, ly) in [(door - 6.5, MAIN - 2.4), (door - 6.2, MAIN - 3.6), (door + 6.5, MAIN - 2.6)]:
         a.add('log_pile', lx + B.jitter(a, 0.2), ly, 0, 0.9)
     a.add('station_deco', door - 3.0, MAIN - 4.6, station='sawmill', tier=2)
@@ -87,6 +87,11 @@ def generate(a):
     for i in range(4):
         a.add('branch', door + a.rng.uniform(3, 8), MAIN - a.rng.uniform(1.4, 3.5), a.rng.randrange(5))
     B.lot(a, 91, MAIN, 12, 'log', 'The Coopers', 'woodpile')
+    door2 = B.lot(a, 105, MAIN, 12, 'plank', 'Pen Ridge Ranch', dress=False)
+    B.shopkeeper(a, door2 + 2.6, MAIN - 3.4, 'peasant', 'Pen Ridge', 'rancher')
+    door = B.lot(a, 64, SOUTH, 12, 'wood', 'Green Thumb Dispensary')
+    B.shopkeeper(a, door + 2.6, SOUTH - 3.4, 'peasant', 'Snoop', 'dispensary')
+
     B.lamps_along(a, MAIN + 3, 8, 100, 12)
     # ---- the back lane to the churchyard
     lane_y = MAIN - 17
@@ -102,6 +107,16 @@ def generate(a):
         a.add('stool', tx + 1.4, ty + 0.2, 0, 0.3)
     B.lot(a, 92, SOUTH, 12, 'plank', 'The Weavers', 'wild', depth=16)
     B.lamps_along(a, SOUTH + 3, 8, 102, 13)
+    # Additional town buildings
+    door = B.lot(a, 40, SOUTH, 20, 'brick', 'Town Library', 'flowers', depth=16)
+    door = B.lot(a, 55, SOUTH, 20, 'plaster', 'Town Museum', depth=16)
+    door = B.lot(a, 82, MAIN, 20, 'brick', 'Medical Clinic', depth=16)
+    door = B.lot(a, 35, MAIN, 20, 'dark', 'The Stardrop Saloon', depth=16)
+    B.shopkeeper(a, door + 2.6, MAIN - 3.4, 'barkeep_cass', 'Cass', 'saloon')
+    door = B.lot(a, 82, SOUTH, 20, 'plaster', "Mayor's Manor", 'flowers', gables=2, depth=16)
+    B.shopkeeper(a, door + 2.6, SOUTH - 3.4, 'mayor_holt', 'Mayor Holt', 'mayor')
+    door = B.lot(a, 80, 16, 20, 'plank', 'Town Bathhouse', depth=16)
+
     # ---- people
     B.villager(a, cx - 4, cy + 6.5, 'wizard', 'Merlo', 50, lines='merlo')
     B.villager(a, 98, MAIN + 1.6, 'knight', 'Captain Brann', 0, lines='guard')
@@ -177,3 +192,8 @@ def _festivals(a, cx, cy):
         lx = x0 + 1 + (x1 - x0 - 2) * t
         a.add('lantern', lx, y0 + 0.6, 0, 0, light=1, festival='winter')
         a.add('lantern', lx, y1 - 0.4, 0, 0, light=1, festival='winter')
+
+    N.enemy(a, 'dog', cx - 2, cy - 2)
+    N.enemy(a, 'tabby_cat', cx + 2, cy + 2)
+    N.enemy(a, 'chicken', cx - 4, cy + 3)
+

@@ -1,0 +1,20 @@
+{
+  "id": "92b31a60-2b5e-4ce9-a8cd-2d7486ac22c5",
+  "name": "fenn",
+  "state_name": "fenn",
+  "prompt": "Fenn Alder, friendly seed merchant with a wide straw hat, seed pouch and overalls, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:31:26.602632+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/92b31a60-2b5e-4ce9-a8cd-2d7486ac22c5/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "3a6fd989-dc61-4a18-a34f-4258e699fb4c"
+}

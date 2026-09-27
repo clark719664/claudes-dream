@@ -1,0 +1,27 @@
+{
+  "id": "8de37f02-2e64-4813-9b12-6b3acd14096e",
+  "name": "mercy",
+  "state_name": "mercy",
+  "prompt": "Sister Mercy, serene chapel sister in a dark hooded habit holding a small lantern, cozy stardew-style RPG villager, gothic, full body",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:25:24.988626+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "failed",
+  "rotation_urls": null,
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "15ab6ca3-cf74-448e-b098-2ff9fdbc8fbf",
+  "skeletons": null,
+  "animations": []
+}

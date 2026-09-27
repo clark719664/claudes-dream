@@ -1,0 +1,16 @@
+{
+  "id": "72a42ff7-543b-4f35-929b-b33b3dace1b7",
+  "name": "An iron pickaxe with a grey me",
+  "state_name": "base",
+  "prompt": "An iron pickaxe with a grey metal head and wooden handle, pixel art, top-down view, NO background NO UI NO text",
+  "size": {
+    "width": 85,
+    "height": 85
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T01:58:33.523603+00:00",
+  "view": "low top-down",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/72a42ff7-543b-4f35-929b-b33b3dace1b7/rotations/south.png",
+  "tags": [],
+  "status": "completed"
+}

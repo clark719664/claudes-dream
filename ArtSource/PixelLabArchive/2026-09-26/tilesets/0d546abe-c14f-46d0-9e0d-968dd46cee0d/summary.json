@@ -1,0 +1,13 @@
+{
+  "id": "0d546abe-c14f-46d0-9e0d-968dd46cee0d",
+  "name": "dry dead brown grass and dark soil ground → dark stagnant murky water",
+  "lower_description": "dry dead brown grass and dark soil ground",
+  "upper_description": "dark stagnant murky water",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-15T23:55:01.541079+00:00",
+  "status": "completed"
+}

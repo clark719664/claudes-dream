@@ -1,0 +1,7 @@
+map: Untitled Map  (da21265e-e3d6-4723-a9ed-17e4acdbde19)
+bounds: x 0..0, y 0..0   tile size: 16px   painted cells: 0
+legend: t=Tile 1 | i=Tile 2 | l=Tile 3 | e=Tile 4 | a=Tile 5 | b=Tile 6 | c=Tile 7 | d=Tile 8 | f=Tile 9 | g=Tile 10 | h=Tile 11 | j=Tile 12 | k=Tile 13 | m=Tile 14 | n=Tile 15 | o=Tile 16 | .=empty
+overview:
+   0 .
+
+hint: edit_map(map_id="da21265e-e3d6-4723-a9ed-17e4acdbde19", ops=[{"op":"path","terrain":"Tile 1","points":[[x1,y1],[x2,y2]],"width":3}])

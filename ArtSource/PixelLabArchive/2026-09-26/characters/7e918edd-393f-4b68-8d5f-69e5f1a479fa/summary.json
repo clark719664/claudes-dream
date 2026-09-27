@@ -1,0 +1,20 @@
+{
+  "id": "7e918edd-393f-4b68-8d5f-69e5f1a479fa",
+  "name": "archon_vex",
+  "state_name": "archon_vex",
+  "prompt": "Archon Vex, a towering Covenant archon in black and gold ceremonial armor with a dark void halo, imposing villain, gothic-punk, full body",
+  "size": {
+    "width": 96,
+    "height": 96
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T20:56:27.026862+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 7,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7e918edd-393f-4b68-8d5f-69e5f1a479fa/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "c4660c16-dcb6-446f-8d3e-3ec249d873dd"
+}

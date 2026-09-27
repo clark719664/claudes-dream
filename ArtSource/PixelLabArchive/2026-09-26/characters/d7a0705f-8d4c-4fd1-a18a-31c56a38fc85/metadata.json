@@ -1,0 +1,36 @@
+{
+  "id": "d7a0705f-8d4c-4fd1-a18a-31c56a38fc85",
+  "name": "baby_goat",
+  "state_name": "Idle",
+  "prompt": "Baby goat kid, small white and brown, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:43:06.472411+00:00",
+  "updated_at": "2026-09-25T22:47:36.635836+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d7a0705f-8d4c-4fd1-a18a-31c56a38fc85/rotations/south.png?t=1790376456",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d7a0705f-8d4c-4fd1-a18a-31c56a38fc85/rotations/west.png?t=1790376456",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d7a0705f-8d4c-4fd1-a18a-31c56a38fc85/rotations/east.png?t=1790376456",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d7a0705f-8d4c-4fd1-a18a-31c56a38fc85/rotations/north.png?t=1790376456",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d7a0705f-8d4c-4fd1-a18a-31c56a38fc85/rotations/south-east.png?t=1790376456",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d7a0705f-8d4c-4fd1-a18a-31c56a38fc85/rotations/north-east.png?t=1790376456",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d7a0705f-8d4c-4fd1-a18a-31c56a38fc85/rotations/north-west.png?t=1790376456",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d7a0705f-8d4c-4fd1-a18a-31c56a38fc85/rotations/south-west.png?t=1790376456"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "b97fac23-5421-4219-8699-977f6ff712eb",
+  "skeletons": null,
+  "animations": []
+}

@@ -1,0 +1,20 @@
+{
+  "id": "130806fb-f1ac-4939-855f-be6ca11ea85c",
+  "name": "farmer_skim",
+  "state_name": "farmer_skim",
+  "prompt": "a humble farmer in denim overalls and a straw hat holding a hoe, friendly townsperson, cozy gothic-punk, full body",
+  "size": {
+    "width": 120,
+    "height": 120
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T23:01:04.154051+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/130806fb-f1ac-4939-855f-be6ca11ea85c/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "d7087b84-9044-400d-82f7-7e7a3ac2be86"
+}

@@ -1,0 +1,800 @@
+{
+  "sprites": {
+    "crop_sativa": [
+      {
+        "sheet": "curated/strains/sativa_growth.png",
+        "region": [
+          0,
+          0,
+          32,
+          48
+        ],
+        "anchor": [
+          16,
+          46
+        ]
+      },
+      {
+        "sheet": "curated/strains/sativa_growth.png",
+        "region": [
+          32,
+          0,
+          64,
+          48
+        ],
+        "anchor": [
+          16,
+          46
+        ]
+      },
+      {
+        "sheet": "curated/strains/sativa_growth.png",
+        "region": [
+          64,
+          0,
+          96,
+          48
+        ],
+        "anchor": [
+          16,
+          46
+        ]
+      },
+      {
+        "sheet": "curated/strains/sativa_growth.png",
+        "region": [
+          96,
+          0,
+          128,
+          48
+        ],
+        "anchor": [
+          16,
+          46
+        ]
+      }
+    ],
+    "crop_hybrid": [
+      {
+        "sheet": "curated/strains/hybrid_growth.png",
+        "region": [
+          0,
+          0,
+          32,
+          48
+        ],
+        "anchor": [
+          16,
+          46
+        ]
+      },
+      {
+        "sheet": "curated/strains/hybrid_growth.png",
+        "region": [
+          32,
+          0,
+          64,
+          48
+        ],
+        "anchor": [
+          16,
+          46
+        ]
+      },
+      {
+        "sheet": "curated/strains/hybrid_growth.png",
+        "region": [
+          64,
+          0,
+          96,
+          48
+        ],
+        "anchor": [
+          16,
+          46
+        ]
+      },
+      {
+        "sheet": "curated/strains/hybrid_growth.png",
+        "region": [
+          96,
+          0,
+          128,
+          48
+        ],
+        "anchor": [
+          16,
+          46
+        ]
+      }
+    ],
+    "crop_indica": [
+      {
+        "sheet": "curated/strains/indica_growth.png",
+        "region": [
+          0,
+          0,
+          32,
+          48
+        ],
+        "anchor": [
+          16,
+          46
+        ]
+      },
+      {
+        "sheet": "curated/strains/indica_growth.png",
+        "region": [
+          32,
+          0,
+          64,
+          48
+        ],
+        "anchor": [
+          16,
+          46
+        ]
+      },
+      {
+        "sheet": "curated/strains/indica_growth.png",
+        "region": [
+          64,
+          0,
+          96,
+          48
+        ],
+        "anchor": [
+          16,
+          46
+        ]
+      },
+      {
+        "sheet": "curated/strains/indica_growth.png",
+        "region": [
+          96,
+          0,
+          128,
+          48
+        ],
+        "anchor": [
+          16,
+          46
+        ]
+      }
+    ],
+    "crop_corn": [
+      {
+        "sheet": "pixellab_crops/crop_corn.png",
+        "region": [
+          0,
+          0,
+          16,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_corn.png",
+        "region": [
+          16,
+          0,
+          32,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_corn.png",
+        "region": [
+          32,
+          0,
+          48,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_corn.png",
+        "region": [
+          48,
+          0,
+          64,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      }
+    ],
+    "crop_eggplant": [
+      {
+        "sheet": "pixellab_crops/crop_eggplant.png",
+        "region": [
+          0,
+          0,
+          16,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_eggplant.png",
+        "region": [
+          16,
+          0,
+          32,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_eggplant.png",
+        "region": [
+          32,
+          0,
+          48,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_eggplant.png",
+        "region": [
+          48,
+          0,
+          64,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      }
+    ],
+    "crop_onion": [
+      {
+        "sheet": "pixellab_crops/crop_onion.png",
+        "region": [
+          0,
+          0,
+          16,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_onion.png",
+        "region": [
+          16,
+          0,
+          32,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_onion.png",
+        "region": [
+          32,
+          0,
+          48,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_onion.png",
+        "region": [
+          48,
+          0,
+          64,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      }
+    ],
+    "crop_pumpkin": [
+      {
+        "sheet": "pixellab_crops/crop_pumpkin.png",
+        "region": [
+          0,
+          0,
+          16,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_pumpkin.png",
+        "region": [
+          16,
+          0,
+          32,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_pumpkin.png",
+        "region": [
+          32,
+          0,
+          48,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_pumpkin.png",
+        "region": [
+          48,
+          0,
+          64,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      }
+    ],
+    "crop_strawberry": [
+      {
+        "sheet": "pixellab_crops/crop_strawberry.png",
+        "region": [
+          0,
+          0,
+          16,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_strawberry.png",
+        "region": [
+          16,
+          0,
+          32,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_strawberry.png",
+        "region": [
+          32,
+          0,
+          48,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_strawberry.png",
+        "region": [
+          48,
+          0,
+          64,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      }
+    ],
+    "crop_tomato": [
+      {
+        "sheet": "pixellab_crops/crop_tomato.png",
+        "region": [
+          0,
+          0,
+          16,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_tomato.png",
+        "region": [
+          16,
+          0,
+          32,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_tomato.png",
+        "region": [
+          32,
+          0,
+          48,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      },
+      {
+        "sheet": "pixellab_crops/crop_tomato.png",
+        "region": [
+          48,
+          0,
+          64,
+          32
+        ],
+        "anchor": [
+          8,
+          31
+        ]
+      }
+    ]
+  },
+  "items": {
+    "sativa": {
+      "sheet": "curated/strains/sativa_bud.png",
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "anchor": [
+        8,
+        8
+      ]
+    },
+    "sativa_seed": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "sativa_seeds": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "hybrid": {
+      "sheet": "curated/strains/hybrid_bud.png",
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "anchor": [
+        8,
+        8
+      ]
+    },
+    "hybrid_seed": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "hybrid_seeds": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "indica": {
+      "sheet": "curated/strains/indica_bud.png",
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "anchor": [
+        8,
+        8
+      ]
+    },
+    "indica_seed": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "indica_seeds": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "corn_seed": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "corn_seeds": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "eggplant_seed": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "eggplant_seeds": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "onion_seed": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "onion_seeds": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "pumpkin_seed": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "pumpkin_seeds": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "strawberry_seed": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "strawberry_seeds": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "tomato_seed": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    },
+    "tomato_seeds": {
+      "sheet": "Environment/Props/Static/Farm.png",
+      "region": [
+        0,
+        2,
+        16,
+        14
+      ],
+      "anchor": [
+        8,
+        6
+      ]
+    }
+  },
+  "strain_sources": {
+    "sativa": {
+      "id": "01cb8e15-1863-486c-b470-837f8f4b35dd",
+      "view": "south",
+      "heights": [
+        7,
+        17,
+        28,
+        40
+      ],
+      "width": 24
+    },
+    "hybrid": {
+      "id": "ad155a81-6199-4d9c-9851-fef03732133b",
+      "view": "south-east",
+      "heights": [
+        7,
+        16,
+        24,
+        33
+      ],
+      "width": 26
+    },
+    "indica": {
+      "id": "18bb9cb1-4efe-46fa-8276-997b37d7bfda",
+      "view": "south",
+      "heights": [
+        7,
+        14,
+        21,
+        28
+      ],
+      "width": 28
+    }
+  }
+}

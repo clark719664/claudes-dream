@@ -1,0 +1,13 @@
+{
+  "id": "fb307276-90c0-413e-8f73-186a0a29efe2",
+  "name": "weathered barn wood plank floor → weathered barn wood wall with support beams",
+  "lower_description": "weathered barn wood plank floor",
+  "upper_description": "weathered barn wood wall with support beams",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-16T03:53:46.983697+00:00",
+  "status": "completed"
+}

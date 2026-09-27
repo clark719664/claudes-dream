@@ -1,0 +1,20 @@
+{
+  "id": "56515907-8528-4640-8ea9-327a671d5e58",
+  "name": "baby_bear",
+  "state_name": "Idle",
+  "prompt": "Baby bear cub, small brown, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:50:00.383419+00:00",
+  "updated_at": "2026-09-25T20:06:39.299652+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/56515907-8528-4640-8ea9-327a671d5e58/rotations/south.png?t=1790366799",
+  "tags": [],
+  "group_id": "25916f0b-957a-476c-ab5c-9776588882ea"
+}

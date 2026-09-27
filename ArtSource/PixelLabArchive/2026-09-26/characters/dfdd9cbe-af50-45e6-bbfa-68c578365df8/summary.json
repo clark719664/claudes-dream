@@ -1,0 +1,20 @@
+{
+  "id": "dfdd9cbe-af50-45e6-bbfa-68c578365df8",
+  "name": "berserker_f",
+  "state_name": "berserker_f",
+  "prompt": "female Covenant berserker in spiked black armor wielding a massive cleaver, fierce villain, full body",
+  "size": {
+    "width": 96,
+    "height": 96
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:53:42.386395+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/dfdd9cbe-af50-45e6-bbfa-68c578365df8/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "1c642f73-f2cf-4eca-b7a4-6e3971ec65af"
+}

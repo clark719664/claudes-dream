@@ -1,0 +1,20 @@
+{
+  "id": "efc0c682-aac6-4b50-828c-c50b485c8c66",
+  "name": "crates",
+  "state_name": "crates",
+  "prompt": "Crates Voss, burly blacksmith in a soot-stained leather apron holding a hammer, muscular, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 84,
+    "height": 84
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:31:24.351491+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/efc0c682-aac6-4b50-828c-c50b485c8c66/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "36aab8fc-adc0-48c6-a1b5-8f9fddaf2782"
+}

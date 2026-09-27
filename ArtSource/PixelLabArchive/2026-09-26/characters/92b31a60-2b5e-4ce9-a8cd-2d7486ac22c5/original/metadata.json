@@ -1,0 +1,103 @@
+{
+  "group_id": "3a6fd989-dc61-4a18-a34f-4258e699fb4c",
+  "states": [
+    {
+      "character": {
+        "id": "92b31a60-2b5e-4ce9-a8cd-2d7486ac22c5",
+        "name": "fenn",
+        "prompt": "Fenn Alder, friendly seed merchant with a wide straw hat, seed pouch and overalls, cozy stardew-style RPG villager, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T16:31:26.602632+00:00"
+      },
+      "folder": "fenn",
+      "frames": {
+        "rotations": {
+          "south": "fenn/rotations/south.png",
+          "south-east": "fenn/rotations/south-east.png",
+          "east": "fenn/rotations/east.png",
+          "north-east": "fenn/rotations/north-east.png",
+          "north": "fenn/rotations/north.png",
+          "north-west": "fenn/rotations/north-west.png",
+          "west": "fenn/rotations/west.png",
+          "south-west": "fenn/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "east": [
+              "fenn/animations/walking/east/frame_000.png",
+              "fenn/animations/walking/east/frame_001.png",
+              "fenn/animations/walking/east/frame_002.png",
+              "fenn/animations/walking/east/frame_003.png",
+              "fenn/animations/walking/east/frame_004.png",
+              "fenn/animations/walking/east/frame_005.png"
+            ],
+            "north-west": [
+              "fenn/animations/walking/north-west/frame_000.png",
+              "fenn/animations/walking/north-west/frame_001.png",
+              "fenn/animations/walking/north-west/frame_002.png",
+              "fenn/animations/walking/north-west/frame_003.png",
+              "fenn/animations/walking/north-west/frame_004.png",
+              "fenn/animations/walking/north-west/frame_005.png"
+            ],
+            "south-west": [
+              "fenn/animations/walking/south-west/frame_000.png",
+              "fenn/animations/walking/south-west/frame_001.png",
+              "fenn/animations/walking/south-west/frame_002.png",
+              "fenn/animations/walking/south-west/frame_003.png",
+              "fenn/animations/walking/south-west/frame_004.png",
+              "fenn/animations/walking/south-west/frame_005.png"
+            ],
+            "north": [
+              "fenn/animations/walking/north/frame_000.png",
+              "fenn/animations/walking/north/frame_001.png",
+              "fenn/animations/walking/north/frame_002.png",
+              "fenn/animations/walking/north/frame_003.png",
+              "fenn/animations/walking/north/frame_004.png",
+              "fenn/animations/walking/north/frame_005.png"
+            ],
+            "west": [
+              "fenn/animations/walking/west/frame_000.png",
+              "fenn/animations/walking/west/frame_001.png",
+              "fenn/animations/walking/west/frame_002.png",
+              "fenn/animations/walking/west/frame_003.png",
+              "fenn/animations/walking/west/frame_004.png",
+              "fenn/animations/walking/west/frame_005.png"
+            ],
+            "north-east": [
+              "fenn/animations/walking/north-east/frame_000.png",
+              "fenn/animations/walking/north-east/frame_001.png",
+              "fenn/animations/walking/north-east/frame_002.png",
+              "fenn/animations/walking/north-east/frame_003.png",
+              "fenn/animations/walking/north-east/frame_004.png",
+              "fenn/animations/walking/north-east/frame_005.png"
+            ],
+            "south-east": [
+              "fenn/animations/walking/south-east/frame_000.png",
+              "fenn/animations/walking/south-east/frame_001.png",
+              "fenn/animations/walking/south-east/frame_002.png",
+              "fenn/animations/walking/south-east/frame_003.png",
+              "fenn/animations/walking/south-east/frame_004.png",
+              "fenn/animations/walking/south-east/frame_005.png"
+            ],
+            "south": [
+              "fenn/animations/walking/south/frame_000.png",
+              "fenn/animations/walking/south/frame_001.png",
+              "fenn/animations/walking/south/frame_002.png",
+              "fenn/animations/walking/south/frame_003.png",
+              "fenn/animations/walking/south/frame_004.png",
+              "fenn/animations/walking/south/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:50:15.540882"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "b1615072-4d8e-49bf-add3-9542f039d2f0",
+  "name": "grey flagstone floor, interior stone tiles → mossy cracked stone slab",
+  "lower_description": "grey flagstone floor, interior stone tiles",
+  "upper_description": "mossy cracked stone slab",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-16T03:17:52.858858+00:00",
+  "status": "completed"
+}

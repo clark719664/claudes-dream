@@ -1,0 +1,36 @@
+{
+  "id": "4d0524dd-06c6-45d4-ad6a-3da4556f9fea",
+  "name": "baby_polar_bear",
+  "state_name": "Idle",
+  "prompt": "Baby polar bear cub, small white, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:32:25.341014+00:00",
+  "updated_at": "2026-09-25T22:38:39.263398+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4d0524dd-06c6-45d4-ad6a-3da4556f9fea/rotations/south.png?t=1790375919",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4d0524dd-06c6-45d4-ad6a-3da4556f9fea/rotations/west.png?t=1790375919",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4d0524dd-06c6-45d4-ad6a-3da4556f9fea/rotations/east.png?t=1790375919",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4d0524dd-06c6-45d4-ad6a-3da4556f9fea/rotations/north.png?t=1790375919",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4d0524dd-06c6-45d4-ad6a-3da4556f9fea/rotations/south-east.png?t=1790375919",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4d0524dd-06c6-45d4-ad6a-3da4556f9fea/rotations/north-east.png?t=1790375919",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4d0524dd-06c6-45d4-ad6a-3da4556f9fea/rotations/north-west.png?t=1790375919",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4d0524dd-06c6-45d4-ad6a-3da4556f9fea/rotations/south-west.png?t=1790375919"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "64b907bc-3075-48dc-a13a-03ce390357e6",
+  "skeletons": null,
+  "animations": []
+}

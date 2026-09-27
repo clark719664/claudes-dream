@@ -1,0 +1,20 @@
+{
+  "id": "48b7a456-3bc7-4cdc-a7a8-be90746cc80c",
+  "name": "vale",
+  "state_name": "vale",
+  "prompt": "Riot Designer Vale, edgy neon fashion designer with an asymmetric punk outfit, shaved-side bright hair and studded jacket, cozy stardew-style RPG villager, cyberpunk, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:17:55.695693+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/48b7a456-3bc7-4cdc-a7a8-be90746cc80c/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "f6d668e5-ac1c-43b5-8baf-ff1c933b11b8"
+}

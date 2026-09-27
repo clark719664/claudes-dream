@@ -1,0 +1,103 @@
+{
+  "group_id": "65a7d3a9-48f7-4752-a8d1-2957362ae583",
+  "states": [
+    {
+      "character": {
+        "id": "4f5d4b41-3da0-4b6b-b027-bf72b22f1a2e",
+        "name": "inquisitor_m",
+        "prompt": "male Covenant inquisitor in austere dark vestments holding a bladed scepter, severe villain, gothic, full body",
+        "size": {
+          "width": 88,
+          "height": 88
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T22:08:28.776334+00:00"
+      },
+      "folder": "inquisitor_m",
+      "frames": {
+        "rotations": {
+          "south": "inquisitor_m/rotations/south.png",
+          "south-east": "inquisitor_m/rotations/south-east.png",
+          "east": "inquisitor_m/rotations/east.png",
+          "north-east": "inquisitor_m/rotations/north-east.png",
+          "north": "inquisitor_m/rotations/north.png",
+          "north-west": "inquisitor_m/rotations/north-west.png",
+          "west": "inquisitor_m/rotations/west.png",
+          "south-west": "inquisitor_m/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "south": [
+              "inquisitor_m/animations/walking/south/frame_000.png",
+              "inquisitor_m/animations/walking/south/frame_001.png",
+              "inquisitor_m/animations/walking/south/frame_002.png",
+              "inquisitor_m/animations/walking/south/frame_003.png",
+              "inquisitor_m/animations/walking/south/frame_004.png",
+              "inquisitor_m/animations/walking/south/frame_005.png"
+            ],
+            "north-west": [
+              "inquisitor_m/animations/walking/north-west/frame_000.png",
+              "inquisitor_m/animations/walking/north-west/frame_001.png",
+              "inquisitor_m/animations/walking/north-west/frame_002.png",
+              "inquisitor_m/animations/walking/north-west/frame_003.png",
+              "inquisitor_m/animations/walking/north-west/frame_004.png",
+              "inquisitor_m/animations/walking/north-west/frame_005.png"
+            ],
+            "west": [
+              "inquisitor_m/animations/walking/west/frame_000.png",
+              "inquisitor_m/animations/walking/west/frame_001.png",
+              "inquisitor_m/animations/walking/west/frame_002.png",
+              "inquisitor_m/animations/walking/west/frame_003.png",
+              "inquisitor_m/animations/walking/west/frame_004.png",
+              "inquisitor_m/animations/walking/west/frame_005.png"
+            ],
+            "south-west": [
+              "inquisitor_m/animations/walking/south-west/frame_000.png",
+              "inquisitor_m/animations/walking/south-west/frame_001.png",
+              "inquisitor_m/animations/walking/south-west/frame_002.png",
+              "inquisitor_m/animations/walking/south-west/frame_003.png",
+              "inquisitor_m/animations/walking/south-west/frame_004.png",
+              "inquisitor_m/animations/walking/south-west/frame_005.png"
+            ],
+            "north": [
+              "inquisitor_m/animations/walking/north/frame_000.png",
+              "inquisitor_m/animations/walking/north/frame_001.png",
+              "inquisitor_m/animations/walking/north/frame_002.png",
+              "inquisitor_m/animations/walking/north/frame_003.png",
+              "inquisitor_m/animations/walking/north/frame_004.png",
+              "inquisitor_m/animations/walking/north/frame_005.png"
+            ],
+            "east": [
+              "inquisitor_m/animations/walking/east/frame_000.png",
+              "inquisitor_m/animations/walking/east/frame_001.png",
+              "inquisitor_m/animations/walking/east/frame_002.png",
+              "inquisitor_m/animations/walking/east/frame_003.png",
+              "inquisitor_m/animations/walking/east/frame_004.png",
+              "inquisitor_m/animations/walking/east/frame_005.png"
+            ],
+            "north-east": [
+              "inquisitor_m/animations/walking/north-east/frame_000.png",
+              "inquisitor_m/animations/walking/north-east/frame_001.png",
+              "inquisitor_m/animations/walking/north-east/frame_002.png",
+              "inquisitor_m/animations/walking/north-east/frame_003.png",
+              "inquisitor_m/animations/walking/north-east/frame_004.png",
+              "inquisitor_m/animations/walking/north-east/frame_005.png"
+            ],
+            "south-east": [
+              "inquisitor_m/animations/walking/south-east/frame_000.png",
+              "inquisitor_m/animations/walking/south-east/frame_001.png",
+              "inquisitor_m/animations/walking/south-east/frame_002.png",
+              "inquisitor_m/animations/walking/south-east/frame_003.png",
+              "inquisitor_m/animations/walking/south-east/frame_004.png",
+              "inquisitor_m/animations/walking/south-east/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:11.034606"
+}

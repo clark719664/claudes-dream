@@ -1,0 +1,36 @@
+{
+  "id": "7695f402-28ec-44dc-b370-de91a5e29661",
+  "name": "baby_duck",
+  "state_name": "one baby duckling wi",
+  "prompt": "Baby duckling, small yellow bird, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:59:47.931186+00:00",
+  "updated_at": "2026-09-25T23:00:50.823323+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7695f402-28ec-44dc-b370-de91a5e29661/rotations/south.png?t=1790377250",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7695f402-28ec-44dc-b370-de91a5e29661/rotations/west.png?t=1790377250",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7695f402-28ec-44dc-b370-de91a5e29661/rotations/east.png?t=1790377250",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7695f402-28ec-44dc-b370-de91a5e29661/rotations/north.png?t=1790377250",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7695f402-28ec-44dc-b370-de91a5e29661/rotations/south-east.png?t=1790377250",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7695f402-28ec-44dc-b370-de91a5e29661/rotations/north-east.png?t=1790377250",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7695f402-28ec-44dc-b370-de91a5e29661/rotations/north-west.png?t=1790377250",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7695f402-28ec-44dc-b370-de91a5e29661/rotations/south-west.png?t=1790377250"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "cfa50a95-fee8-4153-a9e1-75fb5754dc3a",
+  "skeletons": null,
+  "animations": []
+}

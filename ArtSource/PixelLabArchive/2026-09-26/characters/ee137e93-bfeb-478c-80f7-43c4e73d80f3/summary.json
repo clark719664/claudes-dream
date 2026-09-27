@@ -1,0 +1,20 @@
+{
+  "id": "ee137e93-bfeb-478c-80f7-43c4e73d80f3",
+  "name": "emerald_slime",
+  "state_name": "Idle",
+  "prompt": "Giant Emerald Forest Slime monster with a glowing golden core and mossy crown, low top-down 16-bit RPG pixel art monster, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T18:30:11.120587+00:00",
+  "updated_at": "2026-09-25T18:39:14.994014+00:00",
+  "animation_count": 20,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ee137e93-bfeb-478c-80f7-43c4e73d80f3/rotations/south.png?t=1790361554",
+  "tags": [],
+  "group_id": "de8b7a21-e74c-4ba8-88fb-206681ab8392"
+}

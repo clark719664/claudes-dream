@@ -1,0 +1,103 @@
+{
+  "group_id": "8f35543b-8c68-4fd8-ab00-a5c777c77684",
+  "states": [
+    {
+      "character": {
+        "id": "d5807d50-61e8-4fc3-877b-c2d921f5fa06",
+        "name": "jax",
+        "prompt": "Jax Kira, cocky teenage rival trainer in a stylish high-collar jacket with spiky hair and a confident smirk, cozy stardew-style RPG villager, gothic-punk, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T20:33:58.638151+00:00"
+      },
+      "folder": "jax",
+      "frames": {
+        "rotations": {
+          "south": "jax/rotations/south.png",
+          "south-east": "jax/rotations/south-east.png",
+          "east": "jax/rotations/east.png",
+          "north-east": "jax/rotations/north-east.png",
+          "north": "jax/rotations/north.png",
+          "north-west": "jax/rotations/north-west.png",
+          "west": "jax/rotations/west.png",
+          "south-west": "jax/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-east": [
+              "jax/animations/walking/north-east/frame_000.png",
+              "jax/animations/walking/north-east/frame_001.png",
+              "jax/animations/walking/north-east/frame_002.png",
+              "jax/animations/walking/north-east/frame_003.png",
+              "jax/animations/walking/north-east/frame_004.png",
+              "jax/animations/walking/north-east/frame_005.png"
+            ],
+            "south-west": [
+              "jax/animations/walking/south-west/frame_000.png",
+              "jax/animations/walking/south-west/frame_001.png",
+              "jax/animations/walking/south-west/frame_002.png",
+              "jax/animations/walking/south-west/frame_003.png",
+              "jax/animations/walking/south-west/frame_004.png",
+              "jax/animations/walking/south-west/frame_005.png"
+            ],
+            "east": [
+              "jax/animations/walking/east/frame_000.png",
+              "jax/animations/walking/east/frame_001.png",
+              "jax/animations/walking/east/frame_002.png",
+              "jax/animations/walking/east/frame_003.png",
+              "jax/animations/walking/east/frame_004.png",
+              "jax/animations/walking/east/frame_005.png"
+            ],
+            "north-west": [
+              "jax/animations/walking/north-west/frame_000.png",
+              "jax/animations/walking/north-west/frame_001.png",
+              "jax/animations/walking/north-west/frame_002.png",
+              "jax/animations/walking/north-west/frame_003.png",
+              "jax/animations/walking/north-west/frame_004.png",
+              "jax/animations/walking/north-west/frame_005.png"
+            ],
+            "north": [
+              "jax/animations/walking/north/frame_000.png",
+              "jax/animations/walking/north/frame_001.png",
+              "jax/animations/walking/north/frame_002.png",
+              "jax/animations/walking/north/frame_003.png",
+              "jax/animations/walking/north/frame_004.png",
+              "jax/animations/walking/north/frame_005.png"
+            ],
+            "west": [
+              "jax/animations/walking/west/frame_000.png",
+              "jax/animations/walking/west/frame_001.png",
+              "jax/animations/walking/west/frame_002.png",
+              "jax/animations/walking/west/frame_003.png",
+              "jax/animations/walking/west/frame_004.png",
+              "jax/animations/walking/west/frame_005.png"
+            ],
+            "south-east": [
+              "jax/animations/walking/south-east/frame_000.png",
+              "jax/animations/walking/south-east/frame_001.png",
+              "jax/animations/walking/south-east/frame_002.png",
+              "jax/animations/walking/south-east/frame_003.png",
+              "jax/animations/walking/south-east/frame_004.png",
+              "jax/animations/walking/south-east/frame_005.png"
+            ],
+            "south": [
+              "jax/animations/walking/south/frame_000.png",
+              "jax/animations/walking/south/frame_001.png",
+              "jax/animations/walking/south/frame_002.png",
+              "jax/animations/walking/south/frame_003.png",
+              "jax/animations/walking/south/frame_004.png",
+              "jax/animations/walking/south/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:55.741927"
+}

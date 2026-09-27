@@ -1,0 +1,36 @@
+{
+  "id": "c3e35841-cafb-4631-804e-573c8eaa00e6",
+  "name": "kitten",
+  "state_name": "Idle",
+  "prompt": "Baby kitten cat, small tabby, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:49:56.382384+00:00",
+  "updated_at": "2026-09-25T20:18:35.425056+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c3e35841-cafb-4631-804e-573c8eaa00e6/rotations/south.png?t=1790367515",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c3e35841-cafb-4631-804e-573c8eaa00e6/rotations/west.png?t=1790367515",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c3e35841-cafb-4631-804e-573c8eaa00e6/rotations/east.png?t=1790367515",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c3e35841-cafb-4631-804e-573c8eaa00e6/rotations/north.png?t=1790367515",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c3e35841-cafb-4631-804e-573c8eaa00e6/rotations/south-east.png?t=1790367515",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c3e35841-cafb-4631-804e-573c8eaa00e6/rotations/north-east.png?t=1790367515",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c3e35841-cafb-4631-804e-573c8eaa00e6/rotations/north-west.png?t=1790367515",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c3e35841-cafb-4631-804e-573c8eaa00e6/rotations/south-west.png?t=1790367515"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "0aa8fe67-758c-4a7e-a361-9cda1f53bbb4",
+  "skeletons": null,
+  "animations": []
+}

@@ -1,0 +1,45 @@
+{
+  "object": {
+    "id": "e261fb6b-526c-40a1-932e-ada3aa60e1fd",
+    "name": "base",
+    "prompt": "wooden farm windmill with large canvas sails, 16-bit RPG top down pixel art, NO UI, NO TEXT, NO BACKGROUND, NO GRID",
+    "size": {
+      "width": 170,
+      "height": 170
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "wooden_farm_windmill_with_larg.png",
+    "cell_size": {
+      "width": 170,
+      "height": 170
+    },
+    "sheet_size": {
+      "width": 1360,
+      "height": 170
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:52:02.656835+00:00"
+}

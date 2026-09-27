@@ -1,0 +1,16 @@
+{
+  "id": "68f767e9-a15e-4bfb-8cad-2b92173dc0ac",
+  "name": "A long-handled wooden scythe w",
+  "state_name": "base",
+  "prompt": "A long-handled wooden scythe with a curved metal blade, harvesting tool, pixel art, top-down view, NO background NO UI NO text",
+  "size": {
+    "width": 85,
+    "height": 85
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T02:04:17.542832+00:00",
+  "view": "low top-down",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/68f767e9-a15e-4bfb-8cad-2b92173dc0ac/rotations/south.png",
+  "tags": [],
+  "status": "completed"
+}

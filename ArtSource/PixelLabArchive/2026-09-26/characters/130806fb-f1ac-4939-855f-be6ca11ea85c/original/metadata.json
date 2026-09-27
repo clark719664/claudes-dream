@@ -1,0 +1,103 @@
+{
+  "group_id": "d7087b84-9044-400d-82f7-7e7a3ac2be86",
+  "states": [
+    {
+      "character": {
+        "id": "130806fb-f1ac-4939-855f-be6ca11ea85c",
+        "name": "farmer_skim",
+        "prompt": "a humble farmer in denim overalls and a straw hat holding a hoe, friendly townsperson, cozy gothic-punk, full body",
+        "size": {
+          "width": 120,
+          "height": 120
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T23:01:04.154051+00:00"
+      },
+      "folder": "farmer_skim",
+      "frames": {
+        "rotations": {
+          "south": "farmer_skim/rotations/south.png",
+          "south-east": "farmer_skim/rotations/south-east.png",
+          "east": "farmer_skim/rotations/east.png",
+          "north-east": "farmer_skim/rotations/north-east.png",
+          "north": "farmer_skim/rotations/north.png",
+          "north-west": "farmer_skim/rotations/north-west.png",
+          "west": "farmer_skim/rotations/west.png",
+          "south-west": "farmer_skim/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "south-east": [
+              "farmer_skim/animations/walking/south-east/frame_000.png",
+              "farmer_skim/animations/walking/south-east/frame_001.png",
+              "farmer_skim/animations/walking/south-east/frame_002.png",
+              "farmer_skim/animations/walking/south-east/frame_003.png",
+              "farmer_skim/animations/walking/south-east/frame_004.png",
+              "farmer_skim/animations/walking/south-east/frame_005.png"
+            ],
+            "west": [
+              "farmer_skim/animations/walking/west/frame_000.png",
+              "farmer_skim/animations/walking/west/frame_001.png",
+              "farmer_skim/animations/walking/west/frame_002.png",
+              "farmer_skim/animations/walking/west/frame_003.png",
+              "farmer_skim/animations/walking/west/frame_004.png",
+              "farmer_skim/animations/walking/west/frame_005.png"
+            ],
+            "south": [
+              "farmer_skim/animations/walking/south/frame_000.png",
+              "farmer_skim/animations/walking/south/frame_001.png",
+              "farmer_skim/animations/walking/south/frame_002.png",
+              "farmer_skim/animations/walking/south/frame_003.png",
+              "farmer_skim/animations/walking/south/frame_004.png",
+              "farmer_skim/animations/walking/south/frame_005.png"
+            ],
+            "north-east": [
+              "farmer_skim/animations/walking/north-east/frame_000.png",
+              "farmer_skim/animations/walking/north-east/frame_001.png",
+              "farmer_skim/animations/walking/north-east/frame_002.png",
+              "farmer_skim/animations/walking/north-east/frame_003.png",
+              "farmer_skim/animations/walking/north-east/frame_004.png",
+              "farmer_skim/animations/walking/north-east/frame_005.png"
+            ],
+            "north": [
+              "farmer_skim/animations/walking/north/frame_000.png",
+              "farmer_skim/animations/walking/north/frame_001.png",
+              "farmer_skim/animations/walking/north/frame_002.png",
+              "farmer_skim/animations/walking/north/frame_003.png",
+              "farmer_skim/animations/walking/north/frame_004.png",
+              "farmer_skim/animations/walking/north/frame_005.png"
+            ],
+            "south-west": [
+              "farmer_skim/animations/walking/south-west/frame_000.png",
+              "farmer_skim/animations/walking/south-west/frame_001.png",
+              "farmer_skim/animations/walking/south-west/frame_002.png",
+              "farmer_skim/animations/walking/south-west/frame_003.png",
+              "farmer_skim/animations/walking/south-west/frame_004.png",
+              "farmer_skim/animations/walking/south-west/frame_005.png"
+            ],
+            "east": [
+              "farmer_skim/animations/walking/east/frame_000.png",
+              "farmer_skim/animations/walking/east/frame_001.png",
+              "farmer_skim/animations/walking/east/frame_002.png",
+              "farmer_skim/animations/walking/east/frame_003.png",
+              "farmer_skim/animations/walking/east/frame_004.png",
+              "farmer_skim/animations/walking/east/frame_005.png"
+            ],
+            "north-west": [
+              "farmer_skim/animations/walking/north-west/frame_000.png",
+              "farmer_skim/animations/walking/north-west/frame_001.png",
+              "farmer_skim/animations/walking/north-west/frame_002.png",
+              "farmer_skim/animations/walking/north-west/frame_003.png",
+              "farmer_skim/animations/walking/north-west/frame_004.png",
+              "farmer_skim/animations/walking/north-west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:48:52.838731"
+}

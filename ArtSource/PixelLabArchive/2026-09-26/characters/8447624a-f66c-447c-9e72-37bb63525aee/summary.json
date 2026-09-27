@@ -1,0 +1,20 @@
+{
+  "id": "8447624a-f66c-447c-9e72-37bb63525aee",
+  "name": "Female Forrest elf",
+  "state_name": "Idle",
+  "prompt": "Female Forrest elf",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:29:35.734507+00:00",
+  "updated_at": "2026-09-25T19:34:54.569442+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/8447624a-f66c-447c-9e72-37bb63525aee/rotations/south.png?t=1790364894",
+  "tags": [],
+  "group_id": "d2ddddf8-9f83-466f-b0a5-99bea1f2fbd8"
+}

@@ -1,0 +1,103 @@
+{
+  "group_id": "9c84b08a-f913-4f9f-b262-4170c85890a6",
+  "states": [
+    {
+      "character": {
+        "id": "f39fc43c-4a6a-4008-8c95-c95fec7e6f25",
+        "name": "spark_kael",
+        "prompt": "Spark Prophet Kael, a Covenant warden in crackling electric robes with a lightning crown, menacing villain, gothic-punk, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T21:03:52.204956+00:00"
+      },
+      "folder": "spark_kael",
+      "frames": {
+        "rotations": {
+          "south": "spark_kael/rotations/south.png",
+          "south-east": "spark_kael/rotations/south-east.png",
+          "east": "spark_kael/rotations/east.png",
+          "north-east": "spark_kael/rotations/north-east.png",
+          "north": "spark_kael/rotations/north.png",
+          "north-west": "spark_kael/rotations/north-west.png",
+          "west": "spark_kael/rotations/west.png",
+          "south-west": "spark_kael/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-east": [
+              "spark_kael/animations/walking/north-east/frame_000.png",
+              "spark_kael/animations/walking/north-east/frame_001.png",
+              "spark_kael/animations/walking/north-east/frame_002.png",
+              "spark_kael/animations/walking/north-east/frame_003.png",
+              "spark_kael/animations/walking/north-east/frame_004.png",
+              "spark_kael/animations/walking/north-east/frame_005.png"
+            ],
+            "south": [
+              "spark_kael/animations/walking/south/frame_000.png",
+              "spark_kael/animations/walking/south/frame_001.png",
+              "spark_kael/animations/walking/south/frame_002.png",
+              "spark_kael/animations/walking/south/frame_003.png",
+              "spark_kael/animations/walking/south/frame_004.png",
+              "spark_kael/animations/walking/south/frame_005.png"
+            ],
+            "west": [
+              "spark_kael/animations/walking/west/frame_000.png",
+              "spark_kael/animations/walking/west/frame_001.png",
+              "spark_kael/animations/walking/west/frame_002.png",
+              "spark_kael/animations/walking/west/frame_003.png",
+              "spark_kael/animations/walking/west/frame_004.png",
+              "spark_kael/animations/walking/west/frame_005.png"
+            ],
+            "north-west": [
+              "spark_kael/animations/walking/north-west/frame_000.png",
+              "spark_kael/animations/walking/north-west/frame_001.png",
+              "spark_kael/animations/walking/north-west/frame_002.png",
+              "spark_kael/animations/walking/north-west/frame_003.png",
+              "spark_kael/animations/walking/north-west/frame_004.png",
+              "spark_kael/animations/walking/north-west/frame_005.png"
+            ],
+            "south-west": [
+              "spark_kael/animations/walking/south-west/frame_000.png",
+              "spark_kael/animations/walking/south-west/frame_001.png",
+              "spark_kael/animations/walking/south-west/frame_002.png",
+              "spark_kael/animations/walking/south-west/frame_003.png",
+              "spark_kael/animations/walking/south-west/frame_004.png",
+              "spark_kael/animations/walking/south-west/frame_005.png"
+            ],
+            "south-east": [
+              "spark_kael/animations/walking/south-east/frame_000.png",
+              "spark_kael/animations/walking/south-east/frame_001.png",
+              "spark_kael/animations/walking/south-east/frame_002.png",
+              "spark_kael/animations/walking/south-east/frame_003.png",
+              "spark_kael/animations/walking/south-east/frame_004.png",
+              "spark_kael/animations/walking/south-east/frame_005.png"
+            ],
+            "east": [
+              "spark_kael/animations/walking/east/frame_000.png",
+              "spark_kael/animations/walking/east/frame_001.png",
+              "spark_kael/animations/walking/east/frame_002.png",
+              "spark_kael/animations/walking/east/frame_003.png",
+              "spark_kael/animations/walking/east/frame_004.png",
+              "spark_kael/animations/walking/east/frame_005.png"
+            ],
+            "north": [
+              "spark_kael/animations/walking/north/frame_000.png",
+              "spark_kael/animations/walking/north/frame_001.png",
+              "spark_kael/animations/walking/north/frame_002.png",
+              "spark_kael/animations/walking/north/frame_003.png",
+              "spark_kael/animations/walking/north/frame_004.png",
+              "spark_kael/animations/walking/north/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:40.585068"
+}

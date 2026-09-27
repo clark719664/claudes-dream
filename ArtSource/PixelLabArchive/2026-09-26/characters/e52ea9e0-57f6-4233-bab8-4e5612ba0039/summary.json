@@ -1,0 +1,20 @@
+{
+  "id": "e52ea9e0-57f6-4233-bab8-4e5612ba0039",
+  "name": "wren",
+  "state_name": "wren",
+  "prompt": "Herbalist Wren, gentle herbalist in earthy green robes carrying bundles of dried herbs, leafy hair clip, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:31:21.717480+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/e52ea9e0-57f6-4233-bab8-4e5612ba0039/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "f873a9b3-e44c-47bb-9c52-9fc5e0ea0eae"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "94ad19ff-8ca6-44de-a69c-88cb710b119c",
+  "name": "Butterfly",
+  "state_name": "Idle",
+  "prompt": "Butterfly",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:32:41.434899+00:00",
+  "updated_at": "2026-09-25T19:34:34.638692+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/94ad19ff-8ca6-44de-a69c-88cb710b119c/rotations/south.png?t=1790364874",
+  "tags": [],
+  "group_id": "7c5e6347-aec3-4090-875b-1a1989fae82d"
+}

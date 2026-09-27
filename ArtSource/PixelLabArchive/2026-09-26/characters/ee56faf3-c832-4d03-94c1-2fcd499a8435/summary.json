@@ -1,0 +1,20 @@
+{
+  "id": "ee56faf3-c832-4d03-94c1-2fcd499a8435",
+  "name": "Ferret ",
+  "state_name": "Idle",
+  "prompt": "Ferret ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:20:38.048771+00:00",
+  "updated_at": "2026-09-25T19:23:24.031237+00:00",
+  "animation_count": 0,
+  "template_id": "bear",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ee56faf3-c832-4d03-94c1-2fcd499a8435/rotations/south.png?t=1790364204",
+  "tags": [],
+  "group_id": "c554d40f-e2ea-48fa-b0ac-a833434573f1"
+}

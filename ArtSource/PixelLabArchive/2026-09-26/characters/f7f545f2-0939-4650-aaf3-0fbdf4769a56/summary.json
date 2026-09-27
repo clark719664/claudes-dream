@@ -1,0 +1,20 @@
+{
+  "id": "f7f545f2-0939-4650-aaf3-0fbdf4769a56",
+  "name": "grunt_m",
+  "state_name": "grunt_m",
+  "prompt": "male Covenant grunt enforcer in a dark hooded uniform with a glowing sigil, menacing villain, gothic-punk, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:40:25.122468+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f7f545f2-0939-4650-aaf3-0fbdf4769a56/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "7b34bab3-3f22-441d-9770-1b6201545e9b"
+}

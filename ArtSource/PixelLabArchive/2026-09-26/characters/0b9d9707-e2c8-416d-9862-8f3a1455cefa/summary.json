@@ -1,0 +1,20 @@
+{
+  "id": "0b9d9707-e2c8-416d-9862-8f3a1455cefa",
+  "name": "busker_rio",
+  "state_name": "busker_rio",
+  "prompt": "Rio, a cheerful street busker with a guitar on the back and a feathered hat, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 96,
+    "height": 96
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:03:44.152100+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b9d9707-e2c8-416d-9862-8f3a1455cefa/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "318f3337-829c-4f93-a199-20c454d8d1fa"
+}

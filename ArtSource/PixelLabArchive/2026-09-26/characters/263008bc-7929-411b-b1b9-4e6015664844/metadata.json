@@ -1,0 +1,38 @@
+{
+  "id": "263008bc-7929-411b-b1b9-4e6015664844",
+  "name": "Radioactive centipede ",
+  "state_name": "Idle",
+  "prompt": "Radioactive centipede ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:18:20.378638+00:00",
+  "updated_at": "2026-09-25T19:19:51.771598+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/263008bc-7929-411b-b1b9-4e6015664844/rotations/south.png?t=1790363991",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/263008bc-7929-411b-b1b9-4e6015664844/rotations/west.png?t=1790363991",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/263008bc-7929-411b-b1b9-4e6015664844/rotations/east.png?t=1790363991",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/263008bc-7929-411b-b1b9-4e6015664844/rotations/north.png?t=1790363991",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/263008bc-7929-411b-b1b9-4e6015664844/rotations/south-east.png?t=1790363991",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/263008bc-7929-411b-b1b9-4e6015664844/rotations/north-east.png?t=1790363991",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/263008bc-7929-411b-b1b9-4e6015664844/rotations/north-west.png?t=1790363991",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/263008bc-7929-411b-b1b9-4e6015664844/rotations/south-west.png?t=1790363991"
+  },
+  "style_settings": {
+    "detail": "",
+    "outline": "",
+    "shading": ""
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "93e7345c-a831-4e00-b5ac-fd8a24656209",
+  "skeletons": {},
+  "animations": []
+}

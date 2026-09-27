@@ -1,0 +1,36 @@
+{
+  "id": "deac580d-d59b-43e3-b29e-e677ad7e0dfa",
+  "name": "alpaca",
+  "state_name": "Idle",
+  "prompt": "Fluffy brown alpaca, tall neck, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:32:40.839557+00:00",
+  "updated_at": "2026-09-25T22:38:51.636765+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/deac580d-d59b-43e3-b29e-e677ad7e0dfa/rotations/south.png?t=1790375931",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/deac580d-d59b-43e3-b29e-e677ad7e0dfa/rotations/west.png?t=1790375931",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/deac580d-d59b-43e3-b29e-e677ad7e0dfa/rotations/east.png?t=1790375931",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/deac580d-d59b-43e3-b29e-e677ad7e0dfa/rotations/north.png?t=1790375931",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/deac580d-d59b-43e3-b29e-e677ad7e0dfa/rotations/south-east.png?t=1790375931",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/deac580d-d59b-43e3-b29e-e677ad7e0dfa/rotations/north-east.png?t=1790375931",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/deac580d-d59b-43e3-b29e-e677ad7e0dfa/rotations/north-west.png?t=1790375931",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/deac580d-d59b-43e3-b29e-e677ad7e0dfa/rotations/south-west.png?t=1790375931"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "4eaed113-ef61-4cf8-a5bb-a5d7a98913c7",
+  "skeletons": null,
+  "animations": []
+}

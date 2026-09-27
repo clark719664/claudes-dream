@@ -1,0 +1,20 @@
+{
+  "id": "d335f514-186e-4dab-a4f1-3faa68ea46a5",
+  "name": "Horse",
+  "state_name": "Idle",
+  "prompt": "Horse",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:34:30.055846+00:00",
+  "updated_at": "2026-09-25T19:36:49.632432+00:00",
+  "animation_count": 0,
+  "template_id": "bear",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d335f514-186e-4dab-a4f1-3faa68ea46a5/rotations/south.png?t=1790365009",
+  "tags": [],
+  "group_id": "da726981-f866-4e8b-8836-e3313a7d5d38"
+}

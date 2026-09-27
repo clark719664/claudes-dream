@@ -1,0 +1,20 @@
+{
+  "id": "ce689332-2b40-4789-8bdf-2622cc8cc900",
+  "name": "acolyte_m",
+  "state_name": "acolyte_m",
+  "prompt": "male Covenant acolyte zealot in dark robes with a glowing seal amulet, devout and cold, gothic, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:53:45.138389+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ce689332-2b40-4789-8bdf-2622cc8cc900/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "d789fad2-363c-43fe-9b2b-39eb37a0623f"
+}

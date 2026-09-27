@@ -1,0 +1,20 @@
+{
+  "id": "9bc302d4-e864-4445-8686-f68dc0acf3b1",
+  "name": "crystal_basilisk",
+  "state_name": "Crystal basilisk arm",
+  "prompt": "Crystal basilisk armored small reptilian beast with glowing blue geode spikes, low top-down 16-bit RPG pixel art monster, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:15:20.993210+00:00",
+  "updated_at": "2026-09-25T19:17:15.512213+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/9bc302d4-e864-4445-8686-f68dc0acf3b1/rotations/south.png?t=1790363835",
+  "tags": [],
+  "group_id": "cec36b96-7549-40ee-a5ba-2559392058cf"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "3d32026d-2bb4-4682-a04c-395e1aaa3d6c",
+  "name": "lyric",
+  "state_name": "lyric",
+  "prompt": "a stylish synthwave DJ with neon headphones and a glowing visor, friendly cool townsperson, gothic-punk neon, full body",
+  "size": {
+    "width": 120,
+    "height": 120
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T23:00:56.420535+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/3d32026d-2bb4-4682-a04c-395e1aaa3d6c/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "3c3b8c53-c662-462b-929e-45d06db04c60"
+}

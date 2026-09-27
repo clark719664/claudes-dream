@@ -1,0 +1,36 @@
+{
+  "group_id": "cfa50a95-fee8-4153-a9e1-75fb5754dc3a",
+  "states": [
+    {
+      "character": {
+        "id": "7695f402-28ec-44dc-b370-de91a5e29661",
+        "name": "one baby duckling wi",
+        "prompt": "Baby duckling, small yellow bird, low top-down 16-bit RPG pixel art, crisp black outline",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "custom",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-09-25T22:59:47.931186+00:00"
+      },
+      "folder": "one_baby_duckling_wi",
+      "frames": {
+        "rotations": {
+          "south": "one_baby_duckling_wi/rotations/south.png",
+          "south-east": "one_baby_duckling_wi/rotations/south-east.png",
+          "east": "one_baby_duckling_wi/rotations/east.png",
+          "north-east": "one_baby_duckling_wi/rotations/north-east.png",
+          "north": "one_baby_duckling_wi/rotations/north.png",
+          "north-west": "one_baby_duckling_wi/rotations/north-west.png",
+          "west": "one_baby_duckling_wi/rotations/west.png",
+          "south-west": "one_baby_duckling_wi/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:47:45.897776"
+}

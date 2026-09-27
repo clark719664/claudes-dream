@@ -1,0 +1,38 @@
+{
+  "id": "cab6b4d9-f6fd-41fc-b27b-1640095805c5",
+  "name": "Garden snake ",
+  "state_name": "Idle",
+  "prompt": "Garden snake ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:27:06.582497+00:00",
+  "updated_at": "2026-09-25T19:28:19.933350+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cab6b4d9-f6fd-41fc-b27b-1640095805c5/rotations/south.png?t=1790364499",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cab6b4d9-f6fd-41fc-b27b-1640095805c5/rotations/west.png?t=1790364499",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cab6b4d9-f6fd-41fc-b27b-1640095805c5/rotations/east.png?t=1790364499",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cab6b4d9-f6fd-41fc-b27b-1640095805c5/rotations/north.png?t=1790364499",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cab6b4d9-f6fd-41fc-b27b-1640095805c5/rotations/south-east.png?t=1790364499",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cab6b4d9-f6fd-41fc-b27b-1640095805c5/rotations/north-east.png?t=1790364499",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cab6b4d9-f6fd-41fc-b27b-1640095805c5/rotations/north-west.png?t=1790364499",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cab6b4d9-f6fd-41fc-b27b-1640095805c5/rotations/south-west.png?t=1790364499"
+  },
+  "style_settings": {
+    "detail": "",
+    "outline": "",
+    "shading": ""
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "6a5c62a0-82b9-41a2-9372-cc7f5f2a8551",
+  "skeletons": {},
+  "animations": []
+}

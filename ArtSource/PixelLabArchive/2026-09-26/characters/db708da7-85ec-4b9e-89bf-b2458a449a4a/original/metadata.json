@@ -1,0 +1,103 @@
+{
+  "group_id": "07fa531c-016b-40b7-82a4-3f01322bb5a4",
+  "states": [
+    {
+      "character": {
+        "id": "db708da7-85ec-4b9e-89bf-b2458a449a4a",
+        "name": "mercy",
+        "prompt": "Sister Mercy, serene chapel sister in a dark hooded habit holding a small glowing lantern, gentle, cozy stardew-style RPG villager, gothic, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T16:43:39.082458+00:00"
+      },
+      "folder": "mercy",
+      "frames": {
+        "rotations": {
+          "south": "mercy/rotations/south.png",
+          "south-east": "mercy/rotations/south-east.png",
+          "east": "mercy/rotations/east.png",
+          "north-east": "mercy/rotations/north-east.png",
+          "north": "mercy/rotations/north.png",
+          "north-west": "mercy/rotations/north-west.png",
+          "west": "mercy/rotations/west.png",
+          "south-west": "mercy/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-west": [
+              "mercy/animations/walking/north-west/frame_000.png",
+              "mercy/animations/walking/north-west/frame_001.png",
+              "mercy/animations/walking/north-west/frame_002.png",
+              "mercy/animations/walking/north-west/frame_003.png",
+              "mercy/animations/walking/north-west/frame_004.png",
+              "mercy/animations/walking/north-west/frame_005.png"
+            ],
+            "west": [
+              "mercy/animations/walking/west/frame_000.png",
+              "mercy/animations/walking/west/frame_001.png",
+              "mercy/animations/walking/west/frame_002.png",
+              "mercy/animations/walking/west/frame_003.png",
+              "mercy/animations/walking/west/frame_004.png",
+              "mercy/animations/walking/west/frame_005.png"
+            ],
+            "south-east": [
+              "mercy/animations/walking/south-east/frame_000.png",
+              "mercy/animations/walking/south-east/frame_001.png",
+              "mercy/animations/walking/south-east/frame_002.png",
+              "mercy/animations/walking/south-east/frame_003.png",
+              "mercy/animations/walking/south-east/frame_004.png",
+              "mercy/animations/walking/south-east/frame_005.png"
+            ],
+            "south": [
+              "mercy/animations/walking/south/frame_000.png",
+              "mercy/animations/walking/south/frame_001.png",
+              "mercy/animations/walking/south/frame_002.png",
+              "mercy/animations/walking/south/frame_003.png",
+              "mercy/animations/walking/south/frame_004.png",
+              "mercy/animations/walking/south/frame_005.png"
+            ],
+            "north-east": [
+              "mercy/animations/walking/north-east/frame_000.png",
+              "mercy/animations/walking/north-east/frame_001.png",
+              "mercy/animations/walking/north-east/frame_002.png",
+              "mercy/animations/walking/north-east/frame_003.png",
+              "mercy/animations/walking/north-east/frame_004.png",
+              "mercy/animations/walking/north-east/frame_005.png"
+            ],
+            "north": [
+              "mercy/animations/walking/north/frame_000.png",
+              "mercy/animations/walking/north/frame_001.png",
+              "mercy/animations/walking/north/frame_002.png",
+              "mercy/animations/walking/north/frame_003.png",
+              "mercy/animations/walking/north/frame_004.png",
+              "mercy/animations/walking/north/frame_005.png"
+            ],
+            "east": [
+              "mercy/animations/walking/east/frame_000.png",
+              "mercy/animations/walking/east/frame_001.png",
+              "mercy/animations/walking/east/frame_002.png",
+              "mercy/animations/walking/east/frame_003.png",
+              "mercy/animations/walking/east/frame_004.png",
+              "mercy/animations/walking/east/frame_005.png"
+            ],
+            "south-west": [
+              "mercy/animations/walking/south-west/frame_000.png",
+              "mercy/animations/walking/south-west/frame_001.png",
+              "mercy/animations/walking/south-west/frame_002.png",
+              "mercy/animations/walking/south-west/frame_003.png",
+              "mercy/animations/walking/south-west/frame_004.png",
+              "mercy/animations/walking/south-west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:50:10.118028"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3",
+  "name": "Design an original cartoon pig character for a sma...",
+  "state_name": "Idle",
+  "prompt": "Design an original cartoon pig character for a small desktop pet that sits on a Windows taskbar. Show three versions side by side in a neutral standing pose: a slim one, a noticeably rounder one, and an almost spherical one. They must read as the same individual pig at three different weights, with identical face, markings, colours, and accessory. Give it one clear signature detail—a bright gold coin tag on its collar—that stays readable at about 60 pixels tall. Appealing, characterful, readable against both light and dark backgrounds. Fully transparent background, no shadow, no card, no border, no text.",
+  "size": {
+    "width": 60,
+    "height": 60
+  },
+  "directions": 8,
+  "created_at": "2026-09-15T12:49:14.030047+00:00",
+  "updated_at": "2026-09-15T12:50:34.257061+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3/rotations/south.png?t=1789476634",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3/rotations/west.png?t=1789476634",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3/rotations/east.png?t=1789476634",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3/rotations/north.png?t=1789476634",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3/rotations/south-east.png?t=1789476634",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3/rotations/north-east.png?t=1789476634",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3/rotations/north-west.png?t=1789476634",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3/rotations/south-west.png?t=1789476634"
+  },
+  "style_settings": {
+    "detail": "",
+    "outline": "",
+    "shading": ""
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "3f22c7a7-b2ca-4f8b-8129-30442736019a",
+  "skeletons": {},
+  "animations": []
+}

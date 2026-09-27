@@ -11,6 +11,28 @@ const ORIGIN := Vector2.ZERO
 ## [region, feet tile x, feet tile y, solid width in px, role]
 ## Tile rows 1-4 are the back wall, the floor starts at row 5.
 const LAYOUTS := {
+	"barn": {"wall": 4, "floor": 6, "w": 12, "h": 6, "props": []},
+	"coop": {"wall": 0, "floor": 0, "w": 8, "h": 5, "props": []},
+	"general_store": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["store_counter", 5.0, 4.0, 40, ""]]},
+	"saloon": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["tavern_bar", 5.0, 4.0, 40, ""], ["tavern_table", 2.5, 7.0, 0, ""], ["tavern_table", 7.5, 7.0, 0, ""]]},
+	"blacksmith_shop": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["forge_anvil", 5.0, 5.0, 40, ""]]},
+	"library": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["library_desk", 5.0, 5.0, 40, ""]]},
+	
+	"dispensary": {"wall": 3, "floor": 5, "w": 8, "h": 6, "props": [
+		["counter", 5.0, 3.0, 20, ""],
+		["plant", 2.0, 2.0, 10, ""],
+		["plant", 7.0, 2.0, 10, ""]
+	]},
+
+	"clinic": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["clinic_bed", 2.5, 5.0, 40, ""], ["clinic_bed", 7.5, 5.0, 40, ""]]},
+	"school": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["school_desk", 2.5, 4.0, 0, ""], ["school_desk", 5.0, 4.0, 0, ""], ["school_desk", 7.5, 4.0, 0, ""], ["school_desk", 2.5, 7.0, 0, ""], ["school_desk", 5.0, 7.0, 0, ""], ["school_desk", 7.5, 7.0, 0, ""]]},
+	"church": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["church_pew", 2.5, 4.0, 40, ""], ["church_pew", 7.5, 4.0, 40, ""], ["church_pew", 2.5, 7.0, 40, ""], ["church_pew", 7.5, 7.0, 40, ""]]},
+	"bathhouse": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["bathhouse_pool", 5.0, 5.0, 0, ""]]},
+	"museum": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["museum_display", 2.5, 4.0, 40, ""], ["museum_display", 7.5, 4.0, 40, ""], ["museum_display", 5.0, 7.0, 40, ""]]},
+	"inn": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": [["inn_bed", 2.5, 5.0, 40, ""], ["inn_bed", 7.5, 5.0, 40, ""]]},
+	"mayors_manor": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": []},
+	"npc_house_1": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": []},
+	"npc_house_2": {"wall": 2, "floor": 4, "w": 10, "h": 8, "props": []},
 	1: {"wall": 0, "floor": 0, "w": 9, "h": 5, "props": [
 		[Rect2(64, 176, 32, 32), 3.0, 3.4, 0, ""],             # window
 		[Rect2(0, 288, 32, 64), 1.5, 8.6, 26, "bed"],
@@ -64,7 +86,7 @@ const LAYOUTS := {
 }
 const POTIONS := [Rect2(528, 288, 16, 16), Rect2(560, 304, 16, 16), Rect2(576, 320, 16, 16)]
 
-var tier := 1
+var tier: Variant = 1
 var w := 9
 var h := 5
 var props_root: Node2D
@@ -97,8 +119,8 @@ func exit_line() -> float:
 	return ORIGIN.y + (h + 5) * 16 + 10
 
 
-func build(tier_: int, sorted_parent: Node2D) -> void:
-	tier = clampi(tier_, 1, 3)
+func build(tier_, sorted_parent: Node2D) -> void:
+	tier = tier_ if tier_ is String and LAYOUTS.has(tier_) else clampi(int(tier_), 1, 3)
 	var lay: Dictionary = LAYOUTS[tier]
 	w = lay.w
 	h = lay.h
@@ -152,23 +174,34 @@ func build(tier_: int, sorted_parent: Node2D) -> void:
 		_furniture(p[0], Vector2(p[1], p[2]) * 16.0, float(p[3]), p[4])
 
 
-func _furniture(region: Rect2, feet: Vector2, solid: float, role: String) -> void:
+func _furniture(region, feet: Vector2, solid: float, role: String) -> void:
 	var node: Node2D
-	if role in ["bed", "kitchen", "alchemy"]:
+	if role in ["bed", "kitchen", "alchemy", "bathhouse_pool"]:
 		node = CabinFixture.new(role)
 	else:
 		node = Node2D.new()
 	node.position = feet
 	var sp := Sprite2D.new()
-	var t := AtlasTexture.new()
-	t.atlas = Pack.texture(PROPS)
-	t.region = region
-	sp.texture = t
+	var sz = Vector2()
+	if typeof(region) == TYPE_STRING:
+		var d = Pack.catalog.sprites[region]
+		if typeof(d) == TYPE_ARRAY:
+			d = d[0]
+		sp.texture = load("res://assets/" + d.sheet)
+		sp.region_enabled = true
+		sp.region_rect = Rect2(d.region[0], d.region[1], d.region[2] - d.region[0], d.region[3] - d.region[1])
+		sz = sp.region_rect.size
+	else:
+		var t := AtlasTexture.new()
+		t.atlas = Pack.texture(PROPS)
+		t.region = region
+		sp.texture = t
+		sz = region.size
 	sp.centered = false
-	sp.offset = Vector2(-region.size.x / 2.0, -region.size.y)
+	sp.offset = Vector2(-sz.x / 2.0, -sz.y)
 	if role == "rug":
 		sp.z_index = -8
-		sp.offset = Vector2(-region.size.x / 2.0, -region.size.y / 2.0)
+		sp.offset = Vector2(-sz.x / 2.0, -sz.y / 2.0)
 		add_child(sp)
 		sp.position = feet
 		return
@@ -176,7 +209,7 @@ func _furniture(region: Rect2, feet: Vector2, solid: float, role: String) -> voi
 	if role == "alchemy":
 		for i in POTIONS.size():
 			var pt := AtlasTexture.new()
-			pt.atlas = t.atlas
+			pt.atlas = Pack.texture(PROPS)
 			pt.region = POTIONS[i]
 			var ps := Sprite2D.new()
 			ps.texture = pt

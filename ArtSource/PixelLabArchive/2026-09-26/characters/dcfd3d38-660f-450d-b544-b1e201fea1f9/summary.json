@@ -1,0 +1,20 @@
+{
+  "id": "dcfd3d38-660f-450d-b544-b1e201fea1f9",
+  "name": "tunnel_spider",
+  "state_name": "Idle",
+  "prompt": "Giant venomous tunnel spider monster, hairy black legs and green glowing fangs, low top-down 16-bit RPG pixel art monster, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:08:27.343842+00:00",
+  "updated_at": "2026-09-25T19:11:55.727698+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/dcfd3d38-660f-450d-b544-b1e201fea1f9/rotations/south.png?t=1790363515",
+  "tags": [],
+  "group_id": "66f5de98-01b0-4d93-8672-c39f49973379"
+}

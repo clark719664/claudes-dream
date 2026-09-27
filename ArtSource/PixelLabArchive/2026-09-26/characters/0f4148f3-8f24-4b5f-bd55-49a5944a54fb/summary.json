@@ -1,0 +1,20 @@
+{
+  "id": "0f4148f3-8f24-4b5f-bd55-49a5944a54fb",
+  "name": "kid_priya",
+  "state_name": "kid_priya",
+  "prompt": "Priya, a sweet little girl in a flowery dress with pigtails, cute, cozy stardew-style RPG child, full body",
+  "size": {
+    "width": 76,
+    "height": 76
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T20:23:43.443889+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0f4148f3-8f24-4b5f-bd55-49a5944a54fb/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "02a9a64a-481b-4117-bb07-bf1be32f2200"
+}

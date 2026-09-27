@@ -1,0 +1,16 @@
+{
+  "id": "45b3a5e6-665a-4f83-813e-7138ba7acc12",
+  "name": "a red health potion bottle, pi",
+  "state_name": "base",
+  "prompt": "a red health potion bottle, pixel art, top down view",
+  "size": {
+    "width": 68,
+    "height": 68
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T01:34:11.802167+00:00",
+  "view": "low top-down",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/45b3a5e6-665a-4f83-813e-7138ba7acc12/rotations/south.png",
+  "tags": [],
+  "status": "completed"
+}

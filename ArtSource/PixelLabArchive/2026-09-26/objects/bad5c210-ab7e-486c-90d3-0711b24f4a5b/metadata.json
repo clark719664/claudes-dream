@@ -1,0 +1,41 @@
+{
+  "id": "bad5c210-ab7e-486c-90d3-0711b24f4a5b",
+  "name": "A small brown sack of plant fe",
+  "state_name": "base",
+  "prompt": "A small brown sack of plant fertilizer with a green leaf symbol, pixel art, top-down view, NO background NO UI NO text",
+  "size": {
+    "width": 85,
+    "height": 85
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T02:37:24.391350+00:00",
+  "view": "low top-down",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/south.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/west.png",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/east.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/north.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/south-west.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/north-west.png"
+  },
+  "storage_urls": {
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/east.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/west.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/north.png",
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/south.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/north-west.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/bad5c210-ab7e-486c-90d3-0711b24f4a5b/rotations/south-west.png"
+  },
+  "frame_urls": null,
+  "style_settings": {},
+  "tags": [],
+  "status": "completed",
+  "group_id": "57e1dd5d-867f-49ae-9739-cbbb1def64e6",
+  "progress_percent": null,
+  "eta_seconds": null,
+  "animations": []
+}

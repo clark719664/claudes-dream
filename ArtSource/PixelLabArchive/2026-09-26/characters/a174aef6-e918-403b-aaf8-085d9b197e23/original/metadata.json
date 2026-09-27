@@ -1,0 +1,103 @@
+{
+  "group_id": "bab89d7e-d23a-47a5-88e0-c01864ad1fb8",
+  "states": [
+    {
+      "character": {
+        "id": "a174aef6-e918-403b-aaf8-085d9b197e23",
+        "name": "player_lg_male",
+        "prompt": "a large broad-shouldered young man in a plain linen tunic and brown trousers and boots, friendly farmer adventurer protagonist, warm gothic-punk, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T22:28:11.746922+00:00"
+      },
+      "folder": "player_lg_male",
+      "frames": {
+        "rotations": {
+          "south": "player_lg_male/rotations/south.png",
+          "south-east": "player_lg_male/rotations/south-east.png",
+          "east": "player_lg_male/rotations/east.png",
+          "north-east": "player_lg_male/rotations/north-east.png",
+          "north": "player_lg_male/rotations/north.png",
+          "north-west": "player_lg_male/rotations/north-west.png",
+          "west": "player_lg_male/rotations/west.png",
+          "south-west": "player_lg_male/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "west": [
+              "player_lg_male/animations/walking/west/frame_000.png",
+              "player_lg_male/animations/walking/west/frame_001.png",
+              "player_lg_male/animations/walking/west/frame_002.png",
+              "player_lg_male/animations/walking/west/frame_003.png",
+              "player_lg_male/animations/walking/west/frame_004.png",
+              "player_lg_male/animations/walking/west/frame_005.png"
+            ],
+            "north-west": [
+              "player_lg_male/animations/walking/north-west/frame_000.png",
+              "player_lg_male/animations/walking/north-west/frame_001.png",
+              "player_lg_male/animations/walking/north-west/frame_002.png",
+              "player_lg_male/animations/walking/north-west/frame_003.png",
+              "player_lg_male/animations/walking/north-west/frame_004.png",
+              "player_lg_male/animations/walking/north-west/frame_005.png"
+            ],
+            "east": [
+              "player_lg_male/animations/walking/east/frame_000.png",
+              "player_lg_male/animations/walking/east/frame_001.png",
+              "player_lg_male/animations/walking/east/frame_002.png",
+              "player_lg_male/animations/walking/east/frame_003.png",
+              "player_lg_male/animations/walking/east/frame_004.png",
+              "player_lg_male/animations/walking/east/frame_005.png"
+            ],
+            "south-west": [
+              "player_lg_male/animations/walking/south-west/frame_000.png",
+              "player_lg_male/animations/walking/south-west/frame_001.png",
+              "player_lg_male/animations/walking/south-west/frame_002.png",
+              "player_lg_male/animations/walking/south-west/frame_003.png",
+              "player_lg_male/animations/walking/south-west/frame_004.png",
+              "player_lg_male/animations/walking/south-west/frame_005.png"
+            ],
+            "south": [
+              "player_lg_male/animations/walking/south/frame_000.png",
+              "player_lg_male/animations/walking/south/frame_001.png",
+              "player_lg_male/animations/walking/south/frame_002.png",
+              "player_lg_male/animations/walking/south/frame_003.png",
+              "player_lg_male/animations/walking/south/frame_004.png",
+              "player_lg_male/animations/walking/south/frame_005.png"
+            ],
+            "north": [
+              "player_lg_male/animations/walking/north/frame_000.png",
+              "player_lg_male/animations/walking/north/frame_001.png",
+              "player_lg_male/animations/walking/north/frame_002.png",
+              "player_lg_male/animations/walking/north/frame_003.png",
+              "player_lg_male/animations/walking/north/frame_004.png",
+              "player_lg_male/animations/walking/north/frame_005.png"
+            ],
+            "south-east": [
+              "player_lg_male/animations/walking/south-east/frame_000.png",
+              "player_lg_male/animations/walking/south-east/frame_001.png",
+              "player_lg_male/animations/walking/south-east/frame_002.png",
+              "player_lg_male/animations/walking/south-east/frame_003.png",
+              "player_lg_male/animations/walking/south-east/frame_004.png",
+              "player_lg_male/animations/walking/south-east/frame_005.png"
+            ],
+            "north-east": [
+              "player_lg_male/animations/walking/north-east/frame_000.png",
+              "player_lg_male/animations/walking/north-east/frame_001.png",
+              "player_lg_male/animations/walking/north-east/frame_002.png",
+              "player_lg_male/animations/walking/north-east/frame_003.png",
+              "player_lg_male/animations/walking/north-east/frame_004.png",
+              "player_lg_male/animations/walking/north-east/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:01.794708"
+}

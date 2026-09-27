@@ -1,0 +1,20 @@
+{
+  "id": "1e89b7a2-c953-44d7-bd5a-17ff36d0785f",
+  "name": "tomas",
+  "state_name": "tomas",
+  "prompt": "Tomas Reed, kind orphanage caretaker in a cozy knit sweater and apron, gentle warm look, cozy stardew-style RPG villager, gothic-punk world, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:17:48.400878+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/1e89b7a2-c953-44d7-bd5a-17ff36d0785f/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "40ba4824-d43f-4ee1-972a-9c8cb4b1eb8c"
+}

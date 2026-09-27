@@ -1,0 +1,38 @@
+{
+  "id": "fb2e1a95-3bac-4c64-bd81-d9697598e845",
+  "name": "Magma slime",
+  "state_name": "Magma slime, red onl",
+  "prompt": "Magma slime",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:24:46.074359+00:00",
+  "updated_at": "2026-09-25T19:25:52.124547+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/fb2e1a95-3bac-4c64-bd81-d9697598e845/rotations/south.png?t=1790364352",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/fb2e1a95-3bac-4c64-bd81-d9697598e845/rotations/west.png?t=1790364352",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/fb2e1a95-3bac-4c64-bd81-d9697598e845/rotations/east.png?t=1790364352",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/fb2e1a95-3bac-4c64-bd81-d9697598e845/rotations/north.png?t=1790364352",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/fb2e1a95-3bac-4c64-bd81-d9697598e845/rotations/south-east.png?t=1790364352",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/fb2e1a95-3bac-4c64-bd81-d9697598e845/rotations/north-east.png?t=1790364352",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/fb2e1a95-3bac-4c64-bd81-d9697598e845/rotations/north-west.png?t=1790364352",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/fb2e1a95-3bac-4c64-bd81-d9697598e845/rotations/south-west.png?t=1790364352"
+  },
+  "style_settings": {
+    "detail": "",
+    "outline": "",
+    "shading": ""
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "37dfd11b-5486-4498-8a63-25458f00277a",
+  "skeletons": null,
+  "animations": []
+}

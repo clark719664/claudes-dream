@@ -1,0 +1,13 @@
+[
+  {
+    "id": "3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b",
+    "name": "1). wooden plank interior wall straight section 2)",
+    "description": "1). wooden plank interior wall straight section 2). wooden interior wall top-left corner 3). wooden interior wall top-right corner 4). wooden interior wall with a glowing window",
+    "tile_type": "square_topdown",
+    "tile_size": 32,
+    "n_tiles": 16,
+    "tile_view": "high top-down",
+    "created_at": "2026-06-16T03:06:29.256379+00:00",
+    "status": "completed"
+  }
+]

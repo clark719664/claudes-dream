@@ -1,7 +1,7 @@
 # Godot cache
 .godot/
 *.import
-# The art pack is licensed to you, not redistributable: unzip it here locally (see assets/README.md)
+# Third-party art retains its original authorship and terms; see CREDITS.md.
 assets/*
 !assets/README.md
 !assets/pixellab_npcs/
@@ -9,3 +9,8 @@ assets/*
 !assets/pixellab_tilesets/
 !assets/pixellab_objects/
 !assets/pixellab_items/
+
+!assets/curated/
+!assets/pixellab_crops/
+
+!assets/Pixel Crawler - Free Pack/

@@ -1,0 +1,45 @@
+{
+  "character": {
+    "id": "d7a0705f-8d4c-4fd1-a18a-31c56a38fc85",
+    "name": "Idle",
+    "prompt": "Baby goat kid, small white and brown, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "baby_goat-Idle.png",
+    "cell_size": {
+      "width": 64,
+      "height": 64
+    },
+    "sheet_size": {
+      "width": 512,
+      "height": 64
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:47:52.544984+00:00"
+}

@@ -1,0 +1,878 @@
+{
+  "id": "0b21563e-43d9-4c84-9b0c-5b64301537f3",
+  "name": "elder_grain",
+  "state_name": "elder_grain",
+  "prompt": "Elder Grain, kindly white-bearded elder in a long robe leaning on a wooden cane, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T17:06:03.832895+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/rotations/south.png?t=1785408257",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/rotations/west.png?t=1785408257",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/rotations/east.png?t=1785408257",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/rotations/north.png?t=1785408257",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/rotations/south-east.png?t=1785408257",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/rotations/north-east.png?t=1785408257",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/rotations/north-west.png?t=1785408257",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/rotations/south-west.png?t=1785408257"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "0c22a797-1cad-4ed3-b28e-017f86114d20",
+  "skeletons": {
+    "3d": {
+      "format": "3d",
+      "keypoints": {
+        "NECK": [
+          0.5074687494382499,
+          0.5027078887105857,
+          0.5821328859997814
+        ],
+        "NOSE": [
+          0.5026116120845789,
+          0.4463526024586344,
+          0.6265840701832796
+        ],
+        "LEFT ARM": [
+          0.623510025136146,
+          0.4502775813139202,
+          0.42175318089389546
+        ],
+        "LEFT EAR": [
+          0.5579800084088883,
+          0.49334011821574464,
+          0.6592802919007005
+        ],
+        "LEFT EYE": [
+          0.5372904934862911,
+          0.4508381309963344,
+          0.6670994605919124
+        ],
+        "LEFT HIP": [
+          0.5545768546657368,
+          0.4852032861559263,
+          0.41887639159509293
+        ],
+        "LEFT LEG": [
+          0.5658882730970304,
+          0.4944710102089218,
+          0.281176348869306
+        ],
+        "LEFT KNEE": [
+          0.5586784505476727,
+          0.4823894280171804,
+          0.3567246635320508
+        ],
+        "RIGHT ARM": [
+          0.3754505048971896,
+          0.4499420912553834,
+          0.4936597272397914
+        ],
+        "RIGHT EAR": [
+          0.45731810396595174,
+          0.5007391001559873,
+          0.6618137747653555
+        ],
+        "RIGHT EYE": [
+          0.4714621461488325,
+          0.4567251433172775,
+          0.6688917713101437
+        ],
+        "RIGHT HIP": [
+          0.4537637598433135,
+          0.5140163991939303,
+          0.4272576485425708
+        ],
+        "RIGHT LEG": [
+          0.4414000386211122,
+          0.5277043487829417,
+          0.2894889481412804
+        ],
+        "LEFT ELBOW": [
+          0.6250779538923793,
+          0.4850457870921255,
+          0.49311597853455447
+        ],
+        "RIGHT KNEE": [
+          0.4441009592878344,
+          0.5101992854368879,
+          0.3607776877860619
+        ],
+        "RIGHT ELBOW": [
+          0.3767510648374812,
+          0.496563929553826,
+          0.5046380385833578
+        ],
+        "LEFT SHOULDER": [
+          0.5994325901357564,
+          0.49576114727828074,
+          0.5737313006439978
+        ],
+        "RIGHT SHOULDER": [
+          0.41679364185597917,
+          0.5223690214446972,
+          0.5792033514475617
+        ]
+      }
+    },
+    "2d_reference": {
+      "view": "low top-down",
+      "format": "2d",
+      "source": "estimated",
+      "direction": "south-east",
+      "keypoints": {
+        "NECK": {
+          "x": 0.5046510558197463,
+          "y": 0.41943359375
+        },
+        "NOSE": {
+          "x": 0.5345582823822465,
+          "y": 0.374267578125
+        },
+        "LEFT ARM": {
+          "x": 0.6273317198822465,
+          "y": 0.564697265625
+        },
+        "LEFT EAR": {
+          "x": 0.5504274230072465,
+          "y": 0.3486328125
+        },
+        "LEFT EYE": {
+          "x": 0.5540895323822465,
+          "y": 0.3583984375
+        },
+        "LEFT HIP": {
+          "x": 0.5479860167572465,
+          "y": 0.567138671875
+        },
+        "LEFT LEG": {
+          "x": 0.5516481261322465,
+          "y": 0.703857421875
+        },
+        "LEFT KNEE": {
+          "x": 0.5565309386322465,
+          "y": 0.642822265625
+        },
+        "RIGHT ARM": {
+          "x": 0.47596453238224645,
+          "y": 0.49755859375
+        },
+        "RIGHT EAR": {
+          "x": 0.45765398550724634,
+          "y": 0.349853515625
+        },
+        "RIGHT EYE": {
+          "x": 0.5052614073822465,
+          "y": 0.359619140625
+        },
+        "RIGHT HIP": {
+          "x": 0.45521257925724634,
+          "y": 0.564697265625
+        },
+        "RIGHT LEG": {
+          "x": 0.44910906363224634,
+          "y": 0.708740234375
+        },
+        "LEFT ELBOW": {
+          "x": 0.6151246886322465,
+          "y": 0.49267578125
+        },
+        "RIGHT KNEE": {
+          "x": 0.44910906363224634,
+          "y": 0.64404296875
+        },
+        "RIGHT ELBOW": {
+          "x": 0.40150164175724634,
+          "y": 0.49755859375
+        },
+        "LEFT SHOULDER": {
+          "x": 0.5846071105072465,
+          "y": 0.4169921875
+        },
+        "RIGHT SHOULDER": {
+          "x": 0.42469500113224634,
+          "y": 0.421875
+        }
+      }
+    },
+    "2d_references": {
+      "east": {
+        "view": "low top-down",
+        "format": "2d",
+        "source": "estimated",
+        "direction": "east",
+        "keypoints": {
+          "NECK": {
+            "x": 0.4767376443614131,
+            "y": 0.4322509765625
+          },
+          "NOSE": {
+            "x": 0.5530315896739131,
+            "y": 0.3779296875
+          },
+          "LEFT ARM": {
+            "x": 0.5664593240489131,
+            "y": 0.548828125
+          },
+          "LEFT EAR": {
+            "x": 0.496879245923913,
+            "y": 0.347412109375
+          },
+          "LEFT EYE": {
+            "x": 0.5371624490489131,
+            "y": 0.352294921875
+          },
+          "LEFT HIP": {
+            "x": 0.5273968240489131,
+            "y": 0.562255859375
+          },
+          "LEFT LEG": {
+            "x": 0.5176311990489131,
+            "y": 0.694091796875
+          },
+          "LEFT KNEE": {
+            "x": 0.5261761209239131,
+            "y": 0.6318359375
+          },
+          "RIGHT ARM": {
+            "x": 0.5518108865489131,
+            "y": 0.49755859375
+          },
+          "RIGHT EAR": {
+            "x": 0.478568699048913,
+            "y": 0.353515625
+          },
+          "RIGHT EYE": {
+            "x": 0.5273968240489131,
+            "y": 0.35595703125
+          },
+          "RIGHT HIP": {
+            "x": 0.471244480298913,
+            "y": 0.564697265625
+          },
+          "RIGHT LEG": {
+            "x": 0.450492527173913,
+            "y": 0.70751953125
+          },
+          "LEFT ELBOW": {
+            "x": 0.5408245584239131,
+            "y": 0.490234375
+          },
+          "RIGHT KNEE": {
+            "x": 0.470023777173913,
+            "y": 0.6416015625
+          },
+          "RIGHT ELBOW": {
+            "x": 0.467582370923913,
+            "y": 0.510986328125
+          },
+          "LEFT SHOULDER": {
+            "x": 0.5127483865489131,
+            "y": 0.425537109375
+          },
+          "RIGHT SHOULDER": {
+            "x": 0.440726902173913,
+            "y": 0.43896484375
+          }
+        }
+      },
+      "west": {
+        "view": "low top-down",
+        "format": "2d",
+        "source": "estimated",
+        "direction": "west",
+        "keypoints": {
+          "NECK": {
+            "x": 0.5050473420516305,
+            "y": 0.430419921875
+          },
+          "NOSE": {
+            "x": 0.42264988111413043,
+            "y": 0.374267578125
+          },
+          "LEFT ARM": {
+            "x": 0.43607761548913043,
+            "y": 0.578125
+          },
+          "LEFT EAR": {
+            "x": 0.48490574048913043,
+            "y": 0.357177734375
+          },
+          "LEFT EYE": {
+            "x": 0.44218113111413043,
+            "y": 0.353515625
+          },
+          "LEFT HIP": {
+            "x": 0.47391941236413043,
+            "y": 0.5732421875
+          },
+          "LEFT LEG": {
+            "x": 0.49711277173913043,
+            "y": 0.71240234375
+          },
+          "LEFT KNEE": {
+            "x": 0.47880222486413043,
+            "y": 0.63916015625
+          },
+          "RIGHT ARM": {
+            "x": 0.42142917798913043,
+            "y": 0.53662109375
+          },
+          "RIGHT EAR": {
+            "x": 0.48490574048913043,
+            "y": 0.349853515625
+          },
+          "RIGHT EYE": {
+            "x": 0.43851902173913043,
+            "y": 0.3486328125
+          },
+          "RIGHT HIP": {
+            "x": 0.5154233186141305,
+            "y": 0.557373046875
+          },
+          "RIGHT LEG": {
+            "x": 0.5300717561141305,
+            "y": 0.650146484375
+          },
+          "LEFT ELBOW": {
+            "x": 0.49222995923913043,
+            "y": 0.520751953125
+          },
+          "RIGHT KNEE": {
+            "x": 0.5105405061141305,
+            "y": 0.606201171875
+          },
+          "RIGHT ELBOW": {
+            "x": 0.46781589673913043,
+            "y": 0.496337890625
+          },
+          "LEFT SHOULDER": {
+            "x": 0.5044369904891305,
+            "y": 0.44384765625
+          },
+          "RIGHT SHOULDER": {
+            "x": 0.5056576936141305,
+            "y": 0.4169921875
+          }
+        }
+      },
+      "north": {
+        "view": "low top-down",
+        "format": "2d",
+        "source": "estimated",
+        "direction": "north",
+        "keypoints": {
+          "NECK": {
+            "x": 0.49135999705480493,
+            "y": 0.4275461832682292
+          },
+          "NOSE": {
+            "x": 0.4939709288486536,
+            "y": 0.3655361632506053
+          },
+          "LEFT ARM": {
+            "x": 0.36733994708544965,
+            "y": 0.5783284505208334
+          },
+          "LEFT EAR": {
+            "x": 0.42739174590594525,
+            "y": 0.3537868956724803
+          },
+          "LEFT EYE": {
+            "x": 0.4639450294384058,
+            "y": 0.3459540506203969
+          },
+          "LEFT HIP": {
+            "x": 0.4404464942821558,
+            "y": 0.591383179028829
+          },
+          "LEFT LEG": {
+            "x": 0.43261364923007245,
+            "y": 0.7062649329503377
+          },
+          "LEFT KNEE": {
+            "x": 0.43783555255419965,
+            "y": 0.6449076334635417
+          },
+          "RIGHT ARM": {
+            "x": 0.6610716166703597,
+            "y": 0.5156656901041667
+          },
+          "RIGHT EAR": {
+            "x": 0.5514117859411931,
+            "y": 0.3550923665364583
+          },
+          "RIGHT EYE": {
+            "x": 0.5200804256010747,
+            "y": 0.347259521484375
+          },
+          "RIGHT HIP": {
+            "x": 0.5409680190293685,
+            "y": 0.5874667565027873
+          },
+          "RIGHT LEG": {
+            "x": 0.5618555925894475,
+            "y": 0.7140977780024211
+          },
+          "LEFT ELBOW": {
+            "x": 0.3699508888134058,
+            "y": 0.5169711709022522
+          },
+          "RIGHT KNEE": {
+            "x": 0.5527172866074935,
+            "y": 0.6488240559895833
+          },
+          "RIGHT ELBOW": {
+            "x": 0.6362676205842391,
+            "y": 0.4986945192019145
+          },
+          "LEFT SHOULDER": {
+            "x": 0.39083848224169965,
+            "y": 0.42950439453125
+          },
+          "RIGHT SHOULDER": {
+            "x": 0.5918815118679103,
+            "y": 0.42558797200520837
+          }
+        }
+      },
+      "north-east": {
+        "view": "low top-down",
+        "format": "2d",
+        "source": "estimated",
+        "direction": "north-east",
+        "keypoints": {
+          "NECK": {
+            "x": 0.47790386624958203,
+            "y": 0.432547668615977
+          },
+          "NOSE": {
+            "x": 0.5094641282938529,
+            "y": 0.3391045431296031
+          },
+          "LEFT ARM": {
+            "x": 0.38941137341485504,
+            "y": 0.555694580078125
+          },
+          "LEFT EAR": {
+            "x": 0.4512942467910656,
+            "y": 0.3378668924172719
+          },
+          "LEFT EYE": {
+            "x": 0.4884239668431489,
+            "y": 0.32177734375
+          },
+          "LEFT HIP": {
+            "x": 0.43891766019489453,
+            "y": 0.5655958453814189
+          },
+          "LEFT LEG": {
+            "x": 0.4401553307754406,
+            "y": 0.6881239016850789
+          },
+          "LEFT KNEE": {
+            "x": 0.44510595349298004,
+            "y": 0.6287163496017456
+          },
+          "RIGHT ARM": {
+            "x": 0.6493194137794385,
+            "y": 0.4826727906862895
+          },
+          "RIGHT EAR": {
+            "x": 0.5354549323303112,
+            "y": 0.3465304871400197
+          },
+          "RIGHT EYE": {
+            "x": 0.5329796309056489,
+            "y": 0.3267279714345932
+          },
+          "RIGHT HIP": {
+            "x": 0.5230783656023551,
+            "y": 0.5754970908164978
+          },
+          "RIGHT LEG": {
+            "x": 0.5168900723042695,
+            "y": 0.7141147057215373
+          },
+          "LEFT ELBOW": {
+            "x": 0.38074777869210724,
+            "y": 0.49504937728246057
+          },
+          "RIGHT KNEE": {
+            "x": 0.5366926029108573,
+            "y": 0.6460435787836711
+          },
+          "RIGHT ELBOW": {
+            "x": 0.6010507777117301,
+            "y": 0.5160895387331645
+          },
+          "LEFT SHOULDER": {
+            "x": 0.4042632614356884,
+            "y": 0.4232652386029562
+          },
+          "RIGHT SHOULDER": {
+            "x": 0.5515444710634757,
+            "y": 0.4418300986289978
+          }
+        }
+      },
+      "north-west": {
+        "view": "low top-down",
+        "format": "2d",
+        "source": "estimated",
+        "direction": "north-west",
+        "keypoints": {
+          "NECK": {
+            "x": 0.4971534618432971,
+            "y": 0.41943359375
+          },
+          "NOSE": {
+            "x": 0.4599220165307971,
+            "y": 0.335205078125
+          },
+          "LEFT ARM": {
+            "x": 0.3744727977807971,
+            "y": 0.581787109375
+          },
+          "LEFT EAR": {
+            "x": 0.4501563915307971,
+            "y": 0.347412109375
+          },
+          "LEFT EYE": {
+            "x": 0.4416114696557971,
+            "y": 0.33154296875
+          },
+          "LEFT HIP": {
+            "x": 0.4513770946557971,
+            "y": 0.57080078125
+          },
+          "LEFT LEG": {
+            "x": 0.4452735790307971,
+            "y": 0.71240234375
+          },
+          "LEFT KNEE": {
+            "x": 0.4391700634057971,
+            "y": 0.64404296875
+          },
+          "RIGHT ARM": {
+            "x": 0.5880958446557971,
+            "y": 0.52685546875
+          },
+          "RIGHT EAR": {
+            "x": 0.518515766530797,
+            "y": 0.332763671875
+          },
+          "RIGHT EYE": {
+            "x": 0.4757911571557971,
+            "y": 0.320556640625
+          },
+          "RIGHT HIP": {
+            "x": 0.540488422780797,
+            "y": 0.56103515625
+          },
+          "RIGHT LEG": {
+            "x": 0.549033344655797,
+            "y": 0.689208984375
+          },
+          "LEFT ELBOW": {
+            "x": 0.3976661571557971,
+            "y": 0.51708984375
+          },
+          "RIGHT KNEE": {
+            "x": 0.538047016530797,
+            "y": 0.62939453125
+          },
+          "RIGHT ELBOW": {
+            "x": 0.6039649852807971,
+            "y": 0.479248046875
+          },
+          "LEFT SHOULDER": {
+            "x": 0.4208595165307971,
+            "y": 0.432861328125
+          },
+          "RIGHT SHOULDER": {
+            "x": 0.5734474071557971,
+            "y": 0.406005859375
+          }
+        }
+      },
+      "south-east": {
+        "view": "low top-down",
+        "format": "2d",
+        "source": "estimated",
+        "direction": "south-east",
+        "keypoints": {
+          "NECK": {
+            "x": 0.5046510558197463,
+            "y": 0.41943359375
+          },
+          "NOSE": {
+            "x": 0.5345582823822465,
+            "y": 0.374267578125
+          },
+          "LEFT ARM": {
+            "x": 0.6273317198822465,
+            "y": 0.564697265625
+          },
+          "LEFT EAR": {
+            "x": 0.5504274230072465,
+            "y": 0.3486328125
+          },
+          "LEFT EYE": {
+            "x": 0.5540895323822465,
+            "y": 0.3583984375
+          },
+          "LEFT HIP": {
+            "x": 0.5479860167572465,
+            "y": 0.567138671875
+          },
+          "LEFT LEG": {
+            "x": 0.5516481261322465,
+            "y": 0.703857421875
+          },
+          "LEFT KNEE": {
+            "x": 0.5565309386322465,
+            "y": 0.642822265625
+          },
+          "RIGHT ARM": {
+            "x": 0.47596453238224645,
+            "y": 0.49755859375
+          },
+          "RIGHT EAR": {
+            "x": 0.45765398550724634,
+            "y": 0.349853515625
+          },
+          "RIGHT EYE": {
+            "x": 0.5052614073822465,
+            "y": 0.359619140625
+          },
+          "RIGHT HIP": {
+            "x": 0.45521257925724634,
+            "y": 0.564697265625
+          },
+          "RIGHT LEG": {
+            "x": 0.44910906363224634,
+            "y": 0.708740234375
+          },
+          "LEFT ELBOW": {
+            "x": 0.6151246886322465,
+            "y": 0.49267578125
+          },
+          "RIGHT KNEE": {
+            "x": 0.44910906363224634,
+            "y": 0.64404296875
+          },
+          "RIGHT ELBOW": {
+            "x": 0.40150164175724634,
+            "y": 0.49755859375
+          },
+          "LEFT SHOULDER": {
+            "x": 0.5846071105072465,
+            "y": 0.4169921875
+          },
+          "RIGHT SHOULDER": {
+            "x": 0.42469500113224634,
+            "y": 0.421875
+          }
+        }
+      },
+      "south-west": {
+        "view": "low top-down",
+        "format": "2d",
+        "source": "estimated",
+        "direction": "south-west",
+        "keypoints": {
+          "NECK": {
+            "x": 0.5044458361639492,
+            "y": 0.4273681640625
+          },
+          "NOSE": {
+            "x": 0.4415796252264493,
+            "y": 0.3779296875
+          },
+          "LEFT ARM": {
+            "x": 0.5245874377264493,
+            "y": 0.586669921875
+          },
+          "LEFT EAR": {
+            "x": 0.5123804064764493,
+            "y": 0.35595703125
+          },
+          "LEFT EYE": {
+            "x": 0.4696557971014492,
+            "y": 0.362060546875
+          },
+          "LEFT HIP": {
+            "x": 0.5148218127264493,
+            "y": 0.572021484375
+          },
+          "LEFT LEG": {
+            "x": 0.5416772814764493,
+            "y": 0.70751953125
+          },
+          "LEFT KNEE": {
+            "x": 0.5221460314764493,
+            "y": 0.645263671875
+          },
+          "RIGHT ARM": {
+            "x": 0.3500268908514493,
+            "y": 0.4755859375
+          },
+          "RIGHT EAR": {
+            "x": 0.4684350939764492,
+            "y": 0.3486328125
+          },
+          "RIGHT EYE": {
+            "x": 0.4354761096014493,
+            "y": 0.35595703125
+          },
+          "RIGHT HIP": {
+            "x": 0.4501245471014492,
+            "y": 0.5634765625
+          },
+          "RIGHT LEG": {
+            "x": 0.4598901721014492,
+            "y": 0.691650390625
+          },
+          "LEFT ELBOW": {
+            "x": 0.5648706408514493,
+            "y": 0.51708984375
+          },
+          "RIGHT KNEE": {
+            "x": 0.4501245471014492,
+            "y": 0.6318359375
+          },
+          "RIGHT ELBOW": {
+            "x": 0.4061792346014493,
+            "y": 0.479248046875
+          },
+          "LEFT SHOULDER": {
+            "x": 0.5538843127264493,
+            "y": 0.4365234375
+          },
+          "RIGHT SHOULDER": {
+            "x": 0.4550073596014492,
+            "y": 0.418212890625
+          }
+        }
+      }
+    }
+  },
+  "animations": [
+    {
+      "animation_type": "walk",
+      "display_name": null,
+      "animation_group_id": "7c34d78b-1aac-4dc7-8ba7-a2d1498ee298",
+      "directions": [
+        {
+          "direction": "east",
+          "frame_count": 6,
+          "frames": [
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/8ef3ab44-caa0-4c82-a4fe-7587123c400c/east/0.png?t=1781663754",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/8ef3ab44-caa0-4c82-a4fe-7587123c400c/east/1.png?t=1781663754",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/8ef3ab44-caa0-4c82-a4fe-7587123c400c/east/2.png?t=1781663754",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/8ef3ab44-caa0-4c82-a4fe-7587123c400c/east/3.png?t=1781663754",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/8ef3ab44-caa0-4c82-a4fe-7587123c400c/east/4.png?t=1781663754",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/8ef3ab44-caa0-4c82-a4fe-7587123c400c/east/5.png?t=1781663754"
+          ]
+        },
+        {
+          "direction": "north-east",
+          "frame_count": 6,
+          "frames": [
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/1c35fc58-69ec-4f26-a54b-d2be30198b6b/north-east/0.png?t=1781663856",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/1c35fc58-69ec-4f26-a54b-d2be30198b6b/north-east/1.png?t=1781663856",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/1c35fc58-69ec-4f26-a54b-d2be30198b6b/north-east/2.png?t=1781663856",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/1c35fc58-69ec-4f26-a54b-d2be30198b6b/north-east/3.png?t=1781663856",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/1c35fc58-69ec-4f26-a54b-d2be30198b6b/north-east/4.png?t=1781663856",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/1c35fc58-69ec-4f26-a54b-d2be30198b6b/north-east/5.png?t=1781663856"
+          ]
+        },
+        {
+          "direction": "north",
+          "frame_count": 6,
+          "frames": [
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/58643d7b-5b0e-4b28-8eaf-3891d86be53c/north/0.png?t=1781663736",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/58643d7b-5b0e-4b28-8eaf-3891d86be53c/north/1.png?t=1781663736",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/58643d7b-5b0e-4b28-8eaf-3891d86be53c/north/2.png?t=1781663736",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/58643d7b-5b0e-4b28-8eaf-3891d86be53c/north/3.png?t=1781663736",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/58643d7b-5b0e-4b28-8eaf-3891d86be53c/north/4.png?t=1781663736",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/58643d7b-5b0e-4b28-8eaf-3891d86be53c/north/5.png?t=1781663736"
+          ]
+        },
+        {
+          "direction": "south-east",
+          "frame_count": 6,
+          "frames": [
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/fb67389e-0df1-4fed-829a-64c32622a3b0/south-east/0.png?t=1781663784",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/fb67389e-0df1-4fed-829a-64c32622a3b0/south-east/1.png?t=1781663784",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/fb67389e-0df1-4fed-829a-64c32622a3b0/south-east/2.png?t=1781663784",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/fb67389e-0df1-4fed-829a-64c32622a3b0/south-east/3.png?t=1781663784",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/fb67389e-0df1-4fed-829a-64c32622a3b0/south-east/4.png?t=1781663784",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/fb67389e-0df1-4fed-829a-64c32622a3b0/south-east/5.png?t=1781663784"
+          ]
+        },
+        {
+          "direction": "south",
+          "frame_count": 6,
+          "frames": [
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/f4d79f0c-61f5-41f0-96d0-e8668b4f5be8/south/0.png?t=1781663776",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/f4d79f0c-61f5-41f0-96d0-e8668b4f5be8/south/1.png?t=1781663776",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/f4d79f0c-61f5-41f0-96d0-e8668b4f5be8/south/2.png?t=1781663776",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/f4d79f0c-61f5-41f0-96d0-e8668b4f5be8/south/3.png?t=1781663776",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/f4d79f0c-61f5-41f0-96d0-e8668b4f5be8/south/4.png?t=1781663776",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/f4d79f0c-61f5-41f0-96d0-e8668b4f5be8/south/5.png?t=1781663776"
+          ]
+        },
+        {
+          "direction": "west",
+          "frame_count": 6,
+          "frames": [
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/34bb043c-5869-4e5d-9a5c-bbe6fc84b244/west/0.png?t=1781663744",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/34bb043c-5869-4e5d-9a5c-bbe6fc84b244/west/1.png?t=1781663744",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/34bb043c-5869-4e5d-9a5c-bbe6fc84b244/west/2.png?t=1781663744",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/34bb043c-5869-4e5d-9a5c-bbe6fc84b244/west/3.png?t=1781663744",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/34bb043c-5869-4e5d-9a5c-bbe6fc84b244/west/4.png?t=1781663744",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/34bb043c-5869-4e5d-9a5c-bbe6fc84b244/west/5.png?t=1781663744"
+          ]
+        },
+        {
+          "direction": "north-west",
+          "frame_count": 6,
+          "frames": [
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/b40a562c-5761-4c84-a4e8-0192b573259d/north-west/0.png?t=1781663792",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/b40a562c-5761-4c84-a4e8-0192b573259d/north-west/1.png?t=1781663792",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/b40a562c-5761-4c84-a4e8-0192b573259d/north-west/2.png?t=1781663792",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/b40a562c-5761-4c84-a4e8-0192b573259d/north-west/3.png?t=1781663792",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/b40a562c-5761-4c84-a4e8-0192b573259d/north-west/4.png?t=1781663792",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/b40a562c-5761-4c84-a4e8-0192b573259d/north-west/5.png?t=1781663792"
+          ]
+        },
+        {
+          "direction": "south-west",
+          "frame_count": 6,
+          "frames": [
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/39993b51-9fe3-43ac-a33c-f3a7bd88f5c8/south-west/0.png?t=1781663748",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/39993b51-9fe3-43ac-a33c-f3a7bd88f5c8/south-west/1.png?t=1781663748",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/39993b51-9fe3-43ac-a33c-f3a7bd88f5c8/south-west/2.png?t=1781663748",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/39993b51-9fe3-43ac-a33c-f3a7bd88f5c8/south-west/3.png?t=1781663748",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/39993b51-9fe3-43ac-a33c-f3a7bd88f5c8/south-west/4.png?t=1781663748",
+            "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/animations/39993b51-9fe3-43ac-a33c-f3a7bd88f5c8/south-west/5.png?t=1781663748"
+          ]
+        }
+      ]
+    }
+  ]
+}

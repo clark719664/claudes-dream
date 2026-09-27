@@ -1,0 +1,20 @@
+{
+  "id": "727b2f99-77d0-4a3a-8e0e-30652ac5a946",
+  "name": "orphan_ren",
+  "state_name": "orphan_ren",
+  "prompt": "Ren, a scrappy orphan kid in patched clothes with a determined grin, cute, cozy stardew-style RPG child, full body",
+  "size": {
+    "width": 76,
+    "height": 76
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:04:00.407381+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/727b2f99-77d0-4a3a-8e0e-30652ac5a946/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "d7319b18-2c38-4302-84cf-9cc48cdba087"
+}

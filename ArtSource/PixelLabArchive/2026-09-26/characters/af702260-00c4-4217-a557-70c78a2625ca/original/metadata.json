@@ -1,0 +1,103 @@
+{
+  "group_id": "1c3076e5-b453-4c52-9894-2fb9c72950b8",
+  "states": [
+    {
+      "character": {
+        "id": "af702260-00c4-4217-a557-70c78a2625ca",
+        "name": "necro_f",
+        "prompt": "female Covenant necromancer in tattered black robes with bone charms and a skull staff, menacing, gothic, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T21:47:07.713254+00:00"
+      },
+      "folder": "necro_f",
+      "frames": {
+        "rotations": {
+          "south": "necro_f/rotations/south.png",
+          "south-east": "necro_f/rotations/south-east.png",
+          "east": "necro_f/rotations/east.png",
+          "north-east": "necro_f/rotations/north-east.png",
+          "north": "necro_f/rotations/north.png",
+          "north-west": "necro_f/rotations/north-west.png",
+          "west": "necro_f/rotations/west.png",
+          "south-west": "necro_f/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "west": [
+              "necro_f/animations/walking/west/frame_000.png",
+              "necro_f/animations/walking/west/frame_001.png",
+              "necro_f/animations/walking/west/frame_002.png",
+              "necro_f/animations/walking/west/frame_003.png",
+              "necro_f/animations/walking/west/frame_004.png",
+              "necro_f/animations/walking/west/frame_005.png"
+            ],
+            "north-west": [
+              "necro_f/animations/walking/north-west/frame_000.png",
+              "necro_f/animations/walking/north-west/frame_001.png",
+              "necro_f/animations/walking/north-west/frame_002.png",
+              "necro_f/animations/walking/north-west/frame_003.png",
+              "necro_f/animations/walking/north-west/frame_004.png",
+              "necro_f/animations/walking/north-west/frame_005.png"
+            ],
+            "north": [
+              "necro_f/animations/walking/north/frame_000.png",
+              "necro_f/animations/walking/north/frame_001.png",
+              "necro_f/animations/walking/north/frame_002.png",
+              "necro_f/animations/walking/north/frame_003.png",
+              "necro_f/animations/walking/north/frame_004.png",
+              "necro_f/animations/walking/north/frame_005.png"
+            ],
+            "south": [
+              "necro_f/animations/walking/south/frame_000.png",
+              "necro_f/animations/walking/south/frame_001.png",
+              "necro_f/animations/walking/south/frame_002.png",
+              "necro_f/animations/walking/south/frame_003.png",
+              "necro_f/animations/walking/south/frame_004.png",
+              "necro_f/animations/walking/south/frame_005.png"
+            ],
+            "east": [
+              "necro_f/animations/walking/east/frame_000.png",
+              "necro_f/animations/walking/east/frame_001.png",
+              "necro_f/animations/walking/east/frame_002.png",
+              "necro_f/animations/walking/east/frame_003.png",
+              "necro_f/animations/walking/east/frame_004.png",
+              "necro_f/animations/walking/east/frame_005.png"
+            ],
+            "south-west": [
+              "necro_f/animations/walking/south-west/frame_000.png",
+              "necro_f/animations/walking/south-west/frame_001.png",
+              "necro_f/animations/walking/south-west/frame_002.png",
+              "necro_f/animations/walking/south-west/frame_003.png",
+              "necro_f/animations/walking/south-west/frame_004.png",
+              "necro_f/animations/walking/south-west/frame_005.png"
+            ],
+            "south-east": [
+              "necro_f/animations/walking/south-east/frame_000.png",
+              "necro_f/animations/walking/south-east/frame_001.png",
+              "necro_f/animations/walking/south-east/frame_002.png",
+              "necro_f/animations/walking/south-east/frame_003.png",
+              "necro_f/animations/walking/south-east/frame_004.png",
+              "necro_f/animations/walking/south-east/frame_005.png"
+            ],
+            "north-east": [
+              "necro_f/animations/walking/north-east/frame_000.png",
+              "necro_f/animations/walking/north-east/frame_001.png",
+              "necro_f/animations/walking/north-east/frame_002.png",
+              "necro_f/animations/walking/north-east/frame_003.png",
+              "necro_f/animations/walking/north-east/frame_004.png",
+              "necro_f/animations/walking/north-east/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:23.011339"
+}

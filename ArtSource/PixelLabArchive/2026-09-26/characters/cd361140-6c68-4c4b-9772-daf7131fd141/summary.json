@@ -1,0 +1,20 @@
+{
+  "id": "cd361140-6c68-4c4b-9772-daf7131fd141",
+  "name": "enforcer_m",
+  "state_name": "enforcer_m",
+  "prompt": "male Covenant enforcer in heavy riot armor with a shock baton and visor, imposing villain, gothic-punk, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:53:56.565714+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cd361140-6c68-4c4b-9772-daf7131fd141/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "54b7823f-72c9-47ad-96da-e82a09bcb838"
+}

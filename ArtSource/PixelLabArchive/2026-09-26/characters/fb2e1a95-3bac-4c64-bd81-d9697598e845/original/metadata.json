@@ -1,0 +1,36 @@
+{
+  "group_id": "37dfd11b-5486-4498-8a63-25458f00277a",
+  "states": [
+    {
+      "character": {
+        "id": "fb2e1a95-3bac-4c64-bd81-d9697598e845",
+        "name": "Magma slime, red onl",
+        "prompt": "Magma slime",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "custom",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-09-25T19:24:46.074359+00:00"
+      },
+      "folder": "Magma_slime_red_onl",
+      "frames": {
+        "rotations": {
+          "south": "Magma_slime_red_onl/rotations/south.png",
+          "south-east": "Magma_slime_red_onl/rotations/south-east.png",
+          "east": "Magma_slime_red_onl/rotations/east.png",
+          "north-east": "Magma_slime_red_onl/rotations/north-east.png",
+          "north": "Magma_slime_red_onl/rotations/north.png",
+          "north-west": "Magma_slime_red_onl/rotations/north-west.png",
+          "west": "Magma_slime_red_onl/rotations/west.png",
+          "south-west": "Magma_slime_red_onl/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:48:22.738554"
+}

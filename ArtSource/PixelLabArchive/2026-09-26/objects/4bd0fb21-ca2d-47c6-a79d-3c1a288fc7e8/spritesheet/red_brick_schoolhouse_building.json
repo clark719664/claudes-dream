@@ -1,0 +1,45 @@
+{
+  "object": {
+    "id": "4bd0fb21-ca2d-47c6-a79d-3c1a288fc7e8",
+    "name": "base",
+    "prompt": "red brick schoolhouse building with a bell tower, 16-bit RPG top down pixel art, NO UI, NO BACKGROUND",
+    "size": {
+      "width": 170,
+      "height": 170
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "red_brick_schoolhouse_building.png",
+    "cell_size": {
+      "width": 170,
+      "height": 170
+    },
+    "sheet_size": {
+      "width": 1360,
+      "height": 170
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:51:38.556031+00:00"
+}

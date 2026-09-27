@@ -1,0 +1,95 @@
+{
+  "group_id": "ddc70e38-eef7-4036-b81e-c5e8fbfae208",
+  "states": [
+    {
+      "character": {
+        "id": "ec0d19af-0754-44ca-8e64-e24b551747e6",
+        "name": "pella",
+        "prompt": "Carpenter Pella, sturdy carpenter with a leather tool belt, rolled-up sleeves and sawdust-dusted overalls, cozy stardew-style RPG villager, gothic-punk world, full body",
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T16:17:43.180572+00:00"
+      },
+      "folder": "pella",
+      "frames": {
+        "rotations": {
+          "south": "pella/rotations/south.png",
+          "south-east": "pella/rotations/south-east.png",
+          "east": "pella/rotations/east.png",
+          "north-east": "pella/rotations/north-east.png",
+          "north": "pella/rotations/north.png",
+          "north-west": "pella/rotations/north-west.png",
+          "west": "pella/rotations/west.png",
+          "south-west": "pella/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north": [
+              "pella/animations/walking/north/frame_000.png",
+              "pella/animations/walking/north/frame_001.png",
+              "pella/animations/walking/north/frame_002.png",
+              "pella/animations/walking/north/frame_003.png",
+              "pella/animations/walking/north/frame_004.png",
+              "pella/animations/walking/north/frame_005.png"
+            ],
+            "east": [
+              "pella/animations/walking/east/frame_000.png",
+              "pella/animations/walking/east/frame_001.png",
+              "pella/animations/walking/east/frame_002.png",
+              "pella/animations/walking/east/frame_003.png",
+              "pella/animations/walking/east/frame_004.png",
+              "pella/animations/walking/east/frame_005.png"
+            ],
+            "north-west": [
+              "pella/animations/walking/north-west/frame_000.png",
+              "pella/animations/walking/north-west/frame_001.png",
+              "pella/animations/walking/north-west/frame_002.png",
+              "pella/animations/walking/north-west/frame_003.png",
+              "pella/animations/walking/north-west/frame_004.png",
+              "pella/animations/walking/north-west/frame_005.png"
+            ],
+            "south-west": [
+              "pella/animations/walking/south-west/frame_000.png",
+              "pella/animations/walking/south-west/frame_001.png",
+              "pella/animations/walking/south-west/frame_002.png",
+              "pella/animations/walking/south-west/frame_003.png",
+              "pella/animations/walking/south-west/frame_004.png",
+              "pella/animations/walking/south-west/frame_005.png"
+            ],
+            "south-east": [
+              "pella/animations/walking/south-east/frame_000.png",
+              "pella/animations/walking/south-east/frame_001.png",
+              "pella/animations/walking/south-east/frame_002.png",
+              "pella/animations/walking/south-east/frame_003.png",
+              "pella/animations/walking/south-east/frame_004.png",
+              "pella/animations/walking/south-east/frame_005.png"
+            ],
+            "west": [
+              "pella/animations/walking/west/frame_000.png",
+              "pella/animations/walking/west/frame_001.png",
+              "pella/animations/walking/west/frame_002.png",
+              "pella/animations/walking/west/frame_003.png",
+              "pella/animations/walking/west/frame_004.png",
+              "pella/animations/walking/west/frame_005.png"
+            ],
+            "south": [
+              "pella/animations/walking/south/frame_000.png",
+              "pella/animations/walking/south/frame_001.png",
+              "pella/animations/walking/south/frame_002.png",
+              "pella/animations/walking/south/frame_003.png",
+              "pella/animations/walking/south/frame_004.png",
+              "pella/animations/walking/south/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:50:26.300156"
+}

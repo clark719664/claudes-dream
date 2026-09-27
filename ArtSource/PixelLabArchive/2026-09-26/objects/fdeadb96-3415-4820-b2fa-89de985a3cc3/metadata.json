@@ -1,0 +1,43 @@
+{
+  "id": "fdeadb96-3415-4820-b2fa-89de985a3cc3",
+  "name": "A white bulb of garlic with pa",
+  "state_name": "White bulb of garlic",
+  "prompt": "A white bulb of garlic with papery skin, pixel art, top-down view, NO background NO UI NO text",
+  "size": {
+    "width": 85,
+    "height": 85
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T02:30:51.176831+00:00",
+  "view": "low top-down",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/south.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/west.png",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/east.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/north.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/south-west.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/north-west.png"
+  },
+  "storage_urls": {
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/east.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/west.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/north.png",
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/south.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/north-west.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/fdeadb96-3415-4820-b2fa-89de985a3cc3/rotations/south-west.png"
+  },
+  "frame_urls": null,
+  "style_settings": {
+    "no_background": true
+  },
+  "tags": [],
+  "status": "completed",
+  "group_id": "112d437c-b84b-4458-87f4-2bb5e47d7cf3",
+  "progress_percent": null,
+  "eta_seconds": null,
+  "animations": []
+}

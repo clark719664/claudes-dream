@@ -1,0 +1,38 @@
+{
+  "id": "c8026092-3205-4d78-be74-19c240ab5907",
+  "name": "Small cave bats",
+  "state_name": "Idle",
+  "prompt": "Small cave bats",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:25:23.729148+00:00",
+  "updated_at": "2026-09-25T19:27:06.797257+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c8026092-3205-4d78-be74-19c240ab5907/rotations/south.png?t=1790364426",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c8026092-3205-4d78-be74-19c240ab5907/rotations/west.png?t=1790364426",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c8026092-3205-4d78-be74-19c240ab5907/rotations/east.png?t=1790364426",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c8026092-3205-4d78-be74-19c240ab5907/rotations/north.png?t=1790364426",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c8026092-3205-4d78-be74-19c240ab5907/rotations/south-east.png?t=1790364426",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c8026092-3205-4d78-be74-19c240ab5907/rotations/north-east.png?t=1790364426",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c8026092-3205-4d78-be74-19c240ab5907/rotations/north-west.png?t=1790364426",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c8026092-3205-4d78-be74-19c240ab5907/rotations/south-west.png?t=1790364426"
+  },
+  "style_settings": {
+    "detail": "",
+    "outline": "",
+    "shading": ""
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "3b17fa02-ab0b-4a8a-ba77-7bb8d68c67a1",
+  "skeletons": {},
+  "animations": []
+}

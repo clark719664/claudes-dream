@@ -1,0 +1,20 @@
+{
+  "id": "16e1696b-59eb-49fe-bac8-1567fcf705d2",
+  "name": "Forrest wolf ",
+  "state_name": "Idle",
+  "prompt": "Forrest wolf ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:17:20.534060+00:00",
+  "updated_at": "2026-09-25T19:19:59.017124+00:00",
+  "animation_count": 0,
+  "template_id": "bear",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/16e1696b-59eb-49fe-bac8-1567fcf705d2/rotations/south.png?t=1790363999",
+  "tags": [],
+  "group_id": "696ff37b-7f39-4c92-ad77-a2e4cc7b532c"
+}

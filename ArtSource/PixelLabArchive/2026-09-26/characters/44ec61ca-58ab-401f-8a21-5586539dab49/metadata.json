@@ -1,0 +1,36 @@
+{
+  "id": "44ec61ca-58ab-401f-8a21-5586539dab49",
+  "name": "baby_ferret",
+  "state_name": "Idle",
+  "prompt": "Baby ferret, small long body, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:49:58.787872+00:00",
+  "updated_at": "2026-09-25T20:13:34.336131+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/44ec61ca-58ab-401f-8a21-5586539dab49/rotations/south.png?t=1790367214",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/44ec61ca-58ab-401f-8a21-5586539dab49/rotations/west.png?t=1790367214",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/44ec61ca-58ab-401f-8a21-5586539dab49/rotations/east.png?t=1790367214",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/44ec61ca-58ab-401f-8a21-5586539dab49/rotations/north.png?t=1790367214",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/44ec61ca-58ab-401f-8a21-5586539dab49/rotations/south-east.png?t=1790367214",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/44ec61ca-58ab-401f-8a21-5586539dab49/rotations/north-east.png?t=1790367214",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/44ec61ca-58ab-401f-8a21-5586539dab49/rotations/north-west.png?t=1790367214",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/44ec61ca-58ab-401f-8a21-5586539dab49/rotations/south-west.png?t=1790367214"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "663df551-c153-4cb2-a569-e71ab39f15b2",
+  "skeletons": null,
+  "animations": []
+}

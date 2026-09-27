@@ -1,0 +1,41 @@
+{
+  "id": "e261fb6b-526c-40a1-932e-ada3aa60e1fd",
+  "name": "wooden farm windmill with larg",
+  "state_name": "base",
+  "prompt": "wooden farm windmill with large canvas sails, 16-bit RPG top down pixel art, NO UI, NO TEXT, NO BACKGROUND, NO GRID",
+  "size": {
+    "width": 170,
+    "height": 170
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T03:56:51.366196+00:00",
+  "view": "low top-down",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/south.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/west.png",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/east.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/north.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/south-west.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/north-west.png"
+  },
+  "storage_urls": {
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/east.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/west.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/north.png",
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/south.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/north-west.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/e261fb6b-526c-40a1-932e-ada3aa60e1fd/rotations/south-west.png"
+  },
+  "frame_urls": null,
+  "style_settings": {},
+  "tags": [],
+  "status": "completed",
+  "group_id": "27436eea-10f2-48fe-a971-cf0cd45c68b6",
+  "progress_percent": null,
+  "eta_seconds": null,
+  "animations": []
+}

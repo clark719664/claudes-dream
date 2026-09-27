@@ -1,0 +1,20 @@
+{
+  "id": "729a76ed-3f4f-4cfb-8e88-313093fef7f9",
+  "name": "enforcer_f",
+  "state_name": "enforcer_f",
+  "prompt": "female Covenant enforcer in heavy riot armor with a shock baton and visor, imposing villain, gothic-punk, full body",
+  "size": {
+    "width": 96,
+    "height": 96
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T22:00:30.896889+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/729a76ed-3f4f-4cfb-8e88-313093fef7f9/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "8d3e548f-2959-4c68-8ed5-bbdccd31041d"
+}

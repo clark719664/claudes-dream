@@ -1,0 +1,36 @@
+{
+  "id": "b227ebee-2b7b-4da5-9ef6-ed6e8992a403",
+  "name": "baby_pig",
+  "state_name": "Idle",
+  "prompt": "Baby piglet, small pink, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:49:51.570644+00:00",
+  "updated_at": "2026-09-25T20:08:15.316747+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b227ebee-2b7b-4da5-9ef6-ed6e8992a403/rotations/south.png?t=1790366895",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b227ebee-2b7b-4da5-9ef6-ed6e8992a403/rotations/west.png?t=1790366895",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b227ebee-2b7b-4da5-9ef6-ed6e8992a403/rotations/east.png?t=1790366895",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b227ebee-2b7b-4da5-9ef6-ed6e8992a403/rotations/north.png?t=1790366895",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b227ebee-2b7b-4da5-9ef6-ed6e8992a403/rotations/south-east.png?t=1790366895",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b227ebee-2b7b-4da5-9ef6-ed6e8992a403/rotations/north-east.png?t=1790366895",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b227ebee-2b7b-4da5-9ef6-ed6e8992a403/rotations/north-west.png?t=1790366895",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b227ebee-2b7b-4da5-9ef6-ed6e8992a403/rotations/south-west.png?t=1790366895"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "b13ccf1d-e99c-4d7f-81ef-7f3130250918",
+  "skeletons": null,
+  "animations": []
+}

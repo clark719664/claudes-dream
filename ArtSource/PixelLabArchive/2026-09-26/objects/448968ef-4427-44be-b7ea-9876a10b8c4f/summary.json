@@ -1,0 +1,16 @@
+{
+  "id": "448968ef-4427-44be-b7ea-9876a10b8c4f",
+  "name": "tall cylindrical metal farm si",
+  "state_name": "base",
+  "prompt": "tall cylindrical metal farm silo for storing grain, 16-bit RPG top down pixel art, NO UI, NO TEXT, NO BACKGROUND, NO GRID",
+  "size": {
+    "width": 170,
+    "height": 170
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T03:56:50.202635+00:00",
+  "view": "low top-down",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/448968ef-4427-44be-b7ea-9876a10b8c4f/rotations/south.png",
+  "tags": [],
+  "status": "completed"
+}

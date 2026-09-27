@@ -1,0 +1,20 @@
+{
+  "id": "a5c463e5-36d6-4e41-9c99-3e755a6fb84d",
+  "name": "refugee_crow",
+  "state_name": "refugee_crow",
+  "prompt": "Crow, a weary refugee in a patched travel cloak carrying a bindle, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:17:41.574473+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "failed",
+  "preview_url": null,
+  "tags": [],
+  "group_id": "d2a60693-f2a0-4c6a-b0ec-3fd2c21f7121"
+}

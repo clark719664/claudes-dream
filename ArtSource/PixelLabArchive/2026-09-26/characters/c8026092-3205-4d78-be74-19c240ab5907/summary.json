@@ -1,0 +1,20 @@
+{
+  "id": "c8026092-3205-4d78-be74-19c240ab5907",
+  "name": "Small cave bats",
+  "state_name": "Idle",
+  "prompt": "Small cave bats",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:25:23.729148+00:00",
+  "updated_at": "2026-09-25T19:27:06.797257+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c8026092-3205-4d78-be74-19c240ab5907/rotations/south.png?t=1790364426",
+  "tags": [],
+  "group_id": "3b17fa02-ab0b-4a8a-ba77-7bb8d68c67a1"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "465d0d6e-0407-462f-a5e4-fe3b3a59d6bf",
+  "name": "Child Forrest elf girl ",
+  "state_name": "Idle",
+  "prompt": "Child Forrest elf girl ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:29:54.106609+00:00",
+  "updated_at": "2026-09-25T19:34:29.461642+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/465d0d6e-0407-462f-a5e4-fe3b3a59d6bf/rotations/south.png?t=1790364869",
+  "tags": [],
+  "group_id": "9d637bdc-29c6-49ee-a7a7-df2435bb7662"
+}

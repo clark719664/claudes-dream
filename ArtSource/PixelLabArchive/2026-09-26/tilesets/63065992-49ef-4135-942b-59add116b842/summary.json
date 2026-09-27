@@ -1,0 +1,13 @@
+{
+  "id": "63065992-49ef-4135-942b-59add116b842",
+  "name": "tilled dark earth soil floor, greenhouse ground → weathered wooden plank barn wall",
+  "lower_description": "tilled dark earth soil floor, greenhouse ground",
+  "upper_description": "weathered wooden plank barn wall",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-16T03:53:44.151716+00:00",
+  "status": "completed"
+}

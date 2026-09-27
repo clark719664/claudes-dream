@@ -1,0 +1,20 @@
+{
+  "id": "88ddaff5-e4b9-4b29-a4d6-ba1c41d6eac5",
+  "name": "Bear ",
+  "state_name": "Idle",
+  "prompt": "Bear ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:19:50.756735+00:00",
+  "updated_at": "2026-09-25T19:22:35.892586+00:00",
+  "animation_count": 0,
+  "template_id": "bear",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/88ddaff5-e4b9-4b29-a4d6-ba1c41d6eac5/rotations/south.png?t=1790364155",
+  "tags": [],
+  "group_id": "92c0f1d6-bab9-4fb0-932b-01b5d199bcf6"
+}

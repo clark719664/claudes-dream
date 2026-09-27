@@ -1,0 +1,45 @@
+{
+  "character": {
+    "id": "e8eab3fd-0578-4874-b6d9-aab249d9cd7a",
+    "name": "Idle",
+    "prompt": "Giant Emerald Forest Slime monster with a glowing golden core and mossy crown, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "emerald_slime-Idle.png",
+    "cell_size": {
+      "width": 64,
+      "height": 64
+    },
+    "sheet_size": {
+      "width": 512,
+      "height": 64
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:47:43.927143+00:00"
+}

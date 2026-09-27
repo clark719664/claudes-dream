@@ -1,0 +1,27 @@
+{
+  "id": "5a1923e5-be7a-4575-92c9-d8b5d104c631",
+  "name": "nyx",
+  "state_name": "nyx",
+  "prompt": "Nyx, a mysterious void researcher in a dark hooded lab coat with faint glowing purple eyes, cozy stardew-style RPG villager, gothic, full body",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T17:21:06.477258+00:00",
+  "updated_at": "2026-07-30T10:43:39.727186+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "failed",
+  "rotation_urls": null,
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "91663fdc-8a7c-4415-8ff1-0f925f3aeca5",
+  "skeletons": null,
+  "animations": []
+}

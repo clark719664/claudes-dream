@@ -1,0 +1,38 @@
+{
+  "id": "94ad19ff-8ca6-44de-a69c-88cb710b119c",
+  "name": "Butterfly",
+  "state_name": "Idle",
+  "prompt": "Butterfly",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:32:41.434899+00:00",
+  "updated_at": "2026-09-25T19:34:34.638692+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/94ad19ff-8ca6-44de-a69c-88cb710b119c/rotations/south.png?t=1790364874",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/94ad19ff-8ca6-44de-a69c-88cb710b119c/rotations/west.png?t=1790364874",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/94ad19ff-8ca6-44de-a69c-88cb710b119c/rotations/east.png?t=1790364874",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/94ad19ff-8ca6-44de-a69c-88cb710b119c/rotations/north.png?t=1790364874",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/94ad19ff-8ca6-44de-a69c-88cb710b119c/rotations/south-east.png?t=1790364874",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/94ad19ff-8ca6-44de-a69c-88cb710b119c/rotations/north-east.png?t=1790364874",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/94ad19ff-8ca6-44de-a69c-88cb710b119c/rotations/north-west.png?t=1790364874",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/94ad19ff-8ca6-44de-a69c-88cb710b119c/rotations/south-west.png?t=1790364874"
+  },
+  "style_settings": {
+    "detail": "",
+    "outline": "",
+    "shading": ""
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "7c5e6347-aec3-4090-875b-1a1989fae82d",
+  "skeletons": {},
+  "animations": []
+}

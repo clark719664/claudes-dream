@@ -1,0 +1,20 @@
+{
+  "id": "d7a0705f-8d4c-4fd1-a18a-31c56a38fc85",
+  "name": "baby_goat",
+  "state_name": "Idle",
+  "prompt": "Baby goat kid, small white and brown, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:43:06.472411+00:00",
+  "updated_at": "2026-09-25T22:47:36.635836+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d7a0705f-8d4c-4fd1-a18a-31c56a38fc85/rotations/south.png?t=1790376456",
+  "tags": [],
+  "group_id": "b97fac23-5421-4219-8699-977f6ff712eb"
+}

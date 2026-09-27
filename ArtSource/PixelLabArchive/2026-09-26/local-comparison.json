@@ -1,0 +1,3322 @@
+[
+  {
+    "id": "c0ae91f2-f06b-4176-bf19-22ff0c9fdbfd",
+    "kind": "characters",
+    "name": "bramble_treant",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/c0ae91f2-f06b-4176-bf19-22ff0c9fdbfd"
+  },
+  {
+    "id": "c8519849-863e-4c37-8a7a-f205f00b98f1",
+    "kind": "characters",
+    "name": "magma_golem",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/c8519849-863e-4c37-8a7a-f205f00b98f1"
+  },
+  {
+    "id": "55c280af-d813-490b-b4c5-f44de5e62c68",
+    "kind": "characters",
+    "name": "cave_goblin",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/55c280af-d813-490b-b4c5-f44de5e62c68"
+  },
+  {
+    "id": "e8eab3fd-0578-4874-b6d9-aab249d9cd7a",
+    "kind": "characters",
+    "name": "emerald_slime",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/e8eab3fd-0578-4874-b6d9-aab249d9cd7a"
+  },
+  {
+    "id": "a98982e4-881a-4d92-a8bf-bef96fe38fff",
+    "kind": "characters",
+    "name": "frost_yeti",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/a98982e4-881a-4d92-a8bf-bef96fe38fff"
+  },
+  {
+    "id": "7695f402-28ec-44dc-b370-de91a5e29661",
+    "kind": "characters",
+    "name": "baby_duck",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/7695f402-28ec-44dc-b370-de91a5e29661"
+  },
+  {
+    "id": "1dfd3835-c569-4afc-bba5-5e3b1e75c58d",
+    "kind": "characters",
+    "name": "Pig, large and pink, low top-down 16-bit RPG pixel art, crisp black outline",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/1dfd3835-c569-4afc-bba5-5e3b1e75c58d"
+  },
+  {
+    "id": "980c9e9a-6e3b-477e-bd10-f98a5dfc29e0",
+    "kind": "characters",
+    "name": "baby_turkey",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/980c9e9a-6e3b-477e-bd10-f98a5dfc29e0"
+  },
+  {
+    "id": "943654b0-d3c1-4999-8e4d-3ee9cf48de95",
+    "kind": "characters",
+    "name": "baby_donkey",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/943654b0-d3c1-4999-8e4d-3ee9cf48de95"
+  },
+  {
+    "id": "4f8eb894-89c4-4e61-ae90-155889f975ec",
+    "kind": "characters",
+    "name": "baby_llama",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/4f8eb894-89c4-4e61-ae90-155889f975ec"
+  },
+  {
+    "id": "472800c9-d301-4d1c-9981-b6f6c7dfa332",
+    "kind": "characters",
+    "name": "baby_alpaca",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/472800c9-d301-4d1c-9981-b6f6c7dfa332"
+  },
+  {
+    "id": "d7a0705f-8d4c-4fd1-a18a-31c56a38fc85",
+    "kind": "characters",
+    "name": "baby_goat",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/d7a0705f-8d4c-4fd1-a18a-31c56a38fc85"
+  },
+  {
+    "id": "90d93607-8027-4fae-bdb4-519260656c7a",
+    "kind": "characters",
+    "name": "turkey",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/90d93607-8027-4fae-bdb4-519260656c7a"
+  },
+  {
+    "id": "60ac20dc-107d-4b0f-8c57-50a17545135a",
+    "kind": "characters",
+    "name": "donkey",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/60ac20dc-107d-4b0f-8c57-50a17545135a"
+  },
+  {
+    "id": "ae53ea0e-dc4c-4456-9e9c-b6a28517a640",
+    "kind": "characters",
+    "name": "llama",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/ae53ea0e-dc4c-4456-9e9c-b6a28517a640"
+  },
+  {
+    "id": "deac580d-d59b-43e3-b29e-e677ad7e0dfa",
+    "kind": "characters",
+    "name": "alpaca",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/deac580d-d59b-43e3-b29e-e677ad7e0dfa"
+  },
+  {
+    "id": "62bb495b-72f7-40e7-98de-c1d826f64b2f",
+    "kind": "characters",
+    "name": "duck",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/62bb495b-72f7-40e7-98de-c1d826f64b2f"
+  },
+  {
+    "id": "25271516-bcb4-4985-a2e3-9d9103863d91",
+    "kind": "characters",
+    "name": "baby_chicken",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/25271516-bcb4-4985-a2e3-9d9103863d91"
+  },
+  {
+    "id": "c48ddb99-3bfe-4419-a0d9-92b3caa92be5",
+    "kind": "characters",
+    "name": "baby_arctic_wolf",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/c48ddb99-3bfe-4419-a0d9-92b3caa92be5"
+  },
+  {
+    "id": "971f912f-f155-4226-9045-61c9dc804429",
+    "kind": "characters",
+    "name": "baby_wolf",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/971f912f-f155-4226-9045-61c9dc804429"
+  },
+  {
+    "id": "4d0524dd-06c6-45d4-ad6a-3da4556f9fea",
+    "kind": "characters",
+    "name": "baby_polar_bear",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/4d0524dd-06c6-45d4-ad6a-3da4556f9fea"
+  },
+  {
+    "id": "56515907-8528-4640-8ea9-327a671d5e58",
+    "kind": "characters",
+    "name": "baby_bear",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/56515907-8528-4640-8ea9-327a671d5e58"
+  },
+  {
+    "id": "44ec61ca-58ab-401f-8a21-5586539dab49",
+    "kind": "characters",
+    "name": "baby_ferret",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/44ec61ca-58ab-401f-8a21-5586539dab49"
+  },
+  {
+    "id": "c3e35841-cafb-4631-804e-573c8eaa00e6",
+    "kind": "characters",
+    "name": "kitten",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/c3e35841-cafb-4631-804e-573c8eaa00e6"
+  },
+  {
+    "id": "b52e5761-85b6-4fd0-8d95-c6daa4e2b61e",
+    "kind": "characters",
+    "name": "puppy",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/b52e5761-85b6-4fd0-8d95-c6daa4e2b61e"
+  },
+  {
+    "id": "f91f2553-5cec-4464-9aa9-18797485a5a9",
+    "kind": "characters",
+    "name": "baby_horse",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/f91f2553-5cec-4464-9aa9-18797485a5a9"
+  },
+  {
+    "id": "b227ebee-2b7b-4da5-9ef6-ed6e8992a403",
+    "kind": "characters",
+    "name": "baby_pig",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/b227ebee-2b7b-4da5-9ef6-ed6e8992a403"
+  },
+  {
+    "id": "d22f2c01-4190-4f64-8aa6-bb607c8f4a29",
+    "kind": "characters",
+    "name": "baby_sheep",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/d22f2c01-4190-4f64-8aa6-bb607c8f4a29"
+  },
+  {
+    "id": "e3c75042-7e54-40f8-8abc-de684379f230",
+    "kind": "characters",
+    "name": "baby_cow",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/e3c75042-7e54-40f8-8abc-de684379f230"
+  },
+  {
+    "id": "0d44fb4f-850f-47b1-a77a-6bf7bc573211",
+    "kind": "characters",
+    "name": "sheep",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/0d44fb4f-850f-47b1-a77a-6bf7bc573211"
+  },
+  {
+    "id": "5928ddc7-7b28-4ead-9f05-101a231ebbd0",
+    "kind": "characters",
+    "name": "cow",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/5928ddc7-7b28-4ead-9f05-101a231ebbd0"
+  },
+  {
+    "id": "037282d2-36dd-4a8a-9087-e612c65ed5c7",
+    "kind": "characters",
+    "name": "Small jumping spider",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/037282d2-36dd-4a8a-9087-e612c65ed5c7"
+  },
+  {
+    "id": "d335f514-186e-4dab-a4f1-3faa68ea46a5",
+    "kind": "characters",
+    "name": "Horse",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/d335f514-186e-4dab-a4f1-3faa68ea46a5"
+  },
+  {
+    "id": "433a89b8-ec8c-4c8e-9e02-a2f2cfd5d50c",
+    "kind": "characters",
+    "name": "Bee",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/433a89b8-ec8c-4c8e-9e02-a2f2cfd5d50c"
+  },
+  {
+    "id": "94ad19ff-8ca6-44de-a69c-88cb710b119c",
+    "kind": "characters",
+    "name": "Butterfly",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/94ad19ff-8ca6-44de-a69c-88cb710b119c"
+  },
+  {
+    "id": "f23a0437-6d04-492f-99e6-625f72796e89",
+    "kind": "characters",
+    "name": "Frog",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/f23a0437-6d04-492f-99e6-625f72796e89"
+  },
+  {
+    "id": "83935a74-30d9-487a-b777-9fc355d68b3b",
+    "kind": "characters",
+    "name": "Creepy ghost child ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/83935a74-30d9-487a-b777-9fc355d68b3b"
+  },
+  {
+    "id": "49dbf51e-343c-4a95-b698-804c3bfb1afd",
+    "kind": "characters",
+    "name": "Child Forrest elf boy",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/49dbf51e-343c-4a95-b698-804c3bfb1afd"
+  },
+  {
+    "id": "465d0d6e-0407-462f-a5e4-fe3b3a59d6bf",
+    "kind": "characters",
+    "name": "Child Forrest elf girl ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/465d0d6e-0407-462f-a5e4-fe3b3a59d6bf"
+  },
+  {
+    "id": "8447624a-f66c-447c-9e72-37bb63525aee",
+    "kind": "characters",
+    "name": "Female Forrest elf",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/8447624a-f66c-447c-9e72-37bb63525aee"
+  },
+  {
+    "id": "62b51a8e-7a1b-4e75-ab44-b38a542c1faa",
+    "kind": "characters",
+    "name": "Male Forrest elf",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/62b51a8e-7a1b-4e75-ab44-b38a542c1faa"
+  },
+  {
+    "id": "ac078aa4-d04a-40ae-8153-7ded8d063697",
+    "kind": "characters",
+    "name": "Ghost female",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/ac078aa4-d04a-40ae-8153-7ded8d063697"
+  },
+  {
+    "id": "2aad9363-9a0d-42e3-bb8a-5e69c9c8e8d7",
+    "kind": "characters",
+    "name": "Ghost male ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/2aad9363-9a0d-42e3-bb8a-5e69c9c8e8d7"
+  },
+  {
+    "id": "cab6b4d9-f6fd-41fc-b27b-1640095805c5",
+    "kind": "characters",
+    "name": "Garden snake ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/cab6b4d9-f6fd-41fc-b27b-1640095805c5"
+  },
+  {
+    "id": "bdc495d6-28e2-440b-81ce-72d876f4c83b",
+    "kind": "characters",
+    "name": "Cave snake ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/bdc495d6-28e2-440b-81ce-72d876f4c83b"
+  },
+  {
+    "id": "c8026092-3205-4d78-be74-19c240ab5907",
+    "kind": "characters",
+    "name": "Small cave bats",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/c8026092-3205-4d78-be74-19c240ab5907"
+  },
+  {
+    "id": "fb2e1a95-3bac-4c64-bd81-d9697598e845",
+    "kind": "characters",
+    "name": "Magma slime",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/fb2e1a95-3bac-4c64-bd81-d9697598e845"
+  },
+  {
+    "id": "71feb45d-4325-409e-9822-2e3cf50bcda6",
+    "kind": "characters",
+    "name": "Chicken",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/71feb45d-4325-409e-9822-2e3cf50bcda6"
+  },
+  {
+    "id": "ee56faf3-c832-4d03-94c1-2fcd499a8435",
+    "kind": "characters",
+    "name": "Ferret ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/ee56faf3-c832-4d03-94c1-2fcd499a8435"
+  },
+  {
+    "id": "98550dca-3683-4148-b6f7-6e1b98ced413",
+    "kind": "characters",
+    "name": "Polar bear ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/98550dca-3683-4148-b6f7-6e1b98ced413"
+  },
+  {
+    "id": "955800a7-46dd-4ee3-b099-17f1e4ff0fbe",
+    "kind": "characters",
+    "name": "Artic wolf ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/955800a7-46dd-4ee3-b099-17f1e4ff0fbe"
+  },
+  {
+    "id": "88ddaff5-e4b9-4b29-a4d6-ba1c41d6eac5",
+    "kind": "characters",
+    "name": "Bear ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/88ddaff5-e4b9-4b29-a4d6-ba1c41d6eac5"
+  },
+  {
+    "id": "eec4222c-9c8d-4341-84f7-ce1040ba493f",
+    "kind": "characters",
+    "name": "Green Forrest slime ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/eec4222c-9c8d-4341-84f7-ce1040ba493f"
+  },
+  {
+    "id": "263008bc-7929-411b-b1b9-4e6015664844",
+    "kind": "characters",
+    "name": "Radioactive centipede ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/263008bc-7929-411b-b1b9-4e6015664844"
+  },
+  {
+    "id": "23faf074-86fe-4bdf-90d9-00518ffc3768",
+    "kind": "characters",
+    "name": "Dog",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/23faf074-86fe-4bdf-90d9-00518ffc3768"
+  },
+  {
+    "id": "d0e25a1e-050a-4b0c-905a-24ab55eecdfe",
+    "kind": "characters",
+    "name": "Tabby cat ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/d0e25a1e-050a-4b0c-905a-24ab55eecdfe"
+  },
+  {
+    "id": "16e1696b-59eb-49fe-bac8-1567fcf705d2",
+    "kind": "characters",
+    "name": "Forrest wolf ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/16e1696b-59eb-49fe-bac8-1567fcf705d2"
+  },
+  {
+    "id": "8eb206db-95b0-41c4-a34f-3ea0ec3f278b",
+    "kind": "characters",
+    "name": "A stone based slime ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/8eb206db-95b0-41c4-a34f-3ea0ec3f278b"
+  },
+  {
+    "id": "9bc302d4-e864-4445-8686-f68dc0acf3b1",
+    "kind": "characters",
+    "name": "crystal_basilisk",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/9bc302d4-e864-4445-8686-f68dc0acf3b1"
+  },
+  {
+    "id": "cfaa77d8-f332-4548-b24d-525a0b16e42d",
+    "kind": "characters",
+    "name": "cave_bat",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/cfaa77d8-f332-4548-b24d-525a0b16e42d"
+  },
+  {
+    "id": "c4b57cf6-f5b6-4034-82f0-95939b905714",
+    "kind": "characters",
+    "name": "shadow_fiend",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/c4b57cf6-f5b6-4034-82f0-95939b905714"
+  },
+  {
+    "id": "c24fbc2e-b1ee-495f-89e2-b8596c6e763c",
+    "kind": "characters",
+    "name": "abyssal_crawler",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/c24fbc2e-b1ee-495f-89e2-b8596c6e763c"
+  },
+  {
+    "id": "dcfd3d38-660f-450d-b544-b1e201fea1f9",
+    "kind": "characters",
+    "name": "tunnel_spider",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/dcfd3d38-660f-450d-b544-b1e201fea1f9"
+  },
+  {
+    "id": "29da762e-b332-43c5-b24e-ce03e25bed7c",
+    "kind": "characters",
+    "name": "bramble_treant",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/bramble_treant.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/29da762e-b332-43c5-b24e-ce03e25bed7c"
+  },
+  {
+    "id": "d1744945-5033-459b-b6c2-6482da99aa82",
+    "kind": "characters",
+    "name": "magma_golem",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/magma_golem.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/d1744945-5033-459b-b6c2-6482da99aa82"
+  },
+  {
+    "id": "3dcc229f-384c-4dbf-a707-e5f3a2ca8345",
+    "kind": "characters",
+    "name": "cave_goblin",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/cave_goblin.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/3dcc229f-384c-4dbf-a707-e5f3a2ca8345"
+  },
+  {
+    "id": "ee137e93-bfeb-478c-80f7-43c4e73d80f3",
+    "kind": "characters",
+    "name": "emerald_slime",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/emerald_slime.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/ee137e93-bfeb-478c-80f7-43c4e73d80f3"
+  },
+  {
+    "id": "4a91fe4f-b945-4ec3-a29a-f8704f730cd7",
+    "kind": "characters",
+    "name": "frost_yeti",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/frost_yeti.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/4a91fe4f-b945-4ec3-a29a-f8704f730cd7"
+  },
+  {
+    "id": "aa160374-eab1-4a9e-8774-e34552a50018",
+    "kind": "characters",
+    "name": "A dungeon slime",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/aa160374-eab1-4a9e-8774-e34552a50018"
+  },
+  {
+    "id": "40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3",
+    "kind": "characters",
+    "name": "Design an original cartoon pig character for a small desktop pet that sits on a Windows taskbar. Show three versions side by side in a neutral standing pose: a slim one, a noticeably rounder one, and an almost spherical one. They must read as the same individual pig at three different weights, with identical face, markings, colours, and accessory. Give it one clear signature detail\u2014a bright gold coin tag on its collar\u2014that stays readable at about 60 pixels tall. Appealing, characterful, readable against both light and dark backgrounds. Fully transparent background, no shadow, no card, no border, no text.",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3"
+  },
+  {
+    "id": "284b1a14-2196-4b62-9e5e-d477e3581439",
+    "kind": "characters",
+    "name": "goat",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/goat/goat.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/goat/goat.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/284b1a14-2196-4b62-9e5e-d477e3581439"
+  },
+  {
+    "id": "c574b348-d63e-4503-94b5-ed6a7ad3d24a",
+    "kind": "characters",
+    "name": "teacher_nessa",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/teacher_nessa/teacher_nessa.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/c574b348-d63e-4503-94b5-ed6a7ad3d24a"
+  },
+  {
+    "id": "130806fb-f1ac-4939-855f-be6ca11ea85c",
+    "kind": "characters",
+    "name": "farmer_skim",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/farmer_skim/farmer_skim.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/farmer_skim/farmer_skim.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/130806fb-f1ac-4939-855f-be6ca11ea85c"
+  },
+  {
+    "id": "ce360dc5-4529-4721-8145-2d5e9d9ca252",
+    "kind": "characters",
+    "name": "road_ira",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/road_ira/road_ira.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/ce360dc5-4529-4721-8145-2d5e9d9ca252"
+  },
+  {
+    "id": "d58856df-78f7-42fc-b6cc-f1752fbbf017",
+    "kind": "characters",
+    "name": "sable",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/sable/sable.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/sable/sable.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/d58856df-78f7-42fc-b6cc-f1752fbbf017"
+  },
+  {
+    "id": "3d32026d-2bb4-4682-a04c-395e1aaa3d6c",
+    "kind": "characters",
+    "name": "lyric",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/lyric/lyric.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/lyric/lyric.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/3d32026d-2bb4-4682-a04c-395e1aaa3d6c"
+  },
+  {
+    "id": "4cc8a51a-fb13-4dc8-a8c0-313881d972c0",
+    "kind": "characters",
+    "name": "player_male",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/player_male/player_male.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/player_male/player_male.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/4cc8a51a-fb13-4dc8-a8c0-313881d972c0"
+  },
+  {
+    "id": "4377269d-9538-4a01-9978-17aeb183b051",
+    "kind": "characters",
+    "name": "player_thin_fem",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/player_thin_fem/player_thin_fem.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/player_thin_fem/player_thin_fem.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/4377269d-9538-4a01-9978-17aeb183b051"
+  },
+  {
+    "id": "e7f8e627-fb0c-4fd0-8878-ea036894e8c6",
+    "kind": "characters",
+    "name": "player_thick_fem",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/player_thick_fem/player_thick_fem.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/player_thick_fem/player_thick_fem.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/e7f8e627-fb0c-4fd0-8878-ea036894e8c6"
+  },
+  {
+    "id": "a7fb240d-64c0-4d26-bb03-c8b98cf6b409",
+    "kind": "characters",
+    "name": "player_male",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/a7fb240d-64c0-4d26-bb03-c8b98cf6b409"
+  },
+  {
+    "id": "a174aef6-e918-403b-aaf8-085d9b197e23",
+    "kind": "characters",
+    "name": "player_lg_male",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/player_lg_male/player_lg_male.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/player_lg_male/player_lg_male.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/a174aef6-e918-403b-aaf8-085d9b197e23"
+  },
+  {
+    "id": "e11f68a7-77ee-472f-889d-a2c45e721b6f",
+    "kind": "characters",
+    "name": "diver_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/diver_f/diver_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/diver_f/diver_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/e11f68a7-77ee-472f-889d-a2c45e721b6f"
+  },
+  {
+    "id": "dd7248b4-d2fb-4cc0-920b-8b305d2197e8",
+    "kind": "characters",
+    "name": "diver_f",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/dd7248b4-d2fb-4cc0-920b-8b305d2197e8"
+  },
+  {
+    "id": "7368cb47-911f-4289-9f60-0b6649a7a09b",
+    "kind": "characters",
+    "name": "diver_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/diver_m/diver_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/diver_m/diver_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/7368cb47-911f-4289-9f60-0b6649a7a09b"
+  },
+  {
+    "id": "1dcce854-9ae8-4e8f-b543-8c2052e78b77",
+    "kind": "characters",
+    "name": "zealot_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/zealot_f/zealot_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/zealot_f/zealot_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/1dcce854-9ae8-4e8f-b543-8c2052e78b77"
+  },
+  {
+    "id": "17f3d9d6-41eb-4710-929c-c3cef525825e",
+    "kind": "characters",
+    "name": "zealot_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/zealot_m/zealot_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/zealot_m/zealot_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/17f3d9d6-41eb-4710-929c-c3cef525825e"
+  },
+  {
+    "id": "2623c3b5-8263-4470-999f-dfcd30705792",
+    "kind": "characters",
+    "name": "reaper_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/reaper_f/reaper_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/reaper_f/reaper_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/2623c3b5-8263-4470-999f-dfcd30705792"
+  },
+  {
+    "id": "1ce41992-6426-4284-96d4-0d47e6e45762",
+    "kind": "characters",
+    "name": "wiccan_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/wiccan_f/wiccan_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/wiccan_f/wiccan_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/1ce41992-6426-4284-96d4-0d47e6e45762"
+  },
+  {
+    "id": "56bdbe72-b7ed-4cdc-9594-a08305c9635d",
+    "kind": "characters",
+    "name": "reaper_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/reaper_m/reaper_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/reaper_m/reaper_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/56bdbe72-b7ed-4cdc-9594-a08305c9635d"
+  },
+  {
+    "id": "580df1aa-a5e6-4be4-b82b-8e1426da56ec",
+    "kind": "characters",
+    "name": "inquisitor_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/inquisitor_f/inquisitor_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/inquisitor_f/inquisitor_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/580df1aa-a5e6-4be4-b82b-8e1426da56ec"
+  },
+  {
+    "id": "4f5d4b41-3da0-4b6b-b027-bf72b22f1a2e",
+    "kind": "characters",
+    "name": "inquisitor_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/inquisitor_m/inquisitor_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/inquisitor_m/inquisitor_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/4f5d4b41-3da0-4b6b-b027-bf72b22f1a2e"
+  },
+  {
+    "id": "4b6cad64-280e-42a4-8715-bd872d6fb2cf",
+    "kind": "characters",
+    "name": "technomancer_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/technomancer_f/technomancer_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/technomancer_f/technomancer_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/4b6cad64-280e-42a4-8715-bd872d6fb2cf"
+  },
+  {
+    "id": "632e9496-2c53-4d2a-a509-61c9ac30660b",
+    "kind": "characters",
+    "name": "technomancer_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/technomancer_m/technomancer_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/technomancer_m/technomancer_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/632e9496-2c53-4d2a-a509-61c9ac30660b"
+  },
+  {
+    "id": "1262882d-0a19-4302-8e33-34416b090c49",
+    "kind": "characters",
+    "name": "hexer_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/hexer_f/hexer_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/hexer_f/hexer_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/1262882d-0a19-4302-8e33-34416b090c49"
+  },
+  {
+    "id": "3ef6ad34-529a-444b-8e3b-5e35ed6833b3",
+    "kind": "characters",
+    "name": "hexer_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/hexer_m/hexer_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/hexer_m/hexer_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/3ef6ad34-529a-444b-8e3b-5e35ed6833b3"
+  },
+  {
+    "id": "729a76ed-3f4f-4cfb-8e88-313093fef7f9",
+    "kind": "characters",
+    "name": "enforcer_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/enforcer_f/enforcer_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/enforcer_f/enforcer_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/729a76ed-3f4f-4cfb-8e88-313093fef7f9"
+  },
+  {
+    "id": "cd361140-6c68-4c4b-9772-daf7131fd141",
+    "kind": "characters",
+    "name": "enforcer_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/enforcer_m/enforcer_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/enforcer_m/enforcer_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/cd361140-6c68-4c4b-9772-daf7131fd141"
+  },
+  {
+    "id": "bb21e65e-8ece-4660-bc07-c38c3ffce0ac",
+    "kind": "characters",
+    "name": "acolyte_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/acolyte_f/acolyte_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/acolyte_f/acolyte_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/bb21e65e-8ece-4660-bc07-c38c3ffce0ac"
+  },
+  {
+    "id": "ce689332-2b40-4789-8bdf-2622cc8cc900",
+    "kind": "characters",
+    "name": "acolyte_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/acolyte_m/acolyte_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/acolyte_m/acolyte_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/ce689332-2b40-4789-8bdf-2622cc8cc900"
+  },
+  {
+    "id": "dfdd9cbe-af50-45e6-bbfa-68c578365df8",
+    "kind": "characters",
+    "name": "berserker_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/berserker_f/berserker_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/berserker_f/berserker_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/dfdd9cbe-af50-45e6-bbfa-68c578365df8"
+  },
+  {
+    "id": "89146965-72b2-416f-9809-88fe415f303e",
+    "kind": "characters",
+    "name": "berserker_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/berserker_m/berserker_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/berserker_m/berserker_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/89146965-72b2-416f-9809-88fe415f303e"
+  },
+  {
+    "id": "cccba738-98a4-413a-b8e5-3c37b89f6d6b",
+    "kind": "characters",
+    "name": "wiccan_f",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/cccba738-98a4-413a-b8e5-3c37b89f6d6b"
+  },
+  {
+    "id": "dba23a1b-0883-465c-a391-6ffc0a6e366d",
+    "kind": "characters",
+    "name": "wiccan_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/wiccan_m/wiccan_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/wiccan_m/wiccan_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/dba23a1b-0883-465c-a391-6ffc0a6e366d"
+  },
+  {
+    "id": "af702260-00c4-4217-a557-70c78a2625ca",
+    "kind": "characters",
+    "name": "necro_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/necro_f/necro_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/necro_f/necro_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/af702260-00c4-4217-a557-70c78a2625ca"
+  },
+  {
+    "id": "3af6d4ce-1803-4865-a25d-121f0f91df53",
+    "kind": "characters",
+    "name": "necro_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/necro_m/necro_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/necro_m/necro_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/3af6d4ce-1803-4865-a25d-121f0f91df53"
+  },
+  {
+    "id": "455f9905-2c73-4d89-ab9f-55d79d7c50e9",
+    "kind": "characters",
+    "name": "scientist_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/scientist_f/scientist_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/scientist_f/scientist_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/455f9905-2c73-4d89-ab9f-55d79d7c50e9"
+  },
+  {
+    "id": "9855336c-838b-4d6d-a0e4-d23998a3f77c",
+    "kind": "characters",
+    "name": "scientist_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/scientist_m/scientist_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/scientist_m/scientist_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/9855336c-838b-4d6d-a0e4-d23998a3f77c"
+  },
+  {
+    "id": "089a7a56-3cc2-488b-bdb1-44b440622e94",
+    "kind": "characters",
+    "name": "grunt_f",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/grunt_f/grunt_f.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/grunt_f/grunt_f.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/089a7a56-3cc2-488b-bdb1-44b440622e94"
+  },
+  {
+    "id": "f7f545f2-0939-4650-aaf3-0fbdf4769a56",
+    "kind": "characters",
+    "name": "grunt_m",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/grunt_m/grunt_m.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/grunt_m/grunt_m.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/f7f545f2-0939-4650-aaf3-0fbdf4769a56"
+  },
+  {
+    "id": "5f0ad488-fbdf-4043-9e7e-9140c8b3c820",
+    "kind": "characters",
+    "name": "scrap_yadi",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/scrap_yadi/scrap_yadi.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/scrap_yadi/scrap_yadi.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/5f0ad488-fbdf-4043-9e7e-9140c8b3c820"
+  },
+  {
+    "id": "a5c463e5-36d6-4e41-9c99-3e755a6fb84d",
+    "kind": "characters",
+    "name": "refugee_crow",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/a5c463e5-36d6-4e41-9c99-3e755a6fb84d"
+  },
+  {
+    "id": "ebacb35d-59a8-4604-a3c4-116c06ee81e6",
+    "kind": "characters",
+    "name": "defector_lace",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/defector_lace/defector_lace.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/defector_lace/defector_lace.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/ebacb35d-59a8-4604-a3c4-116c06ee81e6"
+  },
+  {
+    "id": "84e41e32-fb27-449a-86f5-7df703350a7b",
+    "kind": "characters",
+    "name": "fortune_moth",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/fortune_moth/fortune_moth.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/fortune_moth/fortune_moth.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/84e41e32-fb27-449a-86f5-7df703350a7b"
+  },
+  {
+    "id": "66b4dac8-e7b8-4ff5-8675-0f4a65a489fe",
+    "kind": "characters",
+    "name": "mechanic_grease",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/mechanic_grease/mechanic_grease.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/mechanic_grease/mechanic_grease.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/66b4dac8-e7b8-4ff5-8675-0f4a65a489fe"
+  },
+  {
+    "id": "a0bce44a-c600-4e12-a68d-a051f938814a",
+    "kind": "characters",
+    "name": "bone_pax",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/bone_pax/bone_pax.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/bone_pax/bone_pax.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/a0bce44a-c600-4e12-a68d-a051f938814a"
+  },
+  {
+    "id": "d6bfc464-bc9a-4a15-b015-8a5555b11664",
+    "kind": "characters",
+    "name": "orphan_suki",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/orphan_suki/orphan_suki.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/orphan_suki/orphan_suki.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/d6bfc464-bc9a-4a15-b015-8a5555b11664"
+  },
+  {
+    "id": "727b2f99-77d0-4a3a-8e0e-30652ac5a946",
+    "kind": "characters",
+    "name": "orphan_ren",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/orphan_ren/orphan_ren.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/orphan_ren/orphan_ren.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/727b2f99-77d0-4a3a-8e0e-30652ac5a946"
+  },
+  {
+    "id": "da359d30-1eae-4765-8832-40bd7a9ab128",
+    "kind": "characters",
+    "name": "seraphine",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/seraphine/seraphine.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/seraphine/seraphine.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/da359d30-1eae-4765-8832-40bd7a9ab128"
+  },
+  {
+    "id": "f39fc43c-4a6a-4008-8c95-c95fec7e6f25",
+    "kind": "characters",
+    "name": "spark_kael",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/spark_kael/spark_kael.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/spark_kael/spark_kael.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/f39fc43c-4a6a-4008-8c95-c95fec7e6f25"
+  },
+  {
+    "id": "0b9d9707-e2c8-416d-9862-8f3a1455cefa",
+    "kind": "characters",
+    "name": "busker_rio",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/busker_rio/busker_rio.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/busker_rio/busker_rio.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/0b9d9707-e2c8-416d-9862-8f3a1455cefa"
+  },
+  {
+    "id": "7e918edd-393f-4b68-8d5f-69e5f1a479fa",
+    "kind": "characters",
+    "name": "archon_vex",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/archon_vex/archon_vex.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/archon_vex/archon_vex.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/7e918edd-393f-4b68-8d5f-69e5f1a479fa"
+  },
+  {
+    "id": "1a88f9ef-07d3-45ae-a96a-78dec6db5f6b",
+    "kind": "characters",
+    "name": "thorn_vale",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/thorn_vale/thorn_vale.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/thorn_vale/thorn_vale.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/1a88f9ef-07d3-45ae-a96a-78dec6db5f6b"
+  },
+  {
+    "id": "41b469fc-d9eb-4055-a694-1649c7243778",
+    "kind": "characters",
+    "name": "mirelle",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/mirelle/mirelle.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/mirelle/mirelle.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/41b469fc-d9eb-4055-a694-1649c7243778"
+  },
+  {
+    "id": "abc2a6ed-f4aa-4569-ae1d-ea21a95051ed",
+    "kind": "characters",
+    "name": "garrick",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/garrick/garrick.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/garrick/garrick.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/abc2a6ed-f4aa-4569-ae1d-ea21a95051ed"
+  },
+  {
+    "id": "69d40a60-7f5a-4d70-8bb9-7b900d0cb6b6",
+    "kind": "characters",
+    "name": "ranger_cole",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/ranger_cole/ranger_cole.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/ranger_cole/ranger_cole.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/69d40a60-7f5a-4d70-8bb9-7b900d0cb6b6"
+  },
+  {
+    "id": "5e2302d8-f5c6-485d-a602-3cc69b64a879",
+    "kind": "characters",
+    "name": "mire_lotus",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/mire_lotus/mire_lotus.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/mire_lotus/mire_lotus.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/5e2302d8-f5c6-485d-a602-3cc69b64a879"
+  },
+  {
+    "id": "63959e9e-71d0-4b48-816e-8d9008b57d21",
+    "kind": "characters",
+    "name": "rust_juno",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/rust_juno/rust_juno.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/rust_juno/rust_juno.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/63959e9e-71d0-4b48-816e-8d9008b57d21"
+  },
+  {
+    "id": "f0091cb1-a23a-4ed1-9c4b-5d89ff5fece9",
+    "kind": "characters",
+    "name": "greenhouse_sal",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/greenhouse_sal/greenhouse_sal.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/greenhouse_sal/greenhouse_sal.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/f0091cb1-a23a-4ed1-9c4b-5d89ff5fece9"
+  },
+  {
+    "id": "b7b8f12b-533a-48e8-a206-a7a17436e545",
+    "kind": "characters",
+    "name": "gleam_courier",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/gleam_courier/gleam_courier.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/gleam_courier/gleam_courier.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/b7b8f12b-533a-48e8-a206-a7a17436e545"
+  },
+  {
+    "id": "8114c9b6-fc42-4987-9a40-44f48ae471e5",
+    "kind": "characters",
+    "name": "doc_elm",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/doc_elm/doc_elm.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/doc_elm/doc_elm.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/8114c9b6-fc42-4987-9a40-44f48ae471e5"
+  },
+  {
+    "id": "dcc0c885-a1a1-4e7f-a04b-2894b2657cab",
+    "kind": "characters",
+    "name": "nyx",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/nyx/nyx.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/nyx/nyx.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/dcc0c885-a1a1-4e7f-a04b-2894b2657cab"
+  },
+  {
+    "id": "d5807d50-61e8-4fc3-877b-c2d921f5fa06",
+    "kind": "characters",
+    "name": "jax",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/jax/jax.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/jax/jax.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/d5807d50-61e8-4fc3-877b-c2d921f5fa06"
+  },
+  {
+    "id": "0f4148f3-8f24-4b5f-bd55-49a5944a54fb",
+    "kind": "characters",
+    "name": "kid_priya",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/kid_priya/kid_priya.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/kid_priya/kid_priya.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/0f4148f3-8f24-4b5f-bd55-49a5944a54fb"
+  },
+  {
+    "id": "d7363226-949a-45cb-bec7-45c31ae7d9bf",
+    "kind": "characters",
+    "name": "kid_milo",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/kid_milo/kid_milo.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/kid_milo/kid_milo.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/d7363226-949a-45cb-bec7-45c31ae7d9bf"
+  },
+  {
+    "id": "2aff475b-f0bc-4575-b92b-4701613b8201",
+    "kind": "characters",
+    "name": "samuel",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/samuel/samuel.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/samuel/samuel.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/2aff475b-f0bc-4575-b92b-4701613b8201"
+  },
+  {
+    "id": "305af951-a0f2-4ca1-87c5-bf18fa619a26",
+    "kind": "characters",
+    "name": "hacker_rem",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/hacker_rem/hacker_rem.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/hacker_rem/hacker_rem.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/305af951-a0f2-4ca1-87c5-bf18fa619a26"
+  },
+  {
+    "id": "0f952e30-eae1-4cb3-a096-76cab78c581f",
+    "kind": "characters",
+    "name": "doc_elm",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/0f952e30-eae1-4cb3-a096-76cab78c581f"
+  },
+  {
+    "id": "5a1923e5-be7a-4575-92c9-d8b5d104c631",
+    "kind": "characters",
+    "name": "nyx",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/5a1923e5-be7a-4575-92c9-d8b5d104c631"
+  },
+  {
+    "id": "b059fba7-31e5-4185-af7d-55d572f10159",
+    "kind": "characters",
+    "name": "jax",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/b059fba7-31e5-4185-af7d-55d572f10159"
+  },
+  {
+    "id": "ead0418e-b8c9-43dd-bae0-b11702772e86",
+    "kind": "characters",
+    "name": "neon_pix",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/neon_pix/neon_pix.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/neon_pix/neon_pix.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/ead0418e-b8c9-43dd-bae0-b11702772e86"
+  },
+  {
+    "id": "3baddcd8-8751-4648-8200-fc2560631a6c",
+    "kind": "characters",
+    "name": "barkeep_cass",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/barkeep_cass/barkeep_cass.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/barkeep_cass/barkeep_cass.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/3baddcd8-8751-4648-8200-fc2560631a6c"
+  },
+  {
+    "id": "0b66c3ef-6548-4632-aa58-8b3f43183b5f",
+    "kind": "characters",
+    "name": "bouncer_knox",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/bouncer_knox/bouncer_knox.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/bouncer_knox/bouncer_knox.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/0b66c3ef-6548-4632-aa58-8b3f43183b5f"
+  },
+  {
+    "id": "0b21563e-43d9-4c84-9b0c-5b64301537f3",
+    "kind": "characters",
+    "name": "elder_grain",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/elder_grain/elder_grain.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/elder_grain/elder_grain.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/0b21563e-43d9-4c84-9b0c-5b64301537f3"
+  },
+  {
+    "id": "143f8762-d556-494a-a680-622d3413e4b1",
+    "kind": "characters",
+    "name": "festival_gala",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/festival_gala/festival_gala.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/festival_gala/festival_gala.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/143f8762-d556-494a-a680-622d3413e4b1"
+  },
+  {
+    "id": "1c5c3c11-0c1c-40fe-b151-4730560c67b1",
+    "kind": "characters",
+    "name": "gleam_courier",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/1c5c3c11-0c1c-40fe-b151-4730560c67b1"
+  },
+  {
+    "id": "f6bef22d-021f-42ac-bb01-cf3917ad6f80",
+    "kind": "characters",
+    "name": "curator_ash",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/curator_ash/curator_ash.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/curator_ash/curator_ash.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/f6bef22d-021f-42ac-bb01-cf3917ad6f80"
+  },
+  {
+    "id": "5be865a7-93e1-4ad7-8210-86898ddfe487",
+    "kind": "characters",
+    "name": "ranch_pen",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/ranch_pen/ranch_pen.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/ranch_pen/ranch_pen.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/5be865a7-93e1-4ad7-8210-86898ddfe487"
+  },
+  {
+    "id": "38c81fd2-3b30-411f-bc13-b7938245d678",
+    "kind": "characters",
+    "name": "farmer_dell",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/farmer_dell/farmer_dell.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/farmer_dell/farmer_dell.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/38c81fd2-3b30-411f-bc13-b7938245d678"
+  },
+  {
+    "id": "db708da7-85ec-4b9e-89bf-b2458a449a4a",
+    "kind": "characters",
+    "name": "mercy",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/mercy/mercy.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/mercy/mercy.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/db708da7-85ec-4b9e-89bf-b2458a449a4a"
+  },
+  {
+    "id": "cd6f0bbd-725e-4356-9c60-19b26ae2108f",
+    "kind": "characters",
+    "name": "teacher_nessa",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/cd6f0bbd-725e-4356-9c60-19b26ae2108f"
+  },
+  {
+    "id": "bddf5349-887d-46fe-8626-e960d9a1d6ef",
+    "kind": "characters",
+    "name": "mayor_holt",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/mayor_holt/mayor_holt.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/mayor_holt/mayor_holt.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/bddf5349-887d-46fe-8626-e960d9a1d6ef"
+  },
+  {
+    "id": "acb7294f-70fc-47ba-bae6-fdf60b007b1f",
+    "kind": "characters",
+    "name": "patch",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/patch/patch.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/patch/patch.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/acb7294f-70fc-47ba-bae6-fdf60b007b1f"
+  },
+  {
+    "id": "4a436419-f78f-44ec-9c8d-c8500efcfb92",
+    "kind": "characters",
+    "name": "iodine",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/iodine/iodine.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/iodine/iodine.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/4a436419-f78f-44ec-9c8d-c8500efcfb92"
+  },
+  {
+    "id": "2c3f7be0-adc5-4531-a19a-82ae43f6f546",
+    "kind": "characters",
+    "name": "omar",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/omar/omar.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/omar/omar.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/2c3f7be0-adc5-4531-a19a-82ae43f6f546"
+  },
+  {
+    "id": "92b31a60-2b5e-4ce9-a8cd-2d7486ac22c5",
+    "kind": "characters",
+    "name": "fenn",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/fenn/fenn.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/fenn/fenn.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/92b31a60-2b5e-4ce9-a8cd-2d7486ac22c5"
+  },
+  {
+    "id": "efc0c682-aac6-4b50-828c-c50b485c8c66",
+    "kind": "characters",
+    "name": "crates",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/efc0c682-aac6-4b50-828c-c50b485c8c66"
+  },
+  {
+    "id": "e52ea9e0-57f6-4233-bab8-4e5612ba0039",
+    "kind": "characters",
+    "name": "wren",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/wren/wren.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/wren/wren.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/e52ea9e0-57f6-4233-bab8-4e5612ba0039"
+  },
+  {
+    "id": "9f7c9014-89cb-4d33-a070-449fa643c28d",
+    "kind": "characters",
+    "name": "hao",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/hao/hao.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/hao/hao.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/9f7c9014-89cb-4d33-a070-449fa643c28d"
+  },
+  {
+    "id": "e82b73b6-b05a-4423-ace8-4c749878b4d3",
+    "kind": "characters",
+    "name": "elena",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/elena/elena.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/elena/elena.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/e82b73b6-b05a-4423-ace8-4c749878b4d3"
+  },
+  {
+    "id": "8de37f02-2e64-4813-9b12-6b3acd14096e",
+    "kind": "characters",
+    "name": "mercy",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/8de37f02-2e64-4813-9b12-6b3acd14096e"
+  },
+  {
+    "id": "1a7c36dd-42ce-4acc-8835-e9371494af62",
+    "kind": "characters",
+    "name": "rook",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/rook/rook.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/rook/rook.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/1a7c36dd-42ce-4acc-8835-e9371494af62"
+  },
+  {
+    "id": "989cff77-51ac-4dfd-a75a-49064264364c",
+    "kind": "characters",
+    "name": "venn",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/venn/venn.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/venn/venn.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/989cff77-51ac-4dfd-a75a-49064264364c"
+  },
+  {
+    "id": "3b3e82d8-1804-4853-afcf-5bea9267a688",
+    "kind": "characters",
+    "name": "kota",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/kota/kota.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/kota/kota.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/3b3e82d8-1804-4853-afcf-5bea9267a688"
+  },
+  {
+    "id": "48b7a456-3bc7-4cdc-a7a8-be90746cc80c",
+    "kind": "characters",
+    "name": "vale",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/vale/vale.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/vale/vale.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/48b7a456-3bc7-4cdc-a7a8-be90746cc80c"
+  },
+  {
+    "id": "f19b039d-6e29-43a9-9995-99b45cbde87c",
+    "kind": "characters",
+    "name": "marlow",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/marlow/marlow.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/marlow/marlow.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/f19b039d-6e29-43a9-9995-99b45cbde87c"
+  },
+  {
+    "id": "ea76d990-bf54-4b98-9c60-291e2bb02ab0",
+    "kind": "characters",
+    "name": "sloane",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/sloane/sloane.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/sloane/sloane.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/ea76d990-bf54-4b98-9c60-291e2bb02ab0"
+  },
+  {
+    "id": "1e89b7a2-c953-44d7-bd5a-17ff36d0785f",
+    "kind": "characters",
+    "name": "tomas",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/tomas/tomas.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/tomas/tomas.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/1e89b7a2-c953-44d7-bd5a-17ff36d0785f"
+  },
+  {
+    "id": "ec0d19af-0754-44ca-8e64-e24b551747e6",
+    "kind": "characters",
+    "name": "pella",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/pella/pella.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/pella/pella.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/ec0d19af-0754-44ca-8e64-e24b551747e6"
+  },
+  {
+    "id": "50fa53b8-582d-40cd-9bd2-32935ba06796",
+    "kind": "characters",
+    "name": "Nurse Mira",
+    "existing_metadata_references": [
+      "game/assets/pixellab_npcs/nurse_mira/nurse_mira.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_npcs/nurse_mira/nurse_mira.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/characters/50fa53b8-582d-40cd-9bd2-32935ba06796"
+  },
+  {
+    "id": "01cb8e15-1863-486c-b470-837f8f4b35dd",
+    "kind": "objects",
+    "name": "One nugget of green Crack weed",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/01cb8e15-1863-486c-b470-837f8f4b35dd"
+  },
+  {
+    "id": "134f500a-ef6c-4c96-9d21-aa78c08fdef8",
+    "kind": "objects",
+    "name": "One nugget of 9 Lb hammer weed",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/134f500a-ef6c-4c96-9d21-aa78c08fdef8"
+  },
+  {
+    "id": "18bb9cb1-4efe-46fa-8276-997b37d7bfda",
+    "kind": "objects",
+    "name": "One nugget of grand daddy purp",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/18bb9cb1-4efe-46fa-8276-997b37d7bfda"
+  },
+  {
+    "id": "ad155a81-6199-4d9c-9851-fef03732133b",
+    "kind": "objects",
+    "name": "One nugget of og kush",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/ad155a81-6199-4d9c-9851-fef03732133b"
+  },
+  {
+    "id": "def7ce22-d845-457a-af4c-d2e28a49abfa",
+    "kind": "objects",
+    "name": "small wooden chicken coop buil",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/def7ce22-d845-457a-af4c-d2e28a49abfa"
+  },
+  {
+    "id": "056564f3-5996-4e55-91d8-2675adca2ec1",
+    "kind": "objects",
+    "name": "large red wooden barn building",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/056564f3-5996-4e55-91d8-2675adca2ec1"
+  },
+  {
+    "id": "329d2880-3f94-4e1f-9e81-0fa8a6418094",
+    "kind": "objects",
+    "name": "small log cabin building with ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/329d2880-3f94-4e1f-9e81-0fa8a6418094"
+  },
+  {
+    "id": "935f76f7-2618-4bca-9038-20d4d8971cde",
+    "kind": "objects",
+    "name": "sturdy stone house building wi",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/935f76f7-2618-4bca-9038-20d4d8971cde"
+  },
+  {
+    "id": "7de8716b-ed8d-4015-9fdc-12294e150ad5",
+    "kind": "objects",
+    "name": "cozy cottage building with a b",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/7de8716b-ed8d-4015-9fdc-12294e150ad5"
+  },
+  {
+    "id": "53e9641a-d0eb-4c23-808e-883a6d35e557",
+    "kind": "objects",
+    "name": "stone wishing well structure w",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/53e9641a-d0eb-4c23-808e-883a6d35e557"
+  },
+  {
+    "id": "211270d8-8d6c-4064-a079-a41658b25e0b",
+    "kind": "objects",
+    "name": "rustic wooden windmill buildin",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/211270d8-8d6c-4064-a079-a41658b25e0b"
+  },
+  {
+    "id": "21d6f8db-3e21-495c-8783-fb38a2367010",
+    "kind": "objects",
+    "name": "tall red farm silo building fo",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/21d6f8db-3e21-495c-8783-fb38a2367010"
+  },
+  {
+    "id": "88beb9a9-297e-49d7-acea-076c19e3da4d",
+    "kind": "objects",
+    "name": "beautiful glass greenhouse bui",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/88beb9a9-297e-49d7-acea-076c19e3da4d"
+  },
+  {
+    "id": "6146ebe4-a643-485b-9da1-fbe0130f8020",
+    "kind": "objects",
+    "name": "a massive giant cauliflower si",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/6146ebe4-a643-485b-9da1-fbe0130f8020"
+  },
+  {
+    "id": "9a2ecd95-216f-4c87-af32-15080c3bb23f",
+    "kind": "objects",
+    "name": "a massive giant pink melon sit",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/9a2ecd95-216f-4c87-af32-15080c3bb23f"
+  },
+  {
+    "id": "a0bb171c-157d-46d0-9a79-c6ed54e36f5b",
+    "kind": "objects",
+    "name": "a massive giant pumpkin sittin",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/a0bb171c-157d-46d0-9a79-c6ed54e36f5b"
+  },
+  {
+    "id": "12e15e8f-1e71-45a2-8ae1-6674e5a4ba39",
+    "kind": "objects",
+    "name": "a massive giant pumpkin sittin",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/12e15e8f-1e71-45a2-8ae1-6674e5a4ba39"
+  },
+  {
+    "id": "7cbb12f5-eda7-473c-a6c0-0f292bf491a6",
+    "kind": "objects",
+    "name": "round wooden tavern table with",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/7cbb12f5-eda7-473c-a6c0-0f292bf491a6"
+  },
+  {
+    "id": "78d075cf-8dd4-42fb-8707-3a2c7ef30077",
+    "kind": "objects",
+    "name": "large wooden library desk with",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/78d075cf-8dd4-42fb-8707-3a2c7ef30077"
+  },
+  {
+    "id": "08f34217-f57a-4323-8562-04d4e027c6e7",
+    "kind": "objects",
+    "name": "luxurious inn bed with red bla",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/08f34217-f57a-4323-8562-04d4e027c6e7"
+  },
+  {
+    "id": "0d6d5a58-e21e-4a7d-a974-42f846929261",
+    "kind": "objects",
+    "name": "large tiled indoor hot spring ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/0d6d5a58-e21e-4a7d-a974-42f846929261"
+  },
+  {
+    "id": "3c84d473-4315-4b54-bc0a-ac4df3ed6ae3",
+    "kind": "objects",
+    "name": "small wooden school desk with ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/3c84d473-4315-4b54-bc0a-ac4df3ed6ae3"
+  },
+  {
+    "id": "a42fd7e1-3a71-440f-ba28-82becdb9cf7a",
+    "kind": "objects",
+    "name": "stone church building with sta",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/a42fd7e1-3a71-440f-ba28-82becdb9cf7a"
+  },
+  {
+    "id": "b67c7f9d-98b0-430a-a5a0-94022c58c980",
+    "kind": "objects",
+    "name": "glass museum display case with",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/b67c7f9d-98b0-430a-a5a0-94022c58c980"
+  },
+  {
+    "id": "5a6abb5d-f988-4f2a-9c4e-ff921fbd4aa1",
+    "kind": "objects",
+    "name": "long wooden church bench seati",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/5a6abb5d-f988-4f2a-9c4e-ff921fbd4aa1"
+  },
+  {
+    "id": "366bd7ca-2f04-4535-a32d-c1421c861672",
+    "kind": "objects",
+    "name": "white hospital clinic bed with",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/366bd7ca-2f04-4535-a32d-c1421c861672"
+  },
+  {
+    "id": "4df8a1d7-88a0-4463-bdca-5e54a0f36330",
+    "kind": "objects",
+    "name": "wooden shop counter with a cas",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/4df8a1d7-88a0-4463-bdca-5e54a0f36330"
+  },
+  {
+    "id": "508d29c1-f480-4987-add0-dbfe98ba2ff1",
+    "kind": "objects",
+    "name": "heavy iron blacksmith anvil, 1",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/508d29c1-f480-4987-add0-dbfe98ba2ff1"
+  },
+  {
+    "id": "157dc461-24f8-4f89-9e2f-28b8b15006a8",
+    "kind": "objects",
+    "name": "long polished wooden tavern ba",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/157dc461-24f8-4f89-9e2f-28b8b15006a8"
+  },
+  {
+    "id": "24e73d3c-3540-41bb-8a44-a8abd1392485",
+    "kind": "objects",
+    "name": "traditional wooden bathhouse b",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/24e73d3c-3540-41bb-8a44-a8abd1392485"
+  },
+  {
+    "id": "7c14ca77-4d9c-40e2-bdaa-8112a14af058",
+    "kind": "objects",
+    "name": "grand marble museum building w",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/7c14ca77-4d9c-40e2-bdaa-8112a14af058"
+  },
+  {
+    "id": "58b0d1b5-1cd2-440d-89df-e0cd47a85643",
+    "kind": "objects",
+    "name": "large welcoming inn building w",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/58b0d1b5-1cd2-440d-89df-e0cd47a85643"
+  },
+  {
+    "id": "4bd0fb21-ca2d-47c6-a79d-3c1a288fc7e8",
+    "kind": "objects",
+    "name": "red brick schoolhouse building",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/4bd0fb21-ca2d-47c6-a79d-3c1a288fc7e8"
+  },
+  {
+    "id": "636feb81-5491-4a2a-8740-f3061f8149ae",
+    "kind": "objects",
+    "name": "stone church building with sta",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/636feb81-5491-4a2a-8740-f3061f8149ae"
+  },
+  {
+    "id": "ae0b723d-4881-4d92-a67f-bf450ebae45c",
+    "kind": "objects",
+    "name": "small wooden stool",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/ae0b723d-4881-4d92-a67f-bf450ebae45c"
+  },
+  {
+    "id": "ccf6f5c3-59ae-4715-be5e-f5c0fce42ad9",
+    "kind": "objects",
+    "name": "glowing golden ring with a bla",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/ccf6f5c3-59ae-4715-be5e-f5c0fce42ad9"
+  },
+  {
+    "id": "a312090d-d7c2-463c-9d76-6bb06c32aed3",
+    "kind": "objects",
+    "name": "sturdy log cabin home with flo",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/a312090d-d7c2-463c-9d76-6bb06c32aed3"
+  },
+  {
+    "id": "76e58775-bd9f-4915-bbde-57aec74dc52a",
+    "kind": "objects",
+    "name": "small cozy wooden cottage with",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/76e58775-bd9f-4915-bbde-57aec74dc52a"
+  },
+  {
+    "id": "008aa8b5-f298-47ee-939e-6cc03e33214d",
+    "kind": "objects",
+    "name": "grand library building with st",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/008aa8b5-f298-47ee-939e-6cc03e33214d"
+  },
+  {
+    "id": "26360ed0-2dcc-489b-97ab-bd68d1cfc8f2",
+    "kind": "objects",
+    "name": "tall purple stone wizard tower",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/26360ed0-2dcc-489b-97ab-bd68d1cfc8f2"
+  },
+  {
+    "id": "3af90506-4013-412b-b881-f1b867e46d78",
+    "kind": "objects",
+    "name": "large fancy stone manor house ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/3af90506-4013-412b-b881-f1b867e46d78"
+  },
+  {
+    "id": "5504fc00-6240-4eed-bf38-a92afeb5ee2c",
+    "kind": "objects",
+    "name": "clean white brick village clin",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/5504fc00-6240-4eed-bf38-a92afeb5ee2c"
+  },
+  {
+    "id": "54a4fd73-020f-4165-a2be-ce94e2d91e8e",
+    "kind": "objects",
+    "name": "quaint village general store b",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/54a4fd73-020f-4165-a2be-ce94e2d91e8e"
+  },
+  {
+    "id": "4eb4481b-cdf7-4bbe-9e99-64f607fd2145",
+    "kind": "objects",
+    "name": "stone blacksmith forge buildin",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/4eb4481b-cdf7-4bbe-9e99-64f607fd2145"
+  },
+  {
+    "id": "68dc9ecd-bcd6-4528-a170-3a3769e1722d",
+    "kind": "objects",
+    "name": "large rustic wooden tavern bui",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/68dc9ecd-bcd6-4528-a170-3a3769e1722d"
+  },
+  {
+    "id": "1c73f98f-ea40-4f84-8d01-629bf669c9ec",
+    "kind": "objects",
+    "name": "large green potted fern plant ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/1c73f98f-ea40-4f84-8d01-629bf669c9ec"
+  },
+  {
+    "id": "811701b6-9f65-467b-912a-28f5f009f5e5",
+    "kind": "objects",
+    "name": "tall brass floor lamp with a g",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/811701b6-9f65-467b-912a-28f5f009f5e5"
+  },
+  {
+    "id": "16c088f8-6935-4145-82cd-547195c804d3",
+    "kind": "objects",
+    "name": "large ornate red and gold rect",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/16c088f8-6935-4145-82cd-547195c804d3"
+  },
+  {
+    "id": "3155426c-2564-4860-abe1-27f32c1d390e",
+    "kind": "objects",
+    "name": "tall wooden bookshelf filled w",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/3155426c-2564-4860-abe1-27f32c1d390e"
+  },
+  {
+    "id": "db62e6bf-f783-42ff-9150-46592857e087",
+    "kind": "objects",
+    "name": "cozy wooden bed with red blank",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/db62e6bf-f783-42ff-9150-46592857e087"
+  },
+  {
+    "id": "f56666bc-5c46-4b90-a31c-0525fa86fa7a",
+    "kind": "objects",
+    "name": "glass greenhouse with wooden f",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/f56666bc-5c46-4b90-a31c-0525fa86fa7a"
+  },
+  {
+    "id": "e261fb6b-526c-40a1-932e-ada3aa60e1fd",
+    "kind": "objects",
+    "name": "wooden farm windmill with larg",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/e261fb6b-526c-40a1-932e-ada3aa60e1fd"
+  },
+  {
+    "id": "820e3a88-516e-49ed-ba59-d5f70c2bb7bf",
+    "kind": "objects",
+    "name": "classic stone wishing well wit",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/820e3a88-516e-49ed-ba59-d5f70c2bb7bf"
+  },
+  {
+    "id": "448968ef-4427-44be-b7ea-9876a10b8c4f",
+    "kind": "objects",
+    "name": "tall cylindrical metal farm si",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/448968ef-4427-44be-b7ea-9876a10b8c4f"
+  },
+  {
+    "id": "f741ac07-1075-4a13-83c3-724439678dc3",
+    "kind": "objects",
+    "name": "small wooden chicken coop with",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/f741ac07-1075-4a13-83c3-724439678dc3"
+  },
+  {
+    "id": "922dc6b7-0bbc-4fb7-9b38-62c6683d9a46",
+    "kind": "objects",
+    "name": "large red wooden farm barn wit",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/922dc6b7-0bbc-4fb7-9b38-62c6683d9a46"
+  },
+  {
+    "id": "9be70331-9137-4cd0-a682-085959f82280",
+    "kind": "objects",
+    "name": "A multifaceted sparkling ruby ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/9be70331-9137-4cd0-a682-085959f82280"
+  },
+  {
+    "id": "dd527830-324d-41fb-a640-62f653fdbc30",
+    "kind": "objects",
+    "name": "A flat piece of tanned brown l",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/dd527830-324d-41fb-a640-62f653fdbc30"
+  },
+  {
+    "id": "aa79bbf5-27c4-449d-b0b2-1f02f1ae93bc",
+    "kind": "objects",
+    "name": "A round brown mushroom with a ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/aa79bbf5-27c4-449d-b0b2-1f02f1ae93bc"
+  },
+  {
+    "id": "7a2898c8-600b-4e51-b325-507c570322d0",
+    "kind": "objects",
+    "name": "A bundle of tied wild green he",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/7a2898c8-600b-4e51-b325-507c570322d0"
+  },
+  {
+    "id": "1d540557-138a-4f35-bf3b-e6355b3fdbc5",
+    "kind": "objects",
+    "name": "A golden drop of tree resin in",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/1d540557-138a-4f35-bf3b-e6355b3fdbc5"
+  },
+  {
+    "id": "cde5b874-8fce-42ae-8a7f-ebd11825383c",
+    "kind": "objects",
+    "name": "A small bundle of plant fiber ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/cde5b874-8fce-42ae-8a7f-ebd11825383c"
+  },
+  {
+    "id": "abf2ed77-e197-4087-8624-db9f243d5d36",
+    "kind": "objects",
+    "name": "A grey rough-hewn stone block,",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/abf2ed77-e197-4087-8624-db9f243d5d36"
+  },
+  {
+    "id": "da41b434-321b-4781-84db-24626cd7e432",
+    "kind": "objects",
+    "name": "A bundle of brown wooden logs ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/da41b434-321b-4781-84db-24626cd7e432"
+  },
+  {
+    "id": "bad5c210-ab7e-486c-90d3-0711b24f4a5b",
+    "kind": "objects",
+    "name": "A small brown sack of plant fe",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/bad5c210-ab7e-486c-90d3-0711b24f4a5b"
+  },
+  {
+    "id": "cdc42e98-8a71-404a-8773-06c38a7c1cad",
+    "kind": "objects",
+    "name": "A metal hand-held lantern with",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/cdc42e98-8a71-404a-8773-06c38a7c1cad"
+  },
+  {
+    "id": "351d5690-e1ce-4aa8-91dc-231c6ef69cec",
+    "kind": "objects",
+    "name": "A neatly rolled white cloth ba",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/351d5690-e1ce-4aa8-91dc-231c6ef69cec"
+  },
+  {
+    "id": "f70c1f39-e7e7-45d5-8e97-e24552a637a9",
+    "kind": "objects",
+    "name": "A bright blue haste tonic in a",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/f70c1f39-e7e7-45d5-8e97-e24552a637a9"
+  },
+  {
+    "id": "b8d168d5-c3fa-4547-848b-b6b483884b14",
+    "kind": "objects",
+    "name": "A red-orange glowing strength ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/b8d168d5-c3fa-4547-848b-b6b483884b14"
+  },
+  {
+    "id": "effac1fd-6956-425a-b290-cab5960dbb07",
+    "kind": "objects",
+    "name": "A small green healing tonic bo",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/effac1fd-6956-425a-b290-cab5960dbb07"
+  },
+  {
+    "id": "9ccb572c-b2a1-4eff-a4d9-090878e5f864",
+    "kind": "objects",
+    "name": "A dark grey stone-coloured pot",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/9ccb572c-b2a1-4eff-a4d9-090878e5f864"
+  },
+  {
+    "id": "fdeadb96-3415-4820-b2fa-89de985a3cc3",
+    "kind": "objects",
+    "name": "A white bulb of garlic with pa",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/fdeadb96-3415-4820-b2fa-89de985a3cc3"
+  },
+  {
+    "id": "50b3fd6d-b6d2-4a25-a1b5-5b32585add51",
+    "kind": "objects",
+    "name": "A glowing golden elixir in a f",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/50b3fd6d-b6d2-4a25-a1b5-5b32585add51"
+  },
+  {
+    "id": "6cd18c3f-d5ab-4f2f-960a-e0d436a293d6",
+    "kind": "objects",
+    "name": "A small glass vial filled with",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/6cd18c3f-d5ab-4f2f-960a-e0d436a293d6"
+  },
+  {
+    "id": "9fa9d1b4-6137-49d8-9d93-b05895a2c350",
+    "kind": "objects",
+    "name": "A large round glass bottle fil",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/9fa9d1b4-6137-49d8-9d93-b05895a2c350"
+  },
+  {
+    "id": "ce349aed-e8a0-4267-8546-abe3d681e2fe",
+    "kind": "objects",
+    "name": "A clean white animal bone, pix",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/ce349aed-e8a0-4267-8546-abe3d681e2fe"
+  },
+  {
+    "id": "706dedd2-8c7d-4912-847e-11d1fa1c9d2a",
+    "kind": "objects",
+    "name": "A dark leathery bat wing with ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/706dedd2-8c7d-4912-847e-11d1fa1c9d2a"
+  },
+  {
+    "id": "6aadad13-b2e3-4950-b27f-9c3a2c431ec0",
+    "kind": "objects",
+    "name": "A large iridescent green-grey ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/6aadad13-b2e3-4950-b27f-9c3a2c431ec0"
+  },
+  {
+    "id": "6e4b2f95-97ff-40bc-9099-570dd68b7210",
+    "kind": "objects",
+    "name": "A swirling void-black shadow c",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/6e4b2f95-97ff-40bc-9099-570dd68b7210"
+  },
+  {
+    "id": "4a9139b5-3ba7-42a6-9f5c-f85a6322daea",
+    "kind": "objects",
+    "name": "A red-orange magma core glowin",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/4a9139b5-3ba7-42a6-9f5c-f85a6322daea"
+  },
+  {
+    "id": "e1fc4432-e3ef-4f51-8b16-b6222f8e8318",
+    "kind": "objects",
+    "name": "A glowing ice-blue frost core ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/e1fc4432-e3ef-4f51-8b16-b6222f8e8318"
+  },
+  {
+    "id": "c87ca925-a531-4edc-b537-0fa1f38a25d5",
+    "kind": "objects",
+    "name": "A cluster of clear sparkling c",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/c87ca925-a531-4edc-b537-0fa1f38a25d5"
+  },
+  {
+    "id": "df2fefd9-c53d-4060-93fd-e0ce6c310f63",
+    "kind": "objects",
+    "name": "A jagged dark metallic meteori",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/df2fefd9-c53d-4060-93fd-e0ce6c310f63"
+  },
+  {
+    "id": "801b15b0-1cb6-432e-9c06-6509efda60fe",
+    "kind": "objects",
+    "name": "A cracked open geode revealing",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/801b15b0-1cb6-432e-9c06-6509efda60fe"
+  },
+  {
+    "id": "33e5ab91-f0e5-429c-915e-967a7ae39cfa",
+    "kind": "objects",
+    "name": "A gleaming rectangular gold in",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/33e5ab91-f0e5-429c-915e-967a7ae39cfa"
+  },
+  {
+    "id": "80e4a7b5-decc-4d29-8604-22ab23881db4",
+    "kind": "objects",
+    "name": "A smelted rectangular copper i",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/80e4a7b5-decc-4d29-8604-22ab23881db4"
+  },
+  {
+    "id": "31f7770a-9b7e-47d1-b862-415ce7a3c2e8",
+    "kind": "objects",
+    "name": "A chunk of shiny gold ore with",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/31f7770a-9b7e-47d1-b862-415ce7a3c2e8"
+  },
+  {
+    "id": "fe4f24b1-aa9e-4268-9c68-a5e591da38a7",
+    "kind": "objects",
+    "name": "A rough chunk of copper ore wi",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/fe4f24b1-aa9e-4268-9c68-a5e591da38a7"
+  },
+  {
+    "id": "8810a86c-15d4-4098-8c8d-011fbaec25d3",
+    "kind": "objects",
+    "name": "A full plate with roast meat, ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/8810a86c-15d4-4098-8c8d-011fbaec25d3"
+  },
+  {
+    "id": "a6561e42-2807-4e9b-9b5a-84b77650a454",
+    "kind": "objects",
+    "name": "A wooden skewer with grilled m",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/a6561e42-2807-4e9b-9b5a-84b77650a454"
+  },
+  {
+    "id": "6f0bc9a4-1662-45ca-b711-13c61d6b6901",
+    "kind": "objects",
+    "name": "A wooden bowl of thick vegetab",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/6f0bc9a4-1662-45ca-b711-13c61d6b6901"
+  },
+  {
+    "id": "2ab5c375-0a0f-4a71-bfbd-0fce4bb2add8",
+    "kind": "objects",
+    "name": "A rustic round loaf of hearth ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/2ab5c375-0a0f-4a71-bfbd-0fce4bb2add8"
+  },
+  {
+    "id": "8e0e42dd-0ff1-4d07-8d0c-aed0fa6ee94a",
+    "kind": "objects",
+    "name": "A roasted leg of meat on a bon",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/8e0e42dd-0ff1-4d07-8d0c-aed0fa6ee94a"
+  },
+  {
+    "id": "543b1e0e-8d3e-4055-9408-07aaada411be",
+    "kind": "objects",
+    "name": "A basket of golden crispy frie",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/543b1e0e-8d3e-4055-9408-07aaada411be"
+  },
+  {
+    "id": "738000a3-6c41-49d5-b6ee-aa4017bf65ff",
+    "kind": "objects",
+    "name": "A baked purple eggplant halved",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/738000a3-6c41-49d5-b6ee-aa4017bf65ff"
+  },
+  {
+    "id": "7060c638-9866-4a7b-bdfc-a09566ef3f20",
+    "kind": "objects",
+    "name": "A slice of layered shortcake w",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/7060c638-9866-4a7b-bdfc-a09566ef3f20"
+  },
+  {
+    "id": "8427d006-89c6-416c-afba-218d00773a60",
+    "kind": "objects",
+    "name": "A roasted yellow corn on the c",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/8427d006-89c6-416c-afba-218d00773a60"
+  },
+  {
+    "id": "291d9612-6737-40c4-bf78-b183b27d8a47",
+    "kind": "objects",
+    "name": "A slice of golden-orange pumpk",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/291d9612-6737-40c4-bf78-b183b27d8a47"
+  },
+  {
+    "id": "d3f17176-3389-45a1-9eed-51e38f506559",
+    "kind": "objects",
+    "name": "A dark green broccoli head on ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/d3f17176-3389-45a1-9eed-51e38f506559"
+  },
+  {
+    "id": "3cf857b9-86de-4821-a5df-5a2f192c7224",
+    "kind": "objects",
+    "name": "A white cauliflower head with ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/3cf857b9-86de-4821-a5df-5a2f192c7224"
+  },
+  {
+    "id": "ab5a5a46-a6b1-4c5e-9a9b-e1ae3761ff3d",
+    "kind": "objects",
+    "name": "A leafy bright green lettuce h",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/ab5a5a46-a6b1-4c5e-9a9b-e1ae3761ff3d"
+  },
+  {
+    "id": "e6b31f21-3373-469c-a964-a7dc7a2bf917",
+    "kind": "objects",
+    "name": "A round green cabbage head wit",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/e6b31f21-3373-469c-a964-a7dc7a2bf917"
+  },
+  {
+    "id": "3ad82fa4-3ef2-46a7-9306-64e494a20305",
+    "kind": "objects",
+    "name": "A deep red beet root with purp",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/3ad82fa4-3ef2-46a7-9306-64e494a20305"
+  },
+  {
+    "id": "9a5d9323-d53a-4645-9d89-f023b437d036",
+    "kind": "objects",
+    "name": "An orange carrot with green le",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/9a5d9323-d53a-4645-9d89-f023b437d036"
+  },
+  {
+    "id": "a32d4daf-6a6b-4d9c-b8e1-846da765b7d5",
+    "kind": "objects",
+    "name": "A round red tomato with a gree",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/a32d4daf-6a6b-4d9c-b8e1-846da765b7d5"
+  },
+  {
+    "id": "e634f119-fe9f-4851-a09d-759fd4d9c5a1",
+    "kind": "objects",
+    "name": "A round yellow onion with pape",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/e634f119-fe9f-4851-a09d-759fd4d9c5a1"
+  },
+  {
+    "id": "be65804b-029f-4989-8ec1-8ed807a22538",
+    "kind": "objects",
+    "name": "A deep purple glossy eggplant ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/be65804b-029f-4989-8ec1-8ed807a22538"
+  },
+  {
+    "id": "72320597-7c9c-407f-b871-f2052e97e1e8",
+    "kind": "objects",
+    "name": "A bright red strawberry with g",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/72320597-7c9c-407f-b871-f2052e97e1e8"
+  },
+  {
+    "id": "24599644-584c-4b7e-8b11-345a10f8e99c",
+    "kind": "objects",
+    "name": "A yellow ear of corn with gree",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/24599644-584c-4b7e-8b11-345a10f8e99c"
+  },
+  {
+    "id": "17e8d9f3-b7dd-49e1-a669-7eec17d1bc7d",
+    "kind": "objects",
+    "name": "A round bright orange pumpkin ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/17e8d9f3-b7dd-49e1-a669-7eec17d1bc7d"
+  },
+  {
+    "id": "68f767e9-a15e-4bfb-8cad-2b92173dc0ac",
+    "kind": "objects",
+    "name": "A long-handled wooden scythe w",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/68f767e9-a15e-4bfb-8cad-2b92173dc0ac"
+  },
+  {
+    "id": "83aa7113-ca7f-491a-987a-7f5bfcdbda52",
+    "kind": "objects",
+    "name": "A metal watering can with a lo",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/83aa7113-ca7f-491a-987a-7f5bfcdbda52"
+  },
+  {
+    "id": "6cb3463a-4d26-495d-8437-3dd05f86ab68",
+    "kind": "objects",
+    "name": "A simple wooden-handled hoe wi",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/6cb3463a-4d26-495d-8437-3dd05f86ab68"
+  },
+  {
+    "id": "cec48b61-f6d9-4f7d-af41-271b3ef3a667",
+    "kind": "objects",
+    "name": "A void-black shadow ward shiel",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/cec48b61-f6d9-4f7d-af41-271b3ef3a667"
+  },
+  {
+    "id": "62930ac5-64fa-4a05-9588-f5ef2747d5a5",
+    "kind": "objects",
+    "name": "A radiant golden sunforged shi",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/62930ac5-64fa-4a05-9588-f5ef2747d5a5"
+  },
+  {
+    "id": "61a54634-65d8-40f1-a36b-a9ee315b77b2",
+    "kind": "objects",
+    "name": "A rectangular iron shield with",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/61a54634-65d8-40f1-a36b-a9ee315b77b2"
+  },
+  {
+    "id": "7f8ae93c-2d81-4c99-84d8-0a7051a99406",
+    "kind": "objects",
+    "name": "A small round wooden buckler s",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/7f8ae93c-2d81-4c99-84d8-0a7051a99406"
+  },
+  {
+    "id": "cab86022-a0ed-43a7-abca-47eb3649d00f",
+    "kind": "objects",
+    "name": "A dark shadow pickaxe cracklin",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/cab86022-a0ed-43a7-abca-47eb3649d00f"
+  },
+  {
+    "id": "f1bf6679-1d96-4aaf-9dfb-da5672aff9f8",
+    "kind": "objects",
+    "name": "A glowing teal mythril pickaxe",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/f1bf6679-1d96-4aaf-9dfb-da5672aff9f8"
+  },
+  {
+    "id": "72a42ff7-543b-4f35-929b-b33b3dace1b7",
+    "kind": "objects",
+    "name": "An iron pickaxe with a grey me",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/72a42ff7-543b-4f35-929b-b33b3dace1b7"
+  },
+  {
+    "id": "d09d0e7b-0c47-4b1e-9158-5d8a93825ce2",
+    "kind": "objects",
+    "name": "A stone pickaxe with a wooden ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2"
+  },
+  {
+    "id": "ce9c1dbd-6932-461f-834b-6ac03f26d316",
+    "kind": "objects",
+    "name": "A dark shadow axe with a void-",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/ce9c1dbd-6932-461f-834b-6ac03f26d316"
+  },
+  {
+    "id": "ac2cbcf5-4c3b-4afe-94c0-1c128fc7649c",
+    "kind": "objects",
+    "name": "A shimmering teal mythril axe ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/ac2cbcf5-4c3b-4afe-94c0-1c128fc7649c"
+  },
+  {
+    "id": "92208dfb-32ff-4ff1-a642-1bedc7c793fe",
+    "kind": "objects",
+    "name": "An iron wood-chopping axe with",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/92208dfb-32ff-4ff1-a642-1bedc7c793fe"
+  },
+  {
+    "id": "3945e99d-58f7-4920-941f-db4a7521b343",
+    "kind": "objects",
+    "name": "A stone-headed hand axe with a",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/3945e99d-58f7-4920-941f-db4a7521b343"
+  },
+  {
+    "id": "b770b940-4b60-406d-8f1e-9ac1f1f44759",
+    "kind": "objects",
+    "name": "A wooden druid staff topped wi",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/b770b940-4b60-406d-8f1e-9ac1f1f44759"
+  },
+  {
+    "id": "cc154107-9774-4284-9244-734685cb9a67",
+    "kind": "objects",
+    "name": "A wooden recurve hunter's bow ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/cc154107-9774-4284-9244-734685cb9a67"
+  },
+  {
+    "id": "0cadfaf8-9824-41be-b777-e2a1b2283ace",
+    "kind": "objects",
+    "name": "A dark jagged shadow sword wre",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/0cadfaf8-9824-41be-b777-e2a1b2283ace"
+  },
+  {
+    "id": "3d54fbf7-6dad-4e91-8421-7cfd6c5db450",
+    "kind": "objects",
+    "name": "A radiant golden sunforged swo",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/3d54fbf7-6dad-4e91-8421-7cfd6c5db450"
+  },
+  {
+    "id": "ab5543b7-2167-4160-87f7-4133ecfda7b0",
+    "kind": "objects",
+    "name": "A glowing teal-blue mythril sw",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/ab5543b7-2167-4160-87f7-4133ecfda7b0"
+  },
+  {
+    "id": "7f3c5212-c59b-431b-906b-3fc3fe929a44",
+    "kind": "objects",
+    "name": "A sleek black obsidian blade w",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/7f3c5212-c59b-431b-906b-3fc3fe929a44"
+  },
+  {
+    "id": "6c4d1e9b-16a5-4331-90f6-f1747a8265b9",
+    "kind": "objects",
+    "name": "A polished silver steel sword ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/6c4d1e9b-16a5-4331-90f6-f1747a8265b9"
+  },
+  {
+    "id": "28387a17-a511-42a9-9585-7ed1c9c8cfa9",
+    "kind": "objects",
+    "name": "A grey iron longsword with cro",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/28387a17-a511-42a9-9585-7ed1c9c8cfa9"
+  },
+  {
+    "id": "67b83d11-3f23-4c62-8395-a36ed8479d89",
+    "kind": "objects",
+    "name": "A copper short sword with a re",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/67b83d11-3f23-4c62-8395-a36ed8479d89"
+  },
+  {
+    "id": "3f26949d-ec07-4bd7-945d-f1e66916996d",
+    "kind": "objects",
+    "name": "A jagged bone blade weapon wit",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/3f26949d-ec07-4bd7-945d-f1e66916996d"
+  },
+  {
+    "id": "057e42f1-1060-47e5-9842-fcfc23486dda",
+    "kind": "objects",
+    "name": "A rough wooden short sword wit",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/057e42f1-1060-47e5-9842-fcfc23486dda"
+  },
+  {
+    "id": "eba5e5c0-236c-40dd-bd1f-7068bb9f1936",
+    "kind": "objects",
+    "name": "A small glass vial filled with",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/eba5e5c0-236c-40dd-bd1f-7068bb9f1936"
+  },
+  {
+    "id": "30aa80dd-67df-4d5e-9942-2cb16196c6ef",
+    "kind": "objects",
+    "name": "A large round glass bottle fil",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/30aa80dd-67df-4d5e-9942-2cb16196c6ef"
+  },
+  {
+    "id": "045ccd36-5c14-4d69-9721-4abfffea2387",
+    "kind": "objects",
+    "name": "test",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/045ccd36-5c14-4d69-9721-4abfffea2387"
+  },
+  {
+    "id": "c035614c-ac1b-44af-890c-d9f99638a89b",
+    "kind": "objects",
+    "name": "test",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/c035614c-ac1b-44af-890c-d9f99638a89b"
+  },
+  {
+    "id": "a068b32d-27e4-4189-90c5-90b7559eabef",
+    "kind": "objects",
+    "name": "test",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/a068b32d-27e4-4189-90c5-90b7559eabef"
+  },
+  {
+    "id": "5a7199f7-a133-46a7-bf3e-1690b714692d",
+    "kind": "objects",
+    "name": "a red health potion bottle, pi",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/5a7199f7-a133-46a7-bf3e-1690b714692d"
+  },
+  {
+    "id": "45b3a5e6-665a-4f83-813e-7138ba7acc12",
+    "kind": "objects",
+    "name": "a red health potion bottle, pi",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/45b3a5e6-665a-4f83-813e-7138ba7acc12"
+  },
+  {
+    "id": "a21ba894-919b-441e-9e0c-4a1a85187493",
+    "kind": "objects",
+    "name": "Tomato plant baby sprout",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/a21ba894-919b-441e-9e0c-4a1a85187493"
+  },
+  {
+    "id": "90959998-61e1-4aef-af79-52d652ec3e89",
+    "kind": "objects",
+    "name": "ornate gothic UI panel frame, ",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/90959998-61e1-4aef-af79-52d652ec3e89"
+  },
+  {
+    "id": "288df055-6ee3-45b9-b4f2-8e66823c8ea6",
+    "kind": "objects",
+    "name": "ornate gothic game UI button, ",
+    "existing_metadata_references": [
+      "game/assets/pixellab_objects/ornate_gothic_game_ui_button.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_objects/ornate_gothic_game_ui_button.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/288df055-6ee3-45b9-b4f2-8e66823c8ea6"
+  },
+  {
+    "id": "d3d2ca44-4d6f-4727-86fa-986d49c320e1",
+    "kind": "objects",
+    "name": "ornate gothic UI panel frame, ",
+    "existing_metadata_references": [
+      "game/assets/pixellab_objects/ornate_gothic_ui_panel_frame.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_objects/ornate_gothic_ui_panel_frame.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/d3d2ca44-4d6f-4727-86fa-986d49c320e1"
+  },
+  {
+    "id": "342e94c0-c438-4c31-b3c7-651b6b9fc970",
+    "kind": "objects",
+    "name": "wooden dining table with two c",
+    "existing_metadata_references": [
+      "game/assets/pixellab_objects/wooden_dining_table_with_two_c.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_objects/wooden_dining_table_with_two_c.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/objects/342e94c0-c438-4c31-b3c7-651b6b9fc970"
+  },
+  {
+    "id": "ad85d54a-0e5e-4daf-9f4d-81ad96836208",
+    "kind": "tilesets",
+    "name": "warped dark haunted wood plank floor, gothic manor \u2192 dark gothic manor wall with peeling crimson wallpaper",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/00_warped_dark_haunte_to_dark_gothic_manor/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/ad85d54a-0e5e-4daf-9f4d-81ad96836208"
+  },
+  {
+    "id": "d8af1a07-f246-47eb-b9c3-18d590d944d2",
+    "kind": "tilesets",
+    "name": "dark metal grate floor with faint cyan neon glow, cyberpunk interior \u2192 dark cyberpunk metal wall with magenta neon trim",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/01_dark_metal_grate_f_to_dark_cyberpunk_met/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/d8af1a07-f246-47eb-b9c3-18d590d944d2"
+  },
+  {
+    "id": "d8da7e96-8868-4b51-be87-6574eaf82533",
+    "kind": "tilesets",
+    "name": "clean white and teal checkered clinic tile floor \u2192 clean white clinic wall with teal trim",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/02_clean_white_and_te_to_clean_white_clinic/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/d8da7e96-8868-4b51-be87-6574eaf82533"
+  },
+  {
+    "id": "fb307276-90c0-413e-8f73-186a0a29efe2",
+    "kind": "tilesets",
+    "name": "weathered barn wood plank floor \u2192 weathered barn wood wall with support beams",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/03_weathered_barn_woo_to_weathered_barn_woo/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/fb307276-90c0-413e-8f73-186a0a29efe2"
+  },
+  {
+    "id": "63065992-49ef-4135-942b-59add116b842",
+    "kind": "tilesets",
+    "name": "tilled dark earth soil floor, greenhouse ground \u2192 weathered wooden plank barn wall",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/04_tilled_dark_earth_to_weathered_wooden_p/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/63065992-49ef-4135-942b-59add116b842"
+  },
+  {
+    "id": "a1c9e5ec-57d4-4d53-b273-d0bdffbaec39",
+    "kind": "tilesets",
+    "name": "grey flagstone floor, interior stone tiles \u2192 grey stone brick wall, castle interior",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/05_grey_flagstone_flo_to_grey_stone_brick_w/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/a1c9e5ec-57d4-4d53-b273-d0bdffbaec39"
+  },
+  {
+    "id": "5872345e-5603-436f-be43-b4612da272a2",
+    "kind": "tilesets",
+    "name": "warped dark haunted wood plank floor, gothic manor \u2192 tattered moth-eaten crimson rug",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/06_warped_dark_haunte_to_tattered_moth_eate/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/5872345e-5603-436f-be43-b4612da272a2"
+  },
+  {
+    "id": "70f6f9b3-5474-44f6-8fa5-0c10b1c5af35",
+    "kind": "tilesets",
+    "name": "dark metal grate floor with faint cyan neon glow, cyberpunk interior \u2192 glowing magenta neon light panel",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/07_dark_metal_grate_f_to_glowing_magenta_ne/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/70f6f9b3-5474-44f6-8fa5-0c10b1c5af35"
+  },
+  {
+    "id": "8367804e-2621-4a8f-8808-e57d51203ddc",
+    "kind": "tilesets",
+    "name": "clean white and teal checkered clinic tile floor \u2192 soft examination floor mat",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/08_clean_white_and_te_to_soft_examination_f/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/8367804e-2621-4a8f-8808-e57d51203ddc"
+  },
+  {
+    "id": "866ffd40-4eb1-4be5-ab31-517aaa095e63",
+    "kind": "tilesets",
+    "name": "weathered barn wood plank floor \u2192 piled golden hay",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/09_weathered_barn_woo_to_piled_golden_hay/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/866ffd40-4eb1-4be5-ab31-517aaa095e63"
+  },
+  {
+    "id": "cdda24b5-2144-45d3-9227-73c2e491ad5c",
+    "kind": "tilesets",
+    "name": "tilled dark earth soil floor, greenhouse ground \u2192 scattered straw bedding",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/10_tilled_dark_earth_to_scattered_straw_be/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/cdda24b5-2144-45d3-9227-73c2e491ad5c"
+  },
+  {
+    "id": "b1615072-4d8e-49bf-add3-9542f039d2f0",
+    "kind": "tilesets",
+    "name": "grey flagstone floor, interior stone tiles \u2192 mossy cracked stone slab",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/11_grey_flagstone_flo_to_mossy_cracked_ston/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/b1615072-4d8e-49bf-add3-9542f039d2f0"
+  },
+  {
+    "id": "402c8043-d53f-4b7d-81a1-8d344e3e2e07",
+    "kind": "tilesets",
+    "name": "warm wooden plank floor, cozy interior room \u2192 dark timber interior wall, log cabin wall",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/12_warm_wooden_plank_to_dark_timber_interi/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/402c8043-d53f-4b7d-81a1-8d344e3e2e07"
+  },
+  {
+    "id": "b846c31a-0227-450c-aa4c-2e2021e7c8f7",
+    "kind": "tilesets",
+    "name": "warm wooden plank floor, cozy interior room \u2192 soft patterned area rug",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/13_warm_wooden_plank_to_soft_patterned_are/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/b846c31a-0227-450c-aa4c-2e2021e7c8f7"
+  },
+  {
+    "id": "13443636-b2ce-431f-bcad-558889cc00b2",
+    "kind": "tilesets",
+    "name": "pale grey bone-dust ash ground \u2192 still pale misty grey water",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/14_pale_grey_bone_dus_to_still_pale_misty_g/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/13443636-b2ce-431f-bcad-558889cc00b2"
+  },
+  {
+    "id": "5f94a376-f12a-4cda-a634-6a72f725be33",
+    "kind": "tilesets",
+    "name": "charred black volcanic ash ground with faint glowing ember cracks \u2192 molten glowing orange lava",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/15_charred_black_volc_to_molten_glowing_ora/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/5f94a376-f12a-4cda-a634-6a72f725be33"
+  },
+  {
+    "id": "0d546abe-c14f-46d0-9e0d-968dd46cee0d",
+    "kind": "tilesets",
+    "name": "dry dead brown grass and dark soil ground \u2192 dark stagnant murky water",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/16_dry_dead_brown_gra_to_dark_stagnant_murk/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/0d546abe-c14f-46d0-9e0d-968dd46cee0d"
+  },
+  {
+    "id": "7290f58b-7b15-4b81-84c4-155ccf33047c",
+    "kind": "tilesets",
+    "name": "wet mucky dark green mossy swamp ground \u2192 murky green swamp water",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/17_wet_mucky_dark_gre_to_murky_green_swamp/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/7290f58b-7b15-4b81-84c4-155ccf33047c"
+  },
+  {
+    "id": "a648c08d-1ad8-41a8-bbbf-f65860b8293d",
+    "kind": "tilesets",
+    "name": "cracked dry rusty orange dirt ground \u2192 murky teal-grey industrial water",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/18_cracked_dry_rusty_to_murky_teal_grey_in/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/a648c08d-1ad8-41a8-bbbf-f65860b8293d"
+  },
+  {
+    "id": "e72062ed-edf3-40df-8bdf-3cefd6b4e60c",
+    "kind": "tilesets",
+    "name": "dark grey concrete city pavement ground \u2192 dark water with neon cyan reflections",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/19_dark_grey_concrete_to_dark_water_with_ne/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/e72062ed-edf3-40df-8bdf-3cefd6b4e60c"
+  },
+  {
+    "id": "3a41cdc1-13bc-4848-985f-16171b286a4b",
+    "kind": "tilesets",
+    "name": "lush green grass meadow ground \u2192 calm clear blue pond water",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/20_lush_green_grass_m_to_calm_clear_blue_po/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/3a41cdc1-13bc-4848-985f-16171b286a4b"
+  },
+  {
+    "id": "6dd25724-34ae-4d8d-a365-fb8766b1ad5e",
+    "kind": "tilesets",
+    "name": "lush green grass meadow ground \u2192 warm tan dirt path",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/21_lush_green_grass_m_to_warm_tan_dirt_path/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/6dd25724-34ae-4d8d-a365-fb8766b1ad5e"
+  },
+  {
+    "id": "17bee7c5-8f67-49e8-8784-d499514f442b",
+    "kind": "tilesets",
+    "name": "lush green grass meadow ground \u2192 warm tan dirt path",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/22_lush_green_grass_m_to_warm_tan_dirt_path/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/17bee7c5-8f67-49e8-8784-d499514f442b"
+  },
+  {
+    "id": "959bd0dd-2943-4465-bb79-01b7aaac76f4",
+    "kind": "tilesets",
+    "name": "lush green grass meadow ground \u2192 calm clear blue pond water",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/23_lush_green_grass_m_to_calm_clear_blue_po/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/959bd0dd-2943-4465-bb79-01b7aaac76f4"
+  },
+  {
+    "id": "8d7aac59-84ac-4163-a748-a2124a898e91",
+    "kind": "tilesets",
+    "name": "lush green grass meadow ground \u2192 clear blue water",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/24_lush_green_grass_m_to_clear_blue_water/tileset.json"
+    ],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tilesets/8d7aac59-84ac-4163-a748-a2124a898e91"
+  },
+  {
+    "id": "3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b",
+    "kind": "tiles-pro",
+    "name": "1). wooden plank interior wall straight section 2)",
+    "existing_metadata_references": [],
+    "identical_existing_images": [],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/tiles-pro/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b"
+  },
+  {
+    "id": "63065992-49ef-4135-942b-59add116b842",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/04_tilled_dark_earth_to_weathered_wooden_p/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/04_tilled_dark_earth_to_weathered_wooden_p/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/63065992-49ef-4135-942b-59add116b842"
+  },
+  {
+    "id": "cdda24b5-2144-45d3-9227-73c2e491ad5c",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/10_tilled_dark_earth_to_scattered_straw_be/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/10_tilled_dark_earth_to_scattered_straw_be/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/cdda24b5-2144-45d3-9227-73c2e491ad5c"
+  },
+  {
+    "id": "13443636-b2ce-431f-bcad-558889cc00b2",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/14_pale_grey_bone_dus_to_still_pale_misty_g/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/14_pale_grey_bone_dus_to_still_pale_misty_g/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/13443636-b2ce-431f-bcad-558889cc00b2"
+  },
+  {
+    "id": "5f94a376-f12a-4cda-a634-6a72f725be33",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/15_charred_black_volc_to_molten_glowing_ora/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/15_charred_black_volc_to_molten_glowing_ora/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/5f94a376-f12a-4cda-a634-6a72f725be33"
+  },
+  {
+    "id": "0d546abe-c14f-46d0-9e0d-968dd46cee0d",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/16_dry_dead_brown_gra_to_dark_stagnant_murk/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/16_dry_dead_brown_gra_to_dark_stagnant_murk/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/0d546abe-c14f-46d0-9e0d-968dd46cee0d"
+  },
+  {
+    "id": "7290f58b-7b15-4b81-84c4-155ccf33047c",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/17_wet_mucky_dark_gre_to_murky_green_swamp/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/17_wet_mucky_dark_gre_to_murky_green_swamp/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/7290f58b-7b15-4b81-84c4-155ccf33047c"
+  },
+  {
+    "id": "a648c08d-1ad8-41a8-bbbf-f65860b8293d",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/18_cracked_dry_rusty_to_murky_teal_grey_in/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/18_cracked_dry_rusty_to_murky_teal_grey_in/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/a648c08d-1ad8-41a8-bbbf-f65860b8293d"
+  },
+  {
+    "id": "e72062ed-edf3-40df-8bdf-3cefd6b4e60c",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/19_dark_grey_concrete_to_dark_water_with_ne/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/19_dark_grey_concrete_to_dark_water_with_ne/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/e72062ed-edf3-40df-8bdf-3cefd6b4e60c"
+  },
+  {
+    "id": "3a41cdc1-13bc-4848-985f-16171b286a4b",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/20_lush_green_grass_m_to_calm_clear_blue_po/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/20_lush_green_grass_m_to_calm_clear_blue_po/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/3a41cdc1-13bc-4848-985f-16171b286a4b"
+  },
+  {
+    "id": "6dd25724-34ae-4d8d-a365-fb8766b1ad5e",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/21_lush_green_grass_m_to_warm_tan_dirt_path/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/21_lush_green_grass_m_to_warm_tan_dirt_path/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/6dd25724-34ae-4d8d-a365-fb8766b1ad5e"
+  },
+  {
+    "id": "17bee7c5-8f67-49e8-8784-d499514f442b",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/22_lush_green_grass_m_to_warm_tan_dirt_path/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/22_lush_green_grass_m_to_warm_tan_dirt_path/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/17bee7c5-8f67-49e8-8784-d499514f442b"
+  },
+  {
+    "id": "959bd0dd-2943-4465-bb79-01b7aaac76f4",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/23_lush_green_grass_m_to_calm_clear_blue_po/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/23_lush_green_grass_m_to_calm_clear_blue_po/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/959bd0dd-2943-4465-bb79-01b7aaac76f4"
+  },
+  {
+    "id": "8d7aac59-84ac-4163-a748-a2124a898e91",
+    "kind": "sidescroller-tilesets",
+    "name": "",
+    "existing_metadata_references": [
+      "game/assets/pixellab_tilesets/24_lush_green_grass_m_to_clear_blue_water/tileset.json"
+    ],
+    "identical_existing_images": [
+      "game/assets/pixellab_tilesets/24_lush_green_grass_m_to_clear_blue_water/tilesheet.png"
+    ],
+    "archive": "ArtSource/PixelLabArchive/2026-09-26/sidescroller-tilesets/8d7aac59-84ac-4163-a748-a2124a898e91"
+  }
+]

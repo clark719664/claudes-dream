@@ -1,0 +1,20 @@
+{
+  "id": "d7363226-949a-45cb-bec7-45c31ae7d9bf",
+  "name": "kid_milo",
+  "state_name": "kid_milo",
+  "prompt": "Milo, a cheerful little kid in a striped shirt and shorts, messy hair, cute, cozy stardew-style RPG child, full body",
+  "size": {
+    "width": 72,
+    "height": 72
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T20:23:41.132464+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d7363226-949a-45cb-bec7-45c31ae7d9bf/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "b0c9ae16-26a8-4bb2-8ce8-35a9f428cfd8"
+}

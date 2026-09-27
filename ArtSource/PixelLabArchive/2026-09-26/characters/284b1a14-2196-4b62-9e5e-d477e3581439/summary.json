@@ -1,0 +1,20 @@
+{
+  "id": "284b1a14-2196-4b62-9e5e-d477e3581439",
+  "name": "goat",
+  "state_name": "goat",
+  "prompt": "small white nanny goat with back-curved horns and a short beard, cloven hooves, friendly farm livestock",
+  "size": {
+    "width": 68,
+    "height": 68
+  },
+  "directions": 8,
+  "created_at": "2026-06-17T00:07:01.825541+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "horse",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/284b1a14-2196-4b62-9e5e-d477e3581439/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "87e934be-b705-4035-aeef-f9c1e6223adc"
+}

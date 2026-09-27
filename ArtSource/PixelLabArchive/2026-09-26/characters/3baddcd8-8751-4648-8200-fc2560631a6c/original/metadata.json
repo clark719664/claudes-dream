@@ -1,0 +1,103 @@
+{
+  "group_id": "0e21d598-e366-486f-bee6-f4d0bcfbc182",
+  "states": [
+    {
+      "character": {
+        "id": "3baddcd8-8751-4648-8200-fc2560631a6c",
+        "name": "barkeep_cass",
+        "prompt": "Cass, friendly barkeep in a vest and apron wiping a glass, rolled sleeves, cozy stardew-style RPG villager, full body",
+        "size": {
+          "width": 88,
+          "height": 88
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T17:13:29.606609+00:00"
+      },
+      "folder": "barkeep_cass",
+      "frames": {
+        "rotations": {
+          "south": "barkeep_cass/rotations/south.png",
+          "south-east": "barkeep_cass/rotations/south-east.png",
+          "east": "barkeep_cass/rotations/east.png",
+          "north-east": "barkeep_cass/rotations/north-east.png",
+          "north": "barkeep_cass/rotations/north.png",
+          "north-west": "barkeep_cass/rotations/north-west.png",
+          "west": "barkeep_cass/rotations/west.png",
+          "south-west": "barkeep_cass/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "south": [
+              "barkeep_cass/animations/walking/south/frame_000.png",
+              "barkeep_cass/animations/walking/south/frame_001.png",
+              "barkeep_cass/animations/walking/south/frame_002.png",
+              "barkeep_cass/animations/walking/south/frame_003.png",
+              "barkeep_cass/animations/walking/south/frame_004.png",
+              "barkeep_cass/animations/walking/south/frame_005.png"
+            ],
+            "east": [
+              "barkeep_cass/animations/walking/east/frame_000.png",
+              "barkeep_cass/animations/walking/east/frame_001.png",
+              "barkeep_cass/animations/walking/east/frame_002.png",
+              "barkeep_cass/animations/walking/east/frame_003.png",
+              "barkeep_cass/animations/walking/east/frame_004.png",
+              "barkeep_cass/animations/walking/east/frame_005.png"
+            ],
+            "north-west": [
+              "barkeep_cass/animations/walking/north-west/frame_000.png",
+              "barkeep_cass/animations/walking/north-west/frame_001.png",
+              "barkeep_cass/animations/walking/north-west/frame_002.png",
+              "barkeep_cass/animations/walking/north-west/frame_003.png",
+              "barkeep_cass/animations/walking/north-west/frame_004.png",
+              "barkeep_cass/animations/walking/north-west/frame_005.png"
+            ],
+            "north-east": [
+              "barkeep_cass/animations/walking/north-east/frame_000.png",
+              "barkeep_cass/animations/walking/north-east/frame_001.png",
+              "barkeep_cass/animations/walking/north-east/frame_002.png",
+              "barkeep_cass/animations/walking/north-east/frame_003.png",
+              "barkeep_cass/animations/walking/north-east/frame_004.png",
+              "barkeep_cass/animations/walking/north-east/frame_005.png"
+            ],
+            "south-west": [
+              "barkeep_cass/animations/walking/south-west/frame_000.png",
+              "barkeep_cass/animations/walking/south-west/frame_001.png",
+              "barkeep_cass/animations/walking/south-west/frame_002.png",
+              "barkeep_cass/animations/walking/south-west/frame_003.png",
+              "barkeep_cass/animations/walking/south-west/frame_004.png",
+              "barkeep_cass/animations/walking/south-west/frame_005.png"
+            ],
+            "west": [
+              "barkeep_cass/animations/walking/west/frame_000.png",
+              "barkeep_cass/animations/walking/west/frame_001.png",
+              "barkeep_cass/animations/walking/west/frame_002.png",
+              "barkeep_cass/animations/walking/west/frame_003.png",
+              "barkeep_cass/animations/walking/west/frame_004.png",
+              "barkeep_cass/animations/walking/west/frame_005.png"
+            ],
+            "south-east": [
+              "barkeep_cass/animations/walking/south-east/frame_000.png",
+              "barkeep_cass/animations/walking/south-east/frame_001.png",
+              "barkeep_cass/animations/walking/south-east/frame_002.png",
+              "barkeep_cass/animations/walking/south-east/frame_003.png",
+              "barkeep_cass/animations/walking/south-east/frame_004.png",
+              "barkeep_cass/animations/walking/south-east/frame_005.png"
+            ],
+            "north": [
+              "barkeep_cass/animations/walking/north/frame_000.png",
+              "barkeep_cass/animations/walking/north/frame_001.png",
+              "barkeep_cass/animations/walking/north/frame_002.png",
+              "barkeep_cass/animations/walking/north/frame_003.png",
+              "barkeep_cass/animations/walking/north/frame_004.png",
+              "barkeep_cass/animations/walking/north/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:50:01.701669"
+}

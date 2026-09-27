@@ -1,0 +1,103 @@
+{
+  "group_id": "8eb43bde-db08-4a04-bcd7-d1098666e331",
+  "states": [
+    {
+      "character": {
+        "id": "305af951-a0f2-4ca1-87c5-bf18fa619a26",
+        "name": "hacker_rem",
+        "prompt": "Rem, a hacker in a dark hoodie holding a glowing tablet, neon accents and headset, cyberpunk, cozy stardew-style RPG villager, full body",
+        "size": {
+          "width": 88,
+          "height": 88
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T17:21:15.109597+00:00"
+      },
+      "folder": "hacker_rem",
+      "frames": {
+        "rotations": {
+          "south": "hacker_rem/rotations/south.png",
+          "south-east": "hacker_rem/rotations/south-east.png",
+          "east": "hacker_rem/rotations/east.png",
+          "north-east": "hacker_rem/rotations/north-east.png",
+          "north": "hacker_rem/rotations/north.png",
+          "north-west": "hacker_rem/rotations/north-west.png",
+          "west": "hacker_rem/rotations/west.png",
+          "south-west": "hacker_rem/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-east": [
+              "hacker_rem/animations/walking/north-east/frame_000.png",
+              "hacker_rem/animations/walking/north-east/frame_001.png",
+              "hacker_rem/animations/walking/north-east/frame_002.png",
+              "hacker_rem/animations/walking/north-east/frame_003.png",
+              "hacker_rem/animations/walking/north-east/frame_004.png",
+              "hacker_rem/animations/walking/north-east/frame_005.png"
+            ],
+            "south-west": [
+              "hacker_rem/animations/walking/south-west/frame_000.png",
+              "hacker_rem/animations/walking/south-west/frame_001.png",
+              "hacker_rem/animations/walking/south-west/frame_002.png",
+              "hacker_rem/animations/walking/south-west/frame_003.png",
+              "hacker_rem/animations/walking/south-west/frame_004.png",
+              "hacker_rem/animations/walking/south-west/frame_005.png"
+            ],
+            "north": [
+              "hacker_rem/animations/walking/north/frame_000.png",
+              "hacker_rem/animations/walking/north/frame_001.png",
+              "hacker_rem/animations/walking/north/frame_002.png",
+              "hacker_rem/animations/walking/north/frame_003.png",
+              "hacker_rem/animations/walking/north/frame_004.png",
+              "hacker_rem/animations/walking/north/frame_005.png"
+            ],
+            "east": [
+              "hacker_rem/animations/walking/east/frame_000.png",
+              "hacker_rem/animations/walking/east/frame_001.png",
+              "hacker_rem/animations/walking/east/frame_002.png",
+              "hacker_rem/animations/walking/east/frame_003.png",
+              "hacker_rem/animations/walking/east/frame_004.png",
+              "hacker_rem/animations/walking/east/frame_005.png"
+            ],
+            "north-west": [
+              "hacker_rem/animations/walking/north-west/frame_000.png",
+              "hacker_rem/animations/walking/north-west/frame_001.png",
+              "hacker_rem/animations/walking/north-west/frame_002.png",
+              "hacker_rem/animations/walking/north-west/frame_003.png",
+              "hacker_rem/animations/walking/north-west/frame_004.png",
+              "hacker_rem/animations/walking/north-west/frame_005.png"
+            ],
+            "west": [
+              "hacker_rem/animations/walking/west/frame_000.png",
+              "hacker_rem/animations/walking/west/frame_001.png",
+              "hacker_rem/animations/walking/west/frame_002.png",
+              "hacker_rem/animations/walking/west/frame_003.png",
+              "hacker_rem/animations/walking/west/frame_004.png",
+              "hacker_rem/animations/walking/west/frame_005.png"
+            ],
+            "south": [
+              "hacker_rem/animations/walking/south/frame_000.png",
+              "hacker_rem/animations/walking/south/frame_001.png",
+              "hacker_rem/animations/walking/south/frame_002.png",
+              "hacker_rem/animations/walking/south/frame_003.png",
+              "hacker_rem/animations/walking/south/frame_004.png",
+              "hacker_rem/animations/walking/south/frame_005.png"
+            ],
+            "south-east": [
+              "hacker_rem/animations/walking/south-east/frame_000.png",
+              "hacker_rem/animations/walking/south-east/frame_001.png",
+              "hacker_rem/animations/walking/south-east/frame_002.png",
+              "hacker_rem/animations/walking/south-east/frame_003.png",
+              "hacker_rem/animations/walking/south-east/frame_004.png",
+              "hacker_rem/animations/walking/south-east/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:59.003906"
+}

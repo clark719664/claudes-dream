@@ -1,0 +1,103 @@
+{
+  "group_id": "ecd1b4c2-8daa-4d0d-90cd-27722493d892",
+  "states": [
+    {
+      "character": {
+        "id": "089a7a56-3cc2-488b-bdb1-44b440622e94",
+        "name": "grunt_f",
+        "prompt": "female Covenant grunt enforcer in a dark hooded uniform with a glowing sigil, menacing villain, gothic-punk, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T21:40:27.793036+00:00"
+      },
+      "folder": "grunt_f",
+      "frames": {
+        "rotations": {
+          "south": "grunt_f/rotations/south.png",
+          "south-east": "grunt_f/rotations/south-east.png",
+          "east": "grunt_f/rotations/east.png",
+          "north-east": "grunt_f/rotations/north-east.png",
+          "north": "grunt_f/rotations/north.png",
+          "north-west": "grunt_f/rotations/north-west.png",
+          "west": "grunt_f/rotations/west.png",
+          "south-west": "grunt_f/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "south-west": [
+              "grunt_f/animations/walking/south-west/frame_000.png",
+              "grunt_f/animations/walking/south-west/frame_001.png",
+              "grunt_f/animations/walking/south-west/frame_002.png",
+              "grunt_f/animations/walking/south-west/frame_003.png",
+              "grunt_f/animations/walking/south-west/frame_004.png",
+              "grunt_f/animations/walking/south-west/frame_005.png"
+            ],
+            "west": [
+              "grunt_f/animations/walking/west/frame_000.png",
+              "grunt_f/animations/walking/west/frame_001.png",
+              "grunt_f/animations/walking/west/frame_002.png",
+              "grunt_f/animations/walking/west/frame_003.png",
+              "grunt_f/animations/walking/west/frame_004.png",
+              "grunt_f/animations/walking/west/frame_005.png"
+            ],
+            "north-west": [
+              "grunt_f/animations/walking/north-west/frame_000.png",
+              "grunt_f/animations/walking/north-west/frame_001.png",
+              "grunt_f/animations/walking/north-west/frame_002.png",
+              "grunt_f/animations/walking/north-west/frame_003.png",
+              "grunt_f/animations/walking/north-west/frame_004.png",
+              "grunt_f/animations/walking/north-west/frame_005.png"
+            ],
+            "east": [
+              "grunt_f/animations/walking/east/frame_000.png",
+              "grunt_f/animations/walking/east/frame_001.png",
+              "grunt_f/animations/walking/east/frame_002.png",
+              "grunt_f/animations/walking/east/frame_003.png",
+              "grunt_f/animations/walking/east/frame_004.png",
+              "grunt_f/animations/walking/east/frame_005.png"
+            ],
+            "south-east": [
+              "grunt_f/animations/walking/south-east/frame_000.png",
+              "grunt_f/animations/walking/south-east/frame_001.png",
+              "grunt_f/animations/walking/south-east/frame_002.png",
+              "grunt_f/animations/walking/south-east/frame_003.png",
+              "grunt_f/animations/walking/south-east/frame_004.png",
+              "grunt_f/animations/walking/south-east/frame_005.png"
+            ],
+            "south": [
+              "grunt_f/animations/walking/south/frame_000.png",
+              "grunt_f/animations/walking/south/frame_001.png",
+              "grunt_f/animations/walking/south/frame_002.png",
+              "grunt_f/animations/walking/south/frame_003.png",
+              "grunt_f/animations/walking/south/frame_004.png",
+              "grunt_f/animations/walking/south/frame_005.png"
+            ],
+            "north-east": [
+              "grunt_f/animations/walking/north-east/frame_000.png",
+              "grunt_f/animations/walking/north-east/frame_001.png",
+              "grunt_f/animations/walking/north-east/frame_002.png",
+              "grunt_f/animations/walking/north-east/frame_003.png",
+              "grunt_f/animations/walking/north-east/frame_004.png",
+              "grunt_f/animations/walking/north-east/frame_005.png"
+            ],
+            "north": [
+              "grunt_f/animations/walking/north/frame_000.png",
+              "grunt_f/animations/walking/north/frame_001.png",
+              "grunt_f/animations/walking/north/frame_002.png",
+              "grunt_f/animations/walking/north/frame_003.png",
+              "grunt_f/animations/walking/north/frame_004.png",
+              "grunt_f/animations/walking/north/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:26.605885"
+}

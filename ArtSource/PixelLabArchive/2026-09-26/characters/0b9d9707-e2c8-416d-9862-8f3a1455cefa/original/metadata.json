@@ -1,0 +1,103 @@
+{
+  "group_id": "318f3337-829c-4f93-a199-20c454d8d1fa",
+  "states": [
+    {
+      "character": {
+        "id": "0b9d9707-e2c8-416d-9862-8f3a1455cefa",
+        "name": "busker_rio",
+        "prompt": "Rio, a cheerful street busker with a guitar on the back and a feathered hat, cozy stardew-style RPG villager, full body",
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T21:03:44.152100+00:00"
+      },
+      "folder": "busker_rio",
+      "frames": {
+        "rotations": {
+          "south": "busker_rio/rotations/south.png",
+          "south-east": "busker_rio/rotations/south-east.png",
+          "east": "busker_rio/rotations/east.png",
+          "north-east": "busker_rio/rotations/north-east.png",
+          "north": "busker_rio/rotations/north.png",
+          "north-west": "busker_rio/rotations/north-west.png",
+          "west": "busker_rio/rotations/west.png",
+          "south-west": "busker_rio/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "east": [
+              "busker_rio/animations/walking/east/frame_000.png",
+              "busker_rio/animations/walking/east/frame_001.png",
+              "busker_rio/animations/walking/east/frame_002.png",
+              "busker_rio/animations/walking/east/frame_003.png",
+              "busker_rio/animations/walking/east/frame_004.png",
+              "busker_rio/animations/walking/east/frame_005.png"
+            ],
+            "south-east": [
+              "busker_rio/animations/walking/south-east/frame_000.png",
+              "busker_rio/animations/walking/south-east/frame_001.png",
+              "busker_rio/animations/walking/south-east/frame_002.png",
+              "busker_rio/animations/walking/south-east/frame_003.png",
+              "busker_rio/animations/walking/south-east/frame_004.png",
+              "busker_rio/animations/walking/south-east/frame_005.png"
+            ],
+            "north-east": [
+              "busker_rio/animations/walking/north-east/frame_000.png",
+              "busker_rio/animations/walking/north-east/frame_001.png",
+              "busker_rio/animations/walking/north-east/frame_002.png",
+              "busker_rio/animations/walking/north-east/frame_003.png",
+              "busker_rio/animations/walking/north-east/frame_004.png",
+              "busker_rio/animations/walking/north-east/frame_005.png"
+            ],
+            "south-west": [
+              "busker_rio/animations/walking/south-west/frame_000.png",
+              "busker_rio/animations/walking/south-west/frame_001.png",
+              "busker_rio/animations/walking/south-west/frame_002.png",
+              "busker_rio/animations/walking/south-west/frame_003.png",
+              "busker_rio/animations/walking/south-west/frame_004.png",
+              "busker_rio/animations/walking/south-west/frame_005.png"
+            ],
+            "north": [
+              "busker_rio/animations/walking/north/frame_000.png",
+              "busker_rio/animations/walking/north/frame_001.png",
+              "busker_rio/animations/walking/north/frame_002.png",
+              "busker_rio/animations/walking/north/frame_003.png",
+              "busker_rio/animations/walking/north/frame_004.png",
+              "busker_rio/animations/walking/north/frame_005.png"
+            ],
+            "north-west": [
+              "busker_rio/animations/walking/north-west/frame_000.png",
+              "busker_rio/animations/walking/north-west/frame_001.png",
+              "busker_rio/animations/walking/north-west/frame_002.png",
+              "busker_rio/animations/walking/north-west/frame_003.png",
+              "busker_rio/animations/walking/north-west/frame_004.png",
+              "busker_rio/animations/walking/north-west/frame_005.png"
+            ],
+            "south": [
+              "busker_rio/animations/walking/south/frame_000.png",
+              "busker_rio/animations/walking/south/frame_001.png",
+              "busker_rio/animations/walking/south/frame_002.png",
+              "busker_rio/animations/walking/south/frame_003.png",
+              "busker_rio/animations/walking/south/frame_004.png",
+              "busker_rio/animations/walking/south/frame_005.png"
+            ],
+            "west": [
+              "busker_rio/animations/walking/west/frame_000.png",
+              "busker_rio/animations/walking/west/frame_001.png",
+              "busker_rio/animations/walking/west/frame_002.png",
+              "busker_rio/animations/walking/west/frame_003.png",
+              "busker_rio/animations/walking/west/frame_004.png",
+              "busker_rio/animations/walking/west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:38.943105"
+}

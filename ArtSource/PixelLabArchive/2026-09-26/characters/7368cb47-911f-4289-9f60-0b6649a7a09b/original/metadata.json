@@ -1,0 +1,103 @@
+{
+  "group_id": "ca756490-eb76-448a-84ea-0e79c37216a6",
+  "states": [
+    {
+      "character": {
+        "id": "7368cb47-911f-4289-9f60-0b6649a7a09b",
+        "name": "diver_m",
+        "prompt": "male Covenant diver in a dark sleek wetsuit with a rebreather and void-tech goggles, menacing aquatic villain, gothic-punk, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T22:15:14.989315+00:00"
+      },
+      "folder": "diver_m",
+      "frames": {
+        "rotations": {
+          "south": "diver_m/rotations/south.png",
+          "south-east": "diver_m/rotations/south-east.png",
+          "east": "diver_m/rotations/east.png",
+          "north-east": "diver_m/rotations/north-east.png",
+          "north": "diver_m/rotations/north.png",
+          "north-west": "diver_m/rotations/north-west.png",
+          "west": "diver_m/rotations/west.png",
+          "south-west": "diver_m/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "south-west": [
+              "diver_m/animations/walking/south-west/frame_000.png",
+              "diver_m/animations/walking/south-west/frame_001.png",
+              "diver_m/animations/walking/south-west/frame_002.png",
+              "diver_m/animations/walking/south-west/frame_003.png",
+              "diver_m/animations/walking/south-west/frame_004.png",
+              "diver_m/animations/walking/south-west/frame_005.png"
+            ],
+            "west": [
+              "diver_m/animations/walking/west/frame_000.png",
+              "diver_m/animations/walking/west/frame_001.png",
+              "diver_m/animations/walking/west/frame_002.png",
+              "diver_m/animations/walking/west/frame_003.png",
+              "diver_m/animations/walking/west/frame_004.png",
+              "diver_m/animations/walking/west/frame_005.png"
+            ],
+            "south-east": [
+              "diver_m/animations/walking/south-east/frame_000.png",
+              "diver_m/animations/walking/south-east/frame_001.png",
+              "diver_m/animations/walking/south-east/frame_002.png",
+              "diver_m/animations/walking/south-east/frame_003.png",
+              "diver_m/animations/walking/south-east/frame_004.png",
+              "diver_m/animations/walking/south-east/frame_005.png"
+            ],
+            "north-east": [
+              "diver_m/animations/walking/north-east/frame_000.png",
+              "diver_m/animations/walking/north-east/frame_001.png",
+              "diver_m/animations/walking/north-east/frame_002.png",
+              "diver_m/animations/walking/north-east/frame_003.png",
+              "diver_m/animations/walking/north-east/frame_004.png",
+              "diver_m/animations/walking/north-east/frame_005.png"
+            ],
+            "east": [
+              "diver_m/animations/walking/east/frame_000.png",
+              "diver_m/animations/walking/east/frame_001.png",
+              "diver_m/animations/walking/east/frame_002.png",
+              "diver_m/animations/walking/east/frame_003.png",
+              "diver_m/animations/walking/east/frame_004.png",
+              "diver_m/animations/walking/east/frame_005.png"
+            ],
+            "north": [
+              "diver_m/animations/walking/north/frame_000.png",
+              "diver_m/animations/walking/north/frame_001.png",
+              "diver_m/animations/walking/north/frame_002.png",
+              "diver_m/animations/walking/north/frame_003.png",
+              "diver_m/animations/walking/north/frame_004.png",
+              "diver_m/animations/walking/north/frame_005.png"
+            ],
+            "north-west": [
+              "diver_m/animations/walking/north-west/frame_000.png",
+              "diver_m/animations/walking/north-west/frame_001.png",
+              "diver_m/animations/walking/north-west/frame_002.png",
+              "diver_m/animations/walking/north-west/frame_003.png",
+              "diver_m/animations/walking/north-west/frame_004.png",
+              "diver_m/animations/walking/north-west/frame_005.png"
+            ],
+            "south": [
+              "diver_m/animations/walking/south/frame_000.png",
+              "diver_m/animations/walking/south/frame_001.png",
+              "diver_m/animations/walking/south/frame_002.png",
+              "diver_m/animations/walking/south/frame_003.png",
+              "diver_m/animations/walking/south/frame_004.png",
+              "diver_m/animations/walking/south/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:04.025614"
+}

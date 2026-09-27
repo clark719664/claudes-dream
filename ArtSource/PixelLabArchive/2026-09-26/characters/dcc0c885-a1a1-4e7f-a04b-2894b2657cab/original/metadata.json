@@ -1,0 +1,103 @@
+{
+  "group_id": "c1443984-f4f2-44b4-9854-1716e6cbfeae",
+  "states": [
+    {
+      "character": {
+        "id": "dcc0c885-a1a1-4e7f-a04b-2894b2657cab",
+        "name": "nyx",
+        "prompt": "Nyx, a mysterious void researcher in a dark hooded lab coat with faint glowing purple eyes, cozy stardew-style RPG villager, gothic, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T20:34:01.280546+00:00"
+      },
+      "folder": "nyx",
+      "frames": {
+        "rotations": {
+          "south": "nyx/rotations/south.png",
+          "south-east": "nyx/rotations/south-east.png",
+          "east": "nyx/rotations/east.png",
+          "north-east": "nyx/rotations/north-east.png",
+          "north": "nyx/rotations/north.png",
+          "north-west": "nyx/rotations/north-west.png",
+          "west": "nyx/rotations/west.png",
+          "south-west": "nyx/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "south-east": [
+              "nyx/animations/walking/south-east/frame_000.png",
+              "nyx/animations/walking/south-east/frame_001.png",
+              "nyx/animations/walking/south-east/frame_002.png",
+              "nyx/animations/walking/south-east/frame_003.png",
+              "nyx/animations/walking/south-east/frame_004.png",
+              "nyx/animations/walking/south-east/frame_005.png"
+            ],
+            "east": [
+              "nyx/animations/walking/east/frame_000.png",
+              "nyx/animations/walking/east/frame_001.png",
+              "nyx/animations/walking/east/frame_002.png",
+              "nyx/animations/walking/east/frame_003.png",
+              "nyx/animations/walking/east/frame_004.png",
+              "nyx/animations/walking/east/frame_005.png"
+            ],
+            "west": [
+              "nyx/animations/walking/west/frame_000.png",
+              "nyx/animations/walking/west/frame_001.png",
+              "nyx/animations/walking/west/frame_002.png",
+              "nyx/animations/walking/west/frame_003.png",
+              "nyx/animations/walking/west/frame_004.png",
+              "nyx/animations/walking/west/frame_005.png"
+            ],
+            "north-west": [
+              "nyx/animations/walking/north-west/frame_000.png",
+              "nyx/animations/walking/north-west/frame_001.png",
+              "nyx/animations/walking/north-west/frame_002.png",
+              "nyx/animations/walking/north-west/frame_003.png",
+              "nyx/animations/walking/north-west/frame_004.png",
+              "nyx/animations/walking/north-west/frame_005.png"
+            ],
+            "south": [
+              "nyx/animations/walking/south/frame_000.png",
+              "nyx/animations/walking/south/frame_001.png",
+              "nyx/animations/walking/south/frame_002.png",
+              "nyx/animations/walking/south/frame_003.png",
+              "nyx/animations/walking/south/frame_004.png",
+              "nyx/animations/walking/south/frame_005.png"
+            ],
+            "south-west": [
+              "nyx/animations/walking/south-west/frame_000.png",
+              "nyx/animations/walking/south-west/frame_001.png",
+              "nyx/animations/walking/south-west/frame_002.png",
+              "nyx/animations/walking/south-west/frame_003.png",
+              "nyx/animations/walking/south-west/frame_004.png",
+              "nyx/animations/walking/south-west/frame_005.png"
+            ],
+            "north-east": [
+              "nyx/animations/walking/north-east/frame_000.png",
+              "nyx/animations/walking/north-east/frame_001.png",
+              "nyx/animations/walking/north-east/frame_002.png",
+              "nyx/animations/walking/north-east/frame_003.png",
+              "nyx/animations/walking/north-east/frame_004.png",
+              "nyx/animations/walking/north-east/frame_005.png"
+            ],
+            "north": [
+              "nyx/animations/walking/north/frame_000.png",
+              "nyx/animations/walking/north/frame_001.png",
+              "nyx/animations/walking/north/frame_002.png",
+              "nyx/animations/walking/north/frame_003.png",
+              "nyx/animations/walking/north/frame_004.png",
+              "nyx/animations/walking/north/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:53.835906"
+}

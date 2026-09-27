@@ -1,0 +1,103 @@
+{
+  "group_id": "54b7823f-72c9-47ad-96da-e82a09bcb838",
+  "states": [
+    {
+      "character": {
+        "id": "cd361140-6c68-4c4b-9772-daf7131fd141",
+        "name": "enforcer_m",
+        "prompt": "male Covenant enforcer in heavy riot armor with a shock baton and visor, imposing villain, gothic-punk, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T21:53:56.565714+00:00"
+      },
+      "folder": "enforcer_m",
+      "frames": {
+        "rotations": {
+          "south": "enforcer_m/rotations/south.png",
+          "south-east": "enforcer_m/rotations/south-east.png",
+          "east": "enforcer_m/rotations/east.png",
+          "north-east": "enforcer_m/rotations/north-east.png",
+          "north": "enforcer_m/rotations/north.png",
+          "north-west": "enforcer_m/rotations/north-west.png",
+          "west": "enforcer_m/rotations/west.png",
+          "south-west": "enforcer_m/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "south-east": [
+              "enforcer_m/animations/walking/south-east/frame_000.png",
+              "enforcer_m/animations/walking/south-east/frame_001.png",
+              "enforcer_m/animations/walking/south-east/frame_002.png",
+              "enforcer_m/animations/walking/south-east/frame_003.png",
+              "enforcer_m/animations/walking/south-east/frame_004.png",
+              "enforcer_m/animations/walking/south-east/frame_005.png"
+            ],
+            "east": [
+              "enforcer_m/animations/walking/east/frame_000.png",
+              "enforcer_m/animations/walking/east/frame_001.png",
+              "enforcer_m/animations/walking/east/frame_002.png",
+              "enforcer_m/animations/walking/east/frame_003.png",
+              "enforcer_m/animations/walking/east/frame_004.png",
+              "enforcer_m/animations/walking/east/frame_005.png"
+            ],
+            "west": [
+              "enforcer_m/animations/walking/west/frame_000.png",
+              "enforcer_m/animations/walking/west/frame_001.png",
+              "enforcer_m/animations/walking/west/frame_002.png",
+              "enforcer_m/animations/walking/west/frame_003.png",
+              "enforcer_m/animations/walking/west/frame_004.png",
+              "enforcer_m/animations/walking/west/frame_005.png"
+            ],
+            "north": [
+              "enforcer_m/animations/walking/north/frame_000.png",
+              "enforcer_m/animations/walking/north/frame_001.png",
+              "enforcer_m/animations/walking/north/frame_002.png",
+              "enforcer_m/animations/walking/north/frame_003.png",
+              "enforcer_m/animations/walking/north/frame_004.png",
+              "enforcer_m/animations/walking/north/frame_005.png"
+            ],
+            "north-east": [
+              "enforcer_m/animations/walking/north-east/frame_000.png",
+              "enforcer_m/animations/walking/north-east/frame_001.png",
+              "enforcer_m/animations/walking/north-east/frame_002.png",
+              "enforcer_m/animations/walking/north-east/frame_003.png",
+              "enforcer_m/animations/walking/north-east/frame_004.png",
+              "enforcer_m/animations/walking/north-east/frame_005.png"
+            ],
+            "north-west": [
+              "enforcer_m/animations/walking/north-west/frame_000.png",
+              "enforcer_m/animations/walking/north-west/frame_001.png",
+              "enforcer_m/animations/walking/north-west/frame_002.png",
+              "enforcer_m/animations/walking/north-west/frame_003.png",
+              "enforcer_m/animations/walking/north-west/frame_004.png",
+              "enforcer_m/animations/walking/north-west/frame_005.png"
+            ],
+            "south-west": [
+              "enforcer_m/animations/walking/south-west/frame_000.png",
+              "enforcer_m/animations/walking/south-west/frame_001.png",
+              "enforcer_m/animations/walking/south-west/frame_002.png",
+              "enforcer_m/animations/walking/south-west/frame_003.png",
+              "enforcer_m/animations/walking/south-west/frame_004.png",
+              "enforcer_m/animations/walking/south-west/frame_005.png"
+            ],
+            "south": [
+              "enforcer_m/animations/walking/south/frame_000.png",
+              "enforcer_m/animations/walking/south/frame_001.png",
+              "enforcer_m/animations/walking/south/frame_002.png",
+              "enforcer_m/animations/walking/south/frame_003.png",
+              "enforcer_m/animations/walking/south/frame_004.png",
+              "enforcer_m/animations/walking/south/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:17.295727"
+}

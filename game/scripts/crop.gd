@@ -30,11 +30,61 @@ static func stage_of(c: Dictionary) -> int:
 
 
 func refresh() -> void:
+	var stage := stage_of(info)
 	if sprite:
 		sprite.queue_free()
-	sprite = Pack.sprite("crop_" + kind, stage_of(info))
+	sprite = Pack.sprite("crop_" + kind, stage)
+	sprite.show_behind_parent = true
 	add_child(sprite)
+	if kind in ["sativa", "hybrid", "indica"] and stage >= 2:
+		_add_buds(stage)
+	if Game.world and Game.world.soil and Game.world.soil.state.soil.get(Soil.key_of(cell) + "_f", 0) == 1 and stage == 3:
+		sprite.scale = Vector2(1.35, 1.35)
+	queue_redraw()
 
+
+func _add_buds(stage: int) -> void:
+	var heights := {"sativa": [28.0, 40.0], "hybrid": [24.0, 33.0], "indica": [21.0, 28.0]}
+	var height: float = heights[kind][stage - 2]
+	var places := [Vector2(0, -height * 0.80)]
+	if stage == 3:
+		places.append(Vector2(-5, -height * 0.52))
+		places.append(Vector2(5, -height * 0.40))
+	for at in places:
+		var bud := Sprite2D.new()
+		bud.texture = Pack.icon(kind)
+		bud.position = at.round()
+		bud.scale = Vector2.ONE * (0.5 if stage == 3 else 0.25)
+		bud.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		sprite.add_child(bud)
+
+
+func get_seed_color() -> Color:
+	match kind:
+		"carrot": return Color.ORANGE
+		"beet": return Color.CRIMSON
+		"cabbage": return Color.PALE_GREEN
+		"lettuce": return Color.LIGHT_GREEN
+		"cauliflower": return Color.WHITE
+		"broccoli": return Color.DARK_GREEN
+		"garlic": return Color.LIGHT_YELLOW
+		"tomato": return Color.RED
+		"pumpkin": return Color.DARK_ORANGE
+		"corn": return Color.YELLOW
+		"strawberry": return Color.HOT_PINK
+		"eggplant": return Color.PURPLE
+		"onion": return Color.LIGHT_CYAN
+		_: return Color.SADDLE_BROWN
+
+func _draw() -> void:
+	if stage_of(info) == 0 and not kind in ["sativa", "hybrid", "indica"]:
+		var c = get_seed_color()
+		# Draw above sprite
+		draw_rect(Rect2(-4, -6, 2, 2), c)
+		draw_rect(Rect2(2, -4, 2, 2), c)
+		draw_rect(Rect2(-1, -1, 2, 2), c)
+		draw_rect(Rect2(4, -8, 2, 2), c)
+		draw_rect(Rect2(-5, -2, 2, 2), c)
 
 func interact(_player: Node) -> void:
 	if stage_of(info) < 3:

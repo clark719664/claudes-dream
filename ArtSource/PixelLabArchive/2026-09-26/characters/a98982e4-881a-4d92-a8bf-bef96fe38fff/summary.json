@@ -1,0 +1,20 @@
+{
+  "id": "a98982e4-881a-4d92-a8bf-bef96fe38fff",
+  "name": "frost_yeti",
+  "state_name": "Idle",
+  "prompt": "Frostvale Yeti monster, hulking white-furred ice beast with glowing blue eyes and frost claws, low top-down 16-bit RPG pixel art monster, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T23:44:05.571325+00:00",
+  "updated_at": "2026-09-25T23:47:45.727347+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/a98982e4-881a-4d92-a8bf-bef96fe38fff/rotations/south.png?t=1790380065",
+  "tags": [],
+  "group_id": "3ff5ac81-3c83-41dc-bef7-fa0ea7a7d01c"
+}

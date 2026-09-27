@@ -1,0 +1,36 @@
+{
+  "id": "4f8eb894-89c4-4e61-ae90-155889f975ec",
+  "name": "baby_llama",
+  "state_name": "Idle",
+  "prompt": "Baby llama cria, small brown and white, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:43:11.618130+00:00",
+  "updated_at": "2026-09-25T22:47:07.681015+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4f8eb894-89c4-4e61-ae90-155889f975ec/rotations/south.png?t=1790376427",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4f8eb894-89c4-4e61-ae90-155889f975ec/rotations/west.png?t=1790376427",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4f8eb894-89c4-4e61-ae90-155889f975ec/rotations/east.png?t=1790376427",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4f8eb894-89c4-4e61-ae90-155889f975ec/rotations/north.png?t=1790376427",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4f8eb894-89c4-4e61-ae90-155889f975ec/rotations/south-east.png?t=1790376427",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4f8eb894-89c4-4e61-ae90-155889f975ec/rotations/north-east.png?t=1790376427",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4f8eb894-89c4-4e61-ae90-155889f975ec/rotations/north-west.png?t=1790376427",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4f8eb894-89c4-4e61-ae90-155889f975ec/rotations/south-west.png?t=1790376427"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "34f3792d-5598-4481-acec-d03333919a47",
+  "skeletons": null,
+  "animations": []
+}

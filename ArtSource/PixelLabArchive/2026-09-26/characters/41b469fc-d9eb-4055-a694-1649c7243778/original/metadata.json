@@ -1,0 +1,103 @@
+{
+  "group_id": "c4e62e4c-043f-40da-8fbe-c07ac719f122",
+  "states": [
+    {
+      "character": {
+        "id": "41b469fc-d9eb-4055-a694-1649c7243778",
+        "name": "mirelle",
+        "prompt": "Sister Mirelle, a severe Covenant warden in dark ornate robes wielding a bladed staff, cold menacing villain, gothic, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T20:56:21.993128+00:00"
+      },
+      "folder": "mirelle",
+      "frames": {
+        "rotations": {
+          "south": "mirelle/rotations/south.png",
+          "south-east": "mirelle/rotations/south-east.png",
+          "east": "mirelle/rotations/east.png",
+          "north-east": "mirelle/rotations/north-east.png",
+          "north": "mirelle/rotations/north.png",
+          "north-west": "mirelle/rotations/north-west.png",
+          "west": "mirelle/rotations/west.png",
+          "south-west": "mirelle/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north": [
+              "mirelle/animations/walking/north/frame_000.png",
+              "mirelle/animations/walking/north/frame_001.png",
+              "mirelle/animations/walking/north/frame_002.png",
+              "mirelle/animations/walking/north/frame_003.png",
+              "mirelle/animations/walking/north/frame_004.png",
+              "mirelle/animations/walking/north/frame_005.png"
+            ],
+            "east": [
+              "mirelle/animations/walking/east/frame_000.png",
+              "mirelle/animations/walking/east/frame_001.png",
+              "mirelle/animations/walking/east/frame_002.png",
+              "mirelle/animations/walking/east/frame_003.png",
+              "mirelle/animations/walking/east/frame_004.png",
+              "mirelle/animations/walking/east/frame_005.png"
+            ],
+            "south": [
+              "mirelle/animations/walking/south/frame_000.png",
+              "mirelle/animations/walking/south/frame_001.png",
+              "mirelle/animations/walking/south/frame_002.png",
+              "mirelle/animations/walking/south/frame_003.png",
+              "mirelle/animations/walking/south/frame_004.png",
+              "mirelle/animations/walking/south/frame_005.png"
+            ],
+            "north-west": [
+              "mirelle/animations/walking/north-west/frame_000.png",
+              "mirelle/animations/walking/north-west/frame_001.png",
+              "mirelle/animations/walking/north-west/frame_002.png",
+              "mirelle/animations/walking/north-west/frame_003.png",
+              "mirelle/animations/walking/north-west/frame_004.png",
+              "mirelle/animations/walking/north-west/frame_005.png"
+            ],
+            "north-east": [
+              "mirelle/animations/walking/north-east/frame_000.png",
+              "mirelle/animations/walking/north-east/frame_001.png",
+              "mirelle/animations/walking/north-east/frame_002.png",
+              "mirelle/animations/walking/north-east/frame_003.png",
+              "mirelle/animations/walking/north-east/frame_004.png",
+              "mirelle/animations/walking/north-east/frame_005.png"
+            ],
+            "south-west": [
+              "mirelle/animations/walking/south-west/frame_000.png",
+              "mirelle/animations/walking/south-west/frame_001.png",
+              "mirelle/animations/walking/south-west/frame_002.png",
+              "mirelle/animations/walking/south-west/frame_003.png",
+              "mirelle/animations/walking/south-west/frame_004.png",
+              "mirelle/animations/walking/south-west/frame_005.png"
+            ],
+            "south-east": [
+              "mirelle/animations/walking/south-east/frame_000.png",
+              "mirelle/animations/walking/south-east/frame_001.png",
+              "mirelle/animations/walking/south-east/frame_002.png",
+              "mirelle/animations/walking/south-east/frame_003.png",
+              "mirelle/animations/walking/south-east/frame_004.png",
+              "mirelle/animations/walking/south-east/frame_005.png"
+            ],
+            "west": [
+              "mirelle/animations/walking/west/frame_000.png",
+              "mirelle/animations/walking/west/frame_001.png",
+              "mirelle/animations/walking/west/frame_002.png",
+              "mirelle/animations/walking/west/frame_003.png",
+              "mirelle/animations/walking/west/frame_004.png",
+              "mirelle/animations/walking/west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:48.154522"
+}

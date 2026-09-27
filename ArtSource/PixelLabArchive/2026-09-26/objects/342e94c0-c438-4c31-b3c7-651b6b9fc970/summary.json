@@ -1,0 +1,16 @@
+{
+  "id": "342e94c0-c438-4c31-b3c7-651b6b9fc970",
+  "name": "wooden dining table with two c",
+  "state_name": null,
+  "prompt": "wooden dining table with two chairs, cozy cabin interior",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 1,
+  "created_at": "2026-06-16T03:06:31.413474+00:00",
+  "view": "high top-down",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/342e94c0-c438-4c31-b3c7-651b6b9fc970/rotations/unknown.png",
+  "tags": [],
+  "status": "completed"
+}

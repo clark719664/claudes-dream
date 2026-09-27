@@ -1,0 +1,26 @@
+{
+  "usage": {
+    "type": "usd",
+    "usd": 0.01
+  },
+  "storage_urls": {
+    "tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_0.png",
+    "tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_1.png",
+    "tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_2.png",
+    "tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_3.png",
+    "tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_4.png",
+    "tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_5.png",
+    "tile_6": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_6.png",
+    "tile_7": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_7.png",
+    "tile_8": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_8.png",
+    "tile_9": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_9.png",
+    "tile_10": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_10.png",
+    "tile_11": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_11.png",
+    "tile_12": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_12.png",
+    "tile_13": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_13.png",
+    "tile_14": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_14.png",
+    "tile_15": "https://backblaze.pixellab.ai/file/pixellab-tiles/bdfd08ae-2a14-4fd8-9608-0608149936b5/3eaeb30b-bc7b-41f5-89b8-3ef5ed33025b/tile_15.png"
+  },
+  "kind": "tiles",
+  "tile_rules": null
+}

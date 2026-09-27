@@ -1,0 +1,20 @@
+{
+  "id": "abc2a6ed-f4aa-4569-ae1d-ea21a95051ed",
+  "name": "garrick",
+  "state_name": "garrick",
+  "prompt": "Rust Warden Garrick, a menacing Covenant warden in rusted iron plate armor with a horned helm, imposing villain, gothic-punk, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T20:56:18.040822+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/abc2a6ed-f4aa-4569-ae1d-ea21a95051ed/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "6ef9ab58-8880-496e-aee3-be907d408570"
+}

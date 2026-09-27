@@ -1,0 +1,20 @@
+{
+  "id": "cd6f0bbd-725e-4356-9c60-19b26ae2108f",
+  "name": "teacher_nessa",
+  "state_name": "teacher_nessa",
+  "prompt": "Teacher Nessa, kind schoolteacher in a cardigan holding a book, round glasses, hair in a bun, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:43:33.466817+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cd6f0bbd-725e-4356-9c60-19b26ae2108f/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "fcd84368-0026-4297-9d6e-9a707faeaed9"
+}

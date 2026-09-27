@@ -1,0 +1,20 @@
+{
+  "id": "4d0524dd-06c6-45d4-ad6a-3da4556f9fea",
+  "name": "baby_polar_bear",
+  "state_name": "Idle",
+  "prompt": "Baby polar bear cub, small white, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:32:25.341014+00:00",
+  "updated_at": "2026-09-25T22:38:39.263398+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4d0524dd-06c6-45d4-ad6a-3da4556f9fea/rotations/south.png?t=1790375919",
+  "tags": [],
+  "group_id": "64b907bc-3075-48dc-a13a-03ce390357e6"
+}

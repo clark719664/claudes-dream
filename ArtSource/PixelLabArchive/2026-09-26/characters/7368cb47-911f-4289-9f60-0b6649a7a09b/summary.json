@@ -1,0 +1,20 @@
+{
+  "id": "7368cb47-911f-4289-9f60-0b6649a7a09b",
+  "name": "diver_m",
+  "state_name": "diver_m",
+  "prompt": "male Covenant diver in a dark sleek wetsuit with a rebreather and void-tech goggles, menacing aquatic villain, gothic-punk, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T22:15:14.989315+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7368cb47-911f-4289-9f60-0b6649a7a09b/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "ca756490-eb76-448a-84ea-0e79c37216a6"
+}

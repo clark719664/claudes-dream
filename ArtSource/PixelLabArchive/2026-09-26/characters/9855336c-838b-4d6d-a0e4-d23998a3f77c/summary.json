@@ -1,0 +1,20 @@
+{
+  "id": "9855336c-838b-4d6d-a0e4-d23998a3f77c",
+  "name": "scientist_m",
+  "state_name": "scientist_m",
+  "prompt": "male Covenant scientist in a stained lab coat with void goggles holding a syringe, sinister, gothic-punk, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:40:31.016929+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/9855336c-838b-4d6d-a0e4-d23998a3f77c/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "3418f164-8d14-438b-acd4-485124e481fb"
+}

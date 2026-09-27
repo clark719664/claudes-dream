@@ -1,0 +1,20 @@
+{
+  "id": "8114c9b6-fc42-4987-9a40-44f48ae471e5",
+  "name": "doc_elm",
+  "state_name": "doc_elm",
+  "prompt": "Dr. Elm, a glimmer researcher in a white lab coat with round glasses holding a tablet, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T20:34:10.948381+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/8114c9b6-fc42-4987-9a40-44f48ae471e5/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "40fc0b18-f994-4cf9-b599-5ea70adb266d"
+}

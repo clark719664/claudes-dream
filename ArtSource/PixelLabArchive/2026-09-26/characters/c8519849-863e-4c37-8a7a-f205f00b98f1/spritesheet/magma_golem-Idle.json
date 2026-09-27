@@ -1,0 +1,45 @@
+{
+  "character": {
+    "id": "c8519849-863e-4c37-8a7a-f205f00b98f1",
+    "name": "Idle",
+    "prompt": "Volcanic Magma Golem brute made of cracked dark basalt rock and glowing orange lava veins, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "magma_golem-Idle.png",
+    "cell_size": {
+      "width": 64,
+      "height": 64
+    },
+    "sheet_size": {
+      "width": 512,
+      "height": 64
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:47:41.971289+00:00"
+}

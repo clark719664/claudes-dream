@@ -1,0 +1,20 @@
+{
+  "id": "4cc8a51a-fb13-4dc8-a8c0-313881d972c0",
+  "name": "player_male",
+  "state_name": "player_male",
+  "prompt": "a young man with a lean build in a plain linen tunic and brown trousers and boots, friendly farmer adventurer protagonist, warm gothic-punk, full body",
+  "size": {
+    "width": 128,
+    "height": 128
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T22:43:05.315859+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4cc8a51a-fb13-4dc8-a8c0-313881d972c0/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "aba567e0-13b3-4789-8923-9a13fe6bd86f"
+}

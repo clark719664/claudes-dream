@@ -57,8 +57,19 @@ func water(c: Vector2i) -> bool:
 		crops[k].refresh()
 	return true
 
+func fertilize(c: Vector2i) -> bool:
+	var k := key_of(c)
+	if not state.soil.has(k) or state.soil.get(k + "_f"):
+		return false
+	state.soil[k + "_f"] = 1
+	if has_crop(c):
+		crops[k].refresh()
+	return true
+
 
 func plant(c: Vector2i, kind: String) -> bool:
+	if not Inventory.CROPS.has(kind):
+		return false
 	var k := key_of(c)
 	if not state.soil.has(k) or state.crops.has(k):
 		return false
@@ -79,6 +90,12 @@ func harvest(c: Vector2i) -> int:
 	if crops.has(k):
 		crops[k].queue_free()
 		crops.erase(k)
+	
+	var is_mega = state.soil.get(k + "_f", 0) == 1
+	if is_mega:
+		state.soil.erase(k + "_f")
+		return 5
+		
 	return 1 + int(randf() < 0.25)
 
 

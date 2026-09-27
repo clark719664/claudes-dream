@@ -1,0 +1,13 @@
+{
+  "id": "8367804e-2621-4a8f-8808-e57d51203ddc",
+  "name": "clean white and teal checkered clinic tile floor → soft examination floor mat",
+  "lower_description": "clean white and teal checkered clinic tile floor",
+  "upper_description": "soft examination floor mat",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-16T03:18:04.078689+00:00",
+  "status": "completed"
+}

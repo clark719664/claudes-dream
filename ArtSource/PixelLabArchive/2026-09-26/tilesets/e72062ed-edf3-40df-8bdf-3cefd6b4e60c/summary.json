@@ -1,0 +1,13 @@
+{
+  "id": "e72062ed-edf3-40df-8bdf-3cefd6b4e60c",
+  "name": "dark grey concrete city pavement ground → dark water with neon cyan reflections",
+  "lower_description": "dark grey concrete city pavement ground",
+  "upper_description": "dark water with neon cyan reflections",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-15T23:49:00.278442+00:00",
+  "status": "completed"
+}

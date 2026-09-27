@@ -1,0 +1,20 @@
+{
+  "id": "f19b039d-6e29-43a9-9995-99b45cbde87c",
+  "name": "marlow",
+  "state_name": "marlow",
+  "prompt": "Bus Driver Marlow, weary middle-aged bus driver in a uniform cap and worn jacket, cozy stardew-style RPG villager, gothic-punk world, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:17:53.660815+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f19b039d-6e29-43a9-9995-99b45cbde87c/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "70da961b-9e78-4dc2-841c-ccbc747ee8a1"
+}

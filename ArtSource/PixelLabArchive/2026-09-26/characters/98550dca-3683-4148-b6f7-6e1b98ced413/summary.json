@@ -1,0 +1,20 @@
+{
+  "id": "98550dca-3683-4148-b6f7-6e1b98ced413",
+  "name": "Polar bear ",
+  "state_name": "Idle",
+  "prompt": "Polar bear ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:20:14.036871+00:00",
+  "updated_at": "2026-09-25T19:22:56.735666+00:00",
+  "animation_count": 0,
+  "template_id": "bear",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/98550dca-3683-4148-b6f7-6e1b98ced413/rotations/south.png?t=1790364176",
+  "tags": [],
+  "group_id": "70f1af4e-1242-4971-944d-2493c78c8a3c"
+}

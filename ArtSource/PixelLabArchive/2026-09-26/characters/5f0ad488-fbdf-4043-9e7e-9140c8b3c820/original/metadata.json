@@ -1,0 +1,103 @@
+{
+  "group_id": "ef07f4ac-b514-4275-af8f-718ce1a4f48d",
+  "states": [
+    {
+      "character": {
+        "id": "5f0ad488-fbdf-4043-9e7e-9140c8b3c820",
+        "name": "scrap_yadi",
+        "prompt": "Yadi, a junk dealer in a patchwork coat covered in trinkets and gadgets, cozy stardew-style RPG villager, gothic-punk, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T21:25:05.845084+00:00"
+      },
+      "folder": "scrap_yadi",
+      "frames": {
+        "rotations": {
+          "south": "scrap_yadi/rotations/south.png",
+          "south-east": "scrap_yadi/rotations/south-east.png",
+          "east": "scrap_yadi/rotations/east.png",
+          "north-east": "scrap_yadi/rotations/north-east.png",
+          "north": "scrap_yadi/rotations/north.png",
+          "north-west": "scrap_yadi/rotations/north-west.png",
+          "west": "scrap_yadi/rotations/west.png",
+          "south-west": "scrap_yadi/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "east": [
+              "scrap_yadi/animations/walking/east/frame_000.png",
+              "scrap_yadi/animations/walking/east/frame_001.png",
+              "scrap_yadi/animations/walking/east/frame_002.png",
+              "scrap_yadi/animations/walking/east/frame_003.png",
+              "scrap_yadi/animations/walking/east/frame_004.png",
+              "scrap_yadi/animations/walking/east/frame_005.png"
+            ],
+            "north-west": [
+              "scrap_yadi/animations/walking/north-west/frame_000.png",
+              "scrap_yadi/animations/walking/north-west/frame_001.png",
+              "scrap_yadi/animations/walking/north-west/frame_002.png",
+              "scrap_yadi/animations/walking/north-west/frame_003.png",
+              "scrap_yadi/animations/walking/north-west/frame_004.png",
+              "scrap_yadi/animations/walking/north-west/frame_005.png"
+            ],
+            "south": [
+              "scrap_yadi/animations/walking/south/frame_000.png",
+              "scrap_yadi/animations/walking/south/frame_001.png",
+              "scrap_yadi/animations/walking/south/frame_002.png",
+              "scrap_yadi/animations/walking/south/frame_003.png",
+              "scrap_yadi/animations/walking/south/frame_004.png",
+              "scrap_yadi/animations/walking/south/frame_005.png"
+            ],
+            "south-east": [
+              "scrap_yadi/animations/walking/south-east/frame_000.png",
+              "scrap_yadi/animations/walking/south-east/frame_001.png",
+              "scrap_yadi/animations/walking/south-east/frame_002.png",
+              "scrap_yadi/animations/walking/south-east/frame_003.png",
+              "scrap_yadi/animations/walking/south-east/frame_004.png",
+              "scrap_yadi/animations/walking/south-east/frame_005.png"
+            ],
+            "south-west": [
+              "scrap_yadi/animations/walking/south-west/frame_000.png",
+              "scrap_yadi/animations/walking/south-west/frame_001.png",
+              "scrap_yadi/animations/walking/south-west/frame_002.png",
+              "scrap_yadi/animations/walking/south-west/frame_003.png",
+              "scrap_yadi/animations/walking/south-west/frame_004.png",
+              "scrap_yadi/animations/walking/south-west/frame_005.png"
+            ],
+            "west": [
+              "scrap_yadi/animations/walking/west/frame_000.png",
+              "scrap_yadi/animations/walking/west/frame_001.png",
+              "scrap_yadi/animations/walking/west/frame_002.png",
+              "scrap_yadi/animations/walking/west/frame_003.png",
+              "scrap_yadi/animations/walking/west/frame_004.png",
+              "scrap_yadi/animations/walking/west/frame_005.png"
+            ],
+            "north": [
+              "scrap_yadi/animations/walking/north/frame_000.png",
+              "scrap_yadi/animations/walking/north/frame_001.png",
+              "scrap_yadi/animations/walking/north/frame_002.png",
+              "scrap_yadi/animations/walking/north/frame_003.png",
+              "scrap_yadi/animations/walking/north/frame_004.png",
+              "scrap_yadi/animations/walking/north/frame_005.png"
+            ],
+            "north-east": [
+              "scrap_yadi/animations/walking/north-east/frame_000.png",
+              "scrap_yadi/animations/walking/north-east/frame_001.png",
+              "scrap_yadi/animations/walking/north-east/frame_002.png",
+              "scrap_yadi/animations/walking/north-east/frame_003.png",
+              "scrap_yadi/animations/walking/north-east/frame_004.png",
+              "scrap_yadi/animations/walking/north-east/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:29.537394"
+}

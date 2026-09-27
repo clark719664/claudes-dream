@@ -1,0 +1,20 @@
+{
+  "id": "62bb495b-72f7-40e7-98de-c1d826f64b2f",
+  "name": "duck",
+  "state_name": "Idle",
+  "prompt": "Farm duck, white bird with orange bill, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:32:38.239482+00:00",
+  "updated_at": "2026-09-25T22:36:50.454024+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/62bb495b-72f7-40e7-98de-c1d826f64b2f/rotations/south.png?t=1790375810",
+  "tags": [],
+  "group_id": "be652f00-2bd8-4fcc-8748-8c5149b735b4"
+}

@@ -1,0 +1,45 @@
+{
+  "object": {
+    "id": "820e3a88-516e-49ed-ba59-d5f70c2bb7bf",
+    "name": "base",
+    "prompt": "classic stone wishing well with a wooden roof and bucket, 16-bit RPG top down pixel art, NO UI, NO TEXT, NO BACKGROUND, NO GRID",
+    "size": {
+      "width": 170,
+      "height": 170
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "classic_stone_wishing_well_wit.png",
+    "cell_size": {
+      "width": 170,
+      "height": 170
+    },
+    "sheet_size": {
+      "width": 1360,
+      "height": 170
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:52:04.791554+00:00"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "866ffd40-4eb1-4be5-ab31-517aaa095e63",
+  "name": "weathered barn wood plank floor → piled golden hay",
+  "lower_description": "weathered barn wood plank floor",
+  "upper_description": "piled golden hay",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-16T03:18:02.221857+00:00",
+  "status": "completed"
+}

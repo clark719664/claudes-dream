@@ -1,0 +1,36 @@
+{
+  "id": "ae53ea0e-dc4c-4456-9e9c-b6a28517a640",
+  "name": "llama",
+  "state_name": "Idle",
+  "prompt": "Farm llama, white tall neck, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:32:43.480173+00:00",
+  "updated_at": "2026-09-25T22:41:25.030786+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ae53ea0e-dc4c-4456-9e9c-b6a28517a640/rotations/south.png?t=1790376085",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ae53ea0e-dc4c-4456-9e9c-b6a28517a640/rotations/west.png?t=1790376085",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ae53ea0e-dc4c-4456-9e9c-b6a28517a640/rotations/east.png?t=1790376085",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ae53ea0e-dc4c-4456-9e9c-b6a28517a640/rotations/north.png?t=1790376085",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ae53ea0e-dc4c-4456-9e9c-b6a28517a640/rotations/south-east.png?t=1790376085",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ae53ea0e-dc4c-4456-9e9c-b6a28517a640/rotations/north-east.png?t=1790376085",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ae53ea0e-dc4c-4456-9e9c-b6a28517a640/rotations/north-west.png?t=1790376085",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ae53ea0e-dc4c-4456-9e9c-b6a28517a640/rotations/south-west.png?t=1790376085"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "3e9e6ffa-9f6d-4729-ae33-696401bd48be",
+  "skeletons": null,
+  "animations": []
+}

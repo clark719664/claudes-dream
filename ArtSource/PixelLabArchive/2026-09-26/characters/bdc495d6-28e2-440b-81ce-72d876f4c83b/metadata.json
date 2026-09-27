@@ -1,0 +1,38 @@
+{
+  "id": "bdc495d6-28e2-440b-81ce-72d876f4c83b",
+  "name": "Cave snake ",
+  "state_name": "Idle",
+  "prompt": "Cave snake ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:26:36.671673+00:00",
+  "updated_at": "2026-09-25T19:27:46.323891+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bdc495d6-28e2-440b-81ce-72d876f4c83b/rotations/south.png?t=1790364466",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bdc495d6-28e2-440b-81ce-72d876f4c83b/rotations/west.png?t=1790364466",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bdc495d6-28e2-440b-81ce-72d876f4c83b/rotations/east.png?t=1790364466",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bdc495d6-28e2-440b-81ce-72d876f4c83b/rotations/north.png?t=1790364466",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bdc495d6-28e2-440b-81ce-72d876f4c83b/rotations/south-east.png?t=1790364466",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bdc495d6-28e2-440b-81ce-72d876f4c83b/rotations/north-east.png?t=1790364466",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bdc495d6-28e2-440b-81ce-72d876f4c83b/rotations/north-west.png?t=1790364466",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bdc495d6-28e2-440b-81ce-72d876f4c83b/rotations/south-west.png?t=1790364466"
+  },
+  "style_settings": {
+    "detail": "",
+    "outline": "",
+    "shading": ""
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "a46abbd0-b550-4f53-8724-89fad6497d8d",
+  "skeletons": {},
+  "animations": []
+}

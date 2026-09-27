@@ -1,0 +1,20 @@
+{
+  "id": "0b21563e-43d9-4c84-9b0c-5b64301537f3",
+  "name": "elder_grain",
+  "state_name": "elder_grain",
+  "prompt": "Elder Grain, kindly white-bearded elder in a long robe leaning on a wooden cane, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T17:06:03.832895+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "0c22a797-1cad-4ed3-b28e-017f86114d20"
+}

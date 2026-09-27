@@ -1,0 +1,41 @@
+{
+  "id": "d09d0e7b-0c47-4b1e-9158-5d8a93825ce2",
+  "name": "A stone pickaxe with a wooden ",
+  "state_name": "base",
+  "prompt": "A stone pickaxe with a wooden handle, mining tool, pixel art, top-down view, NO background NO UI NO text",
+  "size": {
+    "width": 85,
+    "height": 85
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T01:58:32.521910+00:00",
+  "view": "low top-down",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/south.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/west.png",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/east.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/north.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/south-west.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/north-west.png"
+  },
+  "storage_urls": {
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/east.png",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/west.png",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/north.png",
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/south.png",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/north-east.png",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/north-west.png",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/south-east.png",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/rotations/south-west.png"
+  },
+  "frame_urls": null,
+  "style_settings": {},
+  "tags": [],
+  "status": "completed",
+  "group_id": "efaba37d-821f-4c86-b329-a8ce9f6098b3",
+  "progress_percent": null,
+  "eta_seconds": null,
+  "animations": []
+}

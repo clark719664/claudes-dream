@@ -1,0 +1,13 @@
+{
+  "id": "7290f58b-7b15-4b81-84c4-155ccf33047c",
+  "name": "wet mucky dark green mossy swamp ground → murky green swamp water",
+  "lower_description": "wet mucky dark green mossy swamp ground",
+  "upper_description": "murky green swamp water",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-15T23:53:01.582949+00:00",
+  "status": "completed"
+}

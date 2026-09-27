@@ -1,0 +1,20 @@
+{
+  "id": "ead0418e-b8c9-43dd-bae0-b11702772e86",
+  "name": "neon_pix",
+  "state_name": "neon_pix",
+  "prompt": "Pix, a neon street vendor with a glowing visor and a tray of glowing wares, cyberpunk, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 96,
+    "height": 96
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T17:14:11.834446+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ead0418e-b8c9-43dd-bae0-b11702772e86/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "51636b03-10e0-4980-ac83-18c43c83fef0"
+}

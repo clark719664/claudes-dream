@@ -1,0 +1,103 @@
+{
+  "group_id": "198e3a10-6c6c-4555-bfb1-3148af836dd1",
+  "states": [
+    {
+      "character": {
+        "id": "69d40a60-7f5a-4d70-8bb9-7b900d0cb6b6",
+        "name": "ranger_cole",
+        "prompt": "Ranger Cole, a forest ranger in green with a wide-brim hat and binoculars, cozy stardew-style RPG villager, full body",
+        "size": {
+          "width": 88,
+          "height": 88
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T20:45:51.892834+00:00"
+      },
+      "folder": "ranger_cole",
+      "frames": {
+        "rotations": {
+          "south": "ranger_cole/rotations/south.png",
+          "south-east": "ranger_cole/rotations/south-east.png",
+          "east": "ranger_cole/rotations/east.png",
+          "north-east": "ranger_cole/rotations/north-east.png",
+          "north": "ranger_cole/rotations/north.png",
+          "north-west": "ranger_cole/rotations/north-west.png",
+          "west": "ranger_cole/rotations/west.png",
+          "south-west": "ranger_cole/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-east": [
+              "ranger_cole/animations/walking/north-east/frame_000.png",
+              "ranger_cole/animations/walking/north-east/frame_001.png",
+              "ranger_cole/animations/walking/north-east/frame_002.png",
+              "ranger_cole/animations/walking/north-east/frame_003.png",
+              "ranger_cole/animations/walking/north-east/frame_004.png",
+              "ranger_cole/animations/walking/north-east/frame_005.png"
+            ],
+            "south-west": [
+              "ranger_cole/animations/walking/south-west/frame_000.png",
+              "ranger_cole/animations/walking/south-west/frame_001.png",
+              "ranger_cole/animations/walking/south-west/frame_002.png",
+              "ranger_cole/animations/walking/south-west/frame_003.png",
+              "ranger_cole/animations/walking/south-west/frame_004.png",
+              "ranger_cole/animations/walking/south-west/frame_005.png"
+            ],
+            "north-west": [
+              "ranger_cole/animations/walking/north-west/frame_000.png",
+              "ranger_cole/animations/walking/north-west/frame_001.png",
+              "ranger_cole/animations/walking/north-west/frame_002.png",
+              "ranger_cole/animations/walking/north-west/frame_003.png",
+              "ranger_cole/animations/walking/north-west/frame_004.png",
+              "ranger_cole/animations/walking/north-west/frame_005.png"
+            ],
+            "west": [
+              "ranger_cole/animations/walking/west/frame_000.png",
+              "ranger_cole/animations/walking/west/frame_001.png",
+              "ranger_cole/animations/walking/west/frame_002.png",
+              "ranger_cole/animations/walking/west/frame_003.png",
+              "ranger_cole/animations/walking/west/frame_004.png",
+              "ranger_cole/animations/walking/west/frame_005.png"
+            ],
+            "south-east": [
+              "ranger_cole/animations/walking/south-east/frame_000.png",
+              "ranger_cole/animations/walking/south-east/frame_001.png",
+              "ranger_cole/animations/walking/south-east/frame_002.png",
+              "ranger_cole/animations/walking/south-east/frame_003.png",
+              "ranger_cole/animations/walking/south-east/frame_004.png",
+              "ranger_cole/animations/walking/south-east/frame_005.png"
+            ],
+            "east": [
+              "ranger_cole/animations/walking/east/frame_000.png",
+              "ranger_cole/animations/walking/east/frame_001.png",
+              "ranger_cole/animations/walking/east/frame_002.png",
+              "ranger_cole/animations/walking/east/frame_003.png",
+              "ranger_cole/animations/walking/east/frame_004.png",
+              "ranger_cole/animations/walking/east/frame_005.png"
+            ],
+            "south": [
+              "ranger_cole/animations/walking/south/frame_000.png",
+              "ranger_cole/animations/walking/south/frame_001.png",
+              "ranger_cole/animations/walking/south/frame_002.png",
+              "ranger_cole/animations/walking/south/frame_003.png",
+              "ranger_cole/animations/walking/south/frame_004.png",
+              "ranger_cole/animations/walking/south/frame_005.png"
+            ],
+            "north": [
+              "ranger_cole/animations/walking/north/frame_000.png",
+              "ranger_cole/animations/walking/north/frame_001.png",
+              "ranger_cole/animations/walking/north/frame_002.png",
+              "ranger_cole/animations/walking/north/frame_003.png",
+              "ranger_cole/animations/walking/north/frame_004.png",
+              "ranger_cole/animations/walking/north/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:43.793693"
+}

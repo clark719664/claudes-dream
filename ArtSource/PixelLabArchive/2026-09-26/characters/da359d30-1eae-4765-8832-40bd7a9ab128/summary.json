@@ -1,0 +1,20 @@
+{
+  "id": "da359d30-1eae-4765-8832-40bd7a9ab128",
+  "name": "seraphine",
+  "state_name": "seraphine",
+  "prompt": "Seraphine, an ethereal Covenant high priestess in flowing white and void robes with a halo of dark light, imposing tragic villain, gothic, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:03:55.138805+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/da359d30-1eae-4765-8832-40bd7a9ab128/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "81a9b0ff-7925-4088-a888-e4b0e6ba3ae5"
+}

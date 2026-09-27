@@ -88,7 +88,7 @@ func _physics_process(_delta: float) -> void:
 	if _busy or player == null or player.dead or root == null:
 		return
 	var p := player.global_position
-	if area_id == "house":
+	if area_id in ["house", "barn", "coop"]:
 		if p.y > interior.exit_line():
 			go_to("farm", "door")
 		return
@@ -130,8 +130,8 @@ func load_area(id: String, at: String) -> void:
 	entities.name = "Entities"
 	entities.y_sort_enabled = true
 	var spot := Vector2.ZERO
-	if id == "house":
-		spot = _build_house(at)
+	if id in ["house", "barn", "coop", "general_store", "saloon", "blacksmith_shop", "library", "clinic", "school", "church", "bathhouse", "museum", "inn", "mayors_manor", "npc_house_1", "npc_house_2", "dispensary"]:
+		spot = _build_interior(id, at)
 	elif id.begins_with("mine"):
 		spot = _build_mine(id, at)
 	else:
@@ -139,8 +139,10 @@ func load_area(id: String, at: String) -> void:
 	player.position = spot
 	entities.add_child(player)
 	player.facing = Vector2.DOWN if at != "bed" else Vector2.DOWN
-	if id == "house":
+	if id in ["house", "barn", "coop", "general_store", "saloon", "blacksmith_shop", "library", "clinic", "school", "church", "bathhouse", "museum", "inn", "mayors_manor", "npc_house_1", "npc_house_2", "dispensary"]:
 		player.set_room(interior.room_rect())
+	elif id.begins_with("mine"):
+		player.set_room(Rect2(Vector2(-256, -256), Vector2(512, 512)))
 	else:
 		player.set_room(Rect2(Vector2.ZERO, size))
 	stream_now()
@@ -224,13 +226,19 @@ func _build_outdoor(id: String, at: String) -> Vector2:
 	return size / 2.0
 
 
-func _build_house(at: String) -> Vector2:
+func _build_interior(id: String, at: String) -> Vector2:
 	data = {}
 	root.add_child(decor)
 	root.add_child(entities)
 	interior = Interior.new()
 	root.add_child(interior)
-	interior.build(Game.cabin_tier, entities)
+	if id == "house":
+		interior.build(Game.cabin_tier, entities)
+	else:
+		interior.build(id, entities)
+	for o in Game.area_state(id).placed:
+		var n := spawn(o)
+		if n: n.set_meta("placed", o)
 	var r := interior.room_rect()
 	size = r.end
 	if at == "bed":
@@ -267,9 +275,63 @@ func new_day() -> int:
 				continue
 			if st.soil.get(key, 0) == 1:
 				c.age = int(c.age) + 1
+				if st.soil.get(key + "_f", 0) == 1:
+					c.age = int(c.age) + 1
 		for key in st.soil.keys():
-			st.soil[key] = 1 if Game.raining() and id != "house" else 0
+			if not key.ends_with("_f"):
+				st.soil[key] = 1 if Game.raining() and id != "house" else 0
+	for id in Game.areas:
+		var st: Dictionary = Game.areas[id]
+		_check_mega_crops(id, st)
 	return died
+
+## Scan a farm for 3x3 grids of fully grown cauliflower, melon, or pumpkin.
+func _check_mega_crops(id: String, st: Dictionary) -> void:
+	if id != "farm":
+		return
+	var mega_eligible = {"cauliflower": true, "melon": true, "pumpkin": true}
+	var crops_by_cell = {}
+	for key in st.crops.keys():
+		var parts = key.split(",")
+		var pos = Vector2i(int(parts[0]), int(parts[1]))
+		crops_by_cell[pos] = st.crops[key]
+		
+	# Find top-left corners of 3x3 grids
+	var to_remove = []
+	for pos in crops_by_cell.keys():
+		var c = crops_by_cell[pos]
+		if not mega_eligible.has(c.kind):
+			continue
+		var ripe_age: int = Inventory.CROPS[c.kind].days
+		if int(c.age) < ripe_age:
+			continue
+			
+		# Check the 3x3 grid
+		var is_mega = true
+		for dx in range(3):
+			for dy in range(3):
+				var check_pos = pos + Vector2i(dx, dy)
+				if not crops_by_cell.has(check_pos):
+					is_mega = false
+					break
+				var check_c = crops_by_cell[check_pos]
+				if check_c.kind != c.kind or int(check_c.age) < ripe_age:
+					is_mega = false
+					break
+			if not is_mega:
+				break
+				
+		if is_mega and randf() < 0.1: # 10% chance
+			# Convert to mega!
+			for dx in range(3):
+				for dy in range(3):
+					var key = "%d,%d" % [(pos.x + dx), (pos.y + dy)]
+					to_remove.append(key)
+			var mega_name = "mega_" + c.kind
+			st.placed.append({"t": "mega_crop", "kind": mega_name, "x": (pos.x + 1) * 16, "y": (pos.y + 1) * 16, "stage": 0})
+
+	for key in to_remove:
+		st.crops.erase(key)
 
 
 func rebuild_cabin() -> void:
@@ -560,9 +622,14 @@ func spawn(o: Dictionary) -> Node2D:
 				keeper.custom = o.say
 			node = keeper
 		"enemy":
-			node = Enemy.new(o.actor)
+			if FarmAnimal.STATS.has(o.actor):
+				node = FarmAnimal.new(o.actor)
+			else:
+				node = Enemy.new(o.actor)
 		"crop":
 			node = prop("crop_" + o.kind, int(o.stage))
+		"mega_crop":
+			node = MegaCrop.new(o.kind)
 		"campfire":
 			node = Campfire.new(o.get("style", "bonfire"))
 		"station":
@@ -577,10 +644,17 @@ func spawn(o: Dictionary) -> Node2D:
 			node = Minecart.new(o.id, o.name)
 		"gate":
 			node = Gate.new(int(o.get("w", 2)))
+		"custom_building":
+			node = CustomBuilding.new(o.kind)
+			node.entered.connect(func(): go_to(o.kind, "door"))
 		"deck":
 			node = Deck.new(o.kind, int(o.w), int(o.h))
 		"house":
 			node = House.new(o.get("style", "log"), o.get("name", ""), false, int(o.get("gables", 1)))
+			if o.get("name", "") == "Barn":
+				node.entered.connect(func(): go_to("barn", "door"))
+			elif o.get("name", "") == "Coop":
+				node.entered.connect(func(): go_to("coop", "door"))
 		"cabin":
 			cabin = House.new(Inventory.CABIN_TIERS[Game.cabin_tier].style, "Your cabin", true)
 			cabin.entered.connect(func(): go_to("house", "door"))

@@ -1,0 +1,45 @@
+{
+  "object": {
+    "id": "5a6abb5d-f988-4f2a-9c4e-ff921fbd4aa1",
+    "name": "base",
+    "prompt": "long wooden church bench seating, 16-bit RPG top down pixel art, NO UI",
+    "size": {
+      "width": 85,
+      "height": 85
+    },
+    "directions": 8,
+    "view": "low top-down"
+  },
+  "spritesheet": {
+    "path": "long_wooden_church_bench_seati.png",
+    "cell_size": {
+      "width": 85,
+      "height": 85
+    },
+    "sheet_size": {
+      "width": 680,
+      "height": 85
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-09-26T18:51:12.501430+00:00"
+}

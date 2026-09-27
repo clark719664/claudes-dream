@@ -1,0 +1,13 @@
+{
+  "id": "5872345e-5603-436f-be43-b4612da272a2",
+  "name": "warped dark haunted wood plank floor, gothic manor → tattered moth-eaten crimson rug",
+  "lower_description": "warped dark haunted wood plank floor, gothic manor",
+  "upper_description": "tattered moth-eaten crimson rug",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "view": "high top-down",
+  "created_at": "2026-06-16T03:18:08.446061+00:00",
+  "status": "completed"
+}

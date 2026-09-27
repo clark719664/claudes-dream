@@ -1,0 +1,103 @@
+{
+  "group_id": "67aaf7cd-f8e2-40f8-a713-dbe3388712cf",
+  "states": [
+    {
+      "character": {
+        "id": "1a7c36dd-42ce-4acc-8835-e9371494af62",
+        "name": "rook",
+        "prompt": "Ranger Rook, tough ranger sergeant in tactical green gear with a utility vest and short hair, cozy stardew-style RPG villager, gothic-punk world, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T16:25:19.871130+00:00"
+      },
+      "folder": "rook",
+      "frames": {
+        "rotations": {
+          "south": "rook/rotations/south.png",
+          "south-east": "rook/rotations/south-east.png",
+          "east": "rook/rotations/east.png",
+          "north-east": "rook/rotations/north-east.png",
+          "north": "rook/rotations/north.png",
+          "north-west": "rook/rotations/north-west.png",
+          "west": "rook/rotations/west.png",
+          "south-west": "rook/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "north-east": [
+              "rook/animations/walking/north-east/frame_000.png",
+              "rook/animations/walking/north-east/frame_001.png",
+              "rook/animations/walking/north-east/frame_002.png",
+              "rook/animations/walking/north-east/frame_003.png",
+              "rook/animations/walking/north-east/frame_004.png",
+              "rook/animations/walking/north-east/frame_005.png"
+            ],
+            "south": [
+              "rook/animations/walking/south/frame_000.png",
+              "rook/animations/walking/south/frame_001.png",
+              "rook/animations/walking/south/frame_002.png",
+              "rook/animations/walking/south/frame_003.png",
+              "rook/animations/walking/south/frame_004.png",
+              "rook/animations/walking/south/frame_005.png"
+            ],
+            "west": [
+              "rook/animations/walking/west/frame_000.png",
+              "rook/animations/walking/west/frame_001.png",
+              "rook/animations/walking/west/frame_002.png",
+              "rook/animations/walking/west/frame_003.png",
+              "rook/animations/walking/west/frame_004.png",
+              "rook/animations/walking/west/frame_005.png"
+            ],
+            "south-west": [
+              "rook/animations/walking/south-west/frame_000.png",
+              "rook/animations/walking/south-west/frame_001.png",
+              "rook/animations/walking/south-west/frame_002.png",
+              "rook/animations/walking/south-west/frame_003.png",
+              "rook/animations/walking/south-west/frame_004.png",
+              "rook/animations/walking/south-west/frame_005.png"
+            ],
+            "north-west": [
+              "rook/animations/walking/north-west/frame_000.png",
+              "rook/animations/walking/north-west/frame_001.png",
+              "rook/animations/walking/north-west/frame_002.png",
+              "rook/animations/walking/north-west/frame_003.png",
+              "rook/animations/walking/north-west/frame_004.png",
+              "rook/animations/walking/north-west/frame_005.png"
+            ],
+            "east": [
+              "rook/animations/walking/east/frame_000.png",
+              "rook/animations/walking/east/frame_001.png",
+              "rook/animations/walking/east/frame_002.png",
+              "rook/animations/walking/east/frame_003.png",
+              "rook/animations/walking/east/frame_004.png",
+              "rook/animations/walking/east/frame_005.png"
+            ],
+            "north": [
+              "rook/animations/walking/north/frame_000.png",
+              "rook/animations/walking/north/frame_001.png",
+              "rook/animations/walking/north/frame_002.png",
+              "rook/animations/walking/north/frame_003.png",
+              "rook/animations/walking/north/frame_004.png",
+              "rook/animations/walking/north/frame_005.png"
+            ],
+            "south-east": [
+              "rook/animations/walking/south-east/frame_000.png",
+              "rook/animations/walking/south-east/frame_001.png",
+              "rook/animations/walking/south-east/frame_002.png",
+              "rook/animations/walking/south-east/frame_003.png",
+              "rook/animations/walking/south-east/frame_004.png",
+              "rook/animations/walking/south-east/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:50:19.535592"
+}

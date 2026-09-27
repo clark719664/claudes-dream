@@ -1,0 +1,20 @@
+{
+  "id": "dba23a1b-0883-465c-a391-6ffc0a6e366d",
+  "name": "wiccan_m",
+  "state_name": "wiccan_m",
+  "prompt": "male Covenant warlock in a hooded ritual cloak holding a candle and grimoire, eerie, gothic, full body",
+  "size": {
+    "width": 88,
+    "height": 88
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:47:10.593831+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/dba23a1b-0883-465c-a391-6ffc0a6e366d/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "b8766582-1b7d-475e-8fa8-dac591f1f21f"
+}

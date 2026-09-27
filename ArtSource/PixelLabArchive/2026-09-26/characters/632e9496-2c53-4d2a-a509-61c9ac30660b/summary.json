@@ -1,0 +1,20 @@
+{
+  "id": "632e9496-2c53-4d2a-a509-61c9ac30660b",
+  "name": "technomancer_m",
+  "state_name": "technomancer_m",
+  "prompt": "male Covenant technomancer in cyber-occult armor with floating glowing data-runes, menacing, cyberpunk-gothic, full body",
+  "size": {
+    "width": 96,
+    "height": 96
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T22:00:40.808619+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/632e9496-2c53-4d2a-a509-61c9ac30660b/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "c5838e6f-4729-4072-b772-87d2ac07e2e5"
+}

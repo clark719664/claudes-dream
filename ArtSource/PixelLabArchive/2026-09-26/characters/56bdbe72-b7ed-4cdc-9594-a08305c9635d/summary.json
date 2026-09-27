@@ -1,0 +1,20 @@
+{
+  "id": "56bdbe72-b7ed-4cdc-9594-a08305c9635d",
+  "name": "reaper_m",
+  "state_name": "reaper_m",
+  "prompt": "male Covenant reaper in a black tattered shroud wielding a void scythe, menacing villain, gothic, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T22:08:39.733540+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/56bdbe72-b7ed-4cdc-9594-a08305c9635d/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "71730160-bb34-4af6-9885-fd03cab25da1"
+}

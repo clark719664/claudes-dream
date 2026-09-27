@@ -1,0 +1,20 @@
+{
+  "id": "089a7a56-3cc2-488b-bdb1-44b440622e94",
+  "name": "grunt_f",
+  "state_name": "grunt_f",
+  "prompt": "female Covenant grunt enforcer in a dark hooded uniform with a glowing sigil, menacing villain, gothic-punk, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:40:27.793036+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/089a7a56-3cc2-488b-bdb1-44b440622e94/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "ecd1b4c2-8daa-4d0d-90cd-27722493d892"
+}

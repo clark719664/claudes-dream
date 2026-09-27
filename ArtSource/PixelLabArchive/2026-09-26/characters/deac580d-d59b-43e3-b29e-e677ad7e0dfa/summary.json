@@ -1,0 +1,20 @@
+{
+  "id": "deac580d-d59b-43e3-b29e-e677ad7e0dfa",
+  "name": "alpaca",
+  "state_name": "Idle",
+  "prompt": "Fluffy brown alpaca, tall neck, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T22:32:40.839557+00:00",
+  "updated_at": "2026-09-25T22:38:51.636765+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/deac580d-d59b-43e3-b29e-e677ad7e0dfa/rotations/south.png?t=1790375931",
+  "tags": [],
+  "group_id": "4eaed113-ef61-4cf8-a5bb-a5d7a98913c7"
+}

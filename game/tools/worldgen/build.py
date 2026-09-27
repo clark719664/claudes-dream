@@ -12,8 +12,47 @@ COLOURS = ['white', 'yellow', 'blue', 'orange']
 def house(a, door_x, feet_y, style, name, gables=1, t='house'):
     """A house whose doorstep is at (door_x, feet_y); door_x is the seam between the two door
     columns. 8 tiles wide per gable, 10 tall."""
-    o = a.add(t, door_x, feet_y, style=style, name=name, gables=gables)
-    a.reserve(door_x - 4 * gables, feet_y - 10, door_x + 4 * gables, feet_y)
+    
+    # Map specific building names to our custom sprites
+    name_map = {
+        'General Store': 'general_store',
+        'Smithy': 'blacksmith_shop',
+        "Tilda's Carpentry": 'npc_house_1',
+        'The Stardrop Saloon': 'saloon',
+        "Merlo's house": 'wizard_tower',
+        'Brindle churchyard': 'church',
+        'The Millers': 'npc_house_2',
+        'The Hollins': 'school',
+        'The Wayfarer Inn': 'inn',
+        'Town Library': 'library',
+        'Medical Clinic': 'clinic',
+        'Green Thumb Dispensary': 'dispensary',
+        'Town Museum': 'museum',
+        "Mayor's Manor": 'mayors_manor',
+        'The Coopers': 'npc_house_3',
+        'Pen Ridge Ranch': 'npc_house_4',
+        'The Weavers': 'npc_house_5',
+        'Town Bathhouse': 'bathhouse',
+        'Barn': 'barn',
+        'Coop': 'coop',
+        'Silo': 'silo',
+        'Windmill': 'windmill',
+        'Greenhouse': 'greenhouse',
+        'Stone Well': 'well'
+    }
+    
+    if name in name_map:
+        # It's a massive 168x168 building, taking ~10x10 tiles
+        t = 'custom_building'
+        kind = name_map[name]
+        o = a.add(t, door_x, feet_y, style=style, name=name, gables=gables, kind=kind)
+        # Custom buildings are 10.5 tiles wide (168px). Their center is door_x.
+        # They go about 10 tiles up.
+        a.reserve(door_x - 5, feet_y - 10, door_x + 5, feet_y)
+    else:
+        o = a.add(t, door_x, feet_y, style=style, name=name, gables=gables)
+        a.reserve(door_x - 4 * gables, feet_y - 10, door_x + 4 * gables, feet_y)
+    
     return o
 
 

@@ -1,0 +1,38 @@
+{
+  "id": "83935a74-30d9-487a-b777-9fc355d68b3b",
+  "name": "Creepy ghost child ",
+  "state_name": "Idle",
+  "prompt": "Creepy ghost child ",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:30:34.495551+00:00",
+  "updated_at": "2026-09-25T19:31:37.264285+00:00",
+  "animation_count": 0,
+  "template_id": "custom",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/83935a74-30d9-487a-b777-9fc355d68b3b/rotations/south.png?t=1790364697",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/83935a74-30d9-487a-b777-9fc355d68b3b/rotations/west.png?t=1790364697",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/83935a74-30d9-487a-b777-9fc355d68b3b/rotations/east.png?t=1790364697",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/83935a74-30d9-487a-b777-9fc355d68b3b/rotations/north.png?t=1790364697",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/83935a74-30d9-487a-b777-9fc355d68b3b/rotations/south-east.png?t=1790364697",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/83935a74-30d9-487a-b777-9fc355d68b3b/rotations/north-east.png?t=1790364697",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/83935a74-30d9-487a-b777-9fc355d68b3b/rotations/north-west.png?t=1790364697",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/83935a74-30d9-487a-b777-9fc355d68b3b/rotations/south-west.png?t=1790364697"
+  },
+  "style_settings": {
+    "detail": "",
+    "outline": "",
+    "shading": ""
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "b1085ca2-1f64-4b60-b1dc-a509f81d51eb",
+  "skeletons": {},
+  "animations": []
+}

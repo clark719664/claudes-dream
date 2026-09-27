@@ -1,0 +1,36 @@
+{
+  "id": "5928ddc7-7b28-4ead-9f05-101a231ebbd0",
+  "name": "cow",
+  "state_name": "Idle",
+  "prompt": "Farm cow, black and white spots, low top-down 16-bit RPG pixel art, crisp black outline",
+  "size": {
+    "width": 64,
+    "height": 64
+  },
+  "directions": 8,
+  "created_at": "2026-09-25T19:49:41.021007+00:00",
+  "updated_at": "2026-09-25T20:04:13.808702+00:00",
+  "animation_count": 0,
+  "template_id": "quadruped",
+  "view": "low top-down",
+  "status": "completed",
+  "rotation_urls": {
+    "south": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5928ddc7-7b28-4ead-9f05-101a231ebbd0/rotations/south.png?t=1790366653",
+    "west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5928ddc7-7b28-4ead-9f05-101a231ebbd0/rotations/west.png?t=1790366653",
+    "east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5928ddc7-7b28-4ead-9f05-101a231ebbd0/rotations/east.png?t=1790366653",
+    "north": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5928ddc7-7b28-4ead-9f05-101a231ebbd0/rotations/north.png?t=1790366653",
+    "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5928ddc7-7b28-4ead-9f05-101a231ebbd0/rotations/south-east.png?t=1790366653",
+    "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5928ddc7-7b28-4ead-9f05-101a231ebbd0/rotations/north-east.png?t=1790366653",
+    "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5928ddc7-7b28-4ead-9f05-101a231ebbd0/rotations/north-west.png?t=1790366653",
+    "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5928ddc7-7b28-4ead-9f05-101a231ebbd0/rotations/south-west.png?t=1790366653"
+  },
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "4fdd3f1d-e148-48d9-8983-83826d2f3392",
+  "skeletons": null,
+  "animations": []
+}

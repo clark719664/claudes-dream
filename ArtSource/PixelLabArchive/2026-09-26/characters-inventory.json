@@ -1,0 +1,3382 @@
+[
+  {
+    "id": "c0ae91f2-f06b-4176-bf19-22ff0c9fdbfd",
+    "name": "bramble_treant",
+    "state_name": "Idle",
+    "prompt": "Haunted Bramble Treant monster made of twisted oak bark, autumn leaves and glowing amber eyes, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T23:44:07.777029+00:00",
+    "updated_at": "2026-09-25T23:47:44.088895+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c0ae91f2-f06b-4176-bf19-22ff0c9fdbfd/rotations/south.png?t=1790380064",
+    "tags": [],
+    "group_id": "a374cb55-a1e2-47ef-bbaf-3c2c284bb7fb"
+  },
+  {
+    "id": "c8519849-863e-4c37-8a7a-f205f00b98f1",
+    "name": "magma_golem",
+    "state_name": "Idle",
+    "prompt": "Volcanic Magma Golem brute made of cracked dark basalt rock and glowing orange lava veins, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T23:44:07.271063+00:00",
+    "updated_at": "2026-09-25T23:47:03.661727+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c8519849-863e-4c37-8a7a-f205f00b98f1/rotations/south.png?t=1790380023",
+    "tags": [],
+    "group_id": "91bf39bc-d853-4851-8132-c2df89718290"
+  },
+  {
+    "id": "55c280af-d813-490b-b4c5-f44de5e62c68",
+    "name": "cave_goblin",
+    "state_name": "Idle",
+    "prompt": "Quarry Cave Goblin raider with mining helmet, jagged iron pickaxe and lantern, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T23:44:06.704589+00:00",
+    "updated_at": "2026-09-25T23:48:43.801857+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/55c280af-d813-490b-b4c5-f44de5e62c68/rotations/south.png?t=1790380123",
+    "tags": [],
+    "group_id": "e8b2d167-b104-44bd-9804-1c7e46a1f9a9"
+  },
+  {
+    "id": "e8eab3fd-0578-4874-b6d9-aab249d9cd7a",
+    "name": "emerald_slime",
+    "state_name": "Idle",
+    "prompt": "Giant Emerald Forest Slime monster with a glowing golden core and mossy crown, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T23:44:06.090641+00:00",
+    "updated_at": "2026-09-25T23:47:35.320575+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/e8eab3fd-0578-4874-b6d9-aab249d9cd7a/rotations/south.png?t=1790380055",
+    "tags": [],
+    "group_id": "a56ed6a3-57d6-45c1-973f-27b6f939028f"
+  },
+  {
+    "id": "a98982e4-881a-4d92-a8bf-bef96fe38fff",
+    "name": "frost_yeti",
+    "state_name": "Idle",
+    "prompt": "Frostvale Yeti monster, hulking white-furred ice beast with glowing blue eyes and frost claws, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T23:44:05.571325+00:00",
+    "updated_at": "2026-09-25T23:47:45.727347+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/a98982e4-881a-4d92-a8bf-bef96fe38fff/rotations/south.png?t=1790380065",
+    "tags": [],
+    "group_id": "3ff5ac81-3c83-41dc-bef7-fa0ea7a7d01c"
+  },
+  {
+    "id": "7695f402-28ec-44dc-b370-de91a5e29661",
+    "name": "baby_duck",
+    "state_name": "one baby duckling wi",
+    "prompt": "Baby duckling, small yellow bird, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:59:47.931186+00:00",
+    "updated_at": "2026-09-25T23:00:50.823323+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7695f402-28ec-44dc-b370-de91a5e29661/rotations/south.png?t=1790377250",
+    "tags": [],
+    "group_id": "cfa50a95-fee8-4153-a9e1-75fb5754dc3a"
+  },
+  {
+    "id": "1dfd3835-c569-4afc-bba5-5e3b1e75c58d",
+    "name": "Pig, large and pink, low top-down 16-bit RPG pixel art, crisp black outline",
+    "state_name": "Idle",
+    "prompt": "Pig, large and pink, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:51:42.474882+00:00",
+    "updated_at": "2026-09-25T22:53:59.518603+00:00",
+    "animation_count": 0,
+    "template_id": "bear",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/1dfd3835-c569-4afc-bba5-5e3b1e75c58d/rotations/south.png?t=1790376839",
+    "tags": [],
+    "group_id": "eeda808b-107f-4f20-bc8e-08efa386fcba"
+  },
+  {
+    "id": "980c9e9a-6e3b-477e-bd10-f98a5dfc29e0",
+    "name": "baby_turkey",
+    "state_name": "Idle",
+    "prompt": "Baby turkey poult, small brown bird, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:43:16.750274+00:00",
+    "updated_at": "2026-09-25T22:46:56.217405+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/980c9e9a-6e3b-477e-bd10-f98a5dfc29e0/rotations/south.png?t=1790376416",
+    "tags": [],
+    "group_id": "4edb895f-f1cb-4e75-b17d-22969ceec57c"
+  },
+  {
+    "id": "943654b0-d3c1-4999-8e4d-3ee9cf48de95",
+    "name": "baby_donkey",
+    "state_name": "Idle",
+    "prompt": "Baby donkey foal, small grey, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:43:14.219553+00:00",
+    "updated_at": "2026-09-25T22:48:47.757166+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/943654b0-d3c1-4999-8e4d-3ee9cf48de95/rotations/south.png?t=1790376527",
+    "tags": [],
+    "group_id": "1b6e728b-607a-42a0-a05a-38b61fe58bae"
+  },
+  {
+    "id": "4f8eb894-89c4-4e61-ae90-155889f975ec",
+    "name": "baby_llama",
+    "state_name": "Idle",
+    "prompt": "Baby llama cria, small brown and white, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:43:11.618130+00:00",
+    "updated_at": "2026-09-25T22:47:07.681015+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4f8eb894-89c4-4e61-ae90-155889f975ec/rotations/south.png?t=1790376427",
+    "tags": [],
+    "group_id": "34f3792d-5598-4481-acec-d03333919a47"
+  },
+  {
+    "id": "472800c9-d301-4d1c-9981-b6f6c7dfa332",
+    "name": "baby_alpaca",
+    "state_name": "Idle",
+    "prompt": "Baby alpaca cria, small fluffy white, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:43:09.089814+00:00",
+    "updated_at": "2026-09-25T22:46:50.719109+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/472800c9-d301-4d1c-9981-b6f6c7dfa332/rotations/south.png?t=1790376410",
+    "tags": [],
+    "group_id": "ff469d35-a15d-450d-ac5f-b77d36713830"
+  },
+  {
+    "id": "d7a0705f-8d4c-4fd1-a18a-31c56a38fc85",
+    "name": "baby_goat",
+    "state_name": "Idle",
+    "prompt": "Baby goat kid, small white and brown, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:43:06.472411+00:00",
+    "updated_at": "2026-09-25T22:47:36.635836+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d7a0705f-8d4c-4fd1-a18a-31c56a38fc85/rotations/south.png?t=1790376456",
+    "tags": [],
+    "group_id": "b97fac23-5421-4219-8699-977f6ff712eb"
+  },
+  {
+    "id": "90d93607-8027-4fae-bdb4-519260656c7a",
+    "name": "turkey",
+    "state_name": "Idle",
+    "prompt": "Farm turkey, large brown bird with tail fan, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:32:48.593038+00:00",
+    "updated_at": "2026-09-25T22:39:23.723744+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/90d93607-8027-4fae-bdb4-519260656c7a/rotations/south.png?t=1790375963",
+    "tags": [],
+    "group_id": "08cf1d35-b74f-4814-92d3-78b65fd0ac5d"
+  },
+  {
+    "id": "60ac20dc-107d-4b0f-8c57-50a17545135a",
+    "name": "donkey",
+    "state_name": "Idle",
+    "prompt": "Farm donkey, gray with long ears, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:32:46.001628+00:00",
+    "updated_at": "2026-09-25T22:36:38.645977+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/60ac20dc-107d-4b0f-8c57-50a17545135a/rotations/south.png?t=1790375798",
+    "tags": [],
+    "group_id": "9676759d-994c-4263-892a-1f9126e4397d"
+  },
+  {
+    "id": "ae53ea0e-dc4c-4456-9e9c-b6a28517a640",
+    "name": "llama",
+    "state_name": "Idle",
+    "prompt": "Farm llama, white tall neck, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:32:43.480173+00:00",
+    "updated_at": "2026-09-25T22:41:25.030786+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ae53ea0e-dc4c-4456-9e9c-b6a28517a640/rotations/south.png?t=1790376085",
+    "tags": [],
+    "group_id": "3e9e6ffa-9f6d-4729-ae33-696401bd48be"
+  },
+  {
+    "id": "deac580d-d59b-43e3-b29e-e677ad7e0dfa",
+    "name": "alpaca",
+    "state_name": "Idle",
+    "prompt": "Fluffy brown alpaca, tall neck, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:32:40.839557+00:00",
+    "updated_at": "2026-09-25T22:38:51.636765+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/deac580d-d59b-43e3-b29e-e677ad7e0dfa/rotations/south.png?t=1790375931",
+    "tags": [],
+    "group_id": "4eaed113-ef61-4cf8-a5bb-a5d7a98913c7"
+  },
+  {
+    "id": "62bb495b-72f7-40e7-98de-c1d826f64b2f",
+    "name": "duck",
+    "state_name": "Idle",
+    "prompt": "Farm duck, white bird with orange bill, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:32:38.239482+00:00",
+    "updated_at": "2026-09-25T22:36:50.454024+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/62bb495b-72f7-40e7-98de-c1d826f64b2f/rotations/south.png?t=1790375810",
+    "tags": [],
+    "group_id": "be652f00-2bd8-4fcc-8748-8c5149b735b4"
+  },
+  {
+    "id": "25271516-bcb4-4985-a2e3-9d9103863d91",
+    "name": "baby_chicken",
+    "state_name": "Idle",
+    "prompt": "Baby chick, small yellow bird, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:32:33.021261+00:00",
+    "updated_at": "2026-09-25T22:40:05.614978+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/25271516-bcb4-4985-a2e3-9d9103863d91/rotations/south.png?t=1790376005",
+    "tags": [],
+    "group_id": "1079624c-3daf-48d7-a343-78db13d02a2c"
+  },
+  {
+    "id": "c48ddb99-3bfe-4419-a0d9-92b3caa92be5",
+    "name": "baby_arctic_wolf",
+    "state_name": "Idle",
+    "prompt": "Baby arctic wolf pup, small white, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:32:30.458448+00:00",
+    "updated_at": "2026-09-25T22:38:53.440251+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c48ddb99-3bfe-4419-a0d9-92b3caa92be5/rotations/south.png?t=1790375933",
+    "tags": [],
+    "group_id": "f58b39dd-839f-4b19-935e-b7402322fb16"
+  },
+  {
+    "id": "971f912f-f155-4226-9045-61c9dc804429",
+    "name": "baby_wolf",
+    "state_name": "Idle",
+    "prompt": "Baby wolf pup, small gray, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:32:27.934548+00:00",
+    "updated_at": "2026-09-25T22:36:06.523377+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/971f912f-f155-4226-9045-61c9dc804429/rotations/south.png?t=1790375766",
+    "tags": [],
+    "group_id": "a3cea120-ad83-4d0e-983c-eff1a3f11e19"
+  },
+  {
+    "id": "4d0524dd-06c6-45d4-ad6a-3da4556f9fea",
+    "name": "baby_polar_bear",
+    "state_name": "Idle",
+    "prompt": "Baby polar bear cub, small white, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T22:32:25.341014+00:00",
+    "updated_at": "2026-09-25T22:38:39.263398+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4d0524dd-06c6-45d4-ad6a-3da4556f9fea/rotations/south.png?t=1790375919",
+    "tags": [],
+    "group_id": "64b907bc-3075-48dc-a13a-03ce390357e6"
+  },
+  {
+    "id": "56515907-8528-4640-8ea9-327a671d5e58",
+    "name": "baby_bear",
+    "state_name": "Idle",
+    "prompt": "Baby bear cub, small brown, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:50:00.383419+00:00",
+    "updated_at": "2026-09-25T20:06:39.299652+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/56515907-8528-4640-8ea9-327a671d5e58/rotations/south.png?t=1790366799",
+    "tags": [],
+    "group_id": "25916f0b-957a-476c-ab5c-9776588882ea"
+  },
+  {
+    "id": "44ec61ca-58ab-401f-8a21-5586539dab49",
+    "name": "baby_ferret",
+    "state_name": "Idle",
+    "prompt": "Baby ferret, small long body, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:49:58.787872+00:00",
+    "updated_at": "2026-09-25T20:13:34.336131+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/44ec61ca-58ab-401f-8a21-5586539dab49/rotations/south.png?t=1790367214",
+    "tags": [],
+    "group_id": "663df551-c153-4cb2-a569-e71ab39f15b2"
+  },
+  {
+    "id": "c3e35841-cafb-4631-804e-573c8eaa00e6",
+    "name": "kitten",
+    "state_name": "Idle",
+    "prompt": "Baby kitten cat, small tabby, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:49:56.382384+00:00",
+    "updated_at": "2026-09-25T20:18:35.425056+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c3e35841-cafb-4631-804e-573c8eaa00e6/rotations/south.png?t=1790367515",
+    "tags": [],
+    "group_id": "0aa8fe67-758c-4a7e-a361-9cda1f53bbb4"
+  },
+  {
+    "id": "b52e5761-85b6-4fd0-8d95-c6daa4e2b61e",
+    "name": "puppy",
+    "state_name": "Idle",
+    "prompt": "Baby puppy dog, small, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:49:54.751001+00:00",
+    "updated_at": "2026-09-25T20:06:33.072960+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b52e5761-85b6-4fd0-8d95-c6daa4e2b61e/rotations/south.png?t=1790366793",
+    "tags": [],
+    "group_id": "d93896d4-78f0-4904-bc83-443db412b573"
+  },
+  {
+    "id": "f91f2553-5cec-4464-9aa9-18797485a5a9",
+    "name": "baby_horse",
+    "state_name": "Idle",
+    "prompt": "Baby foal horse, small brown, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:49:53.155343+00:00",
+    "updated_at": "2026-09-25T20:12:54.417469+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f91f2553-5cec-4464-9aa9-18797485a5a9/rotations/south.png?t=1790367174",
+    "tags": [],
+    "group_id": "179658e2-1716-4520-a547-9457f84ac0a8"
+  },
+  {
+    "id": "b227ebee-2b7b-4da5-9ef6-ed6e8992a403",
+    "name": "baby_pig",
+    "state_name": "Idle",
+    "prompt": "Baby piglet, small pink, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:49:51.570644+00:00",
+    "updated_at": "2026-09-25T20:08:15.316747+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b227ebee-2b7b-4da5-9ef6-ed6e8992a403/rotations/south.png?t=1790366895",
+    "tags": [],
+    "group_id": "b13ccf1d-e99c-4d7f-81ef-7f3130250918"
+  },
+  {
+    "id": "d22f2c01-4190-4f64-8aa6-bb607c8f4a29",
+    "name": "baby_sheep",
+    "state_name": "Idle",
+    "prompt": "Baby lamb, small fluffy white, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:49:49.803084+00:00",
+    "updated_at": "2026-09-25T20:07:27.776790+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d22f2c01-4190-4f64-8aa6-bb607c8f4a29/rotations/south.png?t=1790366847",
+    "tags": [],
+    "group_id": "289a1897-4f01-4fe7-a3e9-62bd3da4a0a3"
+  },
+  {
+    "id": "e3c75042-7e54-40f8-8abc-de684379f230",
+    "name": "baby_cow",
+    "state_name": "Idle",
+    "prompt": "Baby farm calf, small, black and white spots, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:49:48.080251+00:00",
+    "updated_at": "2026-09-25T20:08:23.405479+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/e3c75042-7e54-40f8-8abc-de684379f230/rotations/south.png?t=1790366903",
+    "tags": [],
+    "group_id": "2fcfecb6-0b32-44d6-a19d-16702e66817b"
+  },
+  {
+    "id": "0d44fb4f-850f-47b1-a77a-6bf7bc573211",
+    "name": "sheep",
+    "state_name": "Idle",
+    "prompt": "Fluffy white sheep, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:49:42.917125+00:00",
+    "updated_at": "2026-09-25T20:08:17.767601+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0d44fb4f-850f-47b1-a77a-6bf7bc573211/rotations/south.png?t=1790366897",
+    "tags": [],
+    "group_id": "4cfbde84-7f4d-46f7-a658-35bbc6e3d0e2"
+  },
+  {
+    "id": "5928ddc7-7b28-4ead-9f05-101a231ebbd0",
+    "name": "cow",
+    "state_name": "Idle",
+    "prompt": "Farm cow, black and white spots, low top-down 16-bit RPG pixel art, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:49:41.021007+00:00",
+    "updated_at": "2026-09-25T20:04:13.808702+00:00",
+    "animation_count": 0,
+    "template_id": "quadruped",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5928ddc7-7b28-4ead-9f05-101a231ebbd0/rotations/south.png?t=1790366653",
+    "tags": [],
+    "group_id": "4fdd3f1d-e148-48d9-8983-83826d2f3392"
+  },
+  {
+    "id": "037282d2-36dd-4a8a-9087-e612c65ed5c7",
+    "name": "Small jumping spider",
+    "state_name": "Idle",
+    "prompt": "Small jumping spider",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:35:47.506510+00:00",
+    "updated_at": "2026-09-25T19:37:20.501182+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/037282d2-36dd-4a8a-9087-e612c65ed5c7/rotations/south.png?t=1790365040",
+    "tags": [],
+    "group_id": "2baed737-908a-49fa-82f0-a260dcb63efd"
+  },
+  {
+    "id": "d335f514-186e-4dab-a4f1-3faa68ea46a5",
+    "name": "Horse",
+    "state_name": "Idle",
+    "prompt": "Horse",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:34:30.055846+00:00",
+    "updated_at": "2026-09-25T19:36:49.632432+00:00",
+    "animation_count": 0,
+    "template_id": "bear",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d335f514-186e-4dab-a4f1-3faa68ea46a5/rotations/south.png?t=1790365009",
+    "tags": [],
+    "group_id": "da726981-f866-4e8b-8836-e3313a7d5d38"
+  },
+  {
+    "id": "433a89b8-ec8c-4c8e-9e02-a2f2cfd5d50c",
+    "name": "Bee",
+    "state_name": "Idle",
+    "prompt": "Bee",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:32:56.782100+00:00",
+    "updated_at": "2026-09-25T19:34:30.844441+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/433a89b8-ec8c-4c8e-9e02-a2f2cfd5d50c/rotations/south.png?t=1790364870",
+    "tags": [],
+    "group_id": "8ab32e92-a363-4dd6-99e0-9bfbdebf496a"
+  },
+  {
+    "id": "94ad19ff-8ca6-44de-a69c-88cb710b119c",
+    "name": "Butterfly",
+    "state_name": "Idle",
+    "prompt": "Butterfly",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:32:41.434899+00:00",
+    "updated_at": "2026-09-25T19:34:34.638692+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/94ad19ff-8ca6-44de-a69c-88cb710b119c/rotations/south.png?t=1790364874",
+    "tags": [],
+    "group_id": "7c5e6347-aec3-4090-875b-1a1989fae82d"
+  },
+  {
+    "id": "f23a0437-6d04-492f-99e6-625f72796e89",
+    "name": "Frog",
+    "state_name": "Idle",
+    "prompt": "Frog",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:32:17.668715+00:00",
+    "updated_at": "2026-09-25T19:35:24.225897+00:00",
+    "animation_count": 0,
+    "template_id": "bear",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f23a0437-6d04-492f-99e6-625f72796e89/rotations/south.png?t=1790364924",
+    "tags": [],
+    "group_id": "cc5b9370-2da2-4e40-b984-705814e674d9"
+  },
+  {
+    "id": "83935a74-30d9-487a-b777-9fc355d68b3b",
+    "name": "Creepy ghost child ",
+    "state_name": "Idle",
+    "prompt": "Creepy ghost child ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:30:34.495551+00:00",
+    "updated_at": "2026-09-25T19:31:37.264285+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/83935a74-30d9-487a-b777-9fc355d68b3b/rotations/south.png?t=1790364697",
+    "tags": [],
+    "group_id": "b1085ca2-1f64-4b60-b1dc-a509f81d51eb"
+  },
+  {
+    "id": "49dbf51e-343c-4a95-b698-804c3bfb1afd",
+    "name": "Child Forrest elf boy",
+    "state_name": "Idle",
+    "prompt": "Child Forrest elf boy",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:30:07.975175+00:00",
+    "updated_at": "2026-09-25T19:33:33.022867+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/49dbf51e-343c-4a95-b698-804c3bfb1afd/rotations/south.png?t=1790364813",
+    "tags": [],
+    "group_id": "cef33875-16d5-4247-8418-94e657e0e889"
+  },
+  {
+    "id": "465d0d6e-0407-462f-a5e4-fe3b3a59d6bf",
+    "name": "Child Forrest elf girl ",
+    "state_name": "Idle",
+    "prompt": "Child Forrest elf girl ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:29:54.106609+00:00",
+    "updated_at": "2026-09-25T19:34:29.461642+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/465d0d6e-0407-462f-a5e4-fe3b3a59d6bf/rotations/south.png?t=1790364869",
+    "tags": [],
+    "group_id": "9d637bdc-29c6-49ee-a7a7-df2435bb7662"
+  },
+  {
+    "id": "8447624a-f66c-447c-9e72-37bb63525aee",
+    "name": "Female Forrest elf",
+    "state_name": "Idle",
+    "prompt": "Female Forrest elf",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:29:35.734507+00:00",
+    "updated_at": "2026-09-25T19:34:54.569442+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/8447624a-f66c-447c-9e72-37bb63525aee/rotations/south.png?t=1790364894",
+    "tags": [],
+    "group_id": "d2ddddf8-9f83-466f-b0a5-99bea1f2fbd8"
+  },
+  {
+    "id": "62b51a8e-7a1b-4e75-ab44-b38a542c1faa",
+    "name": "Male Forrest elf",
+    "state_name": "Idle",
+    "prompt": "Male Forrest elf",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:29:21.900884+00:00",
+    "updated_at": "2026-09-25T19:32:38.676381+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/62b51a8e-7a1b-4e75-ab44-b38a542c1faa/rotations/south.png?t=1790364758",
+    "tags": [],
+    "group_id": "88c218c8-3e91-44ac-8d0f-3598f534d9c8"
+  },
+  {
+    "id": "ac078aa4-d04a-40ae-8153-7ded8d063697",
+    "name": "Ghost female",
+    "state_name": "Idle",
+    "prompt": "Ghost female",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:28:06.229937+00:00",
+    "updated_at": "2026-09-25T19:29:36.432497+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ac078aa4-d04a-40ae-8153-7ded8d063697/rotations/south.png?t=1790364576",
+    "tags": [],
+    "group_id": "979cb025-bd53-485d-b150-17ae2a405ca8"
+  },
+  {
+    "id": "2aad9363-9a0d-42e3-bb8a-5e69c9c8e8d7",
+    "name": "Ghost male ",
+    "state_name": "Idle",
+    "prompt": "Ghost male ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:27:54.056414+00:00",
+    "updated_at": "2026-09-25T19:29:14.163217+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/2aad9363-9a0d-42e3-bb8a-5e69c9c8e8d7/rotations/south.png?t=1790364554",
+    "tags": [],
+    "group_id": "655acc3a-2c69-4a76-94d7-14d374bd41b6"
+  },
+  {
+    "id": "cab6b4d9-f6fd-41fc-b27b-1640095805c5",
+    "name": "Garden snake ",
+    "state_name": "Idle",
+    "prompt": "Garden snake ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:27:06.582497+00:00",
+    "updated_at": "2026-09-25T19:28:19.933350+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cab6b4d9-f6fd-41fc-b27b-1640095805c5/rotations/south.png?t=1790364499",
+    "tags": [],
+    "group_id": "6a5c62a0-82b9-41a2-9372-cc7f5f2a8551"
+  },
+  {
+    "id": "bdc495d6-28e2-440b-81ce-72d876f4c83b",
+    "name": "Cave snake ",
+    "state_name": "Idle",
+    "prompt": "Cave snake ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:26:36.671673+00:00",
+    "updated_at": "2026-09-25T19:27:46.323891+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bdc495d6-28e2-440b-81ce-72d876f4c83b/rotations/south.png?t=1790364466",
+    "tags": [],
+    "group_id": "a46abbd0-b550-4f53-8724-89fad6497d8d"
+  },
+  {
+    "id": "c8026092-3205-4d78-be74-19c240ab5907",
+    "name": "Small cave bats",
+    "state_name": "Idle",
+    "prompt": "Small cave bats",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:25:23.729148+00:00",
+    "updated_at": "2026-09-25T19:27:06.797257+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c8026092-3205-4d78-be74-19c240ab5907/rotations/south.png?t=1790364426",
+    "tags": [],
+    "group_id": "3b17fa02-ab0b-4a8a-ba77-7bb8d68c67a1"
+  },
+  {
+    "id": "fb2e1a95-3bac-4c64-bd81-d9697598e845",
+    "name": "Magma slime",
+    "state_name": "Magma slime, red onl",
+    "prompt": "Magma slime",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:24:46.074359+00:00",
+    "updated_at": "2026-09-25T19:25:52.124547+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/fb2e1a95-3bac-4c64-bd81-d9697598e845/rotations/south.png?t=1790364352",
+    "tags": [],
+    "group_id": "37dfd11b-5486-4498-8a63-25458f00277a"
+  },
+  {
+    "id": "71feb45d-4325-409e-9822-2e3cf50bcda6",
+    "name": "Chicken",
+    "state_name": "Idle",
+    "prompt": "Chicken",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:23:40.808123+00:00",
+    "updated_at": "2026-09-25T19:24:53.393068+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/71feb45d-4325-409e-9822-2e3cf50bcda6/rotations/south.png?t=1790364293",
+    "tags": [],
+    "group_id": "f840d8ce-003e-43df-b852-61e81edcab37"
+  },
+  {
+    "id": "ee56faf3-c832-4d03-94c1-2fcd499a8435",
+    "name": "Ferret ",
+    "state_name": "Idle",
+    "prompt": "Ferret ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:20:38.048771+00:00",
+    "updated_at": "2026-09-25T19:23:24.031237+00:00",
+    "animation_count": 0,
+    "template_id": "bear",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ee56faf3-c832-4d03-94c1-2fcd499a8435/rotations/south.png?t=1790364204",
+    "tags": [],
+    "group_id": "c554d40f-e2ea-48fa-b0ac-a833434573f1"
+  },
+  {
+    "id": "98550dca-3683-4148-b6f7-6e1b98ced413",
+    "name": "Polar bear ",
+    "state_name": "Idle",
+    "prompt": "Polar bear ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:20:14.036871+00:00",
+    "updated_at": "2026-09-25T19:22:56.735666+00:00",
+    "animation_count": 0,
+    "template_id": "bear",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/98550dca-3683-4148-b6f7-6e1b98ced413/rotations/south.png?t=1790364176",
+    "tags": [],
+    "group_id": "70f1af4e-1242-4971-944d-2493c78c8a3c"
+  },
+  {
+    "id": "955800a7-46dd-4ee3-b099-17f1e4ff0fbe",
+    "name": "Artic wolf ",
+    "state_name": "Idle",
+    "prompt": "Artic wolf ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:20:03.449025+00:00",
+    "updated_at": "2026-09-25T19:23:07.941362+00:00",
+    "animation_count": 0,
+    "template_id": "bear",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/955800a7-46dd-4ee3-b099-17f1e4ff0fbe/rotations/south.png?t=1790364187",
+    "tags": [],
+    "group_id": "e2701413-2c3a-4906-a267-5eab3e788b8c"
+  },
+  {
+    "id": "88ddaff5-e4b9-4b29-a4d6-ba1c41d6eac5",
+    "name": "Bear ",
+    "state_name": "Idle",
+    "prompt": "Bear ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:19:50.756735+00:00",
+    "updated_at": "2026-09-25T19:22:35.892586+00:00",
+    "animation_count": 0,
+    "template_id": "bear",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/88ddaff5-e4b9-4b29-a4d6-ba1c41d6eac5/rotations/south.png?t=1790364155",
+    "tags": [],
+    "group_id": "92c0f1d6-bab9-4fb0-932b-01b5d199bcf6"
+  },
+  {
+    "id": "eec4222c-9c8d-4341-84f7-ce1040ba493f",
+    "name": "Green Forrest slime ",
+    "state_name": "A green slime covere",
+    "prompt": "Green Forrest slime ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:19:16.504093+00:00",
+    "updated_at": "2026-09-25T19:22:32.853186+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/eec4222c-9c8d-4341-84f7-ce1040ba493f/rotations/south.png?t=1790364152",
+    "tags": [],
+    "group_id": "f3c6ea8a-f70d-4ff0-b6e8-25e02852b3ed"
+  },
+  {
+    "id": "263008bc-7929-411b-b1b9-4e6015664844",
+    "name": "Radioactive centipede ",
+    "state_name": "Idle",
+    "prompt": "Radioactive centipede ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:18:20.378638+00:00",
+    "updated_at": "2026-09-25T19:19:51.771598+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/263008bc-7929-411b-b1b9-4e6015664844/rotations/south.png?t=1790363991",
+    "tags": [],
+    "group_id": "93e7345c-a831-4e00-b5ac-fd8a24656209"
+  },
+  {
+    "id": "23faf074-86fe-4bdf-90d9-00518ffc3768",
+    "name": "Dog",
+    "state_name": "Idle",
+    "prompt": "Dog",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:17:54.107387+00:00",
+    "updated_at": "2026-09-25T19:21:04.601046+00:00",
+    "animation_count": 0,
+    "template_id": "bear",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/23faf074-86fe-4bdf-90d9-00518ffc3768/rotations/south.png?t=1790364064",
+    "tags": [],
+    "group_id": "74bddb12-78cf-4464-bb6b-bd1f9cd79485"
+  },
+  {
+    "id": "d0e25a1e-050a-4b0c-905a-24ab55eecdfe",
+    "name": "Tabby cat ",
+    "state_name": "Idle",
+    "prompt": "Tabby cat ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:17:45.157345+00:00",
+    "updated_at": "2026-09-25T19:20:20.811943+00:00",
+    "animation_count": 0,
+    "template_id": "bear",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d0e25a1e-050a-4b0c-905a-24ab55eecdfe/rotations/south.png?t=1790364020",
+    "tags": [],
+    "group_id": "8d9103a9-445f-46dc-b892-e7a427174ec0"
+  },
+  {
+    "id": "16e1696b-59eb-49fe-bac8-1567fcf705d2",
+    "name": "Forrest wolf ",
+    "state_name": "Idle",
+    "prompt": "Forrest wolf ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:17:20.534060+00:00",
+    "updated_at": "2026-09-25T19:19:59.017124+00:00",
+    "animation_count": 0,
+    "template_id": "bear",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/16e1696b-59eb-49fe-bac8-1567fcf705d2/rotations/south.png?t=1790363999",
+    "tags": [],
+    "group_id": "696ff37b-7f39-4c92-ad77-a2e4cc7b532c"
+  },
+  {
+    "id": "8eb206db-95b0-41c4-a34f-3ea0ec3f278b",
+    "name": "A stone based slime ",
+    "state_name": "Idle",
+    "prompt": "A stone based slime ",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:16:30.370554+00:00",
+    "updated_at": "2026-09-25T19:17:40.376852+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/8eb206db-95b0-41c4-a34f-3ea0ec3f278b/rotations/south.png?t=1790363860",
+    "tags": [],
+    "group_id": "f281dafa-c270-4014-aea9-3d8bda117ea1"
+  },
+  {
+    "id": "9bc302d4-e864-4445-8686-f68dc0acf3b1",
+    "name": "crystal_basilisk",
+    "state_name": "Crystal basilisk arm",
+    "prompt": "Crystal basilisk armored small reptilian beast with glowing blue geode spikes, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:15:20.993210+00:00",
+    "updated_at": "2026-09-25T19:17:15.512213+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/9bc302d4-e864-4445-8686-f68dc0acf3b1/rotations/south.png?t=1790363835",
+    "tags": [],
+    "group_id": "cec36b96-7549-40ee-a5ba-2559392058cf"
+  },
+  {
+    "id": "cfaa77d8-f332-4548-b24d-525a0b16e42d",
+    "name": "cave_bat",
+    "state_name": "A flying cave bat mo",
+    "prompt": "Giant cave bat monster, leathery brown wings and glowing red eyes, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:13:15.427180+00:00",
+    "updated_at": "2026-09-25T19:14:56.552533+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cfaa77d8-f332-4548-b24d-525a0b16e42d/rotations/south.png?t=1790363696",
+    "tags": [],
+    "group_id": "ad03a100-d6d3-46fa-8559-1761050907d2"
+  },
+  {
+    "id": "c4b57cf6-f5b6-4034-82f0-95939b905714",
+    "name": "shadow_fiend",
+    "state_name": "Idle",
+    "prompt": "Dark shadow fiend monster, wraith-like deep cavern stalker with glowing purple hands, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:08:32.112280+00:00",
+    "updated_at": "2026-09-25T19:13:56.745351+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c4b57cf6-f5b6-4034-82f0-95939b905714/rotations/south.png?t=1790363636",
+    "tags": [],
+    "group_id": "86b95825-8d05-44c7-bcd0-60e39ea7bb82"
+  },
+  {
+    "id": "c24fbc2e-b1ee-495f-89e2-b8596c6e763c",
+    "name": "abyssal_crawler",
+    "state_name": "Idle",
+    "prompt": "Abyssal crawler monster, multi-legged deep cave horror with glowing pale eyes, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:08:30.514183+00:00",
+    "updated_at": "2026-09-25T19:12:53.383735+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c24fbc2e-b1ee-495f-89e2-b8596c6e763c/rotations/south.png?t=1790363573",
+    "tags": [],
+    "group_id": "619dfe86-c7e5-4c42-aded-6468012cc41d"
+  },
+  {
+    "id": "dcfd3d38-660f-450d-b544-b1e201fea1f9",
+    "name": "tunnel_spider",
+    "state_name": "Idle",
+    "prompt": "Giant venomous tunnel spider monster, hairy black legs and green glowing fangs, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T19:08:27.343842+00:00",
+    "updated_at": "2026-09-25T19:11:55.727698+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/dcfd3d38-660f-450d-b544-b1e201fea1f9/rotations/south.png?t=1790363515",
+    "tags": [],
+    "group_id": "66f5de98-01b0-4d93-8672-c39f49973379"
+  },
+  {
+    "id": "29da762e-b332-43c5-b24e-ce03e25bed7c",
+    "name": "bramble_treant",
+    "state_name": "Idle",
+    "prompt": "Haunted Bramble Treant monster made of twisted oak bark, autumn leaves and glowing amber eyes, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T18:30:14.688523+00:00",
+    "updated_at": "2026-09-25T19:08:16.263220+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/29da762e-b332-43c5-b24e-ce03e25bed7c/rotations/south.png?t=1790363296",
+    "tags": [],
+    "group_id": "0d9849b9-5969-418e-ae3a-cd4e5d30cfc6"
+  },
+  {
+    "id": "d1744945-5033-459b-b6c2-6482da99aa82",
+    "name": "magma_golem",
+    "state_name": "Idle",
+    "prompt": "Volcanic Magma Golem brute made of cracked dark basalt rock and glowing orange lava veins, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T18:30:12.598618+00:00",
+    "updated_at": "2026-09-25T18:35:11.708867+00:00",
+    "animation_count": 7,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d1744945-5033-459b-b6c2-6482da99aa82/rotations/south.png?t=1790361311",
+    "tags": [],
+    "group_id": "b7cdda19-f609-46f5-93b4-6fd4a1f2d4e6"
+  },
+  {
+    "id": "3dcc229f-384c-4dbf-a707-e5f3a2ca8345",
+    "name": "cave_goblin",
+    "state_name": "Idle",
+    "prompt": "Quarry Cave Goblin raider with mining helmet, jagged iron pickaxe and lantern, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T18:30:11.838476+00:00",
+    "updated_at": "2026-09-25T18:34:05.199093+00:00",
+    "animation_count": 3,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/3dcc229f-384c-4dbf-a707-e5f3a2ca8345/rotations/south.png?t=1790361245",
+    "tags": [],
+    "group_id": "afeb33fe-d549-4efb-83e1-3d23cb3ce959"
+  },
+  {
+    "id": "ee137e93-bfeb-478c-80f7-43c4e73d80f3",
+    "name": "emerald_slime",
+    "state_name": "Idle",
+    "prompt": "Giant Emerald Forest Slime monster with a glowing golden core and mossy crown, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T18:30:11.120587+00:00",
+    "updated_at": "2026-09-25T18:39:14.994014+00:00",
+    "animation_count": 20,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ee137e93-bfeb-478c-80f7-43c4e73d80f3/rotations/south.png?t=1790361554",
+    "tags": [],
+    "group_id": "de8b7a21-e74c-4ba8-88fb-206681ab8392"
+  },
+  {
+    "id": "4a91fe4f-b945-4ec3-a29a-f8704f730cd7",
+    "name": "frost_yeti",
+    "state_name": "Idle",
+    "prompt": "Frostvale Yeti monster, hulking white-furred ice beast with glowing blue eyes and frost claws, low top-down 16-bit RPG pixel art monster, crisp black outline",
+    "size": {
+      "width": 64,
+      "height": 64
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T18:30:10.394242+00:00",
+    "updated_at": "2026-09-25T18:33:24.774537+00:00",
+    "animation_count": 16,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4a91fe4f-b945-4ec3-a29a-f8704f730cd7/rotations/south.png?t=1790361204",
+    "tags": [],
+    "group_id": "13e2b8d3-a16d-4c30-86a8-cdbd7ffa91a9"
+  },
+  {
+    "id": "aa160374-eab1-4a9e-8774-e34552a50018",
+    "name": "A dungeon slime",
+    "state_name": "Idle",
+    "prompt": "A dungeon slime",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-09-25T18:27:15.068564+00:00",
+    "updated_at": "2026-09-25T18:28:13.105935+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/aa160374-eab1-4a9e-8774-e34552a50018/rotations/south.png?t=1790360893",
+    "tags": [],
+    "group_id": "eb5350d5-95ac-46c7-a031-15a3cfe8ebd0"
+  },
+  {
+    "id": "40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3",
+    "name": "Design an original cartoon pig character for a small desktop pet that sits on a Windows taskbar. Show three versions side by side in a neutral standing pose: a slim one, a noticeably rounder one, and an almost spherical one. They must read as the same individual pig at three different weights, with identical face, markings, colours, and accessory. Give it one clear signature detail—a bright gold coin tag on its collar—that stays readable at about 60 pixels tall. Appealing, characterful, readable against both light and dark backgrounds. Fully transparent background, no shadow, no card, no border, no text.",
+    "state_name": "Idle",
+    "prompt": "Design an original cartoon pig character for a small desktop pet that sits on a Windows taskbar. Show three versions side by side in a neutral standing pose: a slim one, a noticeably rounder one, and an almost spherical one. They must read as the same individual pig at three different weights, with identical face, markings, colours, and accessory. Give it one clear signature detail—a bright gold coin tag on its collar—that stays readable at about 60 pixels tall. Appealing, characterful, readable against both light and dark backgrounds. Fully transparent background, no shadow, no card, no border, no text.",
+    "size": {
+      "width": 60,
+      "height": 60
+    },
+    "directions": 8,
+    "created_at": "2026-09-15T12:49:14.030047+00:00",
+    "updated_at": "2026-09-15T12:50:34.257061+00:00",
+    "animation_count": 0,
+    "template_id": "custom",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/40d8aa9c-cadb-449d-bc2e-58d3cab4b6e3/rotations/south.png?t=1789476634",
+    "tags": [],
+    "group_id": "3f22c7a7-b2ca-4f8b-8129-30442736019a"
+  },
+  {
+    "id": "284b1a14-2196-4b62-9e5e-d477e3581439",
+    "name": "goat",
+    "state_name": "goat",
+    "prompt": "small white nanny goat with back-curved horns and a short beard, cloven hooves, friendly farm livestock",
+    "size": {
+      "width": 68,
+      "height": 68
+    },
+    "directions": 8,
+    "created_at": "2026-06-17T00:07:01.825541+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "horse",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/284b1a14-2196-4b62-9e5e-d477e3581439/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "87e934be-b705-4035-aeef-f9c1e6223adc"
+  },
+  {
+    "id": "c574b348-d63e-4503-94b5-ed6a7ad3d24a",
+    "name": "teacher_nessa",
+    "state_name": "teacher_nessa",
+    "prompt": "a kind schoolteacher in a tidy cardigan and long skirt holding a book, warm friendly townsperson, gothic-punk, full body",
+    "size": {
+      "width": 120,
+      "height": 120
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T23:01:06.392221+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/c574b348-d63e-4503-94b5-ed6a7ad3d24a/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "fce553e7-b5c9-49c7-b40d-8bb2de82fd57"
+  },
+  {
+    "id": "130806fb-f1ac-4939-855f-be6ca11ea85c",
+    "name": "farmer_skim",
+    "state_name": "farmer_skim",
+    "prompt": "a humble farmer in denim overalls and a straw hat holding a hoe, friendly townsperson, cozy gothic-punk, full body",
+    "size": {
+      "width": 120,
+      "height": 120
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T23:01:04.154051+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/130806fb-f1ac-4939-855f-be6ca11ea85c/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "d7087b84-9044-400d-82f7-7e7a3ac2be86"
+  },
+  {
+    "id": "ce360dc5-4529-4721-8145-2d5e9d9ca252",
+    "name": "road_ira",
+    "state_name": "road_ira",
+    "prompt": "a wandering road witch in a patched green traveling cloak with herb pouches, mysterious but friendly townsperson, gothic, full body",
+    "size": {
+      "width": 128,
+      "height": 128
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T23:01:02.416320+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ce360dc5-4529-4721-8145-2d5e9d9ca252/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "64427bbf-2fbb-40e2-b765-fa8dc732f346"
+  },
+  {
+    "id": "d58856df-78f7-42fc-b6cc-f1752fbbf017",
+    "name": "sable",
+    "state_name": "sable",
+    "prompt": "a friendly free-diver woman in a teal wetsuit with goggles pushed up on her forehead, warm townsperson, gothic-punk, full body",
+    "size": {
+      "width": 128,
+      "height": 128
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T23:01:00.634323+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d58856df-78f7-42fc-b6cc-f1752fbbf017/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "94082c43-3aac-452c-a7a8-3527b0cfa21c"
+  },
+  {
+    "id": "3d32026d-2bb4-4682-a04c-395e1aaa3d6c",
+    "name": "lyric",
+    "state_name": "lyric",
+    "prompt": "a stylish synthwave DJ with neon headphones and a glowing visor, friendly cool townsperson, gothic-punk neon, full body",
+    "size": {
+      "width": 120,
+      "height": 120
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T23:00:56.420535+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/3d32026d-2bb4-4682-a04c-395e1aaa3d6c/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "3c3b8c53-c662-462b-929e-45d06db04c60"
+  },
+  {
+    "id": "4cc8a51a-fb13-4dc8-a8c0-313881d972c0",
+    "name": "player_male",
+    "state_name": "player_male",
+    "prompt": "a young man with a lean build in a plain linen tunic and brown trousers and boots, friendly farmer adventurer protagonist, warm gothic-punk, full body",
+    "size": {
+      "width": 128,
+      "height": 128
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:43:05.315859+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4cc8a51a-fb13-4dc8-a8c0-313881d972c0/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "aba567e0-13b3-4789-8923-9a13fe6bd86f"
+  },
+  {
+    "id": "4377269d-9538-4a01-9978-17aeb183b051",
+    "name": "player_thin_fem",
+    "state_name": "player_thin_fem",
+    "prompt": "a slender young woman in a plain linen blouse and brown trousers and boots, friendly farmer adventurer protagonist, warm gothic-punk, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:28:17.816377+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4377269d-9538-4a01-9978-17aeb183b051/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "01b54237-b1b1-4a7e-8b0a-9204c04dcf7b"
+  },
+  {
+    "id": "e7f8e627-fb0c-4fd0-8878-ea036894e8c6",
+    "name": "player_thick_fem",
+    "state_name": "player_thick_fem",
+    "prompt": "a curvy full-figured young woman in a plain linen blouse and brown trousers and boots, friendly farmer adventurer protagonist, warm gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:28:15.602018+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/e7f8e627-fb0c-4fd0-8878-ea036894e8c6/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "0413bb9b-4ad8-4d42-a0ab-825498edb81c"
+  },
+  {
+    "id": "a7fb240d-64c0-4d26-bb03-c8b98cf6b409",
+    "name": "player_male",
+    "state_name": "player_male",
+    "prompt": "a young man with a lean build in a plain linen tunic and brown trousers and boots, friendly farmer adventurer protagonist, warm gothic-punk, full body",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:28:13.688137+00:00",
+    "updated_at": "2026-07-30T10:43:51.075223+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "failed",
+    "preview_url": null,
+    "tags": [],
+    "group_id": "1f347453-0fc7-462b-be30-89648b0a1adc"
+  },
+  {
+    "id": "a174aef6-e918-403b-aaf8-085d9b197e23",
+    "name": "player_lg_male",
+    "state_name": "player_lg_male",
+    "prompt": "a large broad-shouldered young man in a plain linen tunic and brown trousers and boots, friendly farmer adventurer protagonist, warm gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:28:11.746922+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/a174aef6-e918-403b-aaf8-085d9b197e23/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "bab89d7e-d23a-47a5-88e0-c01864ad1fb8"
+  },
+  {
+    "id": "e11f68a7-77ee-472f-889d-a2c45e721b6f",
+    "name": "diver_f",
+    "state_name": "diver_f",
+    "prompt": "female Covenant diver in a dark sleek wetsuit with a rebreather and void-tech goggles, menacing aquatic villain, gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:28:09.660059+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/e11f68a7-77ee-472f-889d-a2c45e721b6f/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "4877d8bc-e214-42d7-95f5-d0dad1a785e7"
+  },
+  {
+    "id": "dd7248b4-d2fb-4cc0-920b-8b305d2197e8",
+    "name": "diver_f",
+    "state_name": "diver_f",
+    "prompt": "female Covenant diver in a dark sleek wetsuit with a rebreather and void-tech goggles, menacing aquatic villain, gothic-punk, full body",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:15:17.435085+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "failed",
+    "preview_url": null,
+    "tags": [],
+    "group_id": "90069ef2-6feb-406f-8eaf-6a6a6ce0a4a6"
+  },
+  {
+    "id": "7368cb47-911f-4289-9f60-0b6649a7a09b",
+    "name": "diver_m",
+    "state_name": "diver_m",
+    "prompt": "male Covenant diver in a dark sleek wetsuit with a rebreather and void-tech goggles, menacing aquatic villain, gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:15:14.989315+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7368cb47-911f-4289-9f60-0b6649a7a09b/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "ca756490-eb76-448a-84ea-0e79c37216a6"
+  },
+  {
+    "id": "1dcce854-9ae8-4e8f-b543-8c2052e78b77",
+    "name": "zealot_f",
+    "state_name": "zealot_f",
+    "prompt": "female Covenant zealot fanatic in chained dark robes with burning eyes, fervent villain, gothic, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:15:10.803531+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/1dcce854-9ae8-4e8f-b543-8c2052e78b77/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "3875f082-cbc0-4c18-9a38-242687583244"
+  },
+  {
+    "id": "17f3d9d6-41eb-4710-929c-c3cef525825e",
+    "name": "zealot_m",
+    "state_name": "zealot_m",
+    "prompt": "male Covenant zealot fanatic in chained dark robes with burning eyes, fervent villain, gothic, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:15:08.926140+00:00",
+    "updated_at": "2026-07-30T10:44:13.593692+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/17f3d9d6-41eb-4710-929c-c3cef525825e/rotations/south.png?t=1785408253",
+    "tags": [],
+    "group_id": "5474a141-bd5a-400b-b6f6-4c69919267cf"
+  },
+  {
+    "id": "2623c3b5-8263-4470-999f-dfcd30705792",
+    "name": "reaper_f",
+    "state_name": "reaper_f",
+    "prompt": "female Covenant reaper in a black tattered shroud wielding a void scythe, menacing villain, gothic, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:15:06.813044+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/2623c3b5-8263-4470-999f-dfcd30705792/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "24d4ab32-be6d-46a8-8417-98f1cfae5214"
+  },
+  {
+    "id": "1ce41992-6426-4284-96d4-0d47e6e45762",
+    "name": "wiccan_f",
+    "state_name": "wiccan_f",
+    "prompt": "female Covenant wiccan witch in a hooded ritual cloak holding a candle and grimoire, eerie, gothic, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:08:48.196431+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/1ce41992-6426-4284-96d4-0d47e6e45762/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "9a96bc9c-6652-4d31-a57d-598c90e0cb96"
+  },
+  {
+    "id": "56bdbe72-b7ed-4cdc-9594-a08305c9635d",
+    "name": "reaper_m",
+    "state_name": "reaper_m",
+    "prompt": "male Covenant reaper in a black tattered shroud wielding a void scythe, menacing villain, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:08:39.733540+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/56bdbe72-b7ed-4cdc-9594-a08305c9635d/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "71730160-bb34-4af6-9885-fd03cab25da1"
+  },
+  {
+    "id": "580df1aa-a5e6-4be4-b82b-8e1426da56ec",
+    "name": "inquisitor_f",
+    "state_name": "inquisitor_f",
+    "prompt": "female Covenant inquisitor in austere dark vestments holding a bladed scepter, severe villain, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:08:30.538539+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/580df1aa-a5e6-4be4-b82b-8e1426da56ec/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "6146cb09-f82a-4981-89d4-4913657e3fe6"
+  },
+  {
+    "id": "4f5d4b41-3da0-4b6b-b027-bf72b22f1a2e",
+    "name": "inquisitor_m",
+    "state_name": "inquisitor_m",
+    "prompt": "male Covenant inquisitor in austere dark vestments holding a bladed scepter, severe villain, gothic, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:08:28.776334+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4f5d4b41-3da0-4b6b-b027-bf72b22f1a2e/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "65a7d3a9-48f7-4752-a8d1-2957362ae583"
+  },
+  {
+    "id": "4b6cad64-280e-42a4-8715-bd872d6fb2cf",
+    "name": "technomancer_f",
+    "state_name": "technomancer_f",
+    "prompt": "female Covenant technomancer in cyber-occult armor with floating glowing data-runes, menacing, cyberpunk-gothic, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:08:27.191676+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4b6cad64-280e-42a4-8715-bd872d6fb2cf/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "15eddad2-d6e4-49ad-a28a-61d72e7e2846"
+  },
+  {
+    "id": "632e9496-2c53-4d2a-a509-61c9ac30660b",
+    "name": "technomancer_m",
+    "state_name": "technomancer_m",
+    "prompt": "male Covenant technomancer in cyber-occult armor with floating glowing data-runes, menacing, cyberpunk-gothic, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:00:40.808619+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/632e9496-2c53-4d2a-a509-61c9ac30660b/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "c5838e6f-4729-4072-b772-87d2ac07e2e5"
+  },
+  {
+    "id": "1262882d-0a19-4302-8e33-34416b090c49",
+    "name": "hexer_f",
+    "state_name": "hexer_f",
+    "prompt": "female Covenant hexer in a masked cultist robe trailing dark smoke, sinister, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:00:38.384825+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/1262882d-0a19-4302-8e33-34416b090c49/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "b75e1cb0-30ec-4f1c-8014-02369367280a"
+  },
+  {
+    "id": "3ef6ad34-529a-444b-8e3b-5e35ed6833b3",
+    "name": "hexer_m",
+    "state_name": "hexer_m",
+    "prompt": "male Covenant hexer in a masked cultist robe trailing dark smoke, sinister, gothic, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:00:33.880728+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/3ef6ad34-529a-444b-8e3b-5e35ed6833b3/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "554dd339-71b3-477b-8118-55df8332c5bd"
+  },
+  {
+    "id": "729a76ed-3f4f-4cfb-8e88-313093fef7f9",
+    "name": "enforcer_f",
+    "state_name": "enforcer_f",
+    "prompt": "female Covenant enforcer in heavy riot armor with a shock baton and visor, imposing villain, gothic-punk, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T22:00:30.896889+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/729a76ed-3f4f-4cfb-8e88-313093fef7f9/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "8d3e548f-2959-4c68-8ed5-bbdccd31041d"
+  },
+  {
+    "id": "cd361140-6c68-4c4b-9772-daf7131fd141",
+    "name": "enforcer_m",
+    "state_name": "enforcer_m",
+    "prompt": "male Covenant enforcer in heavy riot armor with a shock baton and visor, imposing villain, gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:53:56.565714+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cd361140-6c68-4c4b-9772-daf7131fd141/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "54b7823f-72c9-47ad-96da-e82a09bcb838"
+  },
+  {
+    "id": "bb21e65e-8ece-4660-bc07-c38c3ffce0ac",
+    "name": "acolyte_f",
+    "state_name": "acolyte_f",
+    "prompt": "female Covenant acolyte zealot in dark robes with a glowing seal amulet, devout and cold, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:53:54.186034+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bb21e65e-8ece-4660-bc07-c38c3ffce0ac/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "094013d0-54a4-4b99-b472-c253579a6cf6"
+  },
+  {
+    "id": "ce689332-2b40-4789-8bdf-2622cc8cc900",
+    "name": "acolyte_m",
+    "state_name": "acolyte_m",
+    "prompt": "male Covenant acolyte zealot in dark robes with a glowing seal amulet, devout and cold, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:53:45.138389+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ce689332-2b40-4789-8bdf-2622cc8cc900/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "d789fad2-363c-43fe-9b2b-39eb37a0623f"
+  },
+  {
+    "id": "dfdd9cbe-af50-45e6-bbfa-68c578365df8",
+    "name": "berserker_f",
+    "state_name": "berserker_f",
+    "prompt": "female Covenant berserker in spiked black armor wielding a massive cleaver, fierce villain, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:53:42.386395+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/dfdd9cbe-af50-45e6-bbfa-68c578365df8/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "1c642f73-f2cf-4eca-b7a4-6e3971ec65af"
+  },
+  {
+    "id": "89146965-72b2-416f-9809-88fe415f303e",
+    "name": "berserker_m",
+    "state_name": "berserker_m",
+    "prompt": "male Covenant berserker, a hulking brute in spiked black armor with a massive cleaver, menacing villain, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:47:21.095370+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/89146965-72b2-416f-9809-88fe415f303e/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "f6be636b-66c7-4040-9874-e49914c6f59c"
+  },
+  {
+    "id": "cccba738-98a4-413a-b8e5-3c37b89f6d6b",
+    "name": "wiccan_f",
+    "state_name": "wiccan_f",
+    "prompt": "female Covenant wiccan witch in a hooded ritual cloak holding a candle and grimoire, eerie, gothic, full body",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:47:16.021442+00:00",
+    "updated_at": "2026-07-30T10:43:51.075223+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "failed",
+    "preview_url": null,
+    "tags": [],
+    "group_id": "1ae38f96-2e64-4b5d-93d2-65595ca52024"
+  },
+  {
+    "id": "dba23a1b-0883-465c-a391-6ffc0a6e366d",
+    "name": "wiccan_m",
+    "state_name": "wiccan_m",
+    "prompt": "male Covenant warlock in a hooded ritual cloak holding a candle and grimoire, eerie, gothic, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:47:10.593831+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/dba23a1b-0883-465c-a391-6ffc0a6e366d/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "b8766582-1b7d-475e-8fa8-dac591f1f21f"
+  },
+  {
+    "id": "af702260-00c4-4217-a557-70c78a2625ca",
+    "name": "necro_f",
+    "state_name": "necro_f",
+    "prompt": "female Covenant necromancer in tattered black robes with bone charms and a skull staff, menacing, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:47:07.713254+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/af702260-00c4-4217-a557-70c78a2625ca/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "1c3076e5-b453-4c52-9894-2fb9c72950b8"
+  },
+  {
+    "id": "3af6d4ce-1803-4865-a25d-121f0f91df53",
+    "name": "necro_m",
+    "state_name": "necro_m",
+    "prompt": "male Covenant necromancer in tattered black robes with bone charms and a skull staff, menacing, gothic, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:40:35.784551+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/3af6d4ce-1803-4865-a25d-121f0f91df53/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "22b91683-71d7-43e8-8217-3d9227fc6e1f"
+  },
+  {
+    "id": "455f9905-2c73-4d89-ab9f-55d79d7c50e9",
+    "name": "scientist_f",
+    "state_name": "scientist_f",
+    "prompt": "female Covenant scientist in a stained lab coat with void goggles holding a syringe, sinister, gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:40:33.434845+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/455f9905-2c73-4d89-ab9f-55d79d7c50e9/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "8090b93b-17e2-4a4d-a2af-4e3f2770218a"
+  },
+  {
+    "id": "9855336c-838b-4d6d-a0e4-d23998a3f77c",
+    "name": "scientist_m",
+    "state_name": "scientist_m",
+    "prompt": "male Covenant scientist in a stained lab coat with void goggles holding a syringe, sinister, gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:40:31.016929+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/9855336c-838b-4d6d-a0e4-d23998a3f77c/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "3418f164-8d14-438b-acd4-485124e481fb"
+  },
+  {
+    "id": "089a7a56-3cc2-488b-bdb1-44b440622e94",
+    "name": "grunt_f",
+    "state_name": "grunt_f",
+    "prompt": "female Covenant grunt enforcer in a dark hooded uniform with a glowing sigil, menacing villain, gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:40:27.793036+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/089a7a56-3cc2-488b-bdb1-44b440622e94/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "ecd1b4c2-8daa-4d0d-90cd-27722493d892"
+  },
+  {
+    "id": "f7f545f2-0939-4650-aaf3-0fbdf4769a56",
+    "name": "grunt_m",
+    "state_name": "grunt_m",
+    "prompt": "male Covenant grunt enforcer in a dark hooded uniform with a glowing sigil, menacing villain, gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:40:25.122468+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f7f545f2-0939-4650-aaf3-0fbdf4769a56/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "7b34bab3-3f22-441d-9770-1b6201545e9b"
+  },
+  {
+    "id": "5f0ad488-fbdf-4043-9e7e-9140c8b3c820",
+    "name": "scrap_yadi",
+    "state_name": "scrap_yadi",
+    "prompt": "Yadi, a junk dealer in a patchwork coat covered in trinkets and gadgets, cozy stardew-style RPG villager, gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:25:05.845084+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5f0ad488-fbdf-4043-9e7e-9140c8b3c820/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "ef07f4ac-b514-4275-af8f-718ce1a4f48d"
+  },
+  {
+    "id": "a5c463e5-36d6-4e41-9c99-3e755a6fb84d",
+    "name": "refugee_crow",
+    "state_name": "refugee_crow",
+    "prompt": "Crow, a weary refugee in a patched travel cloak carrying a bindle, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:17:41.574473+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "failed",
+    "preview_url": null,
+    "tags": [],
+    "group_id": "d2a60693-f2a0-4c6a-b0ec-3fd2c21f7121"
+  },
+  {
+    "id": "ebacb35d-59a8-4604-a3c4-116c06ee81e6",
+    "name": "defector_lace",
+    "state_name": "defector_lace",
+    "prompt": "Lace, a former Covenant member in a half-torn warden cloak, conflicted, cozy stardew-style RPG villager, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:17:38.796356+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ebacb35d-59a8-4604-a3c4-116c06ee81e6/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "7ab79b56-1a57-4ba2-9040-7dec45f5e320"
+  },
+  {
+    "id": "84e41e32-fb27-449a-86f5-7df703350a7b",
+    "name": "fortune_moth",
+    "state_name": "fortune_moth",
+    "prompt": "Moth, a fortune teller in a starry shawl holding a crystal ball, mysterious, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:17:34.557326+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/84e41e32-fb27-449a-86f5-7df703350a7b/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "f53adea7-003f-4b62-a029-11b81c86c1d7"
+  },
+  {
+    "id": "66b4dac8-e7b8-4ff5-8675-0f4a65a489fe",
+    "name": "mechanic_grease",
+    "state_name": "mechanic_grease",
+    "prompt": "Grease, a mechanic in oil-stained overalls and a cap holding a wrench, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:17:26.912852+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/66b4dac8-e7b8-4ff5-8675-0f4a65a489fe/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "0bf3748c-791d-4ceb-a0d5-c8a2c5eafd86"
+  },
+  {
+    "id": "a0bce44a-c600-4e12-a68d-a051f938814a",
+    "name": "bone_pax",
+    "state_name": "bone_pax",
+    "prompt": "Pax, a bone-collector in a skull mask and rib-cage armor, eerie, cozy stardew-style RPG villager, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:17:21.816952+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/a0bce44a-c600-4e12-a68d-a051f938814a/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "32707452-3d94-4b2d-b6fe-6f89f0164118"
+  },
+  {
+    "id": "d6bfc464-bc9a-4a15-b015-8a5555b11664",
+    "name": "orphan_suki",
+    "state_name": "orphan_suki",
+    "prompt": "Suki, a shy little orphan girl hugging a stuffed toy, cute, cozy stardew-style RPG child, full body",
+    "size": {
+      "width": 76,
+      "height": 76
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:04:10.146086+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d6bfc464-bc9a-4a15-b015-8a5555b11664/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "e8bdc562-be85-43a2-ba78-e9d8811e5e33"
+  },
+  {
+    "id": "727b2f99-77d0-4a3a-8e0e-30652ac5a946",
+    "name": "orphan_ren",
+    "state_name": "orphan_ren",
+    "prompt": "Ren, a scrappy orphan kid in patched clothes with a determined grin, cute, cozy stardew-style RPG child, full body",
+    "size": {
+      "width": 76,
+      "height": 76
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:04:00.407381+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/727b2f99-77d0-4a3a-8e0e-30652ac5a946/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "d7319b18-2c38-4302-84cf-9cc48cdba087"
+  },
+  {
+    "id": "da359d30-1eae-4765-8832-40bd7a9ab128",
+    "name": "seraphine",
+    "state_name": "seraphine",
+    "prompt": "Seraphine, an ethereal Covenant high priestess in flowing white and void robes with a halo of dark light, imposing tragic villain, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:03:55.138805+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/da359d30-1eae-4765-8832-40bd7a9ab128/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "81a9b0ff-7925-4088-a888-e4b0e6ba3ae5"
+  },
+  {
+    "id": "f39fc43c-4a6a-4008-8c95-c95fec7e6f25",
+    "name": "spark_kael",
+    "state_name": "spark_kael",
+    "prompt": "Spark Prophet Kael, a Covenant warden in crackling electric robes with a lightning crown, menacing villain, gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:03:52.204956+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f39fc43c-4a6a-4008-8c95-c95fec7e6f25/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "9c84b08a-f913-4f9f-b262-4170c85890a6"
+  },
+  {
+    "id": "0b9d9707-e2c8-416d-9862-8f3a1455cefa",
+    "name": "busker_rio",
+    "state_name": "busker_rio",
+    "prompt": "Rio, a cheerful street busker with a guitar on the back and a feathered hat, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T21:03:44.152100+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b9d9707-e2c8-416d-9862-8f3a1455cefa/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "318f3337-829c-4f93-a199-20c454d8d1fa"
+  },
+  {
+    "id": "7e918edd-393f-4b68-8d5f-69e5f1a479fa",
+    "name": "archon_vex",
+    "state_name": "archon_vex",
+    "prompt": "Archon Vex, a towering Covenant archon in black and gold ceremonial armor with a dark void halo, imposing villain, gothic-punk, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:56:27.026862+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 7,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/7e918edd-393f-4b68-8d5f-69e5f1a479fa/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "c4660c16-dcb6-446f-8d3e-3ec249d873dd"
+  },
+  {
+    "id": "1a88f9ef-07d3-45ae-a96a-78dec6db5f6b",
+    "name": "thorn_vale",
+    "state_name": "thorn_vale",
+    "prompt": "Thorn Matriarch Vale, a warden wreathed in living briars and dark armor, menacing villain, gothic, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:56:24.698733+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/1a88f9ef-07d3-45ae-a96a-78dec6db5f6b/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "961e57ac-23ed-48a8-9595-cc9453724916"
+  },
+  {
+    "id": "41b469fc-d9eb-4055-a694-1649c7243778",
+    "name": "mirelle",
+    "state_name": "mirelle",
+    "prompt": "Sister Mirelle, a severe Covenant warden in dark ornate robes wielding a bladed staff, cold menacing villain, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:56:21.993128+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/41b469fc-d9eb-4055-a694-1649c7243778/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "c4e62e4c-043f-40da-8fbe-c07ac719f122"
+  },
+  {
+    "id": "abc2a6ed-f4aa-4569-ae1d-ea21a95051ed",
+    "name": "garrick",
+    "state_name": "garrick",
+    "prompt": "Rust Warden Garrick, a menacing Covenant warden in rusted iron plate armor with a horned helm, imposing villain, gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:56:18.040822+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/abc2a6ed-f4aa-4569-ae1d-ea21a95051ed/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "6ef9ab58-8880-496e-aee3-be907d408570"
+  },
+  {
+    "id": "69d40a60-7f5a-4d70-8bb9-7b900d0cb6b6",
+    "name": "ranger_cole",
+    "state_name": "ranger_cole",
+    "prompt": "Ranger Cole, a forest ranger in green with a wide-brim hat and binoculars, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:45:51.892834+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/69d40a60-7f5a-4d70-8bb9-7b900d0cb6b6/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "198e3a10-6c6c-4555-bfb1-3148af836dd1"
+  },
+  {
+    "id": "5e2302d8-f5c6-485d-a602-3cc69b64a879",
+    "name": "mire_lotus",
+    "state_name": "mire_lotus",
+    "prompt": "Lotus, a serene swamp guide in a woven cloak holding a lantern, barefoot, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 84,
+      "height": 84
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:45:45.163690+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5e2302d8-f5c6-485d-a602-3cc69b64a879/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "57a3575c-20e8-4354-9474-fc724540547c"
+  },
+  {
+    "id": "63959e9e-71d0-4b48-816e-8d9008b57d21",
+    "name": "rust_juno",
+    "state_name": "rust_juno",
+    "prompt": "Juno Scrapper, a rugged scrapper in welding goggles and a patched jacket carrying scrap metal, cozy stardew-style RPG villager, gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:45:39.745579+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/63959e9e-71d0-4b48-816e-8d9008b57d21/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "3dc78b6b-166c-43e2-bfe9-7f66ec9b248d"
+  },
+  {
+    "id": "f0091cb1-a23a-4ed1-9c4b-5d89ff5fece9",
+    "name": "greenhouse_sal",
+    "state_name": "greenhouse_sal",
+    "prompt": "Sal, greenhouse keeper in a gardening apron and gloves carrying a potted plant, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:45:37.453734+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f0091cb1-a23a-4ed1-9c4b-5d89ff5fece9/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "0596e147-af0f-49ef-83fe-c0cea2fe8efc"
+  },
+  {
+    "id": "b7b8f12b-533a-48e8-a206-a7a17436e545",
+    "name": "gleam_courier",
+    "state_name": "gleam_courier",
+    "prompt": "Courier Gleam, cheerful mail carrier with a satchel of letters and a peaked cap, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:34:14.338232+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/b7b8f12b-533a-48e8-a206-a7a17436e545/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "38b3e73b-ecfd-4807-a603-24b41efe9331"
+  },
+  {
+    "id": "8114c9b6-fc42-4987-9a40-44f48ae471e5",
+    "name": "doc_elm",
+    "state_name": "doc_elm",
+    "prompt": "Dr. Elm, a glimmer researcher in a white lab coat with round glasses holding a tablet, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:34:10.948381+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/8114c9b6-fc42-4987-9a40-44f48ae471e5/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "40fc0b18-f994-4cf9-b599-5ea70adb266d"
+  },
+  {
+    "id": "dcc0c885-a1a1-4e7f-a04b-2894b2657cab",
+    "name": "nyx",
+    "state_name": "nyx",
+    "prompt": "Nyx, a mysterious void researcher in a dark hooded lab coat with faint glowing purple eyes, cozy stardew-style RPG villager, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:34:01.280546+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/dcc0c885-a1a1-4e7f-a04b-2894b2657cab/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "c1443984-f4f2-44b4-9854-1716e6cbfeae"
+  },
+  {
+    "id": "d5807d50-61e8-4fc3-877b-c2d921f5fa06",
+    "name": "jax",
+    "state_name": "jax",
+    "prompt": "Jax Kira, cocky teenage rival trainer in a stylish high-collar jacket with spiky hair and a confident smirk, cozy stardew-style RPG villager, gothic-punk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:33:58.638151+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d5807d50-61e8-4fc3-877b-c2d921f5fa06/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "8f35543b-8c68-4fd8-ab00-a5c777c77684"
+  },
+  {
+    "id": "0f4148f3-8f24-4b5f-bd55-49a5944a54fb",
+    "name": "kid_priya",
+    "state_name": "kid_priya",
+    "prompt": "Priya, a sweet little girl in a flowery dress with pigtails, cute, cozy stardew-style RPG child, full body",
+    "size": {
+      "width": 76,
+      "height": 76
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:23:43.443889+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0f4148f3-8f24-4b5f-bd55-49a5944a54fb/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "02a9a64a-481b-4117-bb07-bf1be32f2200"
+  },
+  {
+    "id": "d7363226-949a-45cb-bec7-45c31ae7d9bf",
+    "name": "kid_milo",
+    "state_name": "kid_milo",
+    "prompt": "Milo, a cheerful little kid in a striped shirt and shorts, messy hair, cute, cozy stardew-style RPG child, full body",
+    "size": {
+      "width": 72,
+      "height": 72
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:23:41.132464+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d7363226-949a-45cb-bec7-45c31ae7d9bf/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "b0c9ae16-26a8-4bb2-8ce8-35a9f428cfd8"
+  },
+  {
+    "id": "2aff475b-f0bc-4575-b92b-4701613b8201",
+    "name": "samuel",
+    "state_name": "samuel",
+    "prompt": "Samuel, a young boy with tousled brown hair in a simple tunic, big eyes, cute, cozy stardew-style RPG child, full body",
+    "size": {
+      "width": 76,
+      "height": 76
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T20:23:38.676711+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/2aff475b-f0bc-4575-b92b-4701613b8201/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "bb76ea51-b848-494c-a2ad-f79244fc5743"
+  },
+  {
+    "id": "305af951-a0f2-4ca1-87c5-bf18fa619a26",
+    "name": "hacker_rem",
+    "state_name": "hacker_rem",
+    "prompt": "Rem, a hacker in a dark hoodie holding a glowing tablet, neon accents and headset, cyberpunk, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T17:21:15.109597+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/305af951-a0f2-4ca1-87c5-bf18fa619a26/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "8eb43bde-db08-4a04-bcd7-d1098666e331"
+  },
+  {
+    "id": "0f952e30-eae1-4cb3-a096-76cab78c581f",
+    "name": "doc_elm",
+    "state_name": "doc_elm",
+    "prompt": "Dr. Elm, a glimmer researcher in a white lab coat with round glasses holding a tablet, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T17:21:09.632811+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "failed",
+    "preview_url": null,
+    "tags": [],
+    "group_id": "b6a36065-3549-4f06-b507-3ab90140bf46"
+  },
+  {
+    "id": "5a1923e5-be7a-4575-92c9-d8b5d104c631",
+    "name": "nyx",
+    "state_name": "nyx",
+    "prompt": "Nyx, a mysterious void researcher in a dark hooded lab coat with faint glowing purple eyes, cozy stardew-style RPG villager, gothic, full body",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T17:21:06.477258+00:00",
+    "updated_at": "2026-07-30T10:43:39.727186+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "failed",
+    "preview_url": null,
+    "tags": [],
+    "group_id": "91663fdc-8a7c-4415-8ff1-0f925f3aeca5"
+  },
+  {
+    "id": "b059fba7-31e5-4185-af7d-55d572f10159",
+    "name": "jax",
+    "state_name": "jax",
+    "prompt": "Jax Kira, cocky teenage rival trainer in a stylish high-collar jacket with spiky hair and a confident smirk, cozy stardew-style RPG villager, gothic-punk, full body",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T17:21:03.944730+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "failed",
+    "preview_url": null,
+    "tags": [],
+    "group_id": "1cb0bde6-68c9-4f6c-abcd-3c0d9ad9c6e2"
+  },
+  {
+    "id": "ead0418e-b8c9-43dd-bae0-b11702772e86",
+    "name": "neon_pix",
+    "state_name": "neon_pix",
+    "prompt": "Pix, a neon street vendor with a glowing visor and a tray of glowing wares, cyberpunk, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T17:14:11.834446+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ead0418e-b8c9-43dd-bae0-b11702772e86/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "51636b03-10e0-4980-ac83-18c43c83fef0"
+  },
+  {
+    "id": "3baddcd8-8751-4648-8200-fc2560631a6c",
+    "name": "barkeep_cass",
+    "state_name": "barkeep_cass",
+    "prompt": "Cass, friendly barkeep in a vest and apron wiping a glass, rolled sleeves, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T17:13:29.606609+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/3baddcd8-8751-4648-8200-fc2560631a6c/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "0e21d598-e366-486f-bee6-f4d0bcfbc182"
+  },
+  {
+    "id": "0b66c3ef-6548-4632-aa58-8b3f43183b5f",
+    "name": "bouncer_knox",
+    "state_name": "bouncer_knox",
+    "prompt": "Knox, burly nightclub bouncer in a black jacket with crossed arms and an earpiece, shaved head, cozy stardew-style RPG villager, cyberpunk, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T17:13:24.985472+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b66c3ef-6548-4632-aa58-8b3f43183b5f/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "904b265a-1c6e-44f7-ab9d-9dca3bdb92bf"
+  },
+  {
+    "id": "0b21563e-43d9-4c84-9b0c-5b64301537f3",
+    "name": "elder_grain",
+    "state_name": "elder_grain",
+    "prompt": "Elder Grain, kindly white-bearded elder in a long robe leaning on a wooden cane, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T17:06:03.832895+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/0b21563e-43d9-4c84-9b0c-5b64301537f3/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "0c22a797-1cad-4ed3-b28e-017f86114d20"
+  },
+  {
+    "id": "143f8762-d556-494a-a680-622d3413e4b1",
+    "name": "festival_gala",
+    "state_name": "festival_gala",
+    "prompt": "Gala Finch, lively festival organizer in a colorful ribboned outfit holding a clipboard and bunting, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T17:05:41.381961+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/143f8762-d556-494a-a680-622d3413e4b1/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "cc8be23b-1ca0-4aa0-8e73-dc814e181a52"
+  },
+  {
+    "id": "1c5c3c11-0c1c-40fe-b151-4730560c67b1",
+    "name": "gleam_courier",
+    "state_name": "gleam_courier",
+    "prompt": "Courier Gleam, cheerful mail carrier with a satchel of letters and a peaked cap, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:59:20.085010+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "failed",
+    "preview_url": null,
+    "tags": [],
+    "group_id": "7ded7d32-daef-4a7e-b3f5-b0bc34320421"
+  },
+  {
+    "id": "f6bef22d-021f-42ac-bb01-cf3917ad6f80",
+    "name": "curator_ash",
+    "state_name": "curator_ash",
+    "prompt": "Curator Ash, museum curator in a tweed jacket with a monocle and white gloves, refined, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:59:14.616684+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f6bef22d-021f-42ac-bb01-cf3917ad6f80/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "4ee275c3-e4c5-40ab-9101-02ace46fa85c"
+  },
+  {
+    "id": "5be865a7-93e1-4ad7-8210-86898ddfe487",
+    "name": "ranch_pen",
+    "state_name": "ranch_pen",
+    "prompt": "Pen Ridge, ranch hand in a wide cowboy hat, leather vest and boots with a coiled lasso, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:59:12.231870+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/5be865a7-93e1-4ad7-8210-86898ddfe487/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "ce81431a-00dc-449f-95de-198a37550912"
+  },
+  {
+    "id": "38c81fd2-3b30-411f-bc13-b7938245d678",
+    "name": "farmer_dell",
+    "state_name": "farmer_dell",
+    "prompt": "Farmer Dell, weathered farmer in denim overalls and a straw hat holding a pitchfork, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:59:09.115221+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/38c81fd2-3b30-411f-bc13-b7938245d678/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "15d0d1bf-1cb9-4f6b-a0b1-8a914abe516a"
+  },
+  {
+    "id": "db708da7-85ec-4b9e-89bf-b2458a449a4a",
+    "name": "mercy",
+    "state_name": "mercy",
+    "prompt": "Sister Mercy, serene chapel sister in a dark hooded habit holding a small glowing lantern, gentle, cozy stardew-style RPG villager, gothic, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:43:39.082458+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/db708da7-85ec-4b9e-89bf-b2458a449a4a/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "07fa531c-016b-40b7-82a4-3f01322bb5a4"
+  },
+  {
+    "id": "cd6f0bbd-725e-4356-9c60-19b26ae2108f",
+    "name": "teacher_nessa",
+    "state_name": "teacher_nessa",
+    "prompt": "Teacher Nessa, kind schoolteacher in a cardigan holding a book, round glasses, hair in a bun, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:43:33.466817+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/cd6f0bbd-725e-4356-9c60-19b26ae2108f/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "fcd84368-0026-4297-9d6e-9a707faeaed9"
+  },
+  {
+    "id": "bddf5349-887d-46fe-8626-e960d9a1d6ef",
+    "name": "mayor_holt",
+    "state_name": "mayor_holt",
+    "prompt": "Mayor Holt, portly mayor in a formal vest, pocket watch and a sash, friendly mustache, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:37:43.548834+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bddf5349-887d-46fe-8626-e960d9a1d6ef/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "1d9640fc-e634-4286-9f42-74e42745d824"
+  },
+  {
+    "id": "acb7294f-70fc-47ba-bae6-fdf60b007b1f",
+    "name": "patch",
+    "state_name": "patch",
+    "prompt": "Patch Silas, tailor with a measuring tape around the neck, pin cushion and a vest, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:37:41.257590+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/acb7294f-70fc-47ba-bae6-fdf60b007b1f/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "c97da64e-a2c2-44eb-88ff-0fcedfd758d9"
+  },
+  {
+    "id": "4a436419-f78f-44ec-9c8d-c8500efcfb92",
+    "name": "iodine",
+    "state_name": "iodine",
+    "prompt": "Iodine Marsh, fish-farm keeper in waders and a rain hat holding a net, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:37:39.126412+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/4a436419-f78f-44ec-9c8d-c8500efcfb92/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "96f04422-ba9b-44d4-9ffb-2fdb9605a319"
+  },
+  {
+    "id": "2c3f7be0-adc5-4531-a19a-82ae43f6f546",
+    "name": "omar",
+    "state_name": "omar",
+    "prompt": "Nurse Omar, young clinic aide in teal scrubs holding a clipboard, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:37:36.099295+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/2c3f7be0-adc5-4531-a19a-82ae43f6f546/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "3afef18c-ebb0-4a9c-b0cf-05735480ab2b"
+  },
+  {
+    "id": "92b31a60-2b5e-4ce9-a8cd-2d7486ac22c5",
+    "name": "fenn",
+    "state_name": "fenn",
+    "prompt": "Fenn Alder, friendly seed merchant with a wide straw hat, seed pouch and overalls, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:31:26.602632+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/92b31a60-2b5e-4ce9-a8cd-2d7486ac22c5/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "3a6fd989-dc61-4a18-a34f-4258e699fb4c"
+  },
+  {
+    "id": "efc0c682-aac6-4b50-828c-c50b485c8c66",
+    "name": "crates",
+    "state_name": "crates",
+    "prompt": "Crates Voss, burly blacksmith in a soot-stained leather apron holding a hammer, muscular, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 84,
+      "height": 84
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:31:24.351491+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/efc0c682-aac6-4b50-828c-c50b485c8c66/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "36aab8fc-adc0-48c6-a1b5-8f9fddaf2782"
+  },
+  {
+    "id": "e52ea9e0-57f6-4233-bab8-4e5612ba0039",
+    "name": "wren",
+    "state_name": "wren",
+    "prompt": "Herbalist Wren, gentle herbalist in earthy green robes carrying bundles of dried herbs, leafy hair clip, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:31:21.717480+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/e52ea9e0-57f6-4233-bab8-4e5612ba0039/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "f873a9b3-e44c-47bb-9c52-9fc5e0ea0eae"
+  },
+  {
+    "id": "9f7c9014-89cb-4d33-a070-449fa643c28d",
+    "name": "hao",
+    "state_name": "hao",
+    "prompt": "Captain Hao, stern ranger captain in a green military uniform with a peaked cap and badge, cozy stardew-style RPG villager, gothic-punk world, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:31:19.504030+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/9f7c9014-89cb-4d33-a070-449fa643c28d/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "f069daa6-aecb-4f10-a7b9-7686bb22dfd7"
+  },
+  {
+    "id": "e82b73b6-b05a-4423-ace8-4c749878b4d3",
+    "name": "elena",
+    "state_name": "elena",
+    "prompt": "Elena Grover, cheerful grocer in an apron over a plaid shirt holding a basket of produce, cozy stardew-style RPG villager, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:25:30.338805+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/e82b73b6-b05a-4423-ace8-4c749878b4d3/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "76663c68-0ba2-4017-9e81-50c03522aa01"
+  },
+  {
+    "id": "8de37f02-2e64-4813-9b12-6b3acd14096e",
+    "name": "mercy",
+    "state_name": "mercy",
+    "prompt": "Sister Mercy, serene chapel sister in a dark hooded habit holding a small lantern, cozy stardew-style RPG villager, gothic, full body",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:25:24.988626+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 0,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "failed",
+    "preview_url": null,
+    "tags": [],
+    "group_id": "15ab6ca3-cf74-448e-b098-2ff9fdbc8fbf"
+  },
+  {
+    "id": "1a7c36dd-42ce-4acc-8835-e9371494af62",
+    "name": "rook",
+    "state_name": "rook",
+    "prompt": "Ranger Rook, tough ranger sergeant in tactical green gear with a utility vest and short hair, cozy stardew-style RPG villager, gothic-punk world, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:25:19.871130+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/1a7c36dd-42ce-4acc-8835-e9371494af62/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "67aaf7cd-f8e2-40f8-a713-dbe3388712cf"
+  },
+  {
+    "id": "989cff77-51ac-4dfd-a75a-49064264364c",
+    "name": "venn",
+    "state_name": "venn",
+    "prompt": "Scrap Lord Venn, shady black-market dealer in a patched trench coat with many pockets and a sly grin, cozy stardew-style RPG villager, gothic-punk world, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:25:17.215368+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/989cff77-51ac-4dfd-a75a-49064264364c/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "1136990b-f86d-4aa1-a1e5-79d9f9eed978"
+  },
+  {
+    "id": "3b3e82d8-1804-4853-afcf-5bea9267a688",
+    "name": "kota",
+    "state_name": "kota",
+    "prompt": "Engineer Kota, grease-smudged engineer with goggles on the forehead, a tool harness and jumpsuit, holding a wrench, cozy stardew-style RPG villager, gothic-punk world, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:25:14.547953+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/3b3e82d8-1804-4853-afcf-5bea9267a688/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "317c7aec-1ed3-4ce1-9aff-acb423f96a52"
+  },
+  {
+    "id": "48b7a456-3bc7-4cdc-a7a8-be90746cc80c",
+    "name": "vale",
+    "state_name": "vale",
+    "prompt": "Riot Designer Vale, edgy neon fashion designer with an asymmetric punk outfit, shaved-side bright hair and studded jacket, cozy stardew-style RPG villager, cyberpunk, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:17:55.695693+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/48b7a456-3bc7-4cdc-a7a8-be90746cc80c/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "f6d668e5-ac1c-43b5-8baf-ff1c933b11b8"
+  },
+  {
+    "id": "f19b039d-6e29-43a9-9995-99b45cbde87c",
+    "name": "marlow",
+    "state_name": "marlow",
+    "prompt": "Bus Driver Marlow, weary middle-aged bus driver in a uniform cap and worn jacket, cozy stardew-style RPG villager, gothic-punk world, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:17:53.660815+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/f19b039d-6e29-43a9-9995-99b45cbde87c/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "70da961b-9e78-4dc2-841c-ccbc747ee8a1"
+  },
+  {
+    "id": "ea76d990-bf54-4b98-9c60-291e2bb02ab0",
+    "name": "sloane",
+    "state_name": "sloane",
+    "prompt": "Archivist Sloane, bookish archivist with round glasses, a long ink-stained coat and a satchel of scrolls, cozy stardew-style RPG villager, gothic-punk world, full body",
+    "size": {
+      "width": 88,
+      "height": 88
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:17:50.746206+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ea76d990-bf54-4b98-9c60-291e2bb02ab0/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "4e03ba97-203f-4974-80fe-dc876b808a36"
+  },
+  {
+    "id": "1e89b7a2-c953-44d7-bd5a-17ff36d0785f",
+    "name": "tomas",
+    "state_name": "tomas",
+    "prompt": "Tomas Reed, kind orphanage caretaker in a cozy knit sweater and apron, gentle warm look, cozy stardew-style RPG villager, gothic-punk world, full body",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:17:48.400878+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/1e89b7a2-c953-44d7-bd5a-17ff36d0785f/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "40ba4824-d43f-4ee1-972a-9c8cb4b1eb8c"
+  },
+  {
+    "id": "ec0d19af-0754-44ca-8e64-e24b551747e6",
+    "name": "pella",
+    "state_name": "pella",
+    "prompt": "Carpenter Pella, sturdy carpenter with a leather tool belt, rolled-up sleeves and sawdust-dusted overalls, cozy stardew-style RPG villager, gothic-punk world, full body",
+    "size": {
+      "width": 96,
+      "height": 96
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T16:17:43.180572+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 7,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/ec0d19af-0754-44ca-8e64-e24b551747e6/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "ddc70e38-eef7-4036-b81e-c5e8fbfae208"
+  },
+  {
+    "id": "50fa53b8-582d-40cd-9bd2-32935ba06796",
+    "name": "Nurse Mira",
+    "state_name": "Nurse Mira",
+    "prompt": "Nurse Mira, friendly young clinic nurse, soft pink hair, white-and-pink nurse outfit, gothic-punk RPG villager",
+    "size": {
+      "width": 92,
+      "height": 92
+    },
+    "directions": 8,
+    "created_at": "2026-06-16T04:24:20.200059+00:00",
+    "updated_at": "2026-07-30T10:44:17.570775+00:00",
+    "animation_count": 8,
+    "template_id": "mannequin",
+    "view": "low top-down",
+    "status": "completed",
+    "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/50fa53b8-582d-40cd-9bd2-32935ba06796/rotations/south.png?t=1785408257",
+    "tags": [],
+    "group_id": "0504e00c-c468-43dd-8a7a-a8220ccb6a1e"
+  }
+]

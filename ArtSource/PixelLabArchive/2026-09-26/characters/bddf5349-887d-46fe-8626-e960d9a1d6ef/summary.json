@@ -1,0 +1,20 @@
+{
+  "id": "bddf5349-887d-46fe-8626-e960d9a1d6ef",
+  "name": "mayor_holt",
+  "state_name": "mayor_holt",
+  "prompt": "Mayor Holt, portly mayor in a formal vest, pocket watch and a sash, friendly mustache, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 88,
+    "height": 88
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:37:43.548834+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bddf5349-887d-46fe-8626-e960d9a1d6ef/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "1d9640fc-e634-4286-9f42-74e42745d824"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "bb21e65e-8ece-4660-bc07-c38c3ffce0ac",
+  "name": "acolyte_f",
+  "state_name": "acolyte_f",
+  "prompt": "female Covenant acolyte zealot in dark robes with a glowing seal amulet, devout and cold, gothic, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T21:53:54.186034+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/bb21e65e-8ece-4660-bc07-c38c3ffce0ac/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "094013d0-54a4-4b99-b472-c253579a6cf6"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "d5807d50-61e8-4fc3-877b-c2d921f5fa06",
+  "name": "jax",
+  "state_name": "jax",
+  "prompt": "Jax Kira, cocky teenage rival trainer in a stylish high-collar jacket with spiky hair and a confident smirk, cozy stardew-style RPG villager, gothic-punk, full body",
+  "size": {
+    "width": 92,
+    "height": 92
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T20:33:58.638151+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 8,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "completed",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/bdfd08ae-2a14-4fd8-9608-0608149936b5/d5807d50-61e8-4fc3-877b-c2d921f5fa06/rotations/south.png?t=1785408257",
+  "tags": [],
+  "group_id": "8f35543b-8c68-4fd8-ab00-a5c777c77684"
+}

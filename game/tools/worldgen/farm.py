@@ -88,4 +88,16 @@ def generate(a):
     a.farmable.append([7, 7, W - 7, H - 7])
     a.spawn('door', hx, hy + 0.7)
     a.poi('Your farm', hx, hy - 4, 'home')
+    for (x, y) in [(20, 40), (25, 45)]:
+        N.enemy(a, 'horse', x, y)
+    for (x, y) in [(40, 20), (45, 25)]:
+        N.enemy(a, 'chicken', x, y)
+    for (x, y) in [(10, 10), (15, 15)]:
+        N.enemy(a, 'bee', x, y)
+
+
+    
+    a.add('house', hx - 12, hy, 0, 0, style='plank', name='Coop')
+
+
     return a

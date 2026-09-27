@@ -1,0 +1,27 @@
+{
+  "id": "1c5c3c11-0c1c-40fe-b151-4730560c67b1",
+  "name": "gleam_courier",
+  "state_name": "gleam_courier",
+  "prompt": "Courier Gleam, cheerful mail carrier with a satchel of letters and a peaked cap, cozy stardew-style RPG villager, full body",
+  "size": {
+    "width": 48,
+    "height": 48
+  },
+  "directions": 8,
+  "created_at": "2026-06-16T16:59:20.085010+00:00",
+  "updated_at": "2026-07-30T10:44:17.570775+00:00",
+  "animation_count": 0,
+  "template_id": "mannequin",
+  "view": "low top-down",
+  "status": "failed",
+  "rotation_urls": null,
+  "style_settings": {
+    "generation_mode": "pixen_v3"
+  },
+  "guidance": null,
+  "ai_freedom": null,
+  "tags": [],
+  "group_id": "7ded7d32-daef-4a7e-b3f5-b0bc34320421",
+  "skeletons": null,
+  "animations": []
+}

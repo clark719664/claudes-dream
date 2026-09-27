@@ -1,0 +1,16 @@
+{
+  "id": "ce349aed-e8a0-4267-8546-abe3d681e2fe",
+  "name": "A clean white animal bone, pix",
+  "state_name": "base",
+  "prompt": "A clean white animal bone, pixel art, top-down view, NO background NO UI NO text",
+  "size": {
+    "width": 85,
+    "height": 85
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T02:29:55.563175+00:00",
+  "view": "low top-down",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/ce349aed-e8a0-4267-8546-abe3d681e2fe/rotations/south.png",
+  "tags": [],
+  "status": "completed"
+}

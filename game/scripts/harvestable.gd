@@ -150,6 +150,10 @@ func _break(dir: Vector2) -> void:
 		Game.world.drop("coal", 1, at)
 	if drop == "crystal" and randf() < 0.2:
 		Game.world.drop("gem", 1, at)
+	if kind == "stone" and randf() < 0.08:
+		var artifacts = ["ancient_doll", "dinosaur_egg", "rusty_sword", "golden_relic", "strange_fossil"]
+		Game.world.drop(artifacts[randi() % artifacts.size()], 1, at)
+
 	if spec.has("stump"):
 		# the tree comes down; its stump stays to be cleared
 		stumped = true

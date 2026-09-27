@@ -1,0 +1,103 @@
+{
+  "group_id": "3dc78b6b-166c-43e2-bfe9-7f66ec9b248d",
+  "states": [
+    {
+      "character": {
+        "id": "63959e9e-71d0-4b48-816e-8d9008b57d21",
+        "name": "rust_juno",
+        "prompt": "Juno Scrapper, a rugged scrapper in welding goggles and a patched jacket carrying scrap metal, cozy stardew-style RPG villager, gothic-punk, full body",
+        "size": {
+          "width": 92,
+          "height": 92
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-16T20:45:39.745579+00:00"
+      },
+      "folder": "rust_juno",
+      "frames": {
+        "rotations": {
+          "south": "rust_juno/rotations/south.png",
+          "south-east": "rust_juno/rotations/south-east.png",
+          "east": "rust_juno/rotations/east.png",
+          "north-east": "rust_juno/rotations/north-east.png",
+          "north": "rust_juno/rotations/north.png",
+          "north-west": "rust_juno/rotations/north-west.png",
+          "west": "rust_juno/rotations/west.png",
+          "south-west": "rust_juno/rotations/south-west.png"
+        },
+        "animations": {
+          "walking": {
+            "south-west": [
+              "rust_juno/animations/walking/south-west/frame_000.png",
+              "rust_juno/animations/walking/south-west/frame_001.png",
+              "rust_juno/animations/walking/south-west/frame_002.png",
+              "rust_juno/animations/walking/south-west/frame_003.png",
+              "rust_juno/animations/walking/south-west/frame_004.png",
+              "rust_juno/animations/walking/south-west/frame_005.png"
+            ],
+            "south-east": [
+              "rust_juno/animations/walking/south-east/frame_000.png",
+              "rust_juno/animations/walking/south-east/frame_001.png",
+              "rust_juno/animations/walking/south-east/frame_002.png",
+              "rust_juno/animations/walking/south-east/frame_003.png",
+              "rust_juno/animations/walking/south-east/frame_004.png",
+              "rust_juno/animations/walking/south-east/frame_005.png"
+            ],
+            "north-west": [
+              "rust_juno/animations/walking/north-west/frame_000.png",
+              "rust_juno/animations/walking/north-west/frame_001.png",
+              "rust_juno/animations/walking/north-west/frame_002.png",
+              "rust_juno/animations/walking/north-west/frame_003.png",
+              "rust_juno/animations/walking/north-west/frame_004.png",
+              "rust_juno/animations/walking/north-west/frame_005.png"
+            ],
+            "west": [
+              "rust_juno/animations/walking/west/frame_000.png",
+              "rust_juno/animations/walking/west/frame_001.png",
+              "rust_juno/animations/walking/west/frame_002.png",
+              "rust_juno/animations/walking/west/frame_003.png",
+              "rust_juno/animations/walking/west/frame_004.png",
+              "rust_juno/animations/walking/west/frame_005.png"
+            ],
+            "north-east": [
+              "rust_juno/animations/walking/north-east/frame_000.png",
+              "rust_juno/animations/walking/north-east/frame_001.png",
+              "rust_juno/animations/walking/north-east/frame_002.png",
+              "rust_juno/animations/walking/north-east/frame_003.png",
+              "rust_juno/animations/walking/north-east/frame_004.png",
+              "rust_juno/animations/walking/north-east/frame_005.png"
+            ],
+            "east": [
+              "rust_juno/animations/walking/east/frame_000.png",
+              "rust_juno/animations/walking/east/frame_001.png",
+              "rust_juno/animations/walking/east/frame_002.png",
+              "rust_juno/animations/walking/east/frame_003.png",
+              "rust_juno/animations/walking/east/frame_004.png",
+              "rust_juno/animations/walking/east/frame_005.png"
+            ],
+            "south": [
+              "rust_juno/animations/walking/south/frame_000.png",
+              "rust_juno/animations/walking/south/frame_001.png",
+              "rust_juno/animations/walking/south/frame_002.png",
+              "rust_juno/animations/walking/south/frame_003.png",
+              "rust_juno/animations/walking/south/frame_004.png",
+              "rust_juno/animations/walking/south/frame_005.png"
+            ],
+            "north": [
+              "rust_juno/animations/walking/north/frame_000.png",
+              "rust_juno/animations/walking/north/frame_001.png",
+              "rust_juno/animations/walking/north/frame_002.png",
+              "rust_juno/animations/walking/north/frame_003.png",
+              "rust_juno/animations/walking/north/frame_004.png",
+              "rust_juno/animations/walking/north/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-26T18:49:46.630927"
+}

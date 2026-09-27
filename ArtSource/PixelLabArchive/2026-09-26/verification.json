@@ -1,0 +1,64 @@
+{
+  "assets": 356,
+  "verified_assets": 347,
+  "verified_by_kind": {
+    "characters": 160,
+    "objects": 148,
+    "tilesets": 25,
+    "tiles-pro": 1,
+    "sidescroller-tilesets": 13
+  },
+  "failed_remote_jobs": [
+    {
+      "id": "a7fb240d-64c0-4d26-bb03-c8b98cf6b409",
+      "name": "player_male",
+      "completed_same_name_exists": true
+    },
+    {
+      "id": "dd7248b4-d2fb-4cc0-920b-8b305d2197e8",
+      "name": "diver_f",
+      "completed_same_name_exists": true
+    },
+    {
+      "id": "cccba738-98a4-413a-b8e5-3c37b89f6d6b",
+      "name": "wiccan_f",
+      "completed_same_name_exists": true
+    },
+    {
+      "id": "a5c463e5-36d6-4e41-9c99-3e755a6fb84d",
+      "name": "refugee_crow",
+      "completed_same_name_exists": false
+    },
+    {
+      "id": "0f952e30-eae1-4cb3-a096-76cab78c581f",
+      "name": "doc_elm",
+      "completed_same_name_exists": true
+    },
+    {
+      "id": "5a1923e5-be7a-4575-92c9-d8b5d104c631",
+      "name": "nyx",
+      "completed_same_name_exists": true
+    },
+    {
+      "id": "b059fba7-31e5-4185-af7d-55d572f10159",
+      "name": "jax",
+      "completed_same_name_exists": true
+    },
+    {
+      "id": "1c5c3c11-0c1c-40fe-b151-4730560c67b1",
+      "name": "gleam_courier",
+      "completed_same_name_exists": true
+    },
+    {
+      "id": "8de37f02-2e64-4813-9b12-6b3acd14096e",
+      "name": "mercy",
+      "completed_same_name_exists": true
+    }
+  ],
+  "recovered_partial_frames": 48,
+  "validated_png_files": 7587,
+  "validated_zip_files": 608,
+  "checksummed_files": 9393,
+  "assets_with_existing_id_or_identical_image": 134,
+  "errors": []
+}

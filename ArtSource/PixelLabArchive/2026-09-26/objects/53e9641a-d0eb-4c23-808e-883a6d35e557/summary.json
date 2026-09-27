@@ -1,0 +1,16 @@
+{
+  "id": "53e9641a-d0eb-4c23-808e-883a6d35e557",
+  "name": "stone wishing well structure w",
+  "state_name": "base",
+  "prompt": "stone wishing well structure with a wooden roof and bucket, 16-bit RPG top down pixel art, NO UI, NO BACKGROUND",
+  "size": {
+    "width": 170,
+    "height": 170
+  },
+  "directions": 8,
+  "created_at": "2026-09-26T04:58:30.517383+00:00",
+  "view": "low top-down",
+  "preview_url": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/bdfd08ae-2a14-4fd8-9608-0608149936b5/53e9641a-d0eb-4c23-808e-883a6d35e557/rotations/south.png",
+  "tags": [],
+  "status": "completed"
+}
