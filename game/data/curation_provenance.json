@@ -1,0 +1,3783 @@
+{
+ "config": "game/tools/curation_config.json",
+ "archive": "ArtSource/PixelLabArchive/2026-09-26",
+ "strain_overlay_reapplied": [
+  "items.corn_seed",
+  "items.corn_seeds",
+  "items.eggplant_seed",
+  "items.eggplant_seeds",
+  "items.hybrid",
+  "items.hybrid_seed",
+  "items.hybrid_seeds",
+  "items.indica",
+  "items.indica_seed",
+  "items.indica_seeds",
+  "items.onion_seed",
+  "items.onion_seeds",
+  "items.pumpkin_seed",
+  "items.pumpkin_seeds",
+  "items.sativa",
+  "items.sativa_seed",
+  "items.sativa_seeds",
+  "items.strawberry_seed",
+  "items.strawberry_seeds",
+  "items.tomato_seed",
+  "items.tomato_seeds",
+  "sprites.crop_corn",
+  "sprites.crop_eggplant",
+  "sprites.crop_hybrid",
+  "sprites.crop_indica",
+  "sprites.crop_onion",
+  "sprites.crop_pumpkin",
+  "sprites.crop_sativa",
+  "sprites.crop_strawberry",
+  "sprites.crop_tomato"
+ ],
+ "skipped_optional": [],
+ "assets": [
+  {
+   "key": "barn",
+   "group": "buildings",
+   "source": {
+    "uuid": "056564f3-5996-4e55-91d8-2675adca2ec1",
+    "name": "large red wooden barn building",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/056564f3-5996-4e55-91d8-2675adca2ec1/original/rotations/south.png",
+    "sha256": "114a2e21a4eb7beff340c99c03e537e03c6ae35764cf99e75914911ef5294e2b"
+   },
+   "crop": [
+    31,
+    21,
+    148,
+    154
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    54,
+    131
+   ],
+   "footprint": {
+    "x": 4,
+    "w": 96,
+    "h": 53
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "note": "brighter of the two barns: white-trimmed X doors and hay bales read best at game scale",
+   "output": {
+    "path": "game/assets/curated/buildings/barn.png",
+    "width": 117,
+    "height": 133,
+    "sha256": "5c36427edb92b171e4fece993feede60e0fde9eb7aae0cbbbceb70f7da737343"
+   },
+   "catalog": [
+    "sprites.barn"
+   ]
+  },
+  {
+   "key": "coop",
+   "group": "buildings",
+   "source": {
+    "uuid": "def7ce22-d845-457a-af4c-d2e28a49abfa",
+    "name": "small wooden chicken coop buil",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/def7ce22-d845-457a-af4c-d2e28a49abfa/original/rotations/south.png",
+    "sha256": "0c4316c5e58cc8cf0ffa2180217ccbc3781e25f4fa1eed3519c93a8f76ac57ac"
+   },
+   "crop": [
+    40,
+    9,
+    144,
+    156
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    45,
+    145
+   ],
+   "footprint": {
+    "x": 7,
+    "w": 85,
+    "h": 56
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "note": "detailed coop with fenced run; the other coop is a chunky thick-outline style",
+   "output": {
+    "path": "game/assets/curated/buildings/coop.png",
+    "width": 104,
+    "height": 147,
+    "sha256": "bde97fd58dd360ecc4ca8a7b0bc22c31196b14266a417aa577105d050380078a"
+   },
+   "catalog": [
+    "sprites.coop"
+   ]
+  },
+  {
+   "key": "greenhouse",
+   "group": "buildings",
+   "source": {
+    "uuid": "f56666bc-5c46-4b90-a31c-0525fa86fa7a",
+    "name": "glass greenhouse with wooden f",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/f56666bc-5c46-4b90-a31c-0525fa86fa7a/original/rotations/south.png",
+    "sha256": "ec9c47702f503236c8b07721201da41316f6655da07207b5aa63dd5b7b976827"
+   },
+   "crop": [
+    28,
+    15,
+    145,
+    157
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    58,
+    140
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 96,
+    "h": 56
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "note": "wood frame with potted plants inside suits the farm better than the white-frame variant",
+   "output": {
+    "path": "game/assets/curated/buildings/greenhouse.png",
+    "width": 117,
+    "height": 142,
+    "sha256": "c2a8c04d1052916a7c4ecb0e00e27d40067832c0d9c8f99b39597103e0d9f5ec"
+   },
+   "catalog": [
+    "sprites.greenhouse"
+   ]
+  },
+  {
+   "key": "windmill",
+   "group": "buildings",
+   "source": {
+    "uuid": "e261fb6b-526c-40a1-932e-ada3aa60e1fd",
+    "name": "wooden farm windmill with larg",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/e261fb6b-526c-40a1-932e-ada3aa60e1fd/original/rotations/south.png",
+    "sha256": "391613a56fe028e782f4ebdf6aaa63890a0365f8c5da6123ca9ed5c799a939b0"
+   },
+   "crop": [
+    19,
+    11,
+    152,
+    164
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    66,
+    151
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 60,
+    "h": 40
+   },
+   "door": null,
+   "note": "larger sails and more detail than the rustic variant",
+   "output": {
+    "path": "game/assets/curated/buildings/windmill.png",
+    "width": 133,
+    "height": 153,
+    "sha256": "ee8f200468d62901e065e5c8a7300f260db2386c1c767df1dfb23175a6bee51f"
+   },
+   "catalog": [
+    "sprites.windmill"
+   ]
+  },
+  {
+   "key": "silo",
+   "group": "buildings",
+   "source": {
+    "uuid": "21d6f8db-3e21-495c-8783-fb38a2367010",
+    "name": "tall red farm silo building fo",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/21d6f8db-3e21-495c-8783-fb38a2367010/original/rotations/south.png",
+    "sha256": "f0a2dc80808bb3d5243daca80308866d4d9e5969398e7036109ec5a025f5746f"
+   },
+   "crop": [
+    52,
+    15,
+    119,
+    155
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    33,
+    138
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 56,
+    "h": 34
+   },
+   "door": null,
+   "note": "red silo matches the red barn; the other is industrial steel",
+   "output": {
+    "path": "game/assets/curated/buildings/silo.png",
+    "width": 67,
+    "height": 140,
+    "sha256": "ce4858e842992b0d24ec87962c93fee85333a905526ba4c55cc11c2de934a730"
+   },
+   "catalog": [
+    "sprites.silo"
+   ]
+  },
+  {
+   "key": "well",
+   "group": "buildings",
+   "source": {
+    "uuid": "820e3a88-516e-49ed-ba59-d5f70c2bb7bf",
+    "name": "classic stone wishing well wit",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/820e3a88-516e-49ed-ba59-d5f70c2bb7bf/original/rotations/south.png",
+    "sha256": "542f81f72f000004a2078c02bf1e75d453026ed4dc176f7721e274b8140775c3"
+   },
+   "crop": [
+    32,
+    14,
+    140,
+    160
+   ],
+   "resample": "majority",
+   "scale": [
+    0.6019,
+    0.6027
+   ],
+   "anchor": [
+    32,
+    86
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 50,
+    "h": 22
+   },
+   "door": null,
+   "note": "a well is about three tiles wide; the other variant has a stray shield on it",
+   "output": {
+    "path": "game/assets/curated/buildings/well.png",
+    "width": 65,
+    "height": 88,
+    "sha256": "1ffd73446c42fffdd683b2b986d4c469c6436e4003353813a07c881d801ec14a"
+   },
+   "catalog": [
+    "sprites.well"
+   ]
+  },
+  {
+   "key": "church",
+   "group": "buildings",
+   "source": {
+    "uuid": "a42fd7e1-3a71-440f-ba28-82becdb9cf7a",
+    "name": "stone church building with sta",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/a42fd7e1-3a71-440f-ba28-82becdb9cf7a/original/rotations/south.png",
+    "sha256": "a1ee6faf0fcb6ff61b1da5f5f21da6249da5a3c61d5b6ef8bdf51f7698e9fd69"
+   },
+   "crop": [
+    43,
+    7,
+    129,
+    161
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    43,
+    152
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 71,
+    "h": 56
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "note": "timber-and-stone church with a cross; richer detail than the plain grey one",
+   "output": {
+    "path": "game/assets/curated/buildings/church.png",
+    "width": 86,
+    "height": 154,
+    "sha256": "80cb77e3665d657a9c2012b78f44ceefe9e244f9ba591991cdae12e10a3254a3"
+   },
+   "catalog": [
+    "sprites.church"
+   ]
+  },
+  {
+   "key": "library",
+   "group": "buildings",
+   "source": {
+    "uuid": "008aa8b5-f298-47ee-939e-6cc03e33214d",
+    "name": "grand library building with st",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/008aa8b5-f298-47ee-939e-6cc03e33214d/original/rotations/south.png",
+    "sha256": "dcdd2d7cfa97a0c1f7173c70bdb4653302d87af70b01c7f57e75a5f6acc585a9"
+   },
+   "crop": [
+    20,
+    23,
+    152,
+    149
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    66,
+    124
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 108,
+    "h": 50
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "output": {
+    "path": "game/assets/curated/buildings/library.png",
+    "width": 132,
+    "height": 126,
+    "sha256": "e233c476d03632dcc2fdb4fe16e11f4f365d674f24e88e773e05130acff7307d"
+   },
+   "catalog": [
+    "sprites.library"
+   ]
+  },
+  {
+   "key": "wizard_tower",
+   "group": "buildings",
+   "source": {
+    "uuid": "26360ed0-2dcc-489b-97ab-bd68d1cfc8f2",
+    "name": "tall purple stone wizard tower",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/26360ed0-2dcc-489b-97ab-bd68d1cfc8f2/original/rotations/south.png",
+    "sha256": "20f400c79a868372f6408795587fa287c7d511ecef31f16539f75a1d9b721cad"
+   },
+   "crop": [
+    61,
+    9,
+    110,
+    154
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    24,
+    143
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 44,
+    "h": 30
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "output": {
+    "path": "game/assets/curated/buildings/wizard_tower.png",
+    "width": 49,
+    "height": 145,
+    "sha256": "b74c739b5e8e63dcdafd1da739ed7ebc0bdf52511db54d4b18365fc2f177e569"
+   },
+   "catalog": [
+    "sprites.wizard_tower"
+   ]
+  },
+  {
+   "key": "mayors_manor",
+   "group": "buildings",
+   "source": {
+    "uuid": "3af90506-4013-412b-b881-f1b867e46d78",
+    "name": "large fancy stone manor house ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/3af90506-4013-412b-b881-f1b867e46d78/original/rotations/south.png",
+    "sha256": "2b29ab6ab68eeb9f98368d702149f16fca63750cfb1099d59d16730699953e09"
+   },
+   "crop": [
+    16,
+    29,
+    156,
+    142
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    70,
+    111
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 115,
+    "h": 45
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "output": {
+    "path": "game/assets/curated/buildings/mayors_manor.png",
+    "width": 140,
+    "height": 113,
+    "sha256": "c70181f666557e4bc4ea2dfe48c56dbe9c6ff0c7a29305ad2b4b39798c2dd5a5"
+   },
+   "catalog": [
+    "sprites.mayors_manor"
+   ]
+  },
+  {
+   "key": "clinic",
+   "group": "buildings",
+   "source": {
+    "uuid": "5504fc00-6240-4eed-bf38-a92afeb5ee2c",
+    "name": "clean white brick village clin",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/5504fc00-6240-4eed-bf38-a92afeb5ee2c/original/rotations/south.png",
+    "sha256": "8d47ff8634e88f008ea9093c18c358d877a30b6cc2f9a5583ffe1e59ab3319c8"
+   },
+   "crop": [
+    33,
+    17,
+    140,
+    142
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    53,
+    123
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 88,
+    "h": 50
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "output": {
+    "path": "game/assets/curated/buildings/clinic.png",
+    "width": 107,
+    "height": 125,
+    "sha256": "90aec12ee81da4b907d6942c35eede250ba8ef0c5caff3c15f2b70dd06f50eec"
+   },
+   "catalog": [
+    "sprites.clinic"
+   ]
+  },
+  {
+   "key": "general_store",
+   "group": "buildings",
+   "source": {
+    "uuid": "54a4fd73-020f-4165-a2be-ce94e2d91e8e",
+    "name": "quaint village general store b",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/54a4fd73-020f-4165-a2be-ce94e2d91e8e/original/rotations/south.png",
+    "sha256": "ea57332ba499973d80ab8fdf9c06f51418558630a39379087ec754ee900de3d9"
+   },
+   "crop": [
+    13,
+    27,
+    158,
+    147
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    72,
+    118
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 119,
+    "h": 48
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "output": {
+    "path": "game/assets/curated/buildings/general_store.png",
+    "width": 145,
+    "height": 120,
+    "sha256": "687256e51e9699a4b5e502a1b34c4888c1c5acf919fd908cb6fdfc5f50da2200"
+   },
+   "catalog": [
+    "sprites.general_store"
+   ]
+  },
+  {
+   "key": "blacksmith_shop",
+   "group": "buildings",
+   "source": {
+    "uuid": "4eb4481b-cdf7-4bbe-9e99-64f607fd2145",
+    "name": "stone blacksmith forge buildin",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/4eb4481b-cdf7-4bbe-9e99-64f607fd2145/original/rotations/south.png",
+    "sha256": "59f3ee15d7247203c62e94149255165285d30b447c3f05ce5850524efb08c06f"
+   },
+   "crop": [
+    26,
+    3,
+    146,
+    164
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    35,
+    159
+   ],
+   "footprint": {
+    "x": 25,
+    "w": 98,
+    "h": 56
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "note": "the dark doorway is left of centre; the forge and anvil sit to its right",
+   "output": {
+    "path": "game/assets/curated/buildings/blacksmith_shop.png",
+    "width": 120,
+    "height": 161,
+    "sha256": "dfa089144bf79ebd60c29df0b06a15d511d8bd8485dccf0e07f1c8c2539f99c9"
+   },
+   "catalog": [
+    "sprites.blacksmith_shop"
+   ]
+  },
+  {
+   "key": "saloon",
+   "group": "buildings",
+   "source": {
+    "uuid": "68dc9ecd-bcd6-4528-a170-3a3769e1722d",
+    "name": "large rustic wooden tavern bui",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/68dc9ecd-bcd6-4528-a170-3a3769e1722d/original/rotations/south.png",
+    "sha256": "1b68df584a16b1045cce724531089bfb15ccf2866f441bae8443b67a7fa9c65b"
+   },
+   "crop": [
+    27,
+    19,
+    163,
+    153
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    37,
+    132
+   ],
+   "footprint": {
+    "x": 31,
+    "w": 112,
+    "h": 54
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "note": "hanging sign pushes the art right; the door is left of centre",
+   "output": {
+    "path": "game/assets/curated/buildings/saloon.png",
+    "width": 136,
+    "height": 134,
+    "sha256": "c54d4064388ef8c037a8dd2f4d48c27d8bf7fcedaf297f72d5c14fae8e05ce8e"
+   },
+   "catalog": [
+    "sprites.saloon"
+   ]
+  },
+  {
+   "key": "bathhouse",
+   "group": "buildings",
+   "source": {
+    "uuid": "24e73d3c-3540-41bb-8a44-a8abd1392485",
+    "name": "traditional wooden bathhouse b",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/24e73d3c-3540-41bb-8a44-a8abd1392485/original/rotations/south.png",
+    "sha256": "122f217c630d642a8d34e1003f080d92dcb00c19de4c2313a91ac180e4a0e5c7"
+   },
+   "crop": [
+    19,
+    14,
+    149,
+    148
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    63,
+    132
+   ],
+   "footprint": {
+    "x": 2,
+    "w": 107,
+    "h": 54
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "output": {
+    "path": "game/assets/curated/buildings/bathhouse.png",
+    "width": 130,
+    "height": 134,
+    "sha256": "db76154b9b5ba6d960c3bfb6611ce8fc40c9972d6895666563f2f900410e7f6d"
+   },
+   "catalog": [
+    "sprites.bathhouse"
+   ]
+  },
+  {
+   "key": "museum",
+   "group": "buildings",
+   "source": {
+    "uuid": "7c14ca77-4d9c-40e2-bdaa-8112a14af058",
+    "name": "grand marble museum building w",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/7c14ca77-4d9c-40e2-bdaa-8112a14af058/original/rotations/south.png",
+    "sha256": "b8419bd3e0360bd5718cc0bfee7417880e9e3c5c098c8cf7e580b6ae9e76382a"
+   },
+   "crop": [
+    30,
+    25,
+    140,
+    145
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    55,
+    118
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 90,
+    "h": 48
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "output": {
+    "path": "game/assets/curated/buildings/museum.png",
+    "width": 110,
+    "height": 120,
+    "sha256": "ce8c35207d2a0d7fb00719f41950064352845868cb9decbec01567c077d2f38e"
+   },
+   "catalog": [
+    "sprites.museum"
+   ]
+  },
+  {
+   "key": "inn",
+   "group": "buildings",
+   "source": {
+    "uuid": "58b0d1b5-1cd2-440d-89df-e0cd47a85643",
+    "name": "large welcoming inn building w",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/58b0d1b5-1cd2-440d-89df-e0cd47a85643/original/rotations/south.png",
+    "sha256": "3ba7a18e15a982153bd0c520aecaacda2a44a60961ea04fd16f2522ac9270c8a"
+   },
+   "crop": [
+    19,
+    6,
+    153,
+    156
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    69,
+    148
+   ],
+   "footprint": {
+    "x": -2,
+    "w": 110,
+    "h": 56
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "output": {
+    "path": "game/assets/curated/buildings/inn.png",
+    "width": 134,
+    "height": 150,
+    "sha256": "f211716bdcf1fcf88c6b0d0691b587508d94d3e6337dd119c18ae02f7f3ff23e"
+   },
+   "catalog": [
+    "sprites.inn"
+   ]
+  },
+  {
+   "key": "school",
+   "group": "buildings",
+   "source": {
+    "uuid": "4bd0fb21-ca2d-47c6-a79d-3c1a288fc7e8",
+    "name": "red brick schoolhouse building",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/4bd0fb21-ca2d-47c6-a79d-3c1a288fc7e8/original/rotations/south.png",
+    "sha256": "3897e5fb717bb3f3229804661b352f8351d41444f02f623008a643337a0be8e7"
+   },
+   "crop": [
+    35,
+    22,
+    138,
+    151
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    52,
+    127
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 84,
+    "h": 52
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "output": {
+    "path": "game/assets/curated/buildings/school.png",
+    "width": 103,
+    "height": 129,
+    "sha256": "3c7d0f519d1229b569139633a1fb3e417f8c8b7b5b1a9c9a9ae972a68b82c516"
+   },
+   "catalog": [
+    "sprites.school"
+   ]
+  },
+  {
+   "key": "npc_house_1",
+   "group": "buildings",
+   "source": {
+    "uuid": "a312090d-d7c2-463c-9d76-6bb06c32aed3",
+    "name": "sturdy log cabin home with flo",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/a312090d-d7c2-463c-9d76-6bb06c32aed3/original/rotations/south.png",
+    "sha256": "cca8ed4effe4f13139635c68b031706d99e8739ddc90d9013603de81b93bc87b"
+   },
+   "crop": [
+    13,
+    24,
+    157,
+    145
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    77,
+    119
+   ],
+   "footprint": {
+    "x": -5,
+    "w": 118,
+    "h": 48
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "note": "Tilda's Carpentry: the log home with a side workshop",
+   "output": {
+    "path": "game/assets/curated/buildings/npc_house_1.png",
+    "width": 144,
+    "height": 121,
+    "sha256": "1d396460c6c3fc66a250f9b87c267a4c26f51f1bc6941c894f3cde8696ec63fa"
+   },
+   "catalog": [
+    "sprites.npc_house_1"
+   ]
+  },
+  {
+   "key": "npc_house_2",
+   "group": "buildings",
+   "source": {
+    "uuid": "329d2880-3f94-4e1f-9e81-0fa8a6418094",
+    "name": "small log cabin building with ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/329d2880-3f94-4e1f-9e81-0fa8a6418094/original/rotations/south.png",
+    "sha256": "aaa6fbce2dda6a69695c1e3a9525ed0d44517029ea11dbaef8ef32c4d8f36dfc"
+   },
+   "crop": [
+    35,
+    34,
+    137,
+    142
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    51,
+    106
+   ],
+   "footprint": {
+    "x": 0,
+    "w": 84,
+    "h": 43
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "note": "The Millers",
+   "output": {
+    "path": "game/assets/curated/buildings/npc_house_2.png",
+    "width": 102,
+    "height": 108,
+    "sha256": "4c022824b783d78376eb5994c95e976fe5c5d373f4ee7d2a73f6371e94e3c9d6"
+   },
+   "catalog": [
+    "sprites.npc_house_2"
+   ]
+  },
+  {
+   "key": "npc_house_3",
+   "group": "buildings",
+   "source": {
+    "uuid": "935f76f7-2618-4bca-9038-20d4d8971cde",
+    "name": "sturdy stone house building wi",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/935f76f7-2618-4bca-9038-20d4d8971cde/original/rotations/south.png",
+    "sha256": "8f85cfa230fff0fbcf63a156f10befd8e06643431c6862710a14b7d16112c1fe"
+   },
+   "crop": [
+    29,
+    29,
+    147,
+    142
+   ],
+   "resample": "majority",
+   "scale": [
+    0.7458,
+    0.7522
+   ],
+   "anchor": [
+    37,
+    83
+   ],
+   "footprint": {
+    "x": 7,
+    "w": 72,
+    "h": 34
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "note": "The Coopers: squeezed between the clinic and the ranch, so a size smaller",
+   "output": {
+    "path": "game/assets/curated/buildings/npc_house_3.png",
+    "width": 88,
+    "height": 85,
+    "sha256": "35aff226843b4bc86e37cd286875d69dd87a970c06da6e7797cc295c19ff7cac"
+   },
+   "catalog": [
+    "sprites.npc_house_3"
+   ]
+  },
+  {
+   "key": "npc_house_4",
+   "group": "buildings",
+   "source": {
+    "uuid": "7de8716b-ed8d-4015-9fdc-12294e150ad5",
+    "name": "cozy cottage building with a b",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/7de8716b-ed8d-4015-9fdc-12294e150ad5/original/rotations/south.png",
+    "sha256": "63affaa7324c5df3ab9a9846a117045fbb3285a2a6999870a7cac9a8dfdaf1ec"
+   },
+   "crop": [
+    15,
+    18,
+    165,
+    147
+   ],
+   "resample": "majority",
+   "scale": [
+    0.7,
+    0.6977
+   ],
+   "anchor": [
+    51,
+    88
+   ],
+   "footprint": {
+    "x": 2,
+    "w": 86,
+    "h": 36
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "note": "Pen Ridge Ranch: sits at the map edge, so a size smaller",
+   "output": {
+    "path": "game/assets/curated/buildings/npc_house_4.png",
+    "width": 105,
+    "height": 90,
+    "sha256": "0798d5dfccf2c495f3936b6e79a1af8c284ac6b60372ea62f1cb3e0fc3c9bdc6"
+   },
+   "catalog": [
+    "sprites.npc_house_4"
+   ]
+  },
+  {
+   "key": "dispensary",
+   "group": "buildings",
+   "source": {
+    "uuid": "88beb9a9-297e-49d7-acea-076c19e3da4d",
+    "name": "beautiful glass greenhouse bui",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/88beb9a9-297e-49d7-acea-076c19e3da4d/original/rotations/south.png",
+    "sha256": "3b69bb331227638fbbd70d6468c41b593efc34847f9f0c140d9eae444ffb3496"
+   },
+   "crop": [
+    25,
+    9,
+    147,
+    154
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    60,
+    143
+   ],
+   "footprint": {
+    "x": 1,
+    "w": 100,
+    "h": 56
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "note": "Green Thumb Dispensary: a glass-house shopfront; its old art was the same cottage as Pen Ridge Ranch",
+   "output": {
+    "path": "game/assets/curated/buildings/dispensary.png",
+    "width": 122,
+    "height": 145,
+    "sha256": "0f40a18eff7d6cff7f0ca22a7bc21251574727c7efa6c2013b770e631bed3b5d"
+   },
+   "catalog": [
+    "sprites.dispensary"
+   ]
+  },
+  {
+   "key": "npc_house_5",
+   "group": "buildings",
+   "source": {
+    "uuid": "76e58775-bd9f-4915-bbde-57aec74dc52a",
+    "name": "small cozy wooden cottage with",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/76e58775-bd9f-4915-bbde-57aec74dc52a/original/rotations/south.png",
+    "sha256": "dbc4151b5623c930440740bcdfc41125bb9cf6c6e03a82b3801830508acc4450"
+   },
+   "crop": [
+    15,
+    12,
+    73,
+    70
+   ],
+   "resample": "nearest",
+   "scale": [
+    1.0,
+    1.0
+   ],
+   "anchor": [
+    30,
+    56
+   ],
+   "footprint": {
+    "x": -1,
+    "w": 48,
+    "h": 23
+   },
+   "door": {
+    "x": 0,
+    "w": 24
+   },
+   "note": "The Weavers: a small thatched cottage on an 85px canvas, kept at native size",
+   "output": {
+    "path": "game/assets/curated/buildings/npc_house_5.png",
+    "width": 58,
+    "height": 58,
+    "sha256": "e58c64864207887c8e32084398693cdafcc0cd7bf1ce55c5b4fdf68a932a8187"
+   },
+   "catalog": [
+    "sprites.npc_house_5"
+   ]
+  },
+  {
+   "key": "house_plant",
+   "group": "furniture",
+   "source": {
+    "uuid": "1c73f98f-ea40-4f84-8d01-629bf669c9ec",
+    "name": "large green potted fern plant ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/1c73f98f-ea40-4f84-8d01-629bf669c9ec/original/rotations/south.png",
+    "sha256": "8deaf299604910ee554984ddb088a90d2197351ebf046188984aec9706472ce1"
+   },
+   "crop": [
+    10,
+    10,
+    76,
+    77
+   ],
+   "resample": "majority",
+   "scale": [
+    0.303,
+    0.2985
+   ],
+   "anchor": [
+    10,
+    19
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/house_plant.png",
+    "width": 20,
+    "height": 20,
+    "sha256": "7a76166afa0f65a548245e3e09c4d6a0092cf51e8a206bb31d9393144aef53bb"
+   },
+   "catalog": [
+    "sprites.house_plant"
+   ]
+  },
+  {
+   "key": "tavern_table",
+   "group": "furniture",
+   "source": {
+    "uuid": "7cbb12f5-eda7-473c-a6c0-0f292bf491a6",
+    "name": "round wooden tavern table with",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/7cbb12f5-eda7-473c-a6c0-0f292bf491a6/original/rotations/south.png",
+    "sha256": "e2f1157c7e17cd2d49e907be8d90b35f62a806e06bd8aa0a6289cd48782ffbfd"
+   },
+   "crop": [
+    15,
+    19,
+    71,
+    75
+   ],
+   "resample": "majority",
+   "scale": [
+    0.5357,
+    0.5357
+   ],
+   "anchor": [
+    15,
+    29
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/tavern_table.png",
+    "width": 30,
+    "height": 30,
+    "sha256": "af631fcb8ed663468d0a023a491bebf97388ed5f6c80248eea7e6b69d5fc6c4d"
+   },
+   "catalog": [
+    "sprites.tavern_table"
+   ]
+  },
+  {
+   "key": "tavern_bar",
+   "group": "furniture",
+   "source": {
+    "uuid": "157dc461-24f8-4f89-9e2f-28b8b15006a8",
+    "name": "long polished wooden tavern ba",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/157dc461-24f8-4f89-9e2f-28b8b15006a8/original/rotations/south.png",
+    "sha256": "499b243e2d08beb3b9ebba764cb04b93c666c939f9be20ddf421eaa5697277b0"
+   },
+   "crop": [
+    2,
+    30,
+    84,
+    66
+   ],
+   "resample": "majority",
+   "scale": [
+    0.878,
+    0.8889
+   ],
+   "anchor": [
+    36,
+    31
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/tavern_bar.png",
+    "width": 72,
+    "height": 32,
+    "sha256": "b099b835a406338282a71a9991a19e491d7716ffac5be3c0e1ec759bf8b1b0c5"
+   },
+   "catalog": [
+    "sprites.tavern_bar"
+   ]
+  },
+  {
+   "key": "library_desk",
+   "group": "furniture",
+   "source": {
+    "uuid": "78d075cf-8dd4-42fb-8707-3a2c7ef30077",
+    "name": "large wooden library desk with",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/78d075cf-8dd4-42fb-8707-3a2c7ef30077/original/rotations/south.png",
+    "sha256": "a8796884ccf5693213d1983871d92bd53f79d1e757307191e165793d7a6c68d3"
+   },
+   "crop": [
+    11,
+    22,
+    75,
+    61
+   ],
+   "resample": "majority",
+   "scale": [
+    0.6875,
+    0.6923
+   ],
+   "anchor": [
+    22,
+    26
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/library_desk.png",
+    "width": 44,
+    "height": 27,
+    "sha256": "1f8ef246be3b1bb8d36cf968fb1715fbeb9f57449f3b6f77f9b4a08133dc6de5"
+   },
+   "catalog": [
+    "sprites.library_desk"
+   ]
+  },
+  {
+   "key": "inn_bed",
+   "group": "furniture",
+   "source": {
+    "uuid": "08f34217-f57a-4323-8562-04d4e027c6e7",
+    "name": "luxurious inn bed with red bla",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/08f34217-f57a-4323-8562-04d4e027c6e7/original/rotations/south.png",
+    "sha256": "2bfb8222bd70b587a9f837bddfae02b8bc5d045bd37327d80e77869402dc8696"
+   },
+   "crop": [
+    21,
+    17,
+    65,
+    71
+   ],
+   "resample": "majority",
+   "scale": [
+    0.7727,
+    0.7778
+   ],
+   "anchor": [
+    17,
+    41
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/inn_bed.png",
+    "width": 34,
+    "height": 42,
+    "sha256": "91b39133b9053277a870f92df7a93b26dea935b0b053ae265bcd3737906d8923"
+   },
+   "catalog": [
+    "sprites.inn_bed"
+   ]
+  },
+  {
+   "key": "bathhouse_pool",
+   "group": "furniture",
+   "source": {
+    "uuid": "0d6d5a58-e21e-4a7d-a974-42f846929261",
+    "name": "large tiled indoor hot spring ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/0d6d5a58-e21e-4a7d-a974-42f846929261/original/rotations/south.png",
+    "sha256": "f97c1274006329e19a3519f7e1a9b1a23e321b8dcebb62714521c61f351bdde7"
+   },
+   "crop": [
+    15,
+    16,
+    158,
+    141
+   ],
+   "resample": "majority",
+   "scale": [
+    0.7273,
+    0.728
+   ],
+   "anchor": [
+    52,
+    90
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/bathhouse_pool.png",
+    "width": 104,
+    "height": 91,
+    "sha256": "87162414b6e9616a114aa487f2c092f3a442c508ecb9a7e6a2e480b950c4c277"
+   },
+   "catalog": [
+    "sprites.bathhouse_pool"
+   ]
+  },
+  {
+   "key": "school_desk",
+   "group": "furniture",
+   "source": {
+    "uuid": "3c84d473-4315-4b54-bc0a-ac4df3ed6ae3",
+    "name": "small wooden school desk with ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/3c84d473-4315-4b54-bc0a-ac4df3ed6ae3/original/rotations/south.png",
+    "sha256": "74d59ccdcba490536b7f49ceb5c26a4e0fde77711aaee0426d82c7ce81a885f2"
+   },
+   "crop": [
+    21,
+    15,
+    65,
+    74
+   ],
+   "resample": "majority",
+   "scale": [
+    0.5455,
+    0.5424
+   ],
+   "anchor": [
+    12,
+    31
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/school_desk.png",
+    "width": 24,
+    "height": 32,
+    "sha256": "8b824dae924893c2aa9990727823e8307fc94df8a9880788b0c84fd4072aee7f"
+   },
+   "catalog": [
+    "sprites.school_desk"
+   ]
+  },
+  {
+   "key": "museum_display",
+   "group": "furniture",
+   "source": {
+    "uuid": "b67c7f9d-98b0-430a-a5a0-94022c58c980",
+    "name": "glass museum display case with",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/b67c7f9d-98b0-430a-a5a0-94022c58c980/original/rotations/south.png",
+    "sha256": "6fe66a5047cba00291ca4425ff53b0b37f1611ead2fb931ff238a9f6eb94118d"
+   },
+   "crop": [
+    17,
+    9,
+    69,
+    77
+   ],
+   "resample": "majority",
+   "scale": [
+    0.5385,
+    0.5441
+   ],
+   "anchor": [
+    14,
+    36
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/museum_display.png",
+    "width": 28,
+    "height": 37,
+    "sha256": "f2b00661ba4e0680d2f4d8a972a7a9f28dc3b729690e4b9b31e15ffe4c61bb24"
+   },
+   "catalog": [
+    "sprites.museum_display"
+   ]
+  },
+  {
+   "key": "church_pew",
+   "group": "furniture",
+   "source": {
+    "uuid": "5a6abb5d-f988-4f2a-9c4e-ff921fbd4aa1",
+    "name": "long wooden church bench seati",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/5a6abb5d-f988-4f2a-9c4e-ff921fbd4aa1/original/rotations/south.png",
+    "sha256": "5f581477bfd21632b54213c36f02fb90e4661d345d7431d364d9f9cd4344053d"
+   },
+   "crop": [
+    12,
+    23,
+    74,
+    61
+   ],
+   "resample": "majority",
+   "scale": [
+    0.7742,
+    0.7632
+   ],
+   "anchor": [
+    24,
+    28
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/church_pew.png",
+    "width": 48,
+    "height": 29,
+    "sha256": "2743be64706236bdcf67950ebcc90242965989a7658b3992e9b14cedf0ac09cf"
+   },
+   "catalog": [
+    "sprites.church_pew"
+   ]
+  },
+  {
+   "key": "clinic_bed",
+   "group": "furniture",
+   "source": {
+    "uuid": "366bd7ca-2f04-4535-a32d-c1421c861672",
+    "name": "white hospital clinic bed with",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/366bd7ca-2f04-4535-a32d-c1421c861672/original/rotations/south.png",
+    "sha256": "932445004080cd2f323f7dc385e0b9ecd36eeb5d5c3ab1feff05a083b2c10ec3"
+   },
+   "crop": [
+    24,
+    10,
+    63,
+    77
+   ],
+   "resample": "majority",
+   "scale": [
+    0.7692,
+    0.7761
+   ],
+   "anchor": [
+    15,
+    51
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/clinic_bed.png",
+    "width": 30,
+    "height": 52,
+    "sha256": "10e68bc2d2ab44496afb7da43db729018084fff8bc4c53b6633ae36b5b71c117"
+   },
+   "catalog": [
+    "sprites.clinic_bed"
+   ]
+  },
+  {
+   "key": "store_counter",
+   "group": "furniture",
+   "source": {
+    "uuid": "4df8a1d7-88a0-4463-bdca-5e54a0f36330",
+    "name": "wooden shop counter with a cas",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/4df8a1d7-88a0-4463-bdca-5e54a0f36330/original/rotations/south.png",
+    "sha256": "d62d448f928c138bb7aa3d1ab02e672ae4fa998825c99d4d13e5850c6ace6172"
+   },
+   "crop": [
+    12,
+    20,
+    74,
+    64
+   ],
+   "resample": "majority",
+   "scale": [
+    0.8387,
+    0.8409
+   ],
+   "anchor": [
+    26,
+    36
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/store_counter.png",
+    "width": 52,
+    "height": 37,
+    "sha256": "9ba5ad3011fe5aab4153ef2231c54975b06bd7d7be8c96e74aef724665a181b8"
+   },
+   "catalog": [
+    "sprites.store_counter"
+   ]
+  },
+  {
+   "key": "forge_anvil",
+   "group": "furniture",
+   "source": {
+    "uuid": "508d29c1-f480-4987-add0-dbfe98ba2ff1",
+    "name": "heavy iron blacksmith anvil, 1",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/508d29c1-f480-4987-add0-dbfe98ba2ff1/original/rotations/south.png",
+    "sha256": "b8c10fca6bf1921b6298196742b3c89be14ba08c9c955d4c8b74050d13acc217"
+   },
+   "crop": [
+    5,
+    23,
+    81,
+    65
+   ],
+   "resample": "majority",
+   "scale": [
+    0.4211,
+    0.4286
+   ],
+   "anchor": [
+    16,
+    17
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/forge_anvil.png",
+    "width": 32,
+    "height": 18,
+    "sha256": "6cd15fa1cfb3987e04859118d2342e3e8d352a22731bb2ea6cd7b5c2715a0492"
+   },
+   "catalog": [
+    "sprites.forge_anvil"
+   ]
+  },
+  {
+   "key": "bookshelf",
+   "group": "furniture",
+   "source": {
+    "uuid": "3155426c-2564-4860-abe1-27f32c1d390e",
+    "name": "tall wooden bookshelf filled w",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/3155426c-2564-4860-abe1-27f32c1d390e/original/rotations/south.png",
+    "sha256": "afc85cad85fa491f6c48e044960e133ea74c8adfaf15fa08e7c98832d8fc0f80"
+   },
+   "crop": [
+    15,
+    8,
+    71,
+    79
+   ],
+   "resample": "majority",
+   "scale": [
+    0.5357,
+    0.5352
+   ],
+   "anchor": [
+    15,
+    37
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/bookshelf.png",
+    "width": 30,
+    "height": 38,
+    "sha256": "755eacd08d18461642f77c26bf8a870ce081b46637a7dfeb856ec9883c64d0a0"
+   },
+   "catalog": [
+    "sprites.bookshelf"
+   ]
+  },
+  {
+   "key": "floor_lamp",
+   "group": "furniture",
+   "source": {
+    "uuid": "811701b6-9f65-467b-912a-28f5f009f5e5",
+    "name": "tall brass floor lamp with a g",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/811701b6-9f65-467b-912a-28f5f009f5e5/original/rotations/south.png",
+    "sha256": "67e9aab6f4d058c1ba56f3a5cd9c3ac0530aa300c19e45bf158c400bf753a5d2"
+   },
+   "crop": [
+    27,
+    6,
+    59,
+    82
+   ],
+   "resample": "majority",
+   "scale": [
+    0.4375,
+    0.4342
+   ],
+   "anchor": [
+    7,
+    32
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/floor_lamp.png",
+    "width": 14,
+    "height": 33,
+    "sha256": "93ea4557ec985c975585e0a3e52874e02748bdf95b8258b80d0f086e11e4a1a2"
+   },
+   "catalog": [
+    "sprites.floor_lamp"
+   ]
+  },
+  {
+   "key": "rug",
+   "group": "furniture",
+   "source": {
+    "uuid": "16c088f8-6935-4145-82cd-547195c804d3",
+    "name": "large ornate red and gold rect",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/16c088f8-6935-4145-82cd-547195c804d3/original/rotations/south.png",
+    "sha256": "b993083ee8f423d8a6234e864d614824d47593ed6f487fd2119cba8ebbded9fd"
+   },
+   "crop": [
+    16,
+    21,
+    70,
+    66
+   ],
+   "resample": "majority",
+   "scale": [
+    1.037,
+    1.0444
+   ],
+   "anchor": [
+    28,
+    46
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/rug.png",
+    "width": 56,
+    "height": 47,
+    "sha256": "38104c29e0c73df5209a0f39a6682297ac73b9a5a3b2efa9162775f579b074d5"
+   },
+   "catalog": [
+    "sprites.rug"
+   ]
+  },
+  {
+   "key": "cozy_bed",
+   "group": "furniture",
+   "source": {
+    "uuid": "db62e6bf-f783-42ff-9150-46592857e087",
+    "name": "cozy wooden bed with red blank",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/db62e6bf-f783-42ff-9150-46592857e087/original/rotations/south.png",
+    "sha256": "38667e8fc0eb745ab8cc9a7997a055544d40c10695cd7d23c7c13b563d923c04"
+   },
+   "crop": [
+    19,
+    13,
+    67,
+    73
+   ],
+   "resample": "majority",
+   "scale": [
+    0.6667,
+    0.6667
+   ],
+   "anchor": [
+    16,
+    39
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/cozy_bed.png",
+    "width": 32,
+    "height": 40,
+    "sha256": "e4beeb04ae6fc6954382ff2c6be92bad8a23b55d27cae9cc127b009a61726b5a"
+   },
+   "catalog": [
+    "sprites.cozy_bed"
+   ]
+  },
+  {
+   "key": "wood_stool",
+   "group": "furniture",
+   "source": {
+    "uuid": "ae0b723d-4881-4d92-a67f-bf450ebae45c",
+    "name": "small wooden stool",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/ae0b723d-4881-4d92-a67f-bf450ebae45c/original/rotations/south.png",
+    "sha256": "bda4cf6d0f6da33e228fc56948bf64b1a977d6098b9b542cca6cc697f28ecbb3"
+   },
+   "crop": [
+    20,
+    15,
+    66,
+    72
+   ],
+   "resample": "majority",
+   "scale": [
+    0.3043,
+    0.2982
+   ],
+   "anchor": [
+    7,
+    16
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/furniture/wood_stool.png",
+    "width": 14,
+    "height": 17,
+    "sha256": "66a4220a27b1896b28bb49cd829275786425807830d0836dab286aef8f1ed9cc"
+   },
+   "catalog": [
+    "sprites.wood_stool"
+   ]
+  },
+  {
+   "key": "wood",
+   "group": "icons",
+   "source": {
+    "uuid": "da41b434-321b-4781-84db-24626cd7e432",
+    "name": "A bundle of brown wooden logs ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/da41b434-321b-4781-84db-24626cd7e432/original/rotations/south.png",
+    "sha256": "cf27728ab525103d2868868f761a915e496a9173d6f2c74d634d903005378991"
+   },
+   "crop": [
+    13,
+    14,
+    65,
+    71
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2885,
+    0.2807
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/wood.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "fd838cd1a06b612e55e3e55c281296e21bad3ff5242ea3066b5fd4f937e8e7d8"
+   },
+   "catalog": [
+    "items.wood"
+   ]
+  },
+  {
+   "key": "herb",
+   "group": "icons",
+   "source": {
+    "uuid": "7a2898c8-600b-4e51-b325-507c570322d0",
+    "name": "A bundle of tied wild green he",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/7a2898c8-600b-4e51-b325-507c570322d0/original/rotations/south.png",
+    "sha256": "c86e52509c14a0fcf4f364833826489d18aee75f0228b05e78cb0ddced1819f2"
+   },
+   "crop": [
+    15,
+    5,
+    71,
+    82
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2143,
+    0.2078
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/herb.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "f19e891e37dacdeba6179b8dbef621f83fc8d1e57eee7279a2f0384b4ac7d0a4"
+   },
+   "catalog": [
+    "items.herb"
+   ]
+  },
+  {
+   "key": "crystal",
+   "group": "icons",
+   "source": {
+    "uuid": "c87ca925-a531-4edc-b537-0fa1f38a25d5",
+    "name": "A cluster of clear sparkling c",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/c87ca925-a531-4edc-b537-0fa1f38a25d5/original/rotations/south.png",
+    "sha256": "7798be219c03296cf73e277c64a1b0db2a16e486db633b1910e04cddd7cfa23c"
+   },
+   "crop": [
+    17,
+    17,
+    68,
+    71
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2941,
+    0.2963
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/crystal.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "0e4e4f3a0212b83a617a054675b4ae8ae4691b4f15be0079dabb2e28c1309727"
+   },
+   "catalog": [
+    "items.crystal"
+   ]
+  },
+  {
+   "key": "bone",
+   "group": "icons",
+   "source": {
+    "uuid": "ce349aed-e8a0-4267-8546-abe3d681e2fe",
+    "name": "A clean white animal bone, pix",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/ce349aed-e8a0-4267-8546-abe3d681e2fe/original/rotations/south.png",
+    "sha256": "67f9d62fc337ec3769004e564b98697cc8af00bf78e9fc3276c9517e80735f34"
+   },
+   "crop": [
+    25,
+    6,
+    61,
+    80
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2222,
+    0.2162
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/bone.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "cd171124baf10c561ff6a0d7c7d5a63b42a4f45755fd21450c32aed7bfb62304"
+   },
+   "catalog": [
+    "items.bone"
+   ]
+  },
+  {
+   "key": "gem",
+   "group": "icons",
+   "source": {
+    "uuid": "9be70331-9137-4cd0-a682-085959f82280",
+    "name": "A multifaceted sparkling ruby ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/9be70331-9137-4cd0-a682-085959f82280/original/rotations/south.png",
+    "sha256": "9054a9572f835323a4461592ae73f537476aac4c5b22d9a56dab67e65f98d4c4"
+   },
+   "crop": [
+    17,
+    24,
+    69,
+    67
+   ],
+   "resample": "majority",
+   "scale": [
+    0.3077,
+    0.3023
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/gem.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "2e99b1b9f5892beb5c6f9ad7f1c9978859debfa6250bc79622ed68441d029342"
+   },
+   "catalog": [
+    "items.gem"
+   ]
+  },
+  {
+   "key": "ring",
+   "group": "icons",
+   "source": {
+    "uuid": "ccf6f5c3-59ae-4715-be5e-f5c0fce42ad9",
+    "name": "glowing golden ring with a bla",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/ccf6f5c3-59ae-4715-be5e-f5c0fce42ad9/original/rotations/south.png",
+    "sha256": "c03d13df4137385d35fb0322f5a2c62689f8fb0dbd7513c5db3ac1450146c44f"
+   },
+   "crop": [
+    18,
+    22,
+    68,
+    64
+   ],
+   "resample": "majority",
+   "scale": [
+    0.32,
+    0.3095
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/ring.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "47c53448b340c877b905075912cc8da913c5595bb87d626c6613f4245b9e6d3d"
+   },
+   "catalog": [
+    "items.ring"
+   ]
+  },
+  {
+   "key": "bread",
+   "group": "icons",
+   "source": {
+    "uuid": "2ab5c375-0a0f-4a71-bfbd-0fce4bb2add8",
+    "name": "A rustic round loaf of hearth ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/2ab5c375-0a0f-4a71-bfbd-0fce4bb2add8/original/rotations/south.png",
+    "sha256": "035e9c6b210ec6845926fbd327038e800cffbddf3e88764ff568cf4c6affdcc1"
+   },
+   "crop": [
+    17,
+    22,
+    69,
+    64
+   ],
+   "resample": "majority",
+   "scale": [
+    0.3077,
+    0.3095
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/bread.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "3c8d30867ed63c77811b2ba39de6d6aa2fbb45e85fb77a3d215a5259fddaa1f9"
+   },
+   "catalog": [
+    "items.bread"
+   ]
+  },
+  {
+   "key": "lantern",
+   "group": "icons",
+   "source": {
+    "uuid": "cdc42e98-8a71-404a-8773-06c38a7c1cad",
+    "name": "A metal hand-held lantern with",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/cdc42e98-8a71-404a-8773-06c38a7c1cad/original/rotations/south.png",
+    "sha256": "4a7555922be78e9940999a4d35822e683f231e9b8b16fad4fb23b11ab324c080"
+   },
+   "crop": [
+    26,
+    10,
+    61,
+    74
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2571,
+    0.25
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/lantern.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "9a8fc3e8eabb5ceb8d4d018c1cdab600d1e33a9aebf99106d7bbef81f0044c07"
+   },
+   "catalog": [
+    "items.lantern"
+   ]
+  },
+  {
+   "key": "tonic_health",
+   "group": "icons",
+   "source": {
+    "uuid": "effac1fd-6956-425a-b290-cab5960dbb07",
+    "name": "A small green healing tonic bo",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/effac1fd-6956-425a-b290-cab5960dbb07/original/rotations/south.png",
+    "sha256": "fbc042bfc316bc5df5d1052e639d3a90aa05f809d93e347adeab115404e4b148"
+   },
+   "crop": [
+    24,
+    14,
+    62,
+    69
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2895,
+    0.2909
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/tonic_health.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "4accb0823100b1cdd6589170f53fd0fbbb392bb363e232e15d371874543bd718"
+   },
+   "catalog": [
+    "items.tonic_health"
+   ]
+  },
+  {
+   "key": "tonic_strength",
+   "group": "icons",
+   "source": {
+    "uuid": "b8d168d5-c3fa-4547-848b-b6b483884b14",
+    "name": "A red-orange glowing strength ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/b8d168d5-c3fa-4547-848b-b6b483884b14/original/rotations/south.png",
+    "sha256": "eaa8e932fd13110f308c0483e868d335a94300b34ef63e9178dbdd390f10aede"
+   },
+   "crop": [
+    26,
+    11,
+    60,
+    75
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2353,
+    0.25
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/tonic_strength.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "626c52ca9ac36b8fbf93c45d1f58b7d1a76ee5238e4be685ba9467a99d8574ab"
+   },
+   "catalog": [
+    "items.tonic_strength"
+   ]
+  },
+  {
+   "key": "tonic_swift",
+   "group": "icons",
+   "source": {
+    "uuid": "f70c1f39-e7e7-45d5-8e97-e24552a637a9",
+    "name": "A bright blue haste tonic in a",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/f70c1f39-e7e7-45d5-8e97-e24552a637a9/original/rotations/south.png",
+    "sha256": "3f3a15efd80fccecaaab3427bff8014f8cd2cfea718bb52ed5fa84b8cdab6122"
+   },
+   "crop": [
+    19,
+    8,
+    67,
+    78
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2292,
+    0.2286
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/tonic_swift.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "3e87d9806151ffad62ada73f653c342d456c04e3701ee4bd1781918e96ddd033"
+   },
+   "catalog": [
+    "items.tonic_swift"
+   ]
+  },
+  {
+   "key": "skewer",
+   "group": "icons",
+   "source": {
+    "uuid": "a6561e42-2807-4e9b-9b5a-84b77650a454",
+    "name": "A wooden skewer with grilled m",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/a6561e42-2807-4e9b-9b5a-84b77650a454/original/rotations/south.png",
+    "sha256": "d58e64bad0c4a49c8608484b9a776da52f0a67844c4bf3e92f058d6e8913aed8"
+   },
+   "crop": [
+    33,
+    4,
+    53,
+    82
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2,
+    0.2051
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/skewer.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "64062d1e88db4a76207fb87385f7e7911bac33857fb775cf6be3529535fe1fbf"
+   },
+   "catalog": [
+    "items.skewer"
+   ]
+  },
+  {
+   "key": "hearty_meal",
+   "group": "icons",
+   "source": {
+    "uuid": "8810a86c-15d4-4098-8c8d-011fbaec25d3",
+    "name": "A full plate with roast meat, ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/8810a86c-15d4-4098-8c8d-011fbaec25d3/original/rotations/south.png",
+    "sha256": "a6633c43934458deb737d70643d4c82171d3ca22046f5c32330cc7d21d8c1e69"
+   },
+   "crop": [
+    8,
+    18,
+    77,
+    72
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2319,
+    0.2407
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/hearty_meal.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "07fcf2c90b749c48d041e6b464af9ada6a32d8782b953804a27813f79fe9e2fb"
+   },
+   "catalog": [
+    "items.hearty_meal"
+   ]
+  },
+  {
+   "key": "stone",
+   "group": "icons",
+   "source": {
+    "uuid": "abf2ed77-e197-4087-8624-db9f243d5d36",
+    "name": "A grey rough-hewn stone block,",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/abf2ed77-e197-4087-8624-db9f243d5d36/original/rotations/south.png",
+    "sha256": "3584b44340dcc4fadd584505a3f658d2c0a55f811165e631ba757dd0e6cd3284"
+   },
+   "crop": [
+    15,
+    22,
+    71,
+    64
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2857,
+    0.2857
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/stone.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "fb5b2722ae32af24656710120ade948dae1469532d8b9ce5c8f7d0232a9dd3a4"
+   },
+   "catalog": [
+    "items.stone"
+   ]
+  },
+  {
+   "key": "fiber",
+   "group": "icons",
+   "source": {
+    "uuid": "cde5b874-8fce-42ae-8a7f-ebd11825383c",
+    "name": "A small bundle of plant fiber ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/cde5b874-8fce-42ae-8a7f-ebd11825383c/original/rotations/south.png",
+    "sha256": "3f0f3bf3b22ce0510cddba752038405bc00016f12e039e4bdc08e7265ed6cd5e"
+   },
+   "crop": [
+    23,
+    10,
+    61,
+    76
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2368,
+    0.2424
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/fiber.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "8809337dcc7febdacb3e5e276e071f0c9d8960ccd477cd6a7f13d1d670fddd0c"
+   },
+   "catalog": [
+    "items.fiber"
+   ]
+  },
+  {
+   "key": "resin",
+   "group": "icons",
+   "source": {
+    "uuid": "1d540557-138a-4f35-bf3b-e6355b3fdbc5",
+    "name": "A golden drop of tree resin in",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/1d540557-138a-4f35-bf3b-e6355b3fdbc5/original/rotations/south.png",
+    "sha256": "90b90597f31fad78ccd45f1d424e9af2a71ab6bfd4f912935a48f6bff74881aa"
+   },
+   "crop": [
+    28,
+    14,
+    58,
+    71
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2667,
+    0.2807
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/resin.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "00d809c2466a26253b45baf301c4670922f3b0b6f171de39d628b158500ea3d4"
+   },
+   "catalog": [
+    "items.resin"
+   ]
+  },
+  {
+   "key": "mushroom",
+   "group": "icons",
+   "source": {
+    "uuid": "aa79bbf5-27c4-449d-b0b2-1f02f1ae93bc",
+    "name": "A round brown mushroom with a ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/aa79bbf5-27c4-449d-b0b2-1f02f1ae93bc/original/rotations/south.png",
+    "sha256": "9db531babef175ce3ada54aabd25bc0ca1ee97a776fd7c52f67fad17ffecd5d5"
+   },
+   "crop": [
+    18,
+    18,
+    68,
+    68
+   ],
+   "resample": "majority",
+   "scale": [
+    0.32,
+    0.32
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/mushroom.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "0551eca02d097504010a8a651e46872de1a589e43b5ba277ca5b7f35d3af679b"
+   },
+   "catalog": [
+    "items.mushroom"
+   ]
+  },
+  {
+   "key": "cloth",
+   "group": "icons",
+   "source": {
+    "uuid": "351d5690-e1ce-4aa8-91dc-231c6ef69cec",
+    "name": "A neatly rolled white cloth ba",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/351d5690-e1ce-4aa8-91dc-231c6ef69cec/original/rotations/south.png",
+    "sha256": "1cf69aa80ab930c2fdbe558b61672b409f544585f05c7f3f43d2c6eb3f25d0a4"
+   },
+   "crop": [
+    19,
+    18,
+    67,
+    70
+   ],
+   "resample": "majority",
+   "scale": [
+    0.3125,
+    0.3077
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/cloth.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "25c25ee50d13ce0a10fa913eecbc6274d26cd048c57a9dab95b09c6c88f4f0c0"
+   },
+   "catalog": [
+    "items.cloth"
+   ]
+  },
+  {
+   "key": "carrot",
+   "group": "icons",
+   "source": {
+    "uuid": "9a5d9323-d53a-4645-9d89-f023b437d036",
+    "name": "An orange carrot with green le",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/9a5d9323-d53a-4645-9d89-f023b437d036/original/rotations/south.png",
+    "sha256": "48842382a600a4e3be918b04c10976ea5491e6ec912e774e4a48339c25115539"
+   },
+   "crop": [
+    19,
+    14,
+    67,
+    72
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2708,
+    0.2759
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/carrot.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "e85d7c896f74292ef10045f73b14564ed4ae69058505ea0452b0239ab42b2cc9"
+   },
+   "catalog": [
+    "items.carrot"
+   ]
+  },
+  {
+   "key": "beet",
+   "group": "icons",
+   "source": {
+    "uuid": "3ad82fa4-3ef2-46a7-9306-64e494a20305",
+    "name": "A deep red beet root with purp",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/3ad82fa4-3ef2-46a7-9306-64e494a20305/original/rotations/south.png",
+    "sha256": "c644e44274c7ac7f87a9a0ee760cada07b365e02169c5e53afa5fc46fc952f68"
+   },
+   "crop": [
+    15,
+    6,
+    71,
+    77
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2321,
+    0.2254
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/beet.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "12dcd1c3c3b4df89f535e9275a290106fd27faeae10990df399dd50469240488"
+   },
+   "catalog": [
+    "items.beet"
+   ]
+  },
+  {
+   "key": "cabbage",
+   "group": "icons",
+   "source": {
+    "uuid": "e6b31f21-3373-469c-a964-a7dc7a2bf917",
+    "name": "A round green cabbage head wit",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/e6b31f21-3373-469c-a964-a7dc7a2bf917/original/rotations/south.png",
+    "sha256": "8fc0cb52fd75c3db40f76c317a00b0d156471c071d6f8edc4e836e7168f3579d"
+   },
+   "crop": [
+    13,
+    14,
+    73,
+    72
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2667,
+    0.2586
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/cabbage.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "9897bedfe2d2ac5741f0ba2d61f4b2d7ee95480b806b1f7fece8f95c20b65874"
+   },
+   "catalog": [
+    "items.cabbage"
+   ]
+  },
+  {
+   "key": "lettuce",
+   "group": "icons",
+   "source": {
+    "uuid": "ab5a5a46-a6b1-4c5e-9a9b-e1ae3761ff3d",
+    "name": "A leafy bright green lettuce h",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/ab5a5a46-a6b1-4c5e-9a9b-e1ae3761ff3d/original/rotations/south.png",
+    "sha256": "58493462d264a478f5dd34ba70b92c5df4a2e09d700449529559196f1f9113c9"
+   },
+   "crop": [
+    15,
+    19,
+    71,
+    66
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2857,
+    0.2766
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/lettuce.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "3826be0619c2e34687e7b8fc10be7ff3e7dc4df65f373d23e2ccae0048778263"
+   },
+   "catalog": [
+    "items.lettuce"
+   ]
+  },
+  {
+   "key": "cauliflower",
+   "group": "icons",
+   "source": {
+    "uuid": "3cf857b9-86de-4821-a5df-5a2f192c7224",
+    "name": "A white cauliflower head with ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/3cf857b9-86de-4821-a5df-5a2f192c7224/original/rotations/south.png",
+    "sha256": "b37f9cd6ff381c8e302920b9912e1c99f3e02515515875156996f376f89bbf1a"
+   },
+   "crop": [
+    13,
+    19,
+    72,
+    70
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2712,
+    0.2745
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/cauliflower.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "bd7a397db571190a4976c998e7896b63a740dd6986c751b765d236c735d92c00"
+   },
+   "catalog": [
+    "items.cauliflower"
+   ]
+  },
+  {
+   "key": "broccoli",
+   "group": "icons",
+   "source": {
+    "uuid": "d3f17176-3389-45a1-9eed-51e38f506559",
+    "name": "A dark green broccoli head on ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/d3f17176-3389-45a1-9eed-51e38f506559/original/rotations/south.png",
+    "sha256": "f69b5d57f25840e8d8d3e95fb7d3e4d8000d5a0c49bce0ecb6a0bc918d128683"
+   },
+   "crop": [
+    13,
+    11,
+    73,
+    75
+   ],
+   "resample": "majority",
+   "scale": [
+    0.25,
+    0.25
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/broccoli.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "cce5beee009e2e99323040b8112b25b4bc17f38263420e524b01127930b87852"
+   },
+   "catalog": [
+    "items.broccoli"
+   ]
+  },
+  {
+   "key": "garlic",
+   "group": "icons",
+   "source": {
+    "uuid": "fdeadb96-3415-4820-b2fa-89de985a3cc3",
+    "name": "A white bulb of garlic with pa",
+    "view": "east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/fdeadb96-3415-4820-b2fa-89de985a3cc3/original/rotations/east.png",
+    "sha256": "70a9f6a92519bf0a47f9cb3175166c4c0c8f4f78c46482182607625756d284cc"
+   },
+   "crop": [
+    18,
+    21,
+    64,
+    64
+   ],
+   "resample": "majority",
+   "scale": [
+    0.3478,
+    0.3488
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "south, south-east, south-west, west and the north views all carry stray generator text; east is the only clean view",
+   "output": {
+    "path": "game/assets/curated/icons/garlic.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "813b9088c93d8b2d7a70c57c1e9272a0c4a3fde42cfff9589ae0e8c305274a8f"
+   },
+   "catalog": [
+    "items.garlic"
+   ]
+  },
+  {
+   "key": "stew",
+   "group": "icons",
+   "source": {
+    "uuid": "6f0bc9a4-1662-45ca-b711-13c61d6b6901",
+    "name": "A wooden bowl of thick vegetab",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/6f0bc9a4-1662-45ca-b711-13c61d6b6901/original/rotations/south.png",
+    "sha256": "a7376caff23171a9023ad4c92f89529a1534255dd43e7ac547abb648071143db"
+   },
+   "crop": [
+    5,
+    4,
+    80,
+    77
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2133,
+    0.2192
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/stew.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "412087a6b689a62481698b335f416b578de68a703dd8d2b66acbc9d3b80963cc"
+   },
+   "catalog": [
+    "items.stew"
+   ]
+  },
+  {
+   "key": "cooked_meat",
+   "group": "icons",
+   "source": {
+    "uuid": "8e0e42dd-0ff1-4d07-8d0c-aed0fa6ee94a",
+    "name": "A roasted leg of meat on a bon",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/8e0e42dd-0ff1-4d07-8d0c-aed0fa6ee94a/original/rotations/south.png",
+    "sha256": "f9309c49eeaa93d7da2ed64e85564576e35f89da35bf8dbcdb4621ba4c831764"
+   },
+   "crop": [
+    22,
+    2,
+    64,
+    78
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2143,
+    0.2105
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/cooked_meat.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "50afa1e9968a0e81db4254f7740c14884f2fd87ac29dd3829015075910a1efcc"
+   },
+   "catalog": [
+    "items.cooked_meat"
+   ]
+  },
+  {
+   "key": "tomato",
+   "group": "icons",
+   "source": {
+    "uuid": "a32d4daf-6a6b-4d9c-b8e1-846da765b7d5",
+    "name": "A round red tomato with a gree",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/a32d4daf-6a6b-4d9c-b8e1-846da765b7d5/original/rotations/south.png",
+    "sha256": "0af7500e02a125c982ca148f83f82c4fa93db0213a55aaeb5f6dee0bfdbdf049"
+   },
+   "crop": [
+    12,
+    14,
+    74,
+    73
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2581,
+    0.2542
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/tomato.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "09de2754b9fc6abcf8bf1569da2c8150892f35f900a9d9f6fb9a51776f2ae8ae"
+   },
+   "catalog": [
+    "items.tomato"
+   ]
+  },
+  {
+   "key": "corn",
+   "group": "icons",
+   "source": {
+    "uuid": "24599644-584c-4b7e-8b11-345a10f8e99c",
+    "name": "A yellow ear of corn with gree",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/24599644-584c-4b7e-8b11-345a10f8e99c/original/rotations/south.png",
+    "sha256": "46ab17487a26c7053fbe05c2b2a421bad9c47b938613b83e3a7b32aa87ab6dfb"
+   },
+   "crop": [
+    21,
+    10,
+    65,
+    76
+   ],
+   "resample": "majority",
+   "scale": [
+    0.25,
+    0.2424
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/corn.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "8e424ac57edd20a0b93697771ef58b58b8a576e26def8ab522089a252568d538"
+   },
+   "catalog": [
+    "items.corn"
+   ]
+  },
+  {
+   "key": "pumpkin",
+   "group": "icons",
+   "source": {
+    "uuid": "17e8d9f3-b7dd-49e1-a669-7eec17d1bc7d",
+    "name": "A round bright orange pumpkin ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/17e8d9f3-b7dd-49e1-a669-7eec17d1bc7d/original/rotations/south.png",
+    "sha256": "db777a8675867f1eea47073c95e8b75f882df80c21b7985e9908fccf05b558a6"
+   },
+   "crop": [
+    16,
+    15,
+    70,
+    67
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2963,
+    0.2885
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/pumpkin.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "c7506d5547b0e04b4f6bd9a1f354db1f399bedaeb227c8b3442b13e01d789422"
+   },
+   "catalog": [
+    "items.pumpkin"
+   ]
+  },
+  {
+   "key": "eggplant",
+   "group": "icons",
+   "source": {
+    "uuid": "be65804b-029f-4989-8ec1-8ed807a22538",
+    "name": "A deep purple glossy eggplant ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/be65804b-029f-4989-8ec1-8ed807a22538/original/rotations/south.png",
+    "sha256": "768860759bce22f768af29d3d2cb75bb95a9f51d24cc4c5144caf5c7c243248a"
+   },
+   "crop": [
+    22,
+    10,
+    64,
+    76
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2381,
+    0.2424
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/eggplant.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "eae22717e0b7c7ba0542d2610b9aed85512876b6000a27ecdee3899fa9ea8251"
+   },
+   "catalog": [
+    "items.eggplant"
+   ]
+  },
+  {
+   "key": "onion",
+   "group": "icons",
+   "source": {
+    "uuid": "e634f119-fe9f-4851-a09d-759fd4d9c5a1",
+    "name": "A round yellow onion with pape",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/e634f119-fe9f-4851-a09d-759fd4d9c5a1/original/rotations/south.png",
+    "sha256": "902280f3ded069e7182dac2d0e0a4bd03269861d84938743bd1d097ef12926a3"
+   },
+   "crop": [
+    20,
+    22,
+    66,
+    71
+   ],
+   "resample": "majority",
+   "scale": [
+    0.3261,
+    0.3265
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/onion.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "c44735a00d1405597aa84dbfc979aba59af23ec6c9de489d10e8fa14d6cfc4ef"
+   },
+   "catalog": [
+    "items.onion"
+   ]
+  },
+  {
+   "key": "strawberry",
+   "group": "icons",
+   "source": {
+    "uuid": "72320597-7c9c-407f-b871-f2052e97e1e8",
+    "name": "A bright red strawberry with g",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/72320597-7c9c-407f-b871-f2052e97e1e8/original/rotations/south.png",
+    "sha256": "8e53071d30fb4894432868faffcd969df49e7304758328db7a308073655a9391"
+   },
+   "crop": [
+    18,
+    14,
+    65,
+    74
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2766,
+    0.2667
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/strawberry.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "c429385d0eae588dbd6b819e1bc7b9ef3984127d3972a1d9e56e6cbe003b2a7b"
+   },
+   "catalog": [
+    "items.strawberry"
+   ]
+  },
+  {
+   "key": "axe_iron",
+   "group": "icons",
+   "source": {
+    "uuid": "92208dfb-32ff-4ff1-a642-1bedc7c793fe",
+    "name": "An iron wood-chopping axe with",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/92208dfb-32ff-4ff1-a642-1bedc7c793fe/original/rotations/north-east.png",
+    "sha256": "b8e29c111af47cec38c36f02a6fbb5b7f4cacb96e4ed669dbb9f90ff3ffae63d"
+   },
+   "crop": [
+    16,
+    20,
+    75,
+    65
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2712,
+    0.2667
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/axe_iron.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "72435c3af48653d09fec775e0aff5da5eeb73bbfddc6474101a419c60cac32ad"
+   },
+   "catalog": [
+    "items.axe_iron"
+   ]
+  },
+  {
+   "key": "pickaxe_iron",
+   "group": "icons",
+   "source": {
+    "uuid": "72a42ff7-543b-4f35-929b-b33b3dace1b7",
+    "name": "An iron pickaxe with a grey me",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/72a42ff7-543b-4f35-929b-b33b3dace1b7/original/rotations/north-east.png",
+    "sha256": "0bdf63f3ae0ce1a1667814ef26a1afe339ebd9c69fe1e3c7b3627c30ab7ce4bf"
+   },
+   "crop": [
+    18,
+    15,
+    68,
+    70
+   ],
+   "resample": "majority",
+   "scale": [
+    0.3,
+    0.2909
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/pickaxe_iron.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "9297d9e23c9e73643d8526523bdab5e43edafa7fa8aab64c44f744c5c92a105c"
+   },
+   "catalog": [
+    "items.pickaxe_iron"
+   ]
+  },
+  {
+   "key": "sword_steel",
+   "group": "icons",
+   "source": {
+    "uuid": "6c4d1e9b-16a5-4331-90f6-f1747a8265b9",
+    "name": "A polished silver steel sword ",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/6c4d1e9b-16a5-4331-90f6-f1747a8265b9/original/rotations/north-east.png",
+    "sha256": "fdfe3d77694ace194107f60a57acfb7eff4e24d607aa1c207e7eb31fcaff4ff9"
+   },
+   "crop": [
+    10,
+    9,
+    73,
+    72
+   ],
+   "resample": "majority",
+   "scale": [
+    0.254,
+    0.254
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/sword_steel.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "07bb837991113114efbd7c4d27af0ce32ef389bbc134a6ea2d9fa0f3e7a3c063"
+   },
+   "catalog": [
+    "items.sword_steel"
+   ]
+  },
+  {
+   "key": "shield_iron",
+   "group": "icons",
+   "source": {
+    "uuid": "61a54634-65d8-40f1-a36b-a9ee315b77b2",
+    "name": "A rectangular iron shield with",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/61a54634-65d8-40f1-a36b-a9ee315b77b2/original/rotations/south.png",
+    "sha256": "b7cbb629aca7cdd622caf9e1298c10ba07e7093acf35ac6b1ae8c4c526b0aac0"
+   },
+   "crop": [
+    20,
+    14,
+    66,
+    73
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2609,
+    0.2712
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/shield_iron.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "128ce610394474d3c112f11ad43b2a4d1993a4b3d7b8e215c8c5aad3c98594b8"
+   },
+   "catalog": [
+    "items.shield_iron"
+   ]
+  },
+  {
+   "key": "sword_wood",
+   "group": "icons",
+   "source": {
+    "uuid": "057e42f1-1060-47e5-9842-fcfc23486dda",
+    "name": "A rough wooden short sword wit",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/057e42f1-1060-47e5-9842-fcfc23486dda/original/rotations/north-east.png",
+    "sha256": "e94f746164bef5a97f395518621929f83146bf379089d68c543d7767a917c3e3"
+   },
+   "crop": [
+    11,
+    11,
+    75,
+    76
+   ],
+   "resample": "majority",
+   "scale": [
+    0.25,
+    0.2462
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/sword_wood.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "2d297b44f4568d9e1b2af6c0fd2f12bb5e417c26134c1b5453420efbfee7f21f"
+   },
+   "catalog": [
+    "items.sword_wood"
+   ]
+  },
+  {
+   "key": "sword_bone",
+   "group": "icons",
+   "source": {
+    "uuid": "3f26949d-ec07-4bd7-945d-f1e66916996d",
+    "name": "A jagged bone blade weapon wit",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/3f26949d-ec07-4bd7-945d-f1e66916996d/original/rotations/north-east.png",
+    "sha256": "a68692a96ab048b8e842ad3fac3e1003717bd64f3fc347d60c95a6ffd8aa2b59"
+   },
+   "crop": [
+    13,
+    10,
+    70,
+    74
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2456,
+    0.25
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/sword_bone.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "1fbd5c9d07508b803a481bfb40d9df2efddf40d37be4e3696475307d7719c240"
+   },
+   "catalog": [
+    "items.sword_bone"
+   ]
+  },
+  {
+   "key": "sword_iron",
+   "group": "icons",
+   "source": {
+    "uuid": "28387a17-a511-42a9-9585-7ed1c9c8cfa9",
+    "name": "A grey iron longsword with cro",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/28387a17-a511-42a9-9585-7ed1c9c8cfa9/original/rotations/north-east.png",
+    "sha256": "17457c54f54634b96b212304857b48f665ab79349f7ab0b612a69e81253ac73b"
+   },
+   "crop": [
+    6,
+    10,
+    77,
+    81
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2254,
+    0.2254
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/sword_iron.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "b914d01b13cd96a9f60dca5a3aecce8976e7027c781f7b28c8f8ea533a9f2323"
+   },
+   "catalog": [
+    "items.sword_iron"
+   ]
+  },
+  {
+   "key": "axe",
+   "group": "icons",
+   "source": {
+    "uuid": "3945e99d-58f7-4920-941f-db4a7521b343",
+    "name": "A stone-headed hand axe with a",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/3945e99d-58f7-4920-941f-db4a7521b343/original/rotations/north-east.png",
+    "sha256": "60f8f9358389247c7e6b37100010f57cfdb119bf90ab01351a7d58a33337f664"
+   },
+   "crop": [
+    16,
+    15,
+    69,
+    69
+   ],
+   "resample": "majority",
+   "scale": [
+    0.3019,
+    0.2963
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/axe.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "db50e9a2ba8c86df8d139f6808e76210441fa26891a3bdd9ff218decfcfd5661"
+   },
+   "catalog": [
+    "items.axe"
+   ]
+  },
+  {
+   "key": "pickaxe",
+   "group": "icons",
+   "source": {
+    "uuid": "d09d0e7b-0c47-4b1e-9158-5d8a93825ce2",
+    "name": "A stone pickaxe with a wooden ",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/d09d0e7b-0c47-4b1e-9158-5d8a93825ce2/original/rotations/north-east.png",
+    "sha256": "a4c341cb8f9312cdb0c02d9deb9b15d0bc91fbaa2d95d14bc8a716eb4c9b1eff"
+   },
+   "crop": [
+    13,
+    10,
+    74,
+    72
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2623,
+    0.2581
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/pickaxe.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "b1ef020aaccaef81a6047fe58e628cbcd08f4c3e6e3e9f3242f1b409b34a64b1"
+   },
+   "catalog": [
+    "items.pickaxe"
+   ]
+  },
+  {
+   "key": "shield",
+   "group": "icons",
+   "source": {
+    "uuid": "7f8ae93c-2d81-4c99-84d8-0a7051a99406",
+    "name": "A small round wooden buckler s",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/7f8ae93c-2d81-4c99-84d8-0a7051a99406/original/rotations/south.png",
+    "sha256": "e55f778d553f07aea2626b3bf587840f4ad5651097fc4a19ef24b15b8a21da4a"
+   },
+   "crop": [
+    17,
+    17,
+    69,
+    69
+   ],
+   "resample": "majority",
+   "scale": [
+    0.3077,
+    0.3077
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/shield.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "ced3292f2255c5825e7eb72e13cb626db473ea6bff2eb5bbf4809c58db4aa3dc"
+   },
+   "catalog": [
+    "items.shield"
+   ]
+  },
+  {
+   "key": "hoe",
+   "group": "icons",
+   "source": {
+    "uuid": "6cb3463a-4d26-495d-8437-3dd05f86ab68",
+    "name": "A simple wooden-handled hoe wi",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/6cb3463a-4d26-495d-8437-3dd05f86ab68/original/rotations/north-east.png",
+    "sha256": "53880e0f12fc58482418119a8161a2dbdfde383eaf0a6830469d450dc9eb62cc"
+   },
+   "crop": [
+    14,
+    14,
+    72,
+    69
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2759,
+    0.2727
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/hoe.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "ef693d33c73592aa63a7fe92b1ca97def48f1eb16fbadde1f38839babfefe0ef"
+   },
+   "catalog": [
+    "items.hoe"
+   ]
+  },
+  {
+   "key": "scythe",
+   "group": "icons",
+   "source": {
+    "uuid": "68f767e9-a15e-4bfb-8cad-2b92173dc0ac",
+    "name": "A long-handled wooden scythe w",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/68f767e9-a15e-4bfb-8cad-2b92173dc0ac/original/rotations/north-east.png",
+    "sha256": "412c06a43314a195273e38fb2f45a7a297d8b23f98338429bc79d470e71a4f4b"
+   },
+   "crop": [
+    23,
+    12,
+    62,
+    73
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2564,
+    0.2623
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/scythe.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "cea032a236574625febf08bdb712baa21cdd35794d376f1db1c21ce0351f4224"
+   },
+   "catalog": [
+    "items.scythe"
+   ]
+  },
+  {
+   "key": "watering_can",
+   "group": "icons",
+   "source": {
+    "uuid": "83aa7113-ca7f-491a-987a-7f5bfcdbda52",
+    "name": "A metal watering can with a lo",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/83aa7113-ca7f-491a-987a-7f5bfcdbda52/original/rotations/south.png",
+    "sha256": "5d16070799f0becbea588ea2b18d991fa7fb988e0186397ef0c4a8d9e29c7e80"
+   },
+   "crop": [
+    26,
+    14,
+    59,
+    67
+   ],
+   "resample": "majority",
+   "scale": [
+    0.303,
+    0.3019
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/watering_can.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "1885660f8ac182e7c6b4d034c4808a82266302d1f59f1487254c833237f45f29"
+   },
+   "catalog": [
+    "items.watering_can"
+   ]
+  },
+  {
+   "key": "axe_mythril",
+   "group": "icons",
+   "source": {
+    "uuid": "ac2cbcf5-4c3b-4afe-94c0-1c128fc7649c",
+    "name": "A shimmering teal mythril axe ",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/ac2cbcf5-4c3b-4afe-94c0-1c128fc7649c/original/rotations/north-east.png",
+    "sha256": "1cc687ceffb107df4fe3dc41e8c9b8499cbd6a13f7f379d0107d369d51887eb4"
+   },
+   "crop": [
+    13,
+    18,
+    67,
+    68
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2963,
+    0.3
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/axe_mythril.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "319885ee7c4026d6cb21a5ee4604a89574b5ecc59422285f927ac13de6215fa8"
+   },
+   "catalog": [
+    "items.axe_mythril"
+   ]
+  },
+  {
+   "key": "bow_hunter",
+   "group": "icons",
+   "source": {
+    "uuid": "cc154107-9774-4284-9244-734685cb9a67",
+    "name": "A wooden recurve hunter's bow ",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/cc154107-9774-4284-9244-734685cb9a67/original/rotations/south.png",
+    "sha256": "42b7c57be31018aed8f135741b1d7df14a917d6a9f70e8df38622d28e6e47d39"
+   },
+   "crop": [
+    2,
+    32,
+    84,
+    53
+   ],
+   "resample": "majority",
+   "scale": [
+    0.1951,
+    0.1905
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/bow_hunter.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "b46f1b3175a1dcb0cf6ace47fe3509f625ccafe713c540895f8aa98647d26369"
+   },
+   "catalog": [
+    "items.bow_hunter"
+   ]
+  },
+  {
+   "key": "pickaxe_mythril",
+   "group": "icons",
+   "source": {
+    "uuid": "f1bf6679-1d96-4aaf-9dfb-da5672aff9f8",
+    "name": "A glowing teal mythril pickaxe",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/f1bf6679-1d96-4aaf-9dfb-da5672aff9f8/original/rotations/north-east.png",
+    "sha256": "8a95e7041def6ceaf9613cd66f4984fd2cc6c2be8c69143119e2fd1b7423e5ce"
+   },
+   "crop": [
+    10,
+    10,
+    74,
+    76
+   ],
+   "resample": "majority",
+   "scale": [
+    0.25,
+    0.2424
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/pickaxe_mythril.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "e4a85f401a85f6132bf78fdcae4c841dc837b2b618b9dbc155ee10a923807374"
+   },
+   "catalog": [
+    "items.pickaxe_mythril"
+   ]
+  },
+  {
+   "key": "staff_spore",
+   "group": "icons",
+   "source": {
+    "uuid": "b770b940-4b60-406d-8f1e-9ac1f1f44759",
+    "name": "A wooden druid staff topped wi",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/b770b940-4b60-406d-8f1e-9ac1f1f44759/original/rotations/north-east.png",
+    "sha256": "e71f72e924057159641f9e6f8c2f677fb9790863e8af57e16e8e7016b438682b"
+   },
+   "crop": [
+    12,
+    16,
+    67,
+    74
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2727,
+    0.2759
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/staff_spore.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "63abe0b57618fbe35a54b5efb583c61a0f63dc491010077acf1ea0fdf9ac4b6f"
+   },
+   "catalog": [
+    "items.staff_spore"
+   ]
+  },
+  {
+   "key": "sword_copper",
+   "group": "icons",
+   "source": {
+    "uuid": "67b83d11-3f23-4c62-8395-a36ed8479d89",
+    "name": "A copper short sword with a re",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/67b83d11-3f23-4c62-8395-a36ed8479d89/original/rotations/north-east.png",
+    "sha256": "aff43dccb19b23d5c6a4f56739d03e016a95f1a251e2da0d3c5fd0e7fa123cce"
+   },
+   "crop": [
+    13,
+    18,
+    68,
+    72
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2909,
+    0.2963
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/sword_copper.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "c84fbefa64d43393f7582d3f3988aefc9d70ef369f463c76299068ae6a134172"
+   },
+   "catalog": [
+    "items.sword_copper"
+   ]
+  },
+  {
+   "key": "sword_mythril",
+   "group": "icons",
+   "source": {
+    "uuid": "ab5543b7-2167-4160-87f7-4133ecfda7b0",
+    "name": "A glowing teal-blue mythril sw",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/ab5543b7-2167-4160-87f7-4133ecfda7b0/original/rotations/north-east.png",
+    "sha256": "8b41f332cf80427c8f30c4034ce59255d3d62b678f85ca108b5f43b802ac943f"
+   },
+   "crop": [
+    9,
+    6,
+    82,
+    79
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2192,
+    0.2192
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/sword_mythril.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "2ef797421fc673af961fa87599e75fde93ef082fa12ef8efa5f038f3af84053f"
+   },
+   "catalog": [
+    "items.sword_mythril"
+   ]
+  },
+  {
+   "key": "sword_obsidian",
+   "group": "icons",
+   "source": {
+    "uuid": "7f3c5212-c59b-431b-906b-3fc3fe929a44",
+    "name": "A sleek black obsidian blade w",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/7f3c5212-c59b-431b-906b-3fc3fe929a44/original/rotations/north-east.png",
+    "sha256": "a833987a2bf23a3fdb2cce286b549a6504df11407ed02c0640461b8742812267"
+   },
+   "crop": [
+    11,
+    13,
+    72,
+    75
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2623,
+    0.2581
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/sword_obsidian.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "5f1190c8ce6392adc8b8a2901b5b53999e4c3fd66abc428104206e42db3788b8"
+   },
+   "catalog": [
+    "items.sword_obsidian"
+   ]
+  },
+  {
+   "key": "sword_sunforged",
+   "group": "icons",
+   "source": {
+    "uuid": "3d54fbf7-6dad-4e91-8421-7cfd6c5db450",
+    "name": "A radiant golden sunforged swo",
+    "view": "north-east",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/3d54fbf7-6dad-4e91-8421-7cfd6c5db450/original/rotations/north-east.png",
+    "sha256": "147cf65f8cd3963f3811c99208e7af91698fb004aa5add43c22e2cc2636453da"
+   },
+   "crop": [
+    14,
+    15,
+    70,
+    69
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2857,
+    0.2778
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "note": "diagonal view fills the icon square the way hand tools read in Stardew",
+   "output": {
+    "path": "game/assets/curated/icons/sword_sunforged.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "1de037224d2704c67508c8d169d7ebb697a2efda4932c27f052059a5d61ebb9e"
+   },
+   "catalog": [
+    "items.sword_sunforged"
+   ]
+  },
+  {
+   "key": "shield_sunforged",
+   "group": "icons",
+   "source": {
+    "uuid": "62930ac5-64fa-4a05-9588-f5ef2747d5a5",
+    "name": "A radiant golden sunforged shi",
+    "view": "south",
+    "path": "ArtSource/PixelLabArchive/2026-09-26/objects/62930ac5-64fa-4a05-9588-f5ef2747d5a5/original/rotations/south.png",
+    "sha256": "280c7c77938b89300ddf4e49a17639f85a2fb934e2b1b47e98aca5692ac6ac24"
+   },
+   "crop": [
+    16,
+    14,
+    70,
+    77
+   ],
+   "resample": "majority",
+   "scale": [
+    0.2593,
+    0.254
+   ],
+   "anchor": [
+    8,
+    8
+   ],
+   "footprint": null,
+   "door": null,
+   "output": {
+    "path": "game/assets/curated/icons/shield_sunforged.png",
+    "width": 16,
+    "height": 16,
+    "sha256": "dc3c6dcb15e6cbb2c944893c953da1af2ca30dd66e3e9d450e060a059ef29e58"
+   },
+   "catalog": [
+    "items.shield_sunforged"
+   ]
+  }
+ ]
+}

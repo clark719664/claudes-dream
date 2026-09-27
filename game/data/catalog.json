@@ -6053,376 +6053,741 @@
     ],
     "tavern_bar": [
       {
-        "sheet": "pixellab_objects/tavern_bar.png",
+        "sheet": "curated/furniture/tavern_bar.png",
+        "anchor": [
+          36,
+          31
+        ],
         "region": [
           0,
           0,
-          84,
-          84
-        ]
+          72,
+          32
+        ],
+        "curated": true
       }
     ],
     "forge_anvil": [
       {
-        "sheet": "pixellab_objects/forge_anvil.png",
+        "sheet": "curated/furniture/forge_anvil.png",
+        "anchor": [
+          16,
+          17
+        ],
         "region": [
           0,
           0,
-          84,
-          84
-        ]
+          32,
+          18
+        ],
+        "curated": true
       }
     ],
     "store_counter": [
       {
-        "sheet": "pixellab_objects/store_counter.png",
+        "sheet": "curated/furniture/store_counter.png",
+        "anchor": [
+          26,
+          36
+        ],
         "region": [
           0,
           0,
-          84,
-          84
-        ]
+          52,
+          37
+        ],
+        "curated": true
       }
     ],
     "clinic_bed": [
       {
-        "sheet": "pixellab_objects/clinic_bed.png",
+        "sheet": "curated/furniture/clinic_bed.png",
+        "anchor": [
+          15,
+          51
+        ],
         "region": [
           0,
           0,
-          84,
-          84
-        ]
+          30,
+          52
+        ],
+        "curated": true
       }
     ],
     "church_pew": [
       {
-        "sheet": "pixellab_objects/church_pew.png",
+        "sheet": "curated/furniture/church_pew.png",
+        "anchor": [
+          24,
+          28
+        ],
         "region": [
           0,
           0,
-          84,
-          84
-        ]
+          48,
+          29
+        ],
+        "curated": true
       }
     ],
     "school_desk": [
       {
-        "sheet": "pixellab_objects/school_desk.png",
+        "sheet": "curated/furniture/school_desk.png",
+        "anchor": [
+          12,
+          31
+        ],
         "region": [
           0,
           0,
-          84,
-          84
-        ]
+          24,
+          32
+        ],
+        "curated": true
       }
     ],
     "museum_display": [
       {
-        "sheet": "pixellab_objects/museum_display.png",
+        "sheet": "curated/furniture/museum_display.png",
+        "anchor": [
+          14,
+          36
+        ],
         "region": [
           0,
           0,
-          84,
-          84
-        ]
+          28,
+          37
+        ],
+        "curated": true
       }
     ],
     "inn_bed": [
       {
-        "sheet": "pixellab_objects/inn_bed.png",
+        "sheet": "curated/furniture/inn_bed.png",
+        "anchor": [
+          17,
+          41
+        ],
         "region": [
           0,
           0,
-          84,
-          84
-        ]
+          34,
+          42
+        ],
+        "curated": true
       }
     ],
     "library_desk": [
       {
-        "sheet": "pixellab_objects/library_desk.png",
+        "sheet": "curated/furniture/library_desk.png",
+        "anchor": [
+          22,
+          26
+        ],
         "region": [
           0,
           0,
-          84,
-          84
-        ]
+          44,
+          27
+        ],
+        "curated": true
       }
     ],
     "tavern_table": [
       {
-        "sheet": "pixellab_objects/tavern_table.png",
+        "sheet": "curated/furniture/tavern_table.png",
+        "anchor": [
+          15,
+          29
+        ],
         "region": [
           0,
           0,
-          84,
-          84
-        ]
+          30,
+          30
+        ],
+        "curated": true
       }
     ],
     "church": [
       {
-        "sheet": "pixellab_objects/church.png",
+        "sheet": "curated/buildings/church.png",
+        "anchor": [
+          43,
+          152
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 71,
+          "h": 56
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          86,
+          154
+        ],
+        "curated": true
       }
     ],
     "school": [
       {
-        "sheet": "pixellab_objects/school.png",
+        "sheet": "curated/buildings/school.png",
+        "anchor": [
+          52,
+          127
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 84,
+          "h": 52
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          103,
+          129
+        ],
+        "curated": true
       }
     ],
     "inn": [
       {
-        "sheet": "pixellab_objects/inn.png",
+        "sheet": "curated/buildings/inn.png",
+        "anchor": [
+          69,
+          148
+        ],
+        "footprint": {
+          "x": -2,
+          "w": 110,
+          "h": 56
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          134,
+          150
+        ],
+        "curated": true
       }
     ],
     "museum": [
       {
-        "sheet": "pixellab_objects/museum.png",
+        "sheet": "curated/buildings/museum.png",
+        "anchor": [
+          55,
+          118
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 90,
+          "h": 48
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          110,
+          120
+        ],
+        "curated": true
       }
     ],
     "bathhouse": [
       {
-        "sheet": "pixellab_objects/bathhouse.png",
+        "sheet": "curated/buildings/bathhouse.png",
+        "anchor": [
+          63,
+          132
+        ],
+        "footprint": {
+          "x": 2,
+          "w": 107,
+          "h": 54
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          130,
+          134
+        ],
+        "curated": true
       }
     ],
     "bathhouse_pool": [
       {
-        "sheet": "pixellab_objects/bathhouse_pool.png",
+        "sheet": "curated/furniture/bathhouse_pool.png",
+        "anchor": [
+          52,
+          90
+        ],
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          104,
+          91
+        ],
+        "curated": true
       }
     ],
     "general_store": [
       {
-        "sheet": "pixellab_objects/general_store.png",
+        "sheet": "curated/buildings/general_store.png",
+        "anchor": [
+          72,
+          118
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 119,
+          "h": 48
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          145,
+          120
+        ],
+        "curated": true
       }
     ],
     "mayors_manor": [
       {
-        "sheet": "pixellab_objects/mayors_manor.png",
+        "sheet": "curated/buildings/mayors_manor.png",
+        "anchor": [
+          70,
+          111
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 115,
+          "h": 45
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          140,
+          113
+        ],
+        "curated": true
       }
     ],
     "blacksmith_shop": [
       {
-        "sheet": "pixellab_objects/blacksmith_shop.png",
+        "sheet": "curated/buildings/blacksmith_shop.png",
+        "anchor": [
+          35,
+          159
+        ],
+        "footprint": {
+          "x": 25,
+          "w": 98,
+          "h": 56
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          120,
+          161
+        ],
+        "curated": true
       }
     ],
     "library": [
       {
-        "sheet": "pixellab_objects/library.png",
+        "sheet": "curated/buildings/library.png",
+        "anchor": [
+          66,
+          124
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 108,
+          "h": 50
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          132,
+          126
+        ],
+        "curated": true
       }
     ],
     "clinic": [
       {
-        "sheet": "pixellab_objects/clinic.png",
+        "sheet": "curated/buildings/clinic.png",
+        "anchor": [
+          53,
+          123
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 88,
+          "h": 50
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          107,
+          125
+        ],
+        "curated": true
       }
     ],
     "saloon": [
       {
-        "sheet": "pixellab_objects/saloon.png",
+        "sheet": "curated/buildings/saloon.png",
+        "anchor": [
+          37,
+          132
+        ],
+        "footprint": {
+          "x": 31,
+          "w": 112,
+          "h": 54
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          136,
+          134
+        ],
+        "curated": true
       }
     ],
     "wizard_tower": [
       {
-        "sheet": "pixellab_objects/wizard_tower.png",
+        "sheet": "curated/buildings/wizard_tower.png",
+        "anchor": [
+          24,
+          143
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 44,
+          "h": 30
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          49,
+          145
+        ],
+        "curated": true
       }
     ],
     "barn": [
       {
-        "sheet": "pixellab_objects/barn.png",
+        "sheet": "curated/buildings/barn.png",
+        "anchor": [
+          54,
+          131
+        ],
+        "footprint": {
+          "x": 4,
+          "w": 96,
+          "h": 53
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          117,
+          133
+        ],
+        "curated": true
       }
     ],
     "coop": [
       {
-        "sheet": "pixellab_objects/coop.png",
+        "sheet": "curated/buildings/coop.png",
+        "anchor": [
+          45,
+          145
+        ],
+        "footprint": {
+          "x": 7,
+          "w": 85,
+          "h": 56
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          104,
+          147
+        ],
+        "curated": true
       }
     ],
     "silo": [
       {
-        "sheet": "pixellab_objects/silo.png",
+        "sheet": "curated/buildings/silo.png",
+        "anchor": [
+          33,
+          138
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 56,
+          "h": 34
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          67,
+          140
+        ],
+        "curated": true
       }
     ],
     "windmill": [
       {
-        "sheet": "pixellab_objects/windmill.png",
+        "sheet": "curated/buildings/windmill.png",
+        "anchor": [
+          66,
+          151
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 60,
+          "h": 40
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          133,
+          153
+        ],
+        "curated": true
       }
     ],
     "greenhouse": [
       {
-        "sheet": "pixellab_objects/greenhouse.png",
+        "sheet": "curated/buildings/greenhouse.png",
+        "anchor": [
+          58,
+          140
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 96,
+          "h": 56
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          117,
+          142
+        ],
+        "curated": true
       }
     ],
     "well": [
       {
-        "sheet": "pixellab_objects/well.png",
+        "sheet": "curated/buildings/well.png",
+        "anchor": [
+          32,
+          86
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 50,
+          "h": 22
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          65,
+          88
+        ],
+        "curated": true
       }
     ],
     "npc_house_1": [
       {
-        "sheet": "pixellab_objects/npc_house_1.png",
+        "sheet": "curated/buildings/npc_house_1.png",
+        "anchor": [
+          77,
+          119
+        ],
+        "footprint": {
+          "x": -5,
+          "w": 118,
+          "h": 48
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          144,
+          121
+        ],
+        "curated": true
       }
     ],
     "npc_house_2": [
       {
-        "sheet": "pixellab_objects/npc_house_2.png",
+        "sheet": "curated/buildings/npc_house_2.png",
+        "anchor": [
+          51,
+          106
+        ],
+        "footprint": {
+          "x": 0,
+          "w": 84,
+          "h": 43
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          102,
+          108
+        ],
+        "curated": true
       }
     ],
     "npc_house_3": [
       {
-        "sheet": "pixellab_objects/npc_house_3.png",
+        "sheet": "curated/buildings/npc_house_3.png",
+        "anchor": [
+          37,
+          83
+        ],
+        "footprint": {
+          "x": 7,
+          "w": 72,
+          "h": 34
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          88,
+          85
+        ],
+        "curated": true
       }
     ],
     "npc_house_4": [
       {
-        "sheet": "pixellab_objects/npc_house_4.png",
+        "sheet": "curated/buildings/npc_house_4.png",
+        "anchor": [
+          51,
+          88
+        ],
+        "footprint": {
+          "x": 2,
+          "w": 86,
+          "h": 36
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          105,
+          90
+        ],
+        "curated": true
       }
     ],
     "npc_house_5": [
       {
-        "sheet": "pixellab_objects/npc_house_5.png",
+        "sheet": "curated/buildings/npc_house_5.png",
+        "anchor": [
+          30,
+          56
+        ],
+        "footprint": {
+          "x": -1,
+          "w": 48,
+          "h": 23
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
         "region": [
           0,
           0,
-          168,
-          168
-        ]
+          58,
+          58
+        ],
+        "curated": true
       }
     ],
     "crop_sativa": [
@@ -6941,6 +7306,127 @@
         ],
         "solid": 8,
         "shadow": "shadow_actor"
+      }
+    ],
+    "house_plant": [
+      {
+        "sheet": "curated/furniture/house_plant.png",
+        "anchor": [
+          10,
+          19
+        ],
+        "region": [
+          0,
+          0,
+          20,
+          20
+        ],
+        "curated": true
+      }
+    ],
+    "bookshelf": [
+      {
+        "sheet": "curated/furniture/bookshelf.png",
+        "anchor": [
+          15,
+          37
+        ],
+        "region": [
+          0,
+          0,
+          30,
+          38
+        ],
+        "curated": true
+      }
+    ],
+    "floor_lamp": [
+      {
+        "sheet": "curated/furniture/floor_lamp.png",
+        "anchor": [
+          7,
+          32
+        ],
+        "region": [
+          0,
+          0,
+          14,
+          33
+        ],
+        "curated": true
+      }
+    ],
+    "rug": [
+      {
+        "sheet": "curated/furniture/rug.png",
+        "anchor": [
+          28,
+          46
+        ],
+        "region": [
+          0,
+          0,
+          56,
+          47
+        ],
+        "curated": true
+      }
+    ],
+    "cozy_bed": [
+      {
+        "sheet": "curated/furniture/cozy_bed.png",
+        "anchor": [
+          16,
+          39
+        ],
+        "region": [
+          0,
+          0,
+          32,
+          40
+        ],
+        "curated": true
+      }
+    ],
+    "wood_stool": [
+      {
+        "sheet": "curated/furniture/wood_stool.png",
+        "anchor": [
+          7,
+          16
+        ],
+        "region": [
+          0,
+          0,
+          14,
+          17
+        ],
+        "curated": true
+      }
+    ],
+    "dispensary": [
+      {
+        "sheet": "curated/buildings/dispensary.png",
+        "anchor": [
+          60,
+          143
+        ],
+        "footprint": {
+          "x": 1,
+          "w": 100,
+          "h": 56
+        },
+        "door": {
+          "x": 0,
+          "w": 24
+        },
+        "region": [
+          0,
+          0,
+          122,
+          145
+        ],
+        "curated": true
       }
     ]
   },
@@ -42353,17 +42839,18 @@
   },
   "items": {
     "wood": {
-      "sheet": "Environment/Props/Static/Resources.png",
-      "region": [
-        32,
-        68,
-        64,
-        75
-      ],
+      "sheet": "curated/icons/wood.png",
       "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
         16,
-        3
-      ]
+        16
+      ],
+      "curated": true
     },
     "stick": {
       "sheet": "Environment/Props/Static/Resources.png",
@@ -42392,56 +42879,60 @@
       ]
     },
     "cloth": {
-      "sheet": "Environment/Structures/Buildings/Interior/Interior_Props_01.png",
-      "region": [
-        102,
-        274,
-        122,
-        286
-      ],
+      "sheet": "curated/icons/cloth.png",
       "anchor": [
-        10,
-        6
-      ]
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
     },
     "resin": {
-      "sheet": "Environment/Props/Static/Resources.png",
-      "region": [
-        6,
-        51,
-        12,
-        61
-      ],
+      "sheet": "curated/icons/resin.png",
       "anchor": [
-        3,
-        5
-      ]
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
     },
     "herb": {
-      "sheet": "Environment/Props/Static/Resources.png",
-      "region": [
-        37,
-        117,
-        43,
-        122
-      ],
+      "sheet": "curated/icons/herb.png",
       "anchor": [
-        3,
-        2
-      ]
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
     },
     "mushroom": {
-      "sheet": "Environment/Props/Static/Vegetation.png",
-      "region": [
-        49,
-        338,
-        63,
-        352
-      ],
+      "sheet": "curated/icons/mushroom.png",
       "anchor": [
-        7,
-        7
-      ]
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
     },
     "nails": {
       "sheet": "Environment/Props/Static/Tools.png",
@@ -42496,173 +42987,186 @@
       ]
     },
     "gem": {
-      "sheet": "Environment/Props/Static/Resources.png",
-      "region": [
-        83,
-        20,
-        92,
-        30
-      ],
-      "anchor": [
-        4,
-        5
-      ]
-    },
-    "ring": {
-      "sheet": "Environment/Props/Static/Resources.png",
-      "region": [
-        101,
-        19,
-        107,
-        28
-      ],
-      "anchor": [
-        3,
-        4
-      ]
-    },
-    "bread": {
-      "sheet": "Environment/Props/Static/Resources.png",
-      "region": [
-        17,
-        133,
-        32,
-        139
-      ],
-      "anchor": [
-        7,
-        3
-      ]
-    },
-    "lantern": {
-      "sheet": "Environment/Props/Static/Furniture.png",
-      "region": [
-        179,
-        482,
-        188,
-        496
-      ],
-      "anchor": [
-        4,
-        7
-      ]
-    },
-    "tonic_health": {
-      "sheet": "Environment/Props/Static/Resources.png",
-      "region": [
-        21,
-        52,
-        26,
-        61
-      ],
-      "anchor": [
-        2,
-        4
-      ]
-    },
-    "tonic_strength": {
-      "sheet": "Environment/Props/Static/Resources.png",
-      "region": [
-        54,
-        52,
-        59,
-        61
-      ],
-      "anchor": [
-        2,
-        4
-      ]
-    },
-    "tonic_swift": {
-      "sheet": "Environment/Props/Static/Resources.png",
-      "region": [
-        38,
-        52,
-        43,
-        61
-      ],
-      "anchor": [
-        2,
-        4
-      ]
-    },
-    "skewer": {
-      "sheet": "Environment/Props/Static/Meat.png",
-      "region": [
-        5,
-        49,
-        10,
-        63
-      ],
-      "anchor": [
-        2,
-        7
-      ]
-    },
-    "hearty_meal": {
-      "sheet": "Environment/Props/Static/Meat.png",
-      "region": [
-        64,
-        32,
-        80,
-        48
-      ],
+      "sheet": "curated/icons/gem.png",
       "anchor": [
         8,
         8
-      ]
-    },
-    "axe_iron": {
-      "sheet": "Weapons/Wood/Wood.png",
-      "region": [
-        48,
-        18,
-        64,
-        46
       ],
-      "anchor": [
-        8,
-        14
-      ]
-    },
-    "pickaxe_iron": {
-      "sheet": "Weapons/Wood/Wood.png",
       "region": [
         0,
-        50,
+        0,
         16,
-        78
+        16
       ],
+      "curated": true
+    },
+    "ring": {
+      "sheet": "curated/icons/ring.png",
       "anchor": [
         8,
-        14
-      ]
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "bread": {
+      "sheet": "curated/icons/bread.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "lantern": {
+      "sheet": "curated/icons/lantern.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "tonic_health": {
+      "sheet": "curated/icons/tonic_health.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "tonic_strength": {
+      "sheet": "curated/icons/tonic_strength.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "tonic_swift": {
+      "sheet": "curated/icons/tonic_swift.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "skewer": {
+      "sheet": "curated/icons/skewer.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "hearty_meal": {
+      "sheet": "curated/icons/hearty_meal.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "axe_iron": {
+      "sheet": "curated/icons/axe_iron.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "pickaxe_iron": {
+      "sheet": "curated/icons/pickaxe_iron.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
     },
     "sword_steel": {
-      "sheet": "Weapons/Wood/Wood.png",
-      "region": [
-        3,
-        16,
-        13,
-        47
-      ],
-      "anchor": [
-        5,
-        15
-      ]
-    },
-    "shield_iron": {
-      "sheet": "Weapons/Wood/Wood.png",
-      "region": [
-        119,
-        19,
-        136,
-        43
-      ],
+      "sheet": "curated/icons/sword_steel.png",
       "anchor": [
         8,
-        12
-      ]
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "shield_iron": {
+      "sheet": "curated/icons/shield_iron.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
     },
     "backpack": {
       "sheet": "Environment/Props/Static/Farm.png",
@@ -42678,30 +43182,32 @@
       ]
     },
     "stone": {
-      "sheet": "Environment/Props/Static/Rocks.png",
-      "region": [
-        48,
-        51,
-        63,
-        61
-      ],
+      "sheet": "curated/icons/stone.png",
       "anchor": [
-        7,
-        5
-      ]
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
     },
     "fiber": {
-      "sheet": "Environment/Props/Static/Vegetation.png",
-      "region": [
-        21,
-        150,
-        29,
-        156
-      ],
+      "sheet": "curated/icons/fiber.png",
       "anchor": [
-        4,
-        3
-      ]
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
     },
     "iron_ore": {
       "sheet": "Environment/Props/Static/Rocks.png",
@@ -42730,17 +43236,18 @@
       ]
     },
     "crystal": {
-      "sheet": "Environment/Props/Static/Rocks.png",
-      "region": [
-        164,
-        289,
-        172,
-        304
-      ],
+      "sheet": "curated/icons/crystal.png",
       "anchor": [
-        4,
-        7
-      ]
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
     },
     "coal": {
       "sheet": "Environment/Props/Static/Resources.png",
@@ -42782,186 +43289,200 @@
       ]
     },
     "bone": {
-      "sheet": "Weapons/Bone/Bone.png",
-      "region": [
-        99,
-        22,
-        109,
-        61
-      ],
-      "anchor": [
-        5,
-        19
-      ]
-    },
-    "carrot": {
-      "sheet": "Environment/Props/Static/Farm.png",
-      "region": [
-        128,
-        16,
-        144,
-        32
-      ],
+      "sheet": "curated/icons/bone.png",
       "anchor": [
         8,
         8
-      ]
-    },
-    "beet": {
-      "sheet": "Environment/Props/Static/Farm.png",
-      "region": [
-        128,
-        48,
-        144,
-        64
       ],
-      "anchor": [
-        8,
-        8
-      ]
-    },
-    "cabbage": {
-      "sheet": "Environment/Props/Static/Farm.png",
-      "region": [
-        128,
-        81,
-        144,
-        95
-      ],
-      "anchor": [
-        8,
-        7
-      ]
-    },
-    "lettuce": {
-      "sheet": "Environment/Props/Static/Farm.png",
-      "region": [
-        128,
-        112,
-        144,
-        128
-      ],
-      "anchor": [
-        8,
-        8
-      ]
-    },
-    "cauliflower": {
-      "sheet": "Environment/Props/Static/Farm.png",
-      "region": [
-        128,
-        144,
-        144,
-        160
-      ],
-      "anchor": [
-        8,
-        8
-      ]
-    },
-    "broccoli": {
-      "sheet": "Environment/Props/Static/Farm.png",
-      "region": [
-        128,
-        176,
-        144,
-        192
-      ],
-      "anchor": [
-        8,
-        8
-      ]
-    },
-    "garlic": {
-      "sheet": "Environment/Props/Static/Farm.png",
-      "region": [
-        128,
-        208,
-        144,
-        224
-      ],
-      "anchor": [
-        8,
-        8
-      ]
-    },
-    "sword_wood": {
-      "sheet": "Weapons/Wood/Wood.png",
-      "region": [
-        3,
-        16,
-        13,
-        47
-      ],
-      "anchor": [
-        5,
-        15
-      ]
-    },
-    "sword_bone": {
-      "sheet": "Weapons/Bone/Bone.png",
-      "region": [
-        3,
-        1,
-        13,
-        48
-      ],
-      "anchor": [
-        5,
-        23
-      ]
-    },
-    "sword_iron": {
-      "sheet": "Weapons/Wood/Wood.png",
-      "region": [
-        3,
-        16,
-        13,
-        47
-      ],
-      "anchor": [
-        5,
-        15
-      ]
-    },
-    "axe": {
-      "sheet": "Weapons/Wood/Wood.png",
-      "region": [
-        48,
-        18,
-        64,
-        46
-      ],
-      "anchor": [
-        8,
-        14
-      ]
-    },
-    "pickaxe": {
-      "sheet": "Weapons/Wood/Wood.png",
       "region": [
         0,
-        50,
-        16,
-        78
-      ],
-      "anchor": [
-        8,
-        14
-      ]
-    },
-    "shield": {
-      "sheet": "Weapons/Wood/Wood.png",
-      "region": [
-        128,
         0,
-        144,
+        16,
         16
       ],
+      "curated": true
+    },
+    "carrot": {
+      "sheet": "curated/icons/carrot.png",
       "anchor": [
         8,
         8
-      ]
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "beet": {
+      "sheet": "curated/icons/beet.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "cabbage": {
+      "sheet": "curated/icons/cabbage.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "lettuce": {
+      "sheet": "curated/icons/lettuce.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "cauliflower": {
+      "sheet": "curated/icons/cauliflower.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "broccoli": {
+      "sheet": "curated/icons/broccoli.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "garlic": {
+      "sheet": "curated/icons/garlic.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "sword_wood": {
+      "sheet": "curated/icons/sword_wood.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "sword_bone": {
+      "sheet": "curated/icons/sword_bone.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "sword_iron": {
+      "sheet": "curated/icons/sword_iron.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "axe": {
+      "sheet": "curated/icons/axe.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "pickaxe": {
+      "sheet": "curated/icons/pickaxe.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "shield": {
+      "sheet": "curated/icons/shield.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
     },
     "poultice": {
       "sheet": "Environment/Props/Static/Vegetation.png",
@@ -42977,69 +43498,74 @@
       ]
     },
     "stew": {
-      "sheet": "Environment/Props/Static/Pan.png",
-      "region": [
-        81,
-        118,
-        95,
-        128
-      ],
-      "anchor": [
-        7,
-        5
-      ]
-    },
-    "cooked_meat": {
-      "sheet": "Environment/Props/Static/Meat.png",
-      "region": [
-        32,
-        65,
-        55,
-        79
-      ],
-      "anchor": [
-        11,
-        7
-      ]
-    },
-    "hoe": {
-      "sheet": "Weapons/Wood/Wood.png",
-      "region": [
-        19,
-        48,
-        29,
-        80
-      ],
-      "anchor": [
-        5,
-        16
-      ]
-    },
-    "watering_can": {
-      "sheet": "Entities/Characters/Body_A/Animations/Watering_Base/Watering_Side-Sheet.png",
-      "region": [
-        157,
-        35,
-        171,
-        47
-      ],
-      "anchor": [
-        7,
-        6
-      ]
-    },
-    "scythe": {
-      "sheet": "Weapons/Wood/Wood.png",
-      "region": [
-        32,
-        49,
-        48,
-        80
-      ],
+      "sheet": "curated/icons/stew.png",
       "anchor": [
         8,
-        15
-      ]
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "cooked_meat": {
+      "sheet": "curated/icons/cooked_meat.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "hoe": {
+      "sheet": "curated/icons/hoe.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "watering_can": {
+      "sheet": "curated/icons/watering_can.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "scythe": {
+      "sheet": "curated/icons/scythe.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
     },
     "carrot_seeds": {
       "sheet": "Environment/Props/Static/Farm.png",
@@ -43211,30 +43737,32 @@
       ]
     },
     "axe_mythril": {
-      "sheet": "pixellab_items/axe_mythril.png",
+      "sheet": "curated/icons/axe_mythril.png",
+      "anchor": [
+        8,
+        8
+      ],
       "region": [
         0,
         0,
-        24,
-        24
+        16,
+        16
       ],
-      "anchor": [
-        12,
-        12
-      ]
+      "curated": true
     },
     "bow_hunter": {
-      "sheet": "pixellab_items/bow_hunter.png",
+      "sheet": "curated/icons/bow_hunter.png",
+      "anchor": [
+        8,
+        8
+      ],
       "region": [
         0,
         0,
-        24,
-        24
+        16,
+        16
       ],
-      "anchor": [
-        12,
-        12
-      ]
+      "curated": true
     },
     "chest_mythril": {
       "sheet": "pixellab_items/chest_mythril.png",
@@ -43263,82 +43791,88 @@
       ]
     },
     "pickaxe_mythril": {
-      "sheet": "pixellab_items/pickaxe_mythril.png",
+      "sheet": "curated/icons/pickaxe_mythril.png",
+      "anchor": [
+        8,
+        8
+      ],
       "region": [
         0,
         0,
-        24,
-        24
+        16,
+        16
       ],
-      "anchor": [
-        12,
-        12
-      ]
+      "curated": true
     },
     "staff_spore": {
-      "sheet": "pixellab_items/staff_spore.png",
+      "sheet": "curated/icons/staff_spore.png",
+      "anchor": [
+        8,
+        8
+      ],
       "region": [
         0,
         0,
-        24,
-        24
+        16,
+        16
       ],
-      "anchor": [
-        12,
-        12
-      ]
+      "curated": true
     },
     "sword_copper": {
-      "sheet": "pixellab_items/sword_copper.png",
+      "sheet": "curated/icons/sword_copper.png",
+      "anchor": [
+        8,
+        8
+      ],
       "region": [
         0,
         0,
-        24,
-        24
+        16,
+        16
       ],
-      "anchor": [
-        12,
-        12
-      ]
+      "curated": true
     },
     "sword_mythril": {
-      "sheet": "pixellab_items/sword_mythril.png",
+      "sheet": "curated/icons/sword_mythril.png",
+      "anchor": [
+        8,
+        8
+      ],
       "region": [
         0,
         0,
-        24,
-        24
+        16,
+        16
       ],
-      "anchor": [
-        12,
-        12
-      ]
+      "curated": true
     },
     "sword_obsidian": {
-      "sheet": "pixellab_items/sword_obsidian.png",
+      "sheet": "curated/icons/sword_obsidian.png",
+      "anchor": [
+        8,
+        8
+      ],
       "region": [
         0,
         0,
-        24,
-        24
+        16,
+        16
       ],
-      "anchor": [
-        12,
-        12
-      ]
+      "curated": true
     },
     "sword_sunforged": {
-      "sheet": "pixellab_items/sword_sunforged.png",
+      "sheet": "curated/icons/sword_sunforged.png",
+      "anchor": [
+        8,
+        8
+      ],
       "region": [
         0,
         0,
-        24,
-        24
+        16,
+        16
       ],
-      "anchor": [
-        12,
-        12
-      ]
+      "curated": true
     },
     "chest_iron": {
       "sheet": "pixellab_items/chest_iron.png",
@@ -43354,17 +43888,18 @@
       ]
     },
     "shield_sunforged": {
-      "sheet": "pixellab_items/shield_sunforged.png",
+      "sheet": "curated/icons/shield_sunforged.png",
+      "anchor": [
+        8,
+        8
+      ],
       "region": [
         0,
         0,
-        24,
-        24
+        16,
+        16
       ],
-      "anchor": [
-        12,
-        12
-      ]
+      "curated": true
     },
     "chicken": {
       "gold": 800
@@ -43896,6 +44431,90 @@
         8,
         6
       ]
+    },
+    "tomato": {
+      "sheet": "curated/icons/tomato.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "corn": {
+      "sheet": "curated/icons/corn.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "pumpkin": {
+      "sheet": "curated/icons/pumpkin.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "eggplant": {
+      "sheet": "curated/icons/eggplant.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "onion": {
+      "sheet": "curated/icons/onion.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
+    },
+    "strawberry": {
+      "sheet": "curated/icons/strawberry.png",
+      "anchor": [
+        8,
+        8
+      ],
+      "region": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "curated": true
     }
   },
   "stations": {
