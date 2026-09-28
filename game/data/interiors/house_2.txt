@@ -1,0 +1,44 @@
+title: Hearthwood Homestead - the second cabin opens into a proper hearth room, with a private sleeping nook and a tiled cook's corner.
+wall log #ead0ad
+floor . planks #f0daba
+floor , tiles #bdb09b
+q = painting
+d = bed_single
+F = fireplace
+w = firewood
+R = range
+G = green_counter
+o = table_round
+h = chair
+k = chair_side
+D = dresser
+B = bookshelf
+C = chest
+p = plant_leafy
+f = plant_flower
+b = broom
+c = crate
+place rug_green 7 10
+place chandelier 10 3
+place sunbeam 3 4
+place sunbeam 15 5
+place window 2 1
+place window 18 1
+map:
+#########################
+#==========q=========...#
+#=====================..#
+#======================.#
+#dd...FFFw....RRR.......#
+#dd...........GGG..p....#
+#dd.....................#
+#================..=====#
+#....B.....o............#
+#....B.....o..h.........#
+#.DD......oo......C.....#
+#.DD......oo.k....C.....#
+#p....f........b....c...#
+#......,,,,,,,,.........#
+#......,,,,,,,,.........#
+#..............f....p...#
+###########..############

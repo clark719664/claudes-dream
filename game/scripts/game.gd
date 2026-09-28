@@ -190,7 +190,7 @@ func is_night() -> bool:
 
 
 func indoors() -> bool:
-	return area == "house" or area.begins_with("mine")
+	return area == "house" or area.begins_with("mine") or World.INTERIORS.has(area)
 
 
 func say(text: String) -> void:

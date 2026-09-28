@@ -1,0 +1,36 @@
+title: Pen Ridge Ranch House - practical, sun-worn ranch quarters with a fire-warmed sitting room, boot room, secure tack storage and family sleeping nook.
+wall log #c59a68
+floor . planks #bfa47f
+floor , stone #918f86
+q = bear_head
+P = pickaxe
+D = bed_double
+B = bookshelf
+F = fireplace
+w = firewood
+h = chair
+o = table_round
+H = hay
+C = chest
+R = weapon_rack
+p = plant_small
+place rug_red 7 10
+place chandelier_dark 7 3
+place window 1 1
+place window 28 1
+map:
+##############################
+#===========q============....#
+#========================....#
+#=========================...#
+#..DDD.................H.....#
+#..DDD...........R...HHH.....#
+#..DDD..............HHH......#
+#========..================..#
+#..F............BB...........#
+#.FFFw..o......BB........C...#
+#.....oo......,........C.....#
+#...h.oo.....,...............#
+#.p..........,.....H....h....#
+#.......,,,,,,............p..#
+#################..###########

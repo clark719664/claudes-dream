@@ -1,0 +1,31 @@
+title: Pen Ridge Coop - a bright, clean poultry house with raised roosts, private nesting bays, dry straw and a broad uncluttered run down the middle.
+wall log #e0c392
+floor . planks #dac19a
+floor , tiles #b4aa91
+N = noticeboard
+H = hay
+S = sack
+C = crate
+R = shelf_small
+B = bench_long
+b = bucket_water
+f = plant_flower
+place rug_green 8 7
+place chandelier_dark 8 3
+place window 2 1
+place window 14 1
+map:
+######################
+#====================#
+#====================#
+#====================#
+#RRRR..RRRR..........#
+#....HH..............#
+#....HH....,,........#
+#....HH....,,........#
+#BBBB........,.......#
+#....,,.....,........#
+#..NN,,.....S........#
+#....,,.....S........#
+#f.........b.........#
+##########..##########

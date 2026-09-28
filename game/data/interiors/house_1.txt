@@ -1,0 +1,50 @@
+title: Starter cabin - one warm log room: bed nook by the window, hearth, kitchen shelf, supper table, work corner.
+wall log
+floor . planks #f2dcc0
+
+W = window
+Y = bear_head
+q = painting
+d = bed_single
+n = shelf_small
+b = broom
+F = fireplace
+w = firewood
+G = green_counter
+p = plant_leafy
+h = chair
+k = chair_side
+o = table_round
+j = chair_back
+R = dresser
+B = workbench
+s = stool
+C = chest
+c = crate
+f = plant_flower
+r = barrel
+
+place rug_red 6.5 5.3
+place sunbeam 3 4.1
+place sunbeam 14 5
+place candle 3.2 3.9
+place kettle 13.3 3.9
+place bread 14.9 4.2
+place bowl 12.6 7.4
+
+map:
+##################
+#================#
+#====Y=====q=====#
+#================#
+#ddn..bFFFw..GGGp#
+#dd..............#
+#dd..............#
+#...........h....#
+#RR........koo...#
+#...........oo...#
+#............j...#
+#BBBs............#
+#C..............c#
+#p....f....f...rr#
+########..########

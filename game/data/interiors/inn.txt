@@ -1,0 +1,42 @@
+title: The Wayfarer Inn - a welcoming public taproom below four quiet guest rooms, with a broad oak bar, booth seating, a hearth and a clear path from the door.
+wall plaster #ead7b5
+floor . parquet #c9a87b
+floor , tiles #a5a09a
+floor : planks #d4b996
+q = painting
+D = bed_double
+B = tavern_bar
+o = table_round
+h = chair
+s = stool
+F = fireplace
+w = firewood
+R = bookshelf
+p = plant_leafy
+f = plant_flower
+C = chest
+place rug_red 6 11
+place rug_green 14 11
+place chandelier 10 9
+place chandelier_dark 7 3
+place window 1 1
+place window 26 1
+map:
+############################
+#==========q============...#
+#=======================...#
+#========================..#
+#..DDD.........DDD.........#
+#..DDD.........DDD.........#
+#..DDD.........DDD.........#
+#===========..===========..#
+#.RR..............RR.......#
+#....BBBBB..........F......#
+#....BBBBBo...o....FFFw....#
+#.........oo..oo...........#
+#...s.....oo..oo....h......#
+#.....,,,.........,,,......#
+#..h..,,,..p......,,,..C...#
+#.hh..,,,....f....,,,....p.#
+#.hh..,,,...............f..#
+################..##########

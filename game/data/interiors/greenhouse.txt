@@ -1,0 +1,41 @@
+title: Glasshouse Conservatory - a warm, ordered growing room with four distinct planting beds, a wet potting bench, seed storage and a clear sunlit central path.
+wall plaster #d4e0c0
+floor . tiles #adb79b
+floor , stone #8e9e81
+floor ; planks #b6c4a2
+q = painting
+P = plant_leafy
+f = plant_flower
+p = pot
+B = bench_long
+S = sack
+C = crate_crops
+b = bucket_water
+R = range
+G = green_counter
+place sunbeam 5 3
+place sunbeam 16 3
+place sunbeam 8 8
+place rug_green 10 14
+place window 2 1
+place window 16 1
+place window 25 1
+map:
+############################
+#========================..#
+#========================..#
+#========================..#
+#PPP;;;PPP;;;PPP;;;PPP.....#
+#PPP;;;PPP;;;PPP;;;PPP.....#
+#..........................#
+#..fff...........fff.......#
+#..fff...........fff.......#
+#================..=======.#
+#...S....RRR....b..........#
+#...S....GGG...............#
+#...C..p.....p....C........#
+#...C..p.....p....C........#
+#...P....f....P.......p....#
+#............,,,,,,,,,,,,..#
+#............,,,,,,,,,,,,..#
+################..##########

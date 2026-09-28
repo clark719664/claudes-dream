@@ -1,0 +1,46 @@
+title: Hearthwood Homestead - the grand cabin layers a quiet bedroom, a bright family room, a generous kitchen and a small reading gallery around one connected hall.
+wall plaster #f4e4c8
+floor . parquet #dfc49b
+floor , tiles #b8ac9d
+floor : planks #e9d8b7
+q = painting
+D = bed_double
+B = bookshelf
+F = fireplace
+w = firewood
+R = range
+G = green_counter
+o = table_round
+h = chair
+S = sofa
+p = plant_leafy
+f = plant_flower
+C = chest
+place rug_red 9 11
+place rug_gold 19 5
+place chandelier 12 3
+place chandelier 6 10
+place sunbeam 2 4
+place window 1 1
+place window 27 1
+map:
+###############################
+#===========q==============...#
+#===========================..#
+#===========================..#
+#..DDD.....B...........p......#
+#..DDD.....B.....f............#
+#..DDD........................#
+#==============..===========..#
+#...F...................S.....#
+#..FFFw.......o.........SSS...#
+#...........oo...........h....#
+#.....RRR...oo...........B....#
+#.....GGG.............C..B....#
+#..p...........f..............#
+#.........,,,,,,,,,,,,........#
+#.........,,,,,,,,,,,,........#
+#....o....,,,,,,,,,,,,........#
+#....oo.......................#
+#...........h................p#
+#################..############

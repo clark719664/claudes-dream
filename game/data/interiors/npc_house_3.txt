@@ -1,0 +1,37 @@
+title: The Coopers - a sturdy cooper's cottage with a clean barrel-making shop up front, a warm family table in the center and a tucked-away sleeping alcove.
+wall plank #c09a70
+floor . planks #d1b48b
+floor , stone #9d9a8e
+q = painting
+D = bed_double
+B = workbench
+b = barrel
+C = crate
+S = shelf_small
+F = fireplace
+w = firewood
+o = table_round
+h = chair
+p = plant_small
+f = plant_flower
+place rug_red 11 9
+place chandelier_dark 10 3
+place window 1 1
+place window 27 1
+map:
+##############################
+#=============q============..#
+#==========================..#
+#==========================..#
+#..b...B...............DDD...#
+#..b...B.......S.......DDD...#
+#.bbb..BBBBB...........DDD...#
+#.........,,,,,,,,,,,,,,,,...#
+#=============..============.#
+#....F..............b........#
+#...FFFw....o........bbb.....#
+#...........oo...............#
+#.....S..h..oo.....p......C..#
+#.....S.....,,,,,,,..........#
+#.p....f....,,,,,,,....f.....#
+##################..##########

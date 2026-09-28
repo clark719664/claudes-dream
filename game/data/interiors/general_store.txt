@@ -1,0 +1,58 @@
+title: Pell's General Store - shelved sales floor with two glass display islands, produce by the west wall, till by the door, stone-floored stockroom behind the northeast wall.
+wall plaster #f6e8d2
+floor . planks #f0d8b8
+floor , stone
+
+W = window
+N = noticeboard
+q = painting
+H = shelf_unit
+r = barrel
+s = sack
+B = bookshelf
+c = crate_crops
+G = green_counter
+p = plant_leafy
+x = crate
+C = chest
+b = basket
+Z = ship_crate
+D = display_counter
+T = store_counter
+k = wood_stool
+L = floor_lamp
+E = bench_long
+f = plant_flower
+
+place rug_red 10.3 14.7
+place chandelier 7.3 7.9
+place sunbeam 3 4.2
+place sunbeam 14 5.1
+place sunbeam 21 4.3
+place bottle 14.3 3.9
+place potion_red 15.1 4.0
+place potion_green 15.7 4.0
+place bread 5.0 6.3
+place tray 12.2 6.1
+
+map:
+##########################
+#=======NN========#======#
+#=======NN========#======#
+#=================#======#
+#HHrsBB.ccBBBBGGGp#ssrrxx#
+#.................#s,,,,x#
+#...DDDD...DDDD...#,,,,,x#
+#...DDDD...DDDD...,,,,,,C#
+#.................,b,,,,x#
+#c................#rr,,ZZ#
+#c................########
+#c................====q==#
+#.................=======#
+#...................k..L.#
+#rr................TTT...#
+#r.......................#
+#........................#
+#EEEE...................p#
+#ss........f..f.......ssL#
+############..############

@@ -97,7 +97,7 @@ func run() -> void:
 	for id in ["general_store", "saloon", "blacksmith_shop", "library", "clinic", "school", "church", "bathhouse", "museum", "inn", "mayors_manor", "npc_house_1", "npc_house_2", "dispensary"]:
 		load_area(id, "door")
 		await settle(2)
-		var want: int = Interior.LAYOUTS[id].props.filter(func(p): return p[4] != "rug").size()
+		var want: int = Interior.load_layout(id).sorted_count
 		check(props_root_count() == want, "%s furniture all placed (%d of %d)" % [id, props_root_count(), want])
 
 	load_area("farm", "door")

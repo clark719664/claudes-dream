@@ -1,0 +1,58 @@
+title: Brom's Smithy - a stone-floored forge room (brick furnace, kiln, anvil, quench bucket, ore and coal) beside a planked shopfront of weapon racks and glass cases, with the counter by the door.
+wall stone #eadfce
+floor . planks #e2c8a6
+floor , stone #bdb4aa
+
+X = sword
+K = pickaxe
+J = shield
+W = window
+O = plaque
+Z = forge
+k = kiln
+o = ore_crate
+s = sack
+R = weapon_rack
+p = plant_leafy
+B = workbench
+A = anvil
+q = bucket_water
+e = display_case
+c = crate
+u = wood_stool
+r = barrel
+T = table_plank
+D = store_counter
+i = iron_chest
+E = bench_long
+L = floor_lamp
+f = plant_fern
+
+place grate 5 5
+place rug_green 17.5 13.4
+place sunbeam 15 5.0
+place sunbeam 21 5.0
+place pot_iron 9.4 9.9
+place candle 10.3 9.8
+
+map:
+##########################
+#=====XX=====#====OO=====#
+#========KK=J#===========#
+#============#===========#
+#,ZZZ,kk,oos,#.RRR..RRR.p#
+#,,,,,,,,,,,,#...........#
+#,,,,,,,,BBB,#...........#
+#,,,AA,q,,,,,,.eee..eee..#
+#,,,,,,,,,,,,,.eee..eee..#
+#cc,,,u,,,,,,#...........#
+#r,,,,,,,TT,,#......u....#
+#rr,,,,,,TT,,=.....DDD...#
+#,,,,,,,,,,,,=...........#
+#.......................i#
+#EEEE....................#
+#........................#
+#cc.....................L#
+#r......................p#
+#L.........f..f.........r#
+############..############

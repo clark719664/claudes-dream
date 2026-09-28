@@ -1,0 +1,36 @@
+title: Pen Ridge Barn - a stone footed working barn with a clear central aisle, two roomy livestock bays, hay storage and a tidy feed-prep corner.
+wall plank #b68f63
+floor . planks #c6a77d
+floor , stone #98958b
+floor : planks #b9a17c
+N = noticeboard
+F = fireplace
+H = hay
+C = crate_crops
+b = barrel
+S = sack
+T = table_long
+h = bench_short
+p = plant_small
+place sunbeam 3 4
+place sunbeam 17 4
+place chandelier_dark 11 3
+place window 1 1
+place window 21 1
+map:
+##########################
+#====================== .#
+#=======================.#
+#=======================.#
+#..HH....,.....HH........#
+#..HH....,.....HH........#
+#..HH....,.....HH........#
+#====...=,=..=====..,=.. #
+#....C..,,,,....b........#
+#....C..,,,,....b........#
+#..SSS..,,,,..HHHH.......#
+#.......,,,,..HHHH.......#
+#.TTTTTT,,,,..........N..#
+#.TTTTTT,,,,..C..........#
+#.b.....,,,,..C.....p....#
+#############..###########

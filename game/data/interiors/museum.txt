@@ -1,0 +1,55 @@
+title: Museum - a gold-tiled entrance hall around a central exhibit with the ticket desk, a fossil and mineral gallery of glass cases to the west, an artifact gallery to the east, and the curator's study behind the northeast wall.
+wall stone #ece6dc
+floor . parquet
+floor : tiles
+floor , planks #e0c8a8
+
+X = sword
+J = shield
+q = painting
+V = window_stone
+O = plaque
+W = window
+m = museum_display
+L = floor_lamp
+p = plant_leafy
+B = bookshelf
+H = shelf_unit
+k = wood_stool
+e = display_case
+D = library_desk
+g = glass_cabinet
+C = chest
+E = bench_long
+T = store_counter
+f = plant_flower
+
+place rug_round 12.5 5.4
+place rug_red 13.25 17.0
+place sunbeam 11 4.2
+place sunbeam 17 4.2
+place sunbeam 23 5.0
+
+map:
+##############################
+#=XX=J=J=#=VV=OO=VV=#========#
+#=q=q==q=#=VV====VV=#========#
+#========#==========#========#
+#mm.mm.mm#Lp::::::pL#BB,,HHBB#
+#........#::::::::::#,,k,,,,,#
+#.eee.eee#::::::::::#,DDD,,gg#
+#.eee.eee#::::mm::::,,,,,,,,,#
+#.........::::::::::,,,,,,,,C#
+#.........::::::::::##########
+#........#::::::::::===q==q==#
+#........#:mm::::mm:=========#
+#.eee.eee#::::::::::#,,,,,,,,#
+#.eee.eee#::::::::::#,mm,,mm,#
+#........#::::::::::#,,,,,,,,#
+#.........::::::::::,,,,,,,,,#
+#.mm..mm..::k:::::::,,,,,,,,,#
+#........#:TTT:::C::#,mm,,mm,#
+#........#::::::::::#,,,,,,,,#
+#..EEEE..#::::::::::#,eee,,,,#
+#p......p#L::f::f::L#,eee,,,p#
+##############::##############

@@ -1,0 +1,37 @@
+title: The Mill - the windmill's broad timber room keeps the grinding floor clear, grain bins grouped by the wall, and flour sacks close to the loading door.
+wall plank #b59269
+floor . planks #c5a77a
+floor , stone #a19b8f
+floor : planks #ddc79c
+N = noticeboard
+S = sack
+C = crate_crops
+H = hay
+B = workbench
+T = table_long
+b = barrel
+p = plant_small
+f = plant_flower
+place rug_gold 8 8
+place chandelier_dark 9 3
+place window 1 1
+place window 23 1
+place noticeboard 12 1
+map:
+#########################
+#=====================..#
+#=====================..#
+#=====================..#
+#.SS....H..,....H.......#
+#.SS....H..,....H.......#
+#...CCC....,............#
+#...CCC....,.....b......#
+#=========....========..#
+#......T...,............#
+#......T...,....B.......#
+#......T...,....B...S...#
+#......T...,....B...S...#
+#.b.......,,,,,,,,,,..C.#
+#.p.......,,,,,,,,,,..C.#
+#...........f........p..#
+##################..#####

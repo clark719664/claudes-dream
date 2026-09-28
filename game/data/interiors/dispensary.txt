@@ -1,0 +1,62 @@
+title: Snoop's Dispensary - a skylit grow room of potting benches and drying racks behind the shop wall, then a tiled shopfront with a glass counter of jars and a consultation table.
+wall plaster #d6e4c8
+floor . tiles #f2ead2
+floor , stone #c6d0bc
+
+W = window
+n = plant_fern
+f = plant_flower
+R = drying_rack
+x = crate_crops
+b = bench_table
+s = sack
+B = workbench
+r = barrel
+q = painting
+N = noticeboard
+H = shelf_unit
+g = glass_cabinet
+L = floor_lamp
+u = cabinet_blue
+k = wood_stool
+c = chair_side
+C = chair_side flip
+o = table_round
+D = display_counter
+p = plant_leafy
+
+place rug_green 1.3 14.6
+place rug_red 9.75 14.8
+place sunbeam 3 5.0
+place sunbeam 9 5.0
+place sunbeam 15 5.0
+place sunbeam 19 5.0
+place bottle 13.4 14.9
+place potion_green 14.2 15.0
+place potion_red 15.0 15.0
+place potion_violet 15.8 14.9
+place candle 2.4 14.6
+place potion_green 2.4 6.2
+place potion_green 6.6 6.2
+place bottle 10.5 6.2
+
+map:
+########################
+#======================#
+#======================#
+#======================#
+#nfnf,RRRnf,RRRfn,xfnx,#
+#,,,,,,,,,,,,,,,,,,,,,,#
+#,bb,,bb,,bb,,,,,,,,ss,#
+#,bb,,bb,,bb,,,,BBB,,,,#
+#,,,,,,,,,,,,,,,,,,,,,r#
+#xx,,,,,,,,,,,,,,,,,,rr#
+#####,,#################
+#====,,===q===NN=======#
+#====,,=======NN=======#
+#HH.....gg......L.uu...#
+#..............k.......#
+#cooC........DDDD......#
+#.oo.........DDDD.....p#
+#L........f..f........L#
+###########..###########

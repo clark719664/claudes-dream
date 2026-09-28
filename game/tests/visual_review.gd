@@ -1,7 +1,10 @@
 extends Node
 ## Screenshots of every screen worth eyeballing, at the game's native 480x270.
 ## Run with a real renderer: Godot --path game res://tests/visual_review.tscn -- --out=<dir>
+## --rooms captures only the interiors; --only=id,id captures just those rooms.
 var output := "user://visual-review"
+var only: PackedStringArray = []
+var rooms_only := false
 
 
 func _ready() -> void:
@@ -9,6 +12,10 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			output = a.trim_prefix("--out=")
+		elif a.begins_with("--only="):
+			only = a.trim_prefix("--only=").split(",")
+		elif a == "--rooms":
+			rooms_only = true
 	DirAccess.make_dir_recursive_absolute(output)
 	call_deferred("run")
 
@@ -30,7 +37,53 @@ func look_at_spot(world: Node, at: Vector2, lift := 70.0) -> void:
 	world.player.camera.reset_smoothing()
 
 
+## The whole room at native resolution: a second viewport sized to the room looks at the same world.
+func room_shot(world: Node, name_: String) -> void:
+	world.player.position = world.interior.door_inside() + Vector2(0, -8)
+	for i in 3:
+		await get_tree().process_frame
+	var r: Rect2 = world.interior.room_rect()
+	var sv := SubViewport.new()
+	sv.size = Vector2i(r.size)
+	sv.world_2d = get_viewport().world_2d
+	sv.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+	sv.snap_2d_transforms_to_pixel = true
+	sv.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	var cam := Camera2D.new()
+	cam.position = r.get_center()
+	sv.add_child(cam)
+	add_child(sv)
+	cam.make_current()
+	for i in 3:
+		await RenderingServer.frame_post_draw
+	sv.get_texture().get_image().save_png(output + "/room_" + name_ + ".png")
+	print("VISUAL: room_", name_)
+	sv.queue_free()
+
+
+func rooms(world: Node = null) -> void:
+	if world == null:
+		Preferences.new_game_requested = true
+		world = load("res://scenes/main.tscn").instantiate()
+		add_child(world)
+		Game.hud.dialog.hide()
+	Game.time_of_day = 0.5
+	for id in Interior.IDS:
+		if not only.is_empty() and not id in only:
+			continue
+		if id.begins_with("house_"):
+			Game.cabin_tier = int(id.substr(6))
+			world.load_area("house", "door")
+		else:
+			world.load_area(id, "door")
+		await room_shot(world, id)
+
+
 func run() -> void:
+	if rooms_only or not only.is_empty():
+		await rooms()
+		get_tree().quit()
+		return
 	var title = load("res://scenes/start.tscn").instantiate()
 	add_child(title)
 	await shot("title")
@@ -76,10 +129,5 @@ func run() -> void:
 	Game.hud.open_shop("general", "Tilda")
 	await shot("shop")
 	Game.hud.close_menu()
-	for id in ["general_store", "saloon", "blacksmith_shop", "library", "clinic", "school", "church", "bathhouse", "museum", "inn", "mayors_manor", "npc_house_1", "npc_house_2", "dispensary"]:
-		world.load_area(id, "door")
-		for i in 3:
-			await get_tree().process_frame
-		world.player.camera.reset_smoothing()
-		await shot("room_" + id)
+	await rooms(world)
 	get_tree().quit()

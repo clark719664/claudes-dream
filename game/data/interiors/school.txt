@@ -1,0 +1,52 @@
+title: Schoolhouse - a classroom of paired desks facing twin chalkboards and the teacher's desk, a reading-and-projects wing behind the east wall, and a coat bench by the door.
+wall plaster #f2e8d4
+floor . planks #ecd4b0
+floor , parquet
+
+W = window
+K = chalkboard
+N = noticeboard
+p = plant_leafy
+x = crate
+B = bookshelf
+k = wood_stool
+A = workbench
+D = library_desk
+d = school_desk
+b = bench_table
+s = stool
+z = sofa
+L = floor_lamp
+E = bench_long
+c = crate
+f = plant_flower
+
+place rug_round 20.4 10.4
+place sunbeam 2 4.3
+place sunbeam 15 4.3
+place sunbeam 22 5.0
+place candle 9.2 4.6
+
+map:
+############################
+#=======KKKK=======#=======#
+#=======KKKK=======#=======#
+#==================#=======#
+#p..xBB..k.......p.#BB,,AAA#
+#.......DDD........#,,,,,,,#
+#..................#,,,,,,,#
+#..................#,bb,bb,#
+#.dd..dd..dd..dd...#,bb,bb,#
+#..................#,,s,,s,#
+#.dd..dd..dd..dd...,,,,,,,,#
+#..................,,,,,,,,#
+#.dd..dd..dd..dd...#,zzz,,L#
+#..................#,,,,,,,#
+#.dd..dd..dd..dd...#cc,,,,p#
+#..................#########
+#..................===NN===#
+#..................===NN===#
+#EEEE......................#
+#.........................p#
+#L...cc.....f..f..........L#
+#############..#############

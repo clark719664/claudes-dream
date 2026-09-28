@@ -1,0 +1,51 @@
+title: Harbor Clinic - three exam rooms along the north (bed, lamp, washstand under a mirror, medicine cabinet), a corridor wall with numbered plaques, and a bright waiting hall with benches and the reception desk.
+wall plaster #e2eeec
+floor . tiles #f6f2ea
+
+W = window
+I = mirror
+b = clinic_bed
+L = floor_lamp
+w = washstand
+s = wood_stool
+g = glass_cabinet
+C = chest
+p = plant_leafy
+O = plaque
+t = cabinet_tall
+E = bench_long
+k = wood_stool
+D = library_desk
+f = plant_flower
+
+place rug_round 10.5 14.3
+place sunbeam 3 5.0
+place sunbeam 12 5.0
+place sunbeam 21 5.0
+place bottle 7.2 6.0
+place bottle 16.2 6.0
+place bottle 25.2 6.0
+
+map:
+############################
+#======I=#======I=#======I=#
+#======I=#======I=#======I=#
+#========#========#========#
+#bb.L..w.#bb.L..w.#bb.L..w.#
+#bb......#bb......#bb......#
+#bbs.....#bbs.....#bbs.....#
+#......gg#......gg#......gg#
+#........#........#........#
+#C......p#C......p#C......p#
+####..#######..#######..####
+#===..OO=====..OO=====..OO=#
+#===..=======..=======..===#
+#p.......................tt#
+#..........................#
+#.EEEE................k....#
+#....................DDD...#
+#..........................#
+#.EEEE.....................#
+#.........................p#
+#Lp.........f..f..........L#
+#############..#############

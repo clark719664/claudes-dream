@@ -1,0 +1,37 @@
+title: The Weavers - a bright, cloth-rich cottage arranged around an open loom, folded linens, a warm stove and a small bedroom screened from the workroom.
+wall plaster #f2e5cd
+floor . parquet #decba5
+floor , planks #e8d8bb
+q = painting
+D = bed_double
+B = bench_long
+T = table_blue
+R = wardrobe
+S = bookshelf
+F = fireplace
+w = firewood
+h = chair
+f = plant_flower
+p = plant_leafy
+place rug_red 10 10
+place rug_green 3 10
+place chandelier 9 3
+place window 1 1
+place window 27 1
+map:
+#############################
+#===========q============...#
+#=========================..#
+#=========================..#
+#..DDD......................#
+#..DDD.........RR...........#
+#..DDD.........RR...........#
+#============..===========..#
+#..BBBB..............T......#
+#..BBBB.....h........TT.....#
+#............h.......TT.....#
+#..F.....SS.................#
+#.FFFw...SS.............p...#
+#...f..,,,,,,,,,,,,,,....f..#
+#........,,,,,,,,,,,,,,,....#
+##################..#########

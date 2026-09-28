@@ -1,0 +1,41 @@
+title: Tilda's Carpentry - a working woodshop joined to a compact, welcoming home; timber, tools and orders stay on the workshop side, supper and rest on the other.
+wall log #e4c69a
+floor . planks #d4b58a
+floor , stone #aaa495
+N = noticeboard
+B = workbench
+C = crate
+r = barrel
+S = shelf_unit
+D = bed_single
+F = fireplace
+w = firewood
+o = table_round
+h = chair
+R = range
+G = green_counter
+p = plant_small
+f = plant_flower
+place rug_red 15 10
+place chandelier 8 3
+place window 2 1
+place window 28 1
+place noticeboard 11 1
+map:
+##############################
+#========================....#
+#=========================...#
+#=========================...#
+#BBBB..........D.............#
+#BBBB..........D.............#
+#....C.........D.............#
+#....C.......................#
+#=============..==========...#
+#...S........FFF.....RRR.....#
+#...S....B...FFF.....GGG.....#
+#.........B........oo........#
+#...CCCC..B........oo.h......#
+#...C.....B...,,,,,,,,,,,,...#
+#...w..p.....,,,,,,,,,,,,..f.#
+#...........h......r.........#
+#################..###########

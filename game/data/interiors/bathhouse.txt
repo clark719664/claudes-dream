@@ -1,0 +1,56 @@
+title: Bathhouse - a stone pool hall with the steaming pool, soaking tubs, benches and a sauna stove; changing rooms with lockers, mirrors and washstands either side of a tiled lobby with the attendant's counter.
+wall plaster #d8e6f0
+floor . tiles #eef2f6
+floor : stone #c8d4dc
+
+W = window
+f = plant_flower
+n = plant_fern
+p = plant_leafy
+h = shelf_small
+K = kiln
+s = bench_short
+O = pool
+t = bathtub
+Q = plaque
+I = mirror
+c = cabinet_tall
+w = washstand
+k = wood_stool
+D = store_counter
+E = bench_long
+L = floor_lamp
+b = basket
+
+place rug_green 12.0 18.5
+place sunbeam 3 4.3
+place sunbeam 9 5.0
+place sunbeam 17 5.0
+place sunbeam 23 4.3
+place bottle 12.3 16.2
+
+map:
+############################
+#==========================#
+#==========================#
+#==========================#
+#fn::p:h::::KK::::::h:p::nf#
+#::::::::::::::::::::::::::#
+#:::::::::OOOOOOO::::::::::#
+#::sss::::OOOOOOO::::sss:::#
+#:::::::::OOOOOOO::::::::::#
+#:ttt:::::OOOOOOO:::::ttt::#
+#:ttt:::::OOOOOOO:::::ttt::#
+#::::::::::::::::::::::::::#
+#:::::p::::::::::::::p:::::#
+###::##################::###
+#==::=I=#====QQ====#=I=::==#
+#==::=I=#==========#=I=::==#
+#cc...w.#....k.....#.w...cc#
+#.......#...DDD....#.......#
+#cc......................cc#
+#.sss..................sss.#
+#.......#..........#.......#
+#p.....p#EEEE..EEEE#p.....p#
+#b......#L..f..f..L#......b#
+#############..#############

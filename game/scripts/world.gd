@@ -20,7 +20,7 @@ const SPAWN_BUDGET := 90                # objects per frame while streaming in
 const FROZEN := {"oak": "oak_frozen", "oak_big": "oak_big_frozen", "oak_young": "oak_young_frozen"}
 
 ## Areas built as a room by Interior rather than loaded from data/areas.
-const INTERIORS := ["house", "barn", "coop", "general_store", "saloon", "blacksmith_shop", "library", "clinic", "school", "church", "bathhouse", "museum", "inn", "mayors_manor", "npc_house_1", "npc_house_2", "dispensary"]
+const INTERIORS := ["house", "barn", "coop", "general_store", "saloon", "blacksmith_shop", "library", "clinic", "school", "church", "bathhouse", "museum", "inn", "mayors_manor", "npc_house_1", "npc_house_2", "dispensary", "wizard_tower", "greenhouse", "windmill", "well", "silo", "npc_house_3", "npc_house_4", "npc_house_5"]
 
 var size := Vector2.ZERO
 var area_id := ""

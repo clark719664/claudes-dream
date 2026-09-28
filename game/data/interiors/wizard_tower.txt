@@ -1,0 +1,37 @@
+title: Merlo's Tower - a spiral of study around a cool blue alchemy hearth, with old books, star charts, crystal shelves and a quiet landing at the tower door.
+wall stone #b8afd1
+floor . tiles #777a91
+floor , parquet #584f6f
+floor : stone #9795a0
+q = painting
+A = alchemy
+B = bookshelf
+C = cabinet_wall
+o = table_round
+h = chair
+p = plant_leafy
+F = fireplace
+w = firewood
+place rug_round 7 8
+place chandelier 8 3
+place rug_gold 7 13
+place window_stone 2 1
+place window_stone 23 1
+map:
+##########################
+#=============q========..#
+#=======================.#
+#=======================.#
+#....B....AABB.......p...#
+#....B....AABB..C........#
+#...........,............#
+#...F.....,,.............#
+#..FFFw...,,.......o.....#
+#........,,,.......oo....#
+#.====...,,,======....==.#
+#..AABB.......,.......B..#
+#..AABB...............B..#
+#.....h......C.......p...#
+#.........,,,,,,,,,......#
+#...q......,,,,,,,,,.....#
+###############..#########

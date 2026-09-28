@@ -1,0 +1,32 @@
+title: Grain Silo Interior - a compact stone silo with a protected grain well, raised storage bins, a steep service ladder and room to shovel clear at the loading hatch.
+wall stone #bcae96
+floor . stone #a9a28e
+floor , tiles #857d6c
+S = sack
+H = hay
+B = shelf_unit
+C = crate_crops
+b = barrel
+K = crate_table
+p = plant_small
+place chandelier_dark 6 3
+place grate 6 8
+place window_stone 2 1
+place window_stone 10 1
+map:
+################
+#==============#
+#==============#
+#==============#
+#BB..BB..BB....#
+#BB..BB..BB....#
+#....HH........#
+#....HH........#
+#..SS..,.......#
+#..SS..,.......#
+#..SS..,.......#
+#..KKKKK.......#
+#..KKKKK..b....#
+#......,,,,....#
+#p.............#
+#######..#######

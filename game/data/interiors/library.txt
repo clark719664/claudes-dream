@@ -1,0 +1,52 @@
+title: The Library - three rows of stacks on the west, a daylit reading room of long candlelit tables on the east, the librarian's desk and rare-book cases in the entrance hall.
+wall plank #f2e2d0
+floor . parquet
+floor , planks #ead2b2
+
+O = plaque
+W = window
+B = bookshelf
+p = plant_leafy
+h = chair
+T = table_long
+j = chair_back
+L = floor_lamp
+u = wood_stool
+D = library_desk
+e = display_case
+E = bench_long
+f = plant_flower
+
+place rug_red 11.75 17.0
+place rug_round 18.5 8.9
+place sunbeam 16 5.0
+place sunbeam 20 5.0
+place sunbeam 24 5.0
+place candle 18.6 6.9
+place candle 23.6 6.9
+place candle 18.6 11.9
+place candle 23.6 11.9
+
+map:
+############################
+#=====OO======#============#
+#=============#============#
+#=============#============#
+#BBBBBBBBBBBB.#,,,BB,,BB,,p#
+#.............#,,,,,,,,,,,,#
+#.............,,,,hh,,,hh,,#
+#.BBBBBBBBBB..,,,TTTT,TTTT,#
+#.............#,,TTTT,TTTT,#
+#.............#,,,jj,,,jj,,#
+#.BBBBBBBBBB..#,,,,,,,,,,,L#
+#.............#,,,hh,,,hh,,#
+#.............#,,TTTT,TTTT,#
+#.BBBBBBBBBB..#,,TTTT,TTTT,#
+#.............=,,,jj,,,jj,,#
+#.............=L,,,,,,,,,,L#
+#.....u....................#
+#....DDD...........eee....p#
+#..................eee.....#
+#EEEE......................#
+#L..........f..f..........L#
+#############..#############

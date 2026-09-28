@@ -1,0 +1,141 @@
+; Art for hand-authored interiors. One piece per line:
+;   name  sheet x y w h  [flags]      or      name  @catalog_sprite  [flags]
+; sheet P = Interior_Props_01.png, F = Props/Static/Furniture.png (Pixel Crawler, native 16px).
+; flags: WxH floor footprint in tiles (map block size, default 1x1); layer wall|floor|over|top
+; (not solid); pass (walk-through); role=<CabinFixture role>; light=rrggbb,energy,radius,y;
+; ox= oy= (sprite nudge in px); alpha=; add (additive blend).
+
+; On the walls
+window          P  64 176 28 32  2x2 wall
+window_stone    P  98 176 28 32  2x2 wall
+chalkboard      P 194 260 28 23  2x2 wall
+noticeboard     P 226 260 28 23  2x2 wall
+sword           P  98 261 28  9  2x1 wall
+pickaxe         P 131 262 26 10  2x1 wall
+shield          P 129 272 14 16  1x1 wall
+plaque          P 102 274 20 12  2x1 wall
+cabinet_wall    P 166 261 20 20  1x1 wall
+wolf_head       P 552   8 16 17  1x1 wall
+bear_head       P 584   7 16 17  1x1 wall
+mirror          P 594 242 12 27  1x2 wall
+painting        P  82 321 14 15  1x1 wall
+
+; On the floor, under everything
+rug_red         @rug             floor
+rug_gold        P 336 336 48 48  floor
+rug_green       P 384 336 48 48  floor
+rug_round       P 432 304 80 80  floor
+table_blue      P   7 163 34 29  2x2
+grate           P 112 144 16 16  floor
+sunbeam         P 560 226 32 46  floor alpha=0.14 add
+
+; Hanging from the ceiling
+chandelier      P 242  64 30 30  over light=ffd08a,1.1,128,12
+chandelier_dark P 210  67 28 27  over
+
+; Seats and tables
+chair           P  66   3 12 24  pass
+chair_back      P  67  34 11 24  pass
+chair_side      P  67  72 11 18  pass
+stool           P  81  62 14 18  pass
+stool_red       P  97  61 14 19  pass
+wood_stool      @wood_stool      pass
+table_long      P   0   0 64 26  4x2
+table_round     P  80   7 32 35  2x2
+table_square    P   2 236 44 52  3x3
+table_dark      P  65 227 45 28  3x2
+table_plank     P 112  64 32 32  2x2
+bench_table     P   7  99 34 29  2x2
+bench_long      P  48 151 64 20  4x1
+bench_short     P   0 204 48 20  3x1
+sofa            P  80 301 45 19  3x1
+tavern_table    @tavern_table    2x2
+
+; Storage
+wardrobe        P 279   1 34 47  2x1
+glass_cabinet   P 231   1 34 31  2x1
+dresser         P 231  32 34 31  2x1
+cabinet_blue    P 327   1 34 47  2x1
+sideboard       P 368   0 64 47  4x1
+counter_top     P 432   0 64 47  4x1
+shelf_small     P 208 120 16 24  1x1
+barrel_small    P 224 122 16 22  1x1
+bottle_rack     P 176 144 48 32  3x1
+washstand       P 176  96 16 32  1x1
+washstand_dark  P 192  96 16 32  1x1
+display_counter F  32  86 64 26  4x2
+display_case    F  32  52 48 28  3x2
+cabinet_tall    F   2  48 28 46  2x1
+crate_table     F   0  16 48 32  3x2
+shelf_unit      F   0  96 31 45  2x1
+green_counter   F  32 118 48 24  3x1
+bookshelf       @bookshelf       2x1
+barrel          @barrel
+crate           @crate
+chest           @chest
+iron_chest      @iron_chest
+sack            @sack            pass
+hay             @hay
+crate_crops     @crate_crops
+ore_crate       @ore_crate
+ship_crate      @ship_crate      2x1
+
+; Fire, cooking and craft
+fireplace       P 272  64 48 80  3x1 light=ff9e52,1.0,112,-20
+hearth          P 321  64 62 80  4x1 light=ff9e52,1.0,120,-20
+forge           P 384  64 48 80  3x1 light=ff7a3a,1.2,128,-18
+kiln            P 434 116 28 22  2x1 light=ff8a4a,0.7,64,-8
+range           P 176   0 48 64  3x1 role=kitchen light=ff9e52,0.7,80,-14
+stove_small     P 116   0 24 48  2x1
+stove_iron      P 144   0 32 64  2x1
+alchemy         P 112  64 32 32  2x1 role=alchemy light=9ad8ff,0.6,56,-20
+cook_station    @stove           3x1
+workbench       @workbench       3x1
+drying_rack     @drying_rack     3x1
+weapon_rack     @weapon_rack     3x1
+anvil           @forge_anvil     2x1
+
+; Beds and bathing
+bed_single      P   1 293 30 54  2x3
+bed_double      P  33 293 46 54  3x3
+bed_striped     F   0 148 31 55  2x3
+bed_plain       F  32 148 31 55  2x3
+cozy_bed        @cozy_bed        2x2
+inn_bed         @inn_bed         2x2
+clinic_bed      @clinic_bed      2x3
+bathtub         P 128 144 48 34  3x2
+pool            @bathhouse_pool  7x5 role=bathhouse_pool
+well            @well            4x2
+
+; Shops, halls and schoolrooms
+store_counter   @store_counter   3x1
+tavern_bar      @tavern_bar      5x2
+library_desk    @library_desk    3x1
+school_desk     @school_desk     2x1
+church_pew      @church_pew      3x1
+museum_display  @museum_display  2x1
+floor_lamp      @floor_lamp      1x1 light=ffcf8a,0.9,72,-26
+
+; Plants and small things
+plant_flower    P  17 352 14 32
+plant_fern      P  32 360 15 24
+plant_leafy     P  64 354 16 30
+plant_small     P  48 360 16 24
+house_plant     @house_plant
+pot             P   2 370 12 14  pass
+basket          P 496 273 16 31
+broom           P 592 336 16 30  pass
+bucket          P 130 130 12 14  pass
+bucket_water    P 146 130 12 14  pass
+firewood        P 433 273 14 15  pass
+candle          P 533 197  9 11  top light=ffb35c,0.6,40,-6
+bread           P 113  99 14 10  top
+kettle          P 455 273 18 15  top
+pot_iron        P 480 276 16 12  top
+pan             P 418 257 28 13  top
+tray            P 402 230 28 20  top
+bowl            P 564 277  9  8  top
+potion_red      P 517 291  5  9  top
+potion_green    P 534 307  5 10  top
+potion_violet   P 565 323  7 10  top
+bottle          P 581 291  7 10  top

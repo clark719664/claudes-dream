@@ -1,0 +1,71 @@
+title: The Stardrop Saloon - bottle wall and a long bar with stools, a hall of candlelit tables, a card room by the hearth, and a lounge with a long supper table by the door.
+wall plaster #f0d6c4
+floor . parquet #f0d2b4
+floor , planks #d8b89a
+
+W = window
+O = plaque
+q = painting
+U = wolf_head
+Y = bear_head
+N = noticeboard
+b = bottle_rack
+S = sideboard
+k = stove_small
+r = barrel
+x = crate
+P = hearth
+p = plant_leafy
+T = tavern_bar
+h = chair
+Q = table_square
+c = chair_side
+C = chair_side flip
+j = chair_back
+o = table_round
+L = floor_lamp
+l = table_long
+z = sofa
+E = bench_long
+f = plant_flower
+
+place rug_round 22.9 6.4
+place rug_red 13.25 16.8
+place sunbeam 3 5.0
+place sunbeam 12 5.0
+place bottle 4.3 5.9
+place bottle 9.1 5.9
+place bowl 6.6 6.0
+place bottle 6.4 2.9
+place potion_red 7.3 3.0
+place bottle 8.4 2.9
+place candle 25.0 7.3
+place candle 3.6 9.6
+place candle 9.6 9.6
+place candle 15.6 9.6
+place candle 23.6 15.8
+place bread 22.6 16.0
+
+map:
+##############################
+#=======OO===========#=======#
+#================q===#U====Yq#
+#====================#=======#
+#.bbb.SSSS.bbb.kk.rr.#.PPPP.p#
+#...................x#,,,,,,,#
+#..TTTTTTTTTT........#,,,h,,,#
+#..TTTTTTTTTT........#,,QQQ,,#
+#....................#,cQQQC,#
+#..h.....h.....h.....,,,QQQ,,#
+#.cooC..cooC..cooC...,,,,j,,,#
+#..oo....oo....oo....#,,,,,,L#
+#...j.....j.....j....#########
+#....................===NN===#
+#....................===NN===#
+#......................hh....#
+#.....................llll...#
+#.zzz.................llll...#
+#......................jj....#
+#EEEE........f..f..........rr#
+#L..........................L#
+##############..##############

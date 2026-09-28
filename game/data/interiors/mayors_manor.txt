@@ -1,0 +1,42 @@
+title: Mayor's Manor - a formal reception room and council table open onto a private study, portrait gallery and restrained family sitting room.
+wall plaster #f1e4cc
+floor . parquet #d7c29d
+floor , tiles #b6a997
+q = painting
+P = plaque
+B = bookshelf
+C = chest
+D = dresser
+T = table_long
+h = chair
+S = sofa
+F = fireplace
+w = firewood
+p = plant_leafy
+f = plant_flower
+L = floor_lamp
+place rug_gold 9 11
+place chandelier 12 4
+place rug_red 20 10
+place window 1 1
+place window 29 1
+map:
+################################
+#============q===============..#
+#============================..#
+#=============================.#
+#..SSS.........q...............#
+#.SSS....P.................BB..#
+#......................DD......#
+#==================..=========.#
+#.....TTTTTTTT...........BB....#
+#.....TTTTTTTT...........BB....#
+#.....hhhh....h...........C....#
+#.....................F........#
+#...p..............FFFw........#
+#...f.....,,,,,,,,,,,,,.....p..#
+#.........,,,,,,,,,,,,,.....L..#
+#..........,,,,,,,,,,,,..q.....#
+#...h......,,,,,,,,,,,,........#
+#...................f..........#
+###################..###########

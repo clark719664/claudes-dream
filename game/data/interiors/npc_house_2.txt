@@ -1,0 +1,38 @@
+title: The Millers - a grain miller's close, efficient house: dry sacks and milling stores lead directly to a bright kitchen, shared meal table and small family bedroom.
+wall plank #b89065
+floor . planks #cbb28e
+floor , stone #a59d8f
+N = noticeboard
+D = bed_double
+S = sack
+C = crate_crops
+B = bookshelf
+R = range
+G = green_counter
+o = table_round
+h = chair
+F = fireplace
+w = firewood
+p = plant_leafy
+f = plant_flower
+place rug_green 8 10
+place chandelier 8 3
+place window 1 1
+place window 27 1
+map:
+#############################
+#========================...#
+#=========================..#
+#=========================..#
+#..DDD.................C....#
+#..DDD..........SSS....C....#
+#..DDD..........SSS.........#
+#=============..==========..#
+#..B.....RRR............p...#
+#..B.....GGG................#
+#...F..............oo.......#
+#..FFFw............oo.h.....#
+#.S....C....,,,,,,,,,,....f.#
+#.S....C....,,,,,,,,,,......#
+#....p........h..........f..#
+#################..##########

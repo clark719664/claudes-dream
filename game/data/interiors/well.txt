@@ -1,0 +1,31 @@
+title: The Stone Well - a damp, quiet well-house built around a safely railed wellhead, with stone paving, a clean bucket station, mossy edges and an open service route.
+wall stone #b5b2a1
+floor . stone #aaa99b
+floor , tiles #838d87
+Q = well
+b = bucket
+v = bucket_water
+g = grate
+p = plant_leafy
+f = plant_flower
+B = barrel
+S = sack
+place rug_round 6 6
+place chandelier_dark 7 3
+place window_stone 2 1
+place window_stone 14 1
+map:
+####################
+#===============...#
+#===============...#
+#===============...#
+#....,,,,..........#
+#....Q...,,,,......#
+#....QQQQ,,,,......#
+#....QQQQ,,,,......#
+#........,,,.......#
+#b...........v.....#
+#B...p.........f...#
+#..........S.......#
+#....g....,,,,.....#
+#########..#########

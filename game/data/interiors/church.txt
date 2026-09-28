@@ -1,0 +1,58 @@
+title: Chapel - a stone nave of pews either side of a carpeted aisle, a gold-tiled chancel with a candlelit altar under the arched windows, the vestry to the west and the choir room to the east.
+wall stone #e4e0d8
+floor . parquet #ead2ba
+floor : tiles
+floor , planks #e0c8a8
+
+W = window
+V = window_stone
+O = plaque
+q = painting
+R = dresser
+A = wardrobe
+L = floor_lamp
+f = plant_flower
+B = bookshelf
+T = table_long
+k = wood_stool
+D = library_desk
+p = plant_leafy
+C = chest
+h = chair
+E = bench_long
+s = bench_short
+
+place rug_round 10.5 6.8
+place rug_red 11.25 13.3
+place rug_red 11.25 17.3
+place sunbeam 8 4.3
+place sunbeam 16 4.3
+place candle 11.5 5.1
+place candle 13.9 5.1
+place bowl 12.6 5.4
+place candle 3.3 5.6
+
+map:
+##########################
+#=====#=VV==OO==VV=#=====#
+#=====#=VV======VV=#=====#
+#=====#============#=====#
+#,RRAA#L:f::::::f:L#,,,BB#
+#,k,,,#::::TTTT::::#,,,,,#
+#DDD,,#::::TTTT::::#,,,,p#
+#,,,,,,::::::::::::,,,,,,#
+#C,,,,,::::::::::::,hhhhh#
+#,,,,p#::::::::::::#p,,,,#
+#######............#######
+#==q===............===q==#
+#======............======#
+#....EEEEsss..sssEEEE....#
+#........................#
+#....EEEEsss..sssEEEE....#
+#........................#
+#....EEEEsss..sssEEEE....#
+#........................#
+#....EEEEsss..sssEEEE....#
+#p......................p#
+#L.........f..f.........L#
+############..############
