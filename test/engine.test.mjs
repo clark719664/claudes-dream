@@ -80,8 +80,9 @@ test('Vixie OR/AND rule for the day fields', () => {
   const all = ok('0 0 1-31 * 1', 'unix');
   assert.equal(all.dayMode, 'all');
   assert.ok(lintIds(all).includes('or-ignored'));
-  // Spring always ANDs
-  assert.equal(ok('0 0 0 1-7 * MON', 'spring').dayMode, 'and');
+  // Spring always ANDs; one week of dates ANDed with one weekday is that week's weekday
+  assert.equal(ok('0 0 0 1-15 * MON', 'spring').dayMode, 'and');
+  assert.deepEqual(ok('0 0 0 1-7 * MON', 'spring').dow.special, { type: 'nth', dow: 1, n: 1 });
 });
 
 test('Quartz needs exactly one ?', () => {
@@ -378,4 +379,194 @@ test('several schedules analyzed together', () => {
   const one = ok('*/7 * * * *', 'unix');
   assert.deepEqual(E.upcomingSet([one], 'UTC', NOW, 10).runs.map(r => r.t), E.upcoming(one, 'UTC', NOW, 10).runs.map(r => r.t));
   assert.equal(E.statsSet([one], 'UTC', NOW).minGap, E.stats(one, 'UTC', NOW).minGap);
+});
+
+// ---------------------------------------------------------------- schedulers added in 1.1
+
+const sameSchedule = (a, b, msg) => {
+  assert.deepEqual(a.times, b.times, `${msg}: times`);
+  for (const y of [2027, 2028]) assert.deepEqual(matchingDays(a, y), matchingDays(b, y), `${msg}: days in ${y}`);
+};
+const isoFrom = (P, from, n, tz = 'UTC') => E.upcoming(P, tz, from, n).runs.map(r => new Date(r.t).toISOString().slice(0, 16));
+
+test('systemd: the normalized forms in systemd.time(7) mean the same thing', () => {
+  const pairs = [
+    ['Sat,Thu,Mon..Wed,Sat..Sun', 'Mon..Thu,Sat,Sun *-*-* 00:00:00'],
+    ['Mon,Sun 12-*-* 2,1:23', 'Mon,Sun 2012-*-* 01,02:23:00'],
+    ['Wed *-1', 'Wed *-*-01 00:00:00'],
+    ['Wed..Wed,Wed *-1', 'Wed *-*-01 00:00:00'],
+    ['Wed, 17:48', 'Wed *-*-* 17:48:00'],
+    ['Wed..Sat,Tue 12-10-15 1:2:3', 'Tue..Sat 2012-10-15 01:02:03'],
+    ['*-*-7 0:0:0', '*-*-07 00:00:00'],
+    ['10-15', '*-10-15 00:00:00'],
+    ['monday *-12-* 17:00', 'Mon *-12-* 17:00:00'],
+    ['Mon,Fri *-*-3,1,2 *:30:45', 'Mon,Fri *-*-01,02,03 *:30:45'],
+    ['12,14,13,12:20,10,30', '*-*-* 12,13,14:10,20,30:00'],
+    ['12..14:10,20,30', '*-*-* 12..14:10,20,30:00'],
+    ['mon,fri *-1/2-1,3 *:30:45', 'Mon,Fri *-01/2-01,03 *:30:45'],
+    ['03-05 08:05:40', '*-03-05 08:05:40'],
+    ['08:05:40', '*-*-* 08:05:40'],
+    ['05:40', '*-*-* 05:40:00'],
+    ['Sat,Sun 12-05 08:05:40', 'Sat,Sun *-12-05 08:05:40'],
+    ['2003-03-05 05:40', '2003-03-05 05:40:00'],
+    ['2003-02..04-05', '2003-02..04-05 00:00:00'],
+    ['hourly', '*-*-* *:00:00'],
+    ['daily', '*-*-* 00:00:00'],
+    ['monthly', '*-*-01 00:00:00'],
+    ['weekly', 'Mon *-*-* 00:00:00'],
+    ['yearly', '*-01-01 00:00:00'],
+    ['annually', '*-01-01 00:00:00'],
+    ['quarterly', '*-01,04,07,10-01 00:00:00'],
+    ['semiannually', '*-01,07-01 00:00:00'],
+    ['*:2/3', '*-*-* *:02/3:00'],
+  ];
+  for (const [a, b] of pairs) {
+    const A = ok(a, 'systemd'), B = ok(b, 'systemd');
+    assert.deepEqual([A.years, A.months, A.times], [B.years, B.months, B.times], a);
+    for (const y of [2003, 2012, 2027]) assert.deepEqual(matchingDays(A, y), matchingDays(B, y), `${a} in ${y}`);
+  }
+  // Rendering gives systemd's own normalized form where it can.
+  for (const x of ['Mon..Thu,Sat,Sun *-*-* 00:00:00', 'Mon,Sun 2012-*-* 01,02:23:00', 'Tue..Sat 2012-10-15 01:02:03', 'Mon,Fri *-01/2-01,03 *:30:45', '*-*-* *:02/3:00']) {
+    assert.equal(E.render(ok(x, 'systemd'), 'systemd').lines[0], x);
+  }
+});
+
+test('systemd: month ends, time zones and refusals', () => {
+  // "Mon *-05~07/1 means the last Monday in May"; "*-02~03 means the third last day in February"
+  assert.deepEqual(matchingDays(ok('Mon *-05~07/1', 'systemd'), 2027), ['5-31']);
+  assert.deepEqual(matchingDays(ok('*-02~03', 'systemd'), 2028), ['2-27']);
+  assert.deepEqual(matchingDays(ok('*-*~01..03', 'systemd'), 2027).slice(0, 4), ['1-29', '1-30', '1-31', '2-26']);
+  assert.equal(E.describe(ok('*-*~01..03 12:00', 'systemd')), 'At 12:00 on the last 3 days of the month.');
+  assert.equal(E.render(ok('0 0 12 ? * 6L', 'quartz'), 'systemd').lines[0], 'Fri *-*~07/1 12:00:00');
+  const z = ok('Mon..Fri 09:00 Europe/Berlin', 'systemd');
+  assert.equal(z.tz, 'Europe/Berlin');
+  assert.equal(ok('daily UTC', 'systemd').tz, 'UTC');
+  const unit = ok('[Unit]\nDescription=Backup\n\n[Timer]\nOnCalendar=Sat *-*-1..7 03:00\nPersistent=true\n', 'systemd');
+  assert.deepEqual(unit.dow.special, { type: 'nth', dow: 6, n: 1 });
+  bad('*:*/15', 'systemd', /`0\/15`/);
+  bad('Fri..Mon 10:00', 'systemd', /Monday to Sunday/);
+  bad('*-*~29', 'systemd', /1–28/);
+  bad('*:50/15', 'systemd', /never fires a second time/);
+  bad('Mon 25:00', 'systemd', /0–23/);
+  assert.deepEqual(E.dstPolicy(ok('02:30', 'systemd')), { gap: null, overlap: null });
+  assert.ok(lintIds(ok('02:30', 'systemd')).includes('sd-timer'));
+});
+
+test('GitLab (fugit): #, L, -n-L and the & extension', () => {
+  assert.deepEqual(ok('0 5 * * mon#1', 'gitlab').dow.special, { type: 'nth', dow: 1, n: 1 });
+  for (const x of ['0 7 * * 5#-1', '0 7 * * fri#-1', '0 7 * * 5#L', '0 7 * * fri#last']) {
+    assert.deepEqual(ok(x, 'gitlab').dow.special, { type: 'lastDow', dow: 5 }, x);
+  }
+  assert.deepEqual(ok('0 0 L * *', 'gitlab').dom.special, { type: 'L', offset: 0 });
+  assert.deepEqual(ok('0 0 last * *', 'gitlab').dom.special, { type: 'L', offset: 0 });
+  assert.deepEqual(ok('0 0 -7-L * *', 'gitlab').dom.special, { type: 'fromEnd', offsets: [0, 1, 2, 3, 4, 5, 6] });
+  // The examples from fugit's README: & turns the day-field OR into AND.
+  const from = (y, m, d) => Date.UTC(y, m - 1, d);
+  assert.equal(isoFrom(ok('0 0 */2 * 1-5', 'gitlab'), from(2022, 8, 9), 1)[0], '2022-08-10T00:00');
+  for (const x of ['0 0 */2 * 1-5&', '0 0 */2& * 1-5', '0 0 */2& * 1-5&']) assert.equal(isoFrom(ok(x, 'gitlab'), from(2022, 8, 9), 1)[0], '2022-08-11T00:00', x);
+  assert.equal(isoFrom(ok('59 6 1-7 * 2', 'gitlab'), from(2020, 3, 15), 1)[0], '2020-03-17T06:59');
+  assert.equal(isoFrom(ok('59 6 1-7& * 2', 'gitlab'), from(2020, 3, 15), 1)[0], '2020-04-07T06:59');
+  // Lists of # days are split into separate schedules.
+  const P = bad('0 6 * * 5#4,5#5', 'gitlab', /split/);
+  assert.deepEqual(P.error.fix.exprs, ['0 6 * * 5#4', '0 6 * * 5#5']);
+  assert.deepEqual(bad('0 23 * * mon#2,tue', 'gitlab').error.fix.exprs, ['0 23 * * mon#2', '0 23 * * tue']);
+  bad('9 0 * * sun%2', 'gitlab', /every-nth-week/);
+  assert.equal(E.render(ok('0 0 12 ? * 6#3', 'quartz'), 'gitlab').lines[0], '0 12 * * 5#3');
+  assert.equal(E.render(ok('0 0 */2 * 1-5', 'unix'), 'gitlab').lines[0], '0 0 */2& * 1-5');
+  assert.ok(lintIds(ok('*/5 * * * *', 'gitlab')).includes('gl-frequent'));
+  assert.ok(lintIds(ok('0 9 * * *', 'gitlab')).includes('gl-worker'));
+  assert.ok(lintIds(ok('0 9 1-7 * 1', 'gitlab')).includes('or-trap'));
+});
+
+test('Cloudflare: Sunday is 1, Quartz-style extras, UTC only', () => {
+  sameSchedule(ok('0 17 * * sun', 'cloudflare'), ok('0 17 * * 1', 'cloudflare'), 'Sunday');
+  sameSchedule(ok('10 7 * * mon-fri', 'cloudflare'), ok('10 7 * * 2-6', 'cloudflare'), 'weekdays');
+  sameSchedule(ok('0 18 * * 6L', 'cloudflare'), ok('0 18 * * friL', 'cloudflare'), 'last Friday');
+  assert.deepEqual(matchingDays(ok('59 23 LW * *', 'cloudflare'), 2027).slice(0, 3), ['1-29', '2-26', '3-31']);
+  assert.deepEqual(ok('0 9 * * FRI-MON', 'cloudflare').dow.list, [0, 1, 5, 6]); // ranges wrap
+  assert.equal(ok('0 0 1 * MON', 'cloudflare').dayMode, 'or');
+  bad('0 9 ? * MON', 'cloudflare', /doesn't use `\?`/);
+  bad('0 9 * * */8', 'cloudflare', /steps above 7/);
+  const w = E.lint(ok('0 9 * * 1-5', 'cloudflare'), 'UTC', NOW);
+  assert.equal(w.find(l => l.id === 'dow-numbering').fix.expr, '0 9 * * MON-FRI');
+  assert.ok(lintIds(ok('0 9 * * *', 'cloudflare')).includes('cf-utc'));
+  assert.equal(E.render(ok('0 9 * * 1-5', 'unix'), 'cloudflare').lines[0], '0 9 * * MON-FRI');
+  assert.equal(ok('[triggers]\ncrons = ["*/3 * * * *", "0 15 1 * *"]', 'cloudflare').minutes.length, 20);
+});
+
+test('Azure Functions (NCRONTAB): seconds first, AND for the day fields', () => {
+  const table = [
+    ['0 */5 * * * *', 12 * 24], ['0 0 * * * *', 24], ['0 0 */2 * * *', 12], ['0 0 9-17 * * *', 9], ['0 30 9 * * *', 1],
+  ];
+  for (const [x, perDay] of table) assert.equal(ok(x, 'azure').times.length, perDay, x);
+  sameSchedule(ok('30 9 * * 1-5', 'azure'), ok('0 30 9 * * 1-5', 'azure'), 'five fields');
+  sameSchedule(ok('0 30 9 * Jan Mon', 'azure'), ok('0 30 9 * 1 1', 'azure'), 'names');
+  sameSchedule(ok('0 0 9 * * Monday', 'azure'), ok('0 0 9 * * Mo', 'azure'), 'name prefixes');
+  const sw = ok('0 0 9 * * Fri-Mon', 'azure');
+  assert.deepEqual(sw.dow.list, [1, 2, 3, 4, 5]); // NCrontab swaps a backwards range
+  assert.ok(lintIds(sw).includes('az-swap'));
+  assert.deepEqual(ok('0 0 9 1-7 * 1', 'azure').dow.special, { type: 'nth', dow: 1, n: 1 });
+  assert.equal(E.render(ok('0 0 9 ? * 2#3', 'quartz'), 'azure').lines[0], '0 0 9 15-21 * 1');
+  bad('0 0 9 * * 7', 'azure', /0–6/);
+  bad('0 0 9 L * *', 'azure', /doesn't support/);
+  assert.equal(E.lint(ok('0 0 9 * * *', 'azure'), 'Europe/Berlin', NOW).find(l => l.id === 'az-timezone').level, 'warn');
+  assert.equal(ok('[TimerTrigger("0 */5 * * * *")] TimerInfo t', 'azure').minutes.length, 12);
+  assert.equal(ok('{"bindings":[{"type":"timerTrigger","name":"t","schedule":"0 30 9 * * 1-5"}]}', 'azure').hours[0], 9);
+  assert.equal(ok('WEBSITE_TIME_ZONE=Europe/Paris\n0 30 9 * * *', 'azure').tz, 'Europe/Paris');
+  const win = ok('WEBSITE_TIME_ZONE=Eastern Standard Time\n0 30 9 * * *', 'azure');
+  assert.equal(win.tz, null);
+  assert.match(win.notes.join(' '), /isn't a tz database name/);
+});
+
+test('APScheduler: keyword arguments, defaults and from_crontab()', () => {
+  // The examples from APScheduler's cron trigger docs
+  const third = ok("sched.add_job(job_function, 'cron', month='6-8,11-12', day='3rd fri', hour='0-3')", 'apscheduler');
+  assert.deepEqual(third.months, [6, 7, 8, 11, 12]);
+  assert.deepEqual(third.hours, [0, 1, 2, 3]);
+  assert.deepEqual(third.dow.special, { type: 'nth', dow: 5, n: 3 });
+  const early = ok("sched.add_job(job_function, 'cron', day_of_week='mon-fri', hour=5, minute=30, end_date='2014-05-30')", 'apscheduler');
+  assert.deepEqual([early.dow.list, early.times], [[1, 2, 3, 4, 5], [5 * 3600 + 30 * 60]]);
+  const lastSun = ok("@sched.scheduled_job('cron', id='my_job_id', day='last sun')", 'apscheduler');
+  assert.deepEqual([lastSun.dow.special, lastSun.times], [{ type: 'lastDow', dow: 0 }, [0]]);
+  // "day=1, minute=20 … at 20 minutes of every hour" on the 1st
+  const gap = ok('CronTrigger(day=1, minute=20)', 'apscheduler');
+  assert.equal(gap.times.length, 24);
+  assert.ok(lintIds(gap).includes('aps-gap'));
+  sameSchedule(ok("CronTrigger.from_crontab('0 0 1-15 may-aug *')", 'apscheduler'), ok('0 0 1-15 5-8 *', 'unix'), 'from_crontab');
+  // from_crontab keeps APScheduler's Monday = 0
+  const fc = ok("CronTrigger.from_crontab('0 9 * * 1-5')", 'apscheduler');
+  assert.deepEqual(fc.dow.list, [2, 3, 4, 5, 6]);
+  const warn = E.lint(fc, 'UTC', NOW).find(l => l.id === 'aps-crontab-dow');
+  assert.equal(warn.fix.expr, "CronTrigger.from_crontab('0 9 * * mon-fri')");
+  assert.equal(ok("CronTrigger(hour=9, timezone='Europe/Berlin')", 'apscheduler').tz, 'Europe/Berlin');
+  // Rendering writes only what differs from APScheduler's defaults.
+  const r = x => E.render(ok(x, 'unix'), 'apscheduler').lines.join(' | ');
+  assert.equal(r('30 9 * * 1-5'), "day_of_week='mon-fri', hour=9, minute=30");
+  assert.equal(r('0 0 * * *'), 'hour=0');
+  assert.equal(r('* * * * *'), "minute='*'");
+  assert.equal(r('0 * * * *'), 'minute=0');
+  assert.equal(r('0 0 1 1 *'), 'month=1');
+  assert.equal(r('0 9 1 * 1'), "day=1, hour=9 | day_of_week='mon', hour=9");
+  bad('CronTrigger(hour=9, week=2)', 'apscheduler', /ISO week/);
+  bad("CronTrigger(hour='*/24')", 'apscheduler', /step value \(24\)/);
+  bad("CronTrigger(day_of_week='sun-mon')", 'apscheduler', /minimum value in a range/);
+  assert.deepEqual(bad("CronTrigger(day='1st mon,3rd mon', hour=9)", 'apscheduler').error.fix.exprs,
+    ["CronTrigger(day='1st mon', hour=9)", "CronTrigger(day='3rd mon', hour=9)"]);
+  // Documented: in Europe/Helsinki, hour=3, minute=30 doesn't run on the last Sunday of March and runs twice on the last Sunday of October.
+  const hel = ok('CronTrigger(hour=3, minute=30)', 'apscheduler');
+  assert.deepEqual(E.dstPolicy(hel), { gap: 'skip', overlap: 'twice' });
+  const spring = E.upcoming(hel, 'Europe/Helsinki', Date.UTC(2027, 2, 27, 12), 2).runs;
+  assert.equal(spring[0].kind, 'skipped');
+  const autumn = E.upcoming(hel, 'Europe/Helsinki', Date.UTC(2027, 9, 30, 12), 2).runs;
+  assert.deepEqual(autumn.map(x => x.kind), ['run', 'repeat']);
+});
+
+test('one week of dates ANDed with a weekday translates as the nth weekday everywhere', () => {
+  for (const [x, d] of [['0 0 9 1-7 * MON', 'spring'], ['0 0 9 1-7 * 1', 'azure'], ['Mon *-*-01..07 09:00', 'systemd'], ['0 9 1-7& * 1', 'gitlab']]) {
+    const P = ok(x, d);
+    assert.deepEqual(P.dow.special, { type: 'nth', dow: 1, n: 1 }, x);
+    assert.equal(E.render(P, 'quartz').lines[0], '0 0 9 ? * 2#1', x);
+  }
+  assert.deepEqual(ok('0 0 9 29-31 * FRI', 'spring').dow.special, { type: 'nth', dow: 5, n: 5 });
+  assert.equal(ok('0 0 9 1-8 * MON', 'spring').dayMode, 'and');
 });

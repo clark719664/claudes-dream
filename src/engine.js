@@ -1,6 +1,6 @@
 /*
  * Cron Almanac engine.
- * Parses cron expressions for six schedulers, computes run times in any IANA
+ * Parses schedules for eleven schedulers, computes run times in any IANA
  * time zone (DST included), describes them in English, flags common mistakes,
  * and translates between dialects. Pure functions, no DOM; runs in browsers
  * and in Node (see test/engine.test.mjs).
@@ -22,6 +22,7 @@
   const DOW_SUN0 = Object.fromEntries(DOW_ABBR.map((d, i) => [d, i]));
   const DOW_SUN1 = Object.fromEntries(DOW_ABBR.map((d, i) => [d, i + 1]));
   const DOW_MON1 = Object.fromEntries(DOW_ABBR.map((d, i) => [d, i === 0 ? 7 : i]));
+  const DOW_MON0 = Object.fromEntries(DOW_ABBR.map((d, i) => [d, (i + 6) % 7]));
 
   const MACROS_UNIX = {
     '@yearly': '0 0 1 1 *', '@annually': '0 0 1 1 *', '@monthly': '0 0 1 * *',
@@ -36,8 +37,11 @@
    * dayRule says how day-of-month and day-of-week combine:
    *  vixie  - OR, unless either field starts with '*' (then AND). Vixie cron, cronie.
    *  robfig - OR, unless either field is '*' or '?' without a step > 1 (then AND). robfig/cron v3, used by Kubernetes.
+   *  star   - OR, unless either field is exactly '*'. fugit (GitLab), saffron (Cloudflare).
    *  quartz - exactly one field must be '?'; the other one decides.
-   *  and    - both must match. Spring.
+   *  and    - both must match. Spring, NCrontab (Azure), APScheduler, systemd.
+   * family groups dialects that share a syntax for rendering. custom marks dialects with
+   * their own grammar (systemd calendar events, APScheduler keyword arguments).
    */
   const DIALECTS = {
     unix: {
@@ -47,12 +51,27 @@
       specials: {}, question: false, wrap: false,
       macros: MACROS_UNIX, reboot: true, commandTail: true, seconds: false, year: null,
     },
+    systemd: {
+      id: 'systemd', name: 'systemd timer', short: 'systemd', family: 'systemd', custom: true,
+      fields: ['dow', 'year', 'month', 'dom', 'hour', 'minute', 'second'],
+      dow: { min: 0, max: 6, names: DOW_SUN0 }, dayRule: 'and',
+      specials: { L: true, Loffset: true, fromEnd: true }, question: false, wrap: false,
+      macros: null, reboot: false, commandTail: false, seconds: true, year: [1970, 2199],
+    },
     github: {
       id: 'github', name: 'GitHub Actions', short: 'GitHub', family: 'unix',
       fields: ['minute', 'hour', 'dom', 'month', 'dow'],
       dow: { min: 0, max: 7, names: DOW_SUN0 }, dayRule: 'vixie',
       specials: {}, question: false, wrap: false,
       macros: null, reboot: false, commandTail: false, seconds: false, year: null,
+    },
+    gitlab: {
+      id: 'gitlab', name: 'GitLab CI', short: 'GitLab', family: 'unix',
+      fields: ['minute', 'hour', 'dom', 'month', 'dow'],
+      dow: { min: 0, max: 7, names: DOW_SUN0 }, dayRule: 'star',
+      specials: { L: true, lastWord: true, negL: true, hash: true, hashLast: true, amp: true },
+      question: false, wrap: false,
+      macros: MACROS_UNIX, reboot: false, commandTail: false, seconds: false, year: null,
     },
     k8s: {
       id: 'k8s', name: 'Kubernetes CronJob', short: 'Kubernetes', family: 'unix',
@@ -67,6 +86,21 @@
       dow: { min: 1, max: 7, names: DOW_SUN1 }, dayRule: 'quartz',
       specials: { L: true, W: true, dowLBare: true, hash: true }, question: true, wrap: false,
       macros: null, reboot: false, commandTail: false, seconds: false, year: [1970, 2199],
+    },
+    cloudflare: {
+      id: 'cloudflare', name: 'Cloudflare Workers', short: 'Cloudflare', family: 'cf',
+      fields: ['minute', 'hour', 'dom', 'month', 'dow'],
+      dow: { min: 1, max: 7, names: DOW_SUN1 }, dayRule: 'star',
+      specials: { L: true, Loffset: true, LW: true, W: true, dowLBare: true, dowLast: true, hash: true },
+      question: false, wrap: true, stepLimit: true, utcOnly: true,
+      macros: null, reboot: false, commandTail: false, seconds: false, year: null,
+    },
+    azure: {
+      id: 'azure', name: 'Azure Functions', short: 'Azure', family: 'ncrontab',
+      fields: ['second?', 'minute', 'hour', 'dom', 'month', 'dow'],
+      dow: { min: 0, max: 6, names: DOW_SUN0 }, dayRule: 'and',
+      specials: {}, question: false, wrap: false, swap: true, prefixNames: true,
+      macros: null, reboot: false, commandTail: false, seconds: true, year: null,
     },
     quartz: {
       id: 'quartz', name: 'Quartz', short: 'Quartz', family: 'quartz',
@@ -84,12 +118,19 @@
       question: true, wrap: false,
       macros: MACROS_SPRING, reboot: false, commandTail: false, seconds: true, year: null,
     },
+    apscheduler: {
+      id: 'apscheduler', name: 'APScheduler', short: 'APScheduler', family: 'aps', custom: true,
+      fields: ['year', 'month', 'dom', 'week', 'dow', 'hour', 'minute', 'second'],
+      dow: { min: 0, max: 6, names: DOW_MON0, monday0: true }, dayRule: 'and',
+      specials: { L: true }, question: false, wrap: false,
+      macros: null, reboot: false, commandTail: false, seconds: true, year: [1970, 9999],
+    },
   };
-  const DIALECT_ORDER = ['unix', 'github', 'k8s', 'eventbridge', 'quartz', 'spring'];
+  const DIALECT_ORDER = ['unix', 'systemd', 'github', 'gitlab', 'k8s', 'eventbridge', 'cloudflare', 'azure', 'quartz', 'spring', 'apscheduler'];
 
   const FIELD_LABEL = {
     second: 'second', minute: 'minute', hour: 'hour', dom: 'day-of-month',
-    month: 'month', dow: 'day-of-week', year: 'year',
+    month: 'month', dow: 'day-of-week', year: 'year', week: 'week',
   };
 
   // ---------------------------------------------------------------- utils
@@ -189,6 +230,7 @@
   const STEP_LIMIT = { second: 59, minute: 59, hour: 23, dom: 31, month: 12, dow: 7, year: Infinity };
 
   function dowNumberingHint(D) {
+    if (D.dow.monday0) return ' (0 = Monday … 6 = Sunday)';
     if (D.dow.min === 1) return ' (1 = Sunday … 7 = Saturday)';
     if (D.dow.max === 7) return ' (0 or 7 = Sunday)';
     return ' (0 = Sunday … 6 = Saturday)';
@@ -196,13 +238,24 @@
 
   function toInternal(kind, v, D) {
     if (kind !== 'dow') return v;
+    if (D.dow.monday0) return (v + 1) % 7;
     return D.dow.min === 1 ? v - 1 : v % 7;
   }
+
+  // NCrontab (Azure) accepts any leading part of a full name, case-insensitively: "Mon", "Monday", "Ja".
+  const FULL_NAMES = { dow: DOW_LONG.map(n => n.toUpperCase()), month: MON_LONG.map(n => n.toUpperCase()) };
 
   const RE_ITEM = /^(\*|\d+|[A-Z]+)(?:-(\d+|[A-Z]+))?(?:\/(\d+))?$/;
   const DOW_TOKEN = '(\\d|SUN|MON|TUE|WED|THU|FRI|SAT)';
   const RE_DOW_LAST = new RegExp('^' + DOW_TOKEN + 'L$');
   const RE_DOW_HASH = new RegExp('^' + DOW_TOKEN + '#(\\d+)$');
+  const RE_DOW_HASH_LAST = new RegExp('^' + DOW_TOKEN + '#(-1|L|LAST)$');
+
+  /** Offsets from the end of the month, sorted; a single one becomes the classic { type: 'L', offset }. */
+  function fromEndSpecial(offsets) {
+    const o = sortNum([...new Set(offsets)]);
+    return o.length === 1 ? { type: 'L', offset: o[0] } : { type: 'fromEnd', offsets: o };
+  }
 
   function parseField(raw, kind, D, idx) {
     const b = bounds(kind, D);
@@ -219,7 +272,11 @@
     const val = tok => {
       let v;
       if (/^\d+$/.test(tok)) v = parseInt(tok, 10);
-      else if (b.names && Object.prototype.hasOwnProperty.call(b.names, tok)) v = b.names[tok];
+      else if (D.prefixNames && FULL_NAMES[kind] && FULL_NAMES[kind].some(n => n.startsWith(tok))) {
+        const i = FULL_NAMES[kind].findIndex(n => n.startsWith(tok));
+        v = kind === 'month' ? i + 1 : i;
+        if (tok.length < 3) f.shortName = tok;
+      } else if (b.names && Object.prototype.hasOwnProperty.call(b.names, tok)) v = b.names[tok];
       else if (b.names) fail(`\`${tok}\` isn't a ${label} name. Use ${kind === 'month' ? 'JAN–DEC' : 'SUN–SAT'} or numbers.`);
       else fail(`\`${tok}\` isn't a number.`);
       if (v < b.min || v > b.max) {
@@ -231,7 +288,7 @@
     const addAll = () => { for (let v = b.min; v <= b.max; v++) add(v); };
     const unsupported = (what) => fail(
       `\`${raw}\` uses ${what}, which ${D.name} doesn't support.` +
-      (D.family === 'unix' ? ' Quartz, Spring and EventBridge do; see Translations for a crontab workaround.' : ''),
+      (D.family === 'unix' && D.id !== 'gitlab' ? ' Quartz, Spring and EventBridge do; see Translations for a crontab workaround.' : ''),
     );
     const mustBeAlone = () => { if (parts.length > 1) fail(`\`${parts.find(p => /[LW#]/.test(p) && !RE_ITEM.test(p)) || raw}\` can't be combined with other values in the ${label} field.`); };
 
@@ -249,10 +306,17 @@
 
       let m;
       if (kind === 'dom') {
-        if (p === 'L') {
+        if (p === 'L' || (p === 'LAST' && D.specials.lastWord)) {
           if (!D.specials.L) unsupported('`L` (last day of the month)');
           mustBeAlone(); f.special = { type: 'L', offset: 0 }; continue;
         }
+        if ((m = p.match(/^-(\d+)-L$/))) {
+          if (!D.specials.negL) unsupported('`-n-L` (the last n days of the month)');
+          const n = parseInt(m[1], 10);
+          if (n < 1 || n > 31) fail(`\`${p}\`: the number of days must be 1–31.`);
+          mustBeAlone(); f.special = fromEndSpecial(Array.from({ length: n }, (_, i) => i)); continue;
+        }
+        if (/^L-\d+W$/.test(p)) fail(`\`${p}\` (the weekday nearest n days before the month's end) isn't something Cron Almanac can chart yet.`);
         if ((m = p.match(/^L-(\d+)$/))) {
           if (!D.specials.Loffset) unsupported('`L-n` (n days before the last day)');
           const n = parseInt(m[1], 10);
@@ -287,6 +351,16 @@
           mustBeAlone();
           f.special = { type: 'nth', dow: toInternal('dow', val(m[1]), D), n }; continue;
         }
+        if ((m = p.match(RE_DOW_HASH_LAST))) {
+          if (!D.specials.hashLast) unsupported('`#-1` (last given weekday of the month)');
+          mustBeAlone();
+          f.special = { type: 'lastDow', dow: toInternal('dow', val(m[1]), D) }; continue;
+        }
+        if (/%/.test(p)) {
+          fail(D.id === 'gitlab'
+            ? `\`${p}\` is fugit's every-nth-week extension. Which weeks it picks depends on the fugit version GitLab runs, so Cron Almanac can't chart it reliably.`
+            : `\`%\` isn't valid in ${D.name}.`);
+        }
       }
 
       m = p.match(RE_ITEM);
@@ -311,7 +385,7 @@
       if (st !== undefined) {
         step = parseInt(st, 10);
         if (step < 1) fail(`\`${p}\`: the step after \`/\` must be 1 or more.`);
-        if (D.stepLimit && step > STEP_LIMIT[kind]) fail(`\`${p}\`: Quartz rejects ${label} steps above ${STEP_LIMIT[kind]}.`);
+        if (D.stepLimit && step > STEP_LIMIT[kind]) fail(`\`${p}\`: ${D.name} rejects ${label} steps above ${STEP_LIMIT[kind]}.`);
       }
       const item = {
         raw: p, star, lo, hi, step, hasStep: st !== undefined, hasRange: bt !== undefined,
@@ -325,6 +399,11 @@
         const len = (hi - lo + span) % span;
         for (let k = 0; k <= len; k += step) add(b.min + ((lo - b.min + k) % span));
         item.wraps = true;
+      } else if (D.swap) {
+        // NCrontab quietly swaps a backwards range, so FRI-MON means Monday to Friday.
+        for (let v = hi; v <= lo; v += step) add(v);
+        Object.assign(item, { lo: hi, hi: lo, swapped: true });
+        f.swapped = item;
       } else {
         fail(`\`${p}\` runs backwards. ${D.name} needs low-high ranges; write \`${lo}-${b.max},${b.min}-${hi}\`.`);
       }
@@ -334,31 +413,457 @@
     return f;
   }
 
+  // ---------------------------------------------------------------- systemd calendar events
+
+  const SD_DAYS = [['monday', 'mon'], ['tuesday', 'tue'], ['wednesday', 'wed'], ['thursday', 'thu'], ['friday', 'fri'], ['saturday', 'sat'], ['sunday', 'sun']];
+  const SD_SHORTHANDS = {
+    minutely: '*-*-* *:*:00', hourly: '*-*-* *:00:00', daily: '*-*-* 00:00:00', monthly: '*-*-01 00:00:00',
+    weekly: 'Mon *-*-* 00:00:00', yearly: '*-01-01 00:00:00', annually: '*-01-01 00:00:00', anually: '*-01-01 00:00:00',
+    quarterly: '*-01,04,07,10-01 00:00:00', semiannually: '*-01,07-01 00:00:00', 'semi-annually': '*-01,07-01 00:00:00',
+    biannually: '*-01,07-01 00:00:00', 'bi-annually': '*-01,07-01 00:00:00',
+  };
+  const SD_BOUNDS = { year: [1970, 2199], month: [1, 12], dom: [1, 31], hour: [0, 23], minute: [0, 59], second: [0, 59] };
+  const SD_LABEL = { dow: 'weekday', year: 'year', month: 'month', dom: 'day', hour: 'hour', minute: 'minute', second: 'second' };
+
+  /** A field object shaped like parseField's, so checks and chips treat every dialect alike. */
+  function makeField(kind, raw, index, values, items, special) {
+    const list = sortNum([...new Set(values)]);
+    return {
+      kind, raw, index, values: new Set(list), list, items: items || [], special: special || null, question: false,
+      vixieStar: raw[0] === '*', robfigStar: raw === '*',
+    };
+  }
+
+  /**
+   * One systemd component chain: *, or a comma list of start[..stop][/repeat]. Follows systemd's
+   * calendarspec.c: values are expanded the way its matcher walks them, and the same chains are refused.
+   * With fromEnd (the day after ~), values count back from the month's last day and come back as offsets.
+   */
+  function sdChain(raw, kind, idx, fromEnd) {
+    const [min, max0] = SD_BOUNDS[kind];
+    const max = fromEnd ? 28 : max0;
+    const label = SD_LABEL[kind];
+    const fail = msg => { throw new CronError(msg, idx); };
+    if (raw === '*') return { star: true, values: [], items: [{ raw, star: true, lo: min, hi: max0, step: 1, hasStep: false, hasRange: false, bareSlash: false }] };
+    if (raw[0] === '*') {
+      const ex = kind === 'year' ? '2027/2' : kind === 'month' || kind === 'dom' ? '01/2' : '0/15';
+      fail(`systemd doesn't accept \`${raw}\`. A repetition needs a starting value, as in \`${ex}\`.`);
+    }
+    if (raw === '') fail(`The ${label} is empty.`);
+    const values = [], items = [];
+    for (const p of raw.split(',')) {
+      const m = /^(\d+(?:\.\d+)?)(?:\.\.(\d+(?:\.\d+)?))?(?:\/(\d+(?:\.\d+)?))?$/.exec(p);
+      if (!m) fail(`Can't read \`${p}\` as a ${label}. systemd writes ranges as \`a..b\` and repetitions as \`a/n\`.`);
+      if ([m[1], m[2], m[3]].some(x => x && x.includes('.'))) {
+        if (kind !== 'second') fail(`\`${p}\`: only seconds can have a fraction.`);
+        fail(`\`${p}\`: Cron Almanac works in whole seconds.`);
+      }
+      let a = parseInt(m[1], 10), b = m[2] !== undefined ? parseInt(m[2], 10) : -1;
+      let r = m[3] !== undefined ? parseInt(m[3], 10) : (b >= 0 ? 1 : 0);
+      if (m[3] !== undefined && r === 0) fail(`\`${p}\`: the repetition must be 1 or more.`);
+      if (kind === 'year') {
+        const fix = v => (v >= 0 && v < 70 ? v + 2000 : v >= 70 && v < 100 ? v + 1900 : v);
+        a = fix(a); if (b >= 0) b = fix(b);
+      }
+      // calendarspec.c normalize_chain(): trim the range to whole repetitions; drop a repetition that can't fire.
+      if (b > a && r > 0) b -= (b - a) % r;
+      if ((b > a && r > 0 && a + r > b) || a === b) { r = 0; b = -1; }
+      const outOfRange = v => v < min || v > max;
+      if (outOfRange(a) || (b >= 0 && outOfRange(b))) {
+        fail(fromEnd
+          ? `\`${p}\`: after \`~\` systemd counts days back from the month's end and accepts 1–28.`
+          : `\`${p}\`: the ${label} must be ${min}–${max}.`);
+      }
+      if (r > max - min) fail(`\`${p}\`: the repetition is longer than the whole ${label} range.`);
+      if (b >= 0) {
+        if (a + r > b) fail(`\`${p}\` runs backwards. Write the smaller value first.`);
+      } else if (r > 0) {
+        if (fromEnd ? a - r < 1 : a + r > max) fail(`\`${p}\`: the repetition never fires a second time, which systemd refuses.`);
+      }
+      if (fromEnd) {
+        // ~a: the a-th last day. ~a..b/r walks up toward the month's end; ~a/r walks down from it.
+        if (b >= 0) for (let v = a; v <= b; v += r) values.push(v - 1);
+        else if (r > 0) for (let v = a; v >= 1; v -= r) values.push(v - 1);
+        else values.push(a - 1);
+        continue;
+      }
+      if (b >= 0) for (let v = a; v <= b; v += r) values.push(v);
+      else if (r > 0) for (let v = a; v <= max; v += r) values.push(v);
+      else values.push(a);
+      items.push({ raw: p, star: false, lo: a, hi: b >= 0 ? b : r > 0 ? max : a, step: r || 1, hasStep: r > 0 && m[3] !== undefined, hasRange: b >= 0, bareSlash: b < 0 && r > 0 });
+    }
+    return { star: false, values, items };
+  }
+
+  function parseSystemd(u, out, D) {
+    const base = u.base;
+    const chips = [], tokens = [];
+    out.chips = chips;
+    out.tokens = tokens;
+    let text = u.core;
+    let lo = 0, hi = text.length;
+    while (lo < hi && /\s/.test(text[lo])) lo++;
+    while (hi > lo && /\s/.test(text[hi - 1])) hi--;
+    if (lo === hi) throw new CronError(`Type a calendar event, for example \`${EXAMPLE_BY_DIALECT.systemd}\`.`);
+    // A trailing time zone: UTC or a tz database name.
+    const zm = /\s+(\S+)$/.exec(text.slice(lo, hi));
+    if (zm && (/^utc$/i.test(zm[1]) || (/[A-Za-z]/.test(zm[1]) && !/[:*]/.test(zm[1]) && !/^[a-z]+(?:\.\.|[-,]|$)/i.test(zm[1]) && isValidZone(zm[1])))) {
+      if (!SD_SHORTHANDS[zm[1].toLowerCase()]) {
+        out.tz = /^utc$/i.test(zm[1]) ? 'UTC' : zm[1];
+        out.tzSource = 'the time zone at the end of the expression';
+        out.tzInline = true;
+        hi = lo + zm.index;
+      }
+    }
+    let body = text.slice(lo, hi);
+    const chip = (kind, raw, start, implied) => {
+      chips.push({ kind, label: SD_LABEL[kind] || kind, token: raw, start: start < 0 ? -1 : base + start, end: start < 0 ? -1 : base + start + raw.length, implied: !!implied });
+      tokens.push({ text: raw, start: start < 0 ? -1 : base + start, end: start < 0 ? -1 : base + start + raw.length });
+      return chips.length - 1;
+    };
+    let at = lo;
+    const short = SD_SHORTHANDS[body.toLowerCase()];
+    if (short) {
+      out.macro = body;
+      out.macroExpansion = short;
+      chip('shortcut', body, lo);
+      body = short;
+      at = -1;
+    }
+    const pos = off => (at < 0 ? -1 : at + off);
+
+    // Weekdays: names, commas and ranges with .. (or -), Monday first.
+    const days = new Set();
+    let i = 0, wdRaw = null;
+    {
+      const low = body.toLowerCase();
+      let first = true, from = -1;
+      for (;;) {
+        let nr = -1, len = 0;
+        for (let k = 0; k < 7 && nr < 0; k++) {
+          for (const nm of SD_DAYS[k]) if (low.startsWith(nm, i)) { nr = k; len = nm.length; break; }
+        }
+        if (nr < 0) {
+          if (first) break;
+          throw new CronError(`Expected a weekday name after \`${body.slice(0, i)}\`.`, chips.length);
+        }
+        const next = body[i + len];
+        if (next !== undefined && !'-., '.includes(next)) {
+          if (first) break;
+          throw new CronError(`Can't read the weekday \`${body.slice(i).split(/[ ,.]/)[0]}\`.`, chips.length);
+        }
+        if (from >= 0) {
+          if (from > nr) {
+            throw new CronError(`\`${body.slice(0, body.indexOf(' ') < 0 ? body.length : body.indexOf(' '))}\`: systemd weeks run Monday to Sunday, so a range can't wrap past Sunday. Write it as two parts, e.g. \`Fri..Sun,Mon\`.`, chips.length);
+          }
+          for (let k = from; k <= nr; k++) days.add(k);
+          from = -1;
+        }
+        days.add(nr);
+        i += len;
+        const c = body[i];
+        if (c === undefined || c === ' ') break;
+        if (c === '.') {
+          if (body[i + 1] !== '.' || from >= 0) throw new CronError('Write weekday ranges with two dots, as in `Mon..Fri`.', chips.length);
+          from = nr; i += 2;
+        } else if (c === '-') { from = nr; i += 1; } else { from = -1; i += 1; }
+        if (body[i] === undefined || body[i] === ' ') {
+          if (from >= 0) throw new CronError('That weekday range has no end.', chips.length);
+          break;
+        }
+        first = false;
+      }
+      if (days.size) wdRaw = body.slice(0, i);
+    }
+    const dowValues = days.size ? [...days].map(k => (k + 1) % 7) : ALL_DOWS;
+    const wdIdx = chip('dow', wdRaw || '–', wdRaw ? pos(0) : -1, !wdRaw);
+    const by = {};
+    by.dow = makeField('dow', wdRaw || '*', wdIdx, dowValues);
+    while (body[i] === ' ') i++;
+
+    // Date and time: "[date] [time]"; a part with ':' is the time.
+    const rest = body.slice(i);
+    const parts = [];
+    const re = /\S+/g;
+    let m;
+    while ((m = re.exec(rest))) parts.push({ text: m[0], at: i + m.index });
+    let date = null, time = null;
+    if (parts.length > 2) throw new CronError(`Can't read \`${parts.slice(2).map(x => x.text).join(' ')}\`. A calendar event is [weekdays] [date] [time] [time zone].`, -1);
+    if (parts.length === 2) {
+      if (parts[0].text.includes(':') || !parts[1].text.includes(':')) {
+        throw new CronError(`Can't read \`${rest}\`. Write the date before the time, as in \`*-*-01 09:00\`.`, -1);
+      }
+      date = parts[0]; time = parts[1];
+    } else if (parts.length === 1) {
+      if (parts[0].text.includes(':')) time = parts[0]; else date = parts[0];
+    }
+
+    // Date: [year-]month-day, with ~ before the day to count from the month's end.
+    let year = { raw: '*', at: -1 }, month = { raw: '*', at: -1 }, day = { raw: '*', at: -1 }, fromEnd = false;
+    if (date) {
+      const segs = [];
+      const sr = /[^-~]+|[-~]/g;
+      while ((m = sr.exec(date.text))) segs.push({ text: m[0], at: date.at + m.index });
+      const vals = segs.filter((_, k) => k % 2 === 0), seps = segs.filter((_, k) => k % 2 === 1).map(x => x.text);
+      const okShape = segs.length % 2 === 1 && segs.every((x, k) => (k % 2 === 1) === /^[-~]$/.test(x.text));
+      if (!okShape || vals.length < 2 || vals.length > 3) {
+        throw new CronError(`Can't read \`${date.text}\` as a date. Write it as \`year-month-day\` or \`month-day\`, with \`*\` for any.`, -1);
+      }
+      if (vals.length === 3 && seps[0] === '~') throw new CronError('`~` can only come right before the day.', -1);
+      fromEnd = seps[seps.length - 1] === '~';
+      if (vals.length === 3) [year, month, day] = vals.map(v => ({ raw: v.text, at: v.at }));
+      else [month, day] = vals.map(v => ({ raw: v.text, at: v.at }));
+    }
+    const yIdx = chip('year', year.raw, year.at < 0 ? -1 : pos(year.at), year.at < 0);
+    const yc = sdChain(year.raw, 'year', yIdx);
+    by.year = makeField('year', year.raw, yIdx, yc.star ? [] : yc.values, yc.items);
+    const moIdx = chip('month', month.raw, month.at < 0 ? -1 : pos(month.at), month.at < 0);
+    const mc = sdChain(month.raw, 'month', moIdx);
+    by.month = makeField('month', month.raw, moIdx, mc.star ? ALL_MONTHS : mc.values, mc.items);
+    const dIdx = chip('dom', (fromEnd ? '~' : '') + day.raw, day.at < 0 ? -1 : pos(day.at - (fromEnd ? 1 : 0)), day.at < 0);
+    const dc = sdChain(day.raw, 'dom', dIdx, fromEnd && day.raw !== '*');
+    if (fromEnd && day.raw !== '*') {
+      by.dom = makeField('dom', '~' + day.raw, dIdx, [], [], fromEndSpecial(dc.values));
+    } else {
+      by.dom = makeField('dom', day.raw, dIdx, dc.star ? ALL_DAYS : dc.values, dc.items);
+    }
+
+    // Time: hour:minute[:second]; seconds default to 00, a missing time to 00:00:00.
+    let hh = { raw: '00', at: -1 }, mm = { raw: '00', at: -1 }, ss = { raw: '00', at: -1 };
+    if (time) {
+      const segs = time.text.split(':');
+      if (segs.length < 2 || segs.length > 3) throw new CronError(`Can't read \`${time.text}\` as a time. Write \`hour:minute\` or \`hour:minute:second\`.`, -1);
+      let off = time.at;
+      const at3 = segs.map(x => { const r = { raw: x, at: off }; off += x.length + 1; return r; });
+      [hh, mm] = at3;
+      if (at3[2]) ss = at3[2];
+    }
+    for (const [kind, f] of [['hour', hh], ['minute', mm], ['second', ss]]) {
+      const idx = chip(kind, f.raw, f.at < 0 ? -1 : pos(f.at), f.at < 0);
+      const c = sdChain(f.raw, kind, idx);
+      by[kind] = makeField(kind, f.raw, idx, c.star ? Array.from({ length: SD_BOUNDS[kind][1] + 1 }, (_, k) => k) : c.values, c.items);
+    }
+    out.fields = ['year', 'month', 'dom', 'hour', 'minute', 'second', 'dow'].map(k => by[k]);
+    chips.forEach(c => { c.field = c.kind === 'shortcut' ? null : by[c.kind]; });
+    return Object.assign(out, modelFromFields(by, 'and'), { ok: true, by });
+  }
+
+  // ---------------------------------------------------------------- APScheduler CronTrigger
+
+  const APS_KIND = { year: 'year', month: 'month', day: 'dom', week: 'week', day_of_week: 'dow', hour: 'hour', minute: 'minute', second: 'second' };
+  const APS_MIN = { year: 1970, month: 1, day: 1, week: 1, day_of_week: 0, hour: 0, minute: 0, second: 0 };
+  const APS_MAX = { year: 9999, month: 12, day: 31, week: 53, day_of_week: 6, hour: 23, minute: 59, second: 59 };
+  const APS_WD = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  const APS_MO = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const APS_POS = ['1st', '2nd', '3rd', '4th', '5th', 'last'];
+
+  /** One CronTrigger field, following APScheduler 3's expressions.py, including its error messages. */
+  function apsField(name, expr, idx, notes) {
+    const kind = APS_KIND[name];
+    const min = APS_MIN[name], max = APS_MAX[name];
+    const fail = msg => { throw new CronError(`\`${name}='${expr}'\`: ${msg}`, idx); };
+    const values = [], items = [];
+    let special = null, specials = 0;
+    const exprs = String(expr).trim().split(/ *, */);
+    for (const e of exprs) {
+      let m;
+      if ((m = /^\*(?:\/(\d+))?$/.exec(e))) {
+        const step = m[1] !== undefined ? parseInt(m[1], 10) : 0;
+        if (m[1] !== undefined && step === 0) fail('Increment must be higher than 0.');
+        if (step > max - min) fail(`the step value (${step}) is higher than the total range of the expression (${max - min}).`);
+        for (let v = min; v <= max; v += step || 1) values.push(v);
+        items.push({ raw: e, star: true, lo: min, hi: max, step: step || 1, hasStep: step > 0, hasRange: false, bareSlash: false });
+        continue;
+      }
+      if ((m = /^(\d+)(?:-(\d+))?(?:\/(\d+))?$/.exec(e))) {
+        const a = parseInt(m[1], 10);
+        let b = m[2] !== undefined ? parseInt(m[2], 10) : null;
+        const step = m[3] !== undefined ? parseInt(m[3], 10) : 0;
+        if (m[3] !== undefined && step === 0) fail('Increment must be higher than 0.');
+        if (b === null && !step) b = a;
+        if (b !== null && a > b) fail('The minimum value in a range must not be higher than the maximum.');
+        if (a < min) fail(`the first value (${a}) is lower than the minimum value (${min}).`);
+        if (b !== null && b > max) fail(`the last value (${b}) is higher than the maximum value (${max}).`);
+        if (step && step > (b || max) - a) fail(`the step value (${step}) is higher than the total range of the expression (${(b || max) - a}).`);
+        const hiV = b === null ? max : b;
+        for (let v = a; v <= hiV; v += step || 1) values.push(v);
+        items.push({ raw: e, star: false, lo: a, hi: hiV, step: step || 1, hasStep: step > 0, hasRange: m[2] !== undefined, bareSlash: b === null && step > 0 });
+        continue;
+      }
+      if (name === 'day') {
+        if ((m = /^(1st|2nd|3rd|4th|5th|last) +(\w+)$/i.exec(e))) {
+          const d = APS_WD.indexOf(m[2].toLowerCase());
+          if (d < 0) fail(`Invalid weekday name "${m[2]}". Use mon, tue, wed, thu, fri, sat or sun.`);
+          const n = APS_POS.indexOf(m[1].toLowerCase());
+          special = n === 5 ? { type: 'lastDow', dow: (d + 1) % 7 } : { type: 'nth', dow: (d + 1) % 7, n: n + 1 };
+          specials++;
+          continue;
+        }
+        if (/^last/i.test(e)) { special = { type: 'L', offset: 0 }; specials++; continue; }
+      }
+      if ((name === 'month' || name === 'day_of_week') && (m = /^([a-z]+)(?:-([a-z]+))?/i.exec(e))) {
+        const names = name === 'month' ? APS_MO : APS_WD;
+        const first = names.indexOf(m[1].toLowerCase());
+        const last = m[2] !== undefined ? names.indexOf(m[2].toLowerCase()) : first;
+        const bad = first < 0 ? m[1] : last < 0 ? m[2] : null;
+        if (bad) fail(`Invalid ${name === 'month' ? 'month' : 'weekday'} name "${bad}". Use ${name === 'month' ? 'jan–dec' : 'mon–sun'}.`);
+        if (first > last) fail('The minimum value in a range must not be higher than the maximum.');
+        if (m[0].length < e.length) notes.push(`APScheduler ignores \`${e.slice(m[0].length)}\` after \`${m[0]}\`, so it reads \`${m[0]}\`.`);
+        const off = name === 'month' ? 1 : 0;
+        for (let v = first; v <= last; v++) values.push(v + off);
+        items.push({ raw: e, star: false, lo: first + off, hi: last + off, step: 1, hasStep: false, hasRange: m[2] !== undefined, bareSlash: false, names: true });
+        continue;
+      }
+      fail(`Unrecognized expression "${e}".`);
+    }
+    if (specials && (specials > 1 || values.length)) return { split: exprs };
+    const internal = kind === 'dow' ? values.map(v => (v + 1) % 7) : values;
+    const f = makeField(kind, String(expr), idx, internal, items, special);
+    f.vixieStar = f.robfigStar = String(expr).trim() === '*';
+    return f;
+  }
+
+  function parseAps(u, out, D) {
+    const text = u.core, base = u.base;
+    const chips = [], tokens = [];
+    out.chips = chips;
+    out.tokens = tokens;
+    const given = {}, pos = {};
+    const options = {};
+    let m;
+    const crontab = /from_crontab\s*\(\s*(?:'([^'\n]*)'|"([^"\n]*)")/d.exec(text);
+    const bare = !crontab && !/=/.test(text) && /^\s*\S+(\s+\S+){4}\s*$/.test(text);
+    if (crontab || bare) {
+      // CronTrigger.from_crontab(): five crontab fields, read with APScheduler's own field rules.
+      const gi = crontab ? (crontab[1] !== undefined ? 1 : 2) : 0;
+      const str = crontab ? crontab[gi] : text;
+      const at = crontab ? crontab.indices[gi][0] : 0;
+      const re = /\S+/g;
+      const toks = [];
+      while ((m = re.exec(str))) toks.push({ text: m[0], at: at + m.index });
+      if (toks.length !== 5) throw new CronError(`Wrong number of fields; got ${toks.length}, expected 5. from_crontab() takes minute hour day month day_of_week.`, -1);
+      ['minute', 'hour', 'day', 'month', 'day_of_week'].forEach((n, k) => { given[n] = toks[k].text; pos[n] = toks[k].at; });
+      out.fromCrontab = true;
+      if (bare) out.notes.push('Read as `CronTrigger.from_crontab()`, where day-of-week 0 is Monday.');
+    } else {
+      const re = /\b([a-z_]+)\s*=(?!=)\s*(?:'([^'\n]*)'|"([^"\n]*)"|(-?\d+(?:\.\d+)?)(?=\s*[,)\n]|\s*$)|([^,)\n]*))/dg;
+      while ((m = re.exec(text))) {
+        const gi = [2, 3, 4, 5].find(k => m[k] !== undefined);
+        const value = m[gi].trim();
+        if (APS_KIND[m[1]]) { given[m[1]] = value; pos[m[1]] = m.indices[gi][0]; } else options[m[1]] = value;
+      }
+      if (!Object.keys(given).length && !/CronTrigger|add_job|scheduled_job|\(/.test(text)) {
+        throw new CronError(`Write the CronTrigger fields, for example \`${EXAMPLE_BY_DIALECT.apscheduler}\`, or a crontab line for from_crontab().`, -1);
+      }
+    }
+    out.apsOptions = options;
+    if (options.jitter) out.notes.push(`\`jitter=${options.jitter}\` moves each run by up to that many seconds; the times below are before jitter.`);
+    // Fields left out: '*' above the last one given, their minimum below it (week and day_of_week stay '*').
+    const fields = [], by = {};
+    let pending = Object.keys(given).length, defaults = false, seenGiven = false;
+    for (const name of APS_FIELDS) {
+      let expr, implied = false;
+      if (given[name] !== undefined) { expr = given[name]; pending--; defaults = pending === 0; } else {
+        expr = defaults ? APS_DEFAULTS[name] : '*';
+        implied = true;
+      }
+      if (name === 'week') {
+        if (expr !== '*') throw new CronError('ISO week numbers (`week=`) have no equivalent in other schedulers, so Cron Almanac can’t chart them.', chips.length);
+        continue;
+      }
+      if (name === 'year' && implied) { by.year = makeField('year', '*', -1, []); continue; }
+      const start = implied ? -1 : base + pos[name];
+      // Leave out '*' fields nobody wrote, except ones between written fields (day=1, minute=20 leaves hour '*').
+      const shown = !implied || expr !== '*' || (seenGiven && APS_DEFAULTS[name] !== '*');
+      if (!implied) seenGiven = true;
+      if (shown) {
+        chips.push({ kind: APS_KIND[name], label: name, token: expr, start, end: implied ? -1 : start + expr.length, implied });
+        tokens.push({ text: expr, start, end: implied ? -1 : start + expr.length });
+      }
+      const f = apsField(name, expr, shown ? chips.length - 1 : -1, out.notes);
+      if (f.split) {
+        const isRule = e => /^(1st|2nd|3rd|4th|5th|last)\b/i.test(e);
+        const groups = f.split.filter(isRule);
+        const plain = f.split.filter(e => !isRule(e));
+        if (plain.length) groups.push(plain.join(','));
+        throw new CronError(`\`day='${expr}'\` mixes several day rules. APScheduler accepts that, but Cron Almanac reads one per trigger, so split it into ${groups.length} triggers (combine them with OrTrigger).`,
+          chips.length - 1, implied ? {} : { fix: { label: `Split into ${groups.length} triggers`, exprs: groups.map(g => replaceToken(out.input, tokens, chips.length - 1, g)) } });
+      }
+      if (shown) chips[chips.length - 1].field = f;
+      fields.push(f);
+      by[f.kind] = f;
+    }
+    out.fields = fields;
+    // day='1st mon' is a weekday rule that lives in the day field; it still has to agree with day_of_week.
+    if (by.dom.special && by.dom.special.type !== 'L') {
+      const sp = by.dom.special;
+      if (!by.dow.list.includes(sp.dow)) {
+        throw new CronError(`\`day='${by.dom.raw}'\` picks a ${DOW_LONG[sp.dow]}, but \`day_of_week\` excludes ${DOW_LONG[sp.dow]}s, so this never runs.`, by.dom.index);
+      }
+      by.dow = Object.assign(makeField('dow', by.dow.raw, by.dow.index, []), { special: sp });
+      by.dom = makeField('dom', '*', by.dom.index, ALL_DAYS);
+    }
+    return Object.assign(out, modelFromFields(by, 'and'), { ok: true, by });
+  }
+
   function looksLikeField(tok) {
     return /^[\d*?/,\-LW#]+$/i.test(tok) || /^(SUN|MON|TUE|WED|THU|FRI|SAT|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)([-,/].*)?$/i.test(tok);
   }
 
   function countMessage(D, n) {
     const names = D.fields.map(f => f.endsWith('?') ? `[${FIELD_LABEL[f.slice(0, -1)]}]` : FIELD_LABEL[f]).join(' ');
-    const need = D.id === 'quartz' ? '6 or 7' : String(D.fields.length);
+    const max = D.fields.length, min = D.fields.filter(f => !f.endsWith('?')).length;
+    const need = min === max ? String(max) : `${min} or ${max}`;
+    const five = max === 5;
     let msg = `This has ${n} field${n === 1 ? '' : 's'}; ${D.name} uses ${need}: ${names}.`;
-    if (D.family === 'unix' && n === 6) msg += ' Six fields usually means a seconds field (Quartz, Spring) or a year field (EventBridge).';
-    if (D.family === 'unix' && n === 7) msg += ' Seven fields is Quartz format.';
-    if (D.family !== 'unix' && n === 5) msg += ' Five fields is crontab format.';
+    if (five && n === 6) msg += ' Six fields usually means a seconds field (Quartz, Spring, Azure) or a year field (EventBridge).';
+    if (five && n === 7) msg += ' Seven fields is Quartz format.';
+    if (!five && min > 5 && n === 5) msg += ' Five fields is crontab format.';
     return msg;
   }
 
+  /*
+   * Where an expression sits inside pasted text. The first matching entry wins. `when` must also
+   * match the whole text; `call` takes the whole function call (APScheduler keeps its arguments).
+   */
   const WRAPPERS = [
     { re: /@Scheduled\s*\(\s*cron\s*=\s*"([^"]*)"/d, dialect: 'spring', note: 'Read the expression from a Spring @Scheduled annotation.' },
     { re: /cronSchedule\s*\(\s*"([^"]*)"/d, dialect: 'quartz', note: 'Read the expression from a Quartz cronSchedule() call.' },
     { re: /--schedule-expression[ \t=]+['"]?((?:cron|rate|at)\([^)]*\))/d, dialect: 'eventbridge', note: 'Read the expression from an AWS CLI command.' },
     { re: /ScheduleExpression['"]?[ \t]*[:=][ \t]*['"]?((?:cron|rate|at)\([^)]*\))/d, dialect: 'eventbridge', note: 'Read the expression from a ScheduleExpression setting.' },
+    { re: /(?:^|\n)[ \t]*OnCalendar[ \t]*=[ \t]*(\S[^\n]*?)[ \t]*(?=\r?\n|$)/d, dialect: 'systemd', note: 'Read the expression from an `OnCalendar=` line.' },
+    { re: /\[\s*TimerTrigger\s*\(\s*"([^"]*)"/d, dialect: 'azure', note: 'Read the expression from a [TimerTrigger] attribute.' },
+    { re: /@TimerTrigger\s*\([^)]*?\bschedule\s*=\s*"([^"]*)"/d, dialect: 'azure', note: 'Read the expression from a @TimerTrigger annotation.' },
+    { re: /\.(?:timer_trigger|schedule)\s*\([^)]*?\bschedule\s*=\s*["']([^"']*)["']/d, dialect: 'azure', note: 'Read the expression from a timer trigger decorator.' },
+    { re: /\bapp\.timer\s*\([^)]*?\bschedule\s*:\s*['"]([^'"]*)['"]/d, dialect: 'azure', note: 'Read the expression from an app.timer() registration.' },
+    { re: /"schedule"\s*:\s*"([^"]*)"/d, when: /timerTrigger/i, dialect: 'azure', note: 'Read the expression from a function.json timer binding.' },
+    { re: /\bcrons['"]?\s*[=:]\s*\[\s*["']([^"']*)["']/d, dialect: 'cloudflare', note: 'Read the expression from a Wrangler `crons` list.' },
+    { re: /\bcron\s*=\s*"([^"]*)"/d, when: /gitlab_pipeline_schedule/, dialect: 'gitlab', note: 'Read the expression from a gitlab_pipeline_schedule resource.' },
+    { re: /"cron"\s*:\s*"([^"]*)"/d, when: /cron_timezone/, dialect: 'gitlab', note: 'Read the expression from a GitLab pipeline schedule.' },
+    { re: /--cron[ \t=]+["']([^"']*)["']/d, when: /\bglab\b/, dialect: 'gitlab', note: 'Read the expression from a glab command.' },
+    { re: /CronTrigger\s*\.\s*from_crontab\s*\(/d, call: true, dialect: 'apscheduler', note: 'Read the expression from CronTrigger.from_crontab().' },
+    { re: /CronTrigger\s*\(/d, call: true, dialect: 'apscheduler', note: 'Read the schedule from a CronTrigger.' },
+    { re: /\b(?:add_job|scheduled_job)\s*\((?=[^)]*['"]cron['"])/d, call: true, dialect: 'apscheduler', note: 'Read the schedule from an APScheduler cron job.' },
     { re: /(?:^|\n)[ \t]*-?[ \t]*cron[ \t]*:[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|(\S[^\n#]*?))[ \t]*(?:#[^\n]*)?(?=\n|$)/d, dialect: 'github', note: 'Read the expression from a GitHub Actions `cron:` line.' },
     { re: /(?:^|\n)[ \t]*schedule[ \t]*:[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|(\S[^\n#]*?))[ \t]*(?:#[^\n]*)?(?=\n|$)/d, dialect: 'k8s', note: 'Read the expression from a Kubernetes `schedule:` line.' },
     { re: /^\s*(?:'([^']*)'|"([^"]*)")\s*$/d, dialect: null, note: null },
   ];
 
-  // Time zone settings that sit next to the expression in a pasted config block.
+  /** Index just past the parenthesis that closes the one opened at `open`, skipping quoted text. */
+  function closeParen(text, open) {
+    let depth = 0, q = null;
+    for (let i = open; i < text.length; i++) {
+      const c = text[i];
+      if (q) { if (c === '\\') i++; else if (c === q) q = null; continue; }
+      if (c === '"' || c === "'") q = c;
+      else if (c === '(') depth++;
+      else if (c === ')' && --depth === 0) return i + 1;
+    }
+    return text.length;
+  }
+
+  // Time zone settings that sit next to the expression in a pasted config block. A `soft` key may
+  // hold a name that isn't an IANA zone (Windows or Rails names), which earns a note, not an error.
   const TZ_KEYS = [
     { re: /(?:^|\n)[ \t]*timezone[ \t]*:[ \t]*['"]?([A-Za-z][\w+\-/]*)/d, label: '`timezone:`' },
     { re: /(?:^|\n)[ \t]*timeZone[ \t]*:[ \t]*['"]?([A-Za-z][\w+\-/]*)/d, label: '`timeZone:`' },
@@ -366,6 +871,9 @@
     { re: /--schedule-expression-timezone[ \t=]+['"]?([^'"\s]+)/d, label: '`--schedule-expression-timezone`' },
     { re: /ScheduleExpressionTimezone['"]?[ \t]*[:=][ \t]*['"]?([^'"\s,}]+)/d, label: '`ScheduleExpressionTimezone`' },
     { re: /inTimeZone\s*\(\s*TimeZone\.getTimeZone\s*\(\s*"([^"]+)"/d, label: '`inTimeZone()`' },
+    { re: /\btimezone\s*=\s*(?:(?:pytz\.timezone|ZoneInfo|tz\.gettz|gettz)\s*\(\s*)?['"]([^'"]+)['"]/d, label: '`timezone=`' },
+    { re: /WEBSITE_TIME_ZONE['"]?[ \t]*[:=][ \t]*['"]?([^'"\n,}]+?)['"]?[ \t]*(?:[,}\n]|$)/d, label: '`WEBSITE_TIME_ZONE`', soft: true },
+    { re: /cron_timezone['"]?\s*[:=]\s*['"]([^'"]+)['"]/d, label: '`cron_timezone`', soft: true },
   ];
 
   function isValidZone(tz) {
@@ -388,16 +896,28 @@
     };
     for (const k of TZ_KEYS) {
       m = k.re.exec(text);
-      if (m) { setZone(m[1], k.label); break; }
+      if (!m) continue;
+      const zone = m[1].trim();
+      if (k.soft && !isValidZone(zone)) out.notes.push(`${k.label} is \`${zone}\`, which isn't a tz database name; pick the matching time zone below.`);
+      else setZone(zone, k.label);
+      break;
     }
     for (const w of WRAPPERS) {
+      if (w.when && !w.when.test(text)) continue;
       m = w.re.exec(core);
       if (!m) continue;
+      if (w.note) out.notes.push(w.note);
+      out.dialect = w.dialect;
+      if (w.call) {
+        // Keep the whole call, arguments and line breaks included.
+        out.core = core.slice(m.index, closeParen(core, m.index + m[0].length - 1));
+        out.base = m.index;
+        out.call = true;
+        return out;
+      }
       const gi = [1, 2, 3].find(i => m[i] !== undefined);
       base += m.indices[gi][0];
       core = m[gi];
-      if (w.note) out.notes.push(w.note);
-      out.dialect = w.dialect;
       break;
     }
     if (/\n/.test(core.trim())) {
@@ -439,6 +959,27 @@
     return out;
   }
 
+  /** Field kinds for an expression with n fields (an optional field may come first or last). */
+  function kindsFor(D, n) {
+    const all = D.fields.map(f => f.replace('?', ''));
+    if (n >= all.length) return all;
+    return D.fields[0].endsWith('?') ? all.slice(all.length - n) : all.slice(0, n);
+  }
+
+  function modelFromFields(by, combine) {
+    const yf = by.year;
+    return buildModel({
+      seconds: by.second ? by.second.list : [0],
+      minutes: by.minute.list,
+      hours: by.hour.list,
+      months: by.month.list,
+      years: yf && yf.raw !== '*' ? yf.list : null,
+      dom: { list: by.dom.list, special: by.dom.special },
+      dow: { list: by.dow.list, special: by.dow.special },
+      combine,
+    });
+  }
+
   /** Parse an expression in the given dialect. Returns a model or { ok:false, error }. */
   function parse(input, dialectId) {
     const D = DIALECTS[dialectId];
@@ -453,6 +994,7 @@
       if (u.tz) { out.tz = u.tz; out.tzSource = u.tzSource; }
       if (u.tzPrefix) out.tzPrefix = u.tzPrefix;
       if (u.wrapped) out.wrapped = true;
+      if (D.custom) return D.family === 'systemd' ? parseSystemd(u, out, D) : parseAps(u, out, D);
       const re = /\S+/g;
       let t;
       while ((t = re.exec(core))) tokens.push({ text: t[0], start: base + t.index, end: base + t.index + t[0].length });
@@ -490,15 +1032,35 @@
         raws = tokens.map(x => x.text);
       }
 
-      const kinds = D.fields.map(f => f.replace('?', ''));
+      const kinds = kindsFor(D, raws.length);
+      out.kinds = kinds;
+      const di = kinds.indexOf('dom'), wi = kinds.indexOf('dow');
+      // GitLab (fugit): a trailing & on a day field makes the two day fields AND instead of OR.
+      let amp = false;
+      if (D.specials.amp) {
+        raws = raws.map((r, i) => {
+          if ((i === di || i === wi) && r.length > 1 && r.endsWith('&')) { amp = true; return r.slice(0, -1); }
+          return r;
+        });
+      }
+      if (D.specials.hash && D.id === 'gitlab' && !out.macro && raws[wi].includes(',') && raws[wi].includes('#')) {
+        const items = raws[wi].split(',');
+        const groups = items.filter(x => x.includes('#'));
+        const plain = items.filter(x => !x.includes('#'));
+        if (plain.length) groups.push(plain.join(','));
+        const suffix = tokens[wi].text.endsWith('&') ? '&' : '';
+        throw new CronError(
+          `\`${raws[wi]}\` lists several \`#\` days. GitLab accepts that, but Cron Almanac reads one \`#\` per schedule, so split it into ${groups.length} schedules that run the same job.`,
+          wi, { fix: { label: `Split into ${groups.length} schedules`, exprs: groups.map(g => replaceToken(text, tokens, wi, g + suffix)) } });
+      }
       const fields = raws.map((raw, i) => parseField(raw, kinds[i], D, out.macro ? 0 : i));
       const by = {};
       fields.forEach(f => { by[f.kind] = f; });
       out.fields = fields;
+      if (amp) out.amp = true;
 
       if (D.dayRule === 'quartz') {
         const dq = by.dom.question, wq = by.dow.question;
-        const di = kinds.indexOf('dom'), wi = kinds.indexOf('dow');
         if (dq && wq) {
           throw new CronError('Only one of day-of-month and day-of-week can be `?`. Put `*` in the other.', di,
             { fix: { label: 'Use * for day-of-month', expr: replaceToken(text, tokens, di, '*') } });
@@ -518,25 +1080,15 @@
       let combine;
       if (D.dayRule === 'vixie') combine = (by.dom.vixieStar || by.dow.vixieStar) ? 'and' : 'or';
       else if (D.dayRule === 'robfig') combine = (by.dom.robfigStar || by.dow.robfigStar) ? 'and' : 'or';
+      else if (D.dayRule === 'star') combine = (amp || by.dom.raw === '*' || by.dow.raw === '*') ? 'and' : 'or';
       else if (D.dayRule === 'quartz') combine = by.dom.question ? 'dow' : 'dom';
       else combine = 'and';
 
-      const yf = by.year;
-      const model = buildModel({
-        seconds: by.second ? by.second.list : [0],
-        minutes: by.minute.list,
-        hours: by.hour.list,
-        months: by.month.list,
-        years: yf && yf.raw !== '*' ? yf.list : null,
-        dom: { list: by.dom.list, special: by.dom.special },
-        dow: { list: by.dow.list, special: by.dow.special },
-        combine,
-      });
-      return Object.assign(out, model, { ok: true, by });
+      return Object.assign(out, modelFromFields(by, combine), { ok: true, by });
     } catch (e) {
       if (!(e instanceof CronError)) throw e;
       out.error = { message: e.message, field: e.field, fix: e.fix || null, countMismatch: !!e.countMismatch };
-      out.tokens = tokens;
+      if (!out.chips) out.tokens = tokens;
       return out;
     }
   }
@@ -548,15 +1100,17 @@
   }
 
   const EXAMPLE_BY_DIALECT = {
-    unix: '0 9 * * 1-5', github: '17 9 * * 1-5', k8s: '0 9 * * 1-5',
-    eventbridge: 'cron(0 9 ? * MON-FRI *)', quartz: '0 0 9 ? * MON-FRI', spring: '0 0 9 * * MON-FRI',
+    unix: '0 9 * * 1-5', systemd: 'Mon..Fri *-*-* 09:00:00', github: '17 9 * * 1-5', gitlab: '0 9 * * 1-5',
+    k8s: '0 9 * * 1-5', eventbridge: 'cron(0 9 ? * MON-FRI *)', cloudflare: '0 9 * * MON-FRI', azure: '0 0 9 * * 1-5',
+    quartz: '0 0 9 ? * MON-FRI', spring: '0 0 9 * * MON-FRI', apscheduler: "day_of_week='mon-fri', hour=9",
   };
 
   /** Build the dialect-independent schedule model. */
   function buildModel(s) {
-    const dom = { list: s.dom.list.slice(), special: s.dom.special || null };
+    let dom = { list: s.dom.list.slice(), special: s.dom.special || null };
+    if (dom.special && dom.special.type === 'fromEnd') dom.special = fromEndSpecial(dom.special.offsets);
     dom.all = !dom.special && dom.list.length === 31;
-    const dow = { list: s.dow.list.slice(), special: s.dow.special || null };
+    let dow = { list: s.dow.list.slice(), special: s.dow.special || null };
     dow.all = !dow.special && dow.list.length === 7;
     let mode;
     switch (s.combine) {
@@ -564,6 +1118,19 @@
       case 'dow': mode = dow.all ? 'all' : 'dow'; break;
       case 'or': mode = (dom.all || dow.all) ? 'all' : 'or'; break;
       default: mode = dom.all ? (dow.all ? 'all' : 'dow') : (dow.all ? 'dom' : 'and');
+    }
+    // A single weekday ANDed with one week of dates is "the nth weekday" (1-7 and Monday = first Monday);
+    // with the last seven days it is "the last weekday". Saying so makes it portable to # and L.
+    if (mode === 'and' && !dow.special && dow.list.length === 1) {
+      const L = dom.list, d = dow.list[0];
+      const n = (L[0] + 6) / 7;
+      const block = !dom.special && Number.isInteger(n) && n <= 5 && L.length === Math.min(7, 32 - L[0]) && L[L.length - 1] - L[0] === L.length - 1;
+      const last7 = !!dom.special && dom.special.type === 'fromEnd' && dom.special.offsets.join() === '0,1,2,3,4,5,6';
+      if (block || last7) {
+        dom = { list: ALL_DAYS.slice(), special: null, all: true };
+        dow = { list: [], special: block ? { type: 'nth', dow: d, n } : { type: 'lastDow', dow: d }, all: false };
+        mode = 'dow';
+      }
     }
     dom.has = boolArr(32, dom.list);
     dow.has = boolArr(7, dow.list);
@@ -596,6 +1163,7 @@
     const sp = dom.special;
     if (sp) {
       if (sp.type === 'L') return d === dim - sp.offset;
+      if (sp.type === 'fromEnd') return sp.offsets.includes(dim - d);
       if (sp.type === 'LW') return d === lastWeekday(y, m, dim);
       if (sp.type === 'W') return d === nearestWeekday(y, m, dim, sp.day);
     }
@@ -825,6 +1393,8 @@
       case 'github': return { gap: 'after', overlap: null };
       case 'eventbridge': return { gap: 'skip', overlap: 'once' };
       case 'quartz': return { gap: 'skip', overlap: 'once' };
+      // APScheduler's cron trigger docs: a skipped local time doesn't run, a repeated one runs twice.
+      case 'apscheduler': return { gap: 'skip', overlap: 'twice' };
       default: return { gap: null, overlap: null };
     }
   }
@@ -1069,10 +1639,18 @@
     return parts.join(', ') + ' ' + hourPart;
   }
 
+  const fromLast = k => (k === 0 ? 'last' : `${ordinal(k + 1)}-to-last`);
+
   function domPhrase(dom) {
     const sp = dom.special;
     if (sp) {
-      if (sp.type === 'L') return sp.offset ? `${sp.offset} day${sp.offset > 1 ? 's' : ''} before the last day of the month` : 'the last day of the month';
+      if (sp.type === 'L') return `the ${fromLast(sp.offset)} day of the month`;
+      if (sp.type === 'fromEnd') {
+        const o = sp.offsets, r = runsOf(o);
+        if (r.length === 1 && o[0] === 0) return `the last ${o.length} days of the month`;
+        if (r.length === 1 && o.length > 2) return `the ${fromLast(o[o.length - 1])} through ${fromLast(o[0])} days of the month`;
+        return `the ${joinList(o.map(fromLast))} days of the month`;
+      }
       if (sp.type === 'LW') return 'the last weekday (Mon–Fri) of the month';
       if (sp.type === 'W') return `the weekday nearest the ${ordinal(sp.day)} of the month`;
     }
@@ -1158,16 +1736,34 @@
 
   function compressDow(list, targetId) {
     if (list.length === 7) return '*';
-    if (DIALECTS[targetId].family === 'unix') {
+    const fam = DIALECTS[targetId].family;
+    if (fam === 'unix' || fam === 'ncrontab') {
       return runsOf(list).map(([a, b]) => a === b ? String(a) : b === a + 1 ? `${a},${b}` : `${a}-${b}`).join(',');
     }
-    // Names avoid the 0/1-based Sunday confusion. Spring counts weeks from Monday, so order Monday-first there.
-    const order = targetId === 'spring' ? [1, 2, 3, 4, 5, 6, 0] : [0, 1, 2, 3, 4, 5, 6];
+    // Names avoid the 0/1-based Sunday confusion. Spring, APScheduler and systemd count weeks
+    // from Monday, so order Monday-first there (their ranges can't wrap past Sunday).
+    const mondayFirst = targetId === 'spring' || fam === 'aps' || fam === 'systemd';
+    const order = mondayFirst ? [1, 2, 3, 4, 5, 6, 0] : [0, 1, 2, 3, 4, 5, 6];
+    const name = d => (fam === 'aps' ? DOW_ABBR[d].toLowerCase() : fam === 'systemd' ? cap(DOW_ABBR[d].toLowerCase()) : DOW_ABBR[d]);
+    const dash = fam === 'systemd' ? '..' : '-';
     const idx = list.map(d => order.indexOf(d)).sort((a, b) => a - b);
     return runsOf(idx).map(([a, b]) => {
-      const A = DOW_ABBR[order[a]], B = DOW_ABBR[order[b]];
-      return a === b ? A : b === a + 1 ? `${A},${B}` : `${A}-${B}`;
+      const A = name(order[a]), B = name(order[b]);
+      return a === b ? A : b === a + 1 ? `${A},${B}` : `${A}${dash}${B}`;
     }).join(',');
+  }
+
+  /** systemd calendar component: * , a..b and a/r, zero-padded. noBareStep avoids a/r (which counts down after ~). */
+  function sdComp(vals, min, max, width, noBareStep) {
+    width = width || 2;
+    if (vals.length === max - min + 1) return '*';
+    const p = v => String(v).padStart(width, '0');
+    const g = apStep(vals);
+    if (g > 1) {
+      const a = vals[0], b = vals[vals.length - 1];
+      return !noBareStep && b + g > max ? `${p(a)}/${g}` : `${p(a)}..${p(b)}/${g}`;
+    }
+    return runsOf(vals).map(([a, b]) => a === b ? p(a) : b === a + 1 ? `${p(a)},${p(b)}` : `${p(a)}..${p(b)}`).join(',');
   }
 
   const isoDow = d => (d === 0 ? 7 : d);
@@ -1187,13 +1783,186 @@
     return `date +%Y | grep -qxE '${years.join('|')}'`;
   }
 
-  /** Day-field rendering per target. Returns { variants:[{dom,dow}], tests:[], reason, note }. */
+  const APS_FIELDS = ['year', 'month', 'day', 'week', 'day_of_week', 'hour', 'minute', 'second'];
+  const APS_DEFAULTS = { year: '*', month: '1', day: '1', week: '*', day_of_week: '*', hour: '0', minute: '0', second: '0' };
+
+  /**
+   * CronTrigger keyword arguments. APScheduler fills in fields you leave out: those above the last one
+   * given become '*', those below it their minimum. So only the fields that differ are written.
+   */
+  function apsLine(M, v) {
+    const val = {
+      year: M.years ? compress(M.years, 1970, 9999, 'unix', false) : '*',
+      month: compress(M.months, 1, 12, 'unix'), day: v.dom, week: '*', day_of_week: v.dow,
+      hour: compress(M.hours, 0, 23, 'unix'), minute: compress(M.minutes, 0, 59, 'unix'), second: compress(M.seconds, 0, 59, 'unix'),
+    };
+    // Pick the last field to write: everything after it must equal its default, everything before it
+    // that isn't '*' is written too. Prefer the fewest fields, then a field that says something.
+    let best = null;
+    APS_FIELDS.forEach((f, a) => {
+      if (f === 'week' || APS_FIELDS.slice(a + 1).some(g => val[g] !== APS_DEFAULTS[g])) return;
+      const fields = APS_FIELDS.filter((g, i) => i === a || (i < a && val[g] !== '*'));
+      const weak = val[f] === '*' || (f === 'second' && val[f] === '0');
+      const score = fields.length * 2 + (weak ? 1 : 0);
+      if (!best || score < best.score) best = { score, fields };
+    });
+    return best.fields.map(f => `${f}=${/^\d+$/.test(val[f]) ? val[f] : `'${val[f]}'`}`).join(', ');
+  }
+
+  /** A systemd calendar event: [weekdays] year-month-day hour:minute:second. */
+  function sdLine(M, v) {
+    const Y = M.years ? sdComp(M.years, 1970, 2199, 4) : '*';
+    return `${v.wd ? v.wd + ' ' : ''}${Y}-${sdComp(M.months, 1, 12)}${v.sep}${v.day} ${sdComp(M.hours, 0, 23)}:${sdComp(M.minutes, 0, 59)}:${sdComp(M.seconds, 0, 59)}`;
+  }
+
+  const contiguousFromLast = o => o[0] === 0 && runsOf(o).length === 1;
+
+  /** GitLab (fugit): # and #-1 for weekdays, L and -n-L for month ends, & to AND the day fields. Null: use the crontab workarounds. */
+  function gitlabDays(M) {
+    const dom = M.dom, dow = M.dow, mode = M.dayMode;
+    if (mode === 'all') return { variants: [{ dom: '*', dow: '*' }] };
+    let a = '*', b = '*';
+    if (mode !== 'dow') {
+      const s = dom.special;
+      if (!s) a = compress(dom.list, 1, 31, 'unix', true);
+      else if (s.type === 'L' && s.offset === 0) a = 'L';
+      else if (s.type === 'fromEnd' && contiguousFromLast(s.offsets)) a = `-${s.offsets.length}-L`;
+      else return null;
+    }
+    if (mode !== 'dom') {
+      const s = dow.special;
+      b = !s ? compressDow(dow.list, 'gitlab') : s.type === 'nth' ? `${s.dow}#${s.n}` : `${s.dow}#-1`;
+    }
+    if (mode === 'and') return { variants: [{ dom: a + '&', dow: b }], note: 'The `&` makes GitLab require both day fields (a fugit extension).' };
+    return { variants: [{ dom: a, dow: b }] };
+  }
+
+  /** Cloudflare (saffron): Quartz-style L, W, # and nL, but no ? and no way to require both day fields. */
+  function cloudflareDays(M, T) {
+    const dom = M.dom, dow = M.dow, mode = M.dayMode;
+    if (mode === 'all') return { variants: [{ dom: '*', dow: '*' }] };
+    if (mode === 'and') return { reason: `${T.name} matches either day field when both are set, so it can't require both.` };
+    const s = dom.special;
+    if (mode === 'dom' && s && s.type === 'fromEnd' && s.offsets.length <= 3) {
+      return {
+        variants: s.offsets.map(k => ({ dom: k ? `L-${k}` : 'L', dow: '*' })),
+        note: `${T.name} takes one \`L-n\` day per expression, so this needs ${s.offsets.length} cron triggers.`,
+      };
+    }
+    let a = '*', b = '*';
+    if (mode !== 'dow') {
+      if (!s) a = compress(dom.list, 1, 31, 'unix', true);
+      else if (s.type === 'L') a = s.offset ? `L-${s.offset}` : 'L';
+      else if (s.type === 'LW') a = 'LW';
+      else if (s.type === 'W') a = `${s.day}W`;
+      else return { reason: `${T.name} can't express ${domPhrase(dom)} in one expression.` };
+    }
+    if (mode !== 'dom') {
+      const w = dow.special;
+      b = !w ? compressDow(dow.list, 'cloudflare') : w.type === 'nth' ? `${DOW_ABBR[w.dow]}#${w.n}` : `${DOW_ABBR[w.dow]}L`;
+    }
+    return { variants: [{ dom: a, dow: b }] };
+  }
+
+  /** Azure (NCrontab): plain fields only, ANDed, so "the nth Monday" is a week of dates plus the weekday. */
+  function ncrontabDays(M, T) {
+    const dom = M.dom, dow = M.dow, mode = M.dayMode;
+    if (mode === 'all') return { variants: [{ dom: '*', dow: '*' }] };
+    if (dom.special && mode !== 'dow') {
+      return { reason: `NCRONTAB, which ${T.name} uses, can't express ${domPhrase(dom)}. Schedule the days it could fall on and return early in the function on the others.` };
+    }
+    if (dow.special && dow.special.type === 'lastDow') return { reason: `NCRONTAB, which ${T.name} uses, can't express ${dowPhrase(dow)}.` };
+    const days = () => compress(dom.list, 1, 31, 'unix', true);
+    const week = () => (dow.special
+      ? { dom: `${7 * dow.special.n - 6}-${Math.min(7 * dow.special.n, 31)}`, dow: String(dow.special.dow) }
+      : { dom: '*', dow: compressDow(dow.list, 'azure') });
+    if (mode === 'dom') return { variants: [{ dom: days(), dow: '*' }] };
+    if (mode === 'dow') return { variants: [week()] };
+    if (mode === 'and') {
+      if (dow.special) return { reason: `${T.name} can't combine these day rules.` };
+      return { variants: [{ dom: days(), dow: compressDow(dow.list, 'azure') }] };
+    }
+    return { variants: [{ dom: days(), dow: '*' }, week()], note: `${T.name} requires both day fields to match, so this takes two timer functions.` };
+  }
+
+  /** APScheduler: `day` holds dates, "last", "1st mon" or "last fri"; `day_of_week` holds weekdays; both must match. */
+  function apsDays(M, T) {
+    const dom = M.dom, dow = M.dow, mode = M.dayMode;
+    const ORD = ['1st', '2nd', '3rd', '4th', '5th'];
+    const wd = d => DOW_ABBR[d].toLowerCase();
+    const day = () => {
+      const s = dom.special;
+      if (!s) return compress(dom.list, 1, 31, 'unix', true);
+      return s.type === 'L' && s.offset === 0 ? 'last' : null;
+    };
+    const weekly = () => (dow.special
+      ? { dom: dow.special.type === 'nth' ? `${ORD[dow.special.n - 1]} ${wd(dow.special.dow)}` : `last ${wd(dow.special.dow)}`, dow: '*' }
+      : { dom: '*', dow: compressDow(dow.list, 'apscheduler') });
+    if (mode === 'all') return { variants: [{ dom: '*', dow: '*' }] };
+    if (mode === 'dow') return { variants: [weekly()] };
+    const a = day();
+    if (a === null) return { reason: `${T.name} can't express ${domPhrase(dom)}.` };
+    if (mode === 'dom') return { variants: [{ dom: a, dow: '*' }] };
+    if (mode === 'and') {
+      if (dow.special) return { reason: `${T.name} can't combine these day rules.` };
+      return { variants: [{ dom: a, dow: compressDow(dow.list, 'apscheduler') }] };
+    }
+    return {
+      variants: [{ dom: a, dow: '*' }, weekly()],
+      note: `${T.name} requires \`day\` and \`day_of_week\` to both match, so this takes two triggers; combine them with \`OrTrigger\`.`,
+    };
+  }
+
+  /** systemd: weekday names, *-*-dd dates, ~dd counted from the month's end; every part must match. */
+  function systemdDays(M, T) {
+    const dom = M.dom, dow = M.dow, mode = M.dayMode;
+    const dates = () => {
+      const s = dom.special;
+      if (!s) return { sep: '-', day: sdComp(dom.list, 1, 31) };
+      if (s.type === 'L' && s.offset <= 27) return { sep: '~', day: pad2(s.offset + 1) };
+      if (s.type === 'fromEnd' && s.offsets[s.offsets.length - 1] <= 27 && s.offsets.length < 28) {
+        return { sep: '~', day: sdComp(s.offsets.map(o => o + 1), 1, 28, 2, true) };
+      }
+      return null;
+    };
+    const name = d => cap(DOW_ABBR[d].toLowerCase());
+    const weekly = () => {
+      const s = dow.special;
+      if (!s) return { wd: compressDow(dow.list, 'systemd'), sep: '-', day: '*' };
+      if (s.type === 'lastDow') return { wd: name(s.dow), sep: '~', day: '07/1' };
+      return { wd: name(s.dow), sep: '-', day: s.n === 5 ? '29..31' : `${pad2(7 * s.n - 6)}..${pad2(7 * s.n)}` };
+    };
+    if (mode === 'all') return { variants: [{ wd: '', sep: '-', day: '*' }] };
+    if (mode === 'dow') return { variants: [weekly()] };
+    const a = dates();
+    if (!a) return { reason: `${T.name} can't express ${domPhrase(dom)}.` };
+    if (mode === 'dom') return { variants: [Object.assign({ wd: '' }, a)] };
+    if (mode === 'and') {
+      if (dow.special) return { reason: `${T.name} can't combine these day rules.` };
+      return { variants: [Object.assign({ wd: compressDow(dow.list, 'systemd') }, a)] };
+    }
+    return {
+      variants: [Object.assign({ wd: '' }, a), weekly()],
+      note: `${T.name} requires every part of a calendar event to match, so this takes two \`OnCalendar=\` lines in the same timer.`,
+    };
+  }
+
+  /** Day-field rendering per target. Returns { variants:[{dom,dow}…], tests:[], reason, note }. */
   function renderDays(M, targetId) {
     const T = DIALECTS[targetId];
     const fam = T.family;
     const dom = M.dom, dow = M.dow, mode = M.dayMode;
     const style = fam === 'unix' ? 'unix' : 'quartz';
     const plainDom = (allowStar) => compress(dom.list, 1, 31, style, allowStar);
+
+    if (fam === 'systemd') return systemdDays(M, T);
+    if (fam === 'aps') return apsDays(M, T);
+    if (fam === 'ncrontab') return ncrontabDays(M, T);
+    if (fam === 'cf') return cloudflareDays(M, T);
+    if (targetId === 'gitlab') {
+      const g = gitlabDays(M);
+      if (g) return g;
+    }
 
     if (fam === 'unix') {
       const vixie = T.dayRule === 'vixie';
@@ -1206,6 +1975,14 @@
             variants: [{ dom: `${28 - k}-${31 - k}`, dow: '*' }],
             tests: [`[ "$(date -d '+${k + 1} day' +%d)" = 01 ]`],
             reason: `${T.name} has no “last day of the month”.`,
+          };
+        }
+        if (dom.special.type === 'fromEnd' && contiguousFromLast(dom.special.offsets)) {
+          const n = dom.special.offsets.length;
+          return {
+            variants: [{ dom: `${Math.max(1, 29 - n)}-31`, dow: '*' }],
+            tests: [`[ "$(date -d '+${n} days' +%d)" -le ${pad2(n)} ]`],
+            reason: `${T.name} has no “last ${n} days of the month”.`,
           };
         }
         return { reason: `${T.name} can't express ${domPhrase(dom)}.` };
@@ -1265,6 +2042,12 @@
     };
     const any = fam === 'spring' ? '*' : '?';
     if (mode === 'all') return { variants: [{ dom: '*', dow: any }] };
+    if (mode === 'dom' && dom.special && dom.special.type === 'fromEnd' && sp.Loffset && dom.special.offsets.length <= 4) {
+      return {
+        variants: dom.special.offsets.map(k => ({ dom: k ? `L-${k}` : 'L', dow: any })),
+        note: `${T.name} takes one \`L-n\` day per expression, so this needs ${dom.special.offsets.length} schedules.`,
+      };
+    }
     const d1 = mode === 'dow' ? '' : domQ();
     const d2 = mode === 'dom' ? '' : dowQ();
     if (d1 === null) return { reason: `${T.name} can't express ${domPhrase(dom)}.` };
@@ -1291,7 +2074,7 @@
   function render(M, targetId) {
     const T = DIALECTS[targetId];
     const fam = T.family;
-    const style = fam === 'unix' ? 'unix' : 'quartz';
+    const style = fam === 'quartz' || fam === 'spring' || fam === 'eb' ? 'quartz' : 'unix';
     if (M.reboot) return targetId === 'unix' ? { ok: true, lines: ['@reboot'] } : { ok: false, reason: `${T.name} has no “at startup” schedule.` };
     const tests = [];
     const reasons = [];
@@ -1314,8 +2097,10 @@
     if (!days.variants) return { ok: false, reason: days.reason };
     if (days.tests) { tests.push(...days.tests); reasons.unshift(days.reason); }
     const lines = days.variants.map(v => {
-      if (fam === 'unix') return `${minute} ${hour} ${v.dom} ${month} ${v.dow}`;
-      if (fam === 'spring') return `${sec} ${minute} ${hour} ${v.dom} ${month} ${v.dow}`;
+      if (fam === 'unix' || fam === 'cf') return `${minute} ${hour} ${v.dom} ${month} ${v.dow}`;
+      if (fam === 'systemd') return sdLine(M, v);
+      if (fam === 'aps') return apsLine(M, v);
+      if (fam === 'spring' || fam === 'ncrontab') return `${sec} ${minute} ${hour} ${v.dom} ${month} ${v.dow}`;
       if (fam === 'quartz') return `${sec} ${minute} ${hour} ${v.dom} ${month} ${v.dow}${year ? ' ' + year : ''}`;
       return `cron(${minute} ${hour} ${v.dom} ${month} ${v.dow} ${year})`;
     });
@@ -1466,9 +2251,14 @@
           seconds: P.seconds, minutes: P.minutes, hours: P.hours, months: P.months, years: P.years,
           dom: { list: dl }, dow: { list: [0, 1, 2, 3, 4, 5, 6] }, combine: 'and',
         }), P.dialect);
-        body += ` If you meant **the ${NTH[n - 1]} ${DOW_LONG[wl[0]]} of the month**, cron can't say that in one expression. Keep the dates and check the weekday ${cmdHint}:`;
-        if (fixed.ok) body += `\n\`${fixed.lines[0]}\`\n\`${shellFor(P.dialect, weekdayTest(wl))} ${D.id === 'unix' ? '&& your-command' : '|| exit 0'}\``;
-        if (D.family !== 'unix') body += ` Or use \`${wl[0] + (D.dow.min === 1 ? 1 : 0)}#${n}\` in ${D.name}.`;
+        if (D.specials.hash) {
+          body += ` If you meant **the ${NTH[n - 1]} ${DOW_LONG[wl[0]]} of the month**, say so directly.`;
+        } else {
+          body += ` If you meant **the ${NTH[n - 1]} ${DOW_LONG[wl[0]]} of the month**, cron can't say that in one expression. Keep the dates and check the weekday ${cmdHint}:`;
+          if (fixed.ok) body += `\n\`${fixed.lines[0]}\`\n\`${shellFor(P.dialect, weekdayTest(wl))} ${D.id === 'unix' ? '&& your-command' : '|| exit 0'}\``;
+        }
+        if (D.specials.hash) body += ` Or use \`${wl[0] + (D.dow.min === 1 ? 1 : 0)}#${n}\` in ${D.name}.`;
+        if (D.specials.amp) body += ` Adding \`&\` to a day field (\`${dl[0]}-${dl[6]}&\`) also makes GitLab require both.`;
       } else {
         body += ' To require both, keep one day field and test the other inside the job.';
       }
@@ -1488,9 +2278,9 @@
       add('warn', 'vixie-star', 'Both day fields must match here',
         `\`${starred.raw}\` starts with \`*\`, so Vixie cron and cronie require **both** day fields to match: ${describeDaysShort(P)}. Other crons, Kubernetes included, OR them instead. Avoid a \`*/n\` day field when the other day field is set if this has to behave the same everywhere.`);
     }
-    if (D.dayRule === 'and' && P.dayMode === 'and') {
-      add('info', 'spring-and', 'Spring requires both day fields',
-        'Spring runs only on days that match day-of-month **and** day-of-week. The same fields in crontab would mean OR.');
+    if ((D.dayRule === 'and' || P.amp) && P.dayMode === 'and') {
+      add('info', 'and-days', `${D.short} requires both day fields`,
+        `${D.name} runs only on days that match the day of the month **and** the day of the week: ${describeDaysShort(P)}. The same fields in crontab would mean OR.`);
     }
 
     // Steps that don't divide their cycle
@@ -1566,8 +2356,30 @@
     if (D.id === 'unix' && by.dow.items.some(i => !i.star && (i.lo === 7 || i.hi === 7))) {
       add('info', 'dow-7', '7 is Sunday', 'crontab accepts both 0 and 7 for Sunday.');
     }
-    if (D.id === 'github' && by.dow.items.some(i => !i.star && (i.lo === 7 || i.hi === 7))) {
-      add('warn', 'gh-dow-7', 'Use 0 for Sunday', "GitHub's documentation lists 0–6 for day-of-week. Write Sunday as `0` to be safe.");
+    if ((D.id === 'github' || D.id === 'gitlab') && by.dow.items.some(i => !i.star && (i.lo === 7 || i.hi === 7))) {
+      add('warn', 'gh-dow-7', 'Use 0 for Sunday', `${D.short}'s documentation lists 0–6 for day-of-week. Write Sunday as \`0\` to be safe.`);
+    }
+    if (D.dow.monday0 && by.dow.items.some(i => !i.names && !i.star)) {
+      if (P.fromCrontab) {
+        let fix = null;
+        try {
+          const meant = parseField(by.dow.raw, 'dow', DIALECTS.unix, by.dow.index);
+          const names = compressDow(meant.list, 'apscheduler');
+          if (P.tokens[by.dow.index] && P.tokens[by.dow.index].start >= 0) fix = { label: `Use ${names}`, expr: replaceToken(P.input, P.tokens, by.dow.index, names) };
+        } catch (e) { fix = null; }
+        add('warn', 'aps-crontab-dow', `\`${by.dow.raw}\` is ${dowPhrase(P.dow)} here`,
+          `APScheduler 3 numbers days from **Monday = 0** even in \`from_crontab()\`, unlike crontab's Sunday = 0, so the days are shifted by one. Use day names to be safe.`, fix);
+      } else {
+        add('info', 'aps-dow', 'Day 0 is Monday here', 'APScheduler numbers `day_of_week` 0 = Monday … 6 = Sunday, unlike crontab. Names like `mon-fri` avoid the mix-up.');
+      }
+    }
+    if (by.dow.swapped || by.month.swapped) {
+      const f = by.dow.swapped ? by.dow : by.month, it = f.swapped;
+      add('warn', 'az-swap', `\`${it.raw}\` runs the other way`,
+        `NCRONTAB swaps a backwards range instead of wrapping it, so \`${it.raw}\` means ${f.kind === 'dow' ? `${DOW_LONG[it.lo % 7]} to ${DOW_LONG[it.hi % 7]}` : `${MON_LONG[it.lo - 1]} to ${MON_LONG[it.hi - 1]}`}. To wrap around, list both parts, e.g. \`${it.hi}-${bounds(f.kind, D).max},${bounds(f.kind, D).min}-${it.lo}\`.`);
+    }
+    for (const f of [by.dow, by.month]) {
+      if (f && f.shortName) add('info', 'az-name', `\`${f.shortName}\` is read as a name prefix`, `NCRONTAB accepts any leading part of a name and takes the first match, so \`${f.shortName}\` means ${f.kind === 'dow' ? DOW_LONG[f.list[0]] : MON_LONG[f.list[0] - 1]}. Three letters are clearer.`);
     }
 
     // A/step without a range in crontab
@@ -1606,6 +2418,10 @@
           body += ' EventBridge Scheduler skips a time that doesn’t exist and runs a repeated time only once.';
         } else if (D.id === 'quartz') {
           body += ' According to the Quartz FAQ, a time that doesn’t exist is skipped and a time that happens twice fires once.';
+        } else if (D.id === 'apscheduler') {
+          body += ' APScheduler’s documentation says a time that doesn’t exist doesn’t run and a time that happens twice runs twice.';
+        } else if (D.id === 'systemd') {
+          body += " systemd's documentation doesn't say how it handles skipped or repeated times; `systemd-analyze calendar --iterations=5` shows what your version does.";
         } else {
           body += ` ${D.name}'s documentation doesn't say how it handles skipped or repeated times.`;
         }
@@ -1657,6 +2473,54 @@
     if (D.id === 'eventbridge') {
       add('info', 'eb-utc', 'Rules run in UTC',
         'EventBridge rules always use UTC. EventBridge Scheduler can use a time zone (`--schedule-expression-timezone`); the time zone picked here assumes Scheduler.');
+    }
+    if (D.id === 'gitlab') {
+      const st = stats(P, 'UTC', now);
+      if (st && st.minGap !== null && st.minGap < 600) {
+        add('warn', 'gl-frequent', 'More often than GitLab checks',
+          `Runs can be ${fmtDuration(st.minGap)} apart, but GitLab starts scheduled pipelines only when its pipeline schedule worker runs, every 10 minutes by default on self-managed GitLab. Runs due in between collapse into one.`);
+      }
+      add('info', 'gl-worker', 'GitLab starts schedules a little late',
+        "Scheduled pipelines are queued the next time GitLab's pipeline schedule worker runs (`3-59/10 * * * *` by default on self-managed GitLab), so a pipeline usually starts a few minutes after its time, and later when many schedules are due at once.");
+      if (tz && tz !== 'UTC' && tz !== 'Etc/UTC' && !P.tz) {
+        add('info', 'gl-timezone', `Set the schedule's Cron timezone to ${tz}`,
+          'Each GitLab pipeline schedule has its own **Cron timezone** setting (`cron_timezone` in the API). Make sure it matches, or the times shift.');
+      }
+    }
+    if (D.id === 'cloudflare') {
+      add('info', 'cf-utc', 'Cron Triggers run in UTC',
+        'Cloudflare runs Cron Triggers on UTC time, so these times are UTC whatever your zone. Changes to triggers can take up to 15 minutes to reach Cloudflare’s network.');
+      if (P.combine === 'or' && P.dayMode === 'or') {
+        add('info', 'cf-or-source', 'Both day fields: from the parser, not the docs',
+          "Cloudflare's documentation doesn't say how the two day fields combine; its open-source cron parser (saffron) runs on days that match either one.");
+      }
+    }
+    if (D.id === 'azure') {
+      if (!P.tz) {
+        const body = 'Azure Functions reads the schedule in UTC unless the app setting `WEBSITE_TIME_ZONE` is set (a tz database name on Linux, a Windows zone name on Windows). It isn’t supported on Linux Consumption or Flex Consumption plans.';
+        if (tz && tz !== 'UTC' && tz !== 'Etc/UTC') add('warn', 'az-timezone', `Set WEBSITE_TIME_ZONE for ${tz}`, body);
+        else add('info', 'az-timezone', 'Times are UTC by default', body);
+      }
+      add('info', 'az-single', 'One run at a time',
+        'When the app scales out, Azure still runs one instance of a timer function, and it doesn’t start a run while the previous one is still going. A run that starts late gets `isPastDue` set.');
+    }
+    if (D.id === 'apscheduler') {
+      const given = new Set((P.chips || []).filter(c => !c.implied).map(c => c.kind));
+      for (const [kind, below, above] of [['hour', ['minute', 'second'], ['year', 'month', 'dom', 'dow']], ['minute', ['second'], ['year', 'month', 'dom', 'dow', 'hour']]]) {
+        if (!given.has(kind) && by[kind].raw === '*' && below.some(k => given.has(k)) && above.some(k => given.has(k))) {
+          add('warn', 'aps-gap', `\`${kind}\` isn't set, so it means every ${kind}`,
+            `APScheduler fills a field you leave out with \`*\` when a later field is set, so this runs every ${kind} on the days it matches. Add \`${kind}=…\` if you meant one time.`);
+        }
+      }
+      if (!P.tz) add('info', 'aps-timezone', 'Uses the scheduler’s time zone', 'Without `timezone=`, the trigger uses the scheduler’s time zone, which is the machine’s local zone unless the scheduler sets one.');
+      const o = P.apsOptions || {};
+      add('info', 'aps-misfire', o.misfire_grace_time ? `Late runs: up to ${o.misfire_grace_time} s` : 'A run more than 1 second late is skipped',
+        `${o.misfire_grace_time ? `With \`misfire_grace_time=${o.misfire_grace_time}\`, a run that can't start within ${o.misfire_grace_time} seconds is skipped.` : 'APScheduler’s default `misfire_grace_time` is 1 second, so a busy or sleeping process silently misses runs. Set it on the job or in `job_defaults`.'} By default missed runs are coalesced into one and only one instance runs at a time (\`max_instances=1\`).`);
+    }
+    if (D.id === 'systemd') {
+      if (!P.tz) add('info', 'sd-timezone', 'Uses the system time zone', "Without a time zone at the end (for example `UTC` or `Europe/Berlin`), systemd uses the machine's local time zone.");
+      add('info', 'sd-timer', 'Two timer settings to know',
+        '`AccuracySec=` defaults to 1 minute, so the timer can fire up to a minute late; set `AccuracySec=1s` if that matters. `Persistent=` defaults to false, so runs missed while the machine was off are skipped; set `Persistent=true` to run them at boot.');
     }
     return out;
   }
@@ -2145,6 +3009,6 @@
     parse, unwrap, buildModel, dayMatches, upcoming, upcomingSet, dstImpact, dstPolicy, stats, statsSet, lintSet, describe, render, renderDays, workaroundText,
     utcVariants, shiftModel, offsetPeriods, transitionsBetween, lint, fromEnglish, minuteIntervalLines,
     wallParts, offsetAt, displayParts, fmtOffset, fmtClock, fmtDuration, ordinal, daysInMonth, weekday, isLeap,
-    isValidZone, compress, runsOf,
+    isValidZone, compress, runsOf, kindsFor,
   };
 });

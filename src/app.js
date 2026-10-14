@@ -25,6 +25,11 @@
     { label: 'Quartz: first Monday, and third Monday every other month', exprs: ['0 0 9 ? * 2#1', '0 0 9 ? 1/2 2#3'], d: 'quartz' },
     { label: 'Quartz: 1-5 isn’t Monday to Friday', exprs: ['0 0 9 ? * 1-5'], d: 'quartz' },
     { label: 'Spring: weekday mornings in Berlin', exprs: ['0 30 8 * * MON-FRI'], d: 'spring', tz: 'Europe/Berlin' },
+    { label: 'systemd: last Monday of the month', exprs: ['Mon *-*~07/1 18:00'], d: 'systemd' },
+    { label: 'GitLab: first Monday with &', exprs: ['0 9 1-7& * 1'], d: 'gitlab' },
+    { label: 'Cloudflare: 1-5 isn’t Monday to Friday', exprs: ['0 9 * * 1-5'], d: 'cloudflare' },
+    { label: 'Azure: seconds come first, times are UTC', exprs: ['0 30 9 * * 1-5'], d: 'azure', tz: 'Europe/Berlin' },
+    { label: 'APScheduler: from_crontab() shifts weekdays', exprs: ["CronTrigger.from_crontab('0 9 * * 1-5')"], d: 'apscheduler' },
   ];
 
   // exprs[0] is the main expression; the rest are extra schedules that run the same job.
@@ -68,6 +73,7 @@
   }
 
   function effTz(P) {
+    if (D[state.dialect].utcOnly) return 'UTC';
     if (P && P.ok && P.tz) return P.tz;
     return state.tz;
   }
@@ -210,11 +216,28 @@
     let msg = '';
     if (list.length && list[0].ok) {
       if (list[0].tz) state.tz = list[0].tz;
+      let zoneNote = '';
+      if (D[state.dialect].utcOnly && !T.utcOnly && state.tz !== 'UTC') {
+        state.tz = 'UTC';
+        zoneNote = ' The times were UTC, so the time zone is now UTC.';
+      }
       const out = [];
       const problems = [];
       let split = 0;
+      const tz = effTz(list[0]);
+      const toUtc = T.utcOnly && tz !== 'UTC' && !list[0].reboot;
+      let utcNote = '';
       list.forEach((P, i) => {
         if (!P.ok) { out.push(state.exprs[i]); return; }
+        if (toUtc) {
+          const now = Date.now();
+          const v = E.utcVariants(P, tz, id, now).find(x => x.periods.some(p => p.from <= now && now < p.to));
+          if (v && v.lines) {
+            out.push(...v.lines);
+            utcNote = ` ${T.name} runs in UTC, so the times were converted for ${tz}'s current offset (${E.fmtOffset(v.off)}); Translations shows every offset.`;
+            return;
+          }
+        }
         const r = E.render(P, id);
         if (r.ok) { out.push(...r.lines); if (r.lines.length > 1) split++; }
         else if (r.workaround) { out.push(r.workaround.expr); problems.push(r.reason); }
@@ -225,7 +248,7 @@
       } else if (split) {
         msg = `${T.name} needs ${out.length} schedules for this, so they're all listed below the expression.`;
       } else msg = `Converted to ${T.name}.`;
-      toast(msg);
+      toast(msg + utcNote + zoneNote);
       setExprs(out, id);
     } else {
       toast(`Reading the expression as ${T.name}.`);
@@ -239,7 +262,8 @@
     if (f.question) return 'not used';
     const sp = f.special;
     if (sp) {
-      if (sp.type === 'L') return sp.offset ? `${sp.offset} before last day` : 'last day';
+      if (sp.type === 'L') return sp.offset ? `${E.ordinal(sp.offset + 1)}-to-last day` : 'last day';
+      if (sp.type === 'fromEnd') return sp.offsets[0] === 0 && E.runsOf(sp.offsets).length === 1 ? `last ${sp.offsets.length} days` : 'days before month end';
       if (sp.type === 'LW') return 'last weekday';
       if (sp.type === 'W') return `weekday nearest ${E.ordinal(sp.day)}`;
       if (sp.type === 'nth') return `${NTH[sp.n - 1]} ${DOW_SHORT[sp.dow]}`;
@@ -274,19 +298,26 @@
 
   function renderFields(P) {
     const T = D[state.dialect];
-    const names = T.fields.map(f => f.replace('?', ''));
     const toks = P.tokens || [];
+    const min = T.fields.filter(f => !f.endsWith('?')).length;
+    const names = E.kindsFor(T, Math.min(Math.max(toks.length, min), T.fields.length));
     const chips = [];
     const chip = (label, token, mean, cls, idx) =>
       `<li><button type="button" class="chip ${cls || ''}" data-i="${idx}"><span class="f-label">${esc(label)}</span><span class="f-token">${esc(token)}</span><span class="f-mean">${esc(mean || ' ')}</span></button></li>`;
-    if (P.ok && P.macro) {
+    if (P.chips) {
+      P.chips.forEach((c, i) => {
+        let mean = '', cls = c.implied ? 'implied' : '';
+        if (c.kind === 'shortcut') mean = `= ${P.macroExpansion}`;
+        else if (P.ok && c.field) mean = chipMeaning(c.field) + (c.implied ? ' (default)' : '');
+        if (!P.ok && P.error.field === i) { cls += ' bad'; mean = 'see below'; }
+        chips.push(chip(c.label, c.token, mean, cls, i));
+      });
+    } else if (P.ok && P.macro) {
       chips.push(chip('shortcut', P.macro, P.reboot ? 'at startup' : `= ${P.macroExpansion}`, '', 0));
     } else {
       const n = Math.max(toks.length, names.length);
       for (let i = 0; i < n; i++) {
         const kind = names[i];
-        const optional = T.fields[i] && T.fields[i].endsWith('?');
-        if (i >= toks.length && optional) continue;
         const label = kind ? E.FIELD_LABEL[kind] : 'extra';
         const token = toks[i] ? toks[i].text : '—';
         let mean = '', cls = '';
@@ -364,6 +395,9 @@
     renderExtras(list);
     const results = $('results');
     const input = $('expr');
+    const long = !!D[state.dialect].custom;
+    input.classList.toggle('long', long);
+    document.querySelectorAll('.extra-input').forEach(x => x.classList.toggle('long', long));
     input.setAttribute('aria-invalid', String(!P.ok));
     if (!P.ok) {
       renderError(P);
@@ -386,24 +420,38 @@
     save();
   }
 
+  const TZ_HINT = {
+    github: 'GitHub uses UTC unless the workflow sets its timezone key.',
+    gitlab: 'Each GitLab pipeline schedule has its own Cron timezone setting.',
+    eventbridge: 'Rules always use UTC; EventBridge Scheduler can use this zone.',
+    azure: 'Azure uses UTC unless the app setting WEBSITE_TIME_ZONE is set.',
+    systemd: 'systemd uses the machine’s time zone unless the expression ends with one.',
+    apscheduler: 'APScheduler uses the scheduler’s time zone unless the trigger sets timezone=.',
+  };
+
   function renderTz(P, tz, now) {
     const sel = $('tz');
+    const T = D[state.dialect];
     ensureTzOption(tz);
-    sel.disabled = !!(P.ok && P.tz);
+    sel.disabled = !!(P.ok && P.tz) || !!T.utcOnly;
     const p = E.displayParts(now, tz);
     let hint = `Now ${p.hour}:${p.minute} ${p.timeZoneName} (${E.fmtOffset(E.offsetAt(now, tz))}).`;
-    if (P.ok && P.tz) hint = `Set by ${P.tzSource.replace(/`/g, '')} in the pasted text. ` + hint;
-    else if (state.dialect === 'github') hint += ' GitHub uses UTC unless the workflow sets its timezone key.';
-    else if (state.dialect === 'eventbridge') hint += ' Rules always use UTC; EventBridge Scheduler can use this zone.';
+    if (T.utcOnly) hint = `${T.name} always runs in UTC. ` + hint;
+    else if (P.ok && P.tzInline) hint = 'Set by the time zone at the end of the expression. ' + hint;
+    else if (P.ok && P.tz) hint = `Set by ${P.tzSource.replace(/`/g, '')} in the pasted text. ` + hint;
+    else if (TZ_HINT[state.dialect]) hint += ' ' + TZ_HINT[state.dialect];
     $('tz-hint').textContent = hint;
   }
 
   function renderError(P) {
     const el = $('error');
     const actions = [];
-    if (P.error.fix) actions.push(`<button type="button" class="btn small" data-fix="0" data-expr="${esc(P.error.fix.expr)}">${esc(P.error.fix.label)}</button>`);
+    const fx = P.error.fix;
+    if (fx && fx.exprs) actions.push(`<button type="button" class="btn small" data-fix="0" data-exprs="${esc(JSON.stringify(fx.exprs))}">${esc(fx.label)}</button>`);
+    else if (fx) actions.push(`<button type="button" class="btn small" data-fix="0" data-expr="${esc(fx.expr)}">${esc(fx.label)}</button>`);
+    const cronLike = /^\s*\S+(\s+\S+){4,6}\s*$/.test(state.exprs[0]) && !/[=(]/.test(state.exprs[0]);
     for (const id of E.DIALECT_ORDER) {
-      if (id === state.dialect || actions.length >= 4) continue;
+      if (id === state.dialect || actions.length >= 4 || (cronLike && D[id].custom)) continue;
       const Q = E.parse(state.exprs[0], id);
       if (Q.ok) actions.push(`<button type="button" class="btn ghost small" data-read="${id}">Read it as ${esc(D[id].name)}</button>`);
     }
@@ -434,7 +482,8 @@
   }
 
   // Notes about the platform rather than one expression; shown once for a set.
-  const PLATFORM_CHECKS = new Set(['gh-notes', 'gh-timezone', 'k8s-tz', 'k8s-crontz', 'eb-utc', 'unix-crontz']);
+  const PLATFORM_CHECKS = new Set(['gh-notes', 'gh-timezone', 'k8s-tz', 'k8s-crontz', 'eb-utc', 'unix-crontz', 'gl-worker', 'gl-timezone',
+    'cf-utc', 'cf-or-source', 'az-timezone', 'az-single', 'aps-timezone', 'aps-misfire', 'sd-timezone', 'sd-timer']);
 
   function renderChecks(models, tz, now) {
     const items = [];
@@ -563,14 +612,17 @@
     const todayKey = `${w.y}-${w.mo}-${w.d}`;
     const todayNum = Date.UTC(w.y, w.mo - 1, w.d);
     const T = D[state.dialect];
-    const wdNum = i => (T.dow.min === 1 ? i + 1 : i);
+    const wdNum = i => (T.dow.monday0 ? (i + 6) % 7 : T.dow.min === 1 ? i + 1 : i);
+    const numbered = T.family !== 'systemd';
     const inWindow = key => {
       const [ky, km] = key.split('-').map(Number);
       const k = ky * 12 + km - 1;
       return k >= start && k < start + 12;
     };
     const focusKey = state.sel && inWindow(state.sel) ? state.sel : inWindow(todayKey) ? todayKey : `${first.y}-${first.m}-1`;
-    const head = DOW_SHORT.map((n, i) => `<span class="wd" title="${E.DOW_LONG[i]} is ${wdNum(i)} in ${esc(T.name)}">${n[0]}<small>${wdNum(i)}</small></span>`).join('');
+    const head = DOW_SHORT.map((n, i) => (numbered
+      ? `<span class="wd" title="${E.DOW_LONG[i]} is ${wdNum(i)} in ${esc(T.name)}">${n[0]}<small>${wdNum(i)}</small></span>`
+      : `<span class="wd" title="${E.DOW_LONG[i]}">${n[0]}</span>`)).join('');
     let html = '';
     for (let k = start; k < start + 12; k++) {
       const { y, m } = ym(k);
@@ -693,6 +745,17 @@
         return lines.map((l, i) => `Trigger trigger${many ? i + 1 : ''} = TriggerBuilder.newTrigger()\n    .forJob(job)\n    .withSchedule(CronScheduleBuilder.cronSchedule("${l}")\n        .inTimeZone(TimeZone.getTimeZone("${tz}")))\n    .build();`).join('\n\n');
       case 'spring':
         return `${lines.map(l => `@Scheduled(cron = "${l}", zone = "${tz}")`).join('\n')}\npublic void run() { /* … */ }`;
+      case 'systemd':
+        return `# /etc/systemd/system/my-job.timer (runs my-job.service)\n[Unit]\nDescription=Run my-job on a schedule\n\n[Timer]\n${lines.map(l => `OnCalendar=${l} ${tz}`).join('\n')}\n# Run a start that was missed while the machine was off\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n\n# Check the next runs:\n# systemd-analyze calendar --iterations=5 '${lines[0]} ${tz}'`;
+      case 'gitlab':
+        return `# Build › Pipeline schedules in the project, or the API:\n${lines.map((l, i) => `curl --request POST --header "PRIVATE-TOKEN: <token>" \\\n  --form description="My job${many ? ' ' + (i + 1) : ''}" --form ref="main" \\\n  --form cron="${l}" --form cron_timezone="${tz}" \\\n  "https://gitlab.example.com/api/v4/projects/<id>/pipeline_schedules"`).join('\n\n')}\n\n# .gitlab-ci.yml: run a job only in scheduled pipelines\nmy-job:\n  rules:\n    - if: $CI_PIPELINE_SOURCE == "schedule"`;
+      case 'cloudflare':
+        return `# wrangler.toml — Cron Triggers run in UTC\n[triggers]\ncrons = [${lines.map(l => `"${l}"`).join(', ')}]`;
+      case 'azure':
+        return `// C#, isolated worker model\n${lines.map((l, i) => `[Function("MyJob${many ? i + 1 : ''}")]\npublic void Run${many ? i + 1 : ''}([TimerTrigger("${l}")] TimerInfo timer) { /* … */ }`).join('\n\n')}\n\n${tz === 'UTC' ? '# Times are UTC unless the app setting WEBSITE_TIME_ZONE is set.' : `# App setting: a tz database name on Linux, a Windows zone name on Windows.\n# Not supported on Linux Consumption or Flex Consumption plans.\nWEBSITE_TIME_ZONE=${tz}`}`;
+      case 'apscheduler':
+        if (!many) return `scheduler.add_job(my_job, 'cron', ${lines[0]}, timezone='${tz}')`;
+        return `from apscheduler.triggers.combining import OrTrigger\nfrom apscheduler.triggers.cron import CronTrigger\n\ntrigger = OrTrigger([\n${lines.map(l => `    CronTrigger(${l}, timezone='${tz}'),`).join('\n')}\n])\nscheduler.add_job(my_job, trigger)`;
     }
     return lines.join('\n');
   }
@@ -745,6 +808,11 @@
     const out = [];
     for (const id of E.DIALECT_ORDER) {
       const T = D[id];
+      if (T.utcOnly && tz !== 'UTC' && !models[0].reboot) {
+        const tagU = id === state.dialect ? `<span class="tag">${several ? 'These expressions' : 'This expression'}</span>` : '';
+        out.push(`<div class="tr"><div class="tr-name"><strong>${esc(T.name)}</strong>${tagU}</div><div class="tr-body"><p>${esc(T.name)} runs in UTC, so the times shift.</p>${utcBlock(models, tz, id, now)}</div></div>`);
+        continue;
+      }
       const renders = models.map(M => E.render(M, id));
       const allOk = renders.every(r => r.ok);
       const isSelf = id === state.dialect;
@@ -827,17 +895,28 @@
     // the time zone and the scheduler the surrounding text implies.
     input.addEventListener('paste', e => {
       const text = e.clipboardData && e.clipboardData.getData('text/plain');
-      if (!text || !/\n|cron\s*[:=(]|schedule\s*:|@Scheduled|cronSchedule|ScheduleExpression|CRON_TZ/i.test(text)) return;
+      if (!text || !/\n|cron\s*[:=(]|schedule\s*:|@Scheduled|cronSchedule|ScheduleExpression|CRON_TZ|OnCalendar|crons|TimerTrigger|CronTrigger|add_job|scheduled_job|cron_timezone|WEBSITE_TIME_ZONE/i.test(text)) return;
       let u;
       try { u = E.unwrap(text); } catch (err) { return; }
       if (!u.core.trim() || (u.core === text && !u.tz)) return;
       e.preventDefault();
-      let exprs = [u.wrapped ? `cron(${u.core.trim()})` : u.core.trim()];
+      // A text field can't hold line breaks, so a multi-line call (APScheduler) is joined into one line.
+      let exprs = [u.wrapped ? `cron(${u.core.trim()})` : u.core.trim().replace(/\s*\n\s*/g, ' ').replace(/\(\s+/g, '(').replace(/,?\s*\)$/, ')')];
+      let all = [];
       if (u.dialect === 'github') {
-        const all = [...text.matchAll(/(?:^|\n)[ \t]*-?[ \t]*cron[ \t]*:[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|(\S[^\n#]*?))[ \t]*(?:#[^\n]*)?(?=\n|$)/g)]
+        all = [...text.matchAll(/(?:^|\n)[ \t]*-?[ \t]*cron[ \t]*:[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|(\S[^\n#]*?))[ \t]*(?:#[^\n]*)?(?=\n|$)/g)]
           .map(m => (m[1] || m[2] || m[3] || '').trim()).filter(Boolean);
-        if (all.length > 1) exprs = all;
+      } else if (u.dialect === 'cloudflare') {
+        const list = /\bcrons['"]?\s*[=:]\s*\[([^\]]*)\]/.exec(text);
+        if (list) all = [...list[1].matchAll(/["']([^"']*)["']/g)].map(m => m[1].trim()).filter(Boolean);
+      } else if (u.dialect === 'systemd') {
+        // An empty OnCalendar= clears the ones before it, as in systemd.
+        for (const m of text.matchAll(/(?:^|\n)[ \t]*OnCalendar[ \t]*=[ \t]*([^\n]*)/g)) {
+          const v = m[1].trim();
+          if (v) all.push(v); else all = [];
+        }
       }
+      if (all.length > 1) exprs = all.slice(0, MAX_SCHEDULES);
       const from = [];
       if (u.dialect && u.dialect !== state.dialect) from.push(D[u.dialect].name);
       if (u.tz) { state.tz = u.tz; from.push(`time zone ${u.tz}`); }
@@ -915,6 +994,13 @@
         update();
         const prev = $('expr-' + Math.min(+b.dataset.remove, state.exprs.length - 1)) || $('expr');
         prev.focus();
+      } else if (b.dataset.exprs != null) {
+        const i = +(b.dataset.fix || 0);
+        const parts = JSON.parse(b.dataset.exprs);
+        state.exprs.splice(i, 1, ...parts);
+        toast(`Split into ${parts.length} schedules that run the same job.`);
+        setExprs(state.exprs);
+        $('expr').focus();
       } else if (b.dataset.expr != null) {
         const i = +(b.dataset.fix || 0);
         state.exprs[i] = b.dataset.expr;

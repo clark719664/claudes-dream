@@ -14,7 +14,7 @@
       </svg>
       <h1>Cron Almanac</h1>
     </div>
-    <p class="tagline">Read, check and translate cron schedules for crontab, GitHub&nbsp;Actions, Kubernetes, EventBridge, Quartz and Spring. Every run time is computed in a real time zone, daylight saving included.</p>
+    <p class="tagline">Read, check and translate schedules for crontab, systemd, GitHub, GitLab, Kubernetes, EventBridge, Cloudflare, Azure, Quartz, Spring and APScheduler. Every run time is computed in a real time zone, daylight saving included.</p>
   </header>
 
   <section class="bench" aria-label="Expression">
@@ -104,18 +104,22 @@
 
   <section class="panel reference" aria-labelledby="ref-h">
     <details>
-      <summary><h2 id="ref-h">How the six dialects differ</h2></summary>
+      <summary><h2 id="ref-h">How the eleven schedulers differ</h2></summary>
       <div class="table-scroll">
         <table class="ref">
-          <thead><tr><th scope="col"></th><th scope="col">crontab</th><th scope="col">GitHub Actions</th><th scope="col">Kubernetes</th><th scope="col">EventBridge</th><th scope="col">Quartz</th><th scope="col">Spring</th></tr></thead>
+          <thead><tr><th scope="col">Scheduler</th><th scope="col">Fields</th><th scope="col">Sunday is</th><th scope="col">Both day fields set</th><th scope="col">Extras</th><th scope="col">Time zone</th><th scope="col">Clock changes</th></tr></thead>
           <tbody>
-            <tr><th scope="row">Fields</th><td>min hour dom mon dow</td><td>min hour dom mon dow</td><td>min hour dom mon dow</td><td>min hour dom mon dow year</td><td>sec min hour dom mon dow [year]</td><td>sec min hour dom mon dow</td></tr>
-            <tr><th scope="row">Sunday is</th><td>0 or 7</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0 or 7</td></tr>
-            <tr><th scope="row">Both day fields set</th><td>OR, but AND if either starts with <code>*</code></td><td>OR</td><td>OR, but AND if either is <code>*</code> or <code>?</code></td><td>Not allowed; one must be <code>?</code></td><td>Not allowed; one must be <code>?</code></td><td>AND</td></tr>
-            <tr><th scope="row">Extras</th><td>—</td><td>—</td><td><code>?</code></td><td><code>L W # ?</code></td><td><code>L L-n LW W nL # ?</code></td><td><code>L L-n LW W nL # ?</code></td></tr>
-            <tr><th scope="row">Shortcuts</th><td><code>@daily</code> etc., <code>@reboot</code></td><td>—</td><td><code>@daily</code> etc.</td><td>—</td><td>—</td><td><code>@daily</code> etc.</td></tr>
-            <tr><th scope="row">Clock changes</th><td>Fixed-time jobs: skipped time runs after the jump, repeated time runs once. Jobs with <code>*</code> in minute or hour follow the clock.</td><td>Skipped time runs at the next valid time. Repeated time: not documented.</td><td>Not documented</td><td>Scheduler: skipped time is skipped, repeated time runs once</td><td>Skipped time is skipped, repeated time fires once (FAQ)</td><td>Not documented</td></tr>
-            <tr><th scope="row">Time zone</th><td>System, or <code>CRON_TZ</code> in cronie</td><td>UTC, or <code>timezone:</code></td><td><code>spec.timeZone</code></td><td>UTC for rules; any for Scheduler</td><td><code>inTimeZone()</code></td><td><code>zone =</code></td></tr>
+            <tr><th scope="row">Linux crontab</th><td>min hour dom mon dow</td><td>0 or 7</td><td>OR, but AND if either starts with <code>*</code></td><td><code>@daily</code> etc., <code>@reboot</code></td><td>System, or <code>CRON_TZ</code> in cronie</td><td>Fixed-time jobs: a skipped time runs after the jump, a repeated time runs once. Jobs with <code>*</code> in minute or hour follow the clock.</td></tr>
+            <tr><th scope="row">systemd timer</th><td><code>[weekdays] Y-M-D H:M:S</code></td><td><code>Sun</code> (names only)</td><td>AND</td><td><code>..</code> ranges, <code>a/n</code>, <code>~</code> counts from the month's end, <code>daily</code> etc.</td><td>System, or a zone at the end</td><td>Not documented</td></tr>
+            <tr><th scope="row">GitHub Actions</th><td>min hour dom mon dow</td><td>0</td><td>OR</td><td>—</td><td>UTC, or <code>timezone:</code></td><td>A skipped time runs at the next valid time. Repeated time: not documented.</td></tr>
+            <tr><th scope="row">GitLab CI</th><td>min hour dom mon dow</td><td>0</td><td>OR, unless either is <code>*</code>; <code>&amp;</code> makes it AND</td><td><code>L</code>, <code>-n-L</code>, <code>#</code>, <code>#-1</code>, <code>@daily</code> etc.</td><td>Each schedule's Cron timezone</td><td>Not documented</td></tr>
+            <tr><th scope="row">Kubernetes CronJob</th><td>min hour dom mon dow</td><td>0</td><td>OR, but AND if either is <code>*</code> or <code>?</code></td><td><code>?</code>, <code>@daily</code> etc.</td><td><code>spec.timeZone</code></td><td>Not documented</td></tr>
+            <tr><th scope="row">AWS EventBridge</th><td>min hour dom mon dow year</td><td>1</td><td>Not allowed; one must be <code>?</code></td><td><code>L W # ?</code></td><td>UTC for rules; any for Scheduler</td><td>Scheduler: a skipped time is skipped, a repeated time runs once</td></tr>
+            <tr><th scope="row">Cloudflare Workers</th><td>min hour dom mon dow</td><td>1</td><td>OR, unless either is <code>*</code> (from its parser; not documented)</td><td><code>L L-n LW W nL #</code></td><td>UTC only</td><td>None: always UTC</td></tr>
+            <tr><th scope="row">Azure Functions</th><td>[sec] min hour dom mon dow</td><td>0</td><td>AND</td><td>Names by prefix (<code>Mon</code>, <code>Monday</code>)</td><td>UTC, or <code>WEBSITE_TIME_ZONE</code></td><td>Not documented</td></tr>
+            <tr><th scope="row">Quartz</th><td>sec min hour dom mon dow [year]</td><td>1</td><td>Not allowed; one must be <code>?</code></td><td><code>L L-n LW W nL # ?</code></td><td><code>inTimeZone()</code></td><td>A skipped time is skipped, a repeated time fires once (FAQ)</td></tr>
+            <tr><th scope="row">Spring @Scheduled</th><td>sec min hour dom mon dow</td><td>0 or 7</td><td>AND</td><td><code>L L-n LW W nL # ?</code>, <code>@daily</code> etc.</td><td><code>zone =</code></td><td>Not documented</td></tr>
+            <tr><th scope="row">APScheduler 3</th><td>Keywords: <code>year month day week day_of_week hour minute second</code></td><td><code>sun</code>, or 6: 0 is Monday</td><td>AND</td><td><code>last</code>, <code>1st mon</code>, <code>last fri</code> in <code>day</code></td><td><code>timezone=</code>, else the scheduler's</td><td>A skipped time doesn't run, a repeated time runs twice</td></tr>
           </tbody>
         </table>
       </div>

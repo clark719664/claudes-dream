@@ -60,6 +60,54 @@ function randomExpr(r, d) {
       const dow = r() < 0.5 ? '*' : pick(r, ['MON-FRI', 'FRI#2', 'FRIL', field(r, 0, 7)]);
       return `${pick(r, ['0', '0', '15', '*/30'])} ${minute()} ${hour()} ${dom} ${month()} ${dow}`;
     }
+    case 'gitlab': {
+      const dom = r() < 0.5 ? '*' : pick(r, ['L', 'last', '-3-L', '-7-L', field(r, 1, 31)]);
+      const dow = r() < 0.5 ? '*' : pick(r, ['1#2', 'fri#-1', '5#L', 'mon-fri', field(r, 0, 7)]);
+      const amp = dom !== '*' && dow !== '*' && r() < 0.4;
+      return `${minute()} ${hour()} ${dom}${amp ? '&' : ''} ${month()} ${dow}`;
+    }
+    case 'cloudflare': {
+      const dom = r() < 0.5 ? '*' : pick(r, ['L', 'L-2', 'LW', '15W', field(r, 1, 31)]);
+      const dow = r() < 0.5 ? '*' : pick(r, ['6#3', 'MON#1', '6L', 'friL', 'MON-FRI', 'FRI-MON', 'L', field(r, 1, 7)]);
+      return `${minute()} ${hour()} ${dom} ${month()} ${dow}`;
+    }
+    case 'azure': {
+      const dow = r() < 0.6 ? '*' : pick(r, ['Mon-Fri', 'Sat,Sun', 'FRI-MON', field(r, 0, 6)]);
+      const head = r() < 0.7 ? `${pick(r, ['0', '0', '30', '*/20'])} ` : '';
+      return `${head}${minute()} ${hour()} ${unixDom()} ${month()} ${dow}`;
+    }
+    case 'systemd': {
+      const chain = (lo, hi, w = 2) => {
+        const p = v => String(v).padStart(w, '0');
+        const a = int(r, lo, hi), b = int(r, lo, hi);
+        switch (pick(r, ['*', '*', 'v', 'list', 'range', 'rep', 'rrep'])) {
+          case '*': return '*';
+          case 'v': return p(a);
+          case 'list': return [...new Set([a, b])].sort((x, y) => x - y).map(p).join(',');
+          case 'range': return a === b ? p(a) : `${p(Math.min(a, b))}..${p(Math.max(a, b))}`;
+          case 'rep': { const k = int(r, 2, 9); return a + k <= hi ? `${p(a)}/${k}` : p(a); }
+          case 'rrep': { const k = int(r, 2, 5), x = Math.min(a, b), y = Math.max(a, b); return x + k <= y ? `${p(x)}..${p(y)}/${k}` : p(x); }
+        }
+      };
+      const wd = r() < 0.5 ? '' : pick(r, ['Mon..Fri ', 'Sat,Sun ', 'Mon ', 'Fri ', 'Tue,Thu ', 'Mon-Wed,Fri ']) ;
+      const day = r() < 0.3 ? `~${pick(r, ['01', '03', '07/1', '01..07', '05/2', '02,04'])}` : `-${r() < 0.6 ? '*' : chain(1, 31)}`;
+      const year = r() < 0.85 ? '*' : pick(r, ['2027', '2027..2028']);
+      const hh = r() < 0.6 ? pick(r, ['00..03', '01', '02', '0/2', '01,02', '*']) : chain(0, 23);
+      const mm = r() < 0.3 ? pick(r, ['00', '30', '00/15', '00,30']) : chain(0, 59);
+      const ss = r() < 0.7 ? '' : `:${pick(r, ['00', '30', '00/20'])}`;
+      return `${wd}${year}-${r() < 0.6 ? '*' : chain(1, 12)}${day} ${hh}:${mm}${ss}`;
+    }
+    case 'apscheduler': {
+      const kw = [];
+      if (r() < 0.3) kw.push(`month='${field(r, 1, 12, { force: pick(r, ['v', 'list', 'range', 'step']) })}'`);
+      if (r() < 0.35) kw.push(`day='${pick(r, ['1st mon', 'last fri', 'last', '3rd fri', field(r, 1, 31, { force: pick(r, ['v', 'list', 'range']) })])}'`);
+      if (r() < 0.4) kw.push(`day_of_week='${pick(r, ['mon-fri', 'sat,sun', 'tue', '0-4', '*/2', '5,6'])}'`);
+      if (r() < 0.8) kw.push(`hour='${pick(r, ['0-3', '1', '2', '*/2', '1,2', '9', '*'])}'`);
+      if (r() < 0.8) kw.push(`minute='${pick(r, ['0', '30', '*/15', '0,30', field(r, 0, 59, { force: pick(r, ['v', 'list', 'range']) })])}'`);
+      if (r() < 0.3) kw.push(`second='${pick(r, ['0', '30', '*/20'])}'`);
+      if (!kw.length) kw.push("hour='3'");
+      return r() < 0.2 ? `CronTrigger.from_crontab('${minute()} ${hour()} ${unixDom()} ${month()} ${field(r, 0, 6)}')` : `CronTrigger(${kw.join(', ')})`;
+    }
   }
 }
 
@@ -89,8 +137,8 @@ const TRANSITIONS = [
 test('upcoming() matches a minute-by-minute wall-clock simulation around clock changes', () => {
   const r = rng(20261014);
   let compared = 0;
-  for (let i = 0; i < 24; i++) {
-    const d = pick(r, ['unix', 'k8s', 'quartz', 'spring', 'eventbridge']);
+  for (let i = 0; i < 40; i++) {
+    const d = pick(r, ['unix', 'k8s', 'quartz', 'spring', 'eventbridge', 'systemd', 'gitlab', 'azure', 'apscheduler']);
     const expr = randomExpr(r, d);
     const P = E.parse(expr, d);
     if (!P.ok || P.times.length > 400) continue;
@@ -136,8 +184,9 @@ function equivalentOverYear(A, lines, target, label) {
 test('random expressions translate to every dialect and back without changing meaning', () => {
   const r = rng(7);
   let checked = 0, translated = 0;
-  for (let i = 0; i < 600; i++) {
-    const d = E.DIALECT_ORDER[i % 6];
+  const n = E.DIALECT_ORDER.length;
+  for (let i = 0; i < 100 * n; i++) {
+    const d = E.DIALECT_ORDER[i % n];
     const expr = randomExpr(r, d);
     const A = E.parse(expr, d);
     if (!A.ok) continue;
@@ -149,8 +198,8 @@ test('random expressions translate to every dialect and back without changing me
       equivalentOverYear(A, out.lines, target, `${expr} (${d})`);
     }
   }
-  assert.ok(checked > 450, `only ${checked} random expressions parsed`);
-  assert.ok(translated > 1800, `only ${translated} translations checked`);
+  assert.ok(checked > 75 * n, `only ${checked} random expressions parsed`);
+  assert.ok(translated > 300 * n, `only ${translated} translations checked`);
 });
 
 test('UTC conversions fire at the same instants as the zoned original', () => {
