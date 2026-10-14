@@ -72,6 +72,23 @@
       </section>
     </div>
 
+    <section class="panel why" aria-labelledby="why-h">
+      <h2 id="why-h">Why didn't it run?</h2>
+      <p class="panel-intro">Enter when you expected a run. You'll see which parts of the schedule match that moment, what a clock change or time zone mix-up did, the nearest real runs, and what else to check on this scheduler.</p>
+      <form class="why-form" id="why-form" autocomplete="off">
+        <div class="control">
+          <label for="why-at">Expected run</label>
+          <input type="datetime-local" id="why-at" step="60" required>
+        </div>
+        <div class="control">
+          <label for="why-zone">Time zone of that time</label>
+          <select id="why-zone"></select>
+        </div>
+        <button type="submit" class="btn">Explain</button>
+      </form>
+      <div class="why-out" id="why-out" aria-live="polite"></div>
+    </section>
+
     <section class="panel" aria-labelledby="year-h">
       <div class="panel-head">
         <h2 id="year-h">Days it runs</h2>

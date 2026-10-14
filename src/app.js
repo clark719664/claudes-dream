@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   const E = window.CronEngine;
+  const W = window.CronWhy;
   const D = E.DIALECTS;
   const DAY = E.DAY;
   const $ = id => document.getElementById(id);
@@ -33,7 +34,10 @@
   ];
 
   // exprs[0] is the main expression; the rest are extra schedules that run the same job.
-  const state = { exprs: ['0 9 1-7 * 1'], dialect: 'unix', tz: browserTz, calStart: null, runs: 12, sel: null };
+  const state = {
+    exprs: ['0 9 1-7 * 1'], dialect: 'unix', tz: browserTz, calStart: null, runs: 12, sel: null,
+    why: { at: '', zone: 'schedule', edited: false, shown: false },
+  };
   let current = null; // { list, P, models, tz }
 
   // ------------------------------------------------------------ helpers
@@ -417,6 +421,7 @@
     renderCalendar(models, tz, now);
     renderDaymap(models, tz, now);
     renderTranslations(models, tz, now);
+    renderWhy(models, tz, now);
     save();
   }
 
@@ -651,7 +656,7 @@
     const [y, m, d] = state.sel.split('-').map(Number);
     const label = `${E.DOW_LONG[E.weekday(y, m, d)]} ${d} ${E.MON_LONG[m - 1]} ${y}`;
     const hits = models.map((M, i) => ({ M, i })).filter(x => E.dayMatches(x.M, y, m, d));
-    if (!hits.length) { el.innerHTML = `<strong>${esc(label)}</strong>: no runs.`; return; }
+    if (!hits.length) { el.innerHTML = `<strong>${esc(label)}</strong>: no runs. <button type="button" class="linkish" data-why="${state.sel}">Why not?</button>`; return; }
     const part = M => {
       const withSec = M.seconds.some(s => s !== 0);
       const T = M.times;
@@ -666,6 +671,7 @@
         ? ` Clocks jump forward this day, so ${x.affected === 1 ? 'one of these times doesn’t' : `${x.affected} of these times don’t`} exist.`
         : ` Clocks fall back this day, so ${x.affected === 1 ? 'one of these times happens' : `${x.affected} of these times happen`} twice.`;
     }
+    html += ` <button type="button" class="linkish" data-why="${state.sel}">Why did or didn't it run that day?</button>`;
     el.innerHTML = html;
   }
 
@@ -853,6 +859,69 @@
     $('translations').innerHTML = out.join('');
   }
 
+  // ------------------------------------------------------------ why didn't it run?
+
+  const isoLocal = w => `${w.y}-${pad(w.mo)}-${pad(w.d)}T${pad(w.h)}:${pad(w.mi)}`;
+
+  function whyZone(tz) {
+    return state.why.zone === 'local' ? browserTz : state.why.zone === 'utc' ? 'UTC' : tz;
+  }
+
+  function renderWhy(models, tz, now) {
+    const sel = $('why-zone');
+    const opts = [['schedule', `${tz} (the schedule's)`]];
+    if (browserTz !== tz) opts.push(['local', `${browserTz} (yours)`]);
+    if (tz !== 'UTC' && browserTz !== 'UTC') opts.push(['utc', 'UTC']);
+    if (!opts.some(o => o[0] === state.why.zone)) state.why.zone = 'schedule';
+    sel.innerHTML = opts.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('');
+    sel.value = state.why.zone;
+    const off = models[0].reboot;
+    $('why-form').hidden = off;
+    if (off) { $('why-out').innerHTML = '<p class="why-note">A startup-only job has no times to check.</p>'; return; }
+    if (!state.why.edited) {
+      // Default to the most recent run, which is usually the one someone is asking about.
+      const prev = W.previousRun(models, tz, now) || E.upcomingSet(models, tz, now, 1).runs[0];
+      state.why.at = isoLocal(prev ? E.wallParts(prev.t, whyZone(tz)) : E.wallParts(now, whyZone(tz)));
+    }
+    const input = $('why-at');
+    if (document.activeElement !== input) input.value = state.why.at;
+    if (state.why.shown) renderWhyResult(models, tz);
+    else $('why-out').innerHTML = '';
+  }
+
+  function whenText(t, tz, ref) {
+    const p = E.displayParts(t, tz);
+    const delta = Math.round((t - ref) / 1000);
+    const rel = delta === 0 ? 'the same moment' : `${E.fmtDuration(Math.abs(delta))} ${delta < 0 ? 'earlier' : 'later'}`;
+    return `${p.weekday} ${p.day} ${p.month} ${p.year} at ${p.hour}:${p.minute} (${rel})`;
+  }
+
+  function renderWhyResult(models, tz) {
+    const out = $('why-out');
+    const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(state.why.at || '');
+    if (!m) { out.innerHTML = '<p class="why-note">Pick a date and time.</p>'; return; }
+    const wall = { y: +m[1], mo: +m[2], d: +m[3], h: +m[4], mi: +m[5] };
+    const r = W.explain({ P: current.P, models, tz, wall, zone: whyZone(tz), localTz: browserTz });
+    if (!r) { out.innerHTML = ''; return; }
+    const cls = r.uncertain ? 'maybe' : r.scheduled ? 'yes' : 'no';
+    let html = `<p class="why-head ${cls}">${md(r.headline)}</p>`;
+    html += r.notes.map(n => `<p class="why-note">${md(n)}</p>`).join('');
+    if (r.dst) html += `<p class="why-dst">${md(r.dst)}</p>`;
+    html += r.hints.map(h => `<p class="why-hint">${md(h)}</p>`).join('');
+    r.schedules.forEach(x => {
+      const rows = x.rows.map(row => `<tr class="${row.info ? '' : row.ok ? 'hit' : 'miss'}"><td>${esc(row.field)}</td><td class="v">${esc(row.value)}</td><td>${md(row.wants)}</td><td class="r">${row.info ? '' : row.ok ? '✓ match' : '✗ no match'}</td></tr>`).join('');
+      html += `<div class="table-scroll"><table class="why-table">${models.length > 1 ? `<caption>${schedName(x.i)}</caption>` : ''}<thead><tr><th scope="col">Field</th><th scope="col">That moment</th><th scope="col">The schedule wants</th><th scope="col"><span class="sr-only">Result</span></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    });
+    const near = [];
+    if (r.prev) near.push(`Previous run: ${whenText(r.prev.t, tz, r.t)}`);
+    if (r.next) near.push(`next run: ${whenText(r.next.t, tz, r.t)}`);
+    if (near.length) html += `<p class="why-near">${esc(near.join('; '))}.</p>`;
+    if (r.checklist.length && (r.scheduled || r.uncertain)) {
+      html += `<p class="why-sub">If it still didn't run, check</p><ul class="why-list">${r.checklist.map(c => `<li><strong>${md(c.title)}</strong> ${md(c.body)}</li>`).join('')}</ul>`;
+    }
+    out.innerHTML = html;
+  }
+
   // ------------------------------------------------------------ English
 
   function onEnglish(e) {
@@ -954,6 +1023,26 @@
       $('share').addEventListener('click', e => { save(); copyText(location.href, e.currentTarget); });
     }
     $('english-form').addEventListener('submit', onEnglish);
+    $('why-form').addEventListener('submit', e => {
+      e.preventDefault();
+      state.why.at = $('why-at').value;
+      state.why.edited = true;
+      state.why.shown = true;
+      if (current && current.models.length) renderWhyResult(current.models, current.tz);
+    });
+    $('why-at').addEventListener('change', () => { state.why.at = $('why-at').value; state.why.edited = true; });
+    $('why-zone').addEventListener('change', () => {
+      // Keep the same moment, shown on the newly chosen clock.
+      const before = whyZone(current.tz);
+      const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec($('why-at').value);
+      state.why.zone = $('why-zone').value;
+      if (m && current) {
+        const t = W.instantsOf({ y: +m[1], mo: +m[2], d: +m[3], h: +m[4], mi: +m[5] }, before);
+        const at = t.ts.length ? t.ts[0] : t.gap ? t.gap.t : null;
+        if (at != null) { state.why.at = isoLocal(E.wallParts(at, whyZone(current.tz))); $('why-at').value = state.why.at; }
+      }
+      if (state.why.shown && current && current.models.length) renderWhyResult(current.models, current.tz);
+    });
     $('more-runs').addEventListener('click', () => { state.runs = Math.min(200, state.runs + 30); update(); });
     const redrawCalendar = () => { if (current && current.models.length) renderCalendar(current.models, current.tz, Date.now()); };
     $('year-prev').addEventListener('click', () => { state.calStart -= 12; redrawCalendar(); });
@@ -989,6 +1078,18 @@
       const b = e.target.closest('button');
       if (!b) return;
       if (b.dataset.copy != null) copyText(b.dataset.copy, b);
+      else if (b.dataset.why) {
+        // From the calendar: check that day at its first run time, or at the time already entered.
+        const [y, m, d] = b.dataset.why.split('-').map(Number);
+        const M = current.models.find(x => E.dayMatches(x, y, m, d));
+        const time = M ? E.fmtClock(M.times[0]) : (state.why.at.split('T')[1] || '09:00');
+        state.why.zone = 'schedule';
+        state.why.at = `${y}-${pad(m)}-${pad(d)}T${time}`;
+        state.why.edited = true;
+        state.why.shown = true;
+        renderWhy(current.models, current.tz, Date.now());
+        $('why-h').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
       else if (b.dataset.remove) {
         state.exprs.splice(+b.dataset.remove, 1);
         update();

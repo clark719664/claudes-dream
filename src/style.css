@@ -389,6 +389,34 @@ details.snip[open] summary { margin-bottom: 6px; }
 .reference details > summary::before { content: '+'; font: 600 1rem var(--f-data); color: var(--ink-3); width: 1em; }
 .reference details[open] > summary::before { content: '−'; }
 .reference details[open] > summary { margin-bottom: 12px; }
+/* Why didn't it run? */
+.why-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 18px; margin: 4px 0 14px; }
+.why-form .control { flex: 0 1 260px; }
+#why-at { font: 500 0.95rem var(--f-data); border: 1px solid var(--rule); border-radius: var(--radius); background: var(--card); padding: 0.45em 0.6em; min-width: 0; }
+.why-out:empty { display: none; }
+.why-out { display: flex; flex-direction: column; gap: 10px; }
+.why-out p { margin: 0; overflow-wrap: anywhere; }
+.why-head { font-size: 1.02rem; padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--rule); }
+.why-head.yes { background: var(--ok-soft); border-color: transparent; }
+.why-head.no { background: var(--bad-soft); border-color: transparent; }
+.why-head.maybe { background: var(--warn-soft); border-color: transparent; }
+.why-note, .why-near { color: var(--ink-2); font-size: 0.92rem; }
+.why-hint { background: var(--accent-soft); border-radius: var(--radius); padding: 8px 12px; font-size: 0.92rem; }
+.why-dst { background: var(--warn-soft); border-radius: var(--radius); padding: 8px 12px; font-size: 0.92rem; }
+.why-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.why-table caption { text-align: left; font: 600 0.7rem/1.2 var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); padding-bottom: 4px; }
+.why-table th { text-align: left; font: 600 0.62rem/1.2 var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); padding: 0 10px 6px 0; }
+.why-table td { padding: 6px 10px 6px 0; border-top: 1px solid var(--rule); vertical-align: baseline; }
+.why-table td.v { font: 500 0.92rem var(--f-data); white-space: nowrap; }
+.why-table td.r { white-space: nowrap; font-weight: 600; }
+.why-table tr.miss td { background: var(--bad-soft); }
+.why-table tr.miss td.r { color: var(--bad); }
+.why-table tr.hit td.r { color: var(--ok); }
+.why-sub { font: 600 0.7rem/1.2 var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); margin-top: 6px; }
+.why-list { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; font-size: 0.92rem; color: var(--ink-2); }
+.why-list strong { color: var(--ink); }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; font-size: inherit; }
+
 .ref { border-collapse: collapse; font-size: 0.86rem; min-width: 980px; }
 .ref th, .ref td { text-align: left; padding: 7px 12px 7px 0; border-top: 1px solid var(--rule); vertical-align: top; }
 .ref thead th { border-top: 0; font: 600 0.62rem/1.2 var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }

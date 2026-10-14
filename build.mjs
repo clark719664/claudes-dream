@@ -9,6 +9,7 @@ const css = read('./src/style.css');
 const fontsCss = read('./src/fonts.css');
 const body = read('./src/page.html').replaceAll('{{VERSION}}', version.replace(/\.0$/, ''));
 const engine = read('./src/engine.js');
+const why = read('./src/why.js');
 const app = read('./src/app.js');
 
 const title = 'Cron Almanac';
@@ -19,7 +20,7 @@ const icon = 'data:image/svg+xml,' + encodeURIComponent(
   '</svg>');
 const googleFonts = '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
   '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Martian+Mono:wght@400;600;700&display=swap">';
-const scripts = `<script>\n${engine}</script>\n<script>\n${app}</script>`;
+const scripts = [engine, why, app].map(js => `<script>\n${js}</script>`).join('\n');
 
 const full = `<!doctype html>
 <html lang="en">
