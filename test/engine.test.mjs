@@ -262,10 +262,12 @@ test('UTC conversion for GitHub and EventBridge rules', () => {
 test('English to cron', () => {
   const u = (text, target = 'unix') => {
     const r = E.fromEnglish(text);
-    assert.ok(r.model, `${text}: ${r.error}`);
-    const out = E.render(r.model, target);
-    assert.ok(out.ok, `${text} -> ${target}: ${out.reason}`);
-    return out.lines.join(' | ');
+    assert.ok(r.models, `${text}: ${r.error}`);
+    return r.models.map(m => {
+      const out = E.render(m, target);
+      assert.ok(out.ok, `${text} -> ${target}: ${out.reason}`);
+      return out.lines.join(' | ');
+    }).join(' + ');
   };
   assert.equal(u('every weekday at 9:30am'), '30 9 * * 1-5');
   assert.equal(u('every 15 minutes during business hours'), '*/15 9-16 * * *');
@@ -282,8 +284,35 @@ test('English to cron', () => {
   assert.equal(u('last day of the month at 23:00', 'eventbridge'), 'cron(0 23 L * ? *)');
   assert.equal(u('every 30 seconds', 'spring'), '0,30 * * * * *');
   assert.match(E.fromEnglish('every 2 weeks').error, /can't count weeks/);
-  assert.deepEqual(E.fromEnglish('every 90 minutes').lines, ['0 */3 * * *', '30 1-22/3 * * *']);
-  assert.deepEqual(E.fromEnglish('at 9:30 and 17:00').lines, ['30 9 * * *', '0 17 * * *']);
+  assert.equal(u('every 90 minutes'), '0 */3 * * * + 30 1-22/3 * * *');
+  assert.equal(u('at 9:30 and 17:00'), '30 9 * * * + 0 17 * * *');
+});
+
+test('English with several schedules in one sentence', () => {
+  const q = text => {
+    const r = E.fromEnglish(text);
+    assert.ok(r.models, `${text}: ${r.error}`);
+    return r.models.map(m => E.render(m, 'quartz').lines.join(' | '));
+  };
+  // The report that started this: both rules must survive, each with its own months.
+  assert.deepEqual(q('First monday of every month, 3rd monday of every other month'), ['0 0 0 ? * 2#1', '0 0 0 ? 1/2 2#3']);
+  assert.deepEqual(q('first monday of every month and 3rd monday of every other month at 9am'), ['0 0 9 ? * 2#1', '0 0 9 ? 1/2 2#3']);
+  assert.deepEqual(q('first monday of every month at 9am, 3rd monday of every other month'), ['0 0 9 ? * 2#1', '0 0 9 ? 1/2 2#3']);
+  assert.deepEqual(q('every monday at 9am and every friday at 5pm'), ['0 0 9 ? * MON', '0 0 17 ? * FRI']);
+  assert.deepEqual(q('first and third monday of the month at 6pm'), ['0 0 18 ? * 2#1', '0 0 18 ? * 2#3']);
+  assert.deepEqual(q('on march 3 and july 4 at 10:00'), ['0 0 10 3 3 ?', '0 0 10 4 7 ?']);
+  assert.deepEqual(q('every 15 minutes between 9am and 5pm on weekdays and hourly on weekends'), ['0 0/15 9-16 ? * MON-FRI', '0 0 * ? * SUN,SAT']);
+  assert.deepEqual(q('second tuesday of every other month starting in february at 6pm'), ['0 0 18 ? 2/2 3#2']);
+  assert.deepEqual(q('last day of every quarter at 23:00'), ['0 0 23 L 3/3 ?']);
+  assert.deepEqual(q('first monday of the quarter at 8am'), ['0 0 8 ? 1/3 2#1']);
+  // Things that are one schedule stay one schedule.
+  assert.deepEqual(q('every weekday at 9am and 5pm'), ['0 0 9,17 ? * MON-FRI']);
+  assert.deepEqual(q('every monday and wednesday at 14:00'), ['0 0 14 ? * MON,WED']);
+  assert.deepEqual(q('mondays, wednesdays and fridays at 8pm'), ['0 0 20 ? * MON,WED,FRI']);
+  assert.deepEqual(q('on the 1st and 15th at noon'), ['0 0 12 1,15 * ?']);
+  assert.deepEqual(q('on the 1st of january and july'), ['0 0 0 1 1,7 ?']);
+  assert.deepEqual(q('every 10 minutes between 9am and 5pm mon-fri'), ['0 0/10 9-16 ? * MON-FRI']);
+  assert.match(E.fromEnglish('First monday of every month, 3rd monday of every other month').notes.join(' '), /January, March, May/);
 });
 
 test('whole pasted config blocks, with their time zone settings', () => {
@@ -327,4 +356,26 @@ test('clock-change edges: the first and last minutes of a skipped or repeated ho
   assert.match(ny('59 1 * * *').body, /fall back/);  // 01:59 happens twice
   assert.match(ny('0 1 * * *').body, /fall back/);
   assert.equal(ny('59 0 * * *'), undefined);
+});
+
+test('several schedules analyzed together', () => {
+  const [a, b] = E.fromEnglish('First monday of every month, 3rd monday of every other month').models;
+  const st = E.statsSet([a, b], 'America/Chicago', NOW);
+  assert.equal(st.perYear, 18); // 12 first Mondays + 6 third Mondays
+  assert.equal(st.overlaps, 0);
+  const runs = E.upcomingSet([a, b], 'America/Chicago', NOW, 5).runs;
+  assert.deepEqual(runs.map(r => [new Date(r.t).toISOString().slice(0, 10), r.which.join()]),
+    [['2026-11-02', '0'], ['2026-11-16', '1'], ['2026-12-07', '0'], ['2027-01-04', '0'], ['2027-01-18', '1']]);
+  assert.deepEqual(E.lintSet([a, b], 'America/Chicago', NOW), []);
+  // Coinciding runs are merged in the list and reported once per year-count.
+  const mon = ok('0 0 9 ? * MON', 'quartz'), first = ok('0 0 9 ? * 2#1', 'quartz');
+  const both = E.upcomingSet([mon, first], 'UTC', NOW, 4).runs;
+  assert.deepEqual(both.map(r => [new Date(r.t).toISOString().slice(0, 10), r.which.join()]),
+    [['2026-10-19', '0'], ['2026-10-26', '0'], ['2026-11-02', '0,1'], ['2026-11-09', '0']]);
+  assert.equal(E.statsSet([mon, first], 'UTC', NOW).overlaps, 12);
+  assert.equal(E.lintSet([mon, first], 'UTC', NOW)[0].id, 'overlap');
+  // A single schedule gives the same answer either way.
+  const one = ok('*/7 * * * *', 'unix');
+  assert.deepEqual(E.upcomingSet([one], 'UTC', NOW, 10).runs.map(r => r.t), E.upcoming(one, 'UTC', NOW, 10).runs.map(r => r.t));
+  assert.equal(E.statsSet([one], 'UTC', NOW).minGap, E.stats(one, 'UTC', NOW).minGap);
 });

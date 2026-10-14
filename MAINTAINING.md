@@ -4,11 +4,10 @@ These are one-time settings that only the repository owner can change. Everythin
 
 ## 1. Put the site live
 
-1. Merge the release pull request into `main`.
-2. Go to **Settings → Pages**.
-3. Under **Build and deployment**, set **Source** to **Deploy from a branch**, choose **`main`** and **`/ (root)`**, then click **Save**.
+1. Go to **Settings → Pages**.
+2. Under **Build and deployment**, set **Source** to **Deploy from a branch**, choose **`main`** and **`/ (root)`**, then click **Save**.
 
-The site appears at https://clark719664.github.io/claudes-dream/ within a few minutes. It updates every time a change is merged into `main`.
+The site appears at https://clark719664.github.io/cron-almanac/ within a few minutes. It updates every time a change is merged into `main`.
 
 ## 2. Lock down `main`
 
@@ -49,6 +48,10 @@ Go to **Settings → Advanced Security** (older screens: **Code security and ana
 - **Private vulnerability reporting**, so people can report problems privately. `SECURITY.md` points them there.
 - **Secret scanning** and **Push protection**, if they aren't on already. They're free for public repositories and block pushes that contain passwords or keys.
 
+## 5. Switch off features you don't use
+
+In **Settings → General → Features**, uncheck **Wikis** and **Projects**. The documentation lives in the repository, where every change goes through review.
+
 ## Accepting a contribution
 
 1. Read the change and check that CI is green.
@@ -58,7 +61,3 @@ Go to **Settings → Advanced Security** (older screens: **Code security and ana
 ## Releasing a new version
 
 Bump `version` in `package.json`, run `npm run build`, and merge through a pull request. The footer shows the version.
-
-## Optional: rename the repository
-
-A name like `cron-almanac` is easier to share. Rename it in **Settings → General**. GitHub redirects the old repository links, but the site moves to `https://clark719664.github.io/cron-almanac/`. Afterwards, update the links in `README.md`, `src/page.html`, `.github/ISSUE_TEMPLATE/config.yml` and `package.json`, then rebuild.

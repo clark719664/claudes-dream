@@ -4,13 +4,13 @@
   "description": "Read, check and translate cron schedules for crontab, GitHub Actions, Kubernetes, EventBridge, Quartz and Spring.",
   "private": true,
   "license": "MIT",
-  "homepage": "https://clark719664.github.io/claudes-dream/",
+  "homepage": "https://clark719664.github.io/cron-almanac/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/clark719664/claudes-dream.git"
+    "url": "git+https://github.com/clark719664/cron-almanac.git"
   },
   "bugs": {
-    "url": "https://github.com/clark719664/claudes-dream/issues"
+    "url": "https://github.com/clark719664/cron-almanac/issues"
   },
   "engines": {
     "node": ">=20"

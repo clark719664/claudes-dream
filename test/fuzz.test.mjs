@@ -188,10 +188,12 @@ test('nothing throws on random input', () => {
     }
   }
   const words = ['every', 'other', '15', 'minutes', 'at', '9am', 'noon', 'monday', 'weekdays', 'between', 'and', '5pm',
-    'last', 'friday', 'of', 'the', 'month', '1st', 'march', 'hourly', 'twice', 'a', 'day', '2027', 'from', 'to', 'quarter', 'past'];
+    'last', 'friday', 'of', 'the', 'month', '1st', 'march', 'hourly', 'twice', 'a', 'day', '2027', 'from', 'to', 'quarter', 'past',
+    ',', 'first', 'third', '3rd', 'starting', 'in', 'february', 'odd', 'months', 'also', ';', 'weekday', 'year'];
   for (let i = 0; i < 2000; i++) {
     const phrase = Array.from({ length: int(r, 1, 9) }, () => pick(r, words)).join(' ');
     const res = E.fromEnglish(phrase);
-    if (res.model) for (const t of E.DIALECT_ORDER) E.render(res.model, t);
+    if (res.models) for (const m of res.models) for (const t of E.DIALECT_ORDER) E.render(m, t);
+    else assert.ok(res.error, `no models and no error for: ${phrase}`);
   }
 });

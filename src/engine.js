@@ -891,6 +891,123 @@
     };
   }
 
+  // ---------------------------------------------------------------- several schedules together
+
+  function mergeSorted(a, b) {
+    const out = [];
+    let i = 0, j = 0;
+    while (i < a.length || j < b.length) {
+      const v = j >= b.length || (i < a.length && a[i] <= b[j]) ? a[i++] : b[j++];
+      if (out[out.length - 1] !== v) out.push(v);
+    }
+    return out;
+  }
+
+  /**
+   * Upcoming runs of several schedules that make up one job, in time order. Each run lists the
+   * schedules that produce it in `which` (indexes into models); a time two schedules share appears once.
+   */
+  function upcomingSet(models, tz, fromMs, count) {
+    const lists = models.map(M => upcoming(M, tz, fromMs, count));
+    const all = [];
+    lists.forEach((l, i) => l.runs.forEach(r => all.push(Object.assign({}, r, { which: [i] }))));
+    all.sort((a, b) => a.t - b.t || a.which[0] - b.which[0]);
+    const merged = [];
+    for (const r of all) {
+      const prev = merged[merged.length - 1];
+      if (prev && prev.t === r.t && prev.kind === r.kind && r.kind !== 'skipped') { prev.which.push(r.which[0]); continue; }
+      merged.push(r);
+    }
+    // A list cut off at `count` may hide later runs, so stop at the earliest cut-off.
+    let cut = Infinity;
+    for (const l of lists) if (!l.exhausted && l.runs.length) cut = Math.min(cut, l.runs[l.runs.length - 1].t);
+    const runs = merged.filter(r => r.t <= cut).slice(0, count);
+    return { runs, exhausted: lists.every(l => l.exhausted) && runs.length === merged.length };
+  }
+
+  /** stats() for several schedules: runs per year, runs per day (min and max), gaps, and coinciding runs. */
+  function statsSet(models, tz, fromMs) {
+    if (models.some(M => M.reboot || !M.times.length)) return null;
+    if (models.length === 1) {
+      const st = stats(models[0], tz, fromMs);
+      return Object.assign(st, { perDayMin: st.perDay, perDayMax: st.perDay, overlaps: 0 });
+    }
+    const w0 = wallParts(fromMs, tz);
+    const today = Date.UTC(w0.y, w0.mo - 1, w0.d);
+    const unions = new Map();
+    const unionFor = mask => {
+      let u = unions.get(mask);
+      if (u) return u;
+      const sets = models.filter((_, i) => mask & (1 << i)).map(M => M.times);
+      let T = sets[0];
+      for (let k = 1; k < sets.length; k++) T = mergeSorted(T, sets[k]);
+      let minG = Infinity, maxG = 0;
+      for (let i = 1; i < T.length; i++) {
+        const g = T[i] - T[i - 1];
+        if (g < minG) minG = g;
+        if (g > maxG) maxG = g;
+      }
+      u = { T, minG, maxG, dup: sets.reduce((a, x) => a + x.length, 0) - T.length };
+      unions.set(mask, u);
+      return u;
+    };
+    const endYear = Math.max(...models.map(M => horizonYear(M, w0.y)));
+    let activeDays = 0, perYear = 0, overlaps = 0, perDayMin = Infinity, perDayMax = 0;
+    let minGap = Infinity, maxGap = 0, prev = null, total = 0;
+    const yearEnd = today + 365 * DAY;
+    for (let day = today; ; day += DAY) {
+      const dt = new Date(day);
+      const y = dt.getUTCFullYear(), m = dt.getUTCMonth() + 1, d = dt.getUTCDate();
+      if (y > endYear || (day >= yearEnd + DAY && total >= 2)) break;
+      let mask = 0;
+      models.forEach((M, i) => { if (dayMatches(M, y, m, d)) mask |= 1 << i; });
+      if (!mask) continue;
+      const u = unionFor(mask);
+      if (day < yearEnd) {
+        activeDays++;
+        perYear += u.T.length;
+        overlaps += u.dup;
+        perDayMin = Math.min(perDayMin, u.T.length);
+        perDayMax = Math.max(perDayMax, u.T.length);
+      }
+      minGap = Math.min(minGap, u.minG);
+      maxGap = Math.max(maxGap, u.maxG);
+      if (prev) {
+        const g = (day - prev.day) / 1000 - prev.last + u.T[0];
+        minGap = Math.min(minGap, g);
+        maxGap = Math.max(maxGap, g);
+      }
+      prev = { day, last: u.T[u.T.length - 1] };
+      total += u.T.length;
+    }
+    return {
+      perYear, activeDays, overlaps,
+      perDay: perDayMax, perDayMin: activeDays ? perDayMin : 0, perDayMax,
+      minGap: total >= 2 ? minGap : null,
+      maxGap: total >= 2 ? maxGap : null,
+    };
+  }
+
+  /** Checks that only make sense for a set of schedules. */
+  function lintSet(models, tz, now) {
+    const out = [];
+    if (models.length < 2 || models.some(M => M.reboot)) return out;
+    const st = statsSet(models, tz, now);
+    if (st && st.overlaps) {
+      const hit = upcomingSet(models, tz, now, 400).runs.find(r => r.which.length > 1);
+      let when = '';
+      if (hit) {
+        const p = displayParts(hit.t, tz);
+        when = ` The next one is ${p.weekday} ${p.day} ${p.month} at ${p.hour}:${p.minute}, from schedules ${joinList(hit.which.map(i => String(i + 1)))}.`;
+      }
+      out.push({
+        level: 'warn', id: 'overlap', title: 'Two schedules fire at the same time', fix: null,
+        body: `In the next year, ${st.overlaps} run${st.overlaps === 1 ? '' : 's'} from different schedules land on the same minute.${when} Most schedulers start the job once per schedule, so it runs twice at those times.`,
+      });
+    }
+    return out;
+  }
+
   /** Distinct UTC offsets in effect over [a, b), with their date ranges. */
   function offsetPeriods(tz, a, b) {
     const trs = transitionsBetween(tz, a, b);
@@ -1577,65 +1694,123 @@
     return { h, m: mi, ambiguous: !m[3] && !m[2] && h >= 1 && h <= 11 };
   }
 
-  /**
-   * Read a plain-English schedule. Returns { model, notes:[…] } or { error, lines? }.
-   */
-  function fromEnglish(input) {
+  const ORD_WORD = '(?:first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|last)';
+  const ORD_N = { first: 1, '1st': 1, second: 2, '2nd': 2, third: 3, '3rd': 3, fourth: 4, '4th': 4, fifth: 5, '5th': 5, last: 0 };
+  const STEP_WORD = { other: 2, second: 2, third: 3, fourth: 4, sixth: 6 };
+  const AND_MARK = '\u0001'; // stands in for "and" inside a phrase that mustn't be split
+  const ALL_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const ALL_DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+  const ALL_DOWS = [0, 1, 2, 3, 4, 5, 6];
+
+  /** Months for "every n months", starting in a given month (1 = January). */
+  function monthStep(n, start, notes) {
+    start = start || 1;
+    if (n <= 1) return null;
+    let out;
+    if (12 % n === 0) out = sortNum(Array.from({ length: 12 / n }, (_, k) => ((start - 1 + k * n) % 12) + 1));
+    else {
+      out = [];
+      for (let m = start; m <= 12; m += n) out.push(m);
+      notes.push(`12 isn't divisible by ${n}, so the months restart each January.`);
+    }
+    return out;
+  }
+
+  function normalizeEnglish(input) {
     let s = ' ' + String(input || '').toLowerCase()
       .replace(/a\.m\.?/g, 'am').replace(/p\.m\.?/g, 'pm')
       .replace(/(\d{1,2})\.(\d{2})/g, '$1:$2')
-      .replace(/[,;!?]+/g, ' ').replace(/\.(\s|$)/g, ' ')
+      .replace(/[!?]+/g, ' ').replace(/\.(\s|$)/g, ' ')
       .replace(/\b(each|every single)\b/g, 'every')
       .replace(/\b(thru|until|till)\b/g, 'through')
       .replace(/o'?clock/g, '')
+      .replace(/&/g, ' and ')
       .replace(/\s+/g, ' ') + ' ';
-    if (!s.trim()) return { error: 'Describe a schedule, for example “every weekday at 9:30am”.' };
-    const notes = [];
-    const st = { times: [], dows: new Set(), doms: new Set(), months: new Set(), years: new Set() };
+    for (const [k, v] of Object.entries(NUM_WORDS)) s = s.replace(new RegExp(`\\bevery ${k}\\b`, 'g'), `every ${v}`);
+    return s;
+  }
+
+  /** Split a sentence into clauses at commas, semicolons and "and"/"also"/"plus". */
+  function splitClauses(s) {
+    // Keep "and" that belongs to one phrase: time windows and lists of ordinals ("first and third monday").
+    s = s.replace(/\bbetween\s+(\S+(?:\s+(?:am|pm))?)\s+and\s+/g, (m, a) => `between ${a} ${AND_MARK} `);
+    s = s.replace(new RegExp(`\\b${ORD_WORD}(?:\\s*(?:,|and|or)\\s*${ORD_WORD})+(?=\\s+(?:day|weekday|business day|working day|${DAY_WORD}))`, 'g'),
+      m => m.replace(/\s*(?:,|and|or)\s*/g, ` ${AND_MARK} `));
+    return s.split(/\s*[,;]\s*|\s+(?=(?:and|also|plus)\s)/).map(c => c.trim()).filter(Boolean);
+  }
+
+  /** Read one clause into a day rule (which days) and a time spec (which times of day). */
+  function parseClause(text, notes) {
+    let s = ' ' + text.split(AND_MARK).join('and') + ' ';
+    const rule = { dows: new Set(), doms: new Set(), months: new Set(), years: new Set(), entries: [], flags: {} };
+    const time = { times: [], window: null, interval: null, minutePast: null, twice: false };
+    let unsupported = null;
     const take = (re, fn) => { s = s.replace(re, (...a) => { const r = fn(...a); return r === false ? a[0] : ' '; }); };
 
-    for (const [k, v] of Object.entries(NUM_WORDS)) s = s.replace(new RegExp(`\\bevery ${k}\\b`, 'g'), `every ${v}`);
+    // nth / last day or weekday of the month, with its own month qualifier ("of every other month")
+    const nthRe = new RegExp(
+      `\\b(?<ords>${ORD_WORD}(?:\\s*(?:,|and|or)\\s*${ORD_WORD})*)\\s+(?<what>day|weekday|business day|working day|${DAY_WORD})` +
+      `(?:\\s+(?:of|in)\\s+(?:the\\s+|every\\s+)?(?:(?<step>other|second|third|fourth|sixth|\\d+)(?:st|nd|rd|th)?\\s+)?(?<unit>months?|quarters?))?` +
+      `(?:\\s+(?:starting|from|beginning)(?:\\s+in)?\\s+(?<start>${MONTH_WORD}))?`, 'g');
+    take(nthRe, (...a) => {
+      const g = a[a.length - 1];
+      let n = 1;
+      const quarter = !!(g.unit && g.unit.startsWith('quarter'));
+      if (g.step) n = STEP_WORD[g.step] || parseInt(g.step, 10) || 1;
+      if (quarter) n *= 3;
+      const firstMonths = g.unit ? monthStep(n, g.start ? monIdx(g.start) : 1, notes) : null;
+      if (n === 2 && !g.start) notes.push('“Every other month” is read as January, March, May… Add “starting in February” for the even months.');
+      if (n === 3 && !quarter && !g.start) notes.push('Every three months is read as January, April, July and October.');
+      for (const o of g.ords.split(/\s*(?:,|and|or)\s*/)) {
+        const k = ORD_N[o];
+        const what = g.what;
+        // "last … of the quarter" falls in the quarter's final month (March, June, September, December).
+        const months = quarter && k === 0 && firstMonths ? sortNum(firstMonths.map(m => ((m - 1 + 2) % 12) + 1)) : firstMonths;
+        if (what === 'day') rule.entries.push(k === 0 ? { domSpecial: { type: 'L', offset: 0 }, months } : { domList: [k], months });
+        else if (/weekday|business|working/.test(what)) {
+          if (k === 0) rule.entries.push({ domSpecial: { type: 'LW' }, months });
+          else if (k === 1) rule.entries.push({ domSpecial: { type: 'W', day: 1 }, months });
+          else unsupported = `The ${o} weekday of the month has no cron equivalent; only the first and last weekday do.`;
+        } else {
+          const d = dayIdx(what);
+          rule.entries.push({ dowSpecial: k === 0 ? { type: 'lastDow', dow: d } : { type: 'nth', dow: d, n: k }, months });
+        }
+      }
+    });
 
     take(/\b(quarter|half) past (\d{1,2})\s*(am|pm)?\b/g, (_, q, h, ap) => {
       const t = parseTimeWord(h + (ap ? ' ' + ap : ''));
       if (!t) return false;
-      st.times.push({ h: t.h, m: q === 'half' ? 30 : 15 });
+      time.times.push({ h: t.h, m: q === 'half' ? 30 : 15 });
     });
-    take(/\btwice (?:a|per) day\b|\btwice daily\b/g, () => { st.twice = true; });
-    take(/\b(?:during |in )?(?:business|working|office) hours\b/g, () => { st.window = { h1: 9, m1: 0, h2: 17, m2: 0 }; });
-    take(/\bquarterly\b|\bevery quarter\b/g, () => { [1, 4, 7, 10].forEach(m => st.months.add(m)); st.defaultDom = 1; });
-    take(/\b(yearly|annually|every year|once a year)\b/g, () => { st.yearly = true; });
-    take(/\b(monthly|every month|once a month)\b/g, () => { st.monthly = true; });
-    take(/\b(weekly|every week|once a week)\b/g, () => { st.weekly = true; });
-    take(/\b(daily|nightly|every day|once a day)\b/g, () => { st.daily = true; });
-    take(/\bhourly\b/g, () => { st.interval = { n: 1, unit: 'hour' }; });
-
-    // nth / last weekday of the month
-    take(new RegExp(`\\b(first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|last)\\s+(day|weekday|business day|working day|${DAY_WORD})(?:\\s+(?:of|in)\\s+(?:the|every|each)?\\s*month)?\\b`, 'g'), (_, nth, what) => {
-      const n = { first: 1, '1st': 1, second: 2, '2nd': 2, third: 3, '3rd': 3, fourth: 4, '4th': 4, fifth: 5, '5th': 5, last: 0 }[nth];
-      if (what === 'day') {
-        if (n === 0) st.domSpecial = { type: 'L', offset: 0 };
-        else st.doms.add(n);
-      } else if (/weekday|business|working/.test(what)) {
-        st.domSpecial = n === 0 ? { type: 'LW' } : (n === 1 ? { type: 'W', day: 1 } : null);
-        if (!st.domSpecial) { st.unsupported = `“${nth} weekday of the month” has no cron equivalent; only the first and last weekday do.`; }
-      } else {
-        const d = dayIdx(what);
-        st.dowSpecial = n === 0 ? { type: 'lastDow', dow: d } : { type: 'nth', dow: d, n };
-      }
+    take(/\btwice (?:a|per) day\b|\btwice daily\b/g, () => { time.twice = true; });
+    take(/\b(?:during |in )?(?:business|working|office) hours\b/g, () => { time.window = { h1: 9, m1: 0, h2: 17, m2: 0 }; });
+    take(/\bquarterly\b|\bevery quarter\b/g, () => { rule.flags.quarterly = true; });
+    take(/\b(yearly|annually|every year|once a year)\b/g, () => { rule.flags.yearly = true; });
+    take(/\b(monthly|every month|once a month)\b/g, () => { rule.flags.monthly = true; });
+    take(/\b(weekly|every week|once a week)\b/g, () => { rule.flags.weekly = true; });
+    take(/\b(daily|nightly|every day|once a day)\b/g, () => { rule.flags.daily = true; });
+    take(/\bhourly\b/g, () => { time.interval = { n: 1, unit: 'hour' }; });
+    take(/\b(?:in\s+|on\s+)?(?:the\s+)?(odd|even)(?:-numbered)? months\b/g, (_, w) => {
+      for (let m = w === 'odd' ? 1 : 2; m <= 12; m += 2) rule.months.add(m);
     });
 
     // Intervals
-    take(/\bevery (other |\d+ |\d+(?:st|nd|rd|th) )?(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?)\b/g, (_, n, unit) => {
+    take(new RegExp(`\\bevery (other |\\d+ |\\d+(?:st|nd|rd|th) )?(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?)\\b(?:\\s+(?:starting|from|beginning)(?:\\s+in)?\\s+${MONTH_WORD})?`, 'g'), (_, n, unit, startMo) => {
       let k = 1;
       if (n) { n = n.trim(); k = n === 'other' ? 2 : parseInt(n, 10); }
       const u = unit.startsWith('sec') ? 'second' : unit.startsWith('min') ? 'minute' : unit.startsWith('h') ? 'hour'
         : unit.startsWith('d') ? 'day' : unit.startsWith('w') ? 'week' : unit.startsWith('mo') ? 'month' : 'year';
-      if (u === 'day' && k === 1) { st.daily = true; return; }
-      if (u === 'week' && k === 1) { st.weekly = true; return; }
-      if (u === 'month' && k === 1) { st.monthly = true; return; }
-      if (u === 'year' && k === 1) { st.yearly = true; return; }
-      st.interval = { n: k, unit: u };
+      if (u === 'day') { if (k === 1) rule.flags.daily = true; else rule.dayStep = k; return; }
+      if (u === 'week') { if (k === 1) rule.flags.weekly = true; else rule.weekStep = k; return; }
+      if (u === 'month') {
+        if (k === 1) { rule.flags.monthly = true; return; }
+        rule.monthStep = { n: k, start: startMo ? monIdx(startMo) : 1 };
+        if (k === 2 && !startMo) notes.push('“Every other month” is read as January, March, May… Add “starting in February” for the even months.');
+        return;
+      }
+      if (u === 'year') { if (k === 1) rule.flags.yearly = true; else rule.yearStep = k; return; }
+      time.interval = { n: k, unit: u };
     });
 
     // Time windows
@@ -1644,91 +1819,98 @@
       const m = all.match(new RegExp(`(?:between|from)\\s+(${TIME_WORD})\\s+(?:and|to|through|-)\\s+(${TIME_WORD})`));
       const a = parseTimeWord(m[1]), b = parseTimeWord(m[5]);
       if (!a || !b) return false;
-      st.window = { h1: a.h, m1: a.m, h2: b.h, m2: b.m };
+      time.window = { h1: a.h, m1: a.m, h2: b.h, m2: b.m };
     });
     take(new RegExp(`\\b(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)\\s*-\\s*(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))(?=\\s)`, 'g'), (_, a, b) => {
       const ta = parseTimeWord(a), tb = parseTimeWord(b);
       if (!ta || !tb) return false;
-      st.window = { h1: ta.h, m1: ta.m, h2: tb.h, m2: tb.m };
+      time.window = { h1: ta.h, m1: ta.m, h2: tb.h, m2: tb.m };
     });
 
     // Day-of-week ranges and names
     take(new RegExp(`\\b(?:from\\s+)?${DAY_WORD}\\s*(?:-|to|through)\\s*${DAY_WORD}\\b`, 'g'), (_, a, b) => {
       let x = dayIdx(a);
       const y = dayIdx(b);
-      for (let i = 0; i < 7; i++) { st.dows.add(x); if (x === y) break; x = (x + 1) % 7; }
+      for (let i = 0; i < 7; i++) { rule.dows.add(x); if (x === y) break; x = (x + 1) % 7; }
     });
-    take(/\b(?:every )?(?:weekdays?|business days?|work ?days?|working days?)\b/g, () => { [1, 2, 3, 4, 5].forEach(d => st.dows.add(d)); });
-    take(/\b(?:every |on )?weekends?\b/g, () => { st.dows.add(0); st.dows.add(6); });
-    take(new RegExp(`\\b${DAY_WORD}\\b`, 'g'), (_, w) => { st.dows.add(dayIdx(w)); });
+    take(/\b(?:every )?(?:weekdays?|business days?|work ?days?|working days?)\b/g, () => { [1, 2, 3, 4, 5].forEach(d => rule.dows.add(d)); });
+    take(/\b(?:every |on )?weekends?\b/g, () => { rule.dows.add(0); rule.dows.add(6); });
+    take(new RegExp(`\\b${DAY_WORD}\\b`, 'g'), (_, w) => { rule.dows.add(dayIdx(w)); });
 
     // Specific dates: "march 3", "3 march", "3rd of march"
-    take(new RegExp(`\\b${MONTH_WORD}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`, 'g'), (_, mo, d) => {
-      st.months.add(monIdx(mo)); st.doms.add(+d);
-    });
-    take(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?${MONTH_WORD}\\b`, 'g'), (_, d, mo) => {
-      st.months.add(monIdx(mo)); st.doms.add(+d);
-    });
+    take(new RegExp(`\\b${MONTH_WORD}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`, 'g'), (_, mo, d) => { rule.months.add(monIdx(mo)); rule.doms.add(+d); });
+    take(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?${MONTH_WORD}\\b`, 'g'), (_, d, mo) => { rule.months.add(monIdx(mo)); rule.doms.add(+d); });
     take(new RegExp(`\\b${MONTH_WORD}\\s*(?:-|to|through)\\s*${MONTH_WORD}\\b`, 'g'), (_, a, b) => {
       let x = monIdx(a);
       const y = monIdx(b);
-      for (let i = 0; i < 12; i++) { st.months.add(x); if (x === y) break; x = x % 12 + 1; }
+      for (let i = 0; i < 12; i++) { rule.months.add(x); if (x === y) break; x = x % 12 + 1; }
     });
     take(new RegExp(`\\b${MONTH_WORD}\\b`, 'g'), (_, mo, off, str) => {
       if (mo === 'may' && /\bmay\s+(?!\d)/.test(str.slice(off)) && !/\bin\s+$/.test(str.slice(0, off))) return false;
-      st.months.add(monIdx(mo));
+      rule.months.add(monIdx(mo));
     });
 
     // Days of month
-    take(/\b(\d{1,2})(?:st|nd|rd|th)?\s*(?:-|to|through)\s*(\d{1,2})(?:st|nd|rd|th)\b/g, (_, a, b) => {
-      for (let d = +a; d <= +b; d++) st.doms.add(d);
-    });
-    take(/\bdays?\s+(\d{1,2})\s*(?:-|to|through)\s*(\d{1,2})\b/g, (_, a, b) => { for (let d = +a; d <= +b; d++) st.doms.add(d); });
-    take(/\b(\d{1,2})(?:st|nd|rd|th)\b/g, (_, d) => { st.doms.add(+d); });
-    take(/\bday\s+(\d{1,2})\b/g, (_, d) => { st.doms.add(+d); });
+    take(/\bbetween\s+(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)?\s+and\s+(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)\b/g, (_, a, b) => { for (let d = +a; d <= +b; d++) rule.doms.add(d); });
+    take(/\b(\d{1,2})(?:st|nd|rd|th)?\s*(?:-|to|through)\s*(\d{1,2})(?:st|nd|rd|th)\b/g, (_, a, b) => { for (let d = +a; d <= +b; d++) rule.doms.add(d); });
+    take(/\bdays?\s+(\d{1,2})\s*(?:-|to|through)\s*(\d{1,2})\b/g, (_, a, b) => { for (let d = +a; d <= +b; d++) rule.doms.add(d); });
+    take(/\b(\d{1,2})(?:st|nd|rd|th)\b/g, (_, d) => { rule.doms.add(+d); });
+    take(/\bday\s+(\d{1,2})\b/g, (_, d) => { rule.doms.add(+d); });
 
     // Years
-    take(/\b(19[7-9]\d|2[01]\d\d)\b/g, (_, y) => { st.years.add(+y); });
+    take(/\b(19[7-9]\d|2[01]\d\d)\b/g, (_, y) => { rule.years.add(+y); });
 
     // Minutes past the hour
-    take(/\bat\s+:(\d{2})\b/g, (_, m) => { st.minutePast = +m; });
-    take(/\b(?:at\s+)?(\d{1,2})\s+(?:minutes?\s+)?past(?:\s+the hour|\s+every hour)?\b/g, (_, m) => { st.minutePast = +m; });
-    take(/\bat\s+minute\s+(\d{1,2})\b/g, (_, m) => { st.minutePast = +m; });
-    take(/\bon the hour\b/g, () => { st.minutePast = 0; });
-    take(/\b(?:at\s+)?(?:a\s+)?quarter past\b/g, () => { st.minutePast = 15; });
-    take(/\b(?:at\s+)?half past\b/g, () => { st.minutePast = 30; });
+    take(/\bat\s+:(\d{2})\b/g, (_, m) => { time.minutePast = +m; });
+    take(/\b(?:at\s+)?(\d{1,2})\s+(?:minutes?\s+)?past(?:\s+the hour|\s+every hour)?\b/g, (_, m) => { time.minutePast = +m; });
+    take(/\bat\s+minute\s+(\d{1,2})\b/g, (_, m) => { time.minutePast = +m; });
+    take(/\bon the hour\b/g, () => { time.minutePast = 0; });
+    take(/\b(?:at\s+)?(?:a\s+)?quarter past\b/g, () => { time.minutePast = 15; });
+    take(/\b(?:at\s+)?half past\b/g, () => { time.minutePast = 30; });
 
     // Times of day
-    take(/\b(?:at\s+)?(noon|midday|midnight)\b/g, (_, w) => { st.times.push(w === 'midnight' ? { h: 0, m: 0 } : { h: 12, m: 0 }); });
+    take(/\b(?:at\s+)?(noon|midday|midnight)\b/g, (_, w) => { time.times.push(w === 'midnight' ? { h: 0, m: 0 } : { h: 12, m: 0 }); });
     take(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/g, (all, h, m, ap) => {
       const t = parseTimeWord(`${h}${m ? ':' + m : ''} ${ap}`);
       if (!t) return false;
-      st.times.push(t);
+      time.times.push(t);
     });
     take(/\b(?:at\s+)?(\d{1,2}):(\d{2})\b/g, (all, h, m) => {
       const t = parseTimeWord(`${h}:${m}`);
       if (!t) return false;
-      st.times.push(t);
+      time.times.push(t);
     });
     take(/\b(?:at|and)\s+(\d{1,2})(?=\s)(?!\s*(?:minutes?|mins?|hours?|seconds?|days?))/g, (all, h) => {
       const t = parseTimeWord(h);
       if (!t) return false;
       if (t.ambiguous) notes.push(`Read “${h}” as ${pad2(t.h)}:00 (24-hour clock). Write ${h}pm for ${pad2(t.h + 12)}:00.`);
-      st.times.push(t);
+      time.times.push(t);
     });
 
-    const leftover = s.replace(/\b(at|on|in|of|the|and|every|run|runs|running|it|job|please|schedule|cron|from|to|a|an|starting|start|day|days|month|months|week|time|times|each|during|but|only|between|past|minute|hour|o)\b/g, ' ').replace(/[^a-z0-9:]+/g, ' ').trim();
+    const leftover = s.replace(/\b(at|on|in|of|the|and|also|plus|every|run|runs|running|it|job|please|schedule|cron|from|to|a|an|starting|start|day|days|month|months|week|time|times|each|during|but|only|between|past|minute|hour|o)\b/g, ' ').replace(/[^a-z0-9:]+/g, ' ').trim();
     if (leftover) notes.push(`Ignored: “${leftover}”.`);
-    if (st.unsupported) return { error: st.unsupported };
 
-    // Assemble
-    let seconds = [0], minutes = null, hours = null;
+    const f = rule.flags;
+    const hasRule = rule.dows.size || rule.doms.size || rule.months.size || rule.years.size || rule.entries.length ||
+      f.daily || f.weekly || f.monthly || f.yearly || f.quarterly || rule.dayStep || rule.weekStep || rule.monthStep || rule.yearStep;
+    const hasTime = time.times.length || time.window || time.interval || time.minutePast != null || time.twice;
+    return { rule: hasRule ? rule : null, time: hasTime ? time : null, unsupported };
+  }
+
+  /** Times of day for one group of clauses: [{ seconds, minutes, hours }…] or { error }. */
+  function resolveTimes(specs, notes) {
+    const T = { times: [], window: null, interval: null, minutePast: null, twice: false };
+    for (const t of specs) {
+      T.times.push(...t.times);
+      if (t.window) T.window = t.window;
+      if (t.interval) T.interval = t.interval;
+      if (t.minutePast != null) T.minutePast = t.minutePast;
+      if (t.twice) T.twice = true;
+    }
     const allH = Array.from({ length: 24 }, (_, i) => i);
     const allM = Array.from({ length: 60 }, (_, i) => i);
-    let months = st.months.size ? sortNum([...st.months]) : null;
-    let domList = st.doms.size ? sortNum([...st.doms]) : null;
-    const dowList = st.dows.size ? sortNum([...st.dows]) : null;
-    const W = st.window;
+    const W = T.window;
+    if (W && W.h2 < W.h1) return { error: 'The time window ends before it starts. Cron hour ranges can’t wrap past midnight in one go.' };
     const windowHours = (inclusiveEnd) => {
       if (!W) return allH;
       const end = (inclusiveEnd || W.m2 > 0) ? W.h2 : W.h2 - 1;
@@ -1736,98 +1918,200 @@
       for (let h = W.h1; h <= end; h++) out.push(h);
       return out.length ? out : allH;
     };
-    if (W && W.h2 < W.h1) return { error: 'The time window ends before it starts. Cron hour ranges can’t wrap past midnight in one go.' };
-    if (st.twice && !st.times.length) st.times.push({ h: 0, m: 0 }, { h: 12, m: 0 });
-
-    const iv = st.interval;
+    if (T.twice && !T.times.length) T.times.push({ h: 0, m: 0 }, { h: 12, m: 0 });
+    const iv = T.interval;
     if (iv) {
       const n = iv.n;
       if (iv.unit === 'second') {
         if (n >= 60) return { error: 'For intervals of a minute or more, say “every N minutes”.' };
-        seconds = Array.from({ length: Math.ceil(60 / n) }, (_, i) => i * n).filter(v => v < 60);
         if (60 % n) notes.push(`60 isn't divisible by ${n}, so the seconds restart every minute.`);
-        minutes = allM; hours = windowHours(false);
-      } else if (iv.unit === 'minute') {
+        return [{ seconds: Array.from({ length: Math.ceil(60 / n) }, (_, i) => i * n).filter(v => v < 60), minutes: allM, hours: windowHours(false) }];
+      }
+      if (iv.unit === 'minute') {
         if (n >= 60) {
-          if (n % 60 === 0 && n / 60 < 24) { hours = windowHours(true).filter((h, i, a) => (h - a[0]) % (n / 60) === 0); minutes = [st.minutePast || 0]; }
-          else {
-            const lines = minuteIntervalLines(n);
-            return lines
-              ? { error: `Cron can't count ${n}-minute intervals in one line. Use these ${lines.length} crontab lines together:`, lines }
-              : { error: `Every ${n} minutes doesn't divide a day evenly, so cron can't do it.` };
+          if (n % 60 === 0 && n / 60 < 24) {
+            const hs = windowHours(true);
+            return [{ seconds: [0], minutes: [T.minutePast || 0], hours: hs.filter(h => (h - hs[0]) % (n / 60) === 0) }];
           }
-        } else {
-          const start = W ? W.m1 % n : 0;
-          minutes = []; for (let m = start; m < 60; m += n) minutes.push(m);
-          if (60 % n) notes.push(`60 isn't divisible by ${n}: runs restart at :${pad2(start)} each hour.`);
-          hours = windowHours(false);
-          if (W && W.m2 === 0) notes.push(`Last run of the window is ${pad2(hours[hours.length - 1])}:${pad2(minutes[minutes.length - 1])}, the final slot before ${pad2(W.h2)}:00.`);
+          if (1440 % n) return { error: `Every ${n} minutes doesn't divide a day evenly, so cron can't do it.` };
+          const byMinute = new Map();
+          for (let t = 0; t < 1440; t += n) {
+            const m = t % 60;
+            if (!byMinute.has(m)) byMinute.set(m, []);
+            byMinute.get(m).push(Math.floor(t / 60));
+          }
+          notes.push(`Every ${n} minutes takes ${byMinute.size} cron schedules, one per minute of the hour.`);
+          return [...byMinute].map(([m, hs]) => ({ seconds: [0], minutes: [m], hours: hs }));
         }
-      } else if (iv.unit === 'hour') {
+        const start = W ? W.m1 % n : 0;
+        const minutes = [];
+        for (let m = start; m < 60; m += n) minutes.push(m);
+        if (60 % n) notes.push(`60 isn't divisible by ${n}: runs restart at :${pad2(start)} each hour.`);
+        const hours = windowHours(false);
+        if (W && W.m2 === 0) notes.push(`Last run of the window is ${pad2(hours[hours.length - 1])}:${pad2(minutes[minutes.length - 1])}, the final slot before ${pad2(W.h2)}:00.`);
+        return [{ seconds: [0], minutes, hours }];
+      }
+      if (iv.unit === 'hour') {
         if (n >= 24) return { error: 'For a day or longer, say “every day” or “every N days”.' };
         const base = windowHours(true);
-        const first = st.times.length === 1 && !W ? st.times[0].h : base[0];
-        hours = base.filter(h => h >= first && (h - first) % n === 0);
-        minutes = [st.minutePast != null ? st.minutePast : (st.times.length === 1 ? st.times[0].m : 0)];
+        const first = T.times.length === 1 && !W ? T.times[0].h : base[0];
         if (24 % n && !W) notes.push(`24 isn't divisible by ${n}, so the hours restart at midnight.`);
-      } else if (iv.unit === 'day') {
-        domList = []; for (let d = 1; d <= 31; d += n) domList.push(d);
-        notes.push(`Day-of-month steps restart on the 1st each month, so this isn't a strict every-${n}-days rhythm.`);
-      } else if (iv.unit === 'week') {
-        return { error: `Cron can't count weeks. Run weekly and skip alternate weeks in the job, e.g. \`[ $(( $(date +%s) / 604800 % ${n} )) -eq 0 ]\`.` };
-      } else if (iv.unit === 'month') {
-        months = []; for (let m = 1; m <= 12; m += n) months.push(m);
-        if (12 % n) notes.push(`12 isn't divisible by ${n}, so the months restart each January.`);
-        if (!domList && !st.domSpecial && !dowList && !st.dowSpecial) domList = [1];
-      } else {
-        return { error: 'Cron can’t count years. Use a specific year (Quartz or EventBridge) or check the year in the job.' };
+        return [{ seconds: [0], minutes: [T.minutePast != null ? T.minutePast : (T.times.length === 1 ? T.times[0].m : 0)], hours: base.filter(h => h >= first && (h - first) % n === 0) }];
       }
     }
-    if (!minutes) {
-      if (st.times.length) {
-        const hs = sortNum([...new Set(st.times.map(t => t.h))]);
-        const ms = sortNum([...new Set(st.times.map(t => t.m))]);
-        const want = new Set(st.times.map(t => t.h * 60 + t.m));
-        if (hs.length * ms.length !== want.size) {
-          const byMin = new Map();
-          for (const t of st.times) { if (!byMin.has(t.m)) byMin.set(t.m, new Set()); byMin.get(t.m).add(t.h); }
-          return {
-            error: 'Those times have different minutes, so they need one cron line each:',
-            lines: [...byMin].map(([m, h]) => `${m} ${sortNum([...h]).join(',')} * * *`),
-          };
-        }
-        hours = hs; minutes = ms;
-      } else if (st.minutePast != null) {
-        minutes = [st.minutePast]; hours = W ? windowHours(false) : allH;
-      } else if (W) {
-        minutes = [0]; hours = windowHours(true);
-        notes.push('No interval given, so this runs hourly within the window.');
-      } else {
-        minutes = [0]; hours = [0];
-        notes.push('No time given, so this runs at midnight (00:00).');
+    if (T.times.length) {
+      // Group minutes that share the same hours; each group is one schedule.
+      const byMin = new Map();
+      for (const t of T.times) { if (!byMin.has(t.m)) byMin.set(t.m, new Set()); byMin.get(t.m).add(t.h); }
+      const byHours = new Map();
+      for (const [m, hs] of byMin) {
+        const key = sortNum([...hs]).join(',');
+        if (!byHours.has(key)) byHours.set(key, { seconds: [0], minutes: [], hours: sortNum([...hs]) });
+        byHours.get(key).minutes.push(m);
       }
+      const out = [...byHours.values()].map(v => ({ ...v, minutes: sortNum(v.minutes) }));
+      if (out.length > 1) notes.push(`Those times have different minutes, so they take ${out.length} cron schedules.`);
+      return out;
     }
-    if (st.yearly && !months) { months = [1]; if (!domList && !st.domSpecial) domList = [1]; }
-    if (st.monthly && !domList && !st.domSpecial && !dowList && !st.dowSpecial) domList = [1];
-    if (st.weekly && !dowList && !st.dowSpecial) { st.dows.add(0); notes.push('“Weekly” runs on Sundays, like cron’s @weekly.'); }
-    if (st.defaultDom && !domList && !st.domSpecial && !dowList && !st.dowSpecial) domList = [st.defaultDom];
-    const dows = st.dows.size ? sortNum([...st.dows]) : null;
+    if (T.minutePast != null) return [{ seconds: [0], minutes: [T.minutePast], hours: W ? windowHours(false) : allH }];
+    if (W) {
+      notes.push('No interval given, so this runs hourly within the window.');
+      return [{ seconds: [0], minutes: [0], hours: windowHours(true) }];
+    }
+    notes.push('No time given, so this runs at midnight (00:00).');
+    return [{ seconds: [0], minutes: [0], hours: [0] }];
+  }
 
-    for (const d of domList || []) if (d < 1 || d > 31) return { error: `There's no ${ordinal(d)} day of a month.` };
-    const hasDom = !!(domList || st.domSpecial);
-    const hasDow = !!(dows || st.dowSpecial);
-    let combine = 'and';
-    if (hasDom && hasDow) { combine = 'or'; notes.push('Both a date and a weekday were given, so this runs on either.'); }
-    const model = buildModel({
-      seconds, minutes, hours,
-      months: months || Array.from({ length: 12 }, (_, i) => i + 1),
-      years: st.years.size ? sortNum([...st.years]) : null,
-      dom: { list: domList || Array.from({ length: 31 }, (_, i) => i + 1), special: st.domSpecial || null },
-      dow: { list: dows || [0, 1, 2, 3, 4, 5, 6], special: st.dowSpecial || null },
-      combine,
-    });
-    if (!model.times.length) return { error: 'That doesn’t leave any times to run.' };
-    return { model, notes };
+  /** Day rules for one group of clauses: [{ dom, dow, months, years, combine }…] or { error }. */
+  function resolveDays(rules, notes) {
+    // A clause that only names months ("and july") or years extends the clause before it.
+    const folded = [];
+    for (const r of rules) {
+      const onlyMonths = !r.dows.size && !r.doms.size && !r.entries.length && !Object.keys(r.flags).length &&
+        !r.dayStep && !r.weekStep && !r.monthStep && !r.yearStep;
+      if (onlyMonths && folded.length) {
+        r.months.forEach(m => folded[folded.length - 1].months.add(m));
+        r.years.forEach(y => folded[folded.length - 1].years.add(y));
+      } else folded.push(r);
+    }
+    const out = [];
+    const plain = new Map();
+    for (const r of folded) {
+      if (r.weekStep) return { error: `Cron can't count weeks. Run weekly and skip alternate weeks in the job, e.g. \`[ $(( $(date +%s) / 604800 % ${r.weekStep} )) -eq 0 ]\`.` };
+      if (r.yearStep) return { error: 'Cron can’t count years. Use a specific year (Quartz or EventBridge) or check the year in the job.' };
+      let months = r.months.size ? sortNum([...r.months]) : null;
+      if (!months && r.monthStep) months = monthStep(r.monthStep.n, r.monthStep.start, notes);
+      if (!months && r.flags.quarterly) months = [1, 4, 7, 10];
+      if (!months && r.flags.yearly) months = [1];
+      const years = r.years.size ? sortNum([...r.years]) : null;
+      for (const e of r.entries) {
+        out.push({
+          dom: e.domSpecial ? { list: ALL_MONTHS.concat(), special: e.domSpecial } : e.domList ? { list: e.domList } : null,
+          dow: e.dowSpecial ? { special: e.dowSpecial } : null,
+          months: e.months || months, years,
+        });
+      }
+      let dows = r.dows.size ? sortNum([...r.dows]) : null;
+      let doms = r.doms.size ? sortNum([...r.doms]) : null;
+      if (r.dayStep) {
+        doms = [];
+        for (let d = 1; d <= 31; d += r.dayStep) doms.push(d);
+        notes.push(`Day-of-month steps restart on the 1st each month, so this isn't a strict every-${r.dayStep}-days rhythm.`);
+      }
+      const f = r.flags;
+      const hasPlain = dows || doms || f.daily || f.weekly || f.monthly || f.yearly || f.quarterly || r.monthStep || (!r.entries.length);
+      if (!hasPlain) continue;
+      if (f.weekly && !dows) { dows = [0]; notes.push('“Weekly” runs on Sundays, like cron’s @weekly.'); }
+      if ((f.monthly || f.quarterly || f.yearly || r.monthStep) && !dows && !doms) doms = [1];
+      const key = JSON.stringify([months, years, !!dows, !!doms]);
+      const prev = plain.get(key);
+      if (prev) {
+        if (dows) prev.dows = sortNum([...new Set([...(prev.dows || []), ...dows])]);
+        if (doms) prev.doms = sortNum([...new Set([...(prev.doms || []), ...doms])]);
+      } else {
+        const v = { dows, doms, months, years };
+        plain.set(key, v);
+        out.push(v);
+      }
+    }
+    for (const v of out) {
+      if (v.dom === undefined) {
+        v.dom = v.doms ? { list: v.doms } : null;
+        v.dow = v.dows ? { list: v.dows } : null;
+        if (v.dom && v.dow) notes.push('Both a date and a weekday were given, so that schedule runs on either.');
+      }
+      for (const d of (v.dom && v.dom.list && !v.dom.special ? v.dom.list : [])) {
+        if (d < 1 || d > 31) return { error: `There's no ${ordinal(d)} day of a month.` };
+      }
+    }
+    return out.length ? out : [{ dom: null, dow: null, months: null, years: null }];
+  }
+
+  /**
+   * Read a plain-English schedule. Returns { models:[…], notes:[…] } or { error }.
+   * A sentence can describe several schedules ("first Monday of every month, third Monday of
+   * every other month"); each becomes its own model, because cron can't combine them.
+   */
+  function fromEnglish(input) {
+    const s = normalizeEnglish(input);
+    if (!s.trim()) return { error: 'Describe a schedule, for example “every weekday at 9:30am”.' };
+    const notes = [];
+    const clauses = splitClauses(s).map(c => parseClause(c, notes));
+    const bad = clauses.find(c => c.unsupported);
+    if (bad) return { error: bad.unsupported };
+
+    // Group clauses into schedules: a clause with both days and times completes a group;
+    // days alone wait for a time; a time alone joins the days before it.
+    const groups = [];
+    let pend = { rules: [], times: [] };
+    let last = null;
+    for (const c of clauses) {
+      if (c.rule && c.time) {
+        pend.rules.push(c.rule);
+        pend.times.push(c.time);
+        groups.push(pend);
+        last = pend;
+        pend = { rules: [], times: [] };
+      } else if (c.rule) pend.rules.push(c.rule);
+      else if (c.time) {
+        if (!pend.rules.length && last) last.times.push(c.time);
+        else pend.times.push(c.time);
+      }
+    }
+    if (pend.rules.length || pend.times.length) {
+      if (last && !pend.times.length) last.rules.push(...pend.rules);
+      else groups.push(pend);
+    }
+    if (!groups.length) return { error: 'Describe a schedule, for example “every weekday at 9:30am”.' };
+
+    const models = [];
+    const seen = new Set();
+    for (const g of groups) {
+      const times = resolveTimes(g.times, notes);
+      if (times.error) return times;
+      const days = resolveDays(g.rules, notes);
+      if (days.error) return days;
+      for (const d of days) {
+        for (const t of times) {
+          const hasDom = !!d.dom, hasDow = !!d.dow;
+          const model = buildModel({
+            seconds: t.seconds, minutes: t.minutes, hours: t.hours,
+            months: d.months || ALL_MONTHS,
+            years: d.years,
+            dom: { list: d.dom ? d.dom.list || ALL_DAYS : ALL_DAYS, special: d.dom ? d.dom.special || null : null },
+            dow: { list: d.dow ? d.dow.list || ALL_DOWS : ALL_DOWS, special: d.dow ? d.dow.special || null : null },
+            combine: hasDom && hasDow ? 'or' : 'and',
+          });
+          if (!model.times.length) return { error: 'That doesn’t leave any times to run.' };
+          const key = JSON.stringify([model.times.length, model.seconds, model.minutes, model.hours, model.months, model.years, model.dom.list, model.dom.special, model.dow.list, model.dow.special, model.dayMode]);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          models.push(model);
+        }
+      }
+    }
+    if (models.length > 8) return { error: `That takes ${models.length} separate cron schedules. Split it into simpler requests.` };
+    return { models, notes: [...new Set(notes)] };
   }
 
   // ---------------------------------------------------------------- display helpers
@@ -1858,7 +2142,7 @@
 
   return {
     DIALECTS, DIALECT_ORDER, FIELD_LABEL, DOW_ABBR, DOW_LONG, MON_LONG, MON_SHORT, EXAMPLE_BY_DIALECT, DAY,
-    parse, unwrap, buildModel, dayMatches, upcoming, dstImpact, dstPolicy, stats, describe, render, renderDays, workaroundText,
+    parse, unwrap, buildModel, dayMatches, upcoming, upcomingSet, dstImpact, dstPolicy, stats, statsSet, lintSet, describe, render, renderDays, workaroundText,
     utcVariants, shiftModel, offsetPeriods, transitionsBetween, lint, fromEnglish, minuteIntervalLines,
     wallParts, offsetAt, displayParts, fmtOffset, fmtClock, fmtDuration, ordinal, daysInMonth, weekday, isLeap,
     isValidZone, compress, runsOf,

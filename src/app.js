@@ -11,23 +11,25 @@
   const NTH = ['1st', '2nd', '3rd', '4th', '5th'];
   const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const STORE_KEY = 'cron-almanac';
+  const MAX_SCHEDULES = 8;
 
   const EXAMPLES = [
-    { label: 'The “first Monday” mistake', expr: '0 9 1-7 * 1', d: 'unix' },
-    { label: 'Every 7 minutes (uneven)', expr: '*/7 * * * *', d: 'unix' },
-    { label: '02:30 in New York (daylight saving)', expr: '30 2 * * *', d: 'unix', tz: 'America/New_York' },
-    { label: 'Every 90 minutes?', expr: '*/90 * * * *', d: 'unix' },
-    { label: 'Full crontab line with a command', expr: '15 3 * * 1-5 /opt/backup.sh > /var/log/backup-$(date +%F).log', d: 'unix' },
-    { label: 'GitHub Actions: 02:30 in New York', expr: '30 2 * * *', d: 'github', tz: 'America/New_York' },
-    { label: 'Kubernetes: */2 with a weekday', expr: '0 0 */2 * 1', d: 'k8s' },
-    { label: 'EventBridge: month end', expr: 'cron(0 18 L * ? *)', d: 'eventbridge' },
-    { label: 'Quartz: third Friday', expr: '0 0 12 ? * 6#3', d: 'quartz' },
-    { label: 'Quartz: 1-5 isn’t Monday to Friday', expr: '0 0 9 ? * 1-5', d: 'quartz' },
-    { label: 'Spring: weekday mornings in Berlin', expr: '0 30 8 * * MON-FRI', d: 'spring', tz: 'Europe/Berlin' },
+    { label: 'The “first Monday” mistake', exprs: ['0 9 1-7 * 1'], d: 'unix' },
+    { label: 'Every 7 minutes (uneven)', exprs: ['*/7 * * * *'], d: 'unix' },
+    { label: '02:30 in New York (daylight saving)', exprs: ['30 2 * * *'], d: 'unix', tz: 'America/New_York' },
+    { label: 'Every 90 minutes takes two lines', exprs: ['0 */3 * * *', '30 1-22/3 * * *'], d: 'unix' },
+    { label: 'Full crontab line with a command', exprs: ['15 3 * * 1-5 /opt/backup.sh > /var/log/backup-$(date +%F).log'], d: 'unix' },
+    { label: 'GitHub Actions: 02:30 in New York', exprs: ['30 2 * * *'], d: 'github', tz: 'America/New_York' },
+    { label: 'Kubernetes: */2 with a weekday', exprs: ['0 0 */2 * 1'], d: 'k8s' },
+    { label: 'EventBridge: month end', exprs: ['cron(0 18 L * ? *)'], d: 'eventbridge' },
+    { label: 'Quartz: first Monday, and third Monday every other month', exprs: ['0 0 9 ? * 2#1', '0 0 9 ? 1/2 2#3'], d: 'quartz' },
+    { label: 'Quartz: 1-5 isn’t Monday to Friday', exprs: ['0 0 9 ? * 1-5'], d: 'quartz' },
+    { label: 'Spring: weekday mornings in Berlin', exprs: ['0 30 8 * * MON-FRI'], d: 'spring', tz: 'Europe/Berlin' },
   ];
 
-  const state = { expr: '0 9 1-7 * 1', dialect: 'unix', tz: browserTz, calStart: null, runs: 12, sel: null };
-  let current = null;
+  // exprs[0] is the main expression; the rest are extra schedules that run the same job.
+  const state = { exprs: ['0 9 1-7 * 1'], dialect: 'unix', tz: browserTz, calStart: null, runs: 12, sel: null };
+  let current = null; // { list, P, models, tz }
 
   // ------------------------------------------------------------ helpers
 
@@ -37,6 +39,7 @@
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br>');
   const nf = new Intl.NumberFormat('en-US');
+  const pad = n => String(n).padStart(2, '0');
 
   function b64(s) {
     const bytes = new TextEncoder().encode(s);
@@ -68,6 +71,9 @@
     if (P && P.ok && P.tz) return P.tz;
     return state.tz;
   }
+
+  const multi = () => current && current.models.length > 1;
+  const schedName = i => `Schedule ${i + 1}`;
 
   let toastTimer = 0;
   function toast(msg) {
@@ -115,7 +121,8 @@
     if (!raw) return false;
     try {
       const o = JSON.parse(raw);
-      if (typeof o.e === 'string') state.expr = o.e;
+      if (typeof o.e === 'string') state.exprs = [o.e];
+      if (Array.isArray(o.x)) state.exprs.push(...o.x.filter(x => typeof x === 'string').slice(0, MAX_SCHEDULES - 1));
       if (D[o.d]) state.dialect = o.d;
       if (typeof o.z === 'string' && E.isValidZone(o.z)) state.tz = o.z;
     } catch (e) { return false; }
@@ -123,11 +130,22 @@
   }
 
   function save() {
-    const json = JSON.stringify({ e: state.expr, d: state.dialect, z: state.tz });
+    const o = { e: state.exprs[0], d: state.dialect, z: state.tz };
+    if (state.exprs.length > 1) o.x = state.exprs.slice(1);
+    const json = JSON.stringify(o);
     try { localStorage.setItem(STORE_KEY, json); } catch (e) { /* storage unavailable */ }
     if (window.top === window) {
       try { history.replaceState(null, '', '#s.' + b64(json)); } catch (e) { /* ignore */ }
     }
+  }
+
+  /** Replace the whole set of expressions (and optionally the dialect), then redraw. */
+  function setExprs(exprs, dialect) {
+    if (dialect) state.dialect = dialect;
+    state.exprs = exprs.length ? exprs.slice(0, MAX_SCHEDULES) : [''];
+    state.sel = null;
+    $('expr').value = state.exprs[0];
+    update();
   }
 
   // ------------------------------------------------------------ static controls
@@ -176,14 +194,10 @@
       const x = EXAMPLES[+sel.value];
       sel.value = '';
       if (!x) return;
-      state.expr = x.expr;
-      state.dialect = x.d;
       if (x.tz) state.tz = x.tz;
-      state.sel = null;
       state.calStart = null;
-      $('expr').value = state.expr;
       toast('');
-      update();
+      setExprs(x.exprs, x.d);
     });
   }
 
@@ -191,33 +205,35 @@
 
   function switchDialect(id) {
     if (id === state.dialect) return;
-    const P = current;
     const T = D[id];
-    let msg;
-    if (P && P.ok) {
-      if (P.tz) state.tz = P.tz;
-      const r = E.render(P, id);
-      if (r.ok) {
-        state.expr = r.lines[0];
-        msg = r.lines.length > 1
-          ? `${T.name} needs ${r.lines.length} schedules for this; showing the first. Translations lists both.`
-          : `Converted to ${T.name}.`;
-      } else if (r.workaround) {
-        state.expr = r.workaround.expr;
-        msg = `${r.reason} Showing the closest ${T.short} schedule; Translations has the check the job needs.`;
-      } else {
-        msg = `${T.name} can't express this: ${r.reason}`;
-      }
+    const list = current ? current.list : [];
+    let msg = '';
+    if (list.length && list[0].ok) {
+      if (list[0].tz) state.tz = list[0].tz;
+      const out = [];
+      const problems = [];
+      let split = 0;
+      list.forEach((P, i) => {
+        if (!P.ok) { out.push(state.exprs[i]); return; }
+        const r = E.render(P, id);
+        if (r.ok) { out.push(...r.lines); if (r.lines.length > 1) split++; }
+        else if (r.workaround) { out.push(r.workaround.expr); problems.push(r.reason); }
+        else { out.push(state.exprs[i]); problems.push(r.reason); }
+      });
+      if (problems.length) {
+        msg = `${problems[0]} ${list.length > 1 ? 'Where there was no exact match, the closest schedule is shown' : 'Showing the closest schedule'}; Translations has the check the job needs.`;
+      } else if (split) {
+        msg = `${T.name} needs ${out.length} schedules for this, so they're all listed below the expression.`;
+      } else msg = `Converted to ${T.name}.`;
+      toast(msg);
+      setExprs(out, id);
     } else {
-      msg = `Reading the expression as ${T.name}.`;
+      toast(`Reading the expression as ${T.name}.`);
+      setExprs(state.exprs, id);
     }
-    state.dialect = id;
-    $('expr').value = state.expr;
-    toast(msg);
-    update();
   }
 
-  // ------------------------------------------------------------ field chips
+  // ------------------------------------------------------------ field chips (main expression)
 
   function chipMeaning(f) {
     if (f.question) return 'not used';
@@ -240,8 +256,8 @@
       switch (f.kind) {
         case 'dow': return DOW_SHORT[v];
         case 'month': return E.MON_SHORT[v - 1];
-        case 'minute': case 'second': return ':' + String(v).padStart(2, '0');
-        case 'hour': return String(v).padStart(2, '0') + 'h';
+        case 'minute': case 'second': return ':' + pad(v);
+        case 'hour': return pad(v) + 'h';
         case 'dom': return E.ordinal(v);
         default: return String(v);
       }
@@ -262,7 +278,7 @@
     const toks = P.tokens || [];
     const chips = [];
     const chip = (label, token, mean, cls, idx) =>
-      `<li><button type="button" class="chip ${cls || ''}" data-i="${idx}"><span class="f-label">${esc(label)}</span><span class="f-token">${esc(token)}</span><span class="f-mean">${esc(mean || ' ')}</span></button></li>`;
+      `<li><button type="button" class="chip ${cls || ''}" data-i="${idx}"><span class="f-label">${esc(label)}</span><span class="f-token">${esc(token)}</span><span class="f-mean">${esc(mean || ' ')}</span></button></li>`;
     if (P.ok && P.macro) {
       chips.push(chip('shortcut', P.macro, P.reboot ? 'at startup' : `= ${P.macroExpansion}`, '', 0));
     } else {
@@ -286,22 +302,66 @@
 
   function syncCaret() {
     const input = $('expr');
-    const toks = (current && current.tokens) || [];
+    const toks = (current && current.P && current.P.tokens) || [];
     const pos = input.selectionStart;
     const idx = document.activeElement === input ? toks.findIndex(t => pos >= t.start && pos <= t.end) : -1;
     $('fields').querySelectorAll('.chip').forEach(c => c.classList.toggle('active', +c.dataset.i === idx));
   }
 
+  // ------------------------------------------------------------ extra schedules
+
+  function renderExtras(list) {
+    const box = $('extras');
+    const n = state.exprs.length - 1;
+    $('expr-n').hidden = n === 0;
+    $('add-expr').hidden = state.exprs.length >= MAX_SCHEDULES;
+    let rows = box.querySelectorAll('.extra');
+    if (rows.length !== n) {
+      const focused = document.activeElement && document.activeElement.classList.contains('extra-input') ? +document.activeElement.dataset.i : -1;
+      box.innerHTML = state.exprs.slice(1).map((x, k) => {
+        const i = k + 1;
+        return `<div class="extra">
+          <span class="extra-n" aria-hidden="true">${i + 1}</span>
+          <label class="sr-only" for="expr-${i}">${schedName(i)}</label>
+          <input id="expr-${i}" class="extra-input" data-i="${i}" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off">
+          <button type="button" class="btn ghost small" data-remove="${i}" aria-label="Remove ${schedName(i).toLowerCase()}">Remove</button>
+          <p class="extra-note" id="expr-note-${i}"></p>
+        </div>`;
+      }).join('');
+      rows = box.querySelectorAll('.extra');
+      if (focused > 0 && focused <= n) $('expr-' + focused).focus();
+    }
+    rows.forEach((row, k) => {
+      const i = k + 1;
+      const input = row.querySelector('input');
+      if (document.activeElement !== input && input.value !== state.exprs[i]) input.value = state.exprs[i];
+      const P = list[i];
+      const note = row.querySelector('.extra-note');
+      let text, bad = false;
+      if (!P.ok) { text = P.error.message; bad = true; }
+      else if (P.reboot) { text = '`@reboot` can’t be combined with other schedules.'; bad = true; }
+      else text = E.describe(P).replace(/\*\*/g, '');
+      note.innerHTML = md(text);
+      note.classList.toggle('bad', bad);
+      input.classList.toggle('invalid', bad);
+      input.setAttribute('aria-invalid', String(bad));
+      input.setAttribute('aria-describedby', 'expr-note-' + i);
+    });
+  }
+
   // ------------------------------------------------------------ main render
 
   function update() {
-    const P = E.parse(state.expr, state.dialect);
-    current = P;
+    const list = state.exprs.map(x => E.parse(x, state.dialect));
+    const P = list[0];
     const tz = effTz(P);
     const now = Date.now();
+    const models = !P.ok ? [] : P.reboot ? [P] : list.filter(Q => Q.ok && !Q.reboot);
+    current = { list, P, models, tz };
     syncDialectButtons();
     renderTz(P, tz, now);
     renderFields(P);
+    renderExtras(list);
     const results = $('results');
     const input = $('expr');
     input.setAttribute('aria-invalid', String(!P.ok));
@@ -317,24 +377,23 @@
     results.classList.remove('stale');
     input.classList.remove('invalid');
     input.setAttribute('aria-describedby', 'sentence');
-    renderSummary(P, tz, now);
-    renderChecks(P, tz, now);
-    renderRuns(P, tz, now);
-    renderCalendar(P, tz, now);
-    renderDaymap(P, tz, now);
-    renderTranslations(P, tz, now);
+    renderSummary(models, tz, now);
+    renderChecks(models, tz, now);
+    renderRuns(models, tz, now);
+    renderCalendar(models, tz, now);
+    renderDaymap(models, tz, now);
+    renderTranslations(models, tz, now);
     save();
   }
 
   function renderTz(P, tz, now) {
     const sel = $('tz');
     ensureTzOption(tz);
-    const forced = !!(P.ok && P.tz);
-    sel.disabled = forced;
+    sel.disabled = !!(P.ok && P.tz);
     const p = E.displayParts(now, tz);
     let hint = `Now ${p.hour}:${p.minute} ${p.timeZoneName} (${E.fmtOffset(E.offsetAt(now, tz))}).`;
     if (P.ok && P.tz) hint = `Set by ${P.tzSource.replace(/`/g, '')} in the pasted text. ` + hint;
-    else if (state.dialect === 'github') hint += ' GitHub uses UTC unless the workflow sets timezone:.';
+    else if (state.dialect === 'github') hint += ' GitHub uses UTC unless the workflow sets its timezone key.';
     else if (state.dialect === 'eventbridge') hint += ' Rules always use UTC; EventBridge Scheduler can use this zone.';
     $('tz-hint').textContent = hint;
   }
@@ -342,44 +401,61 @@
   function renderError(P) {
     const el = $('error');
     const actions = [];
-    if (P.error.fix) actions.push(`<button type="button" class="btn small" data-expr="${esc(P.error.fix.expr)}">${esc(P.error.fix.label)}</button>`);
+    if (P.error.fix) actions.push(`<button type="button" class="btn small" data-fix="0" data-expr="${esc(P.error.fix.expr)}">${esc(P.error.fix.label)}</button>`);
     for (const id of E.DIALECT_ORDER) {
       if (id === state.dialect || actions.length >= 4) continue;
-      const Q = E.parse(state.expr, id);
+      const Q = E.parse(state.exprs[0], id);
       if (Q.ok) actions.push(`<button type="button" class="btn ghost small" data-read="${id}">Read it as ${esc(D[id].name)}</button>`);
     }
     el.innerHTML = `<p>${md(P.error.message)}</p>${actions.length ? `<div class="actions">${actions.join('')}</div>` : ''}`;
     el.hidden = false;
   }
 
-  function renderSummary(P, tz, now) {
-    let s = md(E.describe(P)).replace(/<strong>or<\/strong>/g, '<mark>or</mark>');
-    if (!P.reboot) s += ` <span class="tz">${esc(tz)}</span>`;
-    $('sentence').innerHTML = s;
-    const st = E.stats(P, tz, now);
+  function renderSummary(models, tz, now) {
+    const desc = M => md(E.describe(M)).replace(/<strong>or<\/strong>/g, '<mark>or</mark>');
+    const zone = models[0].reboot ? '' : ` <span class="tz">${esc(tz)}</span>`;
+    $('sentence').innerHTML = models.length === 1
+      ? `<p>${desc(models[0])}${zone}</p>`
+      : `<p class="lead">Runs on ${models.length} schedules together${zone}</p><ol>${models.map(M => `<li>${desc(M)}</li>`).join('')}</ol>`;
+    const st = E.statsSet(models, tz, now);
     const dl = $('stats');
     if (!st) { dl.innerHTML = ''; dl.hidden = true; return; }
     dl.hidden = false;
-    const next = E.upcoming(P, tz, now, 1).runs[0];
+    const next = E.upcomingSet(models, tz, now, 1).runs[0];
+    const perDay = st.perDayMin === st.perDayMax ? nf.format(st.perDayMax) : `${nf.format(st.perDayMin)}–${nf.format(st.perDayMax)}`;
     const items = [
       ['Next run', next ? `${relTime(next.t - now)}<small>${esc(fmtDate(next.t, tz, new Date(next.t).getUTCFullYear() !== new Date(now).getUTCFullYear()))}</small>` : 'Never'],
       ['Runs a year', `${nf.format(st.perYear)}<small>on ${nf.format(st.activeDays)} day${st.activeDays === 1 ? '' : 's'}</small>`],
-      ['Runs a day', `${nf.format(st.perDay)}<small>on days it runs</small>`],
+      ['Runs a day', `${perDay}<small>on days it runs</small>`],
       ['Shortest gap', st.minGap == null ? '—' : esc(E.fmtDuration(st.minGap))],
       ['Longest gap', st.maxGap == null ? '—' : esc(E.fmtDuration(st.maxGap))],
     ];
     dl.innerHTML = items.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
   }
 
-  function renderChecks(P, tz, now) {
-    const items = E.lint(P, tz, now);
+  // Notes about the platform rather than one expression; shown once for a set.
+  const PLATFORM_CHECKS = new Set(['gh-notes', 'gh-timezone', 'k8s-tz', 'k8s-crontz', 'eb-utc', 'unix-crontz']);
+
+  function renderChecks(models, tz, now) {
+    const items = [];
+    const seen = new Set();
+    models.forEach((M, i) => {
+      for (const c of E.lint(M, tz, now)) {
+        const global = PLATFORM_CHECKS.has(c.id);
+        const key = global ? c.id : `${i}|${c.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        items.push(Object.assign({}, c, { title: models.length > 1 && !global ? `${schedName(i)}: ${c.title}` : c.title, at: i }));
+      }
+    });
+    items.push(...E.lintSet(models, tz, now));
     const order = { error: 0, warn: 1, info: 2 };
     items.sort((a, b) => order[a.level] - order[b.level]);
     if (!items.some(i => i.level !== 'info')) {
       const zoneNote = E.transitionsBetween(tz, now, now + 365 * DAY).length ? `, daylight saving in ${tz}` : '';
       items.unshift({
         level: 'ok', title: 'No problems found',
-        body: `Checked the day-field logic, step sizes, impossible dates${zoneNote} and ${D[state.dialect].name} limits.`,
+        body: `Checked the day-field logic, step sizes, impossible dates${zoneNote}${models.length > 1 ? ', overlapping schedules' : ''} and ${D[state.dialect].name} limits.`,
       });
     }
     const label = { error: 'Error', warn: 'Warning', info: 'Note', ok: 'OK' };
@@ -387,31 +463,32 @@
       <article class="check">
         <header><span class="sev ${c.level}">${label[c.level]}</span><h3>${md(c.title)}</h3></header>
         <p>${md(c.body)}</p>
-        ${c.fix ? `<button type="button" class="btn ghost small" data-expr="${esc(c.fix.expr)}">${esc(c.fix.label)}</button>` : ''}
+        ${c.fix ? `<button type="button" class="btn ghost small" data-fix="${c.at || 0}" data-expr="${esc(c.fix.expr)}">${esc(c.fix.label)}</button>` : ''}
       </article>`).join('');
   }
 
-  function renderRuns(P, tz, now) {
+  function renderRuns(models, tz, now) {
     const table = $('runs');
     const more = $('more-runs');
-    if (P.reboot) {
+    if (models[0].reboot) {
       table.innerHTML = '<tbody><tr><td class="runs-empty">Runs once each time cron starts.</td></tr></tbody>';
       more.hidden = true;
       return;
     }
-    const up = E.upcoming(P, tz, now, state.runs);
+    const up = E.upcomingSet(models, tz, now, state.runs);
     if (!up.runs.length) {
       table.innerHTML = '<tbody><tr><td class="runs-empty">No upcoming runs.</td></tr></tbody>';
       more.hidden = true;
       return;
     }
     const showLocal = browserTz !== tz;
-    const withSec = P.seconds.some(s => s !== 0);
+    const several = models.length > 1;
+    const withSec = models.some(M => M.seconds.some(s => s !== 0));
     const thisYear = E.wallParts(now, tz).y;
-    const pol = E.dstPolicy(P);
     const T = D[state.dialect];
     const badgeHtml = (text, title) => `<span class="badge" title="${esc(title)}">${esc(text)}</span>`;
     const rows = up.runs.map(r => {
+      const pol = E.dstPolicy(models[r.which[0]]);
       const p = E.displayParts(r.t, tz);
       const date = `${p.weekday} ${p.day} ${p.month}${+p.year !== thisYear ? ' ' + p.year : ''}`;
       let time, badge = '', cls = '';
@@ -441,31 +518,37 @@
           badge = badgeHtml(pol.overlap === 'once' ? 'runs once' : '1st of 2', twice);
         }
       }
+      if (several && r.which.length > 1) {
+        cls += ' clash';
+        badge += badgeHtml('twice', `Schedules ${r.which.map(i => i + 1).join(' and ')} both fire now.`);
+      }
       let local = '';
       if (showLocal) {
         const q = E.displayParts(r.t, browserTz);
-        const sameDay = q.day === p.day;
-        local = `<td class="local"><span class="mono">${q.hour}:${q.minute}</span>${sameDay ? '' : ' ' + esc(q.weekday)}</td>`;
+        local = `<td class="local"><span class="mono">${q.hour}:${q.minute}</span>${q.day === p.day ? '' : ' ' + esc(q.weekday)}</td>`;
       }
-      return `<tr class="${cls}"><td>${esc(date)}</td><td class="t">${esc(time)}<span class="abbr">${esc(p.timeZoneName)}</span>${badge}</td>${local}<td class="rel">${esc(relTime(r.t - now))}</td></tr>`;
+      const sched = several ? `<td class="sched">${r.which.map(i => i + 1).join(', ')}</td>` : '';
+      return `<tr class="${cls.trim()}"><td>${esc(date)}</td><td class="t">${esc(time)}<span class="abbr">${esc(p.timeZoneName)}</span>${badge}</td>${sched}${local}<td class="rel">${esc(relTime(r.t - now))}</td></tr>`;
     });
-    table.innerHTML = `<thead><tr><th scope="col">Date</th><th scope="col">Time</th>${showLocal ? `<th scope="col" title="${esc(browserTz)}">Your time</th>` : ''}<th scope="col">In</th></tr></thead><tbody>${rows.join('')}</tbody>`;
+    table.innerHTML = `<thead><tr><th scope="col">Date</th><th scope="col">Time</th>${several ? '<th scope="col" title="Which schedule">Sched.</th>' : ''}${showLocal ? `<th scope="col" title="${esc(browserTz)}">Your time</th>` : ''}<th scope="col">In</th></tr></thead><tbody>${rows.join('')}</tbody>`;
     more.hidden = up.exhausted || state.runs >= 200;
   }
 
-  function dstDays(P, tz, a, b) {
+  function dstDays(models, tz, a, b) {
     const map = new Map();
-    for (const x of E.dstImpact(P, tz, a, b)) {
-      if (!x.affected) continue;
-      for (const s of x.samples) {
-        const d = new Date(s.day);
-        map.set(`${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`, x);
+    for (const M of models) {
+      for (const x of E.dstImpact(M, tz, a, b)) {
+        if (!x.affected) continue;
+        for (const s of x.samples) {
+          const d = new Date(s.day);
+          map.set(`${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`, x);
+        }
       }
     }
     return map;
   }
 
-  function renderCalendar(P, tz, now) {
+  function renderCalendar(models, tz, now) {
     const w = E.wallParts(now, tz);
     if (state.calStart == null) state.calStart = w.y * 12 + (w.mo - 1);
     const start = state.calStart;
@@ -475,8 +558,8 @@
     $('year-prev').disabled = first.y <= 1970;
     $('year-next').disabled = last.y >= 2199;
     const box = $('calendar');
-    if (P.reboot) { box.innerHTML = ''; $('day-detail').textContent = 'No calendar for a startup-only job.'; return; }
-    const dst = dstDays(P, tz, Date.UTC(first.y, first.m - 1, 1) - 2 * DAY, Date.UTC(last.y, last.m, 1) + 2 * DAY);
+    if (models[0].reboot) { box.innerHTML = ''; $('day-detail').textContent = 'No calendar for a startup-only job.'; return; }
+    const dst = dstDays(models, tz, Date.UTC(first.y, first.m - 1, 1) - 2 * DAY, Date.UTC(last.y, last.m, 1) + 2 * DAY);
     const todayKey = `${w.y}-${w.mo}-${w.d}`;
     const todayNum = Date.UTC(w.y, w.mo - 1, w.d);
     const T = D[state.dialect];
@@ -492,13 +575,13 @@
     for (let k = start; k < start + 12; k++) {
       const { y, m } = ym(k);
       const dim = E.daysInMonth(y, m);
-      const first = E.weekday(y, m, 1);
+      const lead = E.weekday(y, m, 1);
       let cells = '';
       let count = 0;
-      for (let i = 0; i < first; i++) cells += '<span></span>';
+      for (let i = 0; i < lead; i++) cells += '<span></span>';
       for (let d = 1; d <= dim; d++) {
         const key = `${y}-${m}-${d}`;
-        const on = E.dayMatches(P, y, m, d);
+        const on = models.some(M => E.dayMatches(M, y, m, d));
         if (on) count++;
         const cls = [on ? 'on' : '', key === todayKey ? 'today' : '', Date.UTC(y, m - 1, d) < todayNum ? 'past' : '', dst.has(key) ? 'dst' : '', state.sel === key ? 'sel' : ''].join(' ').trim();
         cells += `<button type="button" class="${cls}" data-date="${key}" tabindex="${key === focusKey ? 0 : -1}" aria-pressed="${state.sel === key}" aria-label="${E.DOW_LONG[E.weekday(y, m, d)]} ${d} ${E.MON_LONG[m - 1]}${on ? ', runs' : ''}${dst.has(key) ? ', clock change' : ''}">${d}</button>`;
@@ -507,19 +590,24 @@
       html += `<div class="month"><h3><b>${E.MON_LONG[m - 1]}${yr}</b><span>${count} day${count === 1 ? '' : 's'}</span></h3><div class="mgrid" role="group" aria-label="${E.MON_LONG[m - 1]} ${y}">${head}${cells}</div></div>`;
     }
     box.innerHTML = html;
-    renderDayDetail(P, tz, dst);
+    renderDayDetail(models, tz, dst);
   }
 
-  function renderDayDetail(P, tz, dst) {
+  function renderDayDetail(models, tz, dst) {
     const el = $('day-detail');
     if (!state.sel) { el.textContent = 'Pick a day to see its run times.'; return; }
     const [y, m, d] = state.sel.split('-').map(Number);
     const label = `${E.DOW_LONG[E.weekday(y, m, d)]} ${d} ${E.MON_LONG[m - 1]} ${y}`;
-    if (!E.dayMatches(P, y, m, d)) { el.innerHTML = `<strong>${esc(label)}</strong>: no runs.`; return; }
-    const withSec = P.seconds.some(s => s !== 0);
-    const T = P.times;
-    const shown = T.slice(0, 10).map(s => E.fmtClock(s, withSec)).join(', ');
-    let html = `<strong>${esc(label)}</strong>: ${T.length} run${T.length === 1 ? '' : 's'} (${esc(tz)}) at ${esc(shown)}${T.length > 10 ? ` and ${nf.format(T.length - 10)} more` : ''}.`;
+    const hits = models.map((M, i) => ({ M, i })).filter(x => E.dayMatches(x.M, y, m, d));
+    if (!hits.length) { el.innerHTML = `<strong>${esc(label)}</strong>: no runs.`; return; }
+    const part = M => {
+      const withSec = M.seconds.some(s => s !== 0);
+      const T = M.times;
+      return `${nf.format(T.length)} run${T.length === 1 ? '' : 's'} at ${esc(T.slice(0, 10).map(s => E.fmtClock(s, withSec)).join(', '))}${T.length > 10 ? ` and ${nf.format(T.length - 10)} more` : ''}`;
+    };
+    let html = `<strong>${esc(label)}</strong> (${esc(tz)}): `;
+    html += models.length === 1 ? part(hits[0].M) : hits.map(x => `${schedName(x.i).toLowerCase()}, ${part(x.M)}`).join('; ');
+    html += '.';
     const x = dst && dst.get(state.sel);
     if (x) {
       html += x.gap
@@ -530,38 +618,39 @@
   }
 
   let daymapBuilt = false;
+  let daymapDefault = '';
   function buildDaymap() {
     const box = $('daymap');
     let html = '<span></span><div class="cols"><span>:00</span><span>:15</span><span>:30</span><span>:45</span></div>';
     const cells = '<i></i>'.repeat(60);
-    for (let h = 0; h < 24; h++) html += `<span class="hl" data-hl="${h}">${String(h).padStart(2, '0')}</span><div class="row" data-h="${h}">${cells}</div>`;
+    for (let h = 0; h < 24; h++) html += `<span class="hl" data-hl="${h}">${pad(h)}</span><div class="row" data-h="${h}">${cells}</div>`;
     box.innerHTML = html;
     box.addEventListener('pointerover', e => {
       const cell = e.target.closest('.row i');
-      if (!cell || !current || !current.ok || current.reboot) return;
+      if (!cell || !current || !current.models.length || current.models[0].reboot) return;
       const h = +cell.parentElement.dataset.h;
       const m = Array.prototype.indexOf.call(cell.parentElement.children, cell);
-      const on = current.hours.includes(h) && current.minutes.includes(m);
-      const secs = current.seconds;
-      const clock = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-      $('daymap-status').textContent = on
-        ? `${clock}: runs${secs.length > 1 || secs[0] !== 0 ? ` at ${secs.length > 6 ? secs.length + ' seconds' : secs.map(s => ':' + String(s).padStart(2, '0')).join(', ')}` : ''}`
-        : `${clock}: no run`;
+      const which = current.models.map((M, i) => (M.hours.includes(h) && M.minutes.includes(m) ? i : -1)).filter(i => i >= 0);
+      const clock = `${pad(h)}:${pad(m)}`;
+      if (!which.length) { $('daymap-status').textContent = `${clock}: no run`; return; }
+      const secs = current.models[which[0]].seconds;
+      const at = secs.length > 1 || secs[0] !== 0 ? ` at ${secs.length > 6 ? secs.length + ' seconds' : secs.map(s => ':' + pad(s)).join(', ')}` : '';
+      $('daymap-status').textContent = `${clock}: runs${at}${current.models.length > 1 ? ` (schedule ${which.map(i => i + 1).join(', ')})` : ''}`;
     });
     box.addEventListener('pointerleave', () => { $('daymap-status').textContent = daymapDefault; });
     daymapBuilt = true;
   }
 
-  let daymapDefault = '';
-  function renderDaymap(P, tz, now) {
+  function renderDaymap(models, tz, now) {
     if (!daymapBuilt) buildDaymap();
     const box = $('daymap');
-    const hs = new Set(P.reboot ? [] : P.hours), ms = new Set(P.reboot ? [] : P.minutes);
+    const reboot = models[0].reboot;
+    const lit = new Set();
+    if (!reboot) for (const M of models) for (const h of M.hours) for (const m of M.minutes) lit.add(h * 60 + m);
     box.querySelectorAll('.row').forEach(row => {
       const h = +row.dataset.h;
-      const hOn = hs.has(h);
       const kids = row.children;
-      for (let m = 0; m < 60; m++) kids[m].className = hOn && ms.has(m) ? 'on' : '';
+      for (let m = 0; m < 60; m++) kids[m].className = lit.has(h * 60 + m) ? 'on' : '';
     });
     const dstHours = new Set();
     for (const tr of E.transitionsBetween(tz, now, now + 365 * DAY)) {
@@ -570,43 +659,51 @@
     }
     box.querySelectorAll('.hl').forEach(l => l.classList.toggle('dsth', dstHours.has(+l.dataset.hl)));
     const notes = [];
-    if (P.reboot) notes.push('Startup-only jobs have no time of day.');
+    if (reboot) notes.push('Startup-only jobs have no time of day.');
     else {
-      const secs = P.seconds;
-      if (secs.length > 1) notes.push(`Each lit minute runs ${secs.length} times (${secs.length > 6 ? `every ${secs[1] - secs[0]} s` : 'at ' + secs.map(s => ':' + String(s).padStart(2, '0')).join(', ')}).`);
-      else if (secs[0] !== 0) notes.push(`Each lit minute runs at :${String(secs[0]).padStart(2, '0')} seconds.`);
-      notes.push('The same pattern repeats on every day it runs.');
+      const secs = models[0].seconds;
+      if (models.length === 1 && secs.length > 1) notes.push(`Each lit minute runs ${secs.length} times (${secs.length > 6 ? `every ${secs[1] - secs[0]} s` : 'at ' + secs.map(s => ':' + pad(s)).join(', ')}).`);
+      else if (models.length === 1 && secs[0] !== 0) notes.push(`Each lit minute runs at :${pad(secs[0])} seconds.`);
+      notes.push(models.length > 1 ? 'Lit cells combine all the schedules; each one runs only on its own days.' : 'The same pattern repeats on every day it runs.');
     }
     if (dstHours.size) notes.push(`<span class="key dst"></span>Hours where ${esc(tz)} changes its clocks.`);
     $('daymap-legend').innerHTML = notes.join(' ');
-    daymapDefault = P.reboot ? '' : `${nf.format(P.times.length)} run${P.times.length === 1 ? '' : 's'} a day. Hover a cell for its time.`;
-    box.setAttribute('aria-label', P.reboot ? 'No time of day' : `Grid of 24 hours by 60 minutes. ${P.times.length} run times a day: ${E.describe(P).replace(/\*\*/g, '')}`);
+    const perDay = new Set();
+    if (!reboot) for (const M of models) for (const t of M.times) perDay.add(t);
+    daymapDefault = reboot ? '' : `${nf.format(lit.size)} lit minute${lit.size === 1 ? '' : 's'}. Hover a cell for its time.`;
+    box.setAttribute('aria-label', reboot ? 'No time of day' : `Grid of 24 hours by 60 minutes, with ${lit.size} run minutes lit.`);
     $('daymap-status').textContent = daymapDefault;
   }
 
-  function snippet(id, line, tz) {
+  // ------------------------------------------------------------ translations
+
+  /** Config showing where the expressions go; several lines become several entries. */
+  function snippet(id, lines, tz) {
+    const many = lines.length > 1;
     switch (id) {
       case 'unix':
-        return `# CRON_TZ works in cronie; Debian/Ubuntu cron use the system time zone\nCRON_TZ=${tz}\n${line}  /path/to/command`;
+        return `# CRON_TZ works in cronie; Debian/Ubuntu cron use the system time zone\nCRON_TZ=${tz}\n${lines.map(l => `${l}  /path/to/command`).join('\n')}`;
       case 'github':
-        return tz === 'UTC'
-          ? `on:\n  schedule:\n    - cron: '${line}'  # UTC`
-          : `on:\n  schedule:\n    - cron: '${line}'\n      timezone: "${tz}"`;
+        return `on:\n  schedule:\n${lines.map(l => tz === 'UTC' ? `    - cron: '${l}'  # UTC` : `    - cron: '${l}'\n      timezone: "${tz}"`).join('\n')}`;
       case 'k8s':
-        return `apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: my-job\nspec:\n  schedule: "${line}"\n  timeZone: "${tz}"\n  jobTemplate:\n    # …`;
+        return lines.map((l, i) => `apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: my-job${many ? '-' + (i + 1) : ''}\nspec:\n  schedule: "${l}"\n  timeZone: "${tz}"\n  jobTemplate:\n    # …`).join('\n---\n');
       case 'eventbridge':
-        return `aws scheduler create-schedule \\\n  --name my-job \\\n  --schedule-expression "${line}" \\\n  --schedule-expression-timezone "${tz}" \\\n  --flexible-time-window '{"Mode": "OFF"}' \\\n  --target '{"Arn": "…", "RoleArn": "…"}'`;
+        return lines.map((l, i) => `aws scheduler create-schedule \\\n  --name my-job${many ? '-' + (i + 1) : ''} \\\n  --schedule-expression "${l}" \\\n  --schedule-expression-timezone "${tz}" \\\n  --flexible-time-window '{"Mode": "OFF"}' \\\n  --target '{"Arn": "…", "RoleArn": "…"}'`).join('\n\n');
       case 'quartz':
-        return `Trigger trigger = TriggerBuilder.newTrigger()\n    .withSchedule(CronScheduleBuilder.cronSchedule("${line}")\n        .inTimeZone(TimeZone.getTimeZone("${tz}")))\n    .build();`;
+        return lines.map((l, i) => `Trigger trigger${many ? i + 1 : ''} = TriggerBuilder.newTrigger()\n    .forJob(job)\n    .withSchedule(CronScheduleBuilder.cronSchedule("${l}")\n        .inTimeZone(TimeZone.getTimeZone("${tz}")))\n    .build();`).join('\n\n');
       case 'spring':
-        return `@Scheduled(cron = "${line}", zone = "${tz}")\npublic void run() { /* … */ }`;
+        return `${lines.map(l => `@Scheduled(cron = "${l}", zone = "${tz}")`).join('\n')}\npublic void run() { /* … */ }`;
     }
-    return line;
+    return lines.join('\n');
   }
 
-  function lineHtml(line, id, canUse, extra) {
-    const attrs = extra ? Object.entries(extra).map(([k, v]) => ` data-${k}="${esc(v)}"`).join('') : '';
-    return `<div class="line"><span class="expr">${esc(line)}</span><button type="button" class="btn ghost small" data-copy="${esc(line)}">Copy</button>${canUse ? `<button type="button" class="btn ghost small" data-use="${id}" data-line="${esc(line)}"${attrs}>Use</button>` : ''}</div>`;
+  function lineHtml(line, label) {
+    return `<div class="line">${label ? `<span class="sched-label">${esc(label)}</span>` : ''}<span class="expr">${esc(line)}</span><button type="button" class="btn ghost small" data-copy="${esc(line)}">Copy</button></div>`;
+  }
+
+  function useButton(id, lines, tz) {
+    const attrs = tz ? ` data-tz="${esc(tz)}"` : '';
+    return `<button type="button" class="btn small" data-use="${id}" data-lines="${esc(JSON.stringify(lines))}"${attrs}>${lines.length > 1 ? `Use these ${lines.length}` : 'Use this'}</button>`;
   }
 
   function periodText(v, tz, now) {
@@ -621,48 +718,66 @@
     return `While ${tz} is ${E.fmtOffset(v.off)} (${abbr}), ${ranges.join(' and ')}`;
   }
 
-  function utcBlock(P, tz, id, now) {
-    const vs = E.utcVariants(P, tz, id, now);
+  function utcBlock(models, tz, id, now) {
+    // Group each schedule's UTC lines by offset period.
+    const byOff = new Map();
+    models.forEach((M, i) => {
+      for (const v of E.utcVariants(M, tz, id, now)) {
+        if (!byOff.has(v.off)) byOff.set(v.off, { v, lines: [], errors: [] });
+        const g = byOff.get(v.off);
+        if (v.error) g.errors.push(models.length > 1 ? `${schedName(i)}: ${v.error}` : v.error);
+        else g.lines.push(...v.lines);
+      }
+    });
     let html = '';
-    for (const v of vs) {
-      html += `<p class="period">${esc(periodText(v, tz, now))}</p>`;
-      if (v.error) html += `<p>${md(v.error)}</p>`;
-      else html += v.lines.map(l => lineHtml(l, id, true, { tz: 'UTC', of: v.lines.length })).join('') + (v.lines.length > 1 ? `<p>Use all ${v.lines.length} lines together.</p>` : '');
+    for (const g of byOff.values()) {
+      html += `<p class="period">${esc(periodText(g.v, tz, now))}</p>`;
+      html += g.lines.map(l => lineHtml(l)).join('');
+      html += g.errors.map(e => `<p>${md(e)}</p>`).join('');
+      if (g.lines.length && !g.errors.length) html += `<div class="line">${useButton(id, g.lines, 'UTC')}</div>`;
     }
-    if (vs.length > 1) html += `<p>A UTC schedule can't follow daylight saving. Pick one, or schedule both and skip the run that doesn't apply.</p>`;
+    if (byOff.size > 1) html += `<p>A UTC schedule can't follow daylight saving. Pick one, or schedule both and skip the run that doesn't apply.</p>`;
     return html;
   }
 
-  function renderTranslations(P, tz, now) {
+  function renderTranslations(models, tz, now) {
+    const several = models.length > 1;
     const out = [];
     for (const id of E.DIALECT_ORDER) {
       const T = D[id];
-      const r = E.render(P, id);
+      const renders = models.map(M => E.render(M, id));
+      const allOk = renders.every(r => r.ok);
       const isSelf = id === state.dialect;
       const tags = [];
-      if (isSelf) tags.push('<span class="tag">This expression</span>');
-      if (!r.ok) tags.push('<span class="tag no">No exact match</span>');
+      if (isSelf) tags.push(`<span class="tag">${several ? 'These expressions' : 'This expression'}</span>`);
+      if (!allOk) tags.push('<span class="tag no">No exact match</span>');
       let body = '';
-      if (r.ok) {
-        body += r.lines.map(l => lineHtml(l, id, !isSelf, r.lines.length > 1 ? { of: r.lines.length } : null)).join('');
-        if (r.note) body += `<p>${md(r.note)}</p>`;
-        body += `<details class="snip"><summary>Where it goes</summary><pre class="snippet">${esc(snippet(id, r.lines[0], tz))}</pre></details>`;
-        const utc = tz !== 'UTC' && !P.reboot;
-        if (utc && id === 'github') {
-          body += `<details class="snip"><summary>Without <code>timezone:</code> (UTC, or GitHub Enterprise Server before 3.22)</summary><div>${utcBlock(P, tz, id, now)}</div></details>`;
-        } else if (utc && id === 'eventbridge') {
-          body += `<details class="snip"><summary>For an EventBridge rule, which only runs in UTC</summary><div>${utcBlock(P, tz, id, now)}</div></details>`;
-        }
-      } else {
-        body += `<p>${md(r.reason)}</p>`;
-        if (r.workaround) {
-          const text = E.workaroundText(r.workaround, id);
-          if (id === 'unix') {
-            body += `<p class="sub">Closest crontab line</p><pre class="snippet">${esc(text)}</pre>`;
-          } else {
-            body += `<p class="sub">Closest schedule</p>${lineHtml(r.workaround.expr, id, !isSelf)}<p class="sub">Then start the job with</p><pre class="snippet">${esc(text)}</pre>`;
+      const lines = [];
+      renders.forEach((r, i) => {
+        const label = several ? String(i + 1) : '';
+        if (r.ok) {
+          lines.push(...r.lines);
+          body += r.lines.map(l => lineHtml(l, label)).join('');
+          if (r.note) body += `<p>${several ? `${schedName(i)}: ` : ''}${md(r.note)}</p>`;
+        } else {
+          body += `<p>${several ? `<strong>${schedName(i)}:</strong> ` : ''}${md(r.reason)}</p>`;
+          if (r.workaround) {
+            const text = E.workaroundText(r.workaround, id);
+            if (id === 'unix') body += `<p class="sub">Closest crontab line</p><pre class="snippet">${esc(text)}</pre>`;
+            else body += `<p class="sub">Closest schedule</p>${lineHtml(r.workaround.expr, label)}<p class="sub">Then start the job with</p><pre class="snippet">${esc(text)}</pre>`;
+            body += '<p>The check uses GNU <code>date</code>.</p>';
           }
-          body += '<p>The check uses GNU <code>date</code>.</p>';
+        }
+      });
+      if (allOk) {
+        if (!isSelf) body += `<div class="line">${useButton(id, lines)}</div>`;
+        if (lines.length > 1 && renders.some(r => r.lines.length > 1)) body += `<p>${T.name} needs ${lines.length} schedules here; set them all up for the same job.</p>`;
+        body += `<details class="snip"><summary>Where it goes</summary><pre class="snippet">${esc(snippet(id, lines, tz))}</pre></details>`;
+        const utc = tz !== 'UTC' && !models[0].reboot;
+        if (utc && id === 'github') {
+          body += `<details class="snip"><summary>Without <code>timezone:</code> (UTC, or GitHub Enterprise Server before 3.22)</summary><div>${utcBlock(models, tz, id, now)}</div></details>`;
+        } else if (utc && id === 'eventbridge') {
+          body += `<details class="snip"><summary>For an EventBridge rule, which only runs in UTC</summary><div>${utcBlock(models, tz, id, now)}</div></details>`;
         }
       }
       out.push(`<div class="tr"><div class="tr-name"><strong>${esc(T.name)}</strong>${tags.join('')}</div><div class="tr-body">${body}</div></div>`);
@@ -678,53 +793,38 @@
     const out = $('english-out');
     if (!text) { out.innerHTML = ''; return; }
     const r = E.fromEnglish(text);
-    if (r.error) {
-      out.innerHTML = `<p class="bad">${md(r.error)}</p>` + (r.lines ? r.lines.map(l => lineHtml(l, 'unix', true)).join('') : '');
+    if (r.error) { out.innerHTML = `<p class="bad">${md(r.error)}</p>`; return; }
+    const notes = r.notes.slice();
+    // Use the current scheduler if it can express every schedule; otherwise the first one that can.
+    const order = [state.dialect, 'quartz', 'spring', 'eventbridge'].filter((x, i, a) => a.indexOf(x) === i);
+    const target = order.find(id => r.models.every(M => E.render(M, id).ok));
+    if (!target) {
+      const why = r.models.map(M => E.render(M, state.dialect)).find(x => !x.ok);
+      out.innerHTML = `<p class="bad">${md(why ? why.reason : 'No scheduler here can express that.')}</p>`;
       return;
     }
-    let target = state.dialect;
-    let res = E.render(r.model, target);
-    const notes = r.notes.slice();
-    if (!res.ok) {
-      const alt = ['quartz', 'spring', 'eventbridge'].find(id => E.render(r.model, id).ok);
-      if (alt) {
-        notes.unshift(`${D[target].name} can't express this (${res.reason.replace(/\.$/, '')}), so it's shown as ${D[alt].name}.`);
-        target = alt;
-        res = E.render(r.model, alt);
-      } else {
-        out.innerHTML = `<p class="bad">${md(res.reason)}</p>`;
-        return;
-      }
+    if (target !== state.dialect) {
+      notes.unshift(`${D[state.dialect].name} can't express this, so it's shown as ${D[target].name}. Translations has the ${D[state.dialect].short} workaround.`);
     }
-    if (res.lines.length > 1) notes.push(`This needs ${res.lines.length} schedules; the other is \`${res.lines.slice(1).join('`, `')}\`.`);
-    state.dialect = target;
-    state.expr = res.lines[0];
-    state.sel = null;
-    $('expr').value = state.expr;
+    const lines = r.models.flatMap(M => E.render(M, target).lines);
+    if (lines.length > 1) notes.unshift(`That takes ${lines.length} cron schedules, because cron can't combine those rules in one expression. They're numbered above and analyzed together.`);
     toast('');
-    update();
+    setExprs(lines, target);
     out.innerHTML = notes.map(n => `<p>${md(n)}</p>`).join('');
   }
 
   // ------------------------------------------------------------ events
-
-  function applyExpr(expr, dialect) {
-    if (dialect) state.dialect = dialect;
-    state.expr = expr;
-    $('expr').value = expr;
-    update();
-  }
 
   function bind() {
     const input = $('expr');
     let t = 0;
     input.addEventListener('input', () => {
       clearTimeout(t);
-      t = setTimeout(() => { state.expr = input.value; update(); }, 70);
+      t = setTimeout(() => { state.exprs[0] = input.value; update(); }, 70);
     });
     ['keyup', 'click', 'focus', 'select'].forEach(ev => input.addEventListener(ev, syncCaret));
-    // A text field drops line breaks, so read pasted configs here: take the expression,
-    // its time zone and the scheduler the surrounding text implies.
+    // A text field drops line breaks, so read pasted configs here: take the expression(s),
+    // the time zone and the scheduler the surrounding text implies.
     input.addEventListener('paste', e => {
       const text = e.clipboardData && e.clipboardData.getData('text/plain');
       if (!text || !/\n|cron\s*[:=(]|schedule\s*:|@Scheduled|cronSchedule|ScheduleExpression|CRON_TZ/i.test(text)) return;
@@ -732,34 +832,53 @@
       try { u = E.unwrap(text); } catch (err) { return; }
       if (!u.core.trim() || (u.core === text && !u.tz)) return;
       e.preventDefault();
+      let exprs = [u.wrapped ? `cron(${u.core.trim()})` : u.core.trim()];
+      if (u.dialect === 'github') {
+        const all = [...text.matchAll(/(?:^|\n)[ \t]*-?[ \t]*cron[ \t]*:[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|(\S[^\n#]*?))[ \t]*(?:#[^\n]*)?(?=\n|$)/g)]
+          .map(m => (m[1] || m[2] || m[3] || '').trim()).filter(Boolean);
+        if (all.length > 1) exprs = all;
+      }
       const from = [];
-      if (u.dialect && u.dialect !== state.dialect) { state.dialect = u.dialect; from.push(D[u.dialect].name); }
+      if (u.dialect && u.dialect !== state.dialect) from.push(D[u.dialect].name);
       if (u.tz) { state.tz = u.tz; from.push(`time zone ${u.tz}`); }
-      state.expr = u.wrapped ? `cron(${u.core.trim()})` : u.core.trim();
-      state.sel = null;
-      input.value = state.expr;
-      toast(`${u.notes[0] || 'Read the expression from the pasted text.'}${from.length ? ` Set ${from.join(' and ')}.` : ''}`);
-      update();
+      if (exprs.length > 1) from.push(`${exprs.length} schedules`);
+      toast(`${u.notes[0] || 'Read the expression from the pasted text.'}${from.length ? ` Set ${from.join(', ')}.` : ''}`);
+      setExprs(exprs, u.dialect || state.dialect);
     });
     input.addEventListener('blur', () => setTimeout(syncCaret, 0));
     $('fields').addEventListener('click', e => {
       const c = e.target.closest('.chip');
       if (!c || !current) return;
-      const tok = current.tokens[+c.dataset.i];
+      const tok = current.P.tokens[+c.dataset.i];
       if (!tok) return;
       input.focus();
       input.setSelectionRange(tok.start, tok.end);
       syncCaret();
     });
-    $('copy-expr').addEventListener('click', e => copyText(input.value, e.currentTarget));
+    let te = 0;
+    $('extras').addEventListener('input', e => {
+      const el = e.target.closest('.extra-input');
+      if (!el) return;
+      clearTimeout(te);
+      te = setTimeout(() => { state.exprs[+el.dataset.i] = el.value; update(); }, 70);
+    });
+    $('add-expr').addEventListener('click', () => {
+      if (state.exprs.length >= MAX_SCHEDULES) return;
+      state.exprs.push('');
+      update();
+      const last = $('expr-' + (state.exprs.length - 1));
+      if (last) last.focus();
+    });
+    $('copy-expr').addEventListener('click', e => copyText(state.exprs.filter(x => x.trim()).join('\n'), e.currentTarget));
     if (window.top === window && /^https?:$/.test(location.protocol)) {
       $('share').hidden = false;
       $('share').addEventListener('click', e => { save(); copyText(location.href, e.currentTarget); });
     }
     $('english-form').addEventListener('submit', onEnglish);
     $('more-runs').addEventListener('click', () => { state.runs = Math.min(200, state.runs + 30); update(); });
-    $('year-prev').addEventListener('click', () => { state.calStart -= 12; renderCalendar(current, effTz(current), Date.now()); });
-    $('year-next').addEventListener('click', () => { state.calStart += 12; renderCalendar(current, effTz(current), Date.now()); });
+    const redrawCalendar = () => { if (current && current.models.length) renderCalendar(current.models, current.tz, Date.now()); };
+    $('year-prev').addEventListener('click', () => { state.calStart -= 12; redrawCalendar(); });
+    $('year-next').addEventListener('click', () => { state.calStart += 12; redrawCalendar(); });
     $('calendar').addEventListener('keydown', e => {
       const b = e.target.closest('button[data-date]');
       if (!b) return;
@@ -783,31 +902,44 @@
     });
     $('calendar').addEventListener('click', e => {
       const b = e.target.closest('button[data-date]');
-      if (!b || !current || !current.ok) return;
+      if (!b || !current || !current.models.length) return;
       state.sel = state.sel === b.dataset.date ? null : b.dataset.date;
-      renderCalendar(current, effTz(current), Date.now());
+      redrawCalendar();
     });
     document.addEventListener('click', e => {
       const b = e.target.closest('button');
       if (!b) return;
       if (b.dataset.copy != null) copyText(b.dataset.copy, b);
-      else if (b.dataset.expr != null) { toast(''); applyExpr(b.dataset.expr); $('expr').focus(); }
-      else if (b.dataset.read) { const T = D[b.dataset.read]; toast(`Reading the expression as ${T.name}.`); applyExpr(state.expr, b.dataset.read); $('expr').focus(); }
-      else if (b.dataset.use) {
+      else if (b.dataset.remove) {
+        state.exprs.splice(+b.dataset.remove, 1);
+        update();
+        const prev = $('expr-' + Math.min(+b.dataset.remove, state.exprs.length - 1)) || $('expr');
+        prev.focus();
+      } else if (b.dataset.expr != null) {
+        const i = +(b.dataset.fix || 0);
+        state.exprs[i] = b.dataset.expr;
+        toast('');
+        setExprs(state.exprs);
+        (i === 0 ? $('expr') : $('expr-' + i)).focus();
+      } else if (b.dataset.read) {
+        toast(`Reading the expression as ${D[b.dataset.read].name}.`);
+        setExprs(state.exprs, b.dataset.read);
+        $('expr').focus();
+      } else if (b.dataset.use) {
         const id = b.dataset.use;
-        if (current && current.ok && current.tz) state.tz = current.tz;
+        const lines = JSON.parse(b.dataset.lines);
+        if (current && current.P.ok && current.P.tz) state.tz = current.P.tz;
         if (b.dataset.tz) state.tz = b.dataset.tz;
-        const of = +b.dataset.of || 1;
-        toast(of > 1 ? `Switched to ${D[id].name}. This is one of ${of} schedules that work together; Translations lists all of them.` : `Switched to ${D[id].name}.`);
-        applyExpr(b.dataset.line, id);
+        toast(lines.length > 1 ? `Switched to ${D[id].name} with ${lines.length} schedules.` : `Switched to ${D[id].name}.`);
+        setExprs(lines, id);
         $('expr').focus();
       }
     });
     setInterval(() => {
-      if (document.hidden || !current || !current.ok) return;
-      const tz = effTz(current), now = Date.now();
-      renderSummary(current, tz, now);
-      renderRuns(current, tz, now);
+      if (document.hidden || !current || !current.models.length) return;
+      const now = Date.now();
+      renderSummary(current.models, current.tz, now);
+      renderRuns(current.models, current.tz, now);
     }, 30000);
   }
 
@@ -818,7 +950,7 @@
     buildTz();
     buildExamples();
     bind();
-    $('expr').value = state.expr;
+    $('expr').value = state.exprs[0];
     update();
     if (!returning && !linked) toast('This opening example hides a classic mistake; Checks explains it. Type your own expression or load another example.');
   }

@@ -1,10 +1,10 @@
 # Cron Almanac
 
-[![CI](https://github.com/clark719664/claudes-dream/actions/workflows/ci.yml/badge.svg)](https://github.com/clark719664/claudes-dream/actions/workflows/ci.yml)
+[![CI](https://github.com/clark719664/cron-almanac/actions/workflows/ci.yml/badge.svg)](https://github.com/clark719664/cron-almanac/actions/workflows/ci.yml)
 
 **Read, check and translate cron schedules** for Linux crontab, GitHub Actions, Kubernetes CronJob, AWS EventBridge, Quartz and Spring `@Scheduled`.
 
-**Use it:** https://clark719664.github.io/claudes-dream/
+**Use it:** https://clark719664.github.io/cron-almanac/
 
 It's free, open source, and a single web page with no dependencies, no tracking and no network requests. Your expressions never leave your browser.
 
@@ -20,6 +20,7 @@ Most cron tools explain standard 5-field cron and stop there. The bugs that caus
 | `*/7` restarts every hour, so the last gap is 4 minutes. `*/90` only fires at `:00`. | Warns about uneven steps and writes the multi-line crontab for a 90-minute interval. |
 | On the spring-forward day `30 2 * * *` doesn't exist, and on the fall-back day `30 1 * * *` happens twice. Each scheduler handles this differently. | Computes runs in any IANA time zone. It marks every run a clock change affects and says what that scheduler is documented to do: cron's fixed-time vs wildcard rule, GitHub, EventBridge Scheduler and Quartz. Where a scheduler doesn't document it, the page says so. |
 | GitHub Actions uses UTC unless the workflow sets `timezone:`. Older GitHub Enterprise Server versions can't set it. | Reminds you to add `timezone:`, shows the YAML, and gives the UTC equivalents for every offset the zone uses. |
+| "First Monday of every month, plus the third Monday of every other month" can't be written as one cron expression. | Splits the request into separate schedules and analyzes them as one job, with a combined calendar and run list. It warns when two schedules fire at the same moment, which would make the job run twice. |
 | `L`, `W`, `#`, `L-3` and `LW` exist only in some dialects. | Translates between all six dialects. Each translation is parsed back in its target dialect and must match the original. Where there's no equivalent, it explains why and gives the usual workaround. |
 
 It also:
@@ -27,8 +28,8 @@ It also:
 - Shows a 12-month calendar of the days it runs and a 24 × 60 map of the times.
 - Lists the next runs with relative times and your own time zone alongside.
 - Gives runs per year and the shortest and longest gaps.
-- Converts plain English ("last friday of the month at 5pm", "every 15 minutes during business hours") into cron.
-- Reads whatever you paste: a crontab file, a GitHub workflow, a Kubernetes manifest, an `aws scheduler` command, a Spring annotation, or a Quartz call. It picks out the expression, the time zone and the scheduler.
+- Converts plain English into cron, including sentences that need several schedules ("every monday at 9am and every friday at 5pm", "first and third monday of the month", "every 90 minutes").
+- Reads whatever you paste: a crontab file, a GitHub workflow (all of its `cron:` entries), a Kubernetes manifest, an `aws scheduler` command, a Spring annotation, or a Quartz call. It picks out the expressions, the time zone and the scheduler.
 
 ## Running it yourself
 

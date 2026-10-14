@@ -167,6 +167,26 @@ h1 { font: 700 clamp(1.35rem, 3.2vw, 1.7rem)/1.1 var(--f-display); letter-spacin
 #expr.invalid { border-bottom-color: var(--bad); }
 
 .fields { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.expr-n, .extra-n { font: 600 0.78rem/1 var(--f-display); color: var(--ink-3); flex: none; min-width: 1.2em; text-align: center; }
+.extras { display: flex; flex-direction: column; gap: 12px; }
+.extras:empty { display: none; }
+.extra { display: grid; grid-template-columns: 1.2em minmax(0, 1fr) auto; column-gap: 10px; row-gap: 3px; align-items: center; }
+.extra-input {
+  font: 600 clamp(1rem, 3.2vw, 1.4rem)/1.3 var(--f-display);
+  word-spacing: 0.25em;
+  border: 0;
+  border-bottom: 1.5px solid var(--rule);
+  border-radius: 0;
+  background: transparent;
+  padding: 0.15em 0.05em;
+  min-width: 0;
+  width: 100%;
+}
+.extra-input:focus { outline: none; border-bottom-color: var(--accent); }
+.extra-input.invalid { border-bottom-color: var(--bad); }
+.extra-note { grid-column: 2 / -1; margin: 0; font-size: 0.85rem; color: var(--ink-2); overflow-wrap: anywhere; }
+.extra-note.bad { color: var(--bad); }
+.add-expr { align-self: flex-start; }
 .fields li { display: flex; min-width: 0; }
 .fields .chip {
   border: 1px solid var(--rule);
@@ -232,6 +252,9 @@ select:disabled { opacity: 0.7; }
   max-width: 46ch;
   text-wrap: pretty;
 }
+.sentence p { margin: 0; }
+.sentence .lead { font-size: 0.68em; font-weight: 500; color: var(--ink-2); }
+.sentence ol { margin: 0.35em 0 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 0.3em; font-size: 0.82em; }
 .sentence mark { background: var(--warn-soft); color: var(--warn); padding: 0 0.2em; border-radius: 4px; font-weight: 600; }
 .sentence .tz { color: var(--ink-3); font-weight: 400; font-size: 0.7em; white-space: nowrap; }
 .stats { margin: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
@@ -289,7 +312,8 @@ select:disabled { opacity: 0.7; }
 .runs td.t { font: 500 0.95rem var(--f-data); }
 .runs td.rel, .runs td.local { color: var(--ink-2); font-size: 0.86rem; }
 .runs td.local .mono { color: var(--ink); }
-.runs tr.dst td { background: var(--warn-soft); }
+.runs tr.dst td, .runs tr.clash td { background: var(--warn-soft); }
+.runs td.sched { font: 500 0.85rem var(--f-data); color: var(--ink-2); }
 .runs tr.gone td.t, .runs tr.gone td.rel, .runs tr.gone td.local { text-decoration: line-through; color: var(--ink-3); }
 .runs .badge { font: 600 0.62rem/1 var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); margin-left: 6px; }
 .runs .abbr { color: var(--ink-3); font-size: 0.78rem; margin-left: 4px; }
@@ -362,6 +386,7 @@ select:disabled { opacity: 0.7; }
 .tr-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
 .line .expr { font: 600 1.02rem/1.35 var(--f-data); overflow-wrap: anywhere; min-width: 0; }
+.line .sched-label { font: 600 0.62rem/1 var(--f-display); color: var(--ink-3); border: 1px solid var(--rule); border-radius: 4px; padding: 0.3em 0.45em; flex: none; }
 .line .btn { flex: none; }
 .tr-body p { margin: 0; font-size: 0.9rem; color: var(--ink-2); }
 .tr-body .sub { font: 600 0.62rem/1.2 var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-top: 4px; }
@@ -427,6 +452,7 @@ details.snip[open] summary { margin-bottom: 6px; }
       <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
     </div>
     <div class="expr-row">
+      <span class="expr-n" id="expr-n" aria-hidden="true" hidden>1</span>
       <label for="expr" class="sr-only">Cron expression</label>
       <input id="expr" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" enterkeyhint="done">
       <button type="button" class="btn ghost" id="copy-expr">Copy</button>
@@ -434,6 +460,8 @@ details.snip[open] summary { margin-bottom: 6px; }
     </div>
     <ol class="fields" id="fields" aria-label="Fields"></ol>
     <div class="error" id="error" aria-live="polite" hidden></div>
+    <div class="extras" id="extras" aria-label="More schedules for the same job"></div>
+    <button type="button" class="btn ghost small add-expr" id="add-expr">+ Add another schedule</button>
     <div class="controls">
       <div class="control">
         <label for="tz">Time zone</label>
@@ -457,7 +485,7 @@ details.snip[open] summary { margin-bottom: 6px; }
 
   <main id="results">
     <section class="summary" aria-label="Summary">
-      <p class="sentence" id="sentence" aria-live="polite"></p>
+      <div class="sentence" id="sentence" aria-live="polite"></div>
       <dl class="stats" id="stats"></dl>
     </section>
 
@@ -525,7 +553,7 @@ details.snip[open] summary { margin-bottom: 6px; }
 
   <footer class="foot">
     <p>Your expressions never leave your browser. Time zone rules come from your browser's built-in time zone data. Run lists follow the wall clock and mark the times a clock change skips or repeats, along with what each scheduler is documented to do with them.</p>
-    <p class="foot-links"><span>Cron Almanac 1.0</span><a href="https://github.com/clark719664/claudes-dream" target="_blank" rel="noopener">Source code</a><a href="https://github.com/clark719664/claudes-dream/issues/new/choose" target="_blank" rel="noopener">Report a problem</a><span>Free and open source under the MIT License</span></p>
+    <p class="foot-links"><span>Cron Almanac 1.0</span><a href="https://github.com/clark719664/cron-almanac" target="_blank" rel="noopener">Source code</a><a href="https://github.com/clark719664/cron-almanac/issues/new/choose" target="_blank" rel="noopener">Report a problem</a><span>Free and open source under the MIT License</span></p>
   </footer>
 </div>
 
@@ -1423,6 +1451,123 @@ details.snip[open] summary { margin-bottom: 6px; }
     };
   }
 
+  // ---------------------------------------------------------------- several schedules together
+
+  function mergeSorted(a, b) {
+    const out = [];
+    let i = 0, j = 0;
+    while (i < a.length || j < b.length) {
+      const v = j >= b.length || (i < a.length && a[i] <= b[j]) ? a[i++] : b[j++];
+      if (out[out.length - 1] !== v) out.push(v);
+    }
+    return out;
+  }
+
+  /**
+   * Upcoming runs of several schedules that make up one job, in time order. Each run lists the
+   * schedules that produce it in `which` (indexes into models); a time two schedules share appears once.
+   */
+  function upcomingSet(models, tz, fromMs, count) {
+    const lists = models.map(M => upcoming(M, tz, fromMs, count));
+    const all = [];
+    lists.forEach((l, i) => l.runs.forEach(r => all.push(Object.assign({}, r, { which: [i] }))));
+    all.sort((a, b) => a.t - b.t || a.which[0] - b.which[0]);
+    const merged = [];
+    for (const r of all) {
+      const prev = merged[merged.length - 1];
+      if (prev && prev.t === r.t && prev.kind === r.kind && r.kind !== 'skipped') { prev.which.push(r.which[0]); continue; }
+      merged.push(r);
+    }
+    // A list cut off at `count` may hide later runs, so stop at the earliest cut-off.
+    let cut = Infinity;
+    for (const l of lists) if (!l.exhausted && l.runs.length) cut = Math.min(cut, l.runs[l.runs.length - 1].t);
+    const runs = merged.filter(r => r.t <= cut).slice(0, count);
+    return { runs, exhausted: lists.every(l => l.exhausted) && runs.length === merged.length };
+  }
+
+  /** stats() for several schedules: runs per year, runs per day (min and max), gaps, and coinciding runs. */
+  function statsSet(models, tz, fromMs) {
+    if (models.some(M => M.reboot || !M.times.length)) return null;
+    if (models.length === 1) {
+      const st = stats(models[0], tz, fromMs);
+      return Object.assign(st, { perDayMin: st.perDay, perDayMax: st.perDay, overlaps: 0 });
+    }
+    const w0 = wallParts(fromMs, tz);
+    const today = Date.UTC(w0.y, w0.mo - 1, w0.d);
+    const unions = new Map();
+    const unionFor = mask => {
+      let u = unions.get(mask);
+      if (u) return u;
+      const sets = models.filter((_, i) => mask & (1 << i)).map(M => M.times);
+      let T = sets[0];
+      for (let k = 1; k < sets.length; k++) T = mergeSorted(T, sets[k]);
+      let minG = Infinity, maxG = 0;
+      for (let i = 1; i < T.length; i++) {
+        const g = T[i] - T[i - 1];
+        if (g < minG) minG = g;
+        if (g > maxG) maxG = g;
+      }
+      u = { T, minG, maxG, dup: sets.reduce((a, x) => a + x.length, 0) - T.length };
+      unions.set(mask, u);
+      return u;
+    };
+    const endYear = Math.max(...models.map(M => horizonYear(M, w0.y)));
+    let activeDays = 0, perYear = 0, overlaps = 0, perDayMin = Infinity, perDayMax = 0;
+    let minGap = Infinity, maxGap = 0, prev = null, total = 0;
+    const yearEnd = today + 365 * DAY;
+    for (let day = today; ; day += DAY) {
+      const dt = new Date(day);
+      const y = dt.getUTCFullYear(), m = dt.getUTCMonth() + 1, d = dt.getUTCDate();
+      if (y > endYear || (day >= yearEnd + DAY && total >= 2)) break;
+      let mask = 0;
+      models.forEach((M, i) => { if (dayMatches(M, y, m, d)) mask |= 1 << i; });
+      if (!mask) continue;
+      const u = unionFor(mask);
+      if (day < yearEnd) {
+        activeDays++;
+        perYear += u.T.length;
+        overlaps += u.dup;
+        perDayMin = Math.min(perDayMin, u.T.length);
+        perDayMax = Math.max(perDayMax, u.T.length);
+      }
+      minGap = Math.min(minGap, u.minG);
+      maxGap = Math.max(maxGap, u.maxG);
+      if (prev) {
+        const g = (day - prev.day) / 1000 - prev.last + u.T[0];
+        minGap = Math.min(minGap, g);
+        maxGap = Math.max(maxGap, g);
+      }
+      prev = { day, last: u.T[u.T.length - 1] };
+      total += u.T.length;
+    }
+    return {
+      perYear, activeDays, overlaps,
+      perDay: perDayMax, perDayMin: activeDays ? perDayMin : 0, perDayMax,
+      minGap: total >= 2 ? minGap : null,
+      maxGap: total >= 2 ? maxGap : null,
+    };
+  }
+
+  /** Checks that only make sense for a set of schedules. */
+  function lintSet(models, tz, now) {
+    const out = [];
+    if (models.length < 2 || models.some(M => M.reboot)) return out;
+    const st = statsSet(models, tz, now);
+    if (st && st.overlaps) {
+      const hit = upcomingSet(models, tz, now, 400).runs.find(r => r.which.length > 1);
+      let when = '';
+      if (hit) {
+        const p = displayParts(hit.t, tz);
+        when = ` The next one is ${p.weekday} ${p.day} ${p.month} at ${p.hour}:${p.minute}, from schedules ${joinList(hit.which.map(i => String(i + 1)))}.`;
+      }
+      out.push({
+        level: 'warn', id: 'overlap', title: 'Two schedules fire at the same time', fix: null,
+        body: `In the next year, ${st.overlaps} run${st.overlaps === 1 ? '' : 's'} from different schedules land on the same minute.${when} Most schedulers start the job once per schedule, so it runs twice at those times.`,
+      });
+    }
+    return out;
+  }
+
   /** Distinct UTC offsets in effect over [a, b), with their date ranges. */
   function offsetPeriods(tz, a, b) {
     const trs = transitionsBetween(tz, a, b);
@@ -2109,65 +2254,123 @@ details.snip[open] summary { margin-bottom: 6px; }
     return { h, m: mi, ambiguous: !m[3] && !m[2] && h >= 1 && h <= 11 };
   }
 
-  /**
-   * Read a plain-English schedule. Returns { model, notes:[…] } or { error, lines? }.
-   */
-  function fromEnglish(input) {
+  const ORD_WORD = '(?:first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|last)';
+  const ORD_N = { first: 1, '1st': 1, second: 2, '2nd': 2, third: 3, '3rd': 3, fourth: 4, '4th': 4, fifth: 5, '5th': 5, last: 0 };
+  const STEP_WORD = { other: 2, second: 2, third: 3, fourth: 4, sixth: 6 };
+  const AND_MARK = '\u0001'; // stands in for "and" inside a phrase that mustn't be split
+  const ALL_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const ALL_DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+  const ALL_DOWS = [0, 1, 2, 3, 4, 5, 6];
+
+  /** Months for "every n months", starting in a given month (1 = January). */
+  function monthStep(n, start, notes) {
+    start = start || 1;
+    if (n <= 1) return null;
+    let out;
+    if (12 % n === 0) out = sortNum(Array.from({ length: 12 / n }, (_, k) => ((start - 1 + k * n) % 12) + 1));
+    else {
+      out = [];
+      for (let m = start; m <= 12; m += n) out.push(m);
+      notes.push(`12 isn't divisible by ${n}, so the months restart each January.`);
+    }
+    return out;
+  }
+
+  function normalizeEnglish(input) {
     let s = ' ' + String(input || '').toLowerCase()
       .replace(/a\.m\.?/g, 'am').replace(/p\.m\.?/g, 'pm')
       .replace(/(\d{1,2})\.(\d{2})/g, '$1:$2')
-      .replace(/[,;!?]+/g, ' ').replace(/\.(\s|$)/g, ' ')
+      .replace(/[!?]+/g, ' ').replace(/\.(\s|$)/g, ' ')
       .replace(/\b(each|every single)\b/g, 'every')
       .replace(/\b(thru|until|till)\b/g, 'through')
       .replace(/o'?clock/g, '')
+      .replace(/&/g, ' and ')
       .replace(/\s+/g, ' ') + ' ';
-    if (!s.trim()) return { error: 'Describe a schedule, for example “every weekday at 9:30am”.' };
-    const notes = [];
-    const st = { times: [], dows: new Set(), doms: new Set(), months: new Set(), years: new Set() };
+    for (const [k, v] of Object.entries(NUM_WORDS)) s = s.replace(new RegExp(`\\bevery ${k}\\b`, 'g'), `every ${v}`);
+    return s;
+  }
+
+  /** Split a sentence into clauses at commas, semicolons and "and"/"also"/"plus". */
+  function splitClauses(s) {
+    // Keep "and" that belongs to one phrase: time windows and lists of ordinals ("first and third monday").
+    s = s.replace(/\bbetween\s+(\S+(?:\s+(?:am|pm))?)\s+and\s+/g, (m, a) => `between ${a} ${AND_MARK} `);
+    s = s.replace(new RegExp(`\\b${ORD_WORD}(?:\\s*(?:,|and|or)\\s*${ORD_WORD})+(?=\\s+(?:day|weekday|business day|working day|${DAY_WORD}))`, 'g'),
+      m => m.replace(/\s*(?:,|and|or)\s*/g, ` ${AND_MARK} `));
+    return s.split(/\s*[,;]\s*|\s+(?=(?:and|also|plus)\s)/).map(c => c.trim()).filter(Boolean);
+  }
+
+  /** Read one clause into a day rule (which days) and a time spec (which times of day). */
+  function parseClause(text, notes) {
+    let s = ' ' + text.split(AND_MARK).join('and') + ' ';
+    const rule = { dows: new Set(), doms: new Set(), months: new Set(), years: new Set(), entries: [], flags: {} };
+    const time = { times: [], window: null, interval: null, minutePast: null, twice: false };
+    let unsupported = null;
     const take = (re, fn) => { s = s.replace(re, (...a) => { const r = fn(...a); return r === false ? a[0] : ' '; }); };
 
-    for (const [k, v] of Object.entries(NUM_WORDS)) s = s.replace(new RegExp(`\\bevery ${k}\\b`, 'g'), `every ${v}`);
+    // nth / last day or weekday of the month, with its own month qualifier ("of every other month")
+    const nthRe = new RegExp(
+      `\\b(?<ords>${ORD_WORD}(?:\\s*(?:,|and|or)\\s*${ORD_WORD})*)\\s+(?<what>day|weekday|business day|working day|${DAY_WORD})` +
+      `(?:\\s+(?:of|in)\\s+(?:the\\s+|every\\s+)?(?:(?<step>other|second|third|fourth|sixth|\\d+)(?:st|nd|rd|th)?\\s+)?(?<unit>months?|quarters?))?` +
+      `(?:\\s+(?:starting|from|beginning)(?:\\s+in)?\\s+(?<start>${MONTH_WORD}))?`, 'g');
+    take(nthRe, (...a) => {
+      const g = a[a.length - 1];
+      let n = 1;
+      const quarter = !!(g.unit && g.unit.startsWith('quarter'));
+      if (g.step) n = STEP_WORD[g.step] || parseInt(g.step, 10) || 1;
+      if (quarter) n *= 3;
+      const firstMonths = g.unit ? monthStep(n, g.start ? monIdx(g.start) : 1, notes) : null;
+      if (n === 2 && !g.start) notes.push('“Every other month” is read as January, March, May… Add “starting in February” for the even months.');
+      if (n === 3 && !quarter && !g.start) notes.push('Every three months is read as January, April, July and October.');
+      for (const o of g.ords.split(/\s*(?:,|and|or)\s*/)) {
+        const k = ORD_N[o];
+        const what = g.what;
+        // "last … of the quarter" falls in the quarter's final month (March, June, September, December).
+        const months = quarter && k === 0 && firstMonths ? sortNum(firstMonths.map(m => ((m - 1 + 2) % 12) + 1)) : firstMonths;
+        if (what === 'day') rule.entries.push(k === 0 ? { domSpecial: { type: 'L', offset: 0 }, months } : { domList: [k], months });
+        else if (/weekday|business|working/.test(what)) {
+          if (k === 0) rule.entries.push({ domSpecial: { type: 'LW' }, months });
+          else if (k === 1) rule.entries.push({ domSpecial: { type: 'W', day: 1 }, months });
+          else unsupported = `The ${o} weekday of the month has no cron equivalent; only the first and last weekday do.`;
+        } else {
+          const d = dayIdx(what);
+          rule.entries.push({ dowSpecial: k === 0 ? { type: 'lastDow', dow: d } : { type: 'nth', dow: d, n: k }, months });
+        }
+      }
+    });
 
     take(/\b(quarter|half) past (\d{1,2})\s*(am|pm)?\b/g, (_, q, h, ap) => {
       const t = parseTimeWord(h + (ap ? ' ' + ap : ''));
       if (!t) return false;
-      st.times.push({ h: t.h, m: q === 'half' ? 30 : 15 });
+      time.times.push({ h: t.h, m: q === 'half' ? 30 : 15 });
     });
-    take(/\btwice (?:a|per) day\b|\btwice daily\b/g, () => { st.twice = true; });
-    take(/\b(?:during |in )?(?:business|working|office) hours\b/g, () => { st.window = { h1: 9, m1: 0, h2: 17, m2: 0 }; });
-    take(/\bquarterly\b|\bevery quarter\b/g, () => { [1, 4, 7, 10].forEach(m => st.months.add(m)); st.defaultDom = 1; });
-    take(/\b(yearly|annually|every year|once a year)\b/g, () => { st.yearly = true; });
-    take(/\b(monthly|every month|once a month)\b/g, () => { st.monthly = true; });
-    take(/\b(weekly|every week|once a week)\b/g, () => { st.weekly = true; });
-    take(/\b(daily|nightly|every day|once a day)\b/g, () => { st.daily = true; });
-    take(/\bhourly\b/g, () => { st.interval = { n: 1, unit: 'hour' }; });
-
-    // nth / last weekday of the month
-    take(new RegExp(`\\b(first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|last)\\s+(day|weekday|business day|working day|${DAY_WORD})(?:\\s+(?:of|in)\\s+(?:the|every|each)?\\s*month)?\\b`, 'g'), (_, nth, what) => {
-      const n = { first: 1, '1st': 1, second: 2, '2nd': 2, third: 3, '3rd': 3, fourth: 4, '4th': 4, fifth: 5, '5th': 5, last: 0 }[nth];
-      if (what === 'day') {
-        if (n === 0) st.domSpecial = { type: 'L', offset: 0 };
-        else st.doms.add(n);
-      } else if (/weekday|business|working/.test(what)) {
-        st.domSpecial = n === 0 ? { type: 'LW' } : (n === 1 ? { type: 'W', day: 1 } : null);
-        if (!st.domSpecial) { st.unsupported = `“${nth} weekday of the month” has no cron equivalent; only the first and last weekday do.`; }
-      } else {
-        const d = dayIdx(what);
-        st.dowSpecial = n === 0 ? { type: 'lastDow', dow: d } : { type: 'nth', dow: d, n };
-      }
+    take(/\btwice (?:a|per) day\b|\btwice daily\b/g, () => { time.twice = true; });
+    take(/\b(?:during |in )?(?:business|working|office) hours\b/g, () => { time.window = { h1: 9, m1: 0, h2: 17, m2: 0 }; });
+    take(/\bquarterly\b|\bevery quarter\b/g, () => { rule.flags.quarterly = true; });
+    take(/\b(yearly|annually|every year|once a year)\b/g, () => { rule.flags.yearly = true; });
+    take(/\b(monthly|every month|once a month)\b/g, () => { rule.flags.monthly = true; });
+    take(/\b(weekly|every week|once a week)\b/g, () => { rule.flags.weekly = true; });
+    take(/\b(daily|nightly|every day|once a day)\b/g, () => { rule.flags.daily = true; });
+    take(/\bhourly\b/g, () => { time.interval = { n: 1, unit: 'hour' }; });
+    take(/\b(?:in\s+|on\s+)?(?:the\s+)?(odd|even)(?:-numbered)? months\b/g, (_, w) => {
+      for (let m = w === 'odd' ? 1 : 2; m <= 12; m += 2) rule.months.add(m);
     });
 
     // Intervals
-    take(/\bevery (other |\d+ |\d+(?:st|nd|rd|th) )?(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?)\b/g, (_, n, unit) => {
+    take(new RegExp(`\\bevery (other |\\d+ |\\d+(?:st|nd|rd|th) )?(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?)\\b(?:\\s+(?:starting|from|beginning)(?:\\s+in)?\\s+${MONTH_WORD})?`, 'g'), (_, n, unit, startMo) => {
       let k = 1;
       if (n) { n = n.trim(); k = n === 'other' ? 2 : parseInt(n, 10); }
       const u = unit.startsWith('sec') ? 'second' : unit.startsWith('min') ? 'minute' : unit.startsWith('h') ? 'hour'
         : unit.startsWith('d') ? 'day' : unit.startsWith('w') ? 'week' : unit.startsWith('mo') ? 'month' : 'year';
-      if (u === 'day' && k === 1) { st.daily = true; return; }
-      if (u === 'week' && k === 1) { st.weekly = true; return; }
-      if (u === 'month' && k === 1) { st.monthly = true; return; }
-      if (u === 'year' && k === 1) { st.yearly = true; return; }
-      st.interval = { n: k, unit: u };
+      if (u === 'day') { if (k === 1) rule.flags.daily = true; else rule.dayStep = k; return; }
+      if (u === 'week') { if (k === 1) rule.flags.weekly = true; else rule.weekStep = k; return; }
+      if (u === 'month') {
+        if (k === 1) { rule.flags.monthly = true; return; }
+        rule.monthStep = { n: k, start: startMo ? monIdx(startMo) : 1 };
+        if (k === 2 && !startMo) notes.push('“Every other month” is read as January, March, May… Add “starting in February” for the even months.');
+        return;
+      }
+      if (u === 'year') { if (k === 1) rule.flags.yearly = true; else rule.yearStep = k; return; }
+      time.interval = { n: k, unit: u };
     });
 
     // Time windows
@@ -2176,91 +2379,98 @@ details.snip[open] summary { margin-bottom: 6px; }
       const m = all.match(new RegExp(`(?:between|from)\\s+(${TIME_WORD})\\s+(?:and|to|through|-)\\s+(${TIME_WORD})`));
       const a = parseTimeWord(m[1]), b = parseTimeWord(m[5]);
       if (!a || !b) return false;
-      st.window = { h1: a.h, m1: a.m, h2: b.h, m2: b.m };
+      time.window = { h1: a.h, m1: a.m, h2: b.h, m2: b.m };
     });
     take(new RegExp(`\\b(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)\\s*-\\s*(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))(?=\\s)`, 'g'), (_, a, b) => {
       const ta = parseTimeWord(a), tb = parseTimeWord(b);
       if (!ta || !tb) return false;
-      st.window = { h1: ta.h, m1: ta.m, h2: tb.h, m2: tb.m };
+      time.window = { h1: ta.h, m1: ta.m, h2: tb.h, m2: tb.m };
     });
 
     // Day-of-week ranges and names
     take(new RegExp(`\\b(?:from\\s+)?${DAY_WORD}\\s*(?:-|to|through)\\s*${DAY_WORD}\\b`, 'g'), (_, a, b) => {
       let x = dayIdx(a);
       const y = dayIdx(b);
-      for (let i = 0; i < 7; i++) { st.dows.add(x); if (x === y) break; x = (x + 1) % 7; }
+      for (let i = 0; i < 7; i++) { rule.dows.add(x); if (x === y) break; x = (x + 1) % 7; }
     });
-    take(/\b(?:every )?(?:weekdays?|business days?|work ?days?|working days?)\b/g, () => { [1, 2, 3, 4, 5].forEach(d => st.dows.add(d)); });
-    take(/\b(?:every |on )?weekends?\b/g, () => { st.dows.add(0); st.dows.add(6); });
-    take(new RegExp(`\\b${DAY_WORD}\\b`, 'g'), (_, w) => { st.dows.add(dayIdx(w)); });
+    take(/\b(?:every )?(?:weekdays?|business days?|work ?days?|working days?)\b/g, () => { [1, 2, 3, 4, 5].forEach(d => rule.dows.add(d)); });
+    take(/\b(?:every |on )?weekends?\b/g, () => { rule.dows.add(0); rule.dows.add(6); });
+    take(new RegExp(`\\b${DAY_WORD}\\b`, 'g'), (_, w) => { rule.dows.add(dayIdx(w)); });
 
     // Specific dates: "march 3", "3 march", "3rd of march"
-    take(new RegExp(`\\b${MONTH_WORD}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`, 'g'), (_, mo, d) => {
-      st.months.add(monIdx(mo)); st.doms.add(+d);
-    });
-    take(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?${MONTH_WORD}\\b`, 'g'), (_, d, mo) => {
-      st.months.add(monIdx(mo)); st.doms.add(+d);
-    });
+    take(new RegExp(`\\b${MONTH_WORD}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`, 'g'), (_, mo, d) => { rule.months.add(monIdx(mo)); rule.doms.add(+d); });
+    take(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?${MONTH_WORD}\\b`, 'g'), (_, d, mo) => { rule.months.add(monIdx(mo)); rule.doms.add(+d); });
     take(new RegExp(`\\b${MONTH_WORD}\\s*(?:-|to|through)\\s*${MONTH_WORD}\\b`, 'g'), (_, a, b) => {
       let x = monIdx(a);
       const y = monIdx(b);
-      for (let i = 0; i < 12; i++) { st.months.add(x); if (x === y) break; x = x % 12 + 1; }
+      for (let i = 0; i < 12; i++) { rule.months.add(x); if (x === y) break; x = x % 12 + 1; }
     });
     take(new RegExp(`\\b${MONTH_WORD}\\b`, 'g'), (_, mo, off, str) => {
       if (mo === 'may' && /\bmay\s+(?!\d)/.test(str.slice(off)) && !/\bin\s+$/.test(str.slice(0, off))) return false;
-      st.months.add(monIdx(mo));
+      rule.months.add(monIdx(mo));
     });
 
     // Days of month
-    take(/\b(\d{1,2})(?:st|nd|rd|th)?\s*(?:-|to|through)\s*(\d{1,2})(?:st|nd|rd|th)\b/g, (_, a, b) => {
-      for (let d = +a; d <= +b; d++) st.doms.add(d);
-    });
-    take(/\bdays?\s+(\d{1,2})\s*(?:-|to|through)\s*(\d{1,2})\b/g, (_, a, b) => { for (let d = +a; d <= +b; d++) st.doms.add(d); });
-    take(/\b(\d{1,2})(?:st|nd|rd|th)\b/g, (_, d) => { st.doms.add(+d); });
-    take(/\bday\s+(\d{1,2})\b/g, (_, d) => { st.doms.add(+d); });
+    take(/\bbetween\s+(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)?\s+and\s+(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)\b/g, (_, a, b) => { for (let d = +a; d <= +b; d++) rule.doms.add(d); });
+    take(/\b(\d{1,2})(?:st|nd|rd|th)?\s*(?:-|to|through)\s*(\d{1,2})(?:st|nd|rd|th)\b/g, (_, a, b) => { for (let d = +a; d <= +b; d++) rule.doms.add(d); });
+    take(/\bdays?\s+(\d{1,2})\s*(?:-|to|through)\s*(\d{1,2})\b/g, (_, a, b) => { for (let d = +a; d <= +b; d++) rule.doms.add(d); });
+    take(/\b(\d{1,2})(?:st|nd|rd|th)\b/g, (_, d) => { rule.doms.add(+d); });
+    take(/\bday\s+(\d{1,2})\b/g, (_, d) => { rule.doms.add(+d); });
 
     // Years
-    take(/\b(19[7-9]\d|2[01]\d\d)\b/g, (_, y) => { st.years.add(+y); });
+    take(/\b(19[7-9]\d|2[01]\d\d)\b/g, (_, y) => { rule.years.add(+y); });
 
     // Minutes past the hour
-    take(/\bat\s+:(\d{2})\b/g, (_, m) => { st.minutePast = +m; });
-    take(/\b(?:at\s+)?(\d{1,2})\s+(?:minutes?\s+)?past(?:\s+the hour|\s+every hour)?\b/g, (_, m) => { st.minutePast = +m; });
-    take(/\bat\s+minute\s+(\d{1,2})\b/g, (_, m) => { st.minutePast = +m; });
-    take(/\bon the hour\b/g, () => { st.minutePast = 0; });
-    take(/\b(?:at\s+)?(?:a\s+)?quarter past\b/g, () => { st.minutePast = 15; });
-    take(/\b(?:at\s+)?half past\b/g, () => { st.minutePast = 30; });
+    take(/\bat\s+:(\d{2})\b/g, (_, m) => { time.minutePast = +m; });
+    take(/\b(?:at\s+)?(\d{1,2})\s+(?:minutes?\s+)?past(?:\s+the hour|\s+every hour)?\b/g, (_, m) => { time.minutePast = +m; });
+    take(/\bat\s+minute\s+(\d{1,2})\b/g, (_, m) => { time.minutePast = +m; });
+    take(/\bon the hour\b/g, () => { time.minutePast = 0; });
+    take(/\b(?:at\s+)?(?:a\s+)?quarter past\b/g, () => { time.minutePast = 15; });
+    take(/\b(?:at\s+)?half past\b/g, () => { time.minutePast = 30; });
 
     // Times of day
-    take(/\b(?:at\s+)?(noon|midday|midnight)\b/g, (_, w) => { st.times.push(w === 'midnight' ? { h: 0, m: 0 } : { h: 12, m: 0 }); });
+    take(/\b(?:at\s+)?(noon|midday|midnight)\b/g, (_, w) => { time.times.push(w === 'midnight' ? { h: 0, m: 0 } : { h: 12, m: 0 }); });
     take(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/g, (all, h, m, ap) => {
       const t = parseTimeWord(`${h}${m ? ':' + m : ''} ${ap}`);
       if (!t) return false;
-      st.times.push(t);
+      time.times.push(t);
     });
     take(/\b(?:at\s+)?(\d{1,2}):(\d{2})\b/g, (all, h, m) => {
       const t = parseTimeWord(`${h}:${m}`);
       if (!t) return false;
-      st.times.push(t);
+      time.times.push(t);
     });
     take(/\b(?:at|and)\s+(\d{1,2})(?=\s)(?!\s*(?:minutes?|mins?|hours?|seconds?|days?))/g, (all, h) => {
       const t = parseTimeWord(h);
       if (!t) return false;
       if (t.ambiguous) notes.push(`Read “${h}” as ${pad2(t.h)}:00 (24-hour clock). Write ${h}pm for ${pad2(t.h + 12)}:00.`);
-      st.times.push(t);
+      time.times.push(t);
     });
 
-    const leftover = s.replace(/\b(at|on|in|of|the|and|every|run|runs|running|it|job|please|schedule|cron|from|to|a|an|starting|start|day|days|month|months|week|time|times|each|during|but|only|between|past|minute|hour|o)\b/g, ' ').replace(/[^a-z0-9:]+/g, ' ').trim();
+    const leftover = s.replace(/\b(at|on|in|of|the|and|also|plus|every|run|runs|running|it|job|please|schedule|cron|from|to|a|an|starting|start|day|days|month|months|week|time|times|each|during|but|only|between|past|minute|hour|o)\b/g, ' ').replace(/[^a-z0-9:]+/g, ' ').trim();
     if (leftover) notes.push(`Ignored: “${leftover}”.`);
-    if (st.unsupported) return { error: st.unsupported };
 
-    // Assemble
-    let seconds = [0], minutes = null, hours = null;
+    const f = rule.flags;
+    const hasRule = rule.dows.size || rule.doms.size || rule.months.size || rule.years.size || rule.entries.length ||
+      f.daily || f.weekly || f.monthly || f.yearly || f.quarterly || rule.dayStep || rule.weekStep || rule.monthStep || rule.yearStep;
+    const hasTime = time.times.length || time.window || time.interval || time.minutePast != null || time.twice;
+    return { rule: hasRule ? rule : null, time: hasTime ? time : null, unsupported };
+  }
+
+  /** Times of day for one group of clauses: [{ seconds, minutes, hours }…] or { error }. */
+  function resolveTimes(specs, notes) {
+    const T = { times: [], window: null, interval: null, minutePast: null, twice: false };
+    for (const t of specs) {
+      T.times.push(...t.times);
+      if (t.window) T.window = t.window;
+      if (t.interval) T.interval = t.interval;
+      if (t.minutePast != null) T.minutePast = t.minutePast;
+      if (t.twice) T.twice = true;
+    }
     const allH = Array.from({ length: 24 }, (_, i) => i);
     const allM = Array.from({ length: 60 }, (_, i) => i);
-    let months = st.months.size ? sortNum([...st.months]) : null;
-    let domList = st.doms.size ? sortNum([...st.doms]) : null;
-    const dowList = st.dows.size ? sortNum([...st.dows]) : null;
-    const W = st.window;
+    const W = T.window;
+    if (W && W.h2 < W.h1) return { error: 'The time window ends before it starts. Cron hour ranges can’t wrap past midnight in one go.' };
     const windowHours = (inclusiveEnd) => {
       if (!W) return allH;
       const end = (inclusiveEnd || W.m2 > 0) ? W.h2 : W.h2 - 1;
@@ -2268,98 +2478,200 @@ details.snip[open] summary { margin-bottom: 6px; }
       for (let h = W.h1; h <= end; h++) out.push(h);
       return out.length ? out : allH;
     };
-    if (W && W.h2 < W.h1) return { error: 'The time window ends before it starts. Cron hour ranges can’t wrap past midnight in one go.' };
-    if (st.twice && !st.times.length) st.times.push({ h: 0, m: 0 }, { h: 12, m: 0 });
-
-    const iv = st.interval;
+    if (T.twice && !T.times.length) T.times.push({ h: 0, m: 0 }, { h: 12, m: 0 });
+    const iv = T.interval;
     if (iv) {
       const n = iv.n;
       if (iv.unit === 'second') {
         if (n >= 60) return { error: 'For intervals of a minute or more, say “every N minutes”.' };
-        seconds = Array.from({ length: Math.ceil(60 / n) }, (_, i) => i * n).filter(v => v < 60);
         if (60 % n) notes.push(`60 isn't divisible by ${n}, so the seconds restart every minute.`);
-        minutes = allM; hours = windowHours(false);
-      } else if (iv.unit === 'minute') {
+        return [{ seconds: Array.from({ length: Math.ceil(60 / n) }, (_, i) => i * n).filter(v => v < 60), minutes: allM, hours: windowHours(false) }];
+      }
+      if (iv.unit === 'minute') {
         if (n >= 60) {
-          if (n % 60 === 0 && n / 60 < 24) { hours = windowHours(true).filter((h, i, a) => (h - a[0]) % (n / 60) === 0); minutes = [st.minutePast || 0]; }
-          else {
-            const lines = minuteIntervalLines(n);
-            return lines
-              ? { error: `Cron can't count ${n}-minute intervals in one line. Use these ${lines.length} crontab lines together:`, lines }
-              : { error: `Every ${n} minutes doesn't divide a day evenly, so cron can't do it.` };
+          if (n % 60 === 0 && n / 60 < 24) {
+            const hs = windowHours(true);
+            return [{ seconds: [0], minutes: [T.minutePast || 0], hours: hs.filter(h => (h - hs[0]) % (n / 60) === 0) }];
           }
-        } else {
-          const start = W ? W.m1 % n : 0;
-          minutes = []; for (let m = start; m < 60; m += n) minutes.push(m);
-          if (60 % n) notes.push(`60 isn't divisible by ${n}: runs restart at :${pad2(start)} each hour.`);
-          hours = windowHours(false);
-          if (W && W.m2 === 0) notes.push(`Last run of the window is ${pad2(hours[hours.length - 1])}:${pad2(minutes[minutes.length - 1])}, the final slot before ${pad2(W.h2)}:00.`);
+          if (1440 % n) return { error: `Every ${n} minutes doesn't divide a day evenly, so cron can't do it.` };
+          const byMinute = new Map();
+          for (let t = 0; t < 1440; t += n) {
+            const m = t % 60;
+            if (!byMinute.has(m)) byMinute.set(m, []);
+            byMinute.get(m).push(Math.floor(t / 60));
+          }
+          notes.push(`Every ${n} minutes takes ${byMinute.size} cron schedules, one per minute of the hour.`);
+          return [...byMinute].map(([m, hs]) => ({ seconds: [0], minutes: [m], hours: hs }));
         }
-      } else if (iv.unit === 'hour') {
+        const start = W ? W.m1 % n : 0;
+        const minutes = [];
+        for (let m = start; m < 60; m += n) minutes.push(m);
+        if (60 % n) notes.push(`60 isn't divisible by ${n}: runs restart at :${pad2(start)} each hour.`);
+        const hours = windowHours(false);
+        if (W && W.m2 === 0) notes.push(`Last run of the window is ${pad2(hours[hours.length - 1])}:${pad2(minutes[minutes.length - 1])}, the final slot before ${pad2(W.h2)}:00.`);
+        return [{ seconds: [0], minutes, hours }];
+      }
+      if (iv.unit === 'hour') {
         if (n >= 24) return { error: 'For a day or longer, say “every day” or “every N days”.' };
         const base = windowHours(true);
-        const first = st.times.length === 1 && !W ? st.times[0].h : base[0];
-        hours = base.filter(h => h >= first && (h - first) % n === 0);
-        minutes = [st.minutePast != null ? st.minutePast : (st.times.length === 1 ? st.times[0].m : 0)];
+        const first = T.times.length === 1 && !W ? T.times[0].h : base[0];
         if (24 % n && !W) notes.push(`24 isn't divisible by ${n}, so the hours restart at midnight.`);
-      } else if (iv.unit === 'day') {
-        domList = []; for (let d = 1; d <= 31; d += n) domList.push(d);
-        notes.push(`Day-of-month steps restart on the 1st each month, so this isn't a strict every-${n}-days rhythm.`);
-      } else if (iv.unit === 'week') {
-        return { error: `Cron can't count weeks. Run weekly and skip alternate weeks in the job, e.g. \`[ $(( $(date +%s) / 604800 % ${n} )) -eq 0 ]\`.` };
-      } else if (iv.unit === 'month') {
-        months = []; for (let m = 1; m <= 12; m += n) months.push(m);
-        if (12 % n) notes.push(`12 isn't divisible by ${n}, so the months restart each January.`);
-        if (!domList && !st.domSpecial && !dowList && !st.dowSpecial) domList = [1];
-      } else {
-        return { error: 'Cron can’t count years. Use a specific year (Quartz or EventBridge) or check the year in the job.' };
+        return [{ seconds: [0], minutes: [T.minutePast != null ? T.minutePast : (T.times.length === 1 ? T.times[0].m : 0)], hours: base.filter(h => h >= first && (h - first) % n === 0) }];
       }
     }
-    if (!minutes) {
-      if (st.times.length) {
-        const hs = sortNum([...new Set(st.times.map(t => t.h))]);
-        const ms = sortNum([...new Set(st.times.map(t => t.m))]);
-        const want = new Set(st.times.map(t => t.h * 60 + t.m));
-        if (hs.length * ms.length !== want.size) {
-          const byMin = new Map();
-          for (const t of st.times) { if (!byMin.has(t.m)) byMin.set(t.m, new Set()); byMin.get(t.m).add(t.h); }
-          return {
-            error: 'Those times have different minutes, so they need one cron line each:',
-            lines: [...byMin].map(([m, h]) => `${m} ${sortNum([...h]).join(',')} * * *`),
-          };
-        }
-        hours = hs; minutes = ms;
-      } else if (st.minutePast != null) {
-        minutes = [st.minutePast]; hours = W ? windowHours(false) : allH;
-      } else if (W) {
-        minutes = [0]; hours = windowHours(true);
-        notes.push('No interval given, so this runs hourly within the window.');
-      } else {
-        minutes = [0]; hours = [0];
-        notes.push('No time given, so this runs at midnight (00:00).');
+    if (T.times.length) {
+      // Group minutes that share the same hours; each group is one schedule.
+      const byMin = new Map();
+      for (const t of T.times) { if (!byMin.has(t.m)) byMin.set(t.m, new Set()); byMin.get(t.m).add(t.h); }
+      const byHours = new Map();
+      for (const [m, hs] of byMin) {
+        const key = sortNum([...hs]).join(',');
+        if (!byHours.has(key)) byHours.set(key, { seconds: [0], minutes: [], hours: sortNum([...hs]) });
+        byHours.get(key).minutes.push(m);
       }
+      const out = [...byHours.values()].map(v => ({ ...v, minutes: sortNum(v.minutes) }));
+      if (out.length > 1) notes.push(`Those times have different minutes, so they take ${out.length} cron schedules.`);
+      return out;
     }
-    if (st.yearly && !months) { months = [1]; if (!domList && !st.domSpecial) domList = [1]; }
-    if (st.monthly && !domList && !st.domSpecial && !dowList && !st.dowSpecial) domList = [1];
-    if (st.weekly && !dowList && !st.dowSpecial) { st.dows.add(0); notes.push('“Weekly” runs on Sundays, like cron’s @weekly.'); }
-    if (st.defaultDom && !domList && !st.domSpecial && !dowList && !st.dowSpecial) domList = [st.defaultDom];
-    const dows = st.dows.size ? sortNum([...st.dows]) : null;
+    if (T.minutePast != null) return [{ seconds: [0], minutes: [T.minutePast], hours: W ? windowHours(false) : allH }];
+    if (W) {
+      notes.push('No interval given, so this runs hourly within the window.');
+      return [{ seconds: [0], minutes: [0], hours: windowHours(true) }];
+    }
+    notes.push('No time given, so this runs at midnight (00:00).');
+    return [{ seconds: [0], minutes: [0], hours: [0] }];
+  }
 
-    for (const d of domList || []) if (d < 1 || d > 31) return { error: `There's no ${ordinal(d)} day of a month.` };
-    const hasDom = !!(domList || st.domSpecial);
-    const hasDow = !!(dows || st.dowSpecial);
-    let combine = 'and';
-    if (hasDom && hasDow) { combine = 'or'; notes.push('Both a date and a weekday were given, so this runs on either.'); }
-    const model = buildModel({
-      seconds, minutes, hours,
-      months: months || Array.from({ length: 12 }, (_, i) => i + 1),
-      years: st.years.size ? sortNum([...st.years]) : null,
-      dom: { list: domList || Array.from({ length: 31 }, (_, i) => i + 1), special: st.domSpecial || null },
-      dow: { list: dows || [0, 1, 2, 3, 4, 5, 6], special: st.dowSpecial || null },
-      combine,
-    });
-    if (!model.times.length) return { error: 'That doesn’t leave any times to run.' };
-    return { model, notes };
+  /** Day rules for one group of clauses: [{ dom, dow, months, years, combine }…] or { error }. */
+  function resolveDays(rules, notes) {
+    // A clause that only names months ("and july") or years extends the clause before it.
+    const folded = [];
+    for (const r of rules) {
+      const onlyMonths = !r.dows.size && !r.doms.size && !r.entries.length && !Object.keys(r.flags).length &&
+        !r.dayStep && !r.weekStep && !r.monthStep && !r.yearStep;
+      if (onlyMonths && folded.length) {
+        r.months.forEach(m => folded[folded.length - 1].months.add(m));
+        r.years.forEach(y => folded[folded.length - 1].years.add(y));
+      } else folded.push(r);
+    }
+    const out = [];
+    const plain = new Map();
+    for (const r of folded) {
+      if (r.weekStep) return { error: `Cron can't count weeks. Run weekly and skip alternate weeks in the job, e.g. \`[ $(( $(date +%s) / 604800 % ${r.weekStep} )) -eq 0 ]\`.` };
+      if (r.yearStep) return { error: 'Cron can’t count years. Use a specific year (Quartz or EventBridge) or check the year in the job.' };
+      let months = r.months.size ? sortNum([...r.months]) : null;
+      if (!months && r.monthStep) months = monthStep(r.monthStep.n, r.monthStep.start, notes);
+      if (!months && r.flags.quarterly) months = [1, 4, 7, 10];
+      if (!months && r.flags.yearly) months = [1];
+      const years = r.years.size ? sortNum([...r.years]) : null;
+      for (const e of r.entries) {
+        out.push({
+          dom: e.domSpecial ? { list: ALL_MONTHS.concat(), special: e.domSpecial } : e.domList ? { list: e.domList } : null,
+          dow: e.dowSpecial ? { special: e.dowSpecial } : null,
+          months: e.months || months, years,
+        });
+      }
+      let dows = r.dows.size ? sortNum([...r.dows]) : null;
+      let doms = r.doms.size ? sortNum([...r.doms]) : null;
+      if (r.dayStep) {
+        doms = [];
+        for (let d = 1; d <= 31; d += r.dayStep) doms.push(d);
+        notes.push(`Day-of-month steps restart on the 1st each month, so this isn't a strict every-${r.dayStep}-days rhythm.`);
+      }
+      const f = r.flags;
+      const hasPlain = dows || doms || f.daily || f.weekly || f.monthly || f.yearly || f.quarterly || r.monthStep || (!r.entries.length);
+      if (!hasPlain) continue;
+      if (f.weekly && !dows) { dows = [0]; notes.push('“Weekly” runs on Sundays, like cron’s @weekly.'); }
+      if ((f.monthly || f.quarterly || f.yearly || r.monthStep) && !dows && !doms) doms = [1];
+      const key = JSON.stringify([months, years, !!dows, !!doms]);
+      const prev = plain.get(key);
+      if (prev) {
+        if (dows) prev.dows = sortNum([...new Set([...(prev.dows || []), ...dows])]);
+        if (doms) prev.doms = sortNum([...new Set([...(prev.doms || []), ...doms])]);
+      } else {
+        const v = { dows, doms, months, years };
+        plain.set(key, v);
+        out.push(v);
+      }
+    }
+    for (const v of out) {
+      if (v.dom === undefined) {
+        v.dom = v.doms ? { list: v.doms } : null;
+        v.dow = v.dows ? { list: v.dows } : null;
+        if (v.dom && v.dow) notes.push('Both a date and a weekday were given, so that schedule runs on either.');
+      }
+      for (const d of (v.dom && v.dom.list && !v.dom.special ? v.dom.list : [])) {
+        if (d < 1 || d > 31) return { error: `There's no ${ordinal(d)} day of a month.` };
+      }
+    }
+    return out.length ? out : [{ dom: null, dow: null, months: null, years: null }];
+  }
+
+  /**
+   * Read a plain-English schedule. Returns { models:[…], notes:[…] } or { error }.
+   * A sentence can describe several schedules ("first Monday of every month, third Monday of
+   * every other month"); each becomes its own model, because cron can't combine them.
+   */
+  function fromEnglish(input) {
+    const s = normalizeEnglish(input);
+    if (!s.trim()) return { error: 'Describe a schedule, for example “every weekday at 9:30am”.' };
+    const notes = [];
+    const clauses = splitClauses(s).map(c => parseClause(c, notes));
+    const bad = clauses.find(c => c.unsupported);
+    if (bad) return { error: bad.unsupported };
+
+    // Group clauses into schedules: a clause with both days and times completes a group;
+    // days alone wait for a time; a time alone joins the days before it.
+    const groups = [];
+    let pend = { rules: [], times: [] };
+    let last = null;
+    for (const c of clauses) {
+      if (c.rule && c.time) {
+        pend.rules.push(c.rule);
+        pend.times.push(c.time);
+        groups.push(pend);
+        last = pend;
+        pend = { rules: [], times: [] };
+      } else if (c.rule) pend.rules.push(c.rule);
+      else if (c.time) {
+        if (!pend.rules.length && last) last.times.push(c.time);
+        else pend.times.push(c.time);
+      }
+    }
+    if (pend.rules.length || pend.times.length) {
+      if (last && !pend.times.length) last.rules.push(...pend.rules);
+      else groups.push(pend);
+    }
+    if (!groups.length) return { error: 'Describe a schedule, for example “every weekday at 9:30am”.' };
+
+    const models = [];
+    const seen = new Set();
+    for (const g of groups) {
+      const times = resolveTimes(g.times, notes);
+      if (times.error) return times;
+      const days = resolveDays(g.rules, notes);
+      if (days.error) return days;
+      for (const d of days) {
+        for (const t of times) {
+          const hasDom = !!d.dom, hasDow = !!d.dow;
+          const model = buildModel({
+            seconds: t.seconds, minutes: t.minutes, hours: t.hours,
+            months: d.months || ALL_MONTHS,
+            years: d.years,
+            dom: { list: d.dom ? d.dom.list || ALL_DAYS : ALL_DAYS, special: d.dom ? d.dom.special || null : null },
+            dow: { list: d.dow ? d.dow.list || ALL_DOWS : ALL_DOWS, special: d.dow ? d.dow.special || null : null },
+            combine: hasDom && hasDow ? 'or' : 'and',
+          });
+          if (!model.times.length) return { error: 'That doesn’t leave any times to run.' };
+          const key = JSON.stringify([model.times.length, model.seconds, model.minutes, model.hours, model.months, model.years, model.dom.list, model.dom.special, model.dow.list, model.dow.special, model.dayMode]);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          models.push(model);
+        }
+      }
+    }
+    if (models.length > 8) return { error: `That takes ${models.length} separate cron schedules. Split it into simpler requests.` };
+    return { models, notes: [...new Set(notes)] };
   }
 
   // ---------------------------------------------------------------- display helpers
@@ -2390,7 +2702,7 @@ details.snip[open] summary { margin-bottom: 6px; }
 
   return {
     DIALECTS, DIALECT_ORDER, FIELD_LABEL, DOW_ABBR, DOW_LONG, MON_LONG, MON_SHORT, EXAMPLE_BY_DIALECT, DAY,
-    parse, unwrap, buildModel, dayMatches, upcoming, dstImpact, dstPolicy, stats, describe, render, renderDays, workaroundText,
+    parse, unwrap, buildModel, dayMatches, upcoming, upcomingSet, dstImpact, dstPolicy, stats, statsSet, lintSet, describe, render, renderDays, workaroundText,
     utcVariants, shiftModel, offsetPeriods, transitionsBetween, lint, fromEnglish, minuteIntervalLines,
     wallParts, offsetAt, displayParts, fmtOffset, fmtClock, fmtDuration, ordinal, daysInMonth, weekday, isLeap,
     isValidZone, compress, runsOf,
@@ -2411,23 +2723,25 @@ details.snip[open] summary { margin-bottom: 6px; }
   const NTH = ['1st', '2nd', '3rd', '4th', '5th'];
   const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const STORE_KEY = 'cron-almanac';
+  const MAX_SCHEDULES = 8;
 
   const EXAMPLES = [
-    { label: 'The “first Monday” mistake', expr: '0 9 1-7 * 1', d: 'unix' },
-    { label: 'Every 7 minutes (uneven)', expr: '*/7 * * * *', d: 'unix' },
-    { label: '02:30 in New York (daylight saving)', expr: '30 2 * * *', d: 'unix', tz: 'America/New_York' },
-    { label: 'Every 90 minutes?', expr: '*/90 * * * *', d: 'unix' },
-    { label: 'Full crontab line with a command', expr: '15 3 * * 1-5 /opt/backup.sh > /var/log/backup-$(date +%F).log', d: 'unix' },
-    { label: 'GitHub Actions: 02:30 in New York', expr: '30 2 * * *', d: 'github', tz: 'America/New_York' },
-    { label: 'Kubernetes: */2 with a weekday', expr: '0 0 */2 * 1', d: 'k8s' },
-    { label: 'EventBridge: month end', expr: 'cron(0 18 L * ? *)', d: 'eventbridge' },
-    { label: 'Quartz: third Friday', expr: '0 0 12 ? * 6#3', d: 'quartz' },
-    { label: 'Quartz: 1-5 isn’t Monday to Friday', expr: '0 0 9 ? * 1-5', d: 'quartz' },
-    { label: 'Spring: weekday mornings in Berlin', expr: '0 30 8 * * MON-FRI', d: 'spring', tz: 'Europe/Berlin' },
+    { label: 'The “first Monday” mistake', exprs: ['0 9 1-7 * 1'], d: 'unix' },
+    { label: 'Every 7 minutes (uneven)', exprs: ['*/7 * * * *'], d: 'unix' },
+    { label: '02:30 in New York (daylight saving)', exprs: ['30 2 * * *'], d: 'unix', tz: 'America/New_York' },
+    { label: 'Every 90 minutes takes two lines', exprs: ['0 */3 * * *', '30 1-22/3 * * *'], d: 'unix' },
+    { label: 'Full crontab line with a command', exprs: ['15 3 * * 1-5 /opt/backup.sh > /var/log/backup-$(date +%F).log'], d: 'unix' },
+    { label: 'GitHub Actions: 02:30 in New York', exprs: ['30 2 * * *'], d: 'github', tz: 'America/New_York' },
+    { label: 'Kubernetes: */2 with a weekday', exprs: ['0 0 */2 * 1'], d: 'k8s' },
+    { label: 'EventBridge: month end', exprs: ['cron(0 18 L * ? *)'], d: 'eventbridge' },
+    { label: 'Quartz: first Monday, and third Monday every other month', exprs: ['0 0 9 ? * 2#1', '0 0 9 ? 1/2 2#3'], d: 'quartz' },
+    { label: 'Quartz: 1-5 isn’t Monday to Friday', exprs: ['0 0 9 ? * 1-5'], d: 'quartz' },
+    { label: 'Spring: weekday mornings in Berlin', exprs: ['0 30 8 * * MON-FRI'], d: 'spring', tz: 'Europe/Berlin' },
   ];
 
-  const state = { expr: '0 9 1-7 * 1', dialect: 'unix', tz: browserTz, calStart: null, runs: 12, sel: null };
-  let current = null;
+  // exprs[0] is the main expression; the rest are extra schedules that run the same job.
+  const state = { exprs: ['0 9 1-7 * 1'], dialect: 'unix', tz: browserTz, calStart: null, runs: 12, sel: null };
+  let current = null; // { list, P, models, tz }
 
   // ------------------------------------------------------------ helpers
 
@@ -2437,6 +2751,7 @@ details.snip[open] summary { margin-bottom: 6px; }
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br>');
   const nf = new Intl.NumberFormat('en-US');
+  const pad = n => String(n).padStart(2, '0');
 
   function b64(s) {
     const bytes = new TextEncoder().encode(s);
@@ -2468,6 +2783,9 @@ details.snip[open] summary { margin-bottom: 6px; }
     if (P && P.ok && P.tz) return P.tz;
     return state.tz;
   }
+
+  const multi = () => current && current.models.length > 1;
+  const schedName = i => `Schedule ${i + 1}`;
 
   let toastTimer = 0;
   function toast(msg) {
@@ -2515,7 +2833,8 @@ details.snip[open] summary { margin-bottom: 6px; }
     if (!raw) return false;
     try {
       const o = JSON.parse(raw);
-      if (typeof o.e === 'string') state.expr = o.e;
+      if (typeof o.e === 'string') state.exprs = [o.e];
+      if (Array.isArray(o.x)) state.exprs.push(...o.x.filter(x => typeof x === 'string').slice(0, MAX_SCHEDULES - 1));
       if (D[o.d]) state.dialect = o.d;
       if (typeof o.z === 'string' && E.isValidZone(o.z)) state.tz = o.z;
     } catch (e) { return false; }
@@ -2523,11 +2842,22 @@ details.snip[open] summary { margin-bottom: 6px; }
   }
 
   function save() {
-    const json = JSON.stringify({ e: state.expr, d: state.dialect, z: state.tz });
+    const o = { e: state.exprs[0], d: state.dialect, z: state.tz };
+    if (state.exprs.length > 1) o.x = state.exprs.slice(1);
+    const json = JSON.stringify(o);
     try { localStorage.setItem(STORE_KEY, json); } catch (e) { /* storage unavailable */ }
     if (window.top === window) {
       try { history.replaceState(null, '', '#s.' + b64(json)); } catch (e) { /* ignore */ }
     }
+  }
+
+  /** Replace the whole set of expressions (and optionally the dialect), then redraw. */
+  function setExprs(exprs, dialect) {
+    if (dialect) state.dialect = dialect;
+    state.exprs = exprs.length ? exprs.slice(0, MAX_SCHEDULES) : [''];
+    state.sel = null;
+    $('expr').value = state.exprs[0];
+    update();
   }
 
   // ------------------------------------------------------------ static controls
@@ -2576,14 +2906,10 @@ details.snip[open] summary { margin-bottom: 6px; }
       const x = EXAMPLES[+sel.value];
       sel.value = '';
       if (!x) return;
-      state.expr = x.expr;
-      state.dialect = x.d;
       if (x.tz) state.tz = x.tz;
-      state.sel = null;
       state.calStart = null;
-      $('expr').value = state.expr;
       toast('');
-      update();
+      setExprs(x.exprs, x.d);
     });
   }
 
@@ -2591,33 +2917,35 @@ details.snip[open] summary { margin-bottom: 6px; }
 
   function switchDialect(id) {
     if (id === state.dialect) return;
-    const P = current;
     const T = D[id];
-    let msg;
-    if (P && P.ok) {
-      if (P.tz) state.tz = P.tz;
-      const r = E.render(P, id);
-      if (r.ok) {
-        state.expr = r.lines[0];
-        msg = r.lines.length > 1
-          ? `${T.name} needs ${r.lines.length} schedules for this; showing the first. Translations lists both.`
-          : `Converted to ${T.name}.`;
-      } else if (r.workaround) {
-        state.expr = r.workaround.expr;
-        msg = `${r.reason} Showing the closest ${T.short} schedule; Translations has the check the job needs.`;
-      } else {
-        msg = `${T.name} can't express this: ${r.reason}`;
-      }
+    const list = current ? current.list : [];
+    let msg = '';
+    if (list.length && list[0].ok) {
+      if (list[0].tz) state.tz = list[0].tz;
+      const out = [];
+      const problems = [];
+      let split = 0;
+      list.forEach((P, i) => {
+        if (!P.ok) { out.push(state.exprs[i]); return; }
+        const r = E.render(P, id);
+        if (r.ok) { out.push(...r.lines); if (r.lines.length > 1) split++; }
+        else if (r.workaround) { out.push(r.workaround.expr); problems.push(r.reason); }
+        else { out.push(state.exprs[i]); problems.push(r.reason); }
+      });
+      if (problems.length) {
+        msg = `${problems[0]} ${list.length > 1 ? 'Where there was no exact match, the closest schedule is shown' : 'Showing the closest schedule'}; Translations has the check the job needs.`;
+      } else if (split) {
+        msg = `${T.name} needs ${out.length} schedules for this, so they're all listed below the expression.`;
+      } else msg = `Converted to ${T.name}.`;
+      toast(msg);
+      setExprs(out, id);
     } else {
-      msg = `Reading the expression as ${T.name}.`;
+      toast(`Reading the expression as ${T.name}.`);
+      setExprs(state.exprs, id);
     }
-    state.dialect = id;
-    $('expr').value = state.expr;
-    toast(msg);
-    update();
   }
 
-  // ------------------------------------------------------------ field chips
+  // ------------------------------------------------------------ field chips (main expression)
 
   function chipMeaning(f) {
     if (f.question) return 'not used';
@@ -2640,8 +2968,8 @@ details.snip[open] summary { margin-bottom: 6px; }
       switch (f.kind) {
         case 'dow': return DOW_SHORT[v];
         case 'month': return E.MON_SHORT[v - 1];
-        case 'minute': case 'second': return ':' + String(v).padStart(2, '0');
-        case 'hour': return String(v).padStart(2, '0') + 'h';
+        case 'minute': case 'second': return ':' + pad(v);
+        case 'hour': return pad(v) + 'h';
         case 'dom': return E.ordinal(v);
         default: return String(v);
       }
@@ -2662,7 +2990,7 @@ details.snip[open] summary { margin-bottom: 6px; }
     const toks = P.tokens || [];
     const chips = [];
     const chip = (label, token, mean, cls, idx) =>
-      `<li><button type="button" class="chip ${cls || ''}" data-i="${idx}"><span class="f-label">${esc(label)}</span><span class="f-token">${esc(token)}</span><span class="f-mean">${esc(mean || ' ')}</span></button></li>`;
+      `<li><button type="button" class="chip ${cls || ''}" data-i="${idx}"><span class="f-label">${esc(label)}</span><span class="f-token">${esc(token)}</span><span class="f-mean">${esc(mean || ' ')}</span></button></li>`;
     if (P.ok && P.macro) {
       chips.push(chip('shortcut', P.macro, P.reboot ? 'at startup' : `= ${P.macroExpansion}`, '', 0));
     } else {
@@ -2686,22 +3014,66 @@ details.snip[open] summary { margin-bottom: 6px; }
 
   function syncCaret() {
     const input = $('expr');
-    const toks = (current && current.tokens) || [];
+    const toks = (current && current.P && current.P.tokens) || [];
     const pos = input.selectionStart;
     const idx = document.activeElement === input ? toks.findIndex(t => pos >= t.start && pos <= t.end) : -1;
     $('fields').querySelectorAll('.chip').forEach(c => c.classList.toggle('active', +c.dataset.i === idx));
   }
 
+  // ------------------------------------------------------------ extra schedules
+
+  function renderExtras(list) {
+    const box = $('extras');
+    const n = state.exprs.length - 1;
+    $('expr-n').hidden = n === 0;
+    $('add-expr').hidden = state.exprs.length >= MAX_SCHEDULES;
+    let rows = box.querySelectorAll('.extra');
+    if (rows.length !== n) {
+      const focused = document.activeElement && document.activeElement.classList.contains('extra-input') ? +document.activeElement.dataset.i : -1;
+      box.innerHTML = state.exprs.slice(1).map((x, k) => {
+        const i = k + 1;
+        return `<div class="extra">
+          <span class="extra-n" aria-hidden="true">${i + 1}</span>
+          <label class="sr-only" for="expr-${i}">${schedName(i)}</label>
+          <input id="expr-${i}" class="extra-input" data-i="${i}" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off">
+          <button type="button" class="btn ghost small" data-remove="${i}" aria-label="Remove ${schedName(i).toLowerCase()}">Remove</button>
+          <p class="extra-note" id="expr-note-${i}"></p>
+        </div>`;
+      }).join('');
+      rows = box.querySelectorAll('.extra');
+      if (focused > 0 && focused <= n) $('expr-' + focused).focus();
+    }
+    rows.forEach((row, k) => {
+      const i = k + 1;
+      const input = row.querySelector('input');
+      if (document.activeElement !== input && input.value !== state.exprs[i]) input.value = state.exprs[i];
+      const P = list[i];
+      const note = row.querySelector('.extra-note');
+      let text, bad = false;
+      if (!P.ok) { text = P.error.message; bad = true; }
+      else if (P.reboot) { text = '`@reboot` can’t be combined with other schedules.'; bad = true; }
+      else text = E.describe(P).replace(/\*\*/g, '');
+      note.innerHTML = md(text);
+      note.classList.toggle('bad', bad);
+      input.classList.toggle('invalid', bad);
+      input.setAttribute('aria-invalid', String(bad));
+      input.setAttribute('aria-describedby', 'expr-note-' + i);
+    });
+  }
+
   // ------------------------------------------------------------ main render
 
   function update() {
-    const P = E.parse(state.expr, state.dialect);
-    current = P;
+    const list = state.exprs.map(x => E.parse(x, state.dialect));
+    const P = list[0];
     const tz = effTz(P);
     const now = Date.now();
+    const models = !P.ok ? [] : P.reboot ? [P] : list.filter(Q => Q.ok && !Q.reboot);
+    current = { list, P, models, tz };
     syncDialectButtons();
     renderTz(P, tz, now);
     renderFields(P);
+    renderExtras(list);
     const results = $('results');
     const input = $('expr');
     input.setAttribute('aria-invalid', String(!P.ok));
@@ -2717,24 +3089,23 @@ details.snip[open] summary { margin-bottom: 6px; }
     results.classList.remove('stale');
     input.classList.remove('invalid');
     input.setAttribute('aria-describedby', 'sentence');
-    renderSummary(P, tz, now);
-    renderChecks(P, tz, now);
-    renderRuns(P, tz, now);
-    renderCalendar(P, tz, now);
-    renderDaymap(P, tz, now);
-    renderTranslations(P, tz, now);
+    renderSummary(models, tz, now);
+    renderChecks(models, tz, now);
+    renderRuns(models, tz, now);
+    renderCalendar(models, tz, now);
+    renderDaymap(models, tz, now);
+    renderTranslations(models, tz, now);
     save();
   }
 
   function renderTz(P, tz, now) {
     const sel = $('tz');
     ensureTzOption(tz);
-    const forced = !!(P.ok && P.tz);
-    sel.disabled = forced;
+    sel.disabled = !!(P.ok && P.tz);
     const p = E.displayParts(now, tz);
     let hint = `Now ${p.hour}:${p.minute} ${p.timeZoneName} (${E.fmtOffset(E.offsetAt(now, tz))}).`;
     if (P.ok && P.tz) hint = `Set by ${P.tzSource.replace(/`/g, '')} in the pasted text. ` + hint;
-    else if (state.dialect === 'github') hint += ' GitHub uses UTC unless the workflow sets timezone:.';
+    else if (state.dialect === 'github') hint += ' GitHub uses UTC unless the workflow sets its timezone key.';
     else if (state.dialect === 'eventbridge') hint += ' Rules always use UTC; EventBridge Scheduler can use this zone.';
     $('tz-hint').textContent = hint;
   }
@@ -2742,44 +3113,61 @@ details.snip[open] summary { margin-bottom: 6px; }
   function renderError(P) {
     const el = $('error');
     const actions = [];
-    if (P.error.fix) actions.push(`<button type="button" class="btn small" data-expr="${esc(P.error.fix.expr)}">${esc(P.error.fix.label)}</button>`);
+    if (P.error.fix) actions.push(`<button type="button" class="btn small" data-fix="0" data-expr="${esc(P.error.fix.expr)}">${esc(P.error.fix.label)}</button>`);
     for (const id of E.DIALECT_ORDER) {
       if (id === state.dialect || actions.length >= 4) continue;
-      const Q = E.parse(state.expr, id);
+      const Q = E.parse(state.exprs[0], id);
       if (Q.ok) actions.push(`<button type="button" class="btn ghost small" data-read="${id}">Read it as ${esc(D[id].name)}</button>`);
     }
     el.innerHTML = `<p>${md(P.error.message)}</p>${actions.length ? `<div class="actions">${actions.join('')}</div>` : ''}`;
     el.hidden = false;
   }
 
-  function renderSummary(P, tz, now) {
-    let s = md(E.describe(P)).replace(/<strong>or<\/strong>/g, '<mark>or</mark>');
-    if (!P.reboot) s += ` <span class="tz">${esc(tz)}</span>`;
-    $('sentence').innerHTML = s;
-    const st = E.stats(P, tz, now);
+  function renderSummary(models, tz, now) {
+    const desc = M => md(E.describe(M)).replace(/<strong>or<\/strong>/g, '<mark>or</mark>');
+    const zone = models[0].reboot ? '' : ` <span class="tz">${esc(tz)}</span>`;
+    $('sentence').innerHTML = models.length === 1
+      ? `<p>${desc(models[0])}${zone}</p>`
+      : `<p class="lead">Runs on ${models.length} schedules together${zone}</p><ol>${models.map(M => `<li>${desc(M)}</li>`).join('')}</ol>`;
+    const st = E.statsSet(models, tz, now);
     const dl = $('stats');
     if (!st) { dl.innerHTML = ''; dl.hidden = true; return; }
     dl.hidden = false;
-    const next = E.upcoming(P, tz, now, 1).runs[0];
+    const next = E.upcomingSet(models, tz, now, 1).runs[0];
+    const perDay = st.perDayMin === st.perDayMax ? nf.format(st.perDayMax) : `${nf.format(st.perDayMin)}–${nf.format(st.perDayMax)}`;
     const items = [
       ['Next run', next ? `${relTime(next.t - now)}<small>${esc(fmtDate(next.t, tz, new Date(next.t).getUTCFullYear() !== new Date(now).getUTCFullYear()))}</small>` : 'Never'],
       ['Runs a year', `${nf.format(st.perYear)}<small>on ${nf.format(st.activeDays)} day${st.activeDays === 1 ? '' : 's'}</small>`],
-      ['Runs a day', `${nf.format(st.perDay)}<small>on days it runs</small>`],
+      ['Runs a day', `${perDay}<small>on days it runs</small>`],
       ['Shortest gap', st.minGap == null ? '—' : esc(E.fmtDuration(st.minGap))],
       ['Longest gap', st.maxGap == null ? '—' : esc(E.fmtDuration(st.maxGap))],
     ];
     dl.innerHTML = items.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
   }
 
-  function renderChecks(P, tz, now) {
-    const items = E.lint(P, tz, now);
+  // Notes about the platform rather than one expression; shown once for a set.
+  const PLATFORM_CHECKS = new Set(['gh-notes', 'gh-timezone', 'k8s-tz', 'k8s-crontz', 'eb-utc', 'unix-crontz']);
+
+  function renderChecks(models, tz, now) {
+    const items = [];
+    const seen = new Set();
+    models.forEach((M, i) => {
+      for (const c of E.lint(M, tz, now)) {
+        const global = PLATFORM_CHECKS.has(c.id);
+        const key = global ? c.id : `${i}|${c.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        items.push(Object.assign({}, c, { title: models.length > 1 && !global ? `${schedName(i)}: ${c.title}` : c.title, at: i }));
+      }
+    });
+    items.push(...E.lintSet(models, tz, now));
     const order = { error: 0, warn: 1, info: 2 };
     items.sort((a, b) => order[a.level] - order[b.level]);
     if (!items.some(i => i.level !== 'info')) {
       const zoneNote = E.transitionsBetween(tz, now, now + 365 * DAY).length ? `, daylight saving in ${tz}` : '';
       items.unshift({
         level: 'ok', title: 'No problems found',
-        body: `Checked the day-field logic, step sizes, impossible dates${zoneNote} and ${D[state.dialect].name} limits.`,
+        body: `Checked the day-field logic, step sizes, impossible dates${zoneNote}${models.length > 1 ? ', overlapping schedules' : ''} and ${D[state.dialect].name} limits.`,
       });
     }
     const label = { error: 'Error', warn: 'Warning', info: 'Note', ok: 'OK' };
@@ -2787,31 +3175,32 @@ details.snip[open] summary { margin-bottom: 6px; }
       <article class="check">
         <header><span class="sev ${c.level}">${label[c.level]}</span><h3>${md(c.title)}</h3></header>
         <p>${md(c.body)}</p>
-        ${c.fix ? `<button type="button" class="btn ghost small" data-expr="${esc(c.fix.expr)}">${esc(c.fix.label)}</button>` : ''}
+        ${c.fix ? `<button type="button" class="btn ghost small" data-fix="${c.at || 0}" data-expr="${esc(c.fix.expr)}">${esc(c.fix.label)}</button>` : ''}
       </article>`).join('');
   }
 
-  function renderRuns(P, tz, now) {
+  function renderRuns(models, tz, now) {
     const table = $('runs');
     const more = $('more-runs');
-    if (P.reboot) {
+    if (models[0].reboot) {
       table.innerHTML = '<tbody><tr><td class="runs-empty">Runs once each time cron starts.</td></tr></tbody>';
       more.hidden = true;
       return;
     }
-    const up = E.upcoming(P, tz, now, state.runs);
+    const up = E.upcomingSet(models, tz, now, state.runs);
     if (!up.runs.length) {
       table.innerHTML = '<tbody><tr><td class="runs-empty">No upcoming runs.</td></tr></tbody>';
       more.hidden = true;
       return;
     }
     const showLocal = browserTz !== tz;
-    const withSec = P.seconds.some(s => s !== 0);
+    const several = models.length > 1;
+    const withSec = models.some(M => M.seconds.some(s => s !== 0));
     const thisYear = E.wallParts(now, tz).y;
-    const pol = E.dstPolicy(P);
     const T = D[state.dialect];
     const badgeHtml = (text, title) => `<span class="badge" title="${esc(title)}">${esc(text)}</span>`;
     const rows = up.runs.map(r => {
+      const pol = E.dstPolicy(models[r.which[0]]);
       const p = E.displayParts(r.t, tz);
       const date = `${p.weekday} ${p.day} ${p.month}${+p.year !== thisYear ? ' ' + p.year : ''}`;
       let time, badge = '', cls = '';
@@ -2841,31 +3230,37 @@ details.snip[open] summary { margin-bottom: 6px; }
           badge = badgeHtml(pol.overlap === 'once' ? 'runs once' : '1st of 2', twice);
         }
       }
+      if (several && r.which.length > 1) {
+        cls += ' clash';
+        badge += badgeHtml('twice', `Schedules ${r.which.map(i => i + 1).join(' and ')} both fire now.`);
+      }
       let local = '';
       if (showLocal) {
         const q = E.displayParts(r.t, browserTz);
-        const sameDay = q.day === p.day;
-        local = `<td class="local"><span class="mono">${q.hour}:${q.minute}</span>${sameDay ? '' : ' ' + esc(q.weekday)}</td>`;
+        local = `<td class="local"><span class="mono">${q.hour}:${q.minute}</span>${q.day === p.day ? '' : ' ' + esc(q.weekday)}</td>`;
       }
-      return `<tr class="${cls}"><td>${esc(date)}</td><td class="t">${esc(time)}<span class="abbr">${esc(p.timeZoneName)}</span>${badge}</td>${local}<td class="rel">${esc(relTime(r.t - now))}</td></tr>`;
+      const sched = several ? `<td class="sched">${r.which.map(i => i + 1).join(', ')}</td>` : '';
+      return `<tr class="${cls.trim()}"><td>${esc(date)}</td><td class="t">${esc(time)}<span class="abbr">${esc(p.timeZoneName)}</span>${badge}</td>${sched}${local}<td class="rel">${esc(relTime(r.t - now))}</td></tr>`;
     });
-    table.innerHTML = `<thead><tr><th scope="col">Date</th><th scope="col">Time</th>${showLocal ? `<th scope="col" title="${esc(browserTz)}">Your time</th>` : ''}<th scope="col">In</th></tr></thead><tbody>${rows.join('')}</tbody>`;
+    table.innerHTML = `<thead><tr><th scope="col">Date</th><th scope="col">Time</th>${several ? '<th scope="col" title="Which schedule">Sched.</th>' : ''}${showLocal ? `<th scope="col" title="${esc(browserTz)}">Your time</th>` : ''}<th scope="col">In</th></tr></thead><tbody>${rows.join('')}</tbody>`;
     more.hidden = up.exhausted || state.runs >= 200;
   }
 
-  function dstDays(P, tz, a, b) {
+  function dstDays(models, tz, a, b) {
     const map = new Map();
-    for (const x of E.dstImpact(P, tz, a, b)) {
-      if (!x.affected) continue;
-      for (const s of x.samples) {
-        const d = new Date(s.day);
-        map.set(`${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`, x);
+    for (const M of models) {
+      for (const x of E.dstImpact(M, tz, a, b)) {
+        if (!x.affected) continue;
+        for (const s of x.samples) {
+          const d = new Date(s.day);
+          map.set(`${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`, x);
+        }
       }
     }
     return map;
   }
 
-  function renderCalendar(P, tz, now) {
+  function renderCalendar(models, tz, now) {
     const w = E.wallParts(now, tz);
     if (state.calStart == null) state.calStart = w.y * 12 + (w.mo - 1);
     const start = state.calStart;
@@ -2875,8 +3270,8 @@ details.snip[open] summary { margin-bottom: 6px; }
     $('year-prev').disabled = first.y <= 1970;
     $('year-next').disabled = last.y >= 2199;
     const box = $('calendar');
-    if (P.reboot) { box.innerHTML = ''; $('day-detail').textContent = 'No calendar for a startup-only job.'; return; }
-    const dst = dstDays(P, tz, Date.UTC(first.y, first.m - 1, 1) - 2 * DAY, Date.UTC(last.y, last.m, 1) + 2 * DAY);
+    if (models[0].reboot) { box.innerHTML = ''; $('day-detail').textContent = 'No calendar for a startup-only job.'; return; }
+    const dst = dstDays(models, tz, Date.UTC(first.y, first.m - 1, 1) - 2 * DAY, Date.UTC(last.y, last.m, 1) + 2 * DAY);
     const todayKey = `${w.y}-${w.mo}-${w.d}`;
     const todayNum = Date.UTC(w.y, w.mo - 1, w.d);
     const T = D[state.dialect];
@@ -2892,13 +3287,13 @@ details.snip[open] summary { margin-bottom: 6px; }
     for (let k = start; k < start + 12; k++) {
       const { y, m } = ym(k);
       const dim = E.daysInMonth(y, m);
-      const first = E.weekday(y, m, 1);
+      const lead = E.weekday(y, m, 1);
       let cells = '';
       let count = 0;
-      for (let i = 0; i < first; i++) cells += '<span></span>';
+      for (let i = 0; i < lead; i++) cells += '<span></span>';
       for (let d = 1; d <= dim; d++) {
         const key = `${y}-${m}-${d}`;
-        const on = E.dayMatches(P, y, m, d);
+        const on = models.some(M => E.dayMatches(M, y, m, d));
         if (on) count++;
         const cls = [on ? 'on' : '', key === todayKey ? 'today' : '', Date.UTC(y, m - 1, d) < todayNum ? 'past' : '', dst.has(key) ? 'dst' : '', state.sel === key ? 'sel' : ''].join(' ').trim();
         cells += `<button type="button" class="${cls}" data-date="${key}" tabindex="${key === focusKey ? 0 : -1}" aria-pressed="${state.sel === key}" aria-label="${E.DOW_LONG[E.weekday(y, m, d)]} ${d} ${E.MON_LONG[m - 1]}${on ? ', runs' : ''}${dst.has(key) ? ', clock change' : ''}">${d}</button>`;
@@ -2907,19 +3302,24 @@ details.snip[open] summary { margin-bottom: 6px; }
       html += `<div class="month"><h3><b>${E.MON_LONG[m - 1]}${yr}</b><span>${count} day${count === 1 ? '' : 's'}</span></h3><div class="mgrid" role="group" aria-label="${E.MON_LONG[m - 1]} ${y}">${head}${cells}</div></div>`;
     }
     box.innerHTML = html;
-    renderDayDetail(P, tz, dst);
+    renderDayDetail(models, tz, dst);
   }
 
-  function renderDayDetail(P, tz, dst) {
+  function renderDayDetail(models, tz, dst) {
     const el = $('day-detail');
     if (!state.sel) { el.textContent = 'Pick a day to see its run times.'; return; }
     const [y, m, d] = state.sel.split('-').map(Number);
     const label = `${E.DOW_LONG[E.weekday(y, m, d)]} ${d} ${E.MON_LONG[m - 1]} ${y}`;
-    if (!E.dayMatches(P, y, m, d)) { el.innerHTML = `<strong>${esc(label)}</strong>: no runs.`; return; }
-    const withSec = P.seconds.some(s => s !== 0);
-    const T = P.times;
-    const shown = T.slice(0, 10).map(s => E.fmtClock(s, withSec)).join(', ');
-    let html = `<strong>${esc(label)}</strong>: ${T.length} run${T.length === 1 ? '' : 's'} (${esc(tz)}) at ${esc(shown)}${T.length > 10 ? ` and ${nf.format(T.length - 10)} more` : ''}.`;
+    const hits = models.map((M, i) => ({ M, i })).filter(x => E.dayMatches(x.M, y, m, d));
+    if (!hits.length) { el.innerHTML = `<strong>${esc(label)}</strong>: no runs.`; return; }
+    const part = M => {
+      const withSec = M.seconds.some(s => s !== 0);
+      const T = M.times;
+      return `${nf.format(T.length)} run${T.length === 1 ? '' : 's'} at ${esc(T.slice(0, 10).map(s => E.fmtClock(s, withSec)).join(', '))}${T.length > 10 ? ` and ${nf.format(T.length - 10)} more` : ''}`;
+    };
+    let html = `<strong>${esc(label)}</strong> (${esc(tz)}): `;
+    html += models.length === 1 ? part(hits[0].M) : hits.map(x => `${schedName(x.i).toLowerCase()}, ${part(x.M)}`).join('; ');
+    html += '.';
     const x = dst && dst.get(state.sel);
     if (x) {
       html += x.gap
@@ -2930,38 +3330,39 @@ details.snip[open] summary { margin-bottom: 6px; }
   }
 
   let daymapBuilt = false;
+  let daymapDefault = '';
   function buildDaymap() {
     const box = $('daymap');
     let html = '<span></span><div class="cols"><span>:00</span><span>:15</span><span>:30</span><span>:45</span></div>';
     const cells = '<i></i>'.repeat(60);
-    for (let h = 0; h < 24; h++) html += `<span class="hl" data-hl="${h}">${String(h).padStart(2, '0')}</span><div class="row" data-h="${h}">${cells}</div>`;
+    for (let h = 0; h < 24; h++) html += `<span class="hl" data-hl="${h}">${pad(h)}</span><div class="row" data-h="${h}">${cells}</div>`;
     box.innerHTML = html;
     box.addEventListener('pointerover', e => {
       const cell = e.target.closest('.row i');
-      if (!cell || !current || !current.ok || current.reboot) return;
+      if (!cell || !current || !current.models.length || current.models[0].reboot) return;
       const h = +cell.parentElement.dataset.h;
       const m = Array.prototype.indexOf.call(cell.parentElement.children, cell);
-      const on = current.hours.includes(h) && current.minutes.includes(m);
-      const secs = current.seconds;
-      const clock = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-      $('daymap-status').textContent = on
-        ? `${clock}: runs${secs.length > 1 || secs[0] !== 0 ? ` at ${secs.length > 6 ? secs.length + ' seconds' : secs.map(s => ':' + String(s).padStart(2, '0')).join(', ')}` : ''}`
-        : `${clock}: no run`;
+      const which = current.models.map((M, i) => (M.hours.includes(h) && M.minutes.includes(m) ? i : -1)).filter(i => i >= 0);
+      const clock = `${pad(h)}:${pad(m)}`;
+      if (!which.length) { $('daymap-status').textContent = `${clock}: no run`; return; }
+      const secs = current.models[which[0]].seconds;
+      const at = secs.length > 1 || secs[0] !== 0 ? ` at ${secs.length > 6 ? secs.length + ' seconds' : secs.map(s => ':' + pad(s)).join(', ')}` : '';
+      $('daymap-status').textContent = `${clock}: runs${at}${current.models.length > 1 ? ` (schedule ${which.map(i => i + 1).join(', ')})` : ''}`;
     });
     box.addEventListener('pointerleave', () => { $('daymap-status').textContent = daymapDefault; });
     daymapBuilt = true;
   }
 
-  let daymapDefault = '';
-  function renderDaymap(P, tz, now) {
+  function renderDaymap(models, tz, now) {
     if (!daymapBuilt) buildDaymap();
     const box = $('daymap');
-    const hs = new Set(P.reboot ? [] : P.hours), ms = new Set(P.reboot ? [] : P.minutes);
+    const reboot = models[0].reboot;
+    const lit = new Set();
+    if (!reboot) for (const M of models) for (const h of M.hours) for (const m of M.minutes) lit.add(h * 60 + m);
     box.querySelectorAll('.row').forEach(row => {
       const h = +row.dataset.h;
-      const hOn = hs.has(h);
       const kids = row.children;
-      for (let m = 0; m < 60; m++) kids[m].className = hOn && ms.has(m) ? 'on' : '';
+      for (let m = 0; m < 60; m++) kids[m].className = lit.has(h * 60 + m) ? 'on' : '';
     });
     const dstHours = new Set();
     for (const tr of E.transitionsBetween(tz, now, now + 365 * DAY)) {
@@ -2970,43 +3371,51 @@ details.snip[open] summary { margin-bottom: 6px; }
     }
     box.querySelectorAll('.hl').forEach(l => l.classList.toggle('dsth', dstHours.has(+l.dataset.hl)));
     const notes = [];
-    if (P.reboot) notes.push('Startup-only jobs have no time of day.');
+    if (reboot) notes.push('Startup-only jobs have no time of day.');
     else {
-      const secs = P.seconds;
-      if (secs.length > 1) notes.push(`Each lit minute runs ${secs.length} times (${secs.length > 6 ? `every ${secs[1] - secs[0]} s` : 'at ' + secs.map(s => ':' + String(s).padStart(2, '0')).join(', ')}).`);
-      else if (secs[0] !== 0) notes.push(`Each lit minute runs at :${String(secs[0]).padStart(2, '0')} seconds.`);
-      notes.push('The same pattern repeats on every day it runs.');
+      const secs = models[0].seconds;
+      if (models.length === 1 && secs.length > 1) notes.push(`Each lit minute runs ${secs.length} times (${secs.length > 6 ? `every ${secs[1] - secs[0]} s` : 'at ' + secs.map(s => ':' + pad(s)).join(', ')}).`);
+      else if (models.length === 1 && secs[0] !== 0) notes.push(`Each lit minute runs at :${pad(secs[0])} seconds.`);
+      notes.push(models.length > 1 ? 'Lit cells combine all the schedules; each one runs only on its own days.' : 'The same pattern repeats on every day it runs.');
     }
     if (dstHours.size) notes.push(`<span class="key dst"></span>Hours where ${esc(tz)} changes its clocks.`);
     $('daymap-legend').innerHTML = notes.join(' ');
-    daymapDefault = P.reboot ? '' : `${nf.format(P.times.length)} run${P.times.length === 1 ? '' : 's'} a day. Hover a cell for its time.`;
-    box.setAttribute('aria-label', P.reboot ? 'No time of day' : `Grid of 24 hours by 60 minutes. ${P.times.length} run times a day: ${E.describe(P).replace(/\*\*/g, '')}`);
+    const perDay = new Set();
+    if (!reboot) for (const M of models) for (const t of M.times) perDay.add(t);
+    daymapDefault = reboot ? '' : `${nf.format(lit.size)} lit minute${lit.size === 1 ? '' : 's'}. Hover a cell for its time.`;
+    box.setAttribute('aria-label', reboot ? 'No time of day' : `Grid of 24 hours by 60 minutes, with ${lit.size} run minutes lit.`);
     $('daymap-status').textContent = daymapDefault;
   }
 
-  function snippet(id, line, tz) {
+  // ------------------------------------------------------------ translations
+
+  /** Config showing where the expressions go; several lines become several entries. */
+  function snippet(id, lines, tz) {
+    const many = lines.length > 1;
     switch (id) {
       case 'unix':
-        return `# CRON_TZ works in cronie; Debian/Ubuntu cron use the system time zone\nCRON_TZ=${tz}\n${line}  /path/to/command`;
+        return `# CRON_TZ works in cronie; Debian/Ubuntu cron use the system time zone\nCRON_TZ=${tz}\n${lines.map(l => `${l}  /path/to/command`).join('\n')}`;
       case 'github':
-        return tz === 'UTC'
-          ? `on:\n  schedule:\n    - cron: '${line}'  # UTC`
-          : `on:\n  schedule:\n    - cron: '${line}'\n      timezone: "${tz}"`;
+        return `on:\n  schedule:\n${lines.map(l => tz === 'UTC' ? `    - cron: '${l}'  # UTC` : `    - cron: '${l}'\n      timezone: "${tz}"`).join('\n')}`;
       case 'k8s':
-        return `apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: my-job\nspec:\n  schedule: "${line}"\n  timeZone: "${tz}"\n  jobTemplate:\n    # …`;
+        return lines.map((l, i) => `apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: my-job${many ? '-' + (i + 1) : ''}\nspec:\n  schedule: "${l}"\n  timeZone: "${tz}"\n  jobTemplate:\n    # …`).join('\n---\n');
       case 'eventbridge':
-        return `aws scheduler create-schedule \\\n  --name my-job \\\n  --schedule-expression "${line}" \\\n  --schedule-expression-timezone "${tz}" \\\n  --flexible-time-window '{"Mode": "OFF"}' \\\n  --target '{"Arn": "…", "RoleArn": "…"}'`;
+        return lines.map((l, i) => `aws scheduler create-schedule \\\n  --name my-job${many ? '-' + (i + 1) : ''} \\\n  --schedule-expression "${l}" \\\n  --schedule-expression-timezone "${tz}" \\\n  --flexible-time-window '{"Mode": "OFF"}' \\\n  --target '{"Arn": "…", "RoleArn": "…"}'`).join('\n\n');
       case 'quartz':
-        return `Trigger trigger = TriggerBuilder.newTrigger()\n    .withSchedule(CronScheduleBuilder.cronSchedule("${line}")\n        .inTimeZone(TimeZone.getTimeZone("${tz}")))\n    .build();`;
+        return lines.map((l, i) => `Trigger trigger${many ? i + 1 : ''} = TriggerBuilder.newTrigger()\n    .forJob(job)\n    .withSchedule(CronScheduleBuilder.cronSchedule("${l}")\n        .inTimeZone(TimeZone.getTimeZone("${tz}")))\n    .build();`).join('\n\n');
       case 'spring':
-        return `@Scheduled(cron = "${line}", zone = "${tz}")\npublic void run() { /* … */ }`;
+        return `${lines.map(l => `@Scheduled(cron = "${l}", zone = "${tz}")`).join('\n')}\npublic void run() { /* … */ }`;
     }
-    return line;
+    return lines.join('\n');
   }
 
-  function lineHtml(line, id, canUse, extra) {
-    const attrs = extra ? Object.entries(extra).map(([k, v]) => ` data-${k}="${esc(v)}"`).join('') : '';
-    return `<div class="line"><span class="expr">${esc(line)}</span><button type="button" class="btn ghost small" data-copy="${esc(line)}">Copy</button>${canUse ? `<button type="button" class="btn ghost small" data-use="${id}" data-line="${esc(line)}"${attrs}>Use</button>` : ''}</div>`;
+  function lineHtml(line, label) {
+    return `<div class="line">${label ? `<span class="sched-label">${esc(label)}</span>` : ''}<span class="expr">${esc(line)}</span><button type="button" class="btn ghost small" data-copy="${esc(line)}">Copy</button></div>`;
+  }
+
+  function useButton(id, lines, tz) {
+    const attrs = tz ? ` data-tz="${esc(tz)}"` : '';
+    return `<button type="button" class="btn small" data-use="${id}" data-lines="${esc(JSON.stringify(lines))}"${attrs}>${lines.length > 1 ? `Use these ${lines.length}` : 'Use this'}</button>`;
   }
 
   function periodText(v, tz, now) {
@@ -3021,48 +3430,66 @@ details.snip[open] summary { margin-bottom: 6px; }
     return `While ${tz} is ${E.fmtOffset(v.off)} (${abbr}), ${ranges.join(' and ')}`;
   }
 
-  function utcBlock(P, tz, id, now) {
-    const vs = E.utcVariants(P, tz, id, now);
+  function utcBlock(models, tz, id, now) {
+    // Group each schedule's UTC lines by offset period.
+    const byOff = new Map();
+    models.forEach((M, i) => {
+      for (const v of E.utcVariants(M, tz, id, now)) {
+        if (!byOff.has(v.off)) byOff.set(v.off, { v, lines: [], errors: [] });
+        const g = byOff.get(v.off);
+        if (v.error) g.errors.push(models.length > 1 ? `${schedName(i)}: ${v.error}` : v.error);
+        else g.lines.push(...v.lines);
+      }
+    });
     let html = '';
-    for (const v of vs) {
-      html += `<p class="period">${esc(periodText(v, tz, now))}</p>`;
-      if (v.error) html += `<p>${md(v.error)}</p>`;
-      else html += v.lines.map(l => lineHtml(l, id, true, { tz: 'UTC', of: v.lines.length })).join('') + (v.lines.length > 1 ? `<p>Use all ${v.lines.length} lines together.</p>` : '');
+    for (const g of byOff.values()) {
+      html += `<p class="period">${esc(periodText(g.v, tz, now))}</p>`;
+      html += g.lines.map(l => lineHtml(l)).join('');
+      html += g.errors.map(e => `<p>${md(e)}</p>`).join('');
+      if (g.lines.length && !g.errors.length) html += `<div class="line">${useButton(id, g.lines, 'UTC')}</div>`;
     }
-    if (vs.length > 1) html += `<p>A UTC schedule can't follow daylight saving. Pick one, or schedule both and skip the run that doesn't apply.</p>`;
+    if (byOff.size > 1) html += `<p>A UTC schedule can't follow daylight saving. Pick one, or schedule both and skip the run that doesn't apply.</p>`;
     return html;
   }
 
-  function renderTranslations(P, tz, now) {
+  function renderTranslations(models, tz, now) {
+    const several = models.length > 1;
     const out = [];
     for (const id of E.DIALECT_ORDER) {
       const T = D[id];
-      const r = E.render(P, id);
+      const renders = models.map(M => E.render(M, id));
+      const allOk = renders.every(r => r.ok);
       const isSelf = id === state.dialect;
       const tags = [];
-      if (isSelf) tags.push('<span class="tag">This expression</span>');
-      if (!r.ok) tags.push('<span class="tag no">No exact match</span>');
+      if (isSelf) tags.push(`<span class="tag">${several ? 'These expressions' : 'This expression'}</span>`);
+      if (!allOk) tags.push('<span class="tag no">No exact match</span>');
       let body = '';
-      if (r.ok) {
-        body += r.lines.map(l => lineHtml(l, id, !isSelf, r.lines.length > 1 ? { of: r.lines.length } : null)).join('');
-        if (r.note) body += `<p>${md(r.note)}</p>`;
-        body += `<details class="snip"><summary>Where it goes</summary><pre class="snippet">${esc(snippet(id, r.lines[0], tz))}</pre></details>`;
-        const utc = tz !== 'UTC' && !P.reboot;
-        if (utc && id === 'github') {
-          body += `<details class="snip"><summary>Without <code>timezone:</code> (UTC, or GitHub Enterprise Server before 3.22)</summary><div>${utcBlock(P, tz, id, now)}</div></details>`;
-        } else if (utc && id === 'eventbridge') {
-          body += `<details class="snip"><summary>For an EventBridge rule, which only runs in UTC</summary><div>${utcBlock(P, tz, id, now)}</div></details>`;
-        }
-      } else {
-        body += `<p>${md(r.reason)}</p>`;
-        if (r.workaround) {
-          const text = E.workaroundText(r.workaround, id);
-          if (id === 'unix') {
-            body += `<p class="sub">Closest crontab line</p><pre class="snippet">${esc(text)}</pre>`;
-          } else {
-            body += `<p class="sub">Closest schedule</p>${lineHtml(r.workaround.expr, id, !isSelf)}<p class="sub">Then start the job with</p><pre class="snippet">${esc(text)}</pre>`;
+      const lines = [];
+      renders.forEach((r, i) => {
+        const label = several ? String(i + 1) : '';
+        if (r.ok) {
+          lines.push(...r.lines);
+          body += r.lines.map(l => lineHtml(l, label)).join('');
+          if (r.note) body += `<p>${several ? `${schedName(i)}: ` : ''}${md(r.note)}</p>`;
+        } else {
+          body += `<p>${several ? `<strong>${schedName(i)}:</strong> ` : ''}${md(r.reason)}</p>`;
+          if (r.workaround) {
+            const text = E.workaroundText(r.workaround, id);
+            if (id === 'unix') body += `<p class="sub">Closest crontab line</p><pre class="snippet">${esc(text)}</pre>`;
+            else body += `<p class="sub">Closest schedule</p>${lineHtml(r.workaround.expr, label)}<p class="sub">Then start the job with</p><pre class="snippet">${esc(text)}</pre>`;
+            body += '<p>The check uses GNU <code>date</code>.</p>';
           }
-          body += '<p>The check uses GNU <code>date</code>.</p>';
+        }
+      });
+      if (allOk) {
+        if (!isSelf) body += `<div class="line">${useButton(id, lines)}</div>`;
+        if (lines.length > 1 && renders.some(r => r.lines.length > 1)) body += `<p>${T.name} needs ${lines.length} schedules here; set them all up for the same job.</p>`;
+        body += `<details class="snip"><summary>Where it goes</summary><pre class="snippet">${esc(snippet(id, lines, tz))}</pre></details>`;
+        const utc = tz !== 'UTC' && !models[0].reboot;
+        if (utc && id === 'github') {
+          body += `<details class="snip"><summary>Without <code>timezone:</code> (UTC, or GitHub Enterprise Server before 3.22)</summary><div>${utcBlock(models, tz, id, now)}</div></details>`;
+        } else if (utc && id === 'eventbridge') {
+          body += `<details class="snip"><summary>For an EventBridge rule, which only runs in UTC</summary><div>${utcBlock(models, tz, id, now)}</div></details>`;
         }
       }
       out.push(`<div class="tr"><div class="tr-name"><strong>${esc(T.name)}</strong>${tags.join('')}</div><div class="tr-body">${body}</div></div>`);
@@ -3078,53 +3505,38 @@ details.snip[open] summary { margin-bottom: 6px; }
     const out = $('english-out');
     if (!text) { out.innerHTML = ''; return; }
     const r = E.fromEnglish(text);
-    if (r.error) {
-      out.innerHTML = `<p class="bad">${md(r.error)}</p>` + (r.lines ? r.lines.map(l => lineHtml(l, 'unix', true)).join('') : '');
+    if (r.error) { out.innerHTML = `<p class="bad">${md(r.error)}</p>`; return; }
+    const notes = r.notes.slice();
+    // Use the current scheduler if it can express every schedule; otherwise the first one that can.
+    const order = [state.dialect, 'quartz', 'spring', 'eventbridge'].filter((x, i, a) => a.indexOf(x) === i);
+    const target = order.find(id => r.models.every(M => E.render(M, id).ok));
+    if (!target) {
+      const why = r.models.map(M => E.render(M, state.dialect)).find(x => !x.ok);
+      out.innerHTML = `<p class="bad">${md(why ? why.reason : 'No scheduler here can express that.')}</p>`;
       return;
     }
-    let target = state.dialect;
-    let res = E.render(r.model, target);
-    const notes = r.notes.slice();
-    if (!res.ok) {
-      const alt = ['quartz', 'spring', 'eventbridge'].find(id => E.render(r.model, id).ok);
-      if (alt) {
-        notes.unshift(`${D[target].name} can't express this (${res.reason.replace(/\.$/, '')}), so it's shown as ${D[alt].name}.`);
-        target = alt;
-        res = E.render(r.model, alt);
-      } else {
-        out.innerHTML = `<p class="bad">${md(res.reason)}</p>`;
-        return;
-      }
+    if (target !== state.dialect) {
+      notes.unshift(`${D[state.dialect].name} can't express this, so it's shown as ${D[target].name}. Translations has the ${D[state.dialect].short} workaround.`);
     }
-    if (res.lines.length > 1) notes.push(`This needs ${res.lines.length} schedules; the other is \`${res.lines.slice(1).join('`, `')}\`.`);
-    state.dialect = target;
-    state.expr = res.lines[0];
-    state.sel = null;
-    $('expr').value = state.expr;
+    const lines = r.models.flatMap(M => E.render(M, target).lines);
+    if (lines.length > 1) notes.unshift(`That takes ${lines.length} cron schedules, because cron can't combine those rules in one expression. They're numbered above and analyzed together.`);
     toast('');
-    update();
+    setExprs(lines, target);
     out.innerHTML = notes.map(n => `<p>${md(n)}</p>`).join('');
   }
 
   // ------------------------------------------------------------ events
-
-  function applyExpr(expr, dialect) {
-    if (dialect) state.dialect = dialect;
-    state.expr = expr;
-    $('expr').value = expr;
-    update();
-  }
 
   function bind() {
     const input = $('expr');
     let t = 0;
     input.addEventListener('input', () => {
       clearTimeout(t);
-      t = setTimeout(() => { state.expr = input.value; update(); }, 70);
+      t = setTimeout(() => { state.exprs[0] = input.value; update(); }, 70);
     });
     ['keyup', 'click', 'focus', 'select'].forEach(ev => input.addEventListener(ev, syncCaret));
-    // A text field drops line breaks, so read pasted configs here: take the expression,
-    // its time zone and the scheduler the surrounding text implies.
+    // A text field drops line breaks, so read pasted configs here: take the expression(s),
+    // the time zone and the scheduler the surrounding text implies.
     input.addEventListener('paste', e => {
       const text = e.clipboardData && e.clipboardData.getData('text/plain');
       if (!text || !/\n|cron\s*[:=(]|schedule\s*:|@Scheduled|cronSchedule|ScheduleExpression|CRON_TZ/i.test(text)) return;
@@ -3132,34 +3544,53 @@ details.snip[open] summary { margin-bottom: 6px; }
       try { u = E.unwrap(text); } catch (err) { return; }
       if (!u.core.trim() || (u.core === text && !u.tz)) return;
       e.preventDefault();
+      let exprs = [u.wrapped ? `cron(${u.core.trim()})` : u.core.trim()];
+      if (u.dialect === 'github') {
+        const all = [...text.matchAll(/(?:^|\n)[ \t]*-?[ \t]*cron[ \t]*:[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|(\S[^\n#]*?))[ \t]*(?:#[^\n]*)?(?=\n|$)/g)]
+          .map(m => (m[1] || m[2] || m[3] || '').trim()).filter(Boolean);
+        if (all.length > 1) exprs = all;
+      }
       const from = [];
-      if (u.dialect && u.dialect !== state.dialect) { state.dialect = u.dialect; from.push(D[u.dialect].name); }
+      if (u.dialect && u.dialect !== state.dialect) from.push(D[u.dialect].name);
       if (u.tz) { state.tz = u.tz; from.push(`time zone ${u.tz}`); }
-      state.expr = u.wrapped ? `cron(${u.core.trim()})` : u.core.trim();
-      state.sel = null;
-      input.value = state.expr;
-      toast(`${u.notes[0] || 'Read the expression from the pasted text.'}${from.length ? ` Set ${from.join(' and ')}.` : ''}`);
-      update();
+      if (exprs.length > 1) from.push(`${exprs.length} schedules`);
+      toast(`${u.notes[0] || 'Read the expression from the pasted text.'}${from.length ? ` Set ${from.join(', ')}.` : ''}`);
+      setExprs(exprs, u.dialect || state.dialect);
     });
     input.addEventListener('blur', () => setTimeout(syncCaret, 0));
     $('fields').addEventListener('click', e => {
       const c = e.target.closest('.chip');
       if (!c || !current) return;
-      const tok = current.tokens[+c.dataset.i];
+      const tok = current.P.tokens[+c.dataset.i];
       if (!tok) return;
       input.focus();
       input.setSelectionRange(tok.start, tok.end);
       syncCaret();
     });
-    $('copy-expr').addEventListener('click', e => copyText(input.value, e.currentTarget));
+    let te = 0;
+    $('extras').addEventListener('input', e => {
+      const el = e.target.closest('.extra-input');
+      if (!el) return;
+      clearTimeout(te);
+      te = setTimeout(() => { state.exprs[+el.dataset.i] = el.value; update(); }, 70);
+    });
+    $('add-expr').addEventListener('click', () => {
+      if (state.exprs.length >= MAX_SCHEDULES) return;
+      state.exprs.push('');
+      update();
+      const last = $('expr-' + (state.exprs.length - 1));
+      if (last) last.focus();
+    });
+    $('copy-expr').addEventListener('click', e => copyText(state.exprs.filter(x => x.trim()).join('\n'), e.currentTarget));
     if (window.top === window && /^https?:$/.test(location.protocol)) {
       $('share').hidden = false;
       $('share').addEventListener('click', e => { save(); copyText(location.href, e.currentTarget); });
     }
     $('english-form').addEventListener('submit', onEnglish);
     $('more-runs').addEventListener('click', () => { state.runs = Math.min(200, state.runs + 30); update(); });
-    $('year-prev').addEventListener('click', () => { state.calStart -= 12; renderCalendar(current, effTz(current), Date.now()); });
-    $('year-next').addEventListener('click', () => { state.calStart += 12; renderCalendar(current, effTz(current), Date.now()); });
+    const redrawCalendar = () => { if (current && current.models.length) renderCalendar(current.models, current.tz, Date.now()); };
+    $('year-prev').addEventListener('click', () => { state.calStart -= 12; redrawCalendar(); });
+    $('year-next').addEventListener('click', () => { state.calStart += 12; redrawCalendar(); });
     $('calendar').addEventListener('keydown', e => {
       const b = e.target.closest('button[data-date]');
       if (!b) return;
@@ -3183,31 +3614,44 @@ details.snip[open] summary { margin-bottom: 6px; }
     });
     $('calendar').addEventListener('click', e => {
       const b = e.target.closest('button[data-date]');
-      if (!b || !current || !current.ok) return;
+      if (!b || !current || !current.models.length) return;
       state.sel = state.sel === b.dataset.date ? null : b.dataset.date;
-      renderCalendar(current, effTz(current), Date.now());
+      redrawCalendar();
     });
     document.addEventListener('click', e => {
       const b = e.target.closest('button');
       if (!b) return;
       if (b.dataset.copy != null) copyText(b.dataset.copy, b);
-      else if (b.dataset.expr != null) { toast(''); applyExpr(b.dataset.expr); $('expr').focus(); }
-      else if (b.dataset.read) { const T = D[b.dataset.read]; toast(`Reading the expression as ${T.name}.`); applyExpr(state.expr, b.dataset.read); $('expr').focus(); }
-      else if (b.dataset.use) {
+      else if (b.dataset.remove) {
+        state.exprs.splice(+b.dataset.remove, 1);
+        update();
+        const prev = $('expr-' + Math.min(+b.dataset.remove, state.exprs.length - 1)) || $('expr');
+        prev.focus();
+      } else if (b.dataset.expr != null) {
+        const i = +(b.dataset.fix || 0);
+        state.exprs[i] = b.dataset.expr;
+        toast('');
+        setExprs(state.exprs);
+        (i === 0 ? $('expr') : $('expr-' + i)).focus();
+      } else if (b.dataset.read) {
+        toast(`Reading the expression as ${D[b.dataset.read].name}.`);
+        setExprs(state.exprs, b.dataset.read);
+        $('expr').focus();
+      } else if (b.dataset.use) {
         const id = b.dataset.use;
-        if (current && current.ok && current.tz) state.tz = current.tz;
+        const lines = JSON.parse(b.dataset.lines);
+        if (current && current.P.ok && current.P.tz) state.tz = current.P.tz;
         if (b.dataset.tz) state.tz = b.dataset.tz;
-        const of = +b.dataset.of || 1;
-        toast(of > 1 ? `Switched to ${D[id].name}. This is one of ${of} schedules that work together; Translations lists all of them.` : `Switched to ${D[id].name}.`);
-        applyExpr(b.dataset.line, id);
+        toast(lines.length > 1 ? `Switched to ${D[id].name} with ${lines.length} schedules.` : `Switched to ${D[id].name}.`);
+        setExprs(lines, id);
         $('expr').focus();
       }
     });
     setInterval(() => {
-      if (document.hidden || !current || !current.ok) return;
-      const tz = effTz(current), now = Date.now();
-      renderSummary(current, tz, now);
-      renderRuns(current, tz, now);
+      if (document.hidden || !current || !current.models.length) return;
+      const now = Date.now();
+      renderSummary(current.models, current.tz, now);
+      renderRuns(current.models, current.tz, now);
     }, 30000);
   }
 
@@ -3218,7 +3662,7 @@ details.snip[open] summary { margin-bottom: 6px; }
     buildTz();
     buildExamples();
     bind();
-    $('expr').value = state.expr;
+    $('expr').value = state.exprs[0];
     update();
     if (!returning && !linked) toast('This opening example hides a classic mistake; Checks explains it. Type your own expression or load another example.');
   }

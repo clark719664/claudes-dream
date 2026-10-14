@@ -23,6 +23,7 @@
       <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
     </div>
     <div class="expr-row">
+      <span class="expr-n" id="expr-n" aria-hidden="true" hidden>1</span>
       <label for="expr" class="sr-only">Cron expression</label>
       <input id="expr" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" enterkeyhint="done">
       <button type="button" class="btn ghost" id="copy-expr">Copy</button>
@@ -30,6 +31,8 @@
     </div>
     <ol class="fields" id="fields" aria-label="Fields"></ol>
     <div class="error" id="error" aria-live="polite" hidden></div>
+    <div class="extras" id="extras" aria-label="More schedules for the same job"></div>
+    <button type="button" class="btn ghost small add-expr" id="add-expr">+ Add another schedule</button>
     <div class="controls">
       <div class="control">
         <label for="tz">Time zone</label>
@@ -53,7 +56,7 @@
 
   <main id="results">
     <section class="summary" aria-label="Summary">
-      <p class="sentence" id="sentence" aria-live="polite"></p>
+      <div class="sentence" id="sentence" aria-live="polite"></div>
       <dl class="stats" id="stats"></dl>
     </section>
 
@@ -121,6 +124,6 @@
 
   <footer class="foot">
     <p>Your expressions never leave your browser. Time zone rules come from your browser's built-in time zone data. Run lists follow the wall clock and mark the times a clock change skips or repeats, along with what each scheduler is documented to do with them.</p>
-    <p class="foot-links"><span>Cron Almanac {{VERSION}}</span><a href="https://github.com/clark719664/claudes-dream" target="_blank" rel="noopener">Source code</a><a href="https://github.com/clark719664/claudes-dream/issues/new/choose" target="_blank" rel="noopener">Report a problem</a><span>Free and open source under the MIT License</span></p>
+    <p class="foot-links"><span>Cron Almanac {{VERSION}}</span><a href="https://github.com/clark719664/cron-almanac" target="_blank" rel="noopener">Source code</a><a href="https://github.com/clark719664/cron-almanac/issues/new/choose" target="_blank" rel="noopener">Report a problem</a><span>Free and open source under the MIT License</span></p>
   </footer>
 </div>
