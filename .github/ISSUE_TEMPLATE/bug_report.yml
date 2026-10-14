@@ -1,0 +1,48 @@
+name: Wrong result or broken page
+description: The page showed something incorrect, or didn't work.
+labels: [bug]
+body:
+  - type: input
+    id: expression
+    attributes:
+      label: Expression
+      description: Exactly as you typed or pasted it.
+      placeholder: "0 9 1-7 * 1"
+    validations:
+      required: true
+  - type: dropdown
+    id: scheduler
+    attributes:
+      label: Scheduler
+      options:
+        - Linux crontab
+        - GitHub Actions
+        - Kubernetes CronJob
+        - AWS EventBridge
+        - Quartz
+        - Spring @Scheduled
+    validations:
+      required: true
+  - type: input
+    id: timezone
+    attributes:
+      label: Time zone
+      placeholder: America/New_York
+  - type: textarea
+    id: shown
+    attributes:
+      label: What the page showed
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and why
+      description: If a scheduler behaves differently, link its documentation or source code.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Firefox 131

@@ -285,3 +285,46 @@ test('English to cron', () => {
   assert.deepEqual(E.fromEnglish('every 90 minutes').lines, ['0 */3 * * *', '30 1-22/3 * * *']);
   assert.deepEqual(E.fromEnglish('at 9:30 and 17:00').lines, ['30 9 * * *', '0 17 * * *']);
 });
+
+test('whole pasted config blocks, with their time zone settings', () => {
+  const gh = ok("on:\n  schedule:\n    - cron: '30 5 * * 1-5'\n      timezone: \"America/New_York\"\njobs: {}", 'github');
+  assert.equal(gh.tz, 'America/New_York');
+  assert.deepEqual([gh.hours[0], gh.minutes[0]], [5, 30]);
+  assert.ok(!lintIds(gh, 'America/New_York').includes('gh-timezone'));
+  assert.ok(lintIds(ok('30 5 * * 1-5', 'github'), 'Europe/Berlin').includes('gh-timezone'));
+  assert.ok(!lintIds(ok('30 5 * * 1-5', 'github'), 'UTC').includes('gh-timezone'));
+  const k = ok('spec:\n  schedule: "0 9 * * 1-5"\n  timeZone: "Europe/Berlin"', 'k8s');
+  assert.equal(k.tz, 'Europe/Berlin');
+  assert.ok(!lintIds(k, 'Europe/Berlin').includes('k8s-tz'));
+  assert.equal(ok('@Scheduled(cron = "0 0 9 * * MON-FRI", zone = "Asia/Tokyo")', 'spring').tz, 'Asia/Tokyo');
+  const aws = ok('aws scheduler create-schedule --schedule-expression "cron(0 9 ? * MON-FRI *)" --schedule-expression-timezone "Europe/Paris"', 'eventbridge');
+  assert.equal(aws.tz, 'Europe/Paris');
+  const tab = ok('# nightly\nMAILTO=ops@example.com\nCRON_TZ=Australia/Sydney\n30 2 * * * /opt/backup.sh', 'unix');
+  assert.equal(tab.tz, 'Australia/Sydney');
+  assert.equal(tab.command, '/opt/backup.sh');
+  bad('rate(5 minutes)', 'eventbridge', /rate\(\)/);
+  bad('CRON_TZ=Mars/Olympus 0 9 * * *', 'unix', /time zone/);
+});
+
+test('documented daylight-saving behaviour per scheduler', () => {
+  assert.deepEqual(E.dstPolicy(ok('30 2 * * *', 'unix')), { gap: 'after', overlap: 'once', wild: false });
+  assert.deepEqual(E.dstPolicy(ok('*/15 2 * * *', 'unix')), { gap: 'skip', overlap: 'twice', wild: true });
+  assert.deepEqual(E.dstPolicy(ok('30 * * * *', 'unix')), { gap: 'skip', overlap: 'twice', wild: true });
+  assert.deepEqual(E.dstPolicy(ok('@hourly', 'unix')), { gap: 'skip', overlap: 'twice', wild: true });
+  assert.deepEqual(E.dstPolicy(ok('30 2 * * *', 'github')), { gap: 'after', overlap: null });
+  assert.deepEqual(E.dstPolicy(ok('cron(30 2 * * ? *)', 'eventbridge')), { gap: 'skip', overlap: 'once' });
+  assert.deepEqual(E.dstPolicy(ok('0 30 2 * * ?', 'quartz')), { gap: 'skip', overlap: 'once' });
+  assert.deepEqual(E.dstPolicy(ok('30 2 * * *', 'k8s')), { gap: null, overlap: null });
+  const body = E.lint(ok('30 2 * * *', 'github'), 'America/New_York', NOW).find(l => l.id === 'dst').body;
+  assert.match(body, /next valid time/);
+});
+
+test('clock-change edges: the first and last minutes of a skipped or repeated hour', () => {
+  const ny = (x) => E.lint(ok(x, 'unix'), 'America/New_York', NOW).find(l => l.id === 'dst');
+  assert.match(ny('0 2 * * *').body, /jump/);        // 02:00 doesn't exist on spring-forward day
+  assert.doesNotMatch(ny('0 2 * * *').body, /fall back/); // and occurs once on fall-back day
+  assert.equal(ny('0 3 * * *'), undefined);          // 03:00 always exists, once
+  assert.match(ny('59 1 * * *').body, /fall back/);  // 01:59 happens twice
+  assert.match(ny('0 1 * * *').body, /fall back/);
+  assert.equal(ny('59 0 * * *'), undefined);
+});

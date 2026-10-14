@@ -1,0 +1,22 @@
+name: Suggest an improvement
+description: A new check, scheduler, or feature.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation, for example a schedule that confused you or a bug it would have caught.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like the page to do?
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: Links to the scheduler's documentation, if relevant.

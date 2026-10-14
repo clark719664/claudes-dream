@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run tests
+        run: npm test
+      - name: Check index.html is built from src/
+        run: |
+          npm run build
+          if ! git diff --quiet -- index.html; then
+            echo "::error file=index.html::index.html is out of date. Run 'npm run build' and commit the result."
+            exit 1
+          fi

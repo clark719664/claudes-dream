@@ -18,7 +18,7 @@
     { label: '02:30 in New York (daylight saving)', expr: '30 2 * * *', d: 'unix', tz: 'America/New_York' },
     { label: 'Every 90 minutes?', expr: '*/90 * * * *', d: 'unix' },
     { label: 'Full crontab line with a command', expr: '15 3 * * 1-5 /opt/backup.sh > /var/log/backup-$(date +%F).log', d: 'unix' },
-    { label: 'GitHub Actions: nightly build', expr: '0 3 * * *', d: 'github' },
+    { label: 'GitHub Actions: 02:30 in New York', expr: '30 2 * * *', d: 'github', tz: 'America/New_York' },
     { label: 'Kubernetes: */2 with a weekday', expr: '0 0 */2 * 1', d: 'k8s' },
     { label: 'EventBridge: month end', expr: 'cron(0 18 L * ? *)', d: 'eventbridge' },
     { label: 'Quartz: third Friday', expr: '0 0 12 ? * 6#3', d: 'quartz' },
@@ -65,7 +65,6 @@
   }
 
   function effTz(P) {
-    if (state.dialect === 'github') return 'UTC';
     if (P && P.ok && P.tz) return P.tz;
     return state.tz;
   }
@@ -135,7 +134,7 @@
 
   function buildDialects() {
     const box = $('dialects');
-    box.innerHTML = E.DIALECT_ORDER.map(id => `<button type="button" data-d="${id}" aria-pressed="false">${esc(D[id].name)}</button>`).join('');
+    box.innerHTML = E.DIALECT_ORDER.map(id => `<button type="button" data-d="${id}" aria-pressed="false" title="${esc(D[id].name)}"><span class="dl-long">${esc(D[id].name)}</span><span class="dl-short">${esc(D[id].short)}</span></button>`).join('');
     box.addEventListener('click', e => {
       const b = e.target.closest('button[data-d]');
       if (b) switchDialect(b.dataset.d);
@@ -193,37 +192,21 @@
   function switchDialect(id) {
     if (id === state.dialect) return;
     const P = current;
-    const fromTz = effTz(P);
     const T = D[id];
     let msg;
     if (P && P.ok) {
       if (P.tz) state.tz = P.tz;
-      if (id === 'github' && fromTz !== 'UTC') {
-        const now = Date.now();
-        const vs = E.utcVariants(P, fromTz, 'github', now);
-        const v = vs.find(x => x.periods.some(p => p.from <= now && now < p.to)) || vs[0];
-        if (v && v.lines) {
-          state.expr = v.lines[0];
-          msg = `GitHub runs schedules in UTC, so the ${fromTz} times were converted at today's offset (${E.fmtOffset(v.off)}).` +
-            (vs.length > 1 ? ' Translations shows the other season too.' : '') +
-            (v.lines.length > 1 ? ` This takes ${v.lines.length} lines; showing the first.` : '');
-        } else {
-          msg = `Couldn't convert to UTC: ${v ? v.error : 'no offset found'} The expression is unchanged.`;
-        }
+      const r = E.render(P, id);
+      if (r.ok) {
+        state.expr = r.lines[0];
+        msg = r.lines.length > 1
+          ? `${T.name} needs ${r.lines.length} schedules for this; showing the first. Translations lists both.`
+          : `Converted to ${T.name}.`;
+      } else if (r.workaround) {
+        state.expr = r.workaround.expr;
+        msg = `${r.reason} Showing the closest ${T.short} schedule; Translations has the check the job needs.`;
       } else {
-        const r = E.render(P, id);
-        if (r.ok) {
-          state.expr = r.lines[0];
-          msg = r.lines.length > 1
-            ? `${T.name} needs ${r.lines.length} schedules for this; showing the first. Translations lists both.`
-            : `Converted to ${T.name}.`;
-        } else if (r.workaround) {
-          state.expr = r.workaround.expr;
-          msg = `${r.reason} Showing the closest ${T.short} schedule; Translations has the check the job needs.`;
-        } else {
-          msg = `${T.name} can't express this: ${r.reason}`;
-        }
-        if (state.dialect === 'github') { state.tz = 'UTC'; msg += ' The time zone is set to UTC so the times stay the same.'; }
+        msg = `${T.name} can't express this: ${r.reason}`;
       }
     } else {
       msg = `Reading the expression as ${T.name}.`;
@@ -320,16 +303,20 @@
     renderTz(P, tz, now);
     renderFields(P);
     const results = $('results');
+    const input = $('expr');
+    input.setAttribute('aria-invalid', String(!P.ok));
     if (!P.ok) {
       renderError(P);
       results.classList.add('stale');
-      $('expr').classList.add('invalid');
+      input.classList.add('invalid');
+      input.setAttribute('aria-describedby', 'error');
       save();
       return;
     }
     $('error').hidden = true;
     results.classList.remove('stale');
-    $('expr').classList.remove('invalid');
+    input.classList.remove('invalid');
+    input.setAttribute('aria-describedby', 'sentence');
     renderSummary(P, tz, now);
     renderChecks(P, tz, now);
     renderRuns(P, tz, now);
@@ -342,12 +329,12 @@
   function renderTz(P, tz, now) {
     const sel = $('tz');
     ensureTzOption(tz);
-    const forced = state.dialect === 'github' || !!(P.ok && P.tz);
+    const forced = !!(P.ok && P.tz);
     sel.disabled = forced;
     const p = E.displayParts(now, tz);
     let hint = `Now ${p.hour}:${p.minute} ${p.timeZoneName} (${E.fmtOffset(E.offsetAt(now, tz))}).`;
-    if (state.dialect === 'github') hint = 'GitHub Actions evaluates schedules in UTC. ' + hint;
-    else if (P.ok && P.tz) hint = `Set by ${P.tzPrefix.split('=')[0]} in the expression. ` + hint;
+    if (P.ok && P.tz) hint = `Set by ${P.tzSource.replace(/`/g, '')} in the pasted text. ` + hint;
+    else if (state.dialect === 'github') hint += ' GitHub uses UTC unless the workflow sets timezone:.';
     else if (state.dialect === 'eventbridge') hint += ' Rules always use UTC; EventBridge Scheduler can use this zone.';
     $('tz-hint').textContent = hint;
   }
@@ -421,18 +408,38 @@
     const showLocal = browserTz !== tz;
     const withSec = P.seconds.some(s => s !== 0);
     const thisYear = E.wallParts(now, tz).y;
+    const pol = E.dstPolicy(P);
+    const T = D[state.dialect];
+    const badgeHtml = (text, title) => `<span class="badge" title="${esc(title)}">${esc(text)}</span>`;
     const rows = up.runs.map(r => {
       const p = E.displayParts(r.t, tz);
       const date = `${p.weekday} ${p.day} ${p.month}${+p.year !== thisYear ? ' ' + p.year : ''}`;
       let time, badge = '', cls = '';
       if (r.kind === 'skipped') {
-        time = E.fmtClock(r.sec, withSec) + (r.count > 1 ? '–' + E.fmtClock(r.lastSec, withSec) : '');
-        badge = `<span class="badge" title="Clocks jump from ${E.fmtClock(((r.tr.t + r.tr.before) % DAY) / 1000)} to ${E.fmtClock(((r.tr.t + r.tr.after) % DAY) / 1000)}; ${r.count > 1 ? 'these times don’t' : 'this time doesn’t'} exist.">skipped</span>`;
+        const wall = E.fmtClock(r.sec, withSec) + (r.count > 1 ? '–' + E.fmtClock(r.lastSec, withSec) : '');
+        const jump = `Clocks jump from ${E.fmtClock(((r.tr.t + r.tr.before) % DAY) / 1000)} to ${E.fmtClock(((r.tr.t + r.tr.after) % DAY) / 1000)}, so ${wall} doesn’t exist.`;
         cls = 'dst';
+        if (pol.gap === 'after') {
+          time = `${p.hour}:${p.minute}${withSec ? ':' + p.second : ''}`;
+          badge = badgeHtml(r.count > 1 ? `${r.count} moved here` : `moved from ${E.fmtClock(r.sec, withSec)}`, `${jump} ${T.name} runs it right after the jump.`);
+        } else {
+          time = wall;
+          badge = pol.gap === 'skip'
+            ? badgeHtml('skipped', `${jump} ${T.name} skips it.`)
+            : badgeHtml('skipped?', `${jump} ${T.name}'s docs don't say whether it's skipped or moved.`);
+        }
       } else {
         time = `${p.hour}:${p.minute}${withSec ? ':' + p.second : ''}`;
-        if (r.kind === 'repeat') { badge = '<span class="badge" title="Clocks fall back, so this wall time happens a second time.">again</span>'; cls = 'dst'; }
-        else if (r.repeats) { badge = '<span class="badge" title="Clocks fall back later, so this wall time happens twice.">1st of 2</span>'; cls = 'dst'; }
+        const twice = 'Clocks fall back, so this time happens twice.';
+        if (r.kind === 'repeat') {
+          cls = 'dst';
+          if (pol.overlap === 'once') { cls += ' gone'; badge = badgeHtml('not repeated', `${twice} ${T.name} runs it only the first time.`); }
+          else if (pol.overlap === 'twice') badge = badgeHtml('again', `${twice} ${T.name} runs it both times.`);
+          else badge = badgeHtml('again?', `${twice} ${T.name}'s docs don't say whether it runs once or twice.`);
+        } else if (r.repeats) {
+          cls = 'dst';
+          badge = badgeHtml(pol.overlap === 'once' ? 'runs once' : '1st of 2', twice);
+        }
       }
       let local = '';
       if (showLocal) {
@@ -474,6 +481,12 @@
     const todayNum = Date.UTC(w.y, w.mo - 1, w.d);
     const T = D[state.dialect];
     const wdNum = i => (T.dow.min === 1 ? i + 1 : i);
+    const inWindow = key => {
+      const [ky, km] = key.split('-').map(Number);
+      const k = ky * 12 + km - 1;
+      return k >= start && k < start + 12;
+    };
+    const focusKey = state.sel && inWindow(state.sel) ? state.sel : inWindow(todayKey) ? todayKey : `${first.y}-${first.m}-1`;
     const head = DOW_SHORT.map((n, i) => `<span class="wd" title="${E.DOW_LONG[i]} is ${wdNum(i)} in ${esc(T.name)}">${n[0]}<small>${wdNum(i)}</small></span>`).join('');
     let html = '';
     for (let k = start; k < start + 12; k++) {
@@ -488,10 +501,10 @@
         const on = E.dayMatches(P, y, m, d);
         if (on) count++;
         const cls = [on ? 'on' : '', key === todayKey ? 'today' : '', Date.UTC(y, m - 1, d) < todayNum ? 'past' : '', dst.has(key) ? 'dst' : '', state.sel === key ? 'sel' : ''].join(' ').trim();
-        cells += `<button type="button" class="${cls}" data-date="${key}" aria-label="${d} ${E.MON_LONG[m - 1]}${on ? ', runs' : ''}">${d}</button>`;
+        cells += `<button type="button" class="${cls}" data-date="${key}" tabindex="${key === focusKey ? 0 : -1}" aria-pressed="${state.sel === key}" aria-label="${E.DOW_LONG[E.weekday(y, m, d)]} ${d} ${E.MON_LONG[m - 1]}${on ? ', runs' : ''}${dst.has(key) ? ', clock change' : ''}">${d}</button>`;
       }
       const yr = k === start || m === 1 ? ` <em>${y}</em>` : '';
-      html += `<div class="month"><h3><b>${E.MON_LONG[m - 1]}${yr}</b><span>${count} day${count === 1 ? '' : 's'}</span></h3><div class="mgrid">${head}${cells}</div></div>`;
+      html += `<div class="month"><h3><b>${E.MON_LONG[m - 1]}${yr}</b><span>${count} day${count === 1 ? '' : 's'}</span></h3><div class="mgrid" role="group" aria-label="${E.MON_LONG[m - 1]} ${y}">${head}${cells}</div></div>`;
     }
     box.innerHTML = html;
     renderDayDetail(P, tz, dst);
@@ -576,7 +589,9 @@
       case 'unix':
         return `# CRON_TZ works in cronie; Debian/Ubuntu cron use the system time zone\nCRON_TZ=${tz}\n${line}  /path/to/command`;
       case 'github':
-        return `on:\n  schedule:\n    - cron: '${line}'  # UTC`;
+        return tz === 'UTC'
+          ? `on:\n  schedule:\n    - cron: '${line}'  # UTC`
+          : `on:\n  schedule:\n    - cron: '${line}'\n      timezone: "${tz}"`;
       case 'k8s':
         return `apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: my-job\nspec:\n  schedule: "${line}"\n  timeZone: "${tz}"\n  jobTemplate:\n    # …`;
       case 'eventbridge':
@@ -589,8 +604,9 @@
     return line;
   }
 
-  function lineHtml(line, id, canUse) {
-    return `<div class="line"><span class="expr">${esc(line)}</span><button type="button" class="btn ghost small" data-copy="${esc(line)}">Copy</button>${canUse ? `<button type="button" class="btn ghost small" data-use="${id}" data-line="${esc(line)}">Use</button>` : ''}</div>`;
+  function lineHtml(line, id, canUse, extra) {
+    const attrs = extra ? Object.entries(extra).map(([k, v]) => ` data-${k}="${esc(v)}"`).join('') : '';
+    return `<div class="line"><span class="expr">${esc(line)}</span><button type="button" class="btn ghost small" data-copy="${esc(line)}">Copy</button>${canUse ? `<button type="button" class="btn ghost small" data-use="${id}" data-line="${esc(line)}"${attrs}>Use</button>` : ''}</div>`;
   }
 
   function periodText(v, tz, now) {
@@ -611,7 +627,7 @@
     for (const v of vs) {
       html += `<p class="period">${esc(periodText(v, tz, now))}</p>`;
       if (v.error) html += `<p>${md(v.error)}</p>`;
-      else html += v.lines.map(l => lineHtml(l, id, true)).join('') + (v.lines.length > 1 ? `<p>Use all ${v.lines.length} lines together.</p>` : '');
+      else html += v.lines.map(l => lineHtml(l, id, true, { tz: 'UTC', of: v.lines.length })).join('') + (v.lines.length > 1 ? `<p>Use all ${v.lines.length} lines together.</p>` : '');
     }
     if (vs.length > 1) html += `<p>A UTC schedule can't follow daylight saving. Pick one, or schedule both and skip the run that doesn't apply.</p>`;
     return html;
@@ -628,18 +644,15 @@
       if (!r.ok) tags.push('<span class="tag no">No exact match</span>');
       let body = '';
       if (r.ok) {
-        const utcOnly = id === 'github' && tz !== 'UTC' && !P.reboot;
-        if (utcOnly) {
-          body += `<p>GitHub runs schedules in UTC, so the ${esc(tz)} times shift:</p>` + utcBlock(P, tz, id, now);
-        } else {
-          body += r.lines.map(l => lineHtml(l, id, !isSelf)).join('');
-          if (r.note) body += `<p>${md(r.note)}</p>`;
-          if (id === 'eventbridge' && tz !== 'UTC' && !P.reboot) {
-            body += `<details class="snip"><summary>For an EventBridge rule, which only runs in UTC</summary><div>${utcBlock(P, tz, id, now)}</div></details>`;
-          }
+        body += r.lines.map(l => lineHtml(l, id, !isSelf, r.lines.length > 1 ? { of: r.lines.length } : null)).join('');
+        if (r.note) body += `<p>${md(r.note)}</p>`;
+        body += `<details class="snip"><summary>Where it goes</summary><pre class="snippet">${esc(snippet(id, r.lines[0], tz))}</pre></details>`;
+        const utc = tz !== 'UTC' && !P.reboot;
+        if (utc && id === 'github') {
+          body += `<details class="snip"><summary>Without <code>timezone:</code> (UTC, or GitHub Enterprise Server before 3.22)</summary><div>${utcBlock(P, tz, id, now)}</div></details>`;
+        } else if (utc && id === 'eventbridge') {
+          body += `<details class="snip"><summary>For an EventBridge rule, which only runs in UTC</summary><div>${utcBlock(P, tz, id, now)}</div></details>`;
         }
-        const first = utcOnly ? null : r.lines[0];
-        if (first) body += `<details class="snip"><summary>Where it goes</summary><pre class="snippet">${esc(snippet(id, first, tz))}</pre></details>`;
       } else {
         body += `<p>${md(r.reason)}</p>`;
         if (r.workaround) {
@@ -683,7 +696,6 @@
         return;
       }
     }
-    if (target === 'github') notes.push('GitHub reads these times as UTC.');
     if (res.lines.length > 1) notes.push(`This needs ${res.lines.length} schedules; the other is \`${res.lines.slice(1).join('`, `')}\`.`);
     state.dialect = target;
     state.expr = res.lines[0];
@@ -711,6 +723,24 @@
       t = setTimeout(() => { state.expr = input.value; update(); }, 70);
     });
     ['keyup', 'click', 'focus', 'select'].forEach(ev => input.addEventListener(ev, syncCaret));
+    // A text field drops line breaks, so read pasted configs here: take the expression,
+    // its time zone and the scheduler the surrounding text implies.
+    input.addEventListener('paste', e => {
+      const text = e.clipboardData && e.clipboardData.getData('text/plain');
+      if (!text || !/\n|cron\s*[:=(]|schedule\s*:|@Scheduled|cronSchedule|ScheduleExpression|CRON_TZ/i.test(text)) return;
+      let u;
+      try { u = E.unwrap(text); } catch (err) { return; }
+      if (!u.core.trim() || (u.core === text && !u.tz)) return;
+      e.preventDefault();
+      const from = [];
+      if (u.dialect && u.dialect !== state.dialect) { state.dialect = u.dialect; from.push(D[u.dialect].name); }
+      if (u.tz) { state.tz = u.tz; from.push(`time zone ${u.tz}`); }
+      state.expr = u.wrapped ? `cron(${u.core.trim()})` : u.core.trim();
+      state.sel = null;
+      input.value = state.expr;
+      toast(`${u.notes[0] || 'Read the expression from the pasted text.'}${from.length ? ` Set ${from.join(' and ')}.` : ''}`);
+      update();
+    });
     input.addEventListener('blur', () => setTimeout(syncCaret, 0));
     $('fields').addEventListener('click', e => {
       const c = e.target.closest('.chip');
@@ -722,10 +752,35 @@
       syncCaret();
     });
     $('copy-expr').addEventListener('click', e => copyText(input.value, e.currentTarget));
+    if (window.top === window && /^https?:$/.test(location.protocol)) {
+      $('share').hidden = false;
+      $('share').addEventListener('click', e => { save(); copyText(location.href, e.currentTarget); });
+    }
     $('english-form').addEventListener('submit', onEnglish);
     $('more-runs').addEventListener('click', () => { state.runs = Math.min(200, state.runs + 30); update(); });
     $('year-prev').addEventListener('click', () => { state.calStart -= 12; renderCalendar(current, effTz(current), Date.now()); });
     $('year-next').addEventListener('click', () => { state.calStart += 12; renderCalendar(current, effTz(current), Date.now()); });
+    $('calendar').addEventListener('keydown', e => {
+      const b = e.target.closest('button[data-date]');
+      if (!b) return;
+      const [y, m, d] = b.dataset.date.split('-').map(Number);
+      let t = Date.UTC(y, m - 1, d);
+      const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
+      if (step) t += step * DAY;
+      else if (e.key === 'Home') t -= E.weekday(y, m, d) * DAY;
+      else if (e.key === 'End') t += (6 - E.weekday(y, m, d)) * DAY;
+      else if (e.key === 'PageUp' || e.key === 'PageDown') {
+        const mm = new Date(Date.UTC(y, m - 1 + (e.key === 'PageDown' ? 1 : -1), 1));
+        t = Date.UTC(mm.getUTCFullYear(), mm.getUTCMonth(), Math.min(d, E.daysInMonth(mm.getUTCFullYear(), mm.getUTCMonth() + 1)));
+      } else return;
+      e.preventDefault();
+      const n = new Date(t);
+      const next = $('calendar').querySelector(`button[data-date="${n.getUTCFullYear()}-${n.getUTCMonth() + 1}-${n.getUTCDate()}"]`);
+      if (!next) return;
+      b.tabIndex = -1;
+      next.tabIndex = 0;
+      next.focus();
+    });
     $('calendar').addEventListener('click', e => {
       const b = e.target.closest('button[data-date]');
       if (!b || !current || !current.ok) return;
@@ -736,14 +791,16 @@
       const b = e.target.closest('button');
       if (!b) return;
       if (b.dataset.copy != null) copyText(b.dataset.copy, b);
-      else if (b.dataset.expr != null) { toast(''); applyExpr(b.dataset.expr); }
-      else if (b.dataset.read) { const T = D[b.dataset.read]; toast(`Reading the expression as ${T.name}.`); applyExpr(state.expr, b.dataset.read); }
+      else if (b.dataset.expr != null) { toast(''); applyExpr(b.dataset.expr); $('expr').focus(); }
+      else if (b.dataset.read) { const T = D[b.dataset.read]; toast(`Reading the expression as ${T.name}.`); applyExpr(state.expr, b.dataset.read); $('expr').focus(); }
       else if (b.dataset.use) {
         const id = b.dataset.use;
         if (current && current.ok && current.tz) state.tz = current.tz;
-        if (state.dialect === 'github' && id !== 'github') state.tz = 'UTC';
-        toast(`Switched to ${D[id].name}.`);
+        if (b.dataset.tz) state.tz = b.dataset.tz;
+        const of = +b.dataset.of || 1;
+        toast(of > 1 ? `Switched to ${D[id].name}. This is one of ${of} schedules that work together; Translations lists all of them.` : `Switched to ${D[id].name}.`);
         applyExpr(b.dataset.line, id);
+        $('expr').focus();
       }
     });
     setInterval(() => {

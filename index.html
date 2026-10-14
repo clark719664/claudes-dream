@@ -5,17 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cron Almanac</title>
 <meta name="description" content="Read, check and translate cron schedules for crontab, GitHub Actions, Kubernetes, EventBridge, Quartz and Spring.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Martian+Mono:wght@400;600;700&display=swap">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Cron Almanac">
+<meta property="og:description" content="Read, check and translate cron schedules for crontab, GitHub Actions, Kubernetes, EventBridge, Quartz and Spring.">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#edf0f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c1117" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2028%2028%22%3E%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.5%22%20fill%3D%22%232741c9%22%2F%3E%3Crect%20x%3D%2210.5%22%20y%3D%221%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.5%22%20fill%3D%22%23b9c3ce%22%2F%3E%3Crect%20x%3D%2220%22%20y%3D%221%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.5%22%20fill%3D%22%23b9c3ce%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%2210.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.5%22%20fill%3D%22%23b9c3ce%22%2F%3E%3Crect%20x%3D%2210.5%22%20y%3D%2210.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.5%22%20fill%3D%22%232741c9%22%2F%3E%3Crect%20x%3D%2220%22%20y%3D%2210.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.5%22%20fill%3D%22%23b9c3ce%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%2220%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.5%22%20fill%3D%22%23b9c3ce%22%2F%3E%3Crect%20x%3D%2210.5%22%20y%3D%2220%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.5%22%20fill%3D%22%23b9c3ce%22%2F%3E%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.5%22%20fill%3D%22%232741c9%22%2F%3E%3C%2Fsvg%3E">
 <style>
+/* Self-hosted fonts, so the page makes no third-party requests and works offline.
+   IBM Plex Sans and IBM Plex Mono: IBM's official Latin-1 subsets. Martian Mono: Latin subset.
+   All under the SIL Open Font License 1.1; see fonts/. */
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/ibm-plex-sans-400.woff2) format('woff2'); unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02; }
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/ibm-plex-sans-500.woff2) format('woff2'); unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02; }
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/ibm-plex-sans-600.woff2) format('woff2'); unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/ibm-plex-mono-400.woff2) format('woff2'); unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/ibm-plex-mono-500.woff2) format('woff2'); unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/ibm-plex-mono-600.woff2) format('woff2'); unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02; }
+@font-face { font-family: 'Martian Mono'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(fonts/martian-mono.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
 /* Layout: one working column. The expression bench on top, the almanac (calendar, day map) in the middle, translations last. */
 :root {
   --paper: #edf0f3;
   --card: #fafbfc;
   --ink: #0f1a24;
   --ink-2: #4a5967;
-  --ink-3: #74828f;
+  --ink-3: #5a6570;
   --rule: #d3dae1;
   --accent: #2741c9;
   --accent-ink: #ffffff;
@@ -34,14 +49,14 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #0c1117; --card: #131a22; --ink: #e3e9ef; --ink-2: #9aa8b6; --ink-3: #6c7b8a; --rule: #243040;
+    --paper: #0c1117; --card: #131a22; --ink: #e3e9ef; --ink-2: #9aa8b6; --ink-3: #86939f; --rule: #243040;
     --accent: #8fa3ff; --accent-ink: #0c1117; --accent-soft: #1d2650; --cell: #1a232d;
     --warn: #e9b24f; --warn-soft: #33270f; --bad: #f2867e; --bad-soft: #3a1a18; --ok: #62cb92; --ok-soft: #12301f;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #0c1117; --card: #131a22; --ink: #e3e9ef; --ink-2: #9aa8b6; --ink-3: #6c7b8a; --rule: #243040;
+  --paper: #0c1117; --card: #131a22; --ink: #e3e9ef; --ink-2: #9aa8b6; --ink-3: #86939f; --rule: #243040;
   --accent: #8fa3ff; --accent-ink: #0c1117; --accent-soft: #1d2650; --cell: #1a232d;
   --warn: #e9b24f; --warn-soft: #33270f; --bad: #f2867e; --bad-soft: #3a1a18; --ok: #62cb92; --ok-soft: #12301f;
   color-scheme: dark;
@@ -131,6 +146,8 @@ h1 { font: 700 clamp(1.35rem, 3.2vw, 1.7rem)/1.1 var(--f-display); letter-spacin
 }
 .dialects button:hover { color: var(--ink); border-color: var(--ink-3); }
 .dialects button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.dialects .dl-short { display: none; }
+@media (max-width: 560px) { .dialects .dl-long { display: none; } .dialects .dl-short { display: inline; } }
 .toast { margin: 0; font-size: 0.86rem; color: var(--ink-2); max-width: 52ch; }
 
 .expr-row { display: flex; gap: 10px; align-items: center; }
@@ -217,7 +234,8 @@ select:disabled { opacity: 0.7; }
 }
 .sentence mark { background: var(--warn-soft); color: var(--warn); padding: 0 0.2em; border-radius: 4px; font-weight: 600; }
 .sentence .tz { color: var(--ink-3); font-weight: 400; font-size: 0.7em; white-space: nowrap; }
-.stats { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.stats { margin: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+@media (max-width: 760px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stats div:first-child { grid-column: span 2; } }
 .stats div { background: var(--card); padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .stats dt { font: 600 0.62rem/1.2 var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
 .stats dd { margin: 0; font: 500 1.05rem/1.3 var(--f-data); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
@@ -272,6 +290,7 @@ select:disabled { opacity: 0.7; }
 .runs td.rel, .runs td.local { color: var(--ink-2); font-size: 0.86rem; }
 .runs td.local .mono { color: var(--ink); }
 .runs tr.dst td { background: var(--warn-soft); }
+.runs tr.gone td.t, .runs tr.gone td.rel, .runs tr.gone td.local { text-decoration: line-through; color: var(--ink-3); }
 .runs .badge { font: 600 0.62rem/1 var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); margin-left: 6px; }
 .runs .abbr { color: var(--ink-3); font-size: 0.78rem; margin-left: 4px; }
 .runs-empty { color: var(--ink-2); margin: 0; }
@@ -283,6 +302,7 @@ select:disabled { opacity: 0.7; }
 .legend:empty { display: none; }
 .key { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--cell); vertical-align: -1px; margin-right: 5px; }
 .key.on { background: var(--accent); }
+.key.ran { background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
 .key.dst { background: var(--warn); }
 .key.today { background: transparent; box-shadow: inset 0 0 0 2px var(--ink); }
 .calendar { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 212px), 1fr)); gap: 18px 22px; }
@@ -293,14 +313,14 @@ select:disabled { opacity: 0.7; }
 .year-label { font: 600 0.9rem var(--f-data); text-align: center; white-space: nowrap; }
 .mgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
 .mgrid .wd { text-align: center; font: 600 0.62rem/1.1 var(--f-display); color: var(--ink-3); padding-bottom: 2px; }
-.mgrid .wd small { display: block; font: 400 0.56rem/1.2 var(--f-data); color: var(--ink-3); opacity: 0.8; }
+.mgrid .wd small { display: block; font: 400 0.56rem/1.2 var(--f-data); color: var(--ink-3); }
 .mgrid button {
   aspect-ratio: 1;
   border: 0;
   border-radius: 4px;
   background: transparent;
   font: 400 0.72rem/1 var(--f-data);
-  color: var(--ink-3);
+  color: var(--ink-2);
   cursor: pointer;
   padding: 0;
   position: relative;
@@ -308,7 +328,8 @@ select:disabled { opacity: 0.7; }
 }
 .mgrid button:hover { box-shadow: inset 0 0 0 1px var(--ink-3); }
 .mgrid button.on { background: var(--accent); color: var(--accent-ink); font-weight: 500; }
-.mgrid button.past { opacity: 0.45; }
+.mgrid button.past { color: var(--ink-3); }
+.mgrid button.on.past { background: var(--accent-soft); color: var(--accent); }
 .mgrid button.today { box-shadow: inset 0 0 0 2px var(--ink); }
 .mgrid button.on.today { box-shadow: inset 0 0 0 2px var(--accent-ink), 0 0 0 1px var(--ink); }
 .mgrid button.dst::after { content: ''; position: absolute; right: 2px; top: 2px; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
@@ -370,13 +391,17 @@ details.snip[open] summary { margin-bottom: 6px; }
 .ref thead th { border-top: 0; font: 600 0.62rem/1.2 var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
 .ref tbody th { font-weight: 600; white-space: nowrap; }
 
-.foot { color: var(--ink-3); font-size: 0.82rem; }
+.foot { color: var(--ink-3); font-size: 0.82rem; display: flex; flex-direction: column; gap: 8px; }
 .foot p { margin: 0; max-width: 80ch; }
+.foot-links { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.foot a { color: var(--ink-2); text-underline-offset: 2px; }
+.foot a:hover { color: var(--accent); }
 
 @media (prefers-reduced-motion: reduce) { main { transition: none; } }
 </style>
 </head>
 <body>
+<noscript><p style="padding: 16px">Cron Almanac needs JavaScript to read and check schedules.</p></noscript>
 <div class="wrap">
   <header class="masthead">
     <div class="brand">
@@ -405,9 +430,10 @@ details.snip[open] summary { margin-bottom: 6px; }
       <label for="expr" class="sr-only">Cron expression</label>
       <input id="expr" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" enterkeyhint="done">
       <button type="button" class="btn ghost" id="copy-expr">Copy</button>
+      <button type="button" class="btn ghost" id="share" hidden>Share link</button>
     </div>
     <ol class="fields" id="fields" aria-label="Fields"></ol>
-    <div class="error" id="error" role="alert" hidden></div>
+    <div class="error" id="error" aria-live="polite" hidden></div>
     <div class="controls">
       <div class="control">
         <label for="tz">Time zone</label>
@@ -456,7 +482,7 @@ details.snip[open] summary { margin-bottom: 6px; }
           <button type="button" class="btn ghost small" id="year-next" aria-label="Next 12 months">→</button>
         </div>
       </div>
-      <p class="legend"><span class="key on"></span>runs <span class="key dst"></span>clock change hits a run <span class="key today"></span>today</p>
+      <p class="legend"><span class="key on"></span>runs <span class="key ran"></span>already ran <span class="key dst"></span>clock change hits a run <span class="key today"></span>today</p>
       <div class="calendar" id="calendar"></div>
       <p class="day-detail" id="day-detail" aria-live="polite">Pick a day to see its run times.</p>
     </section>
@@ -489,7 +515,8 @@ details.snip[open] summary { margin-bottom: 6px; }
             <tr><th scope="row">Both day fields set</th><td>OR, but AND if either starts with <code>*</code></td><td>OR</td><td>OR, but AND if either is <code>*</code> or <code>?</code></td><td>Not allowed; one must be <code>?</code></td><td>Not allowed; one must be <code>?</code></td><td>AND</td></tr>
             <tr><th scope="row">Extras</th><td>—</td><td>—</td><td><code>?</code></td><td><code>L W # ?</code></td><td><code>L L-n LW W nL # ?</code></td><td><code>L L-n LW W nL # ?</code></td></tr>
             <tr><th scope="row">Shortcuts</th><td><code>@daily</code> etc., <code>@reboot</code></td><td>—</td><td><code>@daily</code> etc.</td><td>—</td><td>—</td><td><code>@daily</code> etc.</td></tr>
-            <tr><th scope="row">Time zone</th><td>System, or <code>CRON_TZ</code> in cronie</td><td>UTC</td><td><code>spec.timeZone</code></td><td>UTC for rules; any for Scheduler</td><td><code>inTimeZone()</code></td><td><code>zone =</code></td></tr>
+            <tr><th scope="row">Clock changes</th><td>Fixed-time jobs: skipped time runs after the jump, repeated time runs once. Jobs with <code>*</code> in minute or hour follow the clock.</td><td>Skipped time runs at the next valid time. Repeated time: not documented.</td><td>Not documented</td><td>Scheduler: skipped time is skipped, repeated time runs once</td><td>Skipped time is skipped, repeated time fires once (FAQ)</td><td>Not documented</td></tr>
+            <tr><th scope="row">Time zone</th><td>System, or <code>CRON_TZ</code> in cronie</td><td>UTC, or <code>timezone:</code></td><td><code>spec.timeZone</code></td><td>UTC for rules; any for Scheduler</td><td><code>inTimeZone()</code></td><td><code>zone =</code></td></tr>
           </tbody>
         </table>
       </div>
@@ -497,7 +524,8 @@ details.snip[open] summary { margin-bottom: 6px; }
   </section>
 
   <footer class="foot">
-    <p>Runs entirely in your browser; nothing is sent anywhere. Time zone rules come from your browser's built-in time zone data. Run lists follow the wall clock: a time skipped by a spring-forward is shown as skipped, and a time repeated by a fall-back is shown twice.</p>
+    <p>Your expressions never leave your browser. Time zone rules come from your browser's built-in time zone data. Run lists follow the wall clock and mark the times a clock change skips or repeats, along with what each scheduler is documented to do with them.</p>
+    <p class="foot-links"><span>Cron Almanac 1.0</span><a href="https://github.com/clark719664/claudes-dream" target="_blank" rel="noopener">Source code</a><a href="https://github.com/clark719664/claudes-dream/issues/new/choose" target="_blank" rel="noopener">Report a problem</a><span>Free and open source under the MIT License</span></p>
   </footer>
 </div>
 
@@ -556,7 +584,7 @@ details.snip[open] summary { margin-bottom: 6px; }
       fields: ['minute', 'hour', 'dom', 'month', 'dow'],
       dow: { min: 0, max: 7, names: DOW_SUN0 }, dayRule: 'vixie',
       specials: {}, question: false, wrap: false,
-      macros: null, reboot: false, commandTail: false, seconds: false, year: null, utcOnly: true,
+      macros: null, reboot: false, commandTail: false, seconds: false, year: null,
     },
     k8s: {
       id: 'k8s', name: 'Kubernetes CronJob', short: 'Kubernetes', family: 'unix',
@@ -853,15 +881,94 @@ details.snip[open] summary { margin-bottom: 6px; }
   }
 
   const WRAPPERS = [
-    { re: /@Scheduled\s*\(\s*cron\s*=\s*"([^"]*)"/d, note: 'Read the expression from a Spring @Scheduled annotation.' },
-    { re: /cronSchedule\s*\(\s*"([^"]*)"/d, note: 'Read the expression from a Quartz cronSchedule() call.' },
-    { re: /^\s*-?\s*cron\s*:\s*(?:'([^']*)'|"([^"]*)"|(\S.*?))\s*$/d, note: 'Read the expression from a GitHub Actions `cron:` line.' },
-    { re: /^\s*schedule\s*:\s*(?:'([^']*)'|"([^"]*)"|(\S.*?))\s*$/d, note: 'Read the expression from a Kubernetes `schedule:` line.' },
-    { re: /^\s*(?:'([^']*)'|"([^"]*)")\s*$/d, note: null },
+    { re: /@Scheduled\s*\(\s*cron\s*=\s*"([^"]*)"/d, dialect: 'spring', note: 'Read the expression from a Spring @Scheduled annotation.' },
+    { re: /cronSchedule\s*\(\s*"([^"]*)"/d, dialect: 'quartz', note: 'Read the expression from a Quartz cronSchedule() call.' },
+    { re: /--schedule-expression[ \t=]+['"]?((?:cron|rate|at)\([^)]*\))/d, dialect: 'eventbridge', note: 'Read the expression from an AWS CLI command.' },
+    { re: /ScheduleExpression['"]?[ \t]*[:=][ \t]*['"]?((?:cron|rate|at)\([^)]*\))/d, dialect: 'eventbridge', note: 'Read the expression from a ScheduleExpression setting.' },
+    { re: /(?:^|\n)[ \t]*-?[ \t]*cron[ \t]*:[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|(\S[^\n#]*?))[ \t]*(?:#[^\n]*)?(?=\n|$)/d, dialect: 'github', note: 'Read the expression from a GitHub Actions `cron:` line.' },
+    { re: /(?:^|\n)[ \t]*schedule[ \t]*:[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|(\S[^\n#]*?))[ \t]*(?:#[^\n]*)?(?=\n|$)/d, dialect: 'k8s', note: 'Read the expression from a Kubernetes `schedule:` line.' },
+    { re: /^\s*(?:'([^']*)'|"([^"]*)")\s*$/d, dialect: null, note: null },
+  ];
+
+  // Time zone settings that sit next to the expression in a pasted config block.
+  const TZ_KEYS = [
+    { re: /(?:^|\n)[ \t]*timezone[ \t]*:[ \t]*['"]?([A-Za-z][\w+\-/]*)/d, label: '`timezone:`' },
+    { re: /(?:^|\n)[ \t]*timeZone[ \t]*:[ \t]*['"]?([A-Za-z][\w+\-/]*)/d, label: '`timeZone:`' },
+    { re: /\bzone[ \t]*=[ \t]*"([^"]+)"/d, label: '`zone =`' },
+    { re: /--schedule-expression-timezone[ \t=]+['"]?([^'"\s]+)/d, label: '`--schedule-expression-timezone`' },
+    { re: /ScheduleExpressionTimezone['"]?[ \t]*[:=][ \t]*['"]?([^'"\s,}]+)/d, label: '`ScheduleExpressionTimezone`' },
+    { re: /inTimeZone\s*\(\s*TimeZone\.getTimeZone\s*\(\s*"([^"]+)"/d, label: '`inTimeZone()`' },
   ];
 
   function isValidZone(tz) {
     try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; } catch (e) { return false; }
+  }
+
+  /**
+   * Find the cron expression inside pasted text: a config line, a whole workflow or manifest,
+   * an annotation, a CLI command or a crontab file. Returns { core, base, tz, tzSource, tzPrefix,
+   * notes, dialect } where core is the expression text, base its offset in the input, and dialect
+   * the scheduler the surrounding text implies (or null). Throws CronError for unusable text.
+   */
+  function unwrap(text) {
+    const out = { core: text, base: 0, tz: null, tzSource: null, tzPrefix: null, notes: [], dialect: null, wrapped: false };
+    let core = text, base = 0, m;
+    const setZone = (zone, source) => {
+      if (!isValidZone(zone)) throw new CronError(`\`${zone}\` isn't a time zone this browser knows.`);
+      out.tz = zone;
+      out.tzSource = source;
+    };
+    for (const k of TZ_KEYS) {
+      m = k.re.exec(text);
+      if (m) { setZone(m[1], k.label); break; }
+    }
+    for (const w of WRAPPERS) {
+      m = w.re.exec(core);
+      if (!m) continue;
+      const gi = [1, 2, 3].find(i => m[i] !== undefined);
+      base += m.indices[gi][0];
+      core = m[gi];
+      if (w.note) out.notes.push(w.note);
+      out.dialect = w.dialect;
+      break;
+    }
+    if (/\n/.test(core.trim())) {
+      // A pasted crontab or config: use the first job line, honouring a CRON_TZ line above it.
+      let off = 0;
+      for (const line of core.split('\n')) {
+        const at = off;
+        off += line.length + 1;
+        const tl = line.trim();
+        if (!tl || tl[0] === '#') continue;
+        const env = /^([A-Za-z_][A-Za-z0-9_]*)[ \t]*=[ \t]*['"]?([^'"]*)['"]?$/.exec(tl);
+        if (env) {
+          if (env[1] === 'CRON_TZ') { setZone(env[2].trim(), '`CRON_TZ`'); out.tzPrefix = 'CRON_TZ=' + env[2].trim(); }
+          out.dialect = out.dialect || 'unix';
+          continue;
+        }
+        base += at;
+        core = line;
+        out.notes.push('Read the first schedule line of the pasted text.');
+        break;
+      }
+    }
+    if (/^\s*(rate|at)\(/i.test(core)) {
+      throw new CronError(/^\s*rate/i.test(core)
+        ? 'That is an EventBridge `rate()` expression, not cron. It repeats at a fixed interval counted from when the schedule starts.'
+        : 'That is an EventBridge one-time `at()` schedule, not cron.');
+    }
+    m = /^\s*cron\(([^)]*)\)\s*$/di.exec(core);
+    if (m) { base += m.indices[1][0]; core = m[1]; out.wrapped = true; out.dialect = out.dialect || 'eventbridge'; }
+    m = /^\s*(?:CRON_TZ|TZ)=(\S+)\s+/d.exec(core);
+    if (m) {
+      setZone(m[1], '`' + m[0].trim().split('=')[0] + '`');
+      out.tzPrefix = m[0].trim();
+      base += m[0].length;
+      core = core.slice(m[0].length);
+    }
+    out.core = core;
+    out.base = base;
+    return out;
   }
 
   /** Parse an expression in the given dialect. Returns a model or { ok:false, error }. */
@@ -872,26 +979,12 @@ details.snip[open] summary { margin-bottom: 6px; }
     const out = { ok: false, dialect: dialectId, input: text, tokens: [], notes: [], tz: null };
     let tokens = [];
     try {
-      let core = text, base = 0, m;
-      for (const w of WRAPPERS) {
-        m = w.re.exec(core);
-        if (!m) continue;
-        const gi = [1, 2, 3].find(i => m[i] !== undefined);
-        base += m.indices[gi][0];
-        core = m[gi];
-        if (w.note) out.notes.push(w.note);
-        break;
-      }
-      m = /^\s*cron\(([^)]*)\)\s*$/di.exec(core);
-      if (m) { base += m.indices[1][0]; core = m[1]; out.wrapped = true; }
-      m = /^\s*(?:CRON_TZ|TZ)=(\S+)\s+/d.exec(core);
-      if (m) {
-        if (!isValidZone(m[1])) throw new CronError(`\`${m[1]}\` isn't a time zone this browser knows.`);
-        out.tz = m[1];
-        out.tzPrefix = m[0].trim();
-        base += m[0].length;
-        core = core.slice(m[0].length);
-      }
+      const u = unwrap(text);
+      const core = u.core, base = u.base;
+      out.notes.push(...u.notes);
+      if (u.tz) { out.tz = u.tz; out.tzSource = u.tzSource; }
+      if (u.tzPrefix) out.tzPrefix = u.tzPrefix;
+      if (u.wrapped) out.wrapped = true;
       const re = /\S+/g;
       let t;
       while ((t = re.exec(core))) tokens.push({ text: t[0], start: base + t.index, end: base + t.index + t[0].length });
@@ -1247,6 +1340,25 @@ details.snip[open] summary { margin-bottom: 6px; }
       return true;
     });
     return { runs, exhausted };
+  }
+
+  /**
+   * What each scheduler is documented to do when a local time is skipped (spring forward)
+   * or repeated (fall back). gap: 'after' | 'skip' | null; overlap: 'once' | 'twice' | null.
+   * null means the scheduler's documentation doesn't say.
+   */
+  function dstPolicy(P) {
+    switch (P.dialect) {
+      case 'unix': {
+        // cron(8) on Debian, Ubuntu and cronie: only fixed-time jobs get special handling.
+        const wild = !P.reboot && (P.by.minute.vixieStar || P.by.hour.vixieStar);
+        return wild ? { gap: 'skip', overlap: 'twice', wild: true } : { gap: 'after', overlap: 'once', wild: false };
+      }
+      case 'github': return { gap: 'after', overlap: null };
+      case 'eventbridge': return { gap: 'skip', overlap: 'once' };
+      case 'quartz': return { gap: 'skip', overlap: 'once' };
+      default: return { gap: null, overlap: null };
+    }
   }
 
   /** Runs that fall into DST gaps or overlaps between a and b. */
@@ -1887,7 +1999,7 @@ details.snip[open] summary { margin-bottom: 6px; }
     }
 
     // DST
-    if (tz && !P.dialect.startsWith('github')) {
+    if (tz) {
       const impacts = dstImpact(P, tz, now, now + 365 * DAY).filter(x => x.affected);
       if (impacts.length) {
         const fmtDate = x => `${x.date.d} ${MON_SHORT[x.date.m - 1]}`;
@@ -1898,12 +2010,21 @@ details.snip[open] summary { margin-bottom: 6px; }
             : `On **${fmtDate(x)}** clocks fall back from ${to} to ${from}, so ${x.affected === 1 ? 'the run' : `${x.affected} runs`} in that hour happen${x.affected === 1 ? 's' : ''} twice by the clock.`;
         });
         let body = `${tz} changes its clocks. ${sentences.join(' ')}`;
+        const pol = dstPolicy(P);
         if (D.id === 'unix') {
-          body += ' cronie and Vixie cron special-case this for jobs at fixed times: a run skipped by the spring jump fires right after it, and a fall-back run fires once. Jobs that run more often than hourly just follow the clock.';
+          body += pol.wild
+            ? ' Because the minute or hour field starts with `*`, cron (Debian, Ubuntu, cronie) treats this as a wildcard job and just follows the clock: runs in a skipped hour are lost and runs in a repeated hour happen twice.'
+            : ' For a job at fixed times like this one, cron (Debian, Ubuntu, cronie) runs a skipped time soon after the jump and doesn’t repeat a run in the repeated hour.';
+        } else if (D.id === 'github') {
+          body += ' GitHub moves a run in the skipped hour to the next valid time, so 02:30 becomes 03:00. Its docs don’t say what happens in a repeated hour.';
+        } else if (D.id === 'eventbridge') {
+          body += ' EventBridge Scheduler skips a time that doesn’t exist and runs a repeated time only once.';
+        } else if (D.id === 'quartz') {
+          body += ' According to the Quartz FAQ, a time that doesn’t exist is skipped and a time that happens twice fires once.';
         } else {
-          body += ` How ${D.name} handles skipped and repeated times is scheduler-specific; check before relying on it.`;
+          body += ` ${D.name}'s documentation doesn't say how it handles skipped or repeated times.`;
         }
-        body += ' The safe options are UTC or a time outside the changeover.';
+        body += ' To avoid the question entirely, use UTC or a time outside the changeover.';
         add('warn', 'dst', 'Daylight saving time changes affect this', body);
       }
     }
@@ -1920,20 +2041,24 @@ details.snip[open] summary { margin-bottom: 6px; }
           'GitHub warns that load peaks at the start of every hour and queued scheduled runs can be delayed or dropped. An off-peak minute such as `17` is more reliable.',
           P.minutes.length === 1 ? { label: 'Use minute 17', expr: replaceToken(P.input, P.tokens, by.minute.index, '17') } : null);
       }
+      if (tz && tz !== 'UTC' && tz !== 'Etc/UTC' && !P.tz) {
+        add('warn', 'gh-timezone', 'Add `timezone:` to the workflow',
+          `Without it, GitHub reads these times as UTC. Put \`timezone: "${tz}"\` under the \`cron:\` line; Translations shows the YAML. GitHub Enterprise Server supports it from version 3.22.`);
+      }
       add('info', 'gh-notes', 'How GitHub runs schedules',
-        'Times are UTC. Scheduled workflows run on the latest commit of the default branch, and in public repositories GitHub disables them after 60 days without repository activity.');
+        'Scheduled workflows run on the latest commit of the default branch, only if the workflow file is on that branch. In public repositories GitHub disables them after 60 days without repository activity.');
     }
     if (D.id === 'k8s') {
-      if (P.tz && P.tzPrefix) {
+      if (P.tzPrefix) {
         add('warn', 'k8s-crontz', 'Use spec.timeZone instead',
           `Kubernetes doesn't support \`${P.tzPrefix.split('=')[0]}=\` inside \`schedule\`, and recent versions reject it. Set \`spec.timeZone: "${P.tz}"\` instead.`);
-      } else {
+      } else if (!P.tz) {
         add('info', 'k8s-tz', 'Set spec.timeZone',
           "Without `spec.timeZone`, Kubernetes evaluates the schedule in the kube-controller-manager's time zone. Set it explicitly so the schedule doesn't depend on the cluster.");
       }
     }
     if (D.id === 'unix') {
-      if (P.tzPrefix) {
+      if (P.tzPrefix && P.tzPrefix.startsWith('CRON_TZ')) {
         add('info', 'unix-crontz', 'CRON_TZ is a cronie feature',
           '`CRON_TZ=` is honoured by cronie (Fedora, RHEL, Arch) and normally goes on its own line above the job. Debian and Ubuntu cron use the system time zone instead.');
       }
@@ -2265,7 +2390,7 @@ details.snip[open] summary { margin-bottom: 6px; }
 
   return {
     DIALECTS, DIALECT_ORDER, FIELD_LABEL, DOW_ABBR, DOW_LONG, MON_LONG, MON_SHORT, EXAMPLE_BY_DIALECT, DAY,
-    parse, buildModel, dayMatches, upcoming, dstImpact, stats, describe, render, renderDays, workaroundText,
+    parse, unwrap, buildModel, dayMatches, upcoming, dstImpact, dstPolicy, stats, describe, render, renderDays, workaroundText,
     utcVariants, shiftModel, offsetPeriods, transitionsBetween, lint, fromEnglish, minuteIntervalLines,
     wallParts, offsetAt, displayParts, fmtOffset, fmtClock, fmtDuration, ordinal, daysInMonth, weekday, isLeap,
     isValidZone, compress, runsOf,
@@ -2293,7 +2418,7 @@ details.snip[open] summary { margin-bottom: 6px; }
     { label: '02:30 in New York (daylight saving)', expr: '30 2 * * *', d: 'unix', tz: 'America/New_York' },
     { label: 'Every 90 minutes?', expr: '*/90 * * * *', d: 'unix' },
     { label: 'Full crontab line with a command', expr: '15 3 * * 1-5 /opt/backup.sh > /var/log/backup-$(date +%F).log', d: 'unix' },
-    { label: 'GitHub Actions: nightly build', expr: '0 3 * * *', d: 'github' },
+    { label: 'GitHub Actions: 02:30 in New York', expr: '30 2 * * *', d: 'github', tz: 'America/New_York' },
     { label: 'Kubernetes: */2 with a weekday', expr: '0 0 */2 * 1', d: 'k8s' },
     { label: 'EventBridge: month end', expr: 'cron(0 18 L * ? *)', d: 'eventbridge' },
     { label: 'Quartz: third Friday', expr: '0 0 12 ? * 6#3', d: 'quartz' },
@@ -2340,7 +2465,6 @@ details.snip[open] summary { margin-bottom: 6px; }
   }
 
   function effTz(P) {
-    if (state.dialect === 'github') return 'UTC';
     if (P && P.ok && P.tz) return P.tz;
     return state.tz;
   }
@@ -2410,7 +2534,7 @@ details.snip[open] summary { margin-bottom: 6px; }
 
   function buildDialects() {
     const box = $('dialects');
-    box.innerHTML = E.DIALECT_ORDER.map(id => `<button type="button" data-d="${id}" aria-pressed="false">${esc(D[id].name)}</button>`).join('');
+    box.innerHTML = E.DIALECT_ORDER.map(id => `<button type="button" data-d="${id}" aria-pressed="false" title="${esc(D[id].name)}"><span class="dl-long">${esc(D[id].name)}</span><span class="dl-short">${esc(D[id].short)}</span></button>`).join('');
     box.addEventListener('click', e => {
       const b = e.target.closest('button[data-d]');
       if (b) switchDialect(b.dataset.d);
@@ -2468,37 +2592,21 @@ details.snip[open] summary { margin-bottom: 6px; }
   function switchDialect(id) {
     if (id === state.dialect) return;
     const P = current;
-    const fromTz = effTz(P);
     const T = D[id];
     let msg;
     if (P && P.ok) {
       if (P.tz) state.tz = P.tz;
-      if (id === 'github' && fromTz !== 'UTC') {
-        const now = Date.now();
-        const vs = E.utcVariants(P, fromTz, 'github', now);
-        const v = vs.find(x => x.periods.some(p => p.from <= now && now < p.to)) || vs[0];
-        if (v && v.lines) {
-          state.expr = v.lines[0];
-          msg = `GitHub runs schedules in UTC, so the ${fromTz} times were converted at today's offset (${E.fmtOffset(v.off)}).` +
-            (vs.length > 1 ? ' Translations shows the other season too.' : '') +
-            (v.lines.length > 1 ? ` This takes ${v.lines.length} lines; showing the first.` : '');
-        } else {
-          msg = `Couldn't convert to UTC: ${v ? v.error : 'no offset found'} The expression is unchanged.`;
-        }
+      const r = E.render(P, id);
+      if (r.ok) {
+        state.expr = r.lines[0];
+        msg = r.lines.length > 1
+          ? `${T.name} needs ${r.lines.length} schedules for this; showing the first. Translations lists both.`
+          : `Converted to ${T.name}.`;
+      } else if (r.workaround) {
+        state.expr = r.workaround.expr;
+        msg = `${r.reason} Showing the closest ${T.short} schedule; Translations has the check the job needs.`;
       } else {
-        const r = E.render(P, id);
-        if (r.ok) {
-          state.expr = r.lines[0];
-          msg = r.lines.length > 1
-            ? `${T.name} needs ${r.lines.length} schedules for this; showing the first. Translations lists both.`
-            : `Converted to ${T.name}.`;
-        } else if (r.workaround) {
-          state.expr = r.workaround.expr;
-          msg = `${r.reason} Showing the closest ${T.short} schedule; Translations has the check the job needs.`;
-        } else {
-          msg = `${T.name} can't express this: ${r.reason}`;
-        }
-        if (state.dialect === 'github') { state.tz = 'UTC'; msg += ' The time zone is set to UTC so the times stay the same.'; }
+        msg = `${T.name} can't express this: ${r.reason}`;
       }
     } else {
       msg = `Reading the expression as ${T.name}.`;
@@ -2595,16 +2703,20 @@ details.snip[open] summary { margin-bottom: 6px; }
     renderTz(P, tz, now);
     renderFields(P);
     const results = $('results');
+    const input = $('expr');
+    input.setAttribute('aria-invalid', String(!P.ok));
     if (!P.ok) {
       renderError(P);
       results.classList.add('stale');
-      $('expr').classList.add('invalid');
+      input.classList.add('invalid');
+      input.setAttribute('aria-describedby', 'error');
       save();
       return;
     }
     $('error').hidden = true;
     results.classList.remove('stale');
-    $('expr').classList.remove('invalid');
+    input.classList.remove('invalid');
+    input.setAttribute('aria-describedby', 'sentence');
     renderSummary(P, tz, now);
     renderChecks(P, tz, now);
     renderRuns(P, tz, now);
@@ -2617,12 +2729,12 @@ details.snip[open] summary { margin-bottom: 6px; }
   function renderTz(P, tz, now) {
     const sel = $('tz');
     ensureTzOption(tz);
-    const forced = state.dialect === 'github' || !!(P.ok && P.tz);
+    const forced = !!(P.ok && P.tz);
     sel.disabled = forced;
     const p = E.displayParts(now, tz);
     let hint = `Now ${p.hour}:${p.minute} ${p.timeZoneName} (${E.fmtOffset(E.offsetAt(now, tz))}).`;
-    if (state.dialect === 'github') hint = 'GitHub Actions evaluates schedules in UTC. ' + hint;
-    else if (P.ok && P.tz) hint = `Set by ${P.tzPrefix.split('=')[0]} in the expression. ` + hint;
+    if (P.ok && P.tz) hint = `Set by ${P.tzSource.replace(/`/g, '')} in the pasted text. ` + hint;
+    else if (state.dialect === 'github') hint += ' GitHub uses UTC unless the workflow sets timezone:.';
     else if (state.dialect === 'eventbridge') hint += ' Rules always use UTC; EventBridge Scheduler can use this zone.';
     $('tz-hint').textContent = hint;
   }
@@ -2696,18 +2808,38 @@ details.snip[open] summary { margin-bottom: 6px; }
     const showLocal = browserTz !== tz;
     const withSec = P.seconds.some(s => s !== 0);
     const thisYear = E.wallParts(now, tz).y;
+    const pol = E.dstPolicy(P);
+    const T = D[state.dialect];
+    const badgeHtml = (text, title) => `<span class="badge" title="${esc(title)}">${esc(text)}</span>`;
     const rows = up.runs.map(r => {
       const p = E.displayParts(r.t, tz);
       const date = `${p.weekday} ${p.day} ${p.month}${+p.year !== thisYear ? ' ' + p.year : ''}`;
       let time, badge = '', cls = '';
       if (r.kind === 'skipped') {
-        time = E.fmtClock(r.sec, withSec) + (r.count > 1 ? '–' + E.fmtClock(r.lastSec, withSec) : '');
-        badge = `<span class="badge" title="Clocks jump from ${E.fmtClock(((r.tr.t + r.tr.before) % DAY) / 1000)} to ${E.fmtClock(((r.tr.t + r.tr.after) % DAY) / 1000)}; ${r.count > 1 ? 'these times don’t' : 'this time doesn’t'} exist.">skipped</span>`;
+        const wall = E.fmtClock(r.sec, withSec) + (r.count > 1 ? '–' + E.fmtClock(r.lastSec, withSec) : '');
+        const jump = `Clocks jump from ${E.fmtClock(((r.tr.t + r.tr.before) % DAY) / 1000)} to ${E.fmtClock(((r.tr.t + r.tr.after) % DAY) / 1000)}, so ${wall} doesn’t exist.`;
         cls = 'dst';
+        if (pol.gap === 'after') {
+          time = `${p.hour}:${p.minute}${withSec ? ':' + p.second : ''}`;
+          badge = badgeHtml(r.count > 1 ? `${r.count} moved here` : `moved from ${E.fmtClock(r.sec, withSec)}`, `${jump} ${T.name} runs it right after the jump.`);
+        } else {
+          time = wall;
+          badge = pol.gap === 'skip'
+            ? badgeHtml('skipped', `${jump} ${T.name} skips it.`)
+            : badgeHtml('skipped?', `${jump} ${T.name}'s docs don't say whether it's skipped or moved.`);
+        }
       } else {
         time = `${p.hour}:${p.minute}${withSec ? ':' + p.second : ''}`;
-        if (r.kind === 'repeat') { badge = '<span class="badge" title="Clocks fall back, so this wall time happens a second time.">again</span>'; cls = 'dst'; }
-        else if (r.repeats) { badge = '<span class="badge" title="Clocks fall back later, so this wall time happens twice.">1st of 2</span>'; cls = 'dst'; }
+        const twice = 'Clocks fall back, so this time happens twice.';
+        if (r.kind === 'repeat') {
+          cls = 'dst';
+          if (pol.overlap === 'once') { cls += ' gone'; badge = badgeHtml('not repeated', `${twice} ${T.name} runs it only the first time.`); }
+          else if (pol.overlap === 'twice') badge = badgeHtml('again', `${twice} ${T.name} runs it both times.`);
+          else badge = badgeHtml('again?', `${twice} ${T.name}'s docs don't say whether it runs once or twice.`);
+        } else if (r.repeats) {
+          cls = 'dst';
+          badge = badgeHtml(pol.overlap === 'once' ? 'runs once' : '1st of 2', twice);
+        }
       }
       let local = '';
       if (showLocal) {
@@ -2749,6 +2881,12 @@ details.snip[open] summary { margin-bottom: 6px; }
     const todayNum = Date.UTC(w.y, w.mo - 1, w.d);
     const T = D[state.dialect];
     const wdNum = i => (T.dow.min === 1 ? i + 1 : i);
+    const inWindow = key => {
+      const [ky, km] = key.split('-').map(Number);
+      const k = ky * 12 + km - 1;
+      return k >= start && k < start + 12;
+    };
+    const focusKey = state.sel && inWindow(state.sel) ? state.sel : inWindow(todayKey) ? todayKey : `${first.y}-${first.m}-1`;
     const head = DOW_SHORT.map((n, i) => `<span class="wd" title="${E.DOW_LONG[i]} is ${wdNum(i)} in ${esc(T.name)}">${n[0]}<small>${wdNum(i)}</small></span>`).join('');
     let html = '';
     for (let k = start; k < start + 12; k++) {
@@ -2763,10 +2901,10 @@ details.snip[open] summary { margin-bottom: 6px; }
         const on = E.dayMatches(P, y, m, d);
         if (on) count++;
         const cls = [on ? 'on' : '', key === todayKey ? 'today' : '', Date.UTC(y, m - 1, d) < todayNum ? 'past' : '', dst.has(key) ? 'dst' : '', state.sel === key ? 'sel' : ''].join(' ').trim();
-        cells += `<button type="button" class="${cls}" data-date="${key}" aria-label="${d} ${E.MON_LONG[m - 1]}${on ? ', runs' : ''}">${d}</button>`;
+        cells += `<button type="button" class="${cls}" data-date="${key}" tabindex="${key === focusKey ? 0 : -1}" aria-pressed="${state.sel === key}" aria-label="${E.DOW_LONG[E.weekday(y, m, d)]} ${d} ${E.MON_LONG[m - 1]}${on ? ', runs' : ''}${dst.has(key) ? ', clock change' : ''}">${d}</button>`;
       }
       const yr = k === start || m === 1 ? ` <em>${y}</em>` : '';
-      html += `<div class="month"><h3><b>${E.MON_LONG[m - 1]}${yr}</b><span>${count} day${count === 1 ? '' : 's'}</span></h3><div class="mgrid">${head}${cells}</div></div>`;
+      html += `<div class="month"><h3><b>${E.MON_LONG[m - 1]}${yr}</b><span>${count} day${count === 1 ? '' : 's'}</span></h3><div class="mgrid" role="group" aria-label="${E.MON_LONG[m - 1]} ${y}">${head}${cells}</div></div>`;
     }
     box.innerHTML = html;
     renderDayDetail(P, tz, dst);
@@ -2851,7 +2989,9 @@ details.snip[open] summary { margin-bottom: 6px; }
       case 'unix':
         return `# CRON_TZ works in cronie; Debian/Ubuntu cron use the system time zone\nCRON_TZ=${tz}\n${line}  /path/to/command`;
       case 'github':
-        return `on:\n  schedule:\n    - cron: '${line}'  # UTC`;
+        return tz === 'UTC'
+          ? `on:\n  schedule:\n    - cron: '${line}'  # UTC`
+          : `on:\n  schedule:\n    - cron: '${line}'\n      timezone: "${tz}"`;
       case 'k8s':
         return `apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: my-job\nspec:\n  schedule: "${line}"\n  timeZone: "${tz}"\n  jobTemplate:\n    # …`;
       case 'eventbridge':
@@ -2864,8 +3004,9 @@ details.snip[open] summary { margin-bottom: 6px; }
     return line;
   }
 
-  function lineHtml(line, id, canUse) {
-    return `<div class="line"><span class="expr">${esc(line)}</span><button type="button" class="btn ghost small" data-copy="${esc(line)}">Copy</button>${canUse ? `<button type="button" class="btn ghost small" data-use="${id}" data-line="${esc(line)}">Use</button>` : ''}</div>`;
+  function lineHtml(line, id, canUse, extra) {
+    const attrs = extra ? Object.entries(extra).map(([k, v]) => ` data-${k}="${esc(v)}"`).join('') : '';
+    return `<div class="line"><span class="expr">${esc(line)}</span><button type="button" class="btn ghost small" data-copy="${esc(line)}">Copy</button>${canUse ? `<button type="button" class="btn ghost small" data-use="${id}" data-line="${esc(line)}"${attrs}>Use</button>` : ''}</div>`;
   }
 
   function periodText(v, tz, now) {
@@ -2886,7 +3027,7 @@ details.snip[open] summary { margin-bottom: 6px; }
     for (const v of vs) {
       html += `<p class="period">${esc(periodText(v, tz, now))}</p>`;
       if (v.error) html += `<p>${md(v.error)}</p>`;
-      else html += v.lines.map(l => lineHtml(l, id, true)).join('') + (v.lines.length > 1 ? `<p>Use all ${v.lines.length} lines together.</p>` : '');
+      else html += v.lines.map(l => lineHtml(l, id, true, { tz: 'UTC', of: v.lines.length })).join('') + (v.lines.length > 1 ? `<p>Use all ${v.lines.length} lines together.</p>` : '');
     }
     if (vs.length > 1) html += `<p>A UTC schedule can't follow daylight saving. Pick one, or schedule both and skip the run that doesn't apply.</p>`;
     return html;
@@ -2903,18 +3044,15 @@ details.snip[open] summary { margin-bottom: 6px; }
       if (!r.ok) tags.push('<span class="tag no">No exact match</span>');
       let body = '';
       if (r.ok) {
-        const utcOnly = id === 'github' && tz !== 'UTC' && !P.reboot;
-        if (utcOnly) {
-          body += `<p>GitHub runs schedules in UTC, so the ${esc(tz)} times shift:</p>` + utcBlock(P, tz, id, now);
-        } else {
-          body += r.lines.map(l => lineHtml(l, id, !isSelf)).join('');
-          if (r.note) body += `<p>${md(r.note)}</p>`;
-          if (id === 'eventbridge' && tz !== 'UTC' && !P.reboot) {
-            body += `<details class="snip"><summary>For an EventBridge rule, which only runs in UTC</summary><div>${utcBlock(P, tz, id, now)}</div></details>`;
-          }
+        body += r.lines.map(l => lineHtml(l, id, !isSelf, r.lines.length > 1 ? { of: r.lines.length } : null)).join('');
+        if (r.note) body += `<p>${md(r.note)}</p>`;
+        body += `<details class="snip"><summary>Where it goes</summary><pre class="snippet">${esc(snippet(id, r.lines[0], tz))}</pre></details>`;
+        const utc = tz !== 'UTC' && !P.reboot;
+        if (utc && id === 'github') {
+          body += `<details class="snip"><summary>Without <code>timezone:</code> (UTC, or GitHub Enterprise Server before 3.22)</summary><div>${utcBlock(P, tz, id, now)}</div></details>`;
+        } else if (utc && id === 'eventbridge') {
+          body += `<details class="snip"><summary>For an EventBridge rule, which only runs in UTC</summary><div>${utcBlock(P, tz, id, now)}</div></details>`;
         }
-        const first = utcOnly ? null : r.lines[0];
-        if (first) body += `<details class="snip"><summary>Where it goes</summary><pre class="snippet">${esc(snippet(id, first, tz))}</pre></details>`;
       } else {
         body += `<p>${md(r.reason)}</p>`;
         if (r.workaround) {
@@ -2958,7 +3096,6 @@ details.snip[open] summary { margin-bottom: 6px; }
         return;
       }
     }
-    if (target === 'github') notes.push('GitHub reads these times as UTC.');
     if (res.lines.length > 1) notes.push(`This needs ${res.lines.length} schedules; the other is \`${res.lines.slice(1).join('`, `')}\`.`);
     state.dialect = target;
     state.expr = res.lines[0];
@@ -2986,6 +3123,24 @@ details.snip[open] summary { margin-bottom: 6px; }
       t = setTimeout(() => { state.expr = input.value; update(); }, 70);
     });
     ['keyup', 'click', 'focus', 'select'].forEach(ev => input.addEventListener(ev, syncCaret));
+    // A text field drops line breaks, so read pasted configs here: take the expression,
+    // its time zone and the scheduler the surrounding text implies.
+    input.addEventListener('paste', e => {
+      const text = e.clipboardData && e.clipboardData.getData('text/plain');
+      if (!text || !/\n|cron\s*[:=(]|schedule\s*:|@Scheduled|cronSchedule|ScheduleExpression|CRON_TZ/i.test(text)) return;
+      let u;
+      try { u = E.unwrap(text); } catch (err) { return; }
+      if (!u.core.trim() || (u.core === text && !u.tz)) return;
+      e.preventDefault();
+      const from = [];
+      if (u.dialect && u.dialect !== state.dialect) { state.dialect = u.dialect; from.push(D[u.dialect].name); }
+      if (u.tz) { state.tz = u.tz; from.push(`time zone ${u.tz}`); }
+      state.expr = u.wrapped ? `cron(${u.core.trim()})` : u.core.trim();
+      state.sel = null;
+      input.value = state.expr;
+      toast(`${u.notes[0] || 'Read the expression from the pasted text.'}${from.length ? ` Set ${from.join(' and ')}.` : ''}`);
+      update();
+    });
     input.addEventListener('blur', () => setTimeout(syncCaret, 0));
     $('fields').addEventListener('click', e => {
       const c = e.target.closest('.chip');
@@ -2997,10 +3152,35 @@ details.snip[open] summary { margin-bottom: 6px; }
       syncCaret();
     });
     $('copy-expr').addEventListener('click', e => copyText(input.value, e.currentTarget));
+    if (window.top === window && /^https?:$/.test(location.protocol)) {
+      $('share').hidden = false;
+      $('share').addEventListener('click', e => { save(); copyText(location.href, e.currentTarget); });
+    }
     $('english-form').addEventListener('submit', onEnglish);
     $('more-runs').addEventListener('click', () => { state.runs = Math.min(200, state.runs + 30); update(); });
     $('year-prev').addEventListener('click', () => { state.calStart -= 12; renderCalendar(current, effTz(current), Date.now()); });
     $('year-next').addEventListener('click', () => { state.calStart += 12; renderCalendar(current, effTz(current), Date.now()); });
+    $('calendar').addEventListener('keydown', e => {
+      const b = e.target.closest('button[data-date]');
+      if (!b) return;
+      const [y, m, d] = b.dataset.date.split('-').map(Number);
+      let t = Date.UTC(y, m - 1, d);
+      const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
+      if (step) t += step * DAY;
+      else if (e.key === 'Home') t -= E.weekday(y, m, d) * DAY;
+      else if (e.key === 'End') t += (6 - E.weekday(y, m, d)) * DAY;
+      else if (e.key === 'PageUp' || e.key === 'PageDown') {
+        const mm = new Date(Date.UTC(y, m - 1 + (e.key === 'PageDown' ? 1 : -1), 1));
+        t = Date.UTC(mm.getUTCFullYear(), mm.getUTCMonth(), Math.min(d, E.daysInMonth(mm.getUTCFullYear(), mm.getUTCMonth() + 1)));
+      } else return;
+      e.preventDefault();
+      const n = new Date(t);
+      const next = $('calendar').querySelector(`button[data-date="${n.getUTCFullYear()}-${n.getUTCMonth() + 1}-${n.getUTCDate()}"]`);
+      if (!next) return;
+      b.tabIndex = -1;
+      next.tabIndex = 0;
+      next.focus();
+    });
     $('calendar').addEventListener('click', e => {
       const b = e.target.closest('button[data-date]');
       if (!b || !current || !current.ok) return;
@@ -3011,14 +3191,16 @@ details.snip[open] summary { margin-bottom: 6px; }
       const b = e.target.closest('button');
       if (!b) return;
       if (b.dataset.copy != null) copyText(b.dataset.copy, b);
-      else if (b.dataset.expr != null) { toast(''); applyExpr(b.dataset.expr); }
-      else if (b.dataset.read) { const T = D[b.dataset.read]; toast(`Reading the expression as ${T.name}.`); applyExpr(state.expr, b.dataset.read); }
+      else if (b.dataset.expr != null) { toast(''); applyExpr(b.dataset.expr); $('expr').focus(); }
+      else if (b.dataset.read) { const T = D[b.dataset.read]; toast(`Reading the expression as ${T.name}.`); applyExpr(state.expr, b.dataset.read); $('expr').focus(); }
       else if (b.dataset.use) {
         const id = b.dataset.use;
         if (current && current.ok && current.tz) state.tz = current.tz;
-        if (state.dialect === 'github' && id !== 'github') state.tz = 'UTC';
-        toast(`Switched to ${D[id].name}.`);
+        if (b.dataset.tz) state.tz = b.dataset.tz;
+        const of = +b.dataset.of || 1;
+        toast(of > 1 ? `Switched to ${D[id].name}. This is one of ${of} schedules that work together; Translations lists all of them.` : `Switched to ${D[id].name}.`);
         applyExpr(b.dataset.line, id);
+        $('expr').focus();
       }
     });
     setInterval(() => {

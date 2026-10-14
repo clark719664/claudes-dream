@@ -26,9 +26,10 @@
       <label for="expr" class="sr-only">Cron expression</label>
       <input id="expr" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" enterkeyhint="done">
       <button type="button" class="btn ghost" id="copy-expr">Copy</button>
+      <button type="button" class="btn ghost" id="share" hidden>Share link</button>
     </div>
     <ol class="fields" id="fields" aria-label="Fields"></ol>
-    <div class="error" id="error" role="alert" hidden></div>
+    <div class="error" id="error" aria-live="polite" hidden></div>
     <div class="controls">
       <div class="control">
         <label for="tz">Time zone</label>
@@ -77,7 +78,7 @@
           <button type="button" class="btn ghost small" id="year-next" aria-label="Next 12 months">→</button>
         </div>
       </div>
-      <p class="legend"><span class="key on"></span>runs <span class="key dst"></span>clock change hits a run <span class="key today"></span>today</p>
+      <p class="legend"><span class="key on"></span>runs <span class="key ran"></span>already ran <span class="key dst"></span>clock change hits a run <span class="key today"></span>today</p>
       <div class="calendar" id="calendar"></div>
       <p class="day-detail" id="day-detail" aria-live="polite">Pick a day to see its run times.</p>
     </section>
@@ -110,7 +111,8 @@
             <tr><th scope="row">Both day fields set</th><td>OR, but AND if either starts with <code>*</code></td><td>OR</td><td>OR, but AND if either is <code>*</code> or <code>?</code></td><td>Not allowed; one must be <code>?</code></td><td>Not allowed; one must be <code>?</code></td><td>AND</td></tr>
             <tr><th scope="row">Extras</th><td>—</td><td>—</td><td><code>?</code></td><td><code>L W # ?</code></td><td><code>L L-n LW W nL # ?</code></td><td><code>L L-n LW W nL # ?</code></td></tr>
             <tr><th scope="row">Shortcuts</th><td><code>@daily</code> etc., <code>@reboot</code></td><td>—</td><td><code>@daily</code> etc.</td><td>—</td><td>—</td><td><code>@daily</code> etc.</td></tr>
-            <tr><th scope="row">Time zone</th><td>System, or <code>CRON_TZ</code> in cronie</td><td>UTC</td><td><code>spec.timeZone</code></td><td>UTC for rules; any for Scheduler</td><td><code>inTimeZone()</code></td><td><code>zone =</code></td></tr>
+            <tr><th scope="row">Clock changes</th><td>Fixed-time jobs: skipped time runs after the jump, repeated time runs once. Jobs with <code>*</code> in minute or hour follow the clock.</td><td>Skipped time runs at the next valid time. Repeated time: not documented.</td><td>Not documented</td><td>Scheduler: skipped time is skipped, repeated time runs once</td><td>Skipped time is skipped, repeated time fires once (FAQ)</td><td>Not documented</td></tr>
+            <tr><th scope="row">Time zone</th><td>System, or <code>CRON_TZ</code> in cronie</td><td>UTC, or <code>timezone:</code></td><td><code>spec.timeZone</code></td><td>UTC for rules; any for Scheduler</td><td><code>inTimeZone()</code></td><td><code>zone =</code></td></tr>
           </tbody>
         </table>
       </div>
@@ -118,6 +120,7 @@
   </section>
 
   <footer class="foot">
-    <p>Runs entirely in your browser; nothing is sent anywhere. Time zone rules come from your browser's built-in time zone data. Run lists follow the wall clock: a time skipped by a spring-forward is shown as skipped, and a time repeated by a fall-back is shown twice.</p>
+    <p>Your expressions never leave your browser. Time zone rules come from your browser's built-in time zone data. Run lists follow the wall clock and mark the times a clock change skips or repeats, along with what each scheduler is documented to do with them.</p>
+    <p class="foot-links"><span>Cron Almanac {{VERSION}}</span><a href="https://github.com/clark719664/claudes-dream" target="_blank" rel="noopener">Source code</a><a href="https://github.com/clark719664/claudes-dream/issues/new/choose" target="_blank" rel="noopener">Report a problem</a><span>Free and open source under the MIT License</span></p>
   </footer>
 </div>

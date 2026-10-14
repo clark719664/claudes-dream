@@ -52,7 +52,7 @@
       fields: ['minute', 'hour', 'dom', 'month', 'dow'],
       dow: { min: 0, max: 7, names: DOW_SUN0 }, dayRule: 'vixie',
       specials: {}, question: false, wrap: false,
-      macros: null, reboot: false, commandTail: false, seconds: false, year: null, utcOnly: true,
+      macros: null, reboot: false, commandTail: false, seconds: false, year: null,
     },
     k8s: {
       id: 'k8s', name: 'Kubernetes CronJob', short: 'Kubernetes', family: 'unix',
@@ -349,15 +349,94 @@
   }
 
   const WRAPPERS = [
-    { re: /@Scheduled\s*\(\s*cron\s*=\s*"([^"]*)"/d, note: 'Read the expression from a Spring @Scheduled annotation.' },
-    { re: /cronSchedule\s*\(\s*"([^"]*)"/d, note: 'Read the expression from a Quartz cronSchedule() call.' },
-    { re: /^\s*-?\s*cron\s*:\s*(?:'([^']*)'|"([^"]*)"|(\S.*?))\s*$/d, note: 'Read the expression from a GitHub Actions `cron:` line.' },
-    { re: /^\s*schedule\s*:\s*(?:'([^']*)'|"([^"]*)"|(\S.*?))\s*$/d, note: 'Read the expression from a Kubernetes `schedule:` line.' },
-    { re: /^\s*(?:'([^']*)'|"([^"]*)")\s*$/d, note: null },
+    { re: /@Scheduled\s*\(\s*cron\s*=\s*"([^"]*)"/d, dialect: 'spring', note: 'Read the expression from a Spring @Scheduled annotation.' },
+    { re: /cronSchedule\s*\(\s*"([^"]*)"/d, dialect: 'quartz', note: 'Read the expression from a Quartz cronSchedule() call.' },
+    { re: /--schedule-expression[ \t=]+['"]?((?:cron|rate|at)\([^)]*\))/d, dialect: 'eventbridge', note: 'Read the expression from an AWS CLI command.' },
+    { re: /ScheduleExpression['"]?[ \t]*[:=][ \t]*['"]?((?:cron|rate|at)\([^)]*\))/d, dialect: 'eventbridge', note: 'Read the expression from a ScheduleExpression setting.' },
+    { re: /(?:^|\n)[ \t]*-?[ \t]*cron[ \t]*:[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|(\S[^\n#]*?))[ \t]*(?:#[^\n]*)?(?=\n|$)/d, dialect: 'github', note: 'Read the expression from a GitHub Actions `cron:` line.' },
+    { re: /(?:^|\n)[ \t]*schedule[ \t]*:[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|(\S[^\n#]*?))[ \t]*(?:#[^\n]*)?(?=\n|$)/d, dialect: 'k8s', note: 'Read the expression from a Kubernetes `schedule:` line.' },
+    { re: /^\s*(?:'([^']*)'|"([^"]*)")\s*$/d, dialect: null, note: null },
+  ];
+
+  // Time zone settings that sit next to the expression in a pasted config block.
+  const TZ_KEYS = [
+    { re: /(?:^|\n)[ \t]*timezone[ \t]*:[ \t]*['"]?([A-Za-z][\w+\-/]*)/d, label: '`timezone:`' },
+    { re: /(?:^|\n)[ \t]*timeZone[ \t]*:[ \t]*['"]?([A-Za-z][\w+\-/]*)/d, label: '`timeZone:`' },
+    { re: /\bzone[ \t]*=[ \t]*"([^"]+)"/d, label: '`zone =`' },
+    { re: /--schedule-expression-timezone[ \t=]+['"]?([^'"\s]+)/d, label: '`--schedule-expression-timezone`' },
+    { re: /ScheduleExpressionTimezone['"]?[ \t]*[:=][ \t]*['"]?([^'"\s,}]+)/d, label: '`ScheduleExpressionTimezone`' },
+    { re: /inTimeZone\s*\(\s*TimeZone\.getTimeZone\s*\(\s*"([^"]+)"/d, label: '`inTimeZone()`' },
   ];
 
   function isValidZone(tz) {
     try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; } catch (e) { return false; }
+  }
+
+  /**
+   * Find the cron expression inside pasted text: a config line, a whole workflow or manifest,
+   * an annotation, a CLI command or a crontab file. Returns { core, base, tz, tzSource, tzPrefix,
+   * notes, dialect } where core is the expression text, base its offset in the input, and dialect
+   * the scheduler the surrounding text implies (or null). Throws CronError for unusable text.
+   */
+  function unwrap(text) {
+    const out = { core: text, base: 0, tz: null, tzSource: null, tzPrefix: null, notes: [], dialect: null, wrapped: false };
+    let core = text, base = 0, m;
+    const setZone = (zone, source) => {
+      if (!isValidZone(zone)) throw new CronError(`\`${zone}\` isn't a time zone this browser knows.`);
+      out.tz = zone;
+      out.tzSource = source;
+    };
+    for (const k of TZ_KEYS) {
+      m = k.re.exec(text);
+      if (m) { setZone(m[1], k.label); break; }
+    }
+    for (const w of WRAPPERS) {
+      m = w.re.exec(core);
+      if (!m) continue;
+      const gi = [1, 2, 3].find(i => m[i] !== undefined);
+      base += m.indices[gi][0];
+      core = m[gi];
+      if (w.note) out.notes.push(w.note);
+      out.dialect = w.dialect;
+      break;
+    }
+    if (/\n/.test(core.trim())) {
+      // A pasted crontab or config: use the first job line, honouring a CRON_TZ line above it.
+      let off = 0;
+      for (const line of core.split('\n')) {
+        const at = off;
+        off += line.length + 1;
+        const tl = line.trim();
+        if (!tl || tl[0] === '#') continue;
+        const env = /^([A-Za-z_][A-Za-z0-9_]*)[ \t]*=[ \t]*['"]?([^'"]*)['"]?$/.exec(tl);
+        if (env) {
+          if (env[1] === 'CRON_TZ') { setZone(env[2].trim(), '`CRON_TZ`'); out.tzPrefix = 'CRON_TZ=' + env[2].trim(); }
+          out.dialect = out.dialect || 'unix';
+          continue;
+        }
+        base += at;
+        core = line;
+        out.notes.push('Read the first schedule line of the pasted text.');
+        break;
+      }
+    }
+    if (/^\s*(rate|at)\(/i.test(core)) {
+      throw new CronError(/^\s*rate/i.test(core)
+        ? 'That is an EventBridge `rate()` expression, not cron. It repeats at a fixed interval counted from when the schedule starts.'
+        : 'That is an EventBridge one-time `at()` schedule, not cron.');
+    }
+    m = /^\s*cron\(([^)]*)\)\s*$/di.exec(core);
+    if (m) { base += m.indices[1][0]; core = m[1]; out.wrapped = true; out.dialect = out.dialect || 'eventbridge'; }
+    m = /^\s*(?:CRON_TZ|TZ)=(\S+)\s+/d.exec(core);
+    if (m) {
+      setZone(m[1], '`' + m[0].trim().split('=')[0] + '`');
+      out.tzPrefix = m[0].trim();
+      base += m[0].length;
+      core = core.slice(m[0].length);
+    }
+    out.core = core;
+    out.base = base;
+    return out;
   }
 
   /** Parse an expression in the given dialect. Returns a model or { ok:false, error }. */
@@ -368,26 +447,12 @@
     const out = { ok: false, dialect: dialectId, input: text, tokens: [], notes: [], tz: null };
     let tokens = [];
     try {
-      let core = text, base = 0, m;
-      for (const w of WRAPPERS) {
-        m = w.re.exec(core);
-        if (!m) continue;
-        const gi = [1, 2, 3].find(i => m[i] !== undefined);
-        base += m.indices[gi][0];
-        core = m[gi];
-        if (w.note) out.notes.push(w.note);
-        break;
-      }
-      m = /^\s*cron\(([^)]*)\)\s*$/di.exec(core);
-      if (m) { base += m.indices[1][0]; core = m[1]; out.wrapped = true; }
-      m = /^\s*(?:CRON_TZ|TZ)=(\S+)\s+/d.exec(core);
-      if (m) {
-        if (!isValidZone(m[1])) throw new CronError(`\`${m[1]}\` isn't a time zone this browser knows.`);
-        out.tz = m[1];
-        out.tzPrefix = m[0].trim();
-        base += m[0].length;
-        core = core.slice(m[0].length);
-      }
+      const u = unwrap(text);
+      const core = u.core, base = u.base;
+      out.notes.push(...u.notes);
+      if (u.tz) { out.tz = u.tz; out.tzSource = u.tzSource; }
+      if (u.tzPrefix) out.tzPrefix = u.tzPrefix;
+      if (u.wrapped) out.wrapped = true;
       const re = /\S+/g;
       let t;
       while ((t = re.exec(core))) tokens.push({ text: t[0], start: base + t.index, end: base + t.index + t[0].length });
@@ -743,6 +808,25 @@
       return true;
     });
     return { runs, exhausted };
+  }
+
+  /**
+   * What each scheduler is documented to do when a local time is skipped (spring forward)
+   * or repeated (fall back). gap: 'after' | 'skip' | null; overlap: 'once' | 'twice' | null.
+   * null means the scheduler's documentation doesn't say.
+   */
+  function dstPolicy(P) {
+    switch (P.dialect) {
+      case 'unix': {
+        // cron(8) on Debian, Ubuntu and cronie: only fixed-time jobs get special handling.
+        const wild = !P.reboot && (P.by.minute.vixieStar || P.by.hour.vixieStar);
+        return wild ? { gap: 'skip', overlap: 'twice', wild: true } : { gap: 'after', overlap: 'once', wild: false };
+      }
+      case 'github': return { gap: 'after', overlap: null };
+      case 'eventbridge': return { gap: 'skip', overlap: 'once' };
+      case 'quartz': return { gap: 'skip', overlap: 'once' };
+      default: return { gap: null, overlap: null };
+    }
   }
 
   /** Runs that fall into DST gaps or overlaps between a and b. */
@@ -1383,7 +1467,7 @@
     }
 
     // DST
-    if (tz && !P.dialect.startsWith('github')) {
+    if (tz) {
       const impacts = dstImpact(P, tz, now, now + 365 * DAY).filter(x => x.affected);
       if (impacts.length) {
         const fmtDate = x => `${x.date.d} ${MON_SHORT[x.date.m - 1]}`;
@@ -1394,12 +1478,21 @@
             : `On **${fmtDate(x)}** clocks fall back from ${to} to ${from}, so ${x.affected === 1 ? 'the run' : `${x.affected} runs`} in that hour happen${x.affected === 1 ? 's' : ''} twice by the clock.`;
         });
         let body = `${tz} changes its clocks. ${sentences.join(' ')}`;
+        const pol = dstPolicy(P);
         if (D.id === 'unix') {
-          body += ' cronie and Vixie cron special-case this for jobs at fixed times: a run skipped by the spring jump fires right after it, and a fall-back run fires once. Jobs that run more often than hourly just follow the clock.';
+          body += pol.wild
+            ? ' Because the minute or hour field starts with `*`, cron (Debian, Ubuntu, cronie) treats this as a wildcard job and just follows the clock: runs in a skipped hour are lost and runs in a repeated hour happen twice.'
+            : ' For a job at fixed times like this one, cron (Debian, Ubuntu, cronie) runs a skipped time soon after the jump and doesn’t repeat a run in the repeated hour.';
+        } else if (D.id === 'github') {
+          body += ' GitHub moves a run in the skipped hour to the next valid time, so 02:30 becomes 03:00. Its docs don’t say what happens in a repeated hour.';
+        } else if (D.id === 'eventbridge') {
+          body += ' EventBridge Scheduler skips a time that doesn’t exist and runs a repeated time only once.';
+        } else if (D.id === 'quartz') {
+          body += ' According to the Quartz FAQ, a time that doesn’t exist is skipped and a time that happens twice fires once.';
         } else {
-          body += ` How ${D.name} handles skipped and repeated times is scheduler-specific; check before relying on it.`;
+          body += ` ${D.name}'s documentation doesn't say how it handles skipped or repeated times.`;
         }
-        body += ' The safe options are UTC or a time outside the changeover.';
+        body += ' To avoid the question entirely, use UTC or a time outside the changeover.';
         add('warn', 'dst', 'Daylight saving time changes affect this', body);
       }
     }
@@ -1416,20 +1509,24 @@
           'GitHub warns that load peaks at the start of every hour and queued scheduled runs can be delayed or dropped. An off-peak minute such as `17` is more reliable.',
           P.minutes.length === 1 ? { label: 'Use minute 17', expr: replaceToken(P.input, P.tokens, by.minute.index, '17') } : null);
       }
+      if (tz && tz !== 'UTC' && tz !== 'Etc/UTC' && !P.tz) {
+        add('warn', 'gh-timezone', 'Add `timezone:` to the workflow',
+          `Without it, GitHub reads these times as UTC. Put \`timezone: "${tz}"\` under the \`cron:\` line; Translations shows the YAML. GitHub Enterprise Server supports it from version 3.22.`);
+      }
       add('info', 'gh-notes', 'How GitHub runs schedules',
-        'Times are UTC. Scheduled workflows run on the latest commit of the default branch, and in public repositories GitHub disables them after 60 days without repository activity.');
+        'Scheduled workflows run on the latest commit of the default branch, only if the workflow file is on that branch. In public repositories GitHub disables them after 60 days without repository activity.');
     }
     if (D.id === 'k8s') {
-      if (P.tz && P.tzPrefix) {
+      if (P.tzPrefix) {
         add('warn', 'k8s-crontz', 'Use spec.timeZone instead',
           `Kubernetes doesn't support \`${P.tzPrefix.split('=')[0]}=\` inside \`schedule\`, and recent versions reject it. Set \`spec.timeZone: "${P.tz}"\` instead.`);
-      } else {
+      } else if (!P.tz) {
         add('info', 'k8s-tz', 'Set spec.timeZone',
           "Without `spec.timeZone`, Kubernetes evaluates the schedule in the kube-controller-manager's time zone. Set it explicitly so the schedule doesn't depend on the cluster.");
       }
     }
     if (D.id === 'unix') {
-      if (P.tzPrefix) {
+      if (P.tzPrefix && P.tzPrefix.startsWith('CRON_TZ')) {
         add('info', 'unix-crontz', 'CRON_TZ is a cronie feature',
           '`CRON_TZ=` is honoured by cronie (Fedora, RHEL, Arch) and normally goes on its own line above the job. Debian and Ubuntu cron use the system time zone instead.');
       }
@@ -1761,7 +1858,7 @@
 
   return {
     DIALECTS, DIALECT_ORDER, FIELD_LABEL, DOW_ABBR, DOW_LONG, MON_LONG, MON_SHORT, EXAMPLE_BY_DIALECT, DAY,
-    parse, buildModel, dayMatches, upcoming, dstImpact, stats, describe, render, renderDays, workaroundText,
+    parse, unwrap, buildModel, dayMatches, upcoming, dstImpact, dstPolicy, stats, describe, render, renderDays, workaroundText,
     utcVariants, shiftModel, offsetPeriods, transitionsBetween, lint, fromEnglish, minuteIntervalLines,
     wallParts, offsetAt, displayParts, fmtOffset, fmtClock, fmtDuration, ordinal, daysInMonth, weekday, isLeap,
     isValidZone, compress, runsOf,
