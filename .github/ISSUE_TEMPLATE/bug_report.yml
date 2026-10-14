@@ -16,11 +16,17 @@ body:
       label: Scheduler
       options:
         - Linux crontab
+        - systemd timer
         - GitHub Actions
+        - GitLab CI
         - Kubernetes CronJob
         - AWS EventBridge
+        - Cloudflare Workers
+        - Azure Functions
         - Quartz
         - Spring @Scheduled
+        - APScheduler
+        - All my jobs view
     validations:
       required: true
   - type: input

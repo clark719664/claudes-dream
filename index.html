@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cron Almanac</title>
-<meta name="description" content="Read, check and translate cron schedules for crontab, GitHub Actions, Kubernetes, EventBridge, Quartz and Spring.">
+<meta name="description" content="Read, check and translate schedules for crontab, systemd, GitHub Actions, GitLab CI, Kubernetes, EventBridge, Cloudflare, Azure Functions, Quartz, Spring and APScheduler.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Cron Almanac">
-<meta property="og:description" content="Read, check and translate cron schedules for crontab, GitHub Actions, Kubernetes, EventBridge, Quartz and Spring.">
+<meta property="og:description" content="Read, check and translate schedules for crontab, systemd, GitHub Actions, GitLab CI, Kubernetes, EventBridge, Cloudflare, Azure Functions, Quartz, Spring and APScheduler.">
 <meta name="twitter:card" content="summary">
 <meta name="theme-color" content="#edf0f3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0c1117" media="(prefers-color-scheme: dark)">
@@ -735,7 +735,7 @@ details.snip[open] summary { margin-bottom: 6px; }
 
   <footer class="foot">
     <p>Your expressions never leave your browser. Time zone rules come from your browser's built-in time zone data. Run lists follow the wall clock and mark the times a clock change skips or repeats, along with what each scheduler is documented to do with them.</p>
-    <p class="foot-links"><span>Cron Almanac 1.0</span><a href="https://github.com/clark719664/cron-almanac" target="_blank" rel="noopener">Source code</a><a href="https://github.com/clark719664/cron-almanac/issues/new/choose" target="_blank" rel="noopener">Report a problem</a><span>Free and open source under the MIT License</span></p>
+    <p class="foot-links"><span>Cron Almanac 1.1</span><a href="https://github.com/clark719664/cron-almanac" target="_blank" rel="noopener">Source code</a><a href="https://github.com/clark719664/cron-almanac/issues/new/choose" target="_blank" rel="noopener">Report a problem</a><span>Free and open source under the MIT License</span></p>
   </footer>
 </div>
 
@@ -1837,7 +1837,7 @@ details.snip[open] summary { margin-bottom: 6px; }
 
   function replaceToken(text, tokens, i, replacement) {
     const t = tokens[i];
-    if (!t) return text;
+    if (!t || t.start < 0) return text; // a field the text leaves implied has nowhere to go
     return text.slice(0, t.start) + replacement + text.slice(t.end);
   }
 
@@ -2958,7 +2958,8 @@ details.snip[open] summary { margin-bottom: 6px; }
   function lint(P, tz, now) {
     const D = DIALECTS[P.dialect];
     const out = [];
-    const add = (level, id, title, body, fix) => out.push({ level, id, title, body, fix: fix || null });
+    // A fix that wouldn't change the text (the field isn't written out) is dropped.
+    const add = (level, id, title, body, fix) => out.push({ level, id, title, body, fix: fix && fix.expr !== P.input ? fix : null });
     if (!P.ok) return out;
     if (P.reboot) {
       add('info', 'reboot', 'Runs at startup only', '`@reboot` fires once when cron starts, which is usually at boot. There is no schedule to chart.');
@@ -3075,12 +3076,12 @@ details.snip[open] summary { margin-bottom: 6px; }
     if (by.minute.raw === '*' && P.hours.length <= 3 && P.hours.length < 24) {
       add('warn', 'every-minute', `Runs every minute of ${P.hours.length > 1 ? 'those hours' : 'that hour'}`,
         `\`*\` in the minute field means every minute, so this runs **${60 * P.hours.length * P.seconds.length} times** a day, from ${pad2(P.hours[0])}:00 to ${pad2(P.hours[P.hours.length - 1])}:59. To run once at ${pad2(P.hours[0])}:00, use \`0\` for the minute.`,
-        { label: 'Use 0 for the minute', expr: replaceToken(P.input, P.tokens, by.minute.index, '0') });
+        { label: 'Use 0 for the minute', expr: replaceToken(P.input, P.tokens, by.minute.index, D.family === 'systemd' ? '00' : '0') });
     }
     if (by.second && by.second.raw === '*' && P.minutes.length < 60) {
       add('warn', 'every-second', 'Runs every second',
         `\`*\` in the seconds field runs this 60 times in each matching minute. To run once per matching minute, use \`0\`.`,
-        { label: 'Use 0 for the second', expr: replaceToken(P.input, P.tokens, by.second.index, '0') });
+        { label: 'Use 0 for the second', expr: replaceToken(P.input, P.tokens, by.second.index, D.family === 'systemd' ? '00' : '0') });
     }
 
     // Day-of-week numbering
@@ -5541,7 +5542,7 @@ CRON_TZ=America/New_York
       t = setTimeout(() => {
         try { sessionStorage.setItem(JOBS_KEY, $('fleet-text').value); } catch (e) { /* storage unavailable */ }
         runFleet();
-      }, 250);
+      }, 250 + Math.min(750, fleet.jobs.length * 2)); // big pastes take longer to analyze, so wait for a longer pause
     });
     $('fleet-dialect').addEventListener('change', () => { fleet.dialect = $('fleet-dialect').value; runFleet(); });
     $('fleet-tz').addEventListener('change', () => { fleet.tz = $('fleet-tz').value; runFleet(); });

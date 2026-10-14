@@ -1095,7 +1095,7 @@
 
   function replaceToken(text, tokens, i, replacement) {
     const t = tokens[i];
-    if (!t) return text;
+    if (!t || t.start < 0) return text; // a field the text leaves implied has nowhere to go
     return text.slice(0, t.start) + replacement + text.slice(t.end);
   }
 
@@ -2216,7 +2216,8 @@
   function lint(P, tz, now) {
     const D = DIALECTS[P.dialect];
     const out = [];
-    const add = (level, id, title, body, fix) => out.push({ level, id, title, body, fix: fix || null });
+    // A fix that wouldn't change the text (the field isn't written out) is dropped.
+    const add = (level, id, title, body, fix) => out.push({ level, id, title, body, fix: fix && fix.expr !== P.input ? fix : null });
     if (!P.ok) return out;
     if (P.reboot) {
       add('info', 'reboot', 'Runs at startup only', '`@reboot` fires once when cron starts, which is usually at boot. There is no schedule to chart.');
@@ -2333,12 +2334,12 @@
     if (by.minute.raw === '*' && P.hours.length <= 3 && P.hours.length < 24) {
       add('warn', 'every-minute', `Runs every minute of ${P.hours.length > 1 ? 'those hours' : 'that hour'}`,
         `\`*\` in the minute field means every minute, so this runs **${60 * P.hours.length * P.seconds.length} times** a day, from ${pad2(P.hours[0])}:00 to ${pad2(P.hours[P.hours.length - 1])}:59. To run once at ${pad2(P.hours[0])}:00, use \`0\` for the minute.`,
-        { label: 'Use 0 for the minute', expr: replaceToken(P.input, P.tokens, by.minute.index, '0') });
+        { label: 'Use 0 for the minute', expr: replaceToken(P.input, P.tokens, by.minute.index, D.family === 'systemd' ? '00' : '0') });
     }
     if (by.second && by.second.raw === '*' && P.minutes.length < 60) {
       add('warn', 'every-second', 'Runs every second',
         `\`*\` in the seconds field runs this 60 times in each matching minute. To run once per matching minute, use \`0\`.`,
-        { label: 'Use 0 for the second', expr: replaceToken(P.input, P.tokens, by.second.index, '0') });
+        { label: 'Use 0 for the second', expr: replaceToken(P.input, P.tokens, by.second.index, D.family === 'systemd' ? '00' : '0') });
     }
 
     // Day-of-week numbering

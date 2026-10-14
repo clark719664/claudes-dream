@@ -966,7 +966,7 @@
       t = setTimeout(() => {
         try { sessionStorage.setItem(JOBS_KEY, $('fleet-text').value); } catch (e) { /* storage unavailable */ }
         runFleet();
-      }, 250);
+      }, 250 + Math.min(750, fleet.jobs.length * 2)); // big pastes take longer to analyze, so wait for a longer pause
     });
     $('fleet-dialect').addEventListener('change', () => { fleet.dialect = $('fleet-dialect').value; runFleet(); });
     $('fleet-tz').addEventListener('change', () => { fleet.tz = $('fleet-tz').value; runFleet(); });

@@ -7,7 +7,7 @@ Thanks for helping. Cron Almanac is free and open source, and anyone can suggest
 [Open an issue](../../issues/new/choose) and include:
 
 - the expression, exactly as you typed or pasted it
-- the scheduler (crontab, GitHub Actions, Kubernetes, EventBridge, Quartz or Spring)
+- the scheduler (crontab, systemd, GitHub Actions, GitLab, Kubernetes, EventBridge, Cloudflare, Azure, Quartz, Spring or APScheduler)
 - the time zone
 - what the page showed, and what you expected
 
@@ -33,7 +33,7 @@ CI runs the tests and checks that `index.html` matches `src/`. The maintainer re
 ## Ground rules for the code
 
 - **No dependencies.** The page is plain HTML, CSS and JavaScript and must keep working when opened straight from disk.
-- **All schedule logic lives in `src/engine.js`** as pure functions, with no DOM access. `src/app.js` only renders.
+- **All schedule logic lives in `src/engine.js`** as pure functions, with no DOM access. `src/why.js` and `src/fleet.js` build on it the same way. `src/app.js` only renders.
 - **Every behaviour change comes with a test.** Tests use Node's built-in runner (`node:test`).
 - **Cite sources for scheduler facts.** If a change depends on how a scheduler behaves (day-field rules, numbering, daylight-saving handling), put the link to its documentation or source in the pull request.
 - **Write for people.** Messages on the page should say what's wrong and how to fix it, in plain language.

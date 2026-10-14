@@ -1,7 +1,7 @@
 {
   "name": "cron-almanac",
-  "version": "1.0.0",
-  "description": "Read, check and translate cron schedules for crontab, GitHub Actions, Kubernetes, EventBridge, Quartz and Spring.",
+  "version": "1.1.0",
+  "description": "Read, check and translate schedules for crontab, systemd, GitHub Actions, GitLab CI, Kubernetes, EventBridge, Cloudflare, Azure Functions, Quartz, Spring and APScheduler.",
   "private": true,
   "license": "MIT",
   "homepage": "https://clark719664.github.io/cron-almanac/",
