@@ -1,0 +1,11 @@
+{
+  "name": "cron-almanac",
+  "version": "1.0.0",
+  "description": "Read, check and translate cron schedules for crontab, GitHub Actions, Kubernetes, EventBridge, Quartz and Spring.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}

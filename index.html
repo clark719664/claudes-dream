@@ -1,0 +1,3049 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cron Almanac</title>
+<meta name="description" content="Read, check and translate cron schedules for crontab, GitHub Actions, Kubernetes, EventBridge, Quartz and Spring.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Martian+Mono:wght@400;600;700&display=swap">
+<style>
+/* Layout: one working column. The expression bench on top, the almanac (calendar, day map) in the middle, translations last. */
+:root {
+  --paper: #edf0f3;
+  --card: #fafbfc;
+  --ink: #0f1a24;
+  --ink-2: #4a5967;
+  --ink-3: #74828f;
+  --rule: #d3dae1;
+  --accent: #2741c9;
+  --accent-ink: #ffffff;
+  --accent-soft: #dde3fa;
+  --cell: #dde3e9;
+  --warn: #93570a;
+  --warn-soft: #fbecce;
+  --bad: #b3261e;
+  --bad-soft: #f9dedc;
+  --ok: #1b6e46;
+  --ok-soft: #d6efe2;
+  --f-display: 'Martian Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --f-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --f-data: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0c1117; --card: #131a22; --ink: #e3e9ef; --ink-2: #9aa8b6; --ink-3: #6c7b8a; --rule: #243040;
+    --accent: #8fa3ff; --accent-ink: #0c1117; --accent-soft: #1d2650; --cell: #1a232d;
+    --warn: #e9b24f; --warn-soft: #33270f; --bad: #f2867e; --bad-soft: #3a1a18; --ok: #62cb92; --ok-soft: #12301f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0c1117; --card: #131a22; --ink: #e3e9ef; --ink-2: #9aa8b6; --ink-3: #6c7b8a; --rule: #243040;
+  --accent: #8fa3ff; --accent-ink: #0c1117; --accent-soft: #1d2650; --cell: #1a232d;
+  --warn: #e9b24f; --warn-soft: #33270f; --bad: #f2867e; --bad-soft: #3a1a18; --ok: #62cb92; --ok-soft: #12301f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 15px/1.55 var(--f-body);
+  -webkit-text-size-adjust: 100%;
+}
+code, .mono { font-family: var(--f-data); font-size: 0.92em; }
+code { background: var(--accent-soft); color: var(--ink); padding: 0.05em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h2 {
+  font: 600 0.74rem/1.2 var(--f-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+main { display: flex; flex-direction: column; gap: 22px; transition: opacity 0.15s; }
+main.stale { opacity: 0.38; pointer-events: none; }
+
+/* Masthead */
+.masthead { display: flex; flex-direction: column; gap: 6px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.mark { width: 26px; height: 26px; flex: none; }
+.mark .m-on { fill: var(--accent); }
+.mark .m-off { fill: var(--cell); }
+h1 { font: 700 clamp(1.35rem, 3.2vw, 1.7rem)/1.1 var(--f-display); letter-spacing: -0.02em; }
+.tagline { margin: 0; color: var(--ink-2); max-width: 70ch; }
+
+/* Buttons */
+.btn {
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius);
+  padding: 0.5em 0.95em;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
+.btn.small { padding: 0.25em 0.7em; font-size: 0.85rem; }
+.btn.done { border-color: var(--ok); color: var(--ok); }
+
+/* Bench */
+.bench {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 18px clamp(14px, 3vw, 26px) 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.bench-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; justify-content: space-between; }
+.dialects { display: flex; flex-wrap: wrap; gap: 6px; }
+.dialects button {
+  border: 1px solid var(--rule);
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.3em 0.85em;
+  font-size: 0.86rem;
+  cursor: pointer;
+  color: var(--ink-2);
+}
+.dialects button:hover { color: var(--ink); border-color: var(--ink-3); }
+.dialects button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.toast { margin: 0; font-size: 0.86rem; color: var(--ink-2); max-width: 52ch; }
+
+.expr-row { display: flex; gap: 10px; align-items: center; }
+#expr {
+  flex: 1;
+  min-width: 0;
+  font: 600 clamp(1.25rem, 4.6vw, 2.3rem)/1.25 var(--f-display);
+  letter-spacing: -0.01em;
+  word-spacing: 0.3em;
+  border: 0;
+  border-bottom: 2px solid var(--ink);
+  background: transparent;
+  padding: 0.2em 0.05em;
+  border-radius: 0;
+}
+#expr:focus { outline: none; border-bottom-color: var(--accent); }
+#expr.invalid { border-bottom-color: var(--bad); }
+
+.fields { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.fields li { display: flex; min-width: 0; }
+.fields .chip {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 6px 10px 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
+  cursor: pointer;
+  background: var(--card);
+  text-align: left;
+}
+.fields .chip:hover { border-color: var(--ink-3); }
+.fields .chip.active { border-color: var(--accent); background: var(--accent-soft); }
+.fields .chip.bad { border-color: var(--bad); background: var(--bad-soft); }
+.fields .f-label { font: 600 0.62rem/1.2 var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.fields .f-token { font: 600 0.95rem/1.3 var(--f-data); }
+.fields .f-mean { font-size: 0.8rem; color: var(--ink-2); }
+
+.error {
+  border: 1px solid var(--bad);
+  background: var(--bad-soft);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.error p { margin: 0; }
+.error .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px 22px; }
+.control { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 240px; max-width: 420px; }
+.control label, .english label { font: 600 0.66rem/1.2 var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+select, #english {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  border-radius: var(--radius);
+  padding: 0.45em 0.6em;
+  min-width: 0;
+  width: 100%;
+}
+select:disabled { opacity: 0.7; }
+.hint { margin: 0; font-size: 0.8rem; color: var(--ink-3); }
+.hint:empty { display: none; }
+
+.english { display: flex; flex-direction: column; gap: 6px; border-top: 1px dashed var(--rule); padding-top: 14px; }
+.english-row { display: flex; gap: 8px; }
+.english-row input { flex: 1; }
+.english-out { font-size: 0.9rem; color: var(--ink-2); display: flex; flex-direction: column; gap: 4px; }
+.english-out:empty { display: none; }
+.english-out p { margin: 0; }
+.english-out .bad { color: var(--bad); }
+
+/* Summary */
+.summary { display: flex; flex-direction: column; gap: 16px; padding: 4px 2px; }
+.sentence {
+  margin: 0;
+  font: 500 clamp(1.2rem, 2.6vw, 1.7rem)/1.35 var(--f-body);
+  letter-spacing: -0.01em;
+  max-width: 46ch;
+  text-wrap: pretty;
+}
+.sentence mark { background: var(--warn-soft); color: var(--warn); padding: 0 0.2em; border-radius: 4px; font-weight: 600; }
+.sentence .tz { color: var(--ink-3); font-weight: 400; font-size: 0.7em; white-space: nowrap; }
+.stats { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.stats div { background: var(--card); padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stats dt { font: 600 0.62rem/1.2 var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.stats dd { margin: 0; font: 500 1.05rem/1.3 var(--f-data); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stats dd small { display: block; font: 400 0.76rem/1.3 var(--f-body); color: var(--ink-2); }
+
+/* Panels */
+.pair { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 880px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+.panel {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 16px clamp(14px, 2.6vw, 22px) 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.panel-intro { margin: 0; color: var(--ink-2); font-size: 0.9rem; max-width: 70ch; }
+
+/* Checks */
+.checks { display: flex; flex-direction: column; }
+.check { padding: 12px 0; border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: 6px; }
+.check:first-child { border-top: 0; padding-top: 0; }
+.check header { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.check h3 { font: 600 0.98rem/1.35 var(--f-body); }
+.check p { margin: 0; color: var(--ink-2); font-size: 0.92rem; overflow-wrap: anywhere; }
+.check p strong { color: var(--ink); }
+.sev {
+  font: 600 0.6rem/1 var(--f-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.4em 0.55em;
+  border-radius: 4px;
+  flex: none;
+  position: relative;
+  top: -1px;
+}
+.sev.error { background: var(--bad-soft); color: var(--bad); }
+.sev.warn { background: var(--warn-soft); color: var(--warn); }
+.sev.info { background: var(--accent-soft); color: var(--accent); }
+.sev.ok { background: var(--ok-soft); color: var(--ok); }
+.check .btn { align-self: flex-start; }
+
+/* Runs */
+.table-scroll { overflow-x: auto; min-width: 0; }
+.runs { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.runs th { text-align: left; font: 600 0.62rem/1.2 var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); padding: 0 10px 6px 0; white-space: nowrap; }
+.runs td { padding: 6px 10px 6px 0; border-top: 1px solid var(--rule); vertical-align: baseline; white-space: nowrap; }
+.runs td.t { font: 500 0.95rem var(--f-data); }
+.runs td.rel, .runs td.local { color: var(--ink-2); font-size: 0.86rem; }
+.runs td.local .mono { color: var(--ink); }
+.runs tr.dst td { background: var(--warn-soft); }
+.runs .badge { font: 600 0.62rem/1 var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); margin-left: 6px; }
+.runs .abbr { color: var(--ink-3); font-size: 0.78rem; margin-left: 4px; }
+.runs-empty { color: var(--ink-2); margin: 0; }
+#more-runs { align-self: flex-start; }
+
+/* Calendar */
+.year-nav { display: flex; align-items: center; gap: 8px; }
+.legend { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 0.82rem; color: var(--ink-2); }
+.legend:empty { display: none; }
+.key { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--cell); vertical-align: -1px; margin-right: 5px; }
+.key.on { background: var(--accent); }
+.key.dst { background: var(--warn); }
+.key.today { background: transparent; box-shadow: inset 0 0 0 2px var(--ink); }
+.calendar { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 212px), 1fr)); gap: 18px 22px; }
+@media (max-width: 560px) { .calendar { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 14px; } .mgrid { gap: 2px; } }
+.month h3 { font: 600 0.86rem/1.2 var(--f-body); display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.month h3 em { font-style: normal; font-weight: 400; color: var(--ink-3); }
+.month h3 span { font: 400 0.72rem var(--f-data); color: var(--ink-3); white-space: nowrap; }
+.year-label { font: 600 0.9rem var(--f-data); text-align: center; white-space: nowrap; }
+.mgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.mgrid .wd { text-align: center; font: 600 0.62rem/1.1 var(--f-display); color: var(--ink-3); padding-bottom: 2px; }
+.mgrid .wd small { display: block; font: 400 0.56rem/1.2 var(--f-data); color: var(--ink-3); opacity: 0.8; }
+.mgrid button {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  font: 400 0.72rem/1 var(--f-data);
+  color: var(--ink-3);
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  min-width: 0;
+}
+.mgrid button:hover { box-shadow: inset 0 0 0 1px var(--ink-3); }
+.mgrid button.on { background: var(--accent); color: var(--accent-ink); font-weight: 500; }
+.mgrid button.past { opacity: 0.45; }
+.mgrid button.today { box-shadow: inset 0 0 0 2px var(--ink); }
+.mgrid button.on.today { box-shadow: inset 0 0 0 2px var(--accent-ink), 0 0 0 1px var(--ink); }
+.mgrid button.dst::after { content: ''; position: absolute; right: 2px; top: 2px; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
+.mgrid button.sel { outline: 2px solid var(--warn); outline-offset: 1px; }
+.day-detail { margin: 0; font-size: 0.9rem; color: var(--ink-2); min-height: 1.5em; overflow-wrap: anywhere; }
+.day-detail strong { color: var(--ink); }
+
+/* Day map */
+.daymap { display: grid; grid-template-columns: 2.4em minmax(0, 1fr); gap: 2px 8px; font-variant-numeric: tabular-nums; }
+.daymap .hl { font: 400 0.68rem/1 var(--f-data); color: var(--ink-3); align-self: center; text-align: right; }
+.daymap .hl.dsth { color: var(--warn); font-weight: 600; }
+.daymap .row { display: grid; grid-template-columns: repeat(60, minmax(0, 1fr)); gap: 1px; }
+.daymap .row i { display: block; height: 10px; background: var(--cell); border-radius: 1px; }
+.daymap .row i:nth-child(15n + 1) { margin-left: 2px; }
+.daymap .row i.on { background: var(--accent); }
+.daymap .row i:hover { outline: 1px solid var(--ink); }
+.daymap .cols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); font: 400 0.66rem/1 var(--f-data); color: var(--ink-3); padding-bottom: 2px; }
+.daymap-status { margin: 0; font: 400 0.86rem var(--f-data); color: var(--ink-2); min-height: 1.3em; }
+@media (max-width: 560px) { .daymap .row i { height: 7px; } .daymap .row { gap: 0.5px; } }
+
+/* Translations */
+.translations { display: flex; flex-direction: column; }
+.tr { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: 6px 18px; padding: 14px 0; border-top: 1px solid var(--rule); }
+.tr:first-child { border-top: 0; padding-top: 0; }
+@media (max-width: 720px) { .tr { grid-template-columns: minmax(0, 1fr); } }
+.tr-name { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.tr-name strong { font-weight: 600; }
+.tag { font: 600 0.58rem/1 var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; padding: 0.35em 0.5em; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+.tag.no { background: var(--warn-soft); color: var(--warn); }
+.tr-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.line .expr { font: 600 1.02rem/1.35 var(--f-data); overflow-wrap: anywhere; min-width: 0; }
+.line .btn { flex: none; }
+.tr-body p { margin: 0; font-size: 0.9rem; color: var(--ink-2); }
+.tr-body .sub { font: 600 0.62rem/1.2 var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-top: 4px; }
+.tr-body .period { font-size: 0.84rem; font-weight: 500; color: var(--ink-2); margin-top: 4px; }
+details.snip > div { display: flex; flex-direction: column; gap: 8px; }
+pre.snippet {
+  margin: 0;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font: 400 0.82rem/1.5 var(--f-data);
+  overflow-x: auto;
+  white-space: pre;
+}
+details.snip summary { cursor: pointer; font-size: 0.85rem; color: var(--ink-2); width: fit-content; }
+details.snip[open] summary { margin-bottom: 6px; }
+
+/* Reference */
+.reference details > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; }
+.reference details > summary::-webkit-details-marker { display: none; }
+.reference details > summary::before { content: '+'; font: 600 1rem var(--f-data); color: var(--ink-3); width: 1em; }
+.reference details[open] > summary::before { content: '−'; }
+.reference details[open] > summary { margin-bottom: 12px; }
+.ref { border-collapse: collapse; font-size: 0.86rem; min-width: 760px; }
+.ref th, .ref td { text-align: left; padding: 7px 12px 7px 0; border-top: 1px solid var(--rule); vertical-align: top; }
+.ref thead th { border-top: 0; font: 600 0.62rem/1.2 var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.ref tbody th { font-weight: 600; white-space: nowrap; }
+
+.foot { color: var(--ink-3); font-size: 0.82rem; }
+.foot p { margin: 0; max-width: 80ch; }
+
+@media (prefers-reduced-motion: reduce) { main { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+        <rect x="1" y="1" width="7" height="7" rx="1.5" class="m-on"/>
+        <rect x="10.5" y="1" width="7" height="7" rx="1.5" class="m-off"/>
+        <rect x="20" y="1" width="7" height="7" rx="1.5" class="m-off"/>
+        <rect x="1" y="10.5" width="7" height="7" rx="1.5" class="m-off"/>
+        <rect x="10.5" y="10.5" width="7" height="7" rx="1.5" class="m-on"/>
+        <rect x="20" y="10.5" width="7" height="7" rx="1.5" class="m-off"/>
+        <rect x="1" y="20" width="7" height="7" rx="1.5" class="m-off"/>
+        <rect x="10.5" y="20" width="7" height="7" rx="1.5" class="m-off"/>
+        <rect x="20" y="20" width="7" height="7" rx="1.5" class="m-on"/>
+      </svg>
+      <h1>Cron Almanac</h1>
+    </div>
+    <p class="tagline">Read, check and translate cron schedules for crontab, GitHub&nbsp;Actions, Kubernetes, EventBridge, Quartz and Spring. Every run time is computed in a real time zone, daylight saving included.</p>
+  </header>
+
+  <section class="bench" aria-label="Expression">
+    <div class="bench-top">
+      <div class="dialects" id="dialects" role="group" aria-label="Scheduler"></div>
+      <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
+    </div>
+    <div class="expr-row">
+      <label for="expr" class="sr-only">Cron expression</label>
+      <input id="expr" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" enterkeyhint="done">
+      <button type="button" class="btn ghost" id="copy-expr">Copy</button>
+    </div>
+    <ol class="fields" id="fields" aria-label="Fields"></ol>
+    <div class="error" id="error" role="alert" hidden></div>
+    <div class="controls">
+      <div class="control">
+        <label for="tz">Time zone</label>
+        <select id="tz"></select>
+        <p class="hint" id="tz-hint"></p>
+      </div>
+      <div class="control">
+        <label for="examples">Examples</label>
+        <select id="examples"></select>
+      </div>
+    </div>
+    <form class="english" id="english-form" autocomplete="off">
+      <label for="english">Or describe it in words</label>
+      <div class="english-row">
+        <input id="english" type="text" placeholder="every weekday at 9:30am" spellcheck="false">
+        <button type="submit" class="btn">Convert</button>
+      </div>
+      <div class="english-out" id="english-out" aria-live="polite"></div>
+    </form>
+  </section>
+
+  <main id="results">
+    <section class="summary" aria-label="Summary">
+      <p class="sentence" id="sentence" aria-live="polite"></p>
+      <dl class="stats" id="stats"></dl>
+    </section>
+
+    <div class="pair">
+      <section class="panel" aria-labelledby="checks-h">
+        <h2 id="checks-h">Checks</h2>
+        <div id="checks" class="checks"></div>
+      </section>
+      <section class="panel" aria-labelledby="runs-h">
+        <h2 id="runs-h">Next runs</h2>
+        <div class="table-scroll"><table class="runs" id="runs"></table></div>
+        <button type="button" class="btn ghost small" id="more-runs">Show 30 more</button>
+      </section>
+    </div>
+
+    <section class="panel" aria-labelledby="year-h">
+      <div class="panel-head">
+        <h2 id="year-h">Days it runs</h2>
+        <div class="year-nav">
+          <button type="button" class="btn ghost small" id="year-prev" aria-label="Previous 12 months">←</button>
+          <span id="year-label" class="year-label"></span>
+          <button type="button" class="btn ghost small" id="year-next" aria-label="Next 12 months">→</button>
+        </div>
+      </div>
+      <p class="legend"><span class="key on"></span>runs <span class="key dst"></span>clock change hits a run <span class="key today"></span>today</p>
+      <div class="calendar" id="calendar"></div>
+      <p class="day-detail" id="day-detail" aria-live="polite">Pick a day to see its run times.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="daymap-h">
+      <div class="panel-head">
+        <h2 id="daymap-h">Time of day</h2>
+        <p class="daymap-status" id="daymap-status" aria-live="polite"></p>
+      </div>
+      <p class="legend" id="daymap-legend"></p>
+      <div class="daymap" id="daymap" role="img"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="tr-h">
+      <h2 id="tr-h">Translations</h2>
+      <p class="panel-intro">The same schedule for each scheduler, checked by parsing it back. Where there's no exact equivalent, you get the reason and the usual workaround.</p>
+      <div class="translations" id="translations"></div>
+    </section>
+  </main>
+
+  <section class="panel reference" aria-labelledby="ref-h">
+    <details>
+      <summary><h2 id="ref-h">How the six dialects differ</h2></summary>
+      <div class="table-scroll">
+        <table class="ref">
+          <thead><tr><th scope="col"></th><th scope="col">crontab</th><th scope="col">GitHub Actions</th><th scope="col">Kubernetes</th><th scope="col">EventBridge</th><th scope="col">Quartz</th><th scope="col">Spring</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Fields</th><td>min hour dom mon dow</td><td>min hour dom mon dow</td><td>min hour dom mon dow</td><td>min hour dom mon dow year</td><td>sec min hour dom mon dow [year]</td><td>sec min hour dom mon dow</td></tr>
+            <tr><th scope="row">Sunday is</th><td>0 or 7</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0 or 7</td></tr>
+            <tr><th scope="row">Both day fields set</th><td>OR, but AND if either starts with <code>*</code></td><td>OR</td><td>OR, but AND if either is <code>*</code> or <code>?</code></td><td>Not allowed; one must be <code>?</code></td><td>Not allowed; one must be <code>?</code></td><td>AND</td></tr>
+            <tr><th scope="row">Extras</th><td>—</td><td>—</td><td><code>?</code></td><td><code>L W # ?</code></td><td><code>L L-n LW W nL # ?</code></td><td><code>L L-n LW W nL # ?</code></td></tr>
+            <tr><th scope="row">Shortcuts</th><td><code>@daily</code> etc., <code>@reboot</code></td><td>—</td><td><code>@daily</code> etc.</td><td>—</td><td>—</td><td><code>@daily</code> etc.</td></tr>
+            <tr><th scope="row">Time zone</th><td>System, or <code>CRON_TZ</code> in cronie</td><td>UTC</td><td><code>spec.timeZone</code></td><td>UTC for rules; any for Scheduler</td><td><code>inTimeZone()</code></td><td><code>zone =</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <footer class="foot">
+    <p>Runs entirely in your browser; nothing is sent anywhere. Time zone rules come from your browser's built-in time zone data. Run lists follow the wall clock: a time skipped by a spring-forward is shown as skipped, and a time repeated by a fall-back is shown twice.</p>
+  </footer>
+</div>
+
+<script>
+/*
+ * Cron Almanac engine.
+ * Parses cron expressions for six schedulers, computes run times in any IANA
+ * time zone (DST included), describes them in English, flags common mistakes,
+ * and translates between dialects. Pure functions, no DOM; runs in browsers
+ * and in Node (see test/engine.test.mjs).
+ */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else root.CronEngine = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  const DAY = 86400000;
+  const DOW_ABBR = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const DOW_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const MON_ABBR = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  const MON_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const MON_SHORT = MON_LONG.map(m => m.slice(0, 3));
+  const MONTH_NAMES = Object.fromEntries(MON_ABBR.map((m, i) => [m, i + 1]));
+  const DOW_SUN0 = Object.fromEntries(DOW_ABBR.map((d, i) => [d, i]));
+  const DOW_SUN1 = Object.fromEntries(DOW_ABBR.map((d, i) => [d, i + 1]));
+  const DOW_MON1 = Object.fromEntries(DOW_ABBR.map((d, i) => [d, i === 0 ? 7 : i]));
+
+  const MACROS_UNIX = {
+    '@yearly': '0 0 1 1 *', '@annually': '0 0 1 1 *', '@monthly': '0 0 1 * *',
+    '@weekly': '0 0 * * 0', '@daily': '0 0 * * *', '@midnight': '0 0 * * *', '@hourly': '0 * * * *',
+  };
+  const MACROS_SPRING = {
+    '@yearly': '0 0 0 1 1 *', '@annually': '0 0 0 1 1 *', '@monthly': '0 0 0 1 * *',
+    '@weekly': '0 0 0 * * 0', '@daily': '0 0 0 * * *', '@midnight': '0 0 0 * * *', '@hourly': '0 0 * * * *',
+  };
+
+  /*
+   * dayRule says how day-of-month and day-of-week combine:
+   *  vixie  - OR, unless either field starts with '*' (then AND). Vixie cron, cronie.
+   *  robfig - OR, unless either field is '*' or '?' without a step > 1 (then AND). robfig/cron v3, used by Kubernetes.
+   *  quartz - exactly one field must be '?'; the other one decides.
+   *  and    - both must match. Spring.
+   */
+  const DIALECTS = {
+    unix: {
+      id: 'unix', name: 'Linux crontab', short: 'crontab', family: 'unix',
+      fields: ['minute', 'hour', 'dom', 'month', 'dow'],
+      dow: { min: 0, max: 7, names: DOW_SUN0 }, dayRule: 'vixie',
+      specials: {}, question: false, wrap: false,
+      macros: MACROS_UNIX, reboot: true, commandTail: true, seconds: false, year: null,
+    },
+    github: {
+      id: 'github', name: 'GitHub Actions', short: 'GitHub', family: 'unix',
+      fields: ['minute', 'hour', 'dom', 'month', 'dow'],
+      dow: { min: 0, max: 7, names: DOW_SUN0 }, dayRule: 'vixie',
+      specials: {}, question: false, wrap: false,
+      macros: null, reboot: false, commandTail: false, seconds: false, year: null, utcOnly: true,
+    },
+    k8s: {
+      id: 'k8s', name: 'Kubernetes CronJob', short: 'Kubernetes', family: 'unix',
+      fields: ['minute', 'hour', 'dom', 'month', 'dow'],
+      dow: { min: 0, max: 6, names: DOW_SUN0 }, dayRule: 'robfig',
+      specials: {}, question: true, wrap: false,
+      macros: MACROS_UNIX, reboot: false, commandTail: false, seconds: false, year: null,
+    },
+    eventbridge: {
+      id: 'eventbridge', name: 'AWS EventBridge', short: 'EventBridge', family: 'eb',
+      fields: ['minute', 'hour', 'dom', 'month', 'dow', 'year'],
+      dow: { min: 1, max: 7, names: DOW_SUN1 }, dayRule: 'quartz',
+      specials: { L: true, W: true, dowLBare: true, hash: true }, question: true, wrap: false,
+      macros: null, reboot: false, commandTail: false, seconds: false, year: [1970, 2199],
+    },
+    quartz: {
+      id: 'quartz', name: 'Quartz', short: 'Quartz', family: 'quartz',
+      fields: ['second', 'minute', 'hour', 'dom', 'month', 'dow', 'year?'],
+      dow: { min: 1, max: 7, names: DOW_SUN1 }, dayRule: 'quartz',
+      specials: { L: true, Loffset: true, LW: true, W: true, dowLBare: true, dowLast: true, hash: true },
+      question: true, wrap: true, stepLimit: true,
+      macros: null, reboot: false, commandTail: false, seconds: true, year: [1970, 2099],
+    },
+    spring: {
+      id: 'spring', name: 'Spring @Scheduled', short: 'Spring', family: 'spring',
+      fields: ['second', 'minute', 'hour', 'dom', 'month', 'dow'],
+      dow: { min: 0, max: 7, names: DOW_MON1 }, dayRule: 'and',
+      specials: { L: true, Loffset: true, LW: true, W: true, dowLast: true, hash: true },
+      question: true, wrap: false,
+      macros: MACROS_SPRING, reboot: false, commandTail: false, seconds: true, year: null,
+    },
+  };
+  const DIALECT_ORDER = ['unix', 'github', 'k8s', 'eventbridge', 'quartz', 'spring'];
+
+  const FIELD_LABEL = {
+    second: 'second', minute: 'minute', hour: 'hour', dom: 'day-of-month',
+    month: 'month', dow: 'day-of-week', year: 'year',
+  };
+
+  // ---------------------------------------------------------------- utils
+
+  const pad2 = n => String(n).padStart(2, '0');
+  const sortNum = a => a.sort((x, y) => x - y);
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  function runsOf(vals) {
+    const out = [];
+    if (!vals.length) return out;
+    let s = vals[0], p = vals[0];
+    for (let i = 1; i < vals.length; i++) {
+      if (vals[i] === p + 1) { p = vals[i]; continue; }
+      out.push([s, p]);
+      s = p = vals[i];
+    }
+    out.push([s, p]);
+    return out;
+  }
+
+  function apStep(vals) {
+    if (vals.length < 3) return 0;
+    const g = vals[1] - vals[0];
+    for (let i = 2; i < vals.length; i++) if (vals[i] - vals[i - 1] !== g) return 0;
+    return g;
+  }
+
+  function joinList(items, conj) {
+    conj = conj || 'and';
+    if (items.length <= 1) return items.join('');
+    return items.slice(0, -1).join(', ') + ' ' + conj + ' ' + items[items.length - 1];
+  }
+
+  function ordinal(n) {
+    const t = n % 100;
+    if (t >= 11 && t <= 13) return n + 'th';
+    return n + (['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+  }
+
+  const daysInMonth = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const weekday = (y, m, d) => new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  const isLeap = y => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+
+  function lowerBound(arr, x) {
+    let lo = 0, hi = arr.length;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (arr[mid] < x) lo = mid + 1; else hi = mid; }
+    return lo;
+  }
+
+  function boolArr(n, list) { const a = new Array(n).fill(false); for (const v of list) a[v] = true; return a; }
+
+  function fmtClock(sec, withSeconds) {
+    const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s = sec % 60;
+    return pad2(h) + ':' + pad2(m) + (withSeconds ? ':' + pad2(s) : '');
+  }
+
+  function fmtDuration(sec) {
+    if (sec < 60) return sec + ' s';
+    const d = Math.floor(sec / 86400), h = Math.floor(sec / 3600) % 24, m = Math.floor(sec / 60) % 60, s = sec % 60;
+    const parts = [];
+    if (d) parts.push(d + ' d');
+    if (h) parts.push(h + ' h');
+    if (m) parts.push(m + ' min');
+    if (s && !d) parts.push(s + ' s');
+    return parts.slice(0, 3).join(' ');
+  }
+
+  function everyUnit(sec) {
+    if (sec % 3600 === 0) { const n = sec / 3600; return n === 1 ? 'every hour' : `every ${n} hours`; }
+    if (sec % 60 === 0) { const n = sec / 60; return n === 1 ? 'every minute' : `every ${n} minutes`; }
+    return sec === 1 ? 'every second' : `every ${sec} seconds`;
+  }
+
+  class CronError extends Error {
+    constructor(message, field, extra) {
+      super(message);
+      this.field = field == null ? -1 : field;
+      if (extra) Object.assign(this, extra);
+    }
+  }
+
+  // ---------------------------------------------------------------- parsing
+
+  function bounds(kind, D) {
+    switch (kind) {
+      case 'second': case 'minute': return { min: 0, max: 59 };
+      case 'hour': return { min: 0, max: 23 };
+      case 'dom': return { min: 1, max: 31 };
+      case 'month': return { min: 1, max: 12, names: MONTH_NAMES };
+      case 'dow': return { min: D.dow.min, max: D.dow.max, names: D.dow.names };
+      case 'year': return { min: D.year[0], max: D.year[1] };
+    }
+    throw new Error('unknown field ' + kind);
+  }
+
+  const STEP_LIMIT = { second: 59, minute: 59, hour: 23, dom: 31, month: 12, dow: 7, year: Infinity };
+
+  function dowNumberingHint(D) {
+    if (D.dow.min === 1) return ' (1 = Sunday … 7 = Saturday)';
+    if (D.dow.max === 7) return ' (0 or 7 = Sunday)';
+    return ' (0 = Sunday … 6 = Saturday)';
+  }
+
+  function toInternal(kind, v, D) {
+    if (kind !== 'dow') return v;
+    return D.dow.min === 1 ? v - 1 : v % 7;
+  }
+
+  const RE_ITEM = /^(\*|\d+|[A-Z]+)(?:-(\d+|[A-Z]+))?(?:\/(\d+))?$/;
+  const DOW_TOKEN = '(\\d|SUN|MON|TUE|WED|THU|FRI|SAT)';
+  const RE_DOW_LAST = new RegExp('^' + DOW_TOKEN + 'L$');
+  const RE_DOW_HASH = new RegExp('^' + DOW_TOKEN + '#(\\d+)$');
+
+  function parseField(raw, kind, D, idx) {
+    const b = bounds(kind, D);
+    const label = FIELD_LABEL[kind];
+    const f = {
+      kind, raw, index: idx, values: new Set(), question: false, special: null, items: [],
+      vixieStar: raw[0] === '*', robfigStar: false,
+    };
+    const fail = (msg, extra) => { throw new CronError(msg, idx, extra); };
+    const up = raw.toUpperCase();
+    const parts = up.split(',');
+    if (parts.some(p => p === '')) fail(`The ${label} field \`${raw}\` has an empty item. Check the commas.`);
+
+    const val = tok => {
+      let v;
+      if (/^\d+$/.test(tok)) v = parseInt(tok, 10);
+      else if (b.names && Object.prototype.hasOwnProperty.call(b.names, tok)) v = b.names[tok];
+      else if (b.names) fail(`\`${tok}\` isn't a ${label} name. Use ${kind === 'month' ? 'JAN–DEC' : 'SUN–SAT'} or numbers.`);
+      else fail(`\`${tok}\` isn't a number.`);
+      if (v < b.min || v > b.max) {
+        fail(`${cap(label)} ${v} is out of range. ${D.name} allows ${b.min}–${b.max}${kind === 'dow' ? dowNumberingHint(D) : ''}.`);
+      }
+      return v;
+    };
+    const add = v => f.values.add(toInternal(kind, v, D));
+    const addAll = () => { for (let v = b.min; v <= b.max; v++) add(v); };
+    const unsupported = (what) => fail(
+      `\`${raw}\` uses ${what}, which ${D.name} doesn't support.` +
+      (D.family === 'unix' ? ' Quartz, Spring and EventBridge do; see Translations for a crontab workaround.' : ''),
+    );
+    const mustBeAlone = () => { if (parts.length > 1) fail(`\`${parts.find(p => /[LW#]/.test(p) && !RE_ITEM.test(p)) || raw}\` can't be combined with other values in the ${label} field.`); };
+
+    for (const p of parts) {
+      if (p === '?') {
+        if (!D.question) fail(`${D.name} doesn't use \`?\`. Use \`*\` for “any”.`);
+        if (kind !== 'dom' && kind !== 'dow') fail(`\`?\` only works in the day-of-month and day-of-week fields.`);
+        if (parts.length > 1) fail(`\`?\` must stand alone in the ${label} field.`);
+        f.question = true;
+        f.robfigStar = true;
+        addAll();
+        continue;
+      }
+      if (/^H(\/|\(|$)/.test(p)) fail('`H` is Jenkins’ hashed-time syntax. Pick a concrete value instead, e.g. `17` for the minute.');
+
+      let m;
+      if (kind === 'dom') {
+        if (p === 'L') {
+          if (!D.specials.L) unsupported('`L` (last day of the month)');
+          mustBeAlone(); f.special = { type: 'L', offset: 0 }; continue;
+        }
+        if ((m = p.match(/^L-(\d+)$/))) {
+          if (!D.specials.Loffset) unsupported('`L-n` (n days before the last day)');
+          const n = parseInt(m[1], 10);
+          if (n < 1 || n > 30) fail(`\`${p}\`: the offset must be 1–30.`);
+          mustBeAlone(); f.special = { type: 'L', offset: n }; continue;
+        }
+        if (p === 'LW' || p === 'WL') {
+          if (!D.specials.LW) unsupported('`LW` (last weekday of the month)');
+          mustBeAlone(); f.special = { type: 'LW' }; continue;
+        }
+        if ((m = p.match(/^(\d+)W$/))) {
+          if (!D.specials.W) unsupported('`W` (nearest weekday)');
+          const n = parseInt(m[1], 10);
+          if (n < 1 || n > 31) fail(`\`${p}\`: the day must be 1–31.`);
+          mustBeAlone(); f.special = { type: 'W', day: n }; continue;
+        }
+      }
+      if (kind === 'dow') {
+        if (p === 'L') {
+          if (!D.specials.dowLBare) unsupported('`L` on its own in day-of-week');
+          mustBeAlone(); add(D.dow.min === 1 ? 7 : 6); f.bareL = true; continue;
+        }
+        if ((m = p.match(RE_DOW_LAST))) {
+          if (!D.specials.dowLast) unsupported('`nL` (last given weekday of the month)');
+          mustBeAlone();
+          f.special = { type: 'lastDow', dow: toInternal('dow', val(m[1]), D) }; continue;
+        }
+        if ((m = p.match(RE_DOW_HASH))) {
+          if (!D.specials.hash) unsupported('`#` (nth weekday of the month)');
+          const n = parseInt(m[2], 10);
+          if (n < 1 || n > 5) fail(`\`${p}\`: the week number after # must be 1–5.`);
+          mustBeAlone();
+          f.special = { type: 'nth', dow: toInternal('dow', val(m[1]), D), n }; continue;
+        }
+      }
+
+      m = p.match(RE_ITEM);
+      if (!m) {
+        if (/[LW#]/.test(p)) {
+          if (kind !== 'dom' && kind !== 'dow') fail(`\`${p}\`: L, W and # only work in the day fields.`);
+          if (D.family === 'unix') unsupported('`L`, `W` or `#`');
+        }
+        fail(`Can't read \`${raw}\` as a ${label} field.`);
+      }
+      const a = m[1], bt = m[2], st = m[3];
+      const star = a === '*';
+      let lo, hi;
+      if (star) {
+        if (bt !== undefined) fail(`\`${p}\`: a range can't start with \`*\`.`);
+        lo = b.min; hi = b.max;
+      } else {
+        lo = val(a);
+        hi = bt !== undefined ? val(bt) : (st !== undefined ? b.max : lo);
+      }
+      let step = 1;
+      if (st !== undefined) {
+        step = parseInt(st, 10);
+        if (step < 1) fail(`\`${p}\`: the step after \`/\` must be 1 or more.`);
+        if (D.stepLimit && step > STEP_LIMIT[kind]) fail(`\`${p}\`: Quartz rejects ${label} steps above ${STEP_LIMIT[kind]}.`);
+      }
+      const item = {
+        raw: p, star, lo, hi, step, hasStep: st !== undefined, hasRange: bt !== undefined,
+        bareSlash: !star && bt === undefined && st !== undefined,
+      };
+      if (star && step <= 1) f.robfigStar = true;
+      if (lo <= hi) {
+        for (let v = lo; v <= hi; v += step) add(v);
+      } else if (D.wrap) {
+        const span = b.max - b.min + 1;
+        const len = (hi - lo + span) % span;
+        for (let k = 0; k <= len; k += step) add(b.min + ((lo - b.min + k) % span));
+        item.wraps = true;
+      } else {
+        fail(`\`${p}\` runs backwards. ${D.name} needs low-high ranges; write \`${lo}-${b.max},${b.min}-${hi}\`.`);
+      }
+      f.items.push(item);
+    }
+    f.list = sortNum([...f.values]);
+    return f;
+  }
+
+  function looksLikeField(tok) {
+    return /^[\d*?/,\-LW#]+$/i.test(tok) || /^(SUN|MON|TUE|WED|THU|FRI|SAT|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)([-,/].*)?$/i.test(tok);
+  }
+
+  function countMessage(D, n) {
+    const names = D.fields.map(f => f.endsWith('?') ? `[${FIELD_LABEL[f.slice(0, -1)]}]` : FIELD_LABEL[f]).join(' ');
+    const need = D.id === 'quartz' ? '6 or 7' : String(D.fields.length);
+    let msg = `This has ${n} field${n === 1 ? '' : 's'}; ${D.name} uses ${need}: ${names}.`;
+    if (D.family === 'unix' && n === 6) msg += ' Six fields usually means a seconds field (Quartz, Spring) or a year field (EventBridge).';
+    if (D.family === 'unix' && n === 7) msg += ' Seven fields is Quartz format.';
+    if (D.family !== 'unix' && n === 5) msg += ' Five fields is crontab format.';
+    return msg;
+  }
+
+  const WRAPPERS = [
+    { re: /@Scheduled\s*\(\s*cron\s*=\s*"([^"]*)"/d, note: 'Read the expression from a Spring @Scheduled annotation.' },
+    { re: /cronSchedule\s*\(\s*"([^"]*)"/d, note: 'Read the expression from a Quartz cronSchedule() call.' },
+    { re: /^\s*-?\s*cron\s*:\s*(?:'([^']*)'|"([^"]*)"|(\S.*?))\s*$/d, note: 'Read the expression from a GitHub Actions `cron:` line.' },
+    { re: /^\s*schedule\s*:\s*(?:'([^']*)'|"([^"]*)"|(\S.*?))\s*$/d, note: 'Read the expression from a Kubernetes `schedule:` line.' },
+    { re: /^\s*(?:'([^']*)'|"([^"]*)")\s*$/d, note: null },
+  ];
+
+  function isValidZone(tz) {
+    try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; } catch (e) { return false; }
+  }
+
+  /** Parse an expression in the given dialect. Returns a model or { ok:false, error }. */
+  function parse(input, dialectId) {
+    const D = DIALECTS[dialectId];
+    if (!D) throw new Error('Unknown dialect ' + dialectId);
+    const text = String(input == null ? '' : input);
+    const out = { ok: false, dialect: dialectId, input: text, tokens: [], notes: [], tz: null };
+    let tokens = [];
+    try {
+      let core = text, base = 0, m;
+      for (const w of WRAPPERS) {
+        m = w.re.exec(core);
+        if (!m) continue;
+        const gi = [1, 2, 3].find(i => m[i] !== undefined);
+        base += m.indices[gi][0];
+        core = m[gi];
+        if (w.note) out.notes.push(w.note);
+        break;
+      }
+      m = /^\s*cron\(([^)]*)\)\s*$/di.exec(core);
+      if (m) { base += m.indices[1][0]; core = m[1]; out.wrapped = true; }
+      m = /^\s*(?:CRON_TZ|TZ)=(\S+)\s+/d.exec(core);
+      if (m) {
+        if (!isValidZone(m[1])) throw new CronError(`\`${m[1]}\` isn't a time zone this browser knows.`);
+        out.tz = m[1];
+        out.tzPrefix = m[0].trim();
+        base += m[0].length;
+        core = core.slice(m[0].length);
+      }
+      const re = /\S+/g;
+      let t;
+      while ((t = re.exec(core))) tokens.push({ text: t[0], start: base + t.index, end: base + t.index + t[0].length });
+      out.tokens = tokens;
+      if (!tokens.length) throw new CronError(`Type an expression, for example \`${EXAMPLE_BY_DIALECT[dialectId]}\`.`);
+
+      let raws;
+      if (tokens[0].text[0] === '@') {
+        const name = tokens[0].text.toLowerCase();
+        if (name === '@reboot') {
+          if (!D.reboot) throw new CronError(`${D.name} has no \`@reboot\`.`, 0);
+          return Object.assign(out, { ok: true, reboot: true, macro: '@reboot', fields: [], tokens: tokens.slice(0, 1) });
+        }
+        if (!D.macros) throw new CronError(`${D.name} doesn't accept @ shortcuts. Write the fields out, e.g. \`${EXAMPLE_BY_DIALECT[dialectId]}\`.`, 0);
+        const exp = D.macros[name];
+        if (!exp) throw new CronError(`Unknown shortcut \`${tokens[0].text}\`. ${D.name} accepts ${Object.keys(D.macros).join(', ')}.`, 0);
+        if (tokens.length > 1) {
+          if (D.commandTail) out.command = text.slice(tokens[1].start).trim();
+          else throw new CronError(`Nothing can follow \`${tokens[0].text}\`.`, 1);
+        }
+        out.macro = name;
+        out.macroExpansion = exp;
+        raws = exp.split(' ');
+        tokens = tokens.slice(0, 1);
+        out.tokens = tokens;
+      } else {
+        const max = D.fields.length;
+        const min = D.fields.filter(f => !f.endsWith('?')).length;
+        if (D.commandTail && tokens.length > max && !looksLikeField(tokens[max].text)) {
+          out.command = text.slice(tokens[max].start).trim();
+          tokens = tokens.slice(0, max);
+          out.tokens = tokens;
+        }
+        if (tokens.length < min || tokens.length > max) throw new CronError(countMessage(D, tokens.length), -1, { countMismatch: true });
+        raws = tokens.map(x => x.text);
+      }
+
+      const kinds = D.fields.map(f => f.replace('?', ''));
+      const fields = raws.map((raw, i) => parseField(raw, kinds[i], D, out.macro ? 0 : i));
+      const by = {};
+      fields.forEach(f => { by[f.kind] = f; });
+      out.fields = fields;
+
+      if (D.dayRule === 'quartz') {
+        const dq = by.dom.question, wq = by.dow.question;
+        const di = kinds.indexOf('dom'), wi = kinds.indexOf('dow');
+        if (dq && wq) {
+          throw new CronError('Only one of day-of-month and day-of-week can be `?`. Put `*` in the other.', di,
+            { fix: { label: 'Use * for day-of-month', expr: replaceToken(text, tokens, di, '*') } });
+        }
+        if (!dq && !wq) {
+          let fix = null;
+          if (by.dow.raw === '*') fix = { label: 'Use ? for day-of-week', expr: replaceToken(text, tokens, wi, '?') };
+          else if (by.dom.raw === '*') fix = { label: 'Use ? for day-of-month', expr: replaceToken(text, tokens, di, '?') };
+          throw new CronError(
+            `${D.name} needs \`?\` in either day-of-month or day-of-week to know which one to use.` +
+            (fix ? '' : ' Both are set here, which takes two separate schedules.'),
+            fix ? (fix.label.includes('week') ? wi : di) : wi, { fix },
+          );
+        }
+      }
+
+      let combine;
+      if (D.dayRule === 'vixie') combine = (by.dom.vixieStar || by.dow.vixieStar) ? 'and' : 'or';
+      else if (D.dayRule === 'robfig') combine = (by.dom.robfigStar || by.dow.robfigStar) ? 'and' : 'or';
+      else if (D.dayRule === 'quartz') combine = by.dom.question ? 'dow' : 'dom';
+      else combine = 'and';
+
+      const yf = by.year;
+      const model = buildModel({
+        seconds: by.second ? by.second.list : [0],
+        minutes: by.minute.list,
+        hours: by.hour.list,
+        months: by.month.list,
+        years: yf && yf.raw !== '*' ? yf.list : null,
+        dom: { list: by.dom.list, special: by.dom.special },
+        dow: { list: by.dow.list, special: by.dow.special },
+        combine,
+      });
+      return Object.assign(out, model, { ok: true, by });
+    } catch (e) {
+      if (!(e instanceof CronError)) throw e;
+      out.error = { message: e.message, field: e.field, fix: e.fix || null, countMismatch: !!e.countMismatch };
+      out.tokens = tokens;
+      return out;
+    }
+  }
+
+  function replaceToken(text, tokens, i, replacement) {
+    const t = tokens[i];
+    if (!t) return text;
+    return text.slice(0, t.start) + replacement + text.slice(t.end);
+  }
+
+  const EXAMPLE_BY_DIALECT = {
+    unix: '0 9 * * 1-5', github: '17 9 * * 1-5', k8s: '0 9 * * 1-5',
+    eventbridge: 'cron(0 9 ? * MON-FRI *)', quartz: '0 0 9 ? * MON-FRI', spring: '0 0 9 * * MON-FRI',
+  };
+
+  /** Build the dialect-independent schedule model. */
+  function buildModel(s) {
+    const dom = { list: s.dom.list.slice(), special: s.dom.special || null };
+    dom.all = !dom.special && dom.list.length === 31;
+    const dow = { list: s.dow.list.slice(), special: s.dow.special || null };
+    dow.all = !dow.special && dow.list.length === 7;
+    let mode;
+    switch (s.combine) {
+      case 'dom': mode = dom.all ? 'all' : 'dom'; break;
+      case 'dow': mode = dow.all ? 'all' : 'dow'; break;
+      case 'or': mode = (dom.all || dow.all) ? 'all' : 'or'; break;
+      default: mode = dom.all ? (dow.all ? 'all' : 'dow') : (dow.all ? 'dom' : 'and');
+    }
+    dom.has = boolArr(32, dom.list);
+    dow.has = boolArr(7, dow.list);
+    const times = [];
+    for (const h of s.hours) for (const m of s.minutes) for (const sec of s.seconds) times.push(h * 3600 + m * 60 + sec);
+    return {
+      seconds: s.seconds.slice(), minutes: s.minutes.slice(), hours: s.hours.slice(),
+      months: s.months.slice(), monthHas: boolArr(13, s.months),
+      years: s.years ? s.years.slice() : null, yearSet: s.years ? new Set(s.years) : null,
+      dom, dow, combine: s.combine, dayMode: mode, times,
+    };
+  }
+
+  // ---------------------------------------------------------------- matching days
+
+  function nearestWeekday(y, m, dim, n) {
+    if (n > dim) return -1;
+    const wd = weekday(y, m, n);
+    if (wd === 6) return n === 1 ? 3 : n - 1;
+    if (wd === 0) return n === dim ? n - 2 : n + 1;
+    return n;
+  }
+
+  function lastWeekday(y, m, dim) {
+    const wd = weekday(y, m, dim);
+    return wd === 6 ? dim - 1 : wd === 0 ? dim - 2 : dim;
+  }
+
+  function domMatch(dom, y, m, d, dim) {
+    const sp = dom.special;
+    if (sp) {
+      if (sp.type === 'L') return d === dim - sp.offset;
+      if (sp.type === 'LW') return d === lastWeekday(y, m, dim);
+      if (sp.type === 'W') return d === nearestWeekday(y, m, dim, sp.day);
+    }
+    return dom.has[d];
+  }
+
+  function dowMatch(dow, d, dim, wd) {
+    const sp = dow.special;
+    if (sp) {
+      if (sp.type === 'nth') return wd === sp.dow && Math.floor((d - 1) / 7) + 1 === sp.n;
+      if (sp.type === 'lastDow') return wd === sp.dow && d + 7 > dim;
+    }
+    return dow.has[wd];
+  }
+
+  function dayMatches(M, y, m, d) {
+    if (!M.monthHas[m]) return false;
+    if (M.yearSet && !M.yearSet.has(y)) return false;
+    const dim = daysInMonth(y, m);
+    if (d > dim) return false;
+    switch (M.dayMode) {
+      case 'all': return true;
+      case 'dom': return domMatch(M.dom, y, m, d, dim);
+      case 'dow': return dowMatch(M.dow, d, dim, weekday(y, m, d));
+      case 'or': return domMatch(M.dom, y, m, d, dim) || dowMatch(M.dow, d, dim, weekday(y, m, d));
+      case 'and': return domMatch(M.dom, y, m, d, dim) && dowMatch(M.dow, d, dim, weekday(y, m, d));
+    }
+    return false;
+  }
+
+  function horizonYear(M, fromYear) {
+    const cap = fromYear + 30;
+    if (M.years) return Math.min(Math.max(...M.years), 2199);
+    return cap;
+  }
+
+  /** Calls fn(dayMs, y, m, d) for matching wall-clock days starting at dayMs, until fn returns false or the horizon. */
+  function eachMatchingDay(M, startDay, endYear, fn) {
+    let cur = startDay;
+    for (;;) {
+      const dt = new Date(cur);
+      const y = dt.getUTCFullYear(), m = dt.getUTCMonth() + 1, d = dt.getUTCDate();
+      if (y > endYear) return;
+      if (M.yearSet && !M.yearSet.has(y)) { cur = Date.UTC(y + 1, 0, 1); continue; }
+      if (!M.monthHas[m]) { cur = Date.UTC(y, m, 1); continue; }
+      if (dayMatches(M, y, m, d) && fn(cur, y, m, d) === false) return;
+      cur += DAY;
+    }
+  }
+
+  // ---------------------------------------------------------------- time zones
+
+  const fmtCache = new Map();
+  function partsFormatter(tz) {
+    let f = fmtCache.get(tz);
+    if (!f) {
+      f = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric',
+      });
+      fmtCache.set(tz, f);
+    }
+    return f;
+  }
+
+  function wallParts(t, tz) {
+    const out = { y: 0, mo: 0, d: 0, h: 0, mi: 0, s: 0 };
+    for (const p of partsFormatter(tz).formatToParts(new Date(t))) {
+      switch (p.type) {
+        case 'year': out.y = +p.value; break;
+        case 'month': out.mo = +p.value; break;
+        case 'day': out.d = +p.value; break;
+        case 'hour': out.h = +p.value % 24; break;
+        case 'minute': out.mi = +p.value; break;
+        case 'second': out.s = +p.value; break;
+      }
+    }
+    return out;
+  }
+
+  /** Offset (ms) of local wall time from UTC at instant t. */
+  function offsetAt(t, tz) {
+    if (tz === 'UTC' || tz === 'Etc/UTC') return 0;
+    const ts = Math.floor(t / 1000) * 1000;
+    const w = wallParts(ts, tz);
+    return Date.UTC(w.y, w.mo - 1, w.d, w.h, w.mi, w.s) - ts;
+  }
+
+  const zoneCache = new Map();
+  /** Offset transitions for a zone during a calendar year (padded by two days each side). */
+  function zoneYear(tz, y) {
+    const key = tz + '|' + y;
+    let z = zoneCache.get(key);
+    if (z) return z;
+    const start = Date.UTC(y, 0, 1) - 2 * DAY, end = Date.UTC(y + 1, 0, 1) + 2 * DAY;
+    let t = start, o = offsetAt(t, tz);
+    z = { start, end, startOffset: o, trans: [] };
+    while (t < end) {
+      const nt = Math.min(t + DAY, end);
+      const no = offsetAt(nt, tz);
+      if (no !== o) {
+        let lo = t, hi = nt;
+        while (hi - lo > 1000) {
+          const mid = lo + Math.floor((hi - lo) / 2000) * 1000;
+          if (offsetAt(mid, tz) === o) lo = mid; else hi = mid;
+        }
+        z.trans.push({ t: hi, before: o, after: no });
+        o = no;
+      }
+      t = nt;
+    }
+    zoneCache.set(key, z);
+    return z;
+  }
+
+  function transitionsBetween(tz, a, b) {
+    const ya = new Date(a).getUTCFullYear(), yb = new Date(b).getUTCFullYear();
+    const seen = new Set(), out = [];
+    for (let y = ya; y <= yb; y++) {
+      for (const tr of zoneYear(tz, y).trans) {
+        if (tr.t >= a && tr.t < b && !seen.has(tr.t)) { seen.add(tr.t); out.push(tr); }
+      }
+    }
+    return out.sort((x, y) => x.t - y.t);
+  }
+
+  function cachedOffset(tz, t) {
+    const z = zoneYear(tz, new Date(t).getUTCFullYear());
+    let o = z.startOffset;
+    for (const tr of z.trans) if (tr.t <= t) o = tr.after;
+    return o;
+  }
+
+  /** Offset segments that cover every instant belonging to the local day starting at wall time W0. */
+  function daySegments(tz, W0) {
+    const trs = transitionsBetween(tz, W0 - 16 * 3600000, W0 + 40 * 3600000);
+    if (!trs.length) return [{ from: -Infinity, to: Infinity, off: cachedOffset(tz, W0) }];
+    const segs = [{ from: -Infinity, to: trs[0].t, off: trs[0].before }];
+    trs.forEach((tr, i) => segs.push({ from: tr.t, to: i + 1 < trs.length ? trs[i + 1].t : Infinity, off: tr.after }));
+    return segs;
+  }
+
+  /** Instants at which wall time w (ms, as if UTC) occurs, given segments. 0 = skipped, 2 = repeated. */
+  function wallInstants(w, segs) {
+    const out = [];
+    for (const s of segs) { const t = w - s.off; if (t >= s.from && t < s.to) out.push(t); }
+    return out;
+  }
+
+  function gapBoundary(w, segs) {
+    for (let i = 0; i + 1 < segs.length; i++) {
+      const a = segs[i], b = segs[i + 1];
+      if (w - a.off >= a.to && w - b.off < b.from) return { t: a.to, before: a.off, after: b.off };
+    }
+    return null;
+  }
+
+  /**
+   * Upcoming runs after fromMs. Wall-clock semantics: a time skipped by a
+   * spring-forward is reported as one 'skipped' entry per transition; a time
+   * repeated by a fall-back occurs twice (second one has kind 'repeat').
+   */
+  function upcoming(M, tz, fromMs, count) {
+    const runs = [];
+    if (M.reboot || !M.times.length) return { runs, exhausted: true };
+    const T = M.times;
+    const w0 = wallParts(fromMs, tz);
+    const startDay = Date.UTC(w0.y, w0.mo - 1, w0.d) - DAY;
+    const endYear = horizonYear(M, w0.y);
+    let exhausted = true;
+    eachMatchingDay(M, startDay, endYear, (W0, y, m, d) => {
+      const segs = daySegments(tz, W0);
+      if (segs.length === 1) {
+        const o = segs[0].off;
+        let i = lowerBound(T, Math.floor((fromMs + o - W0) / 1000) + 1);
+        for (; i < T.length && runs.length < count; i++) {
+          const t = W0 + T[i] * 1000 - o;
+          if (t > fromMs) runs.push({ t, y, m, d, sec: T[i], kind: 'run' });
+        }
+      } else {
+        const list = [];
+        const skipped = new Map();
+        for (const sec of T) {
+          const w = W0 + sec * 1000;
+          const ts = wallInstants(w, segs);
+          if (ts.length === 0) {
+            const tr = gapBoundary(w, segs);
+            if (!tr) continue;
+            const e = skipped.get(tr.t);
+            if (e) { e.count++; e.lastSec = sec; } else {
+              const entry = { t: tr.t, y, m, d, sec, lastSec: sec, kind: 'skipped', count: 1, tr };
+              skipped.set(tr.t, entry);
+              list.push(entry);
+            }
+          } else if (ts.length === 1) {
+            list.push({ t: ts[0], y, m, d, sec, kind: 'run' });
+          } else {
+            const tr = { before: w - ts[0], after: w - ts[1] };
+            list.push({ t: ts[0], y, m, d, sec, kind: 'run', repeats: true, tr });
+            list.push({ t: ts[1], y, m, d, sec, kind: 'repeat', tr });
+          }
+        }
+        list.sort((a, b) => a.t - b.t);
+        for (const e of list) {
+          if (runs.length >= count) break;
+          if (e.t > fromMs) runs.push(e);
+        }
+      }
+      if (runs.length >= count) { exhausted = false; return false; }
+      return true;
+    });
+    return { runs, exhausted };
+  }
+
+  /** Runs that fall into DST gaps or overlaps between a and b. */
+  function dstImpact(M, tz, a, b) {
+    if (M.reboot || !M.times.length) return [];
+    const T = M.times;
+    return transitionsBetween(tz, a, b).map(tr => {
+      const gap = tr.after > tr.before;
+      const ws = tr.t + Math.min(tr.before, tr.after), we = tr.t + Math.max(tr.before, tr.after);
+      let affected = 0;
+      const samples = [];
+      for (let day = Math.floor(ws / DAY) * DAY; day < we; day += DAY) {
+        const dt = new Date(day);
+        const y = dt.getUTCFullYear(), m = dt.getUTCMonth() + 1, d = dt.getUTCDate();
+        if (!dayMatches(M, y, m, d)) continue;
+        const lo = Math.max(0, Math.ceil((ws - day) / 1000)), hi = Math.min(86400, (we - day) / 1000);
+        for (let i = lowerBound(T, lo); i < T.length && T[i] < hi; i++) {
+          affected++;
+          if (samples.length < 4) samples.push({ day, sec: T[i] });
+        }
+      }
+      const wd = new Date(ws);
+      return {
+        tr, gap, ws, we, affected, samples,
+        date: { y: wd.getUTCFullYear(), m: wd.getUTCMonth() + 1, d: wd.getUTCDate() },
+      };
+    });
+  }
+
+  /** Summary numbers: runs per year, runs per active day, shortest and longest gaps (wall clock). */
+  function stats(M, tz, fromMs) {
+    if (M.reboot || !M.times.length) return null;
+    const T = M.times;
+    const w0 = wallParts(fromMs, tz);
+    const today = Date.UTC(w0.y, w0.mo - 1, w0.d);
+    let activeDays = 0;
+    const days = [];
+    const limit = today + 366 * DAY;
+    eachMatchingDay(M, today, horizonYear(M, w0.y), (day) => {
+      if (day < today + 365 * DAY) activeDays++;
+      days.push(day);
+      return !(day >= limit && days.length >= 2);
+    });
+    let minGap = Infinity, maxGap = 0;
+    for (let i = 1; i < T.length; i++) {
+      const g = T[i] - T[i - 1];
+      if (g < minGap) minGap = g;
+      if (g > maxGap) maxGap = g;
+    }
+    for (let i = 1; i < days.length; i++) {
+      const g = (days[i] - days[i - 1]) / 1000 - T[T.length - 1] + T[0];
+      if (g < minGap) minGap = g;
+      if (g > maxGap) maxGap = g;
+    }
+    const totalRuns = days.length * T.length;
+    return {
+      perYear: activeDays * T.length,
+      perDay: T.length,
+      activeDays,
+      minGap: totalRuns >= 2 ? minGap : null,
+      maxGap: totalRuns >= 2 ? maxGap : null,
+    };
+  }
+
+  /** Distinct UTC offsets in effect over [a, b), with their date ranges. */
+  function offsetPeriods(tz, a, b) {
+    const trs = transitionsBetween(tz, a, b);
+    const periods = [];
+    let from = a, off = cachedOffset(tz, a);
+    for (const tr of trs) { periods.push({ from, to: tr.t, off }); from = tr.t; off = tr.after; }
+    periods.push({ from, to: b, off });
+    return periods;
+  }
+
+  // ---------------------------------------------------------------- English
+
+  function fmtSet(vals, f, maxList) {
+    maxList = maxList || 6;
+    if (vals.length <= maxList) return joinList(vals.map(f));
+    const g = apStep(vals);
+    if (g) return `${f(vals[0])}, ${f(vals[1])}, ${f(vals[2])} … ${f(vals[vals.length - 1])}`;
+    const runs = runsOf(vals);
+    if (runs.length <= maxList) return joinList(runs.map(([a, b]) => a === b ? f(a) : b === a + 1 ? `${f(a)}, ${f(b)}` : `${f(a)}–${f(b)}`));
+    return `${vals.slice(0, 4).map(f).join(', ')} … ${f(vals[vals.length - 1])}`;
+  }
+
+  function timePhrase(M) {
+    const T = M.times;
+    const withSec = M.seconds.some(s => s !== 0);
+    const clock = s => fmtClock(s, withSec);
+    if (T.length <= 6) return 'at ' + joinList(T.map(clock));
+    const g = apStep(T);
+    if (g) {
+      if (86400 % g === 0 && T.length === 86400 / g) {
+        if (g === 3600 && T[0] !== 0 && T[0] % 60 === 0) return `every hour at :${pad2(T[0] / 60)}`;
+        return everyUnit(g) + (T[0] !== 0 ? `, starting at ${clock(T[0])}` : '');
+      }
+      return `${everyUnit(g)} from ${clock(T[0])} to ${clock(T[T.length - 1])}`;
+    }
+    const parts = [];
+    let hourPart;
+    const S = M.seconds, Mi = M.minutes, H = M.hours;
+    if (withSec) {
+      const gs = apStep(S);
+      if (S.length === 60) parts.push('every second');
+      else if (gs && S[0] === 0 && 60 % gs === 0) parts.push(`every ${gs} seconds`);
+      else parts.push(`at second${S.length > 1 ? 's' : ''} ${fmtSet(S, v => ':' + pad2(v))}`);
+    }
+    if (Mi.length === 60) parts.push(withSec ? 'of every minute' : 'every minute');
+    else {
+      const gm = apStep(Mi);
+      const r = runsOf(Mi);
+      if (r.length === 1 && Mi.length > 2) parts.push(`${withSec ? 'during' : 'every minute from'} :${pad2(Mi[0])} to :${pad2(Mi[Mi.length - 1])}`);
+      else if (gm && Mi.length > 6) parts.push(`at minutes ${fmtSet(Mi, v => ':' + pad2(v))}`);
+      else parts.push(`at ${Mi.length > 1 ? 'minutes ' : ''}${fmtSet(Mi, v => ':' + pad2(v))}`);
+    }
+    if (H.length === 24) hourPart = 'of every hour';
+    else {
+      const r = runsOf(H);
+      if (r.length === 1 && H.length > 1) hourPart = `from ${pad2(H[0])}:00 through ${pad2(H[H.length - 1])}:59`;
+      else hourPart = `during hour${H.length > 1 ? 's' : ''} ${fmtSet(H, v => pad2(v))}`;
+    }
+    return parts.join(', ') + ' ' + hourPart;
+  }
+
+  function domPhrase(dom) {
+    const sp = dom.special;
+    if (sp) {
+      if (sp.type === 'L') return sp.offset ? `${sp.offset} day${sp.offset > 1 ? 's' : ''} before the last day of the month` : 'the last day of the month';
+      if (sp.type === 'LW') return 'the last weekday (Mon–Fri) of the month';
+      if (sp.type === 'W') return `the weekday nearest the ${ordinal(sp.day)} of the month`;
+    }
+    const L = dom.list;
+    const runs = runsOf(L);
+    if (runs.length === 1 && L.length >= 3) return `the ${ordinal(L[0])} through ${ordinal(L[L.length - 1])} of the month`;
+    if (apStep(L) > 1 && L.length > 6) return `the ${fmtSet(L, ordinal)} of the month`;
+    const txt = joinList(runs.map(([a, b]) => a === b ? ordinal(a) : b === a + 1 ? `${ordinal(a)}, ${ordinal(b)}` : `${ordinal(a)} through ${ordinal(b)}`));
+    return `the ${txt} of the month`;
+  }
+
+  const NTH = ['first', 'second', 'third', 'fourth', 'fifth'];
+
+  function dowPhrase(dow, singular) {
+    const sp = dow.special;
+    if (sp) {
+      if (sp.type === 'nth') return `the ${NTH[sp.n - 1]} ${DOW_LONG[sp.dow]} of the month`;
+      if (sp.type === 'lastDow') return `the last ${DOW_LONG[sp.dow]} of the month`;
+    }
+    const L = dow.list;
+    const key = L.join(',');
+    if (key === '1,2,3,4,5') return 'weekdays (Monday to Friday)';
+    if (key === '0,6') return 'weekends';
+    const plural = d => singular ? DOW_LONG[d] : DOW_LONG[d] + 's';
+    const runs = runsOf(L);
+    if (runs.length === 1 && L.length >= 3) return `${DOW_LONG[L[0]]} through ${DOW_LONG[L[L.length - 1]]}`;
+    return joinList(L.map(plural));
+  }
+
+  function monthPhrase(M) {
+    const L = M.months;
+    if (L.length === 12) return '';
+    const runs = runsOf(L);
+    if (runs.length === 1 && L.length >= 3) return `from ${MON_LONG[L[0] - 1]} through ${MON_LONG[L[L.length - 1] - 1]}`;
+    return 'in ' + joinList(L.map(m => MON_LONG[m - 1]));
+  }
+
+  function yearPhrase(M) {
+    if (!M.years) return '';
+    const runs = runsOf(M.years);
+    return 'in ' + joinList(runs.map(([a, b]) => a === b ? String(a) : `${a}–${b}`));
+  }
+
+  /** One-sentence English description. `**or**` marks the OR in an OR-combined schedule. */
+  function describe(M) {
+    if (M.reboot) return 'Once, when the cron daemon starts (usually at boot).';
+    const time = timePhrase(M);
+    let day = null;
+    switch (M.dayMode) {
+      case 'dom': day = 'on ' + domPhrase(M.dom); break;
+      case 'dow': day = 'on ' + dowPhrase(M.dow); break;
+      case 'or': day = `on ${domPhrase(M.dom)} **or** on ${dowPhrase(M.dow)}`; break;
+      case 'and': day = `on ${dowPhrase(M.dow)}, but only when the date is ${domPhrase(M.dom)}`; break;
+    }
+    const month = monthPhrase(M), year = yearPhrase(M);
+    let s = cap(time);
+    if (!day && !month && !year) s += /every/.test(time) ? '' : ' every day';
+    else {
+      if (day) s += ' ' + day;
+      if (month) s += (day ? ', ' : ' ') + month;
+      if (year) s += ' ' + year;
+    }
+    return s + '.';
+  }
+
+  // ---------------------------------------------------------------- rendering into a dialect
+
+  function compress(vals, min, max, style, allowStar) {
+    if (allowStar === undefined) allowStar = true;
+    const n = max - min + 1;
+    if (vals.length === n && allowStar) return '*';
+    const g = apStep(vals);
+    if (g > 1) {
+      const a = vals[0], b = vals[vals.length - 1];
+      if (b + g > max) {
+        if (style === 'unix') return a === min && allowStar ? `*/${g}` : `${a}-${b}/${g}`;
+        return `${a}/${g}`;
+      }
+      return `${a}-${b}/${g}`;
+    }
+    return runsOf(vals).map(([a, b]) => a === b ? String(a) : b === a + 1 ? `${a},${b}` : `${a}-${b}`).join(',');
+  }
+
+  function compressDow(list, targetId) {
+    if (list.length === 7) return '*';
+    if (DIALECTS[targetId].family === 'unix') {
+      return runsOf(list).map(([a, b]) => a === b ? String(a) : b === a + 1 ? `${a},${b}` : `${a}-${b}`).join(',');
+    }
+    // Names avoid the 0/1-based Sunday confusion. Spring counts weeks from Monday, so order Monday-first there.
+    const order = targetId === 'spring' ? [1, 2, 3, 4, 5, 6, 0] : [0, 1, 2, 3, 4, 5, 6];
+    const idx = list.map(d => order.indexOf(d)).sort((a, b) => a - b);
+    return runsOf(idx).map(([a, b]) => {
+      const A = DOW_ABBR[order[a]], B = DOW_ABBR[order[b]];
+      return a === b ? A : b === a + 1 ? `${A},${B}` : `${A}-${B}`;
+    }).join(',');
+  }
+
+  const isoDow = d => (d === 0 ? 7 : d);
+
+  function weekdayTest(list) {
+    const iso = list.map(isoDow).sort((a, b) => a - b);
+    if (iso.length === 1) return `[ "$(date +%u)" = ${iso[0]} ]`;
+    const r = runsOf(iso);
+    if (r.length === 1) return `[ "$(date +%u)" -ge ${r[0][0]} -a "$(date +%u)" -le ${r[0][1]} ]`;
+    return `date +%u | grep -qx '[${iso.join('')}]'`;
+  }
+
+  function yearTest(years) {
+    const r = runsOf(years);
+    if (years.length === 1) return `[ "$(date +%Y)" = ${years[0]} ]`;
+    if (r.length === 1) return `[ "$(date +%Y)" -ge ${r[0][0]} -a "$(date +%Y)" -le ${r[0][1]} ]`;
+    return `date +%Y | grep -qxE '${years.join('|')}'`;
+  }
+
+  /** Day-field rendering per target. Returns { variants:[{dom,dow}], tests:[], reason, note }. */
+  function renderDays(M, targetId) {
+    const T = DIALECTS[targetId];
+    const fam = T.family;
+    const dom = M.dom, dow = M.dow, mode = M.dayMode;
+    const style = fam === 'unix' ? 'unix' : 'quartz';
+    const plainDom = (allowStar) => compress(dom.list, 1, 31, style, allowStar);
+
+    if (fam === 'unix') {
+      const vixie = T.dayRule === 'vixie';
+      if (mode === 'all') return { variants: [{ dom: '*', dow: '*' }] };
+      if (mode === 'dom') {
+        if (!dom.special) return { variants: [{ dom: plainDom(true), dow: '*' }] };
+        if (dom.special.type === 'L') {
+          const k = dom.special.offset;
+          return {
+            variants: [{ dom: `${28 - k}-${31 - k}`, dow: '*' }],
+            tests: [`[ "$(date -d '+${k + 1} day' +%d)" = 01 ]`],
+            reason: `${T.name} has no “last day of the month”.`,
+          };
+        }
+        return { reason: `${T.name} can't express ${domPhrase(dom)}.` };
+      }
+      if (mode === 'dow') {
+        if (!dow.special) return { variants: [{ dom: '*', dow: compressDow(dow.list, targetId) }] };
+        if (dow.special.type === 'nth') {
+          const n = dow.special.n;
+          return {
+            variants: [{ dom: `${7 * n - 6}-${Math.min(7 * n, 31)}`, dow: '*' }],
+            tests: [weekdayTest([dow.special.dow])],
+            reason: `${T.name} can't say “${dowPhrase(dow)}”. Combining day-of-month and day-of-week would OR them.`,
+          };
+        }
+        return {
+          variants: [{ dom: '*', dow: String(dow.special.dow) }],
+          tests: [`[ "$(date -d '+7 days' +%d)" -le 07 ]`],
+          reason: `${T.name} has no “last ${DOW_LONG[dow.special.dow]} of the month”.`,
+        };
+      }
+      if (dom.special || dow.special) return { reason: `${T.name} can't combine these day rules.` };
+      if (mode === 'or') return { variants: [{ dom: plainDom(false), dow: compressDow(dow.list, targetId) }] };
+      // mode === 'and'
+      if (vixie) {
+        const g = apStep(dom.list);
+        if (g > 1 && dom.list[0] === 1 && dom.list[dom.list.length - 1] + g > 31) {
+          return {
+            variants: [{ dom: `*/${g}`, dow: compressDow(dow.list, targetId) }],
+            note: 'Relies on the Vixie/cronie rule that a day field starting with * makes cron require both day fields.',
+          };
+        }
+      }
+      return {
+        variants: [{ dom: plainDom(true), dow: '*' }],
+        tests: [weekdayTest(dow.list)],
+        reason: `${T.name} ORs day-of-month and day-of-week, so it can't require both.`,
+      };
+    }
+
+    const sp = T.specials;
+    const domQ = () => {
+      const s = dom.special;
+      if (!s) return plainDom(true);
+      if (s.type === 'L' && s.offset === 0 && sp.L) return 'L';
+      if (s.type === 'L' && s.offset > 0 && sp.Loffset) return `L-${s.offset}`;
+      if (s.type === 'LW' && sp.LW) return 'LW';
+      if (s.type === 'W' && sp.W) return `${s.day}W`;
+      return null;
+    };
+    const dowQ = () => {
+      const s = dow.special;
+      const num = d => targetId === 'spring' ? DOW_ABBR[d] : String(d + 1);
+      if (!s) return compressDow(dow.list, targetId);
+      if (s.type === 'nth' && sp.hash) return `${num(s.dow)}#${s.n}`;
+      if (s.type === 'lastDow' && sp.dowLast) return `${num(s.dow)}L`;
+      return null;
+    };
+    const any = fam === 'spring' ? '*' : '?';
+    if (mode === 'all') return { variants: [{ dom: '*', dow: any }] };
+    const d1 = mode === 'dow' ? '' : domQ();
+    const d2 = mode === 'dom' ? '' : dowQ();
+    if (d1 === null) return { reason: `${T.name} can't express ${domPhrase(dom)}.` };
+    if (d2 === null) return { reason: `${T.name} can't express ${dowPhrase(dow)}.` };
+    if (mode === 'dom') return { variants: [{ dom: d1, dow: any }] };
+    if (mode === 'dow') return { variants: [{ dom: fam === 'spring' ? '*' : '?', dow: d2 }] };
+    if (mode === 'and') {
+      if (fam === 'spring') return { variants: [{ dom: d1, dow: d2 }] };
+      return { reason: `${T.name} can't require both a day-of-month and a day-of-week; one of them must be \`?\`.` };
+    }
+    return {
+      variants: [{ dom: d1, dow: any }, { dom: fam === 'spring' ? '*' : '?', dow: d2 }],
+      note: fam === 'spring'
+        ? 'Spring requires both day fields to match, so the OR needs two @Scheduled annotations.'
+        : `${T.name} can't OR the two day fields, so this needs two schedules.`,
+    };
+  }
+
+  /**
+   * Render model M as target dialect. Returns
+   *  { ok:true, lines:[expr…], note }  or
+   *  { ok:false, reason, workaround?: { expr, tests:[shell tests] } }
+   */
+  function render(M, targetId) {
+    const T = DIALECTS[targetId];
+    const fam = T.family;
+    const style = fam === 'unix' ? 'unix' : 'quartz';
+    if (M.reboot) return targetId === 'unix' ? { ok: true, lines: ['@reboot'] } : { ok: false, reason: `${T.name} has no “at startup” schedule.` };
+    const tests = [];
+    const reasons = [];
+    let sec = null;
+    if (T.seconds) sec = compress(M.seconds, 0, 59, style);
+    else if (!(M.seconds.length === 1 && M.seconds[0] === 0)) {
+      if (M.seconds.length === 1 && fam === 'unix') { tests.push(`sleep ${M.seconds[0]}`); reasons.push(`${T.name} works in whole minutes.`); }
+      else return { ok: false, reason: `${T.name} can't schedule anything more precise than a minute.` };
+    }
+    let year = null;
+    if (M.years) {
+      if (T.year) year = compress(M.years, T.year[0], T.year[1], style);
+      else if (fam === 'unix') { tests.push(yearTest(M.years)); reasons.push(`${T.name} has no year field.`); }
+      else return { ok: false, reason: `${T.name} has no year field; check the year in your code instead.` };
+    } else if (targetId === 'eventbridge') year = '*';
+    const minute = compress(M.minutes, 0, 59, style);
+    const hour = compress(M.hours, 0, 23, style);
+    const month = compress(M.months, 1, 12, style);
+    const days = renderDays(M, targetId);
+    if (!days.variants) return { ok: false, reason: days.reason };
+    if (days.tests) { tests.push(...days.tests); reasons.unshift(days.reason); }
+    const lines = days.variants.map(v => {
+      if (fam === 'unix') return `${minute} ${hour} ${v.dom} ${month} ${v.dow}`;
+      if (fam === 'spring') return `${sec} ${minute} ${hour} ${v.dom} ${month} ${v.dow}`;
+      if (fam === 'quartz') return `${sec} ${minute} ${hour} ${v.dom} ${month} ${v.dow}${year ? ' ' + year : ''}`;
+      return `cron(${minute} ${hour} ${v.dom} ${month} ${v.dow} ${year})`;
+    });
+    if (tests.length) {
+      const sleeps = tests.filter(t => t.startsWith('sleep'));
+      const checks = tests.filter(t => !t.startsWith('sleep'));
+      return { ok: false, reason: reasons.join(' '), workaround: { expr: lines[0], tests: checks, sleep: sleeps[0] || null } };
+    }
+    return { ok: true, lines, note: days.note || null };
+  }
+
+  /** Shell guard for a workaround, in crontab-line or job-script form. */
+  function workaroundText(w, targetId, command) {
+    command = command || 'your-command';
+    const parts = w.tests.slice();
+    if (targetId === 'unix') {
+      const chain = parts.concat(w.sleep ? [w.sleep] : []).concat([command]).join(' && ');
+      return `${w.expr}  ${chain.replace(/%/g, '\\%')}`;
+    }
+    const lines = parts.map(t => `${t} || exit 0`);
+    if (w.sleep) lines.push(w.sleep);
+    return lines.join('\n');
+  }
+
+  /** Shift a model's times by deltaSec (e.g. to UTC). Returns { models:[…] } or { error }. */
+  function shiftModel(M, deltaSec) {
+    if (deltaSec === 0) return { models: [M] };
+    if (deltaSec % 60 !== 0) return { error: 'The offset has seconds, which cron can’t express.' };
+    const dmin = deltaSec / 60;
+    const groups = new Map();
+    for (const h of M.hours) {
+      for (const m of M.minutes) {
+        let t = h * 60 + m + dmin;
+        const ds = Math.floor(t / 1440);
+        t -= ds * 1440;
+        if (!groups.has(ds)) groups.set(ds, new Map());
+        const hm = groups.get(ds);
+        const hh = Math.floor(t / 60);
+        if (!hm.has(hh)) hm.set(hh, []);
+        hm.get(hh).push(t % 60);
+      }
+    }
+    const models = [];
+    for (const [ds, hm] of [...groups].sort((a, b) => a[0] - b[0])) {
+      let dowList = M.dow.list;
+      if (ds !== 0) {
+        const plain = M.dayMode === 'all' || (M.dayMode === 'dow' && !M.dow.special);
+        if (!plain || M.months.length !== 12 || M.years) {
+          return { error: 'Converting to UTC moves some runs to a different date, and these day rules can’t follow them across midnight.' };
+        }
+        dowList = sortNum(M.dow.list.map(d => (d + ds + 7) % 7));
+      }
+      const byMinutes = new Map();
+      for (const [hh, mins] of [...hm].sort((a, b) => a[0] - b[0])) {
+        const key = sortNum(mins).join(',');
+        if (!byMinutes.has(key)) byMinutes.set(key, { minutes: sortNum(mins.slice()), hours: [] });
+        byMinutes.get(key).hours.push(hh);
+      }
+      for (const g of byMinutes.values()) {
+        models.push(buildModel({
+          seconds: M.seconds, minutes: g.minutes, hours: g.hours, months: M.months, years: M.years,
+          dom: { list: M.dom.list, special: M.dom.special },
+          dow: { list: dowList, special: M.dow.special }, combine: M.combine,
+        }));
+      }
+    }
+    if (models.length > 4) return { error: 'Converting to UTC would take more than four expressions.' };
+    return { models };
+  }
+
+  /** For UTC-only targets: the expressions to use for each UTC offset the zone has in the next year. */
+  function utcVariants(M, tz, targetId, fromMs) {
+    const periods = offsetPeriods(tz, fromMs, fromMs + 365 * DAY);
+    const byOff = new Map();
+    for (const p of periods) {
+      if (!byOff.has(p.off)) byOff.set(p.off, []);
+      byOff.get(p.off).push(p);
+    }
+    return [...byOff].map(([off, ps]) => {
+      const shifted = shiftModel(M, -off / 1000);
+      const v = { off, periods: ps };
+      if (shifted.error) { v.error = shifted.error; return v; }
+      const lines = [];
+      for (const sm of shifted.models) {
+        const r = render(sm, targetId);
+        if (!r.ok) { v.error = r.reason; return v; }
+        lines.push(...r.lines);
+      }
+      v.lines = lines;
+      return v;
+    });
+  }
+
+  // ---------------------------------------------------------------- checks
+
+  function minuteIntervalLines(N) {
+    if (N <= 0 || 1440 % N !== 0) return null;
+    const byMinute = new Map();
+    for (let t = 0; t < 1440; t += N) {
+      const h = Math.floor(t / 60), m = t % 60;
+      if (!byMinute.has(m)) byMinute.set(m, []);
+      byMinute.get(m).push(h);
+    }
+    return [...byMinute].map(([m, hs]) => `${m} ${compress(hs, 0, 23, 'unix')} * * *`);
+  }
+
+  const shellFor = (dialectId, s) => (dialectId === 'unix' ? s.replace(/%/g, '\\%') : s);
+
+  /**
+   * Checks for one parsed expression. Each: { id, level: 'error'|'warn'|'info', title, body, fix? }.
+   * Bodies use `code` and **bold** only.
+   */
+  function lint(P, tz, now) {
+    const D = DIALECTS[P.dialect];
+    const out = [];
+    const add = (level, id, title, body, fix) => out.push({ level, id, title, body, fix: fix || null });
+    if (!P.ok) return out;
+    if (P.reboot) {
+      add('info', 'reboot', 'Runs at startup only', '`@reboot` fires once when cron starts, which is usually at boot. There is no schedule to chart.');
+      return out;
+    }
+    const by = P.by;
+    const unixish = D.family === 'unix';
+    const cmdHint = D.id === 'unix' ? 'in the command' : 'at the start of the job';
+
+    // Never runs
+    const up = upcoming(P, tz, now, 1);
+    if (!up.runs.length) {
+      let why = 'No date matches all of the fields.';
+      const maxDom = P.dom.special ? 31 : Math.min(...P.dom.list);
+      const longest = Math.max(...P.months.map(m => daysInMonth(2028, m)));
+      if (P.dayMode === 'dom' && !P.dom.special && maxDom > longest) {
+        why = `${joinList(P.months.map(m => MON_LONG[m - 1]))} never ${P.months.length > 1 ? 'have' : 'has'} a ${ordinal(maxDom)}.`;
+      } else if (P.years && Math.max(...P.years) < new Date(now).getUTCFullYear()) {
+        why = 'All of its years are in the past.';
+      }
+      add('error', 'never', 'This never runs', why);
+    }
+
+    // OR between day fields
+    if (P.dayMode === 'or') {
+      let body = `When both day fields are set, ${D.name} runs on days that match **either** one. This runs on ${domPhrase(P.dom)} **and also** on every ${dowPhrase(P.dow, true).replace(/s$/, '')}.`;
+      const dl = P.dom.list, wl = P.dow.list;
+      const block = dl.length === 7 && dl[0] % 7 === 1 && dl[6] === dl[0] + 6;
+      if (block && wl.length === 1 && !P.dom.special && !P.dow.special) {
+        const n = (dl[0] - 1) / 7 + 1;
+        const fixed = render(buildModel({
+          seconds: P.seconds, minutes: P.minutes, hours: P.hours, months: P.months, years: P.years,
+          dom: { list: dl }, dow: { list: [0, 1, 2, 3, 4, 5, 6] }, combine: 'and',
+        }), P.dialect);
+        body += ` If you meant **the ${NTH[n - 1]} ${DOW_LONG[wl[0]]} of the month**, cron can't say that in one expression. Keep the dates and check the weekday ${cmdHint}:`;
+        if (fixed.ok) body += `\n\`${fixed.lines[0]}\`\n\`${shellFor(P.dialect, weekdayTest(wl))} ${D.id === 'unix' ? '&& your-command' : '|| exit 0'}\``;
+        if (D.family !== 'unix') body += ` Or use \`${wl[0] + (D.dow.min === 1 ? 1 : 0)}#${n}\` in ${D.name}.`;
+      } else {
+        body += ' To require both, keep one day field and test the other inside the job.';
+      }
+      if (D.dayRule === 'robfig' && (by.dom.vixieStar || by.dow.vixieStar)) {
+        body += ' Vixie cron and cronie would treat this differently: a day field starting with `*` makes them require both.';
+      }
+      add('warn', 'or-trap', 'Day-of-month OR day-of-week', body);
+    }
+    if (P.combine === 'or' && P.dayMode === 'all' && (!P.dom.all || !P.dow.all) && unixish) {
+      const ignored = P.dom.all ? by.dow : by.dom, full = P.dom.all ? by.dom : by.dow;
+      add('warn', 'or-ignored', `\`${ignored.raw}\` has no effect`,
+        `Neither day field starts with \`*\`, so ${D.name} ORs them, and \`${full.raw}\` already matches every day. To restrict by ${FIELD_LABEL[ignored.kind]}, put \`*\` in the ${FIELD_LABEL[full.kind]} field.`,
+        { label: `Use * for ${FIELD_LABEL[full.kind]}`, expr: replaceToken(P.input, P.tokens, full.index, '*') });
+    }
+    if (P.dayMode === 'and' && D.dayRule === 'vixie') {
+      const starred = by.dom.vixieStar ? by.dom : by.dow;
+      add('warn', 'vixie-star', 'Both day fields must match here',
+        `\`${starred.raw}\` starts with \`*\`, so Vixie cron and cronie require **both** day fields to match: ${describeDaysShort(P)}. Other crons, Kubernetes included, OR them instead. Avoid a \`*/n\` day field when the other day field is set if this has to behave the same everywhere.`);
+    }
+    if (D.dayRule === 'and' && P.dayMode === 'and') {
+      add('info', 'spring-and', 'Spring requires both day fields',
+        'Spring runs only on days that match day-of-month **and** day-of-week. The same fields in crontab would mean OR.');
+    }
+
+    // Steps that don't divide their cycle
+    for (const f of P.fields) {
+      const it = f.items.length === 1 ? f.items[0] : null;
+      if (!it || !it.hasStep || it.step < 2) continue;
+      const b = bounds(f.kind, D);
+      const vals = f.list;
+      const last = vals[vals.length - 1];
+      if (it.hi !== b.max && !it.star && !it.bareSlash) continue;
+      const span = b.max - b.min + 1;
+      if (f.kind === 'minute' || f.kind === 'second' || f.kind === 'hour' || f.kind === 'month') {
+        if (it.step >= span) {
+          let body = `\`${f.raw}\` only matches ${f.kind === 'month' ? MON_LONG[vals[0] - 1] : pad2(vals[0])}: steps restart every ${f.kind === 'month' ? 'year' : f.kind === 'hour' ? 'day' : f.kind === 'minute' ? 'hour' : 'minute'}, so they can't be longer than that.`;
+          if (f.kind === 'minute') {
+            const lines = minuteIntervalLines(it.step);
+            if (lines) body += ` For every ${it.step} minutes, use ${lines.length} lines: ${lines.map(l => '`' + l + '`').join(', ')}.`;
+            else body += ` Every ${it.step} minutes doesn't fit evenly into a day, so cron can't do it exactly.`;
+          }
+          add('warn', 'big-step-' + f.kind, `\`${f.raw}\` doesn't mean every ${it.step} ${f.kind}s`, body);
+        } else if (span % it.step !== 0) {
+          const unitNames = { second: ['second', 'minute'], minute: ['minute', 'hour'], hour: ['hour', 'day'], month: ['month', 'year'] }[f.kind];
+          const wrapGap = span - last + vals[0];
+          const show = f.kind === 'month' ? (v => MON_SHORT[v - 1]) : f.kind === 'hour' ? (v => pad2(v) + ':00') : (v => ':' + pad2(v));
+          add('warn', 'uneven-' + f.kind, `\`${f.raw}\` is uneven`,
+            `${span} isn't divisible by ${it.step}, so the ${unitNames[0]}s restart each ${unitNames[1]}: ${show(vals[0])}, ${show(vals[1])} … ${show(last)}, then ${show(vals[0])} again. That last gap is **${wrapGap} ${unitNames[0]}${wrapGap === 1 ? '' : 's'}**, not ${it.step}.`);
+        }
+      } else if (f.kind === 'dom' && (P.dayMode === 'dom' || P.dayMode === 'or')) {
+        add('warn', 'uneven-dom', `\`${f.raw}\` isn't “every ${it.step} days”`,
+          `Day-of-month steps restart on the ${ordinal(vals[0])} each month. After the ${ordinal(last)} the next run is the ${ordinal(vals[0])} of the following month, so the gap changes with the month's length. For a strict every-${it.step}-days rhythm, run daily and check ${cmdHint}: \`${shellFor(P.dialect, `[ $(( $(date +%s) / 86400 % ${it.step} )) -eq 0 ]`)}\`.`);
+      }
+    }
+
+    // Days that don't exist in every month
+    if (P.dayMode === 'dom' && !P.dom.special && P.dom.list.every(d => d >= 29)) {
+      const missing = P.months.filter(m => !P.dom.list.some(d => d <= daysInMonth(2027, m)));
+      const leapOnly = missing.length === 1 && missing[0] === 2 && P.dom.list.includes(29);
+      if (missing.length && missing.length < P.months.length) {
+        let body = leapOnly
+          ? 'February only has a 29th in leap years, so February runs happen every four years.'
+          : `${joinList(missing.map(m => MON_LONG[m - 1]))} ${missing.length > 1 ? 'are' : 'is'} skipped because ${missing.length > 1 ? 'they have' : 'it has'} no ${ordinal(Math.min(...P.dom.list))}.`;
+        if (!leapOnly) {
+          body += ' For the last day of every month, ' + (D.specials.L ? `use \`L\` in day-of-month.` : `run on the 28th–31st and check ${cmdHint}: \`${shellFor(P.dialect, '[ "$(date -d tomorrow +%d)" = 01 ]')}\`.`);
+        }
+        add('info', 'short-months', leapOnly ? 'Leap years only in February' : 'Skips shorter months', body);
+      }
+    }
+
+    // * where a single value was probably meant
+    if (by.minute.raw === '*' && P.hours.length <= 3 && P.hours.length < 24) {
+      add('warn', 'every-minute', `Runs every minute of ${P.hours.length > 1 ? 'those hours' : 'that hour'}`,
+        `\`*\` in the minute field means every minute, so this runs **${60 * P.hours.length * P.seconds.length} times** a day, from ${pad2(P.hours[0])}:00 to ${pad2(P.hours[P.hours.length - 1])}:59. To run once at ${pad2(P.hours[0])}:00, use \`0\` for the minute.`,
+        { label: 'Use 0 for the minute', expr: replaceToken(P.input, P.tokens, by.minute.index, '0') });
+    }
+    if (by.second && by.second.raw === '*' && P.minutes.length < 60) {
+      add('warn', 'every-second', 'Runs every second',
+        `\`*\` in the seconds field runs this 60 times in each matching minute. To run once per matching minute, use \`0\`.`,
+        { label: 'Use 0 for the second', expr: replaceToken(P.input, P.tokens, by.second.index, '0') });
+    }
+
+    // Day-of-week numbering
+    if (D.dow.min === 1 && /\d/.test(by.dow.raw) && !by.dow.special) {
+      if (/^1-5$/.test(by.dow.raw)) {
+        add('warn', 'dow-numbering', '`1-5` is Sunday to Thursday here',
+          `In ${D.name}, day-of-week 1 is **Sunday** and 7 is Saturday, so \`1-5\` means Sunday through Thursday. For Monday to Friday use \`2-6\` or \`MON-FRI\`.`,
+          { label: 'Use MON-FRI', expr: replaceToken(P.input, P.tokens, by.dow.index, 'MON-FRI') });
+      } else {
+        add('info', 'dow-numbering', 'Day 1 is Sunday here',
+          `${D.name} numbers days 1 = Sunday … 7 = Saturday, unlike crontab's 0 = Sunday. Names like \`MON\` avoid the mix-up.`);
+      }
+    }
+    if (by.dow.bareL) add('info', 'bare-l', '`L` alone means Saturday', 'On its own in day-of-week, `L` means the last day of the week, which is Saturday. For the last Friday of the month, write `6L`.');
+    if (D.id === 'unix' && by.dow.items.some(i => !i.star && (i.lo === 7 || i.hi === 7))) {
+      add('info', 'dow-7', '7 is Sunday', 'crontab accepts both 0 and 7 for Sunday.');
+    }
+    if (D.id === 'github' && by.dow.items.some(i => !i.star && (i.lo === 7 || i.hi === 7))) {
+      add('warn', 'gh-dow-7', 'Use 0 for Sunday', "GitHub's documentation lists 0–6 for day-of-week. Write Sunday as `0` to be safe.");
+    }
+
+    // A/step without a range in crontab
+    if (D.id === 'unix') {
+      for (const f of P.fields) {
+        const it = f.items.find(i => i.bareSlash);
+        if (!it) continue;
+        const b = bounds(f.kind, D);
+        const better = `${it.lo}-${b.max}/${it.step}`;
+        add('info', 'bare-slash', `\`${it.raw}\` isn't portable`,
+          `\`N/step\` isn't in the crontab(5) format and some crons reject it. \`${better}\` means the same and works everywhere.`,
+          { label: `Use ${better}`, expr: replaceToken(P.input, P.tokens, f.index, f.raw.replace(new RegExp(it.raw.replace(/[/*]/g, '\\$&'), 'i'), better)) });
+      }
+    }
+
+    // DST
+    if (tz && !P.dialect.startsWith('github')) {
+      const impacts = dstImpact(P, tz, now, now + 365 * DAY).filter(x => x.affected);
+      if (impacts.length) {
+        const fmtDate = x => `${x.date.d} ${MON_SHORT[x.date.m - 1]}`;
+        const sentences = impacts.map(x => {
+          const from = fmtClock(Math.round((x.ws % DAY) / 1000)), to = fmtClock(Math.round((x.we % DAY) / 1000) % 86400);
+          return x.gap
+            ? `On **${fmtDate(x)}** clocks jump from ${from} to ${to}, so ${x.affected === 1 ? 'the run' : `${x.affected} runs`} in between ${x.affected === 1 ? "doesn't" : "don't"} exist.`
+            : `On **${fmtDate(x)}** clocks fall back from ${to} to ${from}, so ${x.affected === 1 ? 'the run' : `${x.affected} runs`} in that hour happen${x.affected === 1 ? 's' : ''} twice by the clock.`;
+        });
+        let body = `${tz} changes its clocks. ${sentences.join(' ')}`;
+        if (D.id === 'unix') {
+          body += ' cronie and Vixie cron special-case this for jobs at fixed times: a run skipped by the spring jump fires right after it, and a fall-back run fires once. Jobs that run more often than hourly just follow the clock.';
+        } else {
+          body += ` How ${D.name} handles skipped and repeated times is scheduler-specific; check before relying on it.`;
+        }
+        body += ' The safe options are UTC or a time outside the changeover.';
+        add('warn', 'dst', 'Daylight saving time changes affect this', body);
+      }
+    }
+
+    // Platform specifics
+    if (D.id === 'github') {
+      const st = stats(P, 'UTC', now);
+      if (st && st.minGap !== null && st.minGap < 300) {
+        add('warn', 'gh-5min', 'Too frequent for GitHub',
+          `Runs can be ${fmtDuration(st.minGap)} apart, but GitHub Actions runs scheduled workflows at most every 5 minutes.`);
+      }
+      if (P.minutes.includes(0)) {
+        add('info', 'gh-top-of-hour', 'Top of the hour is GitHub’s busiest time',
+          'GitHub warns that load peaks at the start of every hour and queued scheduled runs can be delayed or dropped. An off-peak minute such as `17` is more reliable.',
+          P.minutes.length === 1 ? { label: 'Use minute 17', expr: replaceToken(P.input, P.tokens, by.minute.index, '17') } : null);
+      }
+      add('info', 'gh-notes', 'How GitHub runs schedules',
+        'Times are UTC. Scheduled workflows run on the latest commit of the default branch, and in public repositories GitHub disables them after 60 days without repository activity.');
+    }
+    if (D.id === 'k8s') {
+      if (P.tz && P.tzPrefix) {
+        add('warn', 'k8s-crontz', 'Use spec.timeZone instead',
+          `Kubernetes doesn't support \`${P.tzPrefix.split('=')[0]}=\` inside \`schedule\`, and recent versions reject it. Set \`spec.timeZone: "${P.tz}"\` instead.`);
+      } else {
+        add('info', 'k8s-tz', 'Set spec.timeZone',
+          "Without `spec.timeZone`, Kubernetes evaluates the schedule in the kube-controller-manager's time zone. Set it explicitly so the schedule doesn't depend on the cluster.");
+      }
+    }
+    if (D.id === 'unix') {
+      if (P.tzPrefix) {
+        add('info', 'unix-crontz', 'CRON_TZ is a cronie feature',
+          '`CRON_TZ=` is honoured by cronie (Fedora, RHEL, Arch) and normally goes on its own line above the job. Debian and Ubuntu cron use the system time zone instead.');
+      }
+      if (P.command && /(^|[^\\])%/.test(P.command)) {
+        add('warn', 'percent', '`%` in the command means newline',
+          'In a crontab line, an unescaped `%` ends the command and sends the rest to its standard input. Write `\\%`, for example `date +\\%F`.');
+      } else if (P.command) {
+        add('info', 'command', 'Command ignored', `Only the schedule was read; the command \`${P.command.length > 40 ? P.command.slice(0, 40) + '…' : P.command}\` was ignored.`);
+      }
+    }
+    if (D.id === 'eventbridge') {
+      add('info', 'eb-utc', 'Rules run in UTC',
+        'EventBridge rules always use UTC. EventBridge Scheduler can use a time zone (`--schedule-expression-timezone`); the time zone picked here assumes Scheduler.');
+    }
+    return out;
+  }
+
+  function describeDaysShort(P) {
+    return `${dowPhrase(P.dow)} that are also ${domPhrase(P.dom)}`;
+  }
+
+  // ---------------------------------------------------------------- English → cron
+
+  const NUM_WORDS = {
+    one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+    eleven: 11, twelve: 12, fifteen: 15, twenty: 20, thirty: 30, 'forty-five': 45, ninety: 90,
+  };
+  const DAY_WORD = '(sun(?:days?)?|mon(?:days?)?|tue(?:s(?:days?)?)?|wed(?:nesdays?)?|thu(?:r(?:s(?:days?)?)?)?|fri(?:days?)?|sat(?:urdays?)?)';
+  const MONTH_WORD = '(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)';
+  const TIME_WORD = '(?:(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)?|noon|midnight)';
+  const dayIdx = w => ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].indexOf(w.slice(0, 3));
+  const monIdx = w => ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].indexOf(w.slice(0, 3)) + 1;
+
+  function parseTimeWord(s) {
+    s = s.trim();
+    if (s === 'noon') return { h: 12, m: 0 };
+    if (s === 'midnight') return { h: 0, m: 0 };
+    const m = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
+    if (!m) return null;
+    let h = +m[1];
+    const mi = m[2] ? +m[2] : 0;
+    if (m[3]) {
+      if (h < 1 || h > 12) return null;
+      if (m[3] === 'am') h = h === 12 ? 0 : h;
+      else h = h === 12 ? 12 : h + 12;
+    }
+    if (h > 23 || mi > 59) return null;
+    return { h, m: mi, ambiguous: !m[3] && !m[2] && h >= 1 && h <= 11 };
+  }
+
+  /**
+   * Read a plain-English schedule. Returns { model, notes:[…] } or { error, lines? }.
+   */
+  function fromEnglish(input) {
+    let s = ' ' + String(input || '').toLowerCase()
+      .replace(/a\.m\.?/g, 'am').replace(/p\.m\.?/g, 'pm')
+      .replace(/(\d{1,2})\.(\d{2})/g, '$1:$2')
+      .replace(/[,;!?]+/g, ' ').replace(/\.(\s|$)/g, ' ')
+      .replace(/\b(each|every single)\b/g, 'every')
+      .replace(/\b(thru|until|till)\b/g, 'through')
+      .replace(/o'?clock/g, '')
+      .replace(/\s+/g, ' ') + ' ';
+    if (!s.trim()) return { error: 'Describe a schedule, for example “every weekday at 9:30am”.' };
+    const notes = [];
+    const st = { times: [], dows: new Set(), doms: new Set(), months: new Set(), years: new Set() };
+    const take = (re, fn) => { s = s.replace(re, (...a) => { const r = fn(...a); return r === false ? a[0] : ' '; }); };
+
+    for (const [k, v] of Object.entries(NUM_WORDS)) s = s.replace(new RegExp(`\\bevery ${k}\\b`, 'g'), `every ${v}`);
+
+    take(/\b(quarter|half) past (\d{1,2})\s*(am|pm)?\b/g, (_, q, h, ap) => {
+      const t = parseTimeWord(h + (ap ? ' ' + ap : ''));
+      if (!t) return false;
+      st.times.push({ h: t.h, m: q === 'half' ? 30 : 15 });
+    });
+    take(/\btwice (?:a|per) day\b|\btwice daily\b/g, () => { st.twice = true; });
+    take(/\b(?:during |in )?(?:business|working|office) hours\b/g, () => { st.window = { h1: 9, m1: 0, h2: 17, m2: 0 }; });
+    take(/\bquarterly\b|\bevery quarter\b/g, () => { [1, 4, 7, 10].forEach(m => st.months.add(m)); st.defaultDom = 1; });
+    take(/\b(yearly|annually|every year|once a year)\b/g, () => { st.yearly = true; });
+    take(/\b(monthly|every month|once a month)\b/g, () => { st.monthly = true; });
+    take(/\b(weekly|every week|once a week)\b/g, () => { st.weekly = true; });
+    take(/\b(daily|nightly|every day|once a day)\b/g, () => { st.daily = true; });
+    take(/\bhourly\b/g, () => { st.interval = { n: 1, unit: 'hour' }; });
+
+    // nth / last weekday of the month
+    take(new RegExp(`\\b(first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|last)\\s+(day|weekday|business day|working day|${DAY_WORD})(?:\\s+(?:of|in)\\s+(?:the|every|each)?\\s*month)?\\b`, 'g'), (_, nth, what) => {
+      const n = { first: 1, '1st': 1, second: 2, '2nd': 2, third: 3, '3rd': 3, fourth: 4, '4th': 4, fifth: 5, '5th': 5, last: 0 }[nth];
+      if (what === 'day') {
+        if (n === 0) st.domSpecial = { type: 'L', offset: 0 };
+        else st.doms.add(n);
+      } else if (/weekday|business|working/.test(what)) {
+        st.domSpecial = n === 0 ? { type: 'LW' } : (n === 1 ? { type: 'W', day: 1 } : null);
+        if (!st.domSpecial) { st.unsupported = `“${nth} weekday of the month” has no cron equivalent; only the first and last weekday do.`; }
+      } else {
+        const d = dayIdx(what);
+        st.dowSpecial = n === 0 ? { type: 'lastDow', dow: d } : { type: 'nth', dow: d, n };
+      }
+    });
+
+    // Intervals
+    take(/\bevery (other |\d+ |\d+(?:st|nd|rd|th) )?(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?)\b/g, (_, n, unit) => {
+      let k = 1;
+      if (n) { n = n.trim(); k = n === 'other' ? 2 : parseInt(n, 10); }
+      const u = unit.startsWith('sec') ? 'second' : unit.startsWith('min') ? 'minute' : unit.startsWith('h') ? 'hour'
+        : unit.startsWith('d') ? 'day' : unit.startsWith('w') ? 'week' : unit.startsWith('mo') ? 'month' : 'year';
+      if (u === 'day' && k === 1) { st.daily = true; return; }
+      if (u === 'week' && k === 1) { st.weekly = true; return; }
+      if (u === 'month' && k === 1) { st.monthly = true; return; }
+      if (u === 'year' && k === 1) { st.yearly = true; return; }
+      st.interval = { n: k, unit: u };
+    });
+
+    // Time windows
+    const winRe = new RegExp(`\\b(?:between|from)\\s+${TIME_WORD}\\s+(?:and|to|through|-)\\s+${TIME_WORD}(?=\\s)`, 'g');
+    take(winRe, (all) => {
+      const m = all.match(new RegExp(`(?:between|from)\\s+(${TIME_WORD})\\s+(?:and|to|through|-)\\s+(${TIME_WORD})`));
+      const a = parseTimeWord(m[1]), b = parseTimeWord(m[5]);
+      if (!a || !b) return false;
+      st.window = { h1: a.h, m1: a.m, h2: b.h, m2: b.m };
+    });
+    take(new RegExp(`\\b(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)\\s*-\\s*(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))(?=\\s)`, 'g'), (_, a, b) => {
+      const ta = parseTimeWord(a), tb = parseTimeWord(b);
+      if (!ta || !tb) return false;
+      st.window = { h1: ta.h, m1: ta.m, h2: tb.h, m2: tb.m };
+    });
+
+    // Day-of-week ranges and names
+    take(new RegExp(`\\b(?:from\\s+)?${DAY_WORD}\\s*(?:-|to|through)\\s*${DAY_WORD}\\b`, 'g'), (_, a, b) => {
+      let x = dayIdx(a);
+      const y = dayIdx(b);
+      for (let i = 0; i < 7; i++) { st.dows.add(x); if (x === y) break; x = (x + 1) % 7; }
+    });
+    take(/\b(?:every )?(?:weekdays?|business days?|work ?days?|working days?)\b/g, () => { [1, 2, 3, 4, 5].forEach(d => st.dows.add(d)); });
+    take(/\b(?:every |on )?weekends?\b/g, () => { st.dows.add(0); st.dows.add(6); });
+    take(new RegExp(`\\b${DAY_WORD}\\b`, 'g'), (_, w) => { st.dows.add(dayIdx(w)); });
+
+    // Specific dates: "march 3", "3 march", "3rd of march"
+    take(new RegExp(`\\b${MONTH_WORD}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`, 'g'), (_, mo, d) => {
+      st.months.add(monIdx(mo)); st.doms.add(+d);
+    });
+    take(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?${MONTH_WORD}\\b`, 'g'), (_, d, mo) => {
+      st.months.add(monIdx(mo)); st.doms.add(+d);
+    });
+    take(new RegExp(`\\b${MONTH_WORD}\\s*(?:-|to|through)\\s*${MONTH_WORD}\\b`, 'g'), (_, a, b) => {
+      let x = monIdx(a);
+      const y = monIdx(b);
+      for (let i = 0; i < 12; i++) { st.months.add(x); if (x === y) break; x = x % 12 + 1; }
+    });
+    take(new RegExp(`\\b${MONTH_WORD}\\b`, 'g'), (_, mo, off, str) => {
+      if (mo === 'may' && /\bmay\s+(?!\d)/.test(str.slice(off)) && !/\bin\s+$/.test(str.slice(0, off))) return false;
+      st.months.add(monIdx(mo));
+    });
+
+    // Days of month
+    take(/\b(\d{1,2})(?:st|nd|rd|th)?\s*(?:-|to|through)\s*(\d{1,2})(?:st|nd|rd|th)\b/g, (_, a, b) => {
+      for (let d = +a; d <= +b; d++) st.doms.add(d);
+    });
+    take(/\bdays?\s+(\d{1,2})\s*(?:-|to|through)\s*(\d{1,2})\b/g, (_, a, b) => { for (let d = +a; d <= +b; d++) st.doms.add(d); });
+    take(/\b(\d{1,2})(?:st|nd|rd|th)\b/g, (_, d) => { st.doms.add(+d); });
+    take(/\bday\s+(\d{1,2})\b/g, (_, d) => { st.doms.add(+d); });
+
+    // Years
+    take(/\b(19[7-9]\d|2[01]\d\d)\b/g, (_, y) => { st.years.add(+y); });
+
+    // Minutes past the hour
+    take(/\bat\s+:(\d{2})\b/g, (_, m) => { st.minutePast = +m; });
+    take(/\b(?:at\s+)?(\d{1,2})\s+(?:minutes?\s+)?past(?:\s+the hour|\s+every hour)?\b/g, (_, m) => { st.minutePast = +m; });
+    take(/\bat\s+minute\s+(\d{1,2})\b/g, (_, m) => { st.minutePast = +m; });
+    take(/\bon the hour\b/g, () => { st.minutePast = 0; });
+    take(/\b(?:at\s+)?(?:a\s+)?quarter past\b/g, () => { st.minutePast = 15; });
+    take(/\b(?:at\s+)?half past\b/g, () => { st.minutePast = 30; });
+
+    // Times of day
+    take(/\b(?:at\s+)?(noon|midday|midnight)\b/g, (_, w) => { st.times.push(w === 'midnight' ? { h: 0, m: 0 } : { h: 12, m: 0 }); });
+    take(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/g, (all, h, m, ap) => {
+      const t = parseTimeWord(`${h}${m ? ':' + m : ''} ${ap}`);
+      if (!t) return false;
+      st.times.push(t);
+    });
+    take(/\b(?:at\s+)?(\d{1,2}):(\d{2})\b/g, (all, h, m) => {
+      const t = parseTimeWord(`${h}:${m}`);
+      if (!t) return false;
+      st.times.push(t);
+    });
+    take(/\b(?:at|and)\s+(\d{1,2})(?=\s)(?!\s*(?:minutes?|mins?|hours?|seconds?|days?))/g, (all, h) => {
+      const t = parseTimeWord(h);
+      if (!t) return false;
+      if (t.ambiguous) notes.push(`Read “${h}” as ${pad2(t.h)}:00 (24-hour clock). Write ${h}pm for ${pad2(t.h + 12)}:00.`);
+      st.times.push(t);
+    });
+
+    const leftover = s.replace(/\b(at|on|in|of|the|and|every|run|runs|running|it|job|please|schedule|cron|from|to|a|an|starting|start|day|days|month|months|week|time|times|each|during|but|only|between|past|minute|hour|o)\b/g, ' ').replace(/[^a-z0-9:]+/g, ' ').trim();
+    if (leftover) notes.push(`Ignored: “${leftover}”.`);
+    if (st.unsupported) return { error: st.unsupported };
+
+    // Assemble
+    let seconds = [0], minutes = null, hours = null;
+    const allH = Array.from({ length: 24 }, (_, i) => i);
+    const allM = Array.from({ length: 60 }, (_, i) => i);
+    let months = st.months.size ? sortNum([...st.months]) : null;
+    let domList = st.doms.size ? sortNum([...st.doms]) : null;
+    const dowList = st.dows.size ? sortNum([...st.dows]) : null;
+    const W = st.window;
+    const windowHours = (inclusiveEnd) => {
+      if (!W) return allH;
+      const end = (inclusiveEnd || W.m2 > 0) ? W.h2 : W.h2 - 1;
+      const out = [];
+      for (let h = W.h1; h <= end; h++) out.push(h);
+      return out.length ? out : allH;
+    };
+    if (W && W.h2 < W.h1) return { error: 'The time window ends before it starts. Cron hour ranges can’t wrap past midnight in one go.' };
+    if (st.twice && !st.times.length) st.times.push({ h: 0, m: 0 }, { h: 12, m: 0 });
+
+    const iv = st.interval;
+    if (iv) {
+      const n = iv.n;
+      if (iv.unit === 'second') {
+        if (n >= 60) return { error: 'For intervals of a minute or more, say “every N minutes”.' };
+        seconds = Array.from({ length: Math.ceil(60 / n) }, (_, i) => i * n).filter(v => v < 60);
+        if (60 % n) notes.push(`60 isn't divisible by ${n}, so the seconds restart every minute.`);
+        minutes = allM; hours = windowHours(false);
+      } else if (iv.unit === 'minute') {
+        if (n >= 60) {
+          if (n % 60 === 0 && n / 60 < 24) { hours = windowHours(true).filter((h, i, a) => (h - a[0]) % (n / 60) === 0); minutes = [st.minutePast || 0]; }
+          else {
+            const lines = minuteIntervalLines(n);
+            return lines
+              ? { error: `Cron can't count ${n}-minute intervals in one line. Use these ${lines.length} crontab lines together:`, lines }
+              : { error: `Every ${n} minutes doesn't divide a day evenly, so cron can't do it.` };
+          }
+        } else {
+          const start = W ? W.m1 % n : 0;
+          minutes = []; for (let m = start; m < 60; m += n) minutes.push(m);
+          if (60 % n) notes.push(`60 isn't divisible by ${n}: runs restart at :${pad2(start)} each hour.`);
+          hours = windowHours(false);
+          if (W && W.m2 === 0) notes.push(`Last run of the window is ${pad2(hours[hours.length - 1])}:${pad2(minutes[minutes.length - 1])}, the final slot before ${pad2(W.h2)}:00.`);
+        }
+      } else if (iv.unit === 'hour') {
+        if (n >= 24) return { error: 'For a day or longer, say “every day” or “every N days”.' };
+        const base = windowHours(true);
+        const first = st.times.length === 1 && !W ? st.times[0].h : base[0];
+        hours = base.filter(h => h >= first && (h - first) % n === 0);
+        minutes = [st.minutePast != null ? st.minutePast : (st.times.length === 1 ? st.times[0].m : 0)];
+        if (24 % n && !W) notes.push(`24 isn't divisible by ${n}, so the hours restart at midnight.`);
+      } else if (iv.unit === 'day') {
+        domList = []; for (let d = 1; d <= 31; d += n) domList.push(d);
+        notes.push(`Day-of-month steps restart on the 1st each month, so this isn't a strict every-${n}-days rhythm.`);
+      } else if (iv.unit === 'week') {
+        return { error: `Cron can't count weeks. Run weekly and skip alternate weeks in the job, e.g. \`[ $(( $(date +%s) / 604800 % ${n} )) -eq 0 ]\`.` };
+      } else if (iv.unit === 'month') {
+        months = []; for (let m = 1; m <= 12; m += n) months.push(m);
+        if (12 % n) notes.push(`12 isn't divisible by ${n}, so the months restart each January.`);
+        if (!domList && !st.domSpecial && !dowList && !st.dowSpecial) domList = [1];
+      } else {
+        return { error: 'Cron can’t count years. Use a specific year (Quartz or EventBridge) or check the year in the job.' };
+      }
+    }
+    if (!minutes) {
+      if (st.times.length) {
+        const hs = sortNum([...new Set(st.times.map(t => t.h))]);
+        const ms = sortNum([...new Set(st.times.map(t => t.m))]);
+        const want = new Set(st.times.map(t => t.h * 60 + t.m));
+        if (hs.length * ms.length !== want.size) {
+          const byMin = new Map();
+          for (const t of st.times) { if (!byMin.has(t.m)) byMin.set(t.m, new Set()); byMin.get(t.m).add(t.h); }
+          return {
+            error: 'Those times have different minutes, so they need one cron line each:',
+            lines: [...byMin].map(([m, h]) => `${m} ${sortNum([...h]).join(',')} * * *`),
+          };
+        }
+        hours = hs; minutes = ms;
+      } else if (st.minutePast != null) {
+        minutes = [st.minutePast]; hours = W ? windowHours(false) : allH;
+      } else if (W) {
+        minutes = [0]; hours = windowHours(true);
+        notes.push('No interval given, so this runs hourly within the window.');
+      } else {
+        minutes = [0]; hours = [0];
+        notes.push('No time given, so this runs at midnight (00:00).');
+      }
+    }
+    if (st.yearly && !months) { months = [1]; if (!domList && !st.domSpecial) domList = [1]; }
+    if (st.monthly && !domList && !st.domSpecial && !dowList && !st.dowSpecial) domList = [1];
+    if (st.weekly && !dowList && !st.dowSpecial) { st.dows.add(0); notes.push('“Weekly” runs on Sundays, like cron’s @weekly.'); }
+    if (st.defaultDom && !domList && !st.domSpecial && !dowList && !st.dowSpecial) domList = [st.defaultDom];
+    const dows = st.dows.size ? sortNum([...st.dows]) : null;
+
+    for (const d of domList || []) if (d < 1 || d > 31) return { error: `There's no ${ordinal(d)} day of a month.` };
+    const hasDom = !!(domList || st.domSpecial);
+    const hasDow = !!(dows || st.dowSpecial);
+    let combine = 'and';
+    if (hasDom && hasDow) { combine = 'or'; notes.push('Both a date and a weekday were given, so this runs on either.'); }
+    const model = buildModel({
+      seconds, minutes, hours,
+      months: months || Array.from({ length: 12 }, (_, i) => i + 1),
+      years: st.years.size ? sortNum([...st.years]) : null,
+      dom: { list: domList || Array.from({ length: 31 }, (_, i) => i + 1), special: st.domSpecial || null },
+      dow: { list: dows || [0, 1, 2, 3, 4, 5, 6], special: st.dowSpecial || null },
+      combine,
+    });
+    if (!model.times.length) return { error: 'That doesn’t leave any times to run.' };
+    return { model, notes };
+  }
+
+  // ---------------------------------------------------------------- display helpers
+
+  const dispCache = new Map();
+  function displayParts(t, tz) {
+    const key = tz;
+    let f = dispCache.get(key);
+    if (!f) {
+      f = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz, hourCycle: 'h23', weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short',
+      });
+      dispCache.set(key, f);
+    }
+    const o = {};
+    for (const p of f.formatToParts(new Date(t))) o[p.type] = p.value;
+    if (o.hour === '24') o.hour = '00';
+    return o;
+  }
+
+  function fmtOffset(ms) {
+    const m = Math.round(ms / 60000);
+    const sign = m < 0 ? '−' : '+';
+    const a = Math.abs(m);
+    return `UTC${sign}${pad2(Math.floor(a / 60))}:${pad2(a % 60)}`;
+  }
+
+  return {
+    DIALECTS, DIALECT_ORDER, FIELD_LABEL, DOW_ABBR, DOW_LONG, MON_LONG, MON_SHORT, EXAMPLE_BY_DIALECT, DAY,
+    parse, buildModel, dayMatches, upcoming, dstImpact, stats, describe, render, renderDays, workaroundText,
+    utcVariants, shiftModel, offsetPeriods, transitionsBetween, lint, fromEnglish, minuteIntervalLines,
+    wallParts, offsetAt, displayParts, fmtOffset, fmtClock, fmtDuration, ordinal, daysInMonth, weekday, isLeap,
+    isValidZone, compress, runsOf,
+  };
+});
+</script>
+<script>
+/* Cron Almanac UI. Renders the engine's output; all schedule logic lives in engine.js. */
+(function () {
+  'use strict';
+  const E = window.CronEngine;
+  const D = E.DIALECTS;
+  const DAY = E.DAY;
+  const $ = id => document.getElementById(id);
+  const browserTz = (() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (e) { return 'UTC'; }
+  })();
+  const NTH = ['1st', '2nd', '3rd', '4th', '5th'];
+  const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const STORE_KEY = 'cron-almanac';
+
+  const EXAMPLES = [
+    { label: 'The “first Monday” mistake', expr: '0 9 1-7 * 1', d: 'unix' },
+    { label: 'Every 7 minutes (uneven)', expr: '*/7 * * * *', d: 'unix' },
+    { label: '02:30 in New York (daylight saving)', expr: '30 2 * * *', d: 'unix', tz: 'America/New_York' },
+    { label: 'Every 90 minutes?', expr: '*/90 * * * *', d: 'unix' },
+    { label: 'Full crontab line with a command', expr: '15 3 * * 1-5 /opt/backup.sh > /var/log/backup-$(date +%F).log', d: 'unix' },
+    { label: 'GitHub Actions: nightly build', expr: '0 3 * * *', d: 'github' },
+    { label: 'Kubernetes: */2 with a weekday', expr: '0 0 */2 * 1', d: 'k8s' },
+    { label: 'EventBridge: month end', expr: 'cron(0 18 L * ? *)', d: 'eventbridge' },
+    { label: 'Quartz: third Friday', expr: '0 0 12 ? * 6#3', d: 'quartz' },
+    { label: 'Quartz: 1-5 isn’t Monday to Friday', expr: '0 0 9 ? * 1-5', d: 'quartz' },
+    { label: 'Spring: weekday mornings in Berlin', expr: '0 30 8 * * MON-FRI', d: 'spring', tz: 'Europe/Berlin' },
+  ];
+
+  const state = { expr: '0 9 1-7 * 1', dialect: 'unix', tz: browserTz, calStart: null, runs: 12, sel: null };
+  let current = null;
+
+  // ------------------------------------------------------------ helpers
+
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const md = s => esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+  const nf = new Intl.NumberFormat('en-US');
+
+  function b64(s) {
+    const bytes = new TextEncoder().encode(s);
+    let bin = '';
+    bytes.forEach(b => { bin += String.fromCharCode(b); });
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function unb64(s) {
+    const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+    return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+  }
+
+  function relTime(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    if (s < 60) return `in ${s} s`;
+    if (s < 3600) return `in ${Math.floor(s / 60)} min`;
+    if (s < 86400) { const m = Math.floor(s / 60) % 60; return `in ${Math.floor(s / 3600)} h${m ? ' ' + m + ' min' : ''}`; }
+    if (s < 60 * 86400) { const h = Math.floor(s / 3600) % 24; return `in ${Math.floor(s / 86400)} d${h ? ' ' + h + ' h' : ''}`; }
+    if (s < 730 * 86400) return `in ${Math.round(s / (30.44 * 86400))} months`;
+    return `in ${Math.round(s / (365.25 * 86400))} years`;
+  }
+
+  function fmtDate(t, tz, withYear) {
+    const p = E.displayParts(t, tz);
+    return `${p.weekday} ${p.day} ${p.month}${withYear ? ' ' + p.year : ''}`;
+  }
+
+  function effTz(P) {
+    if (state.dialect === 'github') return 'UTC';
+    if (P && P.ok && P.tz) return P.tz;
+    return state.tz;
+  }
+
+  let toastTimer = 0;
+  function toast(msg) {
+    const el = $('toast');
+    if (!msg) { el.hidden = true; return; }
+    el.innerHTML = md(msg);
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.hidden = true; }, 9000);
+  }
+
+  function copyText(text, btn) {
+    const done = ok => {
+      if (!btn) return;
+      const label = btn.textContent;
+      btn.textContent = ok ? 'Copied' : 'Select and copy';
+      btn.classList.toggle('done', ok);
+      setTimeout(() => { btn.textContent = label; btn.classList.remove('done'); }, 1400);
+    };
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      ta.remove();
+      done(ok);
+    };
+    try {
+      navigator.clipboard.writeText(text).then(() => done(true), fallback);
+    } catch (e) { fallback(); }
+  }
+
+  // ------------------------------------------------------------ state
+
+  function load() {
+    let raw = null;
+    const h = location.hash.slice(1);
+    if (h.startsWith('s.')) { try { raw = unb64(h.slice(2)); } catch (e) { raw = null; } }
+    if (!raw) { try { raw = localStorage.getItem(STORE_KEY); } catch (e) { raw = null; } }
+    if (!raw) return false;
+    try {
+      const o = JSON.parse(raw);
+      if (typeof o.e === 'string') state.expr = o.e;
+      if (D[o.d]) state.dialect = o.d;
+      if (typeof o.z === 'string' && E.isValidZone(o.z)) state.tz = o.z;
+    } catch (e) { return false; }
+    return true;
+  }
+
+  function save() {
+    const json = JSON.stringify({ e: state.expr, d: state.dialect, z: state.tz });
+    try { localStorage.setItem(STORE_KEY, json); } catch (e) { /* storage unavailable */ }
+    if (window.top === window) {
+      try { history.replaceState(null, '', '#s.' + b64(json)); } catch (e) { /* ignore */ }
+    }
+  }
+
+  // ------------------------------------------------------------ static controls
+
+  function buildDialects() {
+    const box = $('dialects');
+    box.innerHTML = E.DIALECT_ORDER.map(id => `<button type="button" data-d="${id}" aria-pressed="false">${esc(D[id].name)}</button>`).join('');
+    box.addEventListener('click', e => {
+      const b = e.target.closest('button[data-d]');
+      if (b) switchDialect(b.dataset.d);
+    });
+  }
+
+  function syncDialectButtons() {
+    for (const b of $('dialects').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.d === state.dialect));
+  }
+
+  function buildTz() {
+    let zones = [];
+    try { zones = Intl.supportedValuesOf('timeZone'); } catch (e) { zones = []; }
+    if (!zones.length) {
+      zones = ['America/Los_Angeles', 'America/Denver', 'America/Chicago', 'America/New_York', 'America/Sao_Paulo',
+        'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Kyiv', 'Africa/Lagos', 'Asia/Dubai', 'Asia/Kolkata',
+        'Asia/Singapore', 'Asia/Shanghai', 'Asia/Tokyo', 'Australia/Sydney', 'Pacific/Auckland'];
+    }
+    const sel = $('tz');
+    const common = ['UTC', browserTz, 'America/New_York', 'America/Los_Angeles', 'Europe/London', 'Europe/Berlin', 'Asia/Kolkata', 'Asia/Tokyo', 'Australia/Sydney']
+      .filter((z, i, a) => a.indexOf(z) === i);
+    const opt = (z, label) => `<option value="${esc(z)}">${esc(label || z)}</option>`;
+    sel.innerHTML =
+      `<optgroup label="Common">${common.map(z => opt(z, z === browserTz ? `${z} (your time zone)` : z)).join('')}</optgroup>` +
+      `<optgroup label="All time zones">${zones.filter(z => z !== 'UTC').map(z => opt(z)).join('')}</optgroup>`;
+    sel.addEventListener('change', () => { state.tz = sel.value; state.sel = null; update(); });
+  }
+
+  function ensureTzOption(tz) {
+    const sel = $('tz');
+    if (![...sel.options].some(o => o.value === tz)) sel.insertAdjacentHTML('afterbegin', `<option value="${esc(tz)}">${esc(tz)}</option>`);
+    sel.value = tz;
+  }
+
+  function buildExamples() {
+    const sel = $('examples');
+    sel.innerHTML = '<option value="">Load an example…</option>' + EXAMPLES.map((x, i) => `<option value="${i}">${esc(x.label)}</option>`).join('');
+    sel.addEventListener('change', () => {
+      const x = EXAMPLES[+sel.value];
+      sel.value = '';
+      if (!x) return;
+      state.expr = x.expr;
+      state.dialect = x.d;
+      if (x.tz) state.tz = x.tz;
+      state.sel = null;
+      state.calStart = null;
+      $('expr').value = state.expr;
+      toast('');
+      update();
+    });
+  }
+
+  // ------------------------------------------------------------ dialect switching
+
+  function switchDialect(id) {
+    if (id === state.dialect) return;
+    const P = current;
+    const fromTz = effTz(P);
+    const T = D[id];
+    let msg;
+    if (P && P.ok) {
+      if (P.tz) state.tz = P.tz;
+      if (id === 'github' && fromTz !== 'UTC') {
+        const now = Date.now();
+        const vs = E.utcVariants(P, fromTz, 'github', now);
+        const v = vs.find(x => x.periods.some(p => p.from <= now && now < p.to)) || vs[0];
+        if (v && v.lines) {
+          state.expr = v.lines[0];
+          msg = `GitHub runs schedules in UTC, so the ${fromTz} times were converted at today's offset (${E.fmtOffset(v.off)}).` +
+            (vs.length > 1 ? ' Translations shows the other season too.' : '') +
+            (v.lines.length > 1 ? ` This takes ${v.lines.length} lines; showing the first.` : '');
+        } else {
+          msg = `Couldn't convert to UTC: ${v ? v.error : 'no offset found'} The expression is unchanged.`;
+        }
+      } else {
+        const r = E.render(P, id);
+        if (r.ok) {
+          state.expr = r.lines[0];
+          msg = r.lines.length > 1
+            ? `${T.name} needs ${r.lines.length} schedules for this; showing the first. Translations lists both.`
+            : `Converted to ${T.name}.`;
+        } else if (r.workaround) {
+          state.expr = r.workaround.expr;
+          msg = `${r.reason} Showing the closest ${T.short} schedule; Translations has the check the job needs.`;
+        } else {
+          msg = `${T.name} can't express this: ${r.reason}`;
+        }
+        if (state.dialect === 'github') { state.tz = 'UTC'; msg += ' The time zone is set to UTC so the times stay the same.'; }
+      }
+    } else {
+      msg = `Reading the expression as ${T.name}.`;
+    }
+    state.dialect = id;
+    $('expr').value = state.expr;
+    toast(msg);
+    update();
+  }
+
+  // ------------------------------------------------------------ field chips
+
+  function chipMeaning(f) {
+    if (f.question) return 'not used';
+    const sp = f.special;
+    if (sp) {
+      if (sp.type === 'L') return sp.offset ? `${sp.offset} before last day` : 'last day';
+      if (sp.type === 'LW') return 'last weekday';
+      if (sp.type === 'W') return `weekday nearest ${E.ordinal(sp.day)}`;
+      if (sp.type === 'nth') return `${NTH[sp.n - 1]} ${DOW_SHORT[sp.dow]}`;
+      if (sp.type === 'lastDow') return `last ${DOW_SHORT[sp.dow]}`;
+    }
+    const L = f.list;
+    const full = { second: 60, minute: 60, hour: 24, dom: 31, month: 12, dow: 7 }[f.kind];
+    if (f.kind === 'year') {
+      if (f.raw === '*') return 'any year';
+    } else if (L.length === full) {
+      return { second: 'every second', minute: 'every minute', hour: 'every hour', dom: 'every day', month: 'every month', dow: 'any weekday' }[f.kind];
+    }
+    const name = v => {
+      switch (f.kind) {
+        case 'dow': return DOW_SHORT[v];
+        case 'month': return E.MON_SHORT[v - 1];
+        case 'minute': case 'second': return ':' + String(v).padStart(2, '0');
+        case 'hour': return String(v).padStart(2, '0') + 'h';
+        case 'dom': return E.ordinal(v);
+        default: return String(v);
+      }
+    };
+    const runs = E.runsOf(L);
+    const unit = { second: ' s', minute: ' min', hour: ' h', dom: ' days', month: ' months' }[f.kind] || '';
+    if (L.length > 2 && runs.length > 1) {
+      const g = L[1] - L[0];
+      if (L.every((v, i) => i === 0 || v - L[i - 1] === g)) return L[0] === (f.kind === 'dom' || f.kind === 'month' ? 1 : 0) ? `every ${g}${unit}` : `every ${g}${unit} from ${name(L[0])}`;
+    }
+    if (runs.length <= 3) return runs.map(([a, b]) => a === b ? name(a) : `${name(a)}–${name(b)}`).join(', ');
+    return `${L.slice(0, 3).map(name).join(', ')} …`;
+  }
+
+  function renderFields(P) {
+    const T = D[state.dialect];
+    const names = T.fields.map(f => f.replace('?', ''));
+    const toks = P.tokens || [];
+    const chips = [];
+    const chip = (label, token, mean, cls, idx) =>
+      `<li><button type="button" class="chip ${cls || ''}" data-i="${idx}"><span class="f-label">${esc(label)}</span><span class="f-token">${esc(token)}</span><span class="f-mean">${esc(mean || ' ')}</span></button></li>`;
+    if (P.ok && P.macro) {
+      chips.push(chip('shortcut', P.macro, P.reboot ? 'at startup' : `= ${P.macroExpansion}`, '', 0));
+    } else {
+      const n = Math.max(toks.length, names.length);
+      for (let i = 0; i < n; i++) {
+        const kind = names[i];
+        const optional = T.fields[i] && T.fields[i].endsWith('?');
+        if (i >= toks.length && optional) continue;
+        const label = kind ? E.FIELD_LABEL[kind] : 'extra';
+        const token = toks[i] ? toks[i].text : '—';
+        let mean = '', cls = '';
+        if (P.ok) mean = chipMeaning(P.fields[i]);
+        else if (P.error.field === i) { cls = 'bad'; mean = 'see below'; }
+        else if (!kind || !toks[i]) { cls = 'bad'; mean = kind ? 'missing' : 'unexpected'; }
+        chips.push(chip(label, token, mean, cls, i));
+      }
+    }
+    $('fields').innerHTML = chips.join('');
+    syncCaret();
+  }
+
+  function syncCaret() {
+    const input = $('expr');
+    const toks = (current && current.tokens) || [];
+    const pos = input.selectionStart;
+    const idx = document.activeElement === input ? toks.findIndex(t => pos >= t.start && pos <= t.end) : -1;
+    $('fields').querySelectorAll('.chip').forEach(c => c.classList.toggle('active', +c.dataset.i === idx));
+  }
+
+  // ------------------------------------------------------------ main render
+
+  function update() {
+    const P = E.parse(state.expr, state.dialect);
+    current = P;
+    const tz = effTz(P);
+    const now = Date.now();
+    syncDialectButtons();
+    renderTz(P, tz, now);
+    renderFields(P);
+    const results = $('results');
+    if (!P.ok) {
+      renderError(P);
+      results.classList.add('stale');
+      $('expr').classList.add('invalid');
+      save();
+      return;
+    }
+    $('error').hidden = true;
+    results.classList.remove('stale');
+    $('expr').classList.remove('invalid');
+    renderSummary(P, tz, now);
+    renderChecks(P, tz, now);
+    renderRuns(P, tz, now);
+    renderCalendar(P, tz, now);
+    renderDaymap(P, tz, now);
+    renderTranslations(P, tz, now);
+    save();
+  }
+
+  function renderTz(P, tz, now) {
+    const sel = $('tz');
+    ensureTzOption(tz);
+    const forced = state.dialect === 'github' || !!(P.ok && P.tz);
+    sel.disabled = forced;
+    const p = E.displayParts(now, tz);
+    let hint = `Now ${p.hour}:${p.minute} ${p.timeZoneName} (${E.fmtOffset(E.offsetAt(now, tz))}).`;
+    if (state.dialect === 'github') hint = 'GitHub Actions evaluates schedules in UTC. ' + hint;
+    else if (P.ok && P.tz) hint = `Set by ${P.tzPrefix.split('=')[0]} in the expression. ` + hint;
+    else if (state.dialect === 'eventbridge') hint += ' Rules always use UTC; EventBridge Scheduler can use this zone.';
+    $('tz-hint').textContent = hint;
+  }
+
+  function renderError(P) {
+    const el = $('error');
+    const actions = [];
+    if (P.error.fix) actions.push(`<button type="button" class="btn small" data-expr="${esc(P.error.fix.expr)}">${esc(P.error.fix.label)}</button>`);
+    for (const id of E.DIALECT_ORDER) {
+      if (id === state.dialect || actions.length >= 4) continue;
+      const Q = E.parse(state.expr, id);
+      if (Q.ok) actions.push(`<button type="button" class="btn ghost small" data-read="${id}">Read it as ${esc(D[id].name)}</button>`);
+    }
+    el.innerHTML = `<p>${md(P.error.message)}</p>${actions.length ? `<div class="actions">${actions.join('')}</div>` : ''}`;
+    el.hidden = false;
+  }
+
+  function renderSummary(P, tz, now) {
+    let s = md(E.describe(P)).replace(/<strong>or<\/strong>/g, '<mark>or</mark>');
+    if (!P.reboot) s += ` <span class="tz">${esc(tz)}</span>`;
+    $('sentence').innerHTML = s;
+    const st = E.stats(P, tz, now);
+    const dl = $('stats');
+    if (!st) { dl.innerHTML = ''; dl.hidden = true; return; }
+    dl.hidden = false;
+    const next = E.upcoming(P, tz, now, 1).runs[0];
+    const items = [
+      ['Next run', next ? `${relTime(next.t - now)}<small>${esc(fmtDate(next.t, tz, new Date(next.t).getUTCFullYear() !== new Date(now).getUTCFullYear()))}</small>` : 'Never'],
+      ['Runs a year', `${nf.format(st.perYear)}<small>on ${nf.format(st.activeDays)} day${st.activeDays === 1 ? '' : 's'}</small>`],
+      ['Runs a day', `${nf.format(st.perDay)}<small>on days it runs</small>`],
+      ['Shortest gap', st.minGap == null ? '—' : esc(E.fmtDuration(st.minGap))],
+      ['Longest gap', st.maxGap == null ? '—' : esc(E.fmtDuration(st.maxGap))],
+    ];
+    dl.innerHTML = items.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  }
+
+  function renderChecks(P, tz, now) {
+    const items = E.lint(P, tz, now);
+    const order = { error: 0, warn: 1, info: 2 };
+    items.sort((a, b) => order[a.level] - order[b.level]);
+    if (!items.some(i => i.level !== 'info')) {
+      const zoneNote = E.transitionsBetween(tz, now, now + 365 * DAY).length ? `, daylight saving in ${tz}` : '';
+      items.unshift({
+        level: 'ok', title: 'No problems found',
+        body: `Checked the day-field logic, step sizes, impossible dates${zoneNote} and ${D[state.dialect].name} limits.`,
+      });
+    }
+    const label = { error: 'Error', warn: 'Warning', info: 'Note', ok: 'OK' };
+    $('checks').innerHTML = items.map(c => `
+      <article class="check">
+        <header><span class="sev ${c.level}">${label[c.level]}</span><h3>${md(c.title)}</h3></header>
+        <p>${md(c.body)}</p>
+        ${c.fix ? `<button type="button" class="btn ghost small" data-expr="${esc(c.fix.expr)}">${esc(c.fix.label)}</button>` : ''}
+      </article>`).join('');
+  }
+
+  function renderRuns(P, tz, now) {
+    const table = $('runs');
+    const more = $('more-runs');
+    if (P.reboot) {
+      table.innerHTML = '<tbody><tr><td class="runs-empty">Runs once each time cron starts.</td></tr></tbody>';
+      more.hidden = true;
+      return;
+    }
+    const up = E.upcoming(P, tz, now, state.runs);
+    if (!up.runs.length) {
+      table.innerHTML = '<tbody><tr><td class="runs-empty">No upcoming runs.</td></tr></tbody>';
+      more.hidden = true;
+      return;
+    }
+    const showLocal = browserTz !== tz;
+    const withSec = P.seconds.some(s => s !== 0);
+    const thisYear = E.wallParts(now, tz).y;
+    const rows = up.runs.map(r => {
+      const p = E.displayParts(r.t, tz);
+      const date = `${p.weekday} ${p.day} ${p.month}${+p.year !== thisYear ? ' ' + p.year : ''}`;
+      let time, badge = '', cls = '';
+      if (r.kind === 'skipped') {
+        time = E.fmtClock(r.sec, withSec) + (r.count > 1 ? '–' + E.fmtClock(r.lastSec, withSec) : '');
+        badge = `<span class="badge" title="Clocks jump from ${E.fmtClock(((r.tr.t + r.tr.before) % DAY) / 1000)} to ${E.fmtClock(((r.tr.t + r.tr.after) % DAY) / 1000)}; ${r.count > 1 ? 'these times don’t' : 'this time doesn’t'} exist.">skipped</span>`;
+        cls = 'dst';
+      } else {
+        time = `${p.hour}:${p.minute}${withSec ? ':' + p.second : ''}`;
+        if (r.kind === 'repeat') { badge = '<span class="badge" title="Clocks fall back, so this wall time happens a second time.">again</span>'; cls = 'dst'; }
+        else if (r.repeats) { badge = '<span class="badge" title="Clocks fall back later, so this wall time happens twice.">1st of 2</span>'; cls = 'dst'; }
+      }
+      let local = '';
+      if (showLocal) {
+        const q = E.displayParts(r.t, browserTz);
+        const sameDay = q.day === p.day;
+        local = `<td class="local"><span class="mono">${q.hour}:${q.minute}</span>${sameDay ? '' : ' ' + esc(q.weekday)}</td>`;
+      }
+      return `<tr class="${cls}"><td>${esc(date)}</td><td class="t">${esc(time)}<span class="abbr">${esc(p.timeZoneName)}</span>${badge}</td>${local}<td class="rel">${esc(relTime(r.t - now))}</td></tr>`;
+    });
+    table.innerHTML = `<thead><tr><th scope="col">Date</th><th scope="col">Time</th>${showLocal ? `<th scope="col" title="${esc(browserTz)}">Your time</th>` : ''}<th scope="col">In</th></tr></thead><tbody>${rows.join('')}</tbody>`;
+    more.hidden = up.exhausted || state.runs >= 200;
+  }
+
+  function dstDays(P, tz, a, b) {
+    const map = new Map();
+    for (const x of E.dstImpact(P, tz, a, b)) {
+      if (!x.affected) continue;
+      for (const s of x.samples) {
+        const d = new Date(s.day);
+        map.set(`${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`, x);
+      }
+    }
+    return map;
+  }
+
+  function renderCalendar(P, tz, now) {
+    const w = E.wallParts(now, tz);
+    if (state.calStart == null) state.calStart = w.y * 12 + (w.mo - 1);
+    const start = state.calStart;
+    const ym = k => ({ y: Math.floor(k / 12), m: (k % 12) + 1 });
+    const first = ym(start), last = ym(start + 11);
+    $('year-label').textContent = `${E.MON_SHORT[first.m - 1]} ${first.y} – ${E.MON_SHORT[last.m - 1]} ${last.y}`;
+    $('year-prev').disabled = first.y <= 1970;
+    $('year-next').disabled = last.y >= 2199;
+    const box = $('calendar');
+    if (P.reboot) { box.innerHTML = ''; $('day-detail').textContent = 'No calendar for a startup-only job.'; return; }
+    const dst = dstDays(P, tz, Date.UTC(first.y, first.m - 1, 1) - 2 * DAY, Date.UTC(last.y, last.m, 1) + 2 * DAY);
+    const todayKey = `${w.y}-${w.mo}-${w.d}`;
+    const todayNum = Date.UTC(w.y, w.mo - 1, w.d);
+    const T = D[state.dialect];
+    const wdNum = i => (T.dow.min === 1 ? i + 1 : i);
+    const head = DOW_SHORT.map((n, i) => `<span class="wd" title="${E.DOW_LONG[i]} is ${wdNum(i)} in ${esc(T.name)}">${n[0]}<small>${wdNum(i)}</small></span>`).join('');
+    let html = '';
+    for (let k = start; k < start + 12; k++) {
+      const { y, m } = ym(k);
+      const dim = E.daysInMonth(y, m);
+      const first = E.weekday(y, m, 1);
+      let cells = '';
+      let count = 0;
+      for (let i = 0; i < first; i++) cells += '<span></span>';
+      for (let d = 1; d <= dim; d++) {
+        const key = `${y}-${m}-${d}`;
+        const on = E.dayMatches(P, y, m, d);
+        if (on) count++;
+        const cls = [on ? 'on' : '', key === todayKey ? 'today' : '', Date.UTC(y, m - 1, d) < todayNum ? 'past' : '', dst.has(key) ? 'dst' : '', state.sel === key ? 'sel' : ''].join(' ').trim();
+        cells += `<button type="button" class="${cls}" data-date="${key}" aria-label="${d} ${E.MON_LONG[m - 1]}${on ? ', runs' : ''}">${d}</button>`;
+      }
+      const yr = k === start || m === 1 ? ` <em>${y}</em>` : '';
+      html += `<div class="month"><h3><b>${E.MON_LONG[m - 1]}${yr}</b><span>${count} day${count === 1 ? '' : 's'}</span></h3><div class="mgrid">${head}${cells}</div></div>`;
+    }
+    box.innerHTML = html;
+    renderDayDetail(P, tz, dst);
+  }
+
+  function renderDayDetail(P, tz, dst) {
+    const el = $('day-detail');
+    if (!state.sel) { el.textContent = 'Pick a day to see its run times.'; return; }
+    const [y, m, d] = state.sel.split('-').map(Number);
+    const label = `${E.DOW_LONG[E.weekday(y, m, d)]} ${d} ${E.MON_LONG[m - 1]} ${y}`;
+    if (!E.dayMatches(P, y, m, d)) { el.innerHTML = `<strong>${esc(label)}</strong>: no runs.`; return; }
+    const withSec = P.seconds.some(s => s !== 0);
+    const T = P.times;
+    const shown = T.slice(0, 10).map(s => E.fmtClock(s, withSec)).join(', ');
+    let html = `<strong>${esc(label)}</strong>: ${T.length} run${T.length === 1 ? '' : 's'} (${esc(tz)}) at ${esc(shown)}${T.length > 10 ? ` and ${nf.format(T.length - 10)} more` : ''}.`;
+    const x = dst && dst.get(state.sel);
+    if (x) {
+      html += x.gap
+        ? ` Clocks jump forward this day, so ${x.affected === 1 ? 'one of these times doesn’t' : `${x.affected} of these times don’t`} exist.`
+        : ` Clocks fall back this day, so ${x.affected === 1 ? 'one of these times happens' : `${x.affected} of these times happen`} twice.`;
+    }
+    el.innerHTML = html;
+  }
+
+  let daymapBuilt = false;
+  function buildDaymap() {
+    const box = $('daymap');
+    let html = '<span></span><div class="cols"><span>:00</span><span>:15</span><span>:30</span><span>:45</span></div>';
+    const cells = '<i></i>'.repeat(60);
+    for (let h = 0; h < 24; h++) html += `<span class="hl" data-hl="${h}">${String(h).padStart(2, '0')}</span><div class="row" data-h="${h}">${cells}</div>`;
+    box.innerHTML = html;
+    box.addEventListener('pointerover', e => {
+      const cell = e.target.closest('.row i');
+      if (!cell || !current || !current.ok || current.reboot) return;
+      const h = +cell.parentElement.dataset.h;
+      const m = Array.prototype.indexOf.call(cell.parentElement.children, cell);
+      const on = current.hours.includes(h) && current.minutes.includes(m);
+      const secs = current.seconds;
+      const clock = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      $('daymap-status').textContent = on
+        ? `${clock}: runs${secs.length > 1 || secs[0] !== 0 ? ` at ${secs.length > 6 ? secs.length + ' seconds' : secs.map(s => ':' + String(s).padStart(2, '0')).join(', ')}` : ''}`
+        : `${clock}: no run`;
+    });
+    box.addEventListener('pointerleave', () => { $('daymap-status').textContent = daymapDefault; });
+    daymapBuilt = true;
+  }
+
+  let daymapDefault = '';
+  function renderDaymap(P, tz, now) {
+    if (!daymapBuilt) buildDaymap();
+    const box = $('daymap');
+    const hs = new Set(P.reboot ? [] : P.hours), ms = new Set(P.reboot ? [] : P.minutes);
+    box.querySelectorAll('.row').forEach(row => {
+      const h = +row.dataset.h;
+      const hOn = hs.has(h);
+      const kids = row.children;
+      for (let m = 0; m < 60; m++) kids[m].className = hOn && ms.has(m) ? 'on' : '';
+    });
+    const dstHours = new Set();
+    for (const tr of E.transitionsBetween(tz, now, now + 365 * DAY)) {
+      const ws = tr.t + Math.min(tr.before, tr.after), we = tr.t + Math.max(tr.before, tr.after);
+      for (let t = ws; t < we; t += 60000) dstHours.add(Math.floor((t % DAY) / 3600000));
+    }
+    box.querySelectorAll('.hl').forEach(l => l.classList.toggle('dsth', dstHours.has(+l.dataset.hl)));
+    const notes = [];
+    if (P.reboot) notes.push('Startup-only jobs have no time of day.');
+    else {
+      const secs = P.seconds;
+      if (secs.length > 1) notes.push(`Each lit minute runs ${secs.length} times (${secs.length > 6 ? `every ${secs[1] - secs[0]} s` : 'at ' + secs.map(s => ':' + String(s).padStart(2, '0')).join(', ')}).`);
+      else if (secs[0] !== 0) notes.push(`Each lit minute runs at :${String(secs[0]).padStart(2, '0')} seconds.`);
+      notes.push('The same pattern repeats on every day it runs.');
+    }
+    if (dstHours.size) notes.push(`<span class="key dst"></span>Hours where ${esc(tz)} changes its clocks.`);
+    $('daymap-legend').innerHTML = notes.join(' ');
+    daymapDefault = P.reboot ? '' : `${nf.format(P.times.length)} run${P.times.length === 1 ? '' : 's'} a day. Hover a cell for its time.`;
+    box.setAttribute('aria-label', P.reboot ? 'No time of day' : `Grid of 24 hours by 60 minutes. ${P.times.length} run times a day: ${E.describe(P).replace(/\*\*/g, '')}`);
+    $('daymap-status').textContent = daymapDefault;
+  }
+
+  function snippet(id, line, tz) {
+    switch (id) {
+      case 'unix':
+        return `# CRON_TZ works in cronie; Debian/Ubuntu cron use the system time zone\nCRON_TZ=${tz}\n${line}  /path/to/command`;
+      case 'github':
+        return `on:\n  schedule:\n    - cron: '${line}'  # UTC`;
+      case 'k8s':
+        return `apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: my-job\nspec:\n  schedule: "${line}"\n  timeZone: "${tz}"\n  jobTemplate:\n    # …`;
+      case 'eventbridge':
+        return `aws scheduler create-schedule \\\n  --name my-job \\\n  --schedule-expression "${line}" \\\n  --schedule-expression-timezone "${tz}" \\\n  --flexible-time-window '{"Mode": "OFF"}' \\\n  --target '{"Arn": "…", "RoleArn": "…"}'`;
+      case 'quartz':
+        return `Trigger trigger = TriggerBuilder.newTrigger()\n    .withSchedule(CronScheduleBuilder.cronSchedule("${line}")\n        .inTimeZone(TimeZone.getTimeZone("${tz}")))\n    .build();`;
+      case 'spring':
+        return `@Scheduled(cron = "${line}", zone = "${tz}")\npublic void run() { /* … */ }`;
+    }
+    return line;
+  }
+
+  function lineHtml(line, id, canUse) {
+    return `<div class="line"><span class="expr">${esc(line)}</span><button type="button" class="btn ghost small" data-copy="${esc(line)}">Copy</button>${canUse ? `<button type="button" class="btn ghost small" data-use="${id}" data-line="${esc(line)}">Use</button>` : ''}</div>`;
+  }
+
+  function periodText(v, tz, now) {
+    const end = now + 365 * DAY - 1000;
+    const short = t => { const p = E.displayParts(t, tz); return `${p.day} ${p.month}`; };
+    const ranges = v.periods.map(p => {
+      const a = p.from > now + 1000 ? short(p.from) : null;
+      const b = p.to < end ? short(p.to) : null;
+      return a && b ? `${a} – ${b}` : a ? `from ${a}` : b ? `until ${b}` : 'all year';
+    });
+    const abbr = E.displayParts(Math.max(v.periods[0].from, now) + 1000, tz).timeZoneName;
+    return `While ${tz} is ${E.fmtOffset(v.off)} (${abbr}), ${ranges.join(' and ')}`;
+  }
+
+  function utcBlock(P, tz, id, now) {
+    const vs = E.utcVariants(P, tz, id, now);
+    let html = '';
+    for (const v of vs) {
+      html += `<p class="period">${esc(periodText(v, tz, now))}</p>`;
+      if (v.error) html += `<p>${md(v.error)}</p>`;
+      else html += v.lines.map(l => lineHtml(l, id, true)).join('') + (v.lines.length > 1 ? `<p>Use all ${v.lines.length} lines together.</p>` : '');
+    }
+    if (vs.length > 1) html += `<p>A UTC schedule can't follow daylight saving. Pick one, or schedule both and skip the run that doesn't apply.</p>`;
+    return html;
+  }
+
+  function renderTranslations(P, tz, now) {
+    const out = [];
+    for (const id of E.DIALECT_ORDER) {
+      const T = D[id];
+      const r = E.render(P, id);
+      const isSelf = id === state.dialect;
+      const tags = [];
+      if (isSelf) tags.push('<span class="tag">This expression</span>');
+      if (!r.ok) tags.push('<span class="tag no">No exact match</span>');
+      let body = '';
+      if (r.ok) {
+        const utcOnly = id === 'github' && tz !== 'UTC' && !P.reboot;
+        if (utcOnly) {
+          body += `<p>GitHub runs schedules in UTC, so the ${esc(tz)} times shift:</p>` + utcBlock(P, tz, id, now);
+        } else {
+          body += r.lines.map(l => lineHtml(l, id, !isSelf)).join('');
+          if (r.note) body += `<p>${md(r.note)}</p>`;
+          if (id === 'eventbridge' && tz !== 'UTC' && !P.reboot) {
+            body += `<details class="snip"><summary>For an EventBridge rule, which only runs in UTC</summary><div>${utcBlock(P, tz, id, now)}</div></details>`;
+          }
+        }
+        const first = utcOnly ? null : r.lines[0];
+        if (first) body += `<details class="snip"><summary>Where it goes</summary><pre class="snippet">${esc(snippet(id, first, tz))}</pre></details>`;
+      } else {
+        body += `<p>${md(r.reason)}</p>`;
+        if (r.workaround) {
+          const text = E.workaroundText(r.workaround, id);
+          if (id === 'unix') {
+            body += `<p class="sub">Closest crontab line</p><pre class="snippet">${esc(text)}</pre>`;
+          } else {
+            body += `<p class="sub">Closest schedule</p>${lineHtml(r.workaround.expr, id, !isSelf)}<p class="sub">Then start the job with</p><pre class="snippet">${esc(text)}</pre>`;
+          }
+          body += '<p>The check uses GNU <code>date</code>.</p>';
+        }
+      }
+      out.push(`<div class="tr"><div class="tr-name"><strong>${esc(T.name)}</strong>${tags.join('')}</div><div class="tr-body">${body}</div></div>`);
+    }
+    $('translations').innerHTML = out.join('');
+  }
+
+  // ------------------------------------------------------------ English
+
+  function onEnglish(e) {
+    e.preventDefault();
+    const text = $('english').value.trim();
+    const out = $('english-out');
+    if (!text) { out.innerHTML = ''; return; }
+    const r = E.fromEnglish(text);
+    if (r.error) {
+      out.innerHTML = `<p class="bad">${md(r.error)}</p>` + (r.lines ? r.lines.map(l => lineHtml(l, 'unix', true)).join('') : '');
+      return;
+    }
+    let target = state.dialect;
+    let res = E.render(r.model, target);
+    const notes = r.notes.slice();
+    if (!res.ok) {
+      const alt = ['quartz', 'spring', 'eventbridge'].find(id => E.render(r.model, id).ok);
+      if (alt) {
+        notes.unshift(`${D[target].name} can't express this (${res.reason.replace(/\.$/, '')}), so it's shown as ${D[alt].name}.`);
+        target = alt;
+        res = E.render(r.model, alt);
+      } else {
+        out.innerHTML = `<p class="bad">${md(res.reason)}</p>`;
+        return;
+      }
+    }
+    if (target === 'github') notes.push('GitHub reads these times as UTC.');
+    if (res.lines.length > 1) notes.push(`This needs ${res.lines.length} schedules; the other is \`${res.lines.slice(1).join('`, `')}\`.`);
+    state.dialect = target;
+    state.expr = res.lines[0];
+    state.sel = null;
+    $('expr').value = state.expr;
+    toast('');
+    update();
+    out.innerHTML = notes.map(n => `<p>${md(n)}</p>`).join('');
+  }
+
+  // ------------------------------------------------------------ events
+
+  function applyExpr(expr, dialect) {
+    if (dialect) state.dialect = dialect;
+    state.expr = expr;
+    $('expr').value = expr;
+    update();
+  }
+
+  function bind() {
+    const input = $('expr');
+    let t = 0;
+    input.addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(() => { state.expr = input.value; update(); }, 70);
+    });
+    ['keyup', 'click', 'focus', 'select'].forEach(ev => input.addEventListener(ev, syncCaret));
+    input.addEventListener('blur', () => setTimeout(syncCaret, 0));
+    $('fields').addEventListener('click', e => {
+      const c = e.target.closest('.chip');
+      if (!c || !current) return;
+      const tok = current.tokens[+c.dataset.i];
+      if (!tok) return;
+      input.focus();
+      input.setSelectionRange(tok.start, tok.end);
+      syncCaret();
+    });
+    $('copy-expr').addEventListener('click', e => copyText(input.value, e.currentTarget));
+    $('english-form').addEventListener('submit', onEnglish);
+    $('more-runs').addEventListener('click', () => { state.runs = Math.min(200, state.runs + 30); update(); });
+    $('year-prev').addEventListener('click', () => { state.calStart -= 12; renderCalendar(current, effTz(current), Date.now()); });
+    $('year-next').addEventListener('click', () => { state.calStart += 12; renderCalendar(current, effTz(current), Date.now()); });
+    $('calendar').addEventListener('click', e => {
+      const b = e.target.closest('button[data-date]');
+      if (!b || !current || !current.ok) return;
+      state.sel = state.sel === b.dataset.date ? null : b.dataset.date;
+      renderCalendar(current, effTz(current), Date.now());
+    });
+    document.addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.copy != null) copyText(b.dataset.copy, b);
+      else if (b.dataset.expr != null) { toast(''); applyExpr(b.dataset.expr); }
+      else if (b.dataset.read) { const T = D[b.dataset.read]; toast(`Reading the expression as ${T.name}.`); applyExpr(state.expr, b.dataset.read); }
+      else if (b.dataset.use) {
+        const id = b.dataset.use;
+        if (current && current.ok && current.tz) state.tz = current.tz;
+        if (state.dialect === 'github' && id !== 'github') state.tz = 'UTC';
+        toast(`Switched to ${D[id].name}.`);
+        applyExpr(b.dataset.line, id);
+      }
+    });
+    setInterval(() => {
+      if (document.hidden || !current || !current.ok) return;
+      const tz = effTz(current), now = Date.now();
+      renderSummary(current, tz, now);
+      renderRuns(current, tz, now);
+    }, 30000);
+  }
+
+  function init() {
+    const linked = location.hash.startsWith('#s.');
+    const returning = load();
+    buildDialects();
+    buildTz();
+    buildExamples();
+    bind();
+    $('expr').value = state.expr;
+    update();
+    if (!returning && !linked) toast('This opening example hides a classic mistake; Checks explains it. Type your own expression or load another example.');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+</body>
+</html>
