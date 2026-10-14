@@ -3,6 +3,7 @@
   'use strict';
   const E = window.CronEngine;
   const W = window.CronWhy;
+  const F = window.CronFleet;
   const D = E.DIALECTS;
   const DAY = E.DAY;
   const $ = id => document.getElementById(id);
@@ -922,6 +923,264 @@
     out.innerHTML = html;
   }
 
+  // ------------------------------------------------------------ all my jobs
+
+  const JOBS_KEY = 'cron-almanac-jobs';
+  const fleet = { jobs: [], analysis: null, plan: [], rewritten: null, dialect: 'unix', tz: browserTz, frequent: false, built: false };
+
+  function setMode(mode, focus) {
+    const all = mode === 'all';
+    $('single').hidden = all;
+    $('fleet').hidden = !all;
+    $('tab-one').setAttribute('aria-selected', String(!all));
+    $('tab-all').setAttribute('aria-selected', String(all));
+    $('tab-one').tabIndex = all ? -1 : 0;
+    $('tab-all').tabIndex = all ? 0 : -1;
+    try { localStorage.setItem(STORE_KEY + '-mode', mode); } catch (e) { /* storage unavailable */ }
+    if (all && window.top === window) {
+      try { history.replaceState(null, '', '#jobs'); } catch (e) { /* ignore */ }
+    }
+    if (all) {
+      buildFleet();
+      runFleet();
+      if (focus) $('fleet-text').focus();
+    } else if (current) update();
+  }
+
+  function buildFleet() {
+    if (fleet.built) return;
+    fleet.built = true;
+    fleet.dialect = state.dialect;
+    fleet.tz = state.tz;
+    $('fleet-dialect').innerHTML = E.DIALECT_ORDER.map(id => `<option value="${id}">${esc(D[id].name)}</option>`).join('');
+    $('fleet-dialect').value = fleet.dialect;
+    $('fleet-tz').innerHTML = $('tz').innerHTML;
+    $('fleet-tz').disabled = false;
+    $('fleet-tz').value = fleet.tz;
+    let saved = '';
+    try { saved = sessionStorage.getItem(JOBS_KEY) || ''; } catch (e) { saved = ''; }
+    $('fleet-text').value = saved;
+    let t = 0;
+    $('fleet-text').addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        try { sessionStorage.setItem(JOBS_KEY, $('fleet-text').value); } catch (e) { /* storage unavailable */ }
+        runFleet();
+      }, 250);
+    });
+    $('fleet-dialect').addEventListener('change', () => { fleet.dialect = $('fleet-dialect').value; runFleet(); });
+    $('fleet-tz').addEventListener('change', () => { fleet.tz = $('fleet-tz').value; runFleet(); });
+    $('fleet-example').addEventListener('click', () => {
+      $('fleet-text').value = F.EXAMPLE;
+      fleet.dialect = 'unix';
+      $('fleet-dialect').value = 'unix';
+      try { sessionStorage.setItem(JOBS_KEY, F.EXAMPLE); } catch (e) { /* storage unavailable */ }
+      runFleet();
+    });
+    $('heat-frequent').addEventListener('change', () => { fleet.frequent = $('heat-frequent').checked; renderHeat(); });
+    buildHeat();
+  }
+
+  const FORMAT_NAME = {
+    crontab: 'a crontab', lines: 'one schedule per line', json: 'JSON', k8s: 'Kubernetes CronJobs', github: 'GitHub workflows',
+    systemd: 'systemd timers', cloudflare: 'a Wrangler config', code: 'source code',
+  };
+
+  function runFleet() {
+    const text = $('fleet-text').value;
+    const parsed = F.parseJobs(text, { dialect: fleet.dialect });
+    fleet.jobs = parsed.jobs;
+    const status = $('fleet-status');
+    if (!parsed.jobs.length) {
+      $('fleet-results').hidden = true;
+      status.innerHTML = text.trim() ? md(parsed.notes[0] || 'No schedules found. Check “Read plain lines as”, or paste one of the formats above.') : '';
+      return;
+    }
+    const readable = parsed.jobs.filter(j => j.P.ok);
+    if (!readable.length) {
+      $('fleet-results').hidden = true;
+      const first = parsed.jobs[0];
+      status.innerHTML = md(`None of the ${parsed.jobs.length === 1 ? 'lines' : `${parsed.jobs.length} lines`} could be read as ${D[fleet.dialect].name}. Line ${first.line || 1}: ${first.P.error.message} Check “Read plain lines as”, or paste one of the formats above.`);
+      return;
+    }
+    const now = Date.now();
+    fleet.analysis = F.analyze(parsed.jobs, { tz: fleet.tz, now });
+    fleet.plan = F.spread(parsed.jobs, fleet.analysis);
+    fleet.rewritten = F.rewrite(text, parsed.jobs, fleet.plan);
+    const bad = fleet.analysis.totals.errors;
+    status.innerHTML = md(`Read ${parsed.jobs.length} job${parsed.jobs.length === 1 ? '' : 's'} from ${FORMAT_NAME[parsed.format] || 'the text'}${bad ? `; ${bad} couldn't be read` : ''}.${parsed.notes.length ? ' ' + parsed.notes.join(' ') : ''}`);
+    $('fleet-results').hidden = false;
+    renderFleetStats(now);
+    renderHeat();
+    renderCollisions();
+    renderFlags();
+    renderFleetTable(now);
+  }
+
+  function renderFleetStats(now) {
+    const a = fleet.analysis, t = a.totals;
+    const top = a.collisions[0];
+    const items = [
+      ['Jobs', `${nf.format(t.jobs)}<small>${t.disabled ? `${t.disabled} turned off` : t.errors ? `${t.errors} unreadable` : 'all readable'}</small>`],
+      ['Runs a week', `${nf.format(t.weekRuns)}<small>about ${nf.format(Math.round(t.weekRuns / 7))} a day</small>`],
+      ['Busiest hour', a.busiest ? `${nf.format(a.busiest.runs)} runs<small>${esc(cellLabel(a.busiest.cell))}</small>` : '—'],
+      ['Biggest pile-up', top ? `${top.max} jobs<small>at ${top.time}</small>` : 'none'],
+      ['Need a look', `${nf.format(t.warnings)}<small>job${t.warnings === 1 ? '' : 's'} with warnings</small>`],
+    ];
+    $('fleet-stats').innerHTML = items.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  }
+
+  function cellDate(k) {
+    const d = new Date(fleet.analysis.startWall + Math.floor(k / 24) * DAY);
+    return { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate(), wd: d.getUTCDay() };
+  }
+  function cellLabel(k) {
+    const c = cellDate(k), h = k % 24;
+    return `${DOW_SHORT[c.wd]} ${c.d} ${E.MON_SHORT[c.m - 1]}, ${pad(h)}:00`;
+  }
+
+  function buildHeat() {
+    const box = $('heat');
+    box.addEventListener('pointerover', e => {
+      const cell = e.target.closest('i[data-c]');
+      if (!cell || !fleet.analysis) return;
+      $('heat-status').textContent = heatText(+cell.dataset.c);
+    });
+    box.addEventListener('pointerleave', () => { $('heat-status').textContent = ''; });
+  }
+
+  function heatText(k) {
+    const c = fleet.analysis.heat[k];
+    const n = fleet.frequent ? c.runs : c.core;
+    const names = [...c.jobs].filter(i => fleet.frequent || !fleet.analysis.rows[i].frequent).map(i => fleet.jobs[i].name);
+    if (!n) return `${cellLabel(k)}: no runs`;
+    return `${cellLabel(k)}–${pad(k % 24)}:59: ${nf.format(n)} run${n === 1 ? '' : 's'} from ${names.length} job${names.length === 1 ? '' : 's'} (${names.slice(0, 4).join(', ')}${names.length > 4 ? ', …' : ''})`;
+  }
+
+  function renderHeat() {
+    const a = fleet.analysis;
+    if (!a) return;
+    const val = c => (fleet.frequent ? c.runs : c.core);
+    const max = Math.max(0, ...a.heat.map(val));
+    const level = n => (!n ? 0 : max <= 1 ? 3 : Math.max(1, Math.min(5, 1 + Math.round(4 * Math.log(n) / Math.log(max)))));
+    let html = '<span></span>';
+    for (let h = 0; h < 24; h++) html += `<span class="hd">${h % 3 === 0 ? pad(h) : ''}</span>`;
+    for (let d = 0; d < a.days; d++) {
+      const c = cellDate(d * 24);
+      html += `<span class="dl">${d === 0 ? 'Today' : DOW_SHORT[c.wd]} <small>${c.d}</small></span>`;
+      for (let h = 0; h < 24; h++) {
+        const k = d * 24 + h;
+        html += `<i class="q${level(val(a.heat[k]))}" data-c="${k}" title="${esc(heatText(k))}"></i>`;
+      }
+    }
+    $('heat').innerHTML = html;
+    const steps = [1, 2, 3, 4, 5].map(q => `<span class="key q${q}"></span>`).join('');
+    $('heat-legend').innerHTML = `Runs per hour <span class="key q0"></span>0 ${steps} ${nf.format(max)} <span class="tz">${esc(a.tz)}</span>`;
+    const order = a.heat.map((c, k) => ({ k, n: val(c) })).filter(x => x.n).sort((x, y) => y.n - x.n).slice(0, 3);
+    const busy = order.length ? `Busiest: ${order.map(x => `${cellLabel(x.k)} (${nf.format(x.n)})`).join('; ')}.` : 'No runs in the next 7 days.';
+    $('heat-busiest').textContent = busy;
+    $('heat').setAttribute('aria-label', `Grid of 7 days by 24 hours showing how many runs start in each hour. ${busy}`);
+  }
+
+  function openJob(i) {
+    const j = fleet.jobs[i];
+    const zone = fleet.analysis.rows[i].zone;
+    if (zone && !D[j.dialect].utcOnly) state.tz = zone;
+    state.calStart = null;
+    toast(`Opened “${j.name}”.`);
+    setExprs([j.expr], j.dialect);
+    setMode('one');
+    $('expr').focus();
+  }
+
+  function renderCollisions() {
+    const a = fleet.analysis;
+    const box = $('fleet-collisions');
+    if (!a.collisions.length) {
+      box.innerHTML = '<p class="panel-intro">No two jobs start in the same minute in the next 7 days.</p>';
+      return;
+    }
+    const name = i => esc(fleet.jobs[i].name);
+    let html = '<ul class="piles">' + a.collisions.slice(0, 6).map(g =>
+      `<li><span class="pile-time">${g.time}</span><span>Up to <strong>${g.max} jobs</strong> together, on ${g.days} day${g.days === 1 ? '' : 's'} of the next 7: ${g.jobs.map(name).join(', ')}</span></li>`).join('') + '</ul>';
+    if (a.collisions.length > 6) html += `<p class="panel-intro">And ${a.collisions.length - 6} more times.</p>`;
+    if (fleet.plan.length) {
+      html += '<p class="why-sub">Stagger them</p><p class="panel-intro">Each pile-up keeps its first job; the others move to quiet minutes later in the same hour.</p><ul class="moves">';
+      for (const g of fleet.plan) {
+        for (const mv of g.moves) {
+          html += `<li><span class="move-name">${esc(mv.name)}</span><span class="expr">${esc(mv.from)}</span><span aria-hidden="true">→</span><span class="sr-only">becomes</span><span class="expr">${esc(mv.to)}</span></li>`;
+        }
+      }
+      html += '</ul>';
+      if (fleet.rewritten) html += `<button type="button" class="btn small" data-copy="${esc(fleet.rewritten)}">Copy the updated text</button>`;
+    }
+    box.innerHTML = html;
+  }
+
+  function renderFlags() {
+    const a = fleet.analysis;
+    const items = [];
+    const open = i => `<button type="button" class="btn ghost small" data-open="${i}">Open</button>`;
+    for (const r of a.rows) {
+      const j = r.job;
+      if (r.error) items.push({ level: 'error', title: `${j.name} can't be read`, body: `\`${j.schedule.length > 60 ? j.schedule.slice(0, 59) + '…' : j.schedule}\`: ${r.error}`, i: r.i });
+    }
+    const freq = a.rows.filter(r => r.frequent);
+    if (freq.length) {
+      items.push({
+        level: 'info', title: `${freq.length} frequent job${freq.length === 1 ? '' : 's'}`,
+        body: freq.map(r => `**${r.job.name}** every ${E.fmtDuration(r.stats.minGap)}`).join('; ') + '. They are left out of the pile-ups, and out of the chart unless you include them.',
+      });
+    }
+    for (const r of a.rows) {
+      if (r.error || r.reboot) continue;
+      const p = r.problems.filter(x => x.id !== 'dst');
+      if (!p.length) continue;
+      items.push({ level: p.some(x => x.level === 'error') ? 'error' : 'warn', title: r.job.name, body: p.map(x => x.title).join('; ') + '.', i: r.i });
+    }
+    // Clock changes: one note for all the jobs they touch; a warning when a once-a-day-or-rarer job is hit.
+    const dst = a.rows.filter(r => r.dst && !r.job.disabled);
+    if (dst.length) {
+      const fixed = dst.filter(r => !r.frequent && r.stats && r.stats.minGap >= 3600);
+      items.push({
+        level: fixed.length ? 'warn' : 'info',
+        title: `Clock changes affect ${dst.length} job${dst.length === 1 ? '' : 's'}`,
+        body: `In the next year, daylight saving time skips or repeats a run of ${dst.map(r => `**${r.job.name}**`).join(', ')}. ${fixed.length ? `For ${fixed.map(r => r.job.name).join(', ')} that means a missed or doubled run on those days. ` : ''}Open a job to see the dates and what its scheduler does.`,
+        i: fixed.length === 1 ? fixed[0].i : null,
+      });
+    }
+    for (const r of a.rows) if (r.job.disabled) items.push({ level: 'info', title: `${r.job.name} is turned off`, body: 'It is suspended, inactive or disabled, so it is left out of the chart and pile-ups.', i: r.i });
+    if (!items.length) items.push({ level: 'ok', title: 'Nothing stands out', body: 'No warnings, no unreadable lines and no very frequent jobs.' });
+    const label = { error: 'Error', warn: 'Warning', info: 'Note', ok: 'OK' };
+    const order = { error: 0, warn: 1, info: 2, ok: 3 };
+    items.sort((x, y) => order[x.level] - order[y.level]);
+    $('fleet-flags').innerHTML = items.map(c => `
+      <article class="check">
+        <header><span class="sev ${c.level}">${label[c.level]}</span><h3>${md(c.title)}</h3></header>
+        <p>${md(c.body)}</p>
+        ${c.i != null ? open(c.i) : ''}
+      </article>`).join('');
+  }
+
+  function renderFleetTable(now) {
+    const a = fleet.analysis;
+    const rows = a.rows.map(r => {
+      const j = r.job;
+      const expr = j.schedule.length > 40 ? j.schedule.slice(0, 39) + '…' : j.schedule;
+      let next = '—', perWeek = '—', issues = '';
+      if (r.error) issues = '<span class="sev error">Error</span>';
+      else if (r.reboot) next = 'at startup';
+      else {
+        if (r.next && !j.disabled) { const p = E.displayParts(r.next.t, fleet.tz); next = `${p.weekday} ${p.day} ${p.month} ${p.hour}:${p.minute}<small>${esc(relTime(r.next.t - now))}</small>`; }
+        if (j.disabled) next = 'turned off';
+        perWeek = nf.format(r.weekRuns);
+        if (r.worst !== 'ok') issues = `<span class="sev ${r.worst}">${r.problems.length} ${r.worst === 'error' ? 'error' : 'warning'}${r.problems.length === 1 ? '' : 's'}</span>`;
+      }
+      return `<tr${r.error ? ' class="bad"' : ''}><td class="name">${esc(j.name)}</td><td class="t">${esc(expr)}</td><td>${esc(D[j.dialect].short)}</td><td class="rel">${esc(r.zone || '')}</td><td class="next">${next}</td><td class="num">${perWeek}</td><td>${issues}</td><td><button type="button" class="btn ghost small" data-open="${r.i}" aria-label="Open ${esc(j.name)}">Open</button></td></tr>`;
+    });
+    $('fleet-table').innerHTML = `<thead><tr><th scope="col">Job</th><th scope="col">Schedule</th><th scope="col">Scheduler</th><th scope="col">Zone</th><th scope="col">Next run (${esc(fleet.tz)})</th><th scope="col">This week</th><th scope="col">Checks</th><th scope="col"><span class="sr-only">Open</span></th></tr></thead><tbody>${rows.join('')}</tbody>`;
+  }
+
   // ------------------------------------------------------------ English
 
   function onEnglish(e) {
@@ -1023,6 +1282,15 @@
       $('share').addEventListener('click', e => { save(); copyText(location.href, e.currentTarget); });
     }
     $('english-form').addEventListener('submit', onEnglish);
+    $('tab-one').addEventListener('click', () => setMode('one'));
+    $('tab-all').addEventListener('click', () => setMode('all', true));
+    document.querySelector('.modes').addEventListener('keydown', e => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      const next = $('tab-one').getAttribute('aria-selected') === 'true' ? 'all' : 'one';
+      setMode(next);
+      $(next === 'all' ? 'tab-all' : 'tab-one').focus();
+      e.preventDefault();
+    });
     $('why-form').addEventListener('submit', e => {
       e.preventDefault();
       state.why.at = $('why-at').value;
@@ -1078,6 +1346,7 @@
       const b = e.target.closest('button');
       if (!b) return;
       if (b.dataset.copy != null) copyText(b.dataset.copy, b);
+      else if (b.dataset.open != null) openJob(+b.dataset.open);
       else if (b.dataset.why) {
         // From the calendar: check that day at its first run time, or at the time already entered.
         const [y, m, d] = b.dataset.why.split('-').map(Number);
@@ -1132,6 +1401,7 @@
 
   function init() {
     const linked = location.hash.startsWith('#s.');
+    const wantJobs = location.hash === '#jobs';
     const returning = load();
     buildDialects();
     buildTz();
@@ -1139,6 +1409,11 @@
     bind();
     $('expr').value = state.exprs[0];
     update();
+    let mode = 'one';
+    try { mode = localStorage.getItem(STORE_KEY + '-mode') || 'one'; } catch (e) { mode = 'one'; }
+    if (wantJobs) mode = 'all';
+    else if (linked) mode = 'one';
+    if (mode === 'all') setMode('all');
     if (!returning && !linked) toast('This opening example hides a classic mistake; Checks explains it. Type your own expression or load another example.');
   }
 

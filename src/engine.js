@@ -3012,6 +3012,7 @@
     isValidZone, compress, runsOf, kindsFor,
     // for why.js and fleet.js
     daySegments, wallInstants, gapBoundary, domMatch, dowMatch, domPhrase, dowPhrase, monthPhrase, yearPhrase, timePhrase,
+    offsetFast: cachedOffset, closeParen,
     joinList, cap, pad2, NTH,
   };
 });

@@ -17,6 +17,12 @@
     <p class="tagline">Read, check and translate schedules for crontab, systemd, GitHub, GitLab, Kubernetes, EventBridge, Cloudflare, Azure, Quartz, Spring and APScheduler. Every run time is computed in a real time zone, daylight saving included.</p>
   </header>
 
+  <div class="modes" role="tablist" aria-label="What to look at">
+    <button type="button" role="tab" id="tab-one" aria-controls="single" aria-selected="true">One schedule</button>
+    <button type="button" role="tab" id="tab-all" aria-controls="fleet" aria-selected="false" tabindex="-1">All my jobs</button>
+  </div>
+
+  <div id="single" role="tabpanel" aria-labelledby="tab-one">
   <section class="bench" aria-label="Expression">
     <div class="bench-top">
       <div class="dialects" id="dialects" role="group" aria-label="Scheduler"></div>
@@ -118,6 +124,63 @@
       <div class="translations" id="translations"></div>
     </section>
   </main>
+  </div>
+
+  <div id="fleet" role="tabpanel" aria-labelledby="tab-all" hidden>
+    <section class="bench fleet-bench" aria-label="Your jobs">
+      <label for="fleet-text" class="fleet-label">Paste your jobs</label>
+      <p class="hint">A crontab, GitHub workflows, Kubernetes manifests or <code>kubectl get cronjobs -o yaml</code>, systemd timers, a Wrangler config, GitLab or EventBridge JSON, Spring, Quartz, Azure or APScheduler code, or one schedule per line. It stays in this browser tab.</p>
+      <textarea id="fleet-text" rows="12" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off"></textarea>
+      <div class="controls">
+        <div class="control">
+          <label for="fleet-dialect">Read plain lines as</label>
+          <select id="fleet-dialect"></select>
+        </div>
+        <div class="control">
+          <label for="fleet-tz">Server time zone</label>
+          <select id="fleet-tz"></select>
+          <p class="hint">For crontab, systemd, Kubernetes and code that doesn't set a zone. GitHub, GitLab, Azure, Cloudflare and EventBridge rules use UTC unless they say otherwise. The charts use this zone too.</p>
+        </div>
+      </div>
+      <div class="fleet-actions">
+        <button type="button" class="btn ghost" id="fleet-example">Load an example</button>
+        <p class="fleet-status" id="fleet-status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <div id="fleet-results" hidden>
+      <section class="summary" aria-label="Summary"><dl class="stats" id="fleet-stats"></dl></section>
+
+      <section class="panel" aria-labelledby="heat-h">
+        <div class="panel-head">
+          <h2 id="heat-h">Runs per hour, next 7 days</h2>
+          <p class="daymap-status" id="heat-status" aria-live="polite"></p>
+        </div>
+        <div class="heat-controls">
+          <p class="legend heat-legend" id="heat-legend"></p>
+          <label class="check-label"><input type="checkbox" id="heat-frequent"> Include jobs that run every 15 minutes or more often</label>
+        </div>
+        <div class="heat" id="heat" role="img"></div>
+        <p class="heat-busiest" id="heat-busiest"></p>
+      </section>
+
+      <div class="pair">
+        <section class="panel" aria-labelledby="pile-h">
+          <h2 id="pile-h">Jobs that start together</h2>
+          <div id="fleet-collisions"></div>
+        </section>
+        <section class="panel" aria-labelledby="flags-h">
+          <h2 id="flags-h">Worth a look</h2>
+          <div id="fleet-flags" class="checks"></div>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="jobs-h">
+        <h2 id="jobs-h">All jobs</h2>
+        <div class="table-scroll"><table class="runs fleet-table" id="fleet-table"></table></div>
+      </section>
+    </div>
+  </div>
 
   <section class="panel reference" aria-labelledby="ref-h">
     <details>
